@@ -21,14 +21,12 @@
 
 import datetime
 import gzip
-from math import *
+import math
 import os
 import sys
 if sys.platform == 'win32' or sys.platform == 'cygwin':
-    import math
     from netCDF4 import Dataset
 else:
-    from Scientific.N import *
     from Scientific.IO.NetCDF import *
 import time
 from PyQt4 import QtCore, QtGui
