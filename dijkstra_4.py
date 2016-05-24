@@ -18,10 +18,6 @@
 #  Public License along with SIREN.  If not, see
 #  <http://www.gnu.org/licenses/>.
 #
-#  This program has been derived from code developed by
-#  http://www.bogotobogo.com Copyright for the original work
-#  remains with them.
-#  http://www.bogotobogo.com/python/files/Dijkstra/Dijkstra_shortest_path.py
 
 import sys
 from math import *
