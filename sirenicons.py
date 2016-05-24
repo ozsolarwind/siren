@@ -1,12 +1,12 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2016 Sustainable Energy Now Inc., Angus King     
+#  Copyright (C) 2016 Sustainable Energy Now Inc., Angus King
 #
 #  sirenicons.py - This file is part of SIREN.
 #
 #  SIREN is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as 
-#  published by the Free Software Foundation, either version 3 of 
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, either version 3 of
 #  the License, or (at your option) any later version.
 #
 #  SIREN is distributed in the hope that it will be useful,
@@ -14,14 +14,14 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU Affero General Public License for more details.
 #
-#  You should have received a copy of the GNU Affero General 
+#  You should have received a copy of the GNU Affero General
 #  Public License along with SIREN.  If not, see
 #  <http://www.gnu.org/licenses/>.
 #
 
-import ConfigParser # decode .ini file
+import ConfigParser   # decode .ini file
 import sys
-    
+
 class Icons:
     def __init__(self):
         config = ConfigParser.RawConfigParser()
@@ -30,8 +30,8 @@ class Icons:
         else:
             config_file = 'SIREN.ini'
         config.read(config_file)
-        self.icons = {'Biomass': 'biomass_g.png', 'Fossil': 'fossil_g.png', 'Geothermal': 'hot_rocks_g.png', 
-                      'Hydro': 'hydro_g.png', 'Other': 'question.png', 'PV': 'solar_pv_g.png', 
+        self.icons = {'Biomass': 'biomass_g.png', 'Fossil': 'fossil_g.png', 'Geothermal': 'hot_rocks_g.png',
+                      'Hydro': 'hydro_g.png', 'Other': 'question.png', 'PV': 'solar_pv_g.png',
                       'Solar Thermal': 'solar_g.png', 'Wave': 'wave_g.png', 'Wind': 'wind_g.png'}
         try:
             technologies = config.get('Power', 'technologies').split(' ')
@@ -62,7 +62,7 @@ class Icons:
         elif 'PV' in technology:
             tech = 'PV'
         elif technology[:6] == 'Fossil':
-            tech = stn.technology[:6]
+            tech = 'Fossil'
         try:
             return self.icons[tech]
         except:
