@@ -4,7 +4,7 @@
 <style>
 div.experiment {
   border: 1px solid red;
-}
+} 
 table {
     border: 1px solid black;
     border-collapse: collapse;
@@ -74,7 +74,7 @@ ul.none {
     margin-left: 0;
     margin-right: 0;
     padding-left: 40px;
-}
+} 
 ul {
     display: block;
     list-style-type: disc;
@@ -83,7 +83,7 @@ ul {
     margin-left: 0;
     margin-right: 0;
     padding-left: 40px;
-}
+} 
 </style>
 </head>
 <body>
@@ -153,33 +153,33 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 <li><em>wind_weather</em> (if present) contains wind (.srw) weather files for the SWIS for 2014 and 2015</li>
 </ul>
 <p>When you open SIREN you will be presented with a list of SIREN Models (Preferences files). Choose the SIREN Model you want by clicking on your choice. If want to use a specific Preferences file you can open the simulation passing the alternate file name as a parameter, for example:</p>
-<ul class="none">
+<ul class="none"> 
 <li><em>siren.exe SIREN_NWIS.ini</em></li>
 </ul>
 <p>If you want to create a new Model press the <em>New Model</em> button on the start up menu. You will be presented with a small list of Properties to update to create a new Preferences file. Many of these properties relate to files and file locations as described in <a href="#setup">Setting Up</a>. It's important to ensure they're correct for the new model to open. For the file fields click on the field to navigate to the desired file or folder. At the bottom of the Create Preferences file menu you have options to Save the new file, Save the new file and edit it, or Save it and open (launch) the new model.
 <div class="experiment">
 <p><strong>Experimental features</strong></p>
-<p>There are some experimental features in SIREN which may or may not be further developed. These are identified within this help by a red bounding box.</p>
+<p>There are some experimental features in SIREN which may or may not be further developed. These are identified within this help by a red bounding box.</p> 
 </div>
 <p><a href="#help">Back to top</a></p>
 <h2 id="setup">Setting Up</h2>
 <p>The simulation uses external &ldquo;data files&rdquo; to model the potential for renewable energy generation for a geographic region. The approach is to model the data on an hourly basis for a desired year (ignoring leap days, that is, 8,760 hours). The following data files are required / desirable. Due to the initial source for each data file the format for each is different (see <a href="#files">SIREN File Formats</a> for further details). Please <a href="#feedback">feedback</a> any desired formats as it's relatively easy to accommodate standard file formats.</p>
 <ul>
 <li>A map of the area of interest (identified in the <a href="#p_map">[Map]</a> Section of the Preferences file). A simple JPEG or PNG image is fine although most conventional image formats should be acceptable. The map covers a geographically rectangular area of the earth. Obtaining a suitable map image is described in <a href="#map">Obtaining a Suitable Map Image</a></li>
-<li>Names and locations of towns. Two files are used as input (either or both can be specified):
+<li>Names and locations of towns. Two files are used as input (either or both can be specified): 
 <ol>
 <li>An Excel file containing a list of weather stations from the BOM (identified by <em>bom</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file)</li>
 <li>A CSV file containing the location of additional towns or localities (identified by <em>towns</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file)</li>
 </ol>
 </li>
-<li>Names, technologies and locations of existing power stations (identified by <em>grid_stations</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file). This is either a CSV or Excel file which contains details of existing Facilities (Stations) registered with the local electricity regulator (AEMO in the case of the SWIS) augmented by geographic location of the station and details on turbines for wind farms. The CSV file may be either a specific format or a normal scenario file. You can update this file for the SWIS as described in <a href="#swisupd">Obtaining Current SWIS Facilities</a>.
+<li>Names, technologies and locations of existing power stations (identified by <em>grid_stations</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file). This is either a CSV or Excel file which contains details of existing Facilities (Stations) registered with the local electricity regulator (AEMO in the case of the SWIS) augmented by geographic location of the station and details on turbines for wind farms. The CSV file may be either a specific format or a normal scenario file. You can update this file for the SWIS as described in <a href="#swisupd">Obtaining Current SWIS Facilities</a>. 
 <br>
 You can also create additional stations, such as Rooftop PV, to be included in the list of existing stations by creating an additional Stations file and setting the <em>grid_stations2</em> property in the <a href="#p_files">[Files]</a> Section of the Preferences file</li>
 <li>A layout of the existing electrical grid. A KML file showing the layout of the major power lines in the grid and an outline of the network (SWIS) boundary. This should be a simplified version of the grid network with all lines connecting exactly for SIREN to correctly connect new stations into the grid
 <br>
 <strong>Note:</strong> The intention of these two files is to describe the existing fossil and renewable Stations on the electricity network</li>
 <li>Hourly load details for the electricity grid. A simple CSV file with a single column of electrical load data for the 8,760 hours in the year of interest (identified by <em>load</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file)</li>
-<li>Hourly solar and weather details for the area of interest (identified by <em>solar_files</em> and <em>wind_files</em> properties of the <a href="#p_files">[Files]</a> Section of the Preferences file). This data is in formats required for input to SAM and contains entries for the 8,760 hours in the year of interest. A SAM weather file is a text file that contains one year's worth of data describing the solar resource, wind speed, temperature, and other weather characteristics at a particular location. The approach we have adopted is to use NASA MERRA-2 data for the desired geographic area and year to create appropriately formatted weather files. This is described in <a href="#merra">Obtaining and Using NASA MERRA-2 Data for SAM</a>.
+<li>Hourly solar and weather details for the area of interest (identified by <em>solar_files</em> and <em>wind_files</em> properties of the <a href="#p_files">[Files]</a> Section of the Preferences file). This data is in formats required for input to SAM and contains entries for the 8,760 hours in the year of interest. A SAM weather file is a text file that contains one year's worth of data describing the solar resource, wind speed, temperature, and other weather characteristics at a particular location. The approach we have adopted is to use NASA MERRA-2 data for the desired geographic area and year to create appropriately formatted weather files. This is described in <a href="#merra">Obtaining and Using NASA MERRA-2 Data for SAM</a>. 
 <br>
 You can also use TMY files such as those provided with SAM. If you have a number of weather files you can create an index of these files for SIREN. This is described in <a href="#index">Using other Weather Files</a></li>
 <li>SIREN allows you to visualise renewable resource attributes. This utilises a summary file to avoid having to process all the weather files covered by the map (identified by <em>resource_grid</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file). This is described in <a href="#resource">Visualising Renewable Resource Attributes</a></li>
@@ -343,13 +343,13 @@ You can also use TMY files such as those provided with SAM. If you have a number
 <td>330_d x 2</td>
 <td class="right">$3.0M</td>
 <td class="right">$20.0M</td>
-</tr>
+</tr>	 	 	
 </table>
 <p>Above 500MW it's a case of alternately adding 330_s and 330_d costs.</p>
 <p><a href="#help">Back to top</a></p>
 <h2 id="prefs">Preferences</h2>
 <p>Many options can be specified by a Preferences file. When you open SIREN you will be presented with a list of available Preferences files (SIREN Models) to choose from. These files (must) reside in the same directory as the SIREN itself.
-The format is similar to a Windows INI file. If you want to create a new Model you can press the <em>New Model</em> button on the start up menu. You will be presented with a small list of Properties to update to create a new Preferences file.
+The format is similar to a Windows INI file. If you want to create a new Model you can press the <em>New Model</em> button on the start up menu. You will be presented with a small list of Properties to update to create a new Preferences file. 
 <p>The Preferences file has the following Sections and properties. The file is a simple text file which must be saved in the <em>siren</em> folder and have a file type of <em>.ini</em> (INI File). The sample <em>siren_default.ini</em> or <em>siren_windows_default.ini</em> file will provide a useful guide as to the content.</p>
 <p>There are three special strings which will be replaced in the Files properties variables:</p>
 <ul class="none">
@@ -358,22 +358,22 @@ The format is similar to a Windows INI file. If you want to create a new Model y
 <li><em>$dirn</em>&nbsp;will be replaced with the corresponding variable from the <dfn>[Parents]</dfn> Section</li>
 </ul>
 <p>(Skip to <a href="#menus">Menus</a>)</p>
-<p>Shortcut to Sections:- <a href="#p_base">Base</a>, <a href="#p_biomass">Biomass</a>, <a href="#p_colors">Colors</a>,
-<a href="#p_files">Files</a>, <a href="#financial">Financial</a>, <a href="#p_fixed_pv">Fixed PV</a>,
-<a href="#p_fossil_coal">Fossil Coal</a>, <a href="#p_fossil_cogen">Fossil Cogen</a>, <a href="#p_fossil_gas">Fossil Gas</a>,
-<a href="#p_fossil_mixed">Fossil Mixed</a>, <a href="#p_geothermal">Geothermal</a>, <a href="#p_grid">Grid</a>,
-<a href="#p_hydro">Hydro</a>, <a href="#p_map">Map</a>, <a href="#p_other">Other</a>, <a href="#p_parents">Parents</a>,
-<a href="#power">Power</a>, <a href="#p_pv">PV</a>, <a href="#p_rooftop_pv">Rooftop PV</a>,
-<a href="#p_sam_modules">SAM Modules</a>, <a href="#p_solar_thermal">Solar Thermal</a>, <a href="#p_storage">Storage</a>,
-<a href="#p_tracking_pv">Tracking PV</a>, <a href="#p_view">View</a>, <a href="#p_wave">Wave</a>, <a href="#p_wind">Wind</a>,
+<p>Shortcut to Sections:- <a href="#p_base">Base</a>, <a href="#p_biomass">Biomass</a>, <a href="#p_colors">Colors</a>, 
+<a href="#p_files">Files</a>, <a href="#financial">Financial</a>, <a href="#p_fixed_pv">Fixed PV</a>, 
+<a href="#p_fossil_coal">Fossil Coal</a>, <a href="#p_fossil_cogen">Fossil Cogen</a>, <a href="#p_fossil_gas">Fossil Gas</a>, 
+<a href="#p_fossil_mixed">Fossil Mixed</a>, <a href="#p_geothermal">Geothermal</a>, <a href="#p_grid">Grid</a>, 
+<a href="#p_hydro">Hydro</a>, <a href="#p_map">Map</a>, <a href="#p_other">Other</a>, <a href="#p_parents">Parents</a>, 
+<a href="#power">Power</a>, <a href="#p_pv">PV</a>, <a href="#p_rooftop_pv">Rooftop PV</a>, 
+<a href="#p_sam_modules">SAM Modules</a>, <a href="#p_solar_thermal">Solar Thermal</a>, <a href="#p_storage">Storage</a>, 
+<a href="#p_tracking_pv">Tracking PV</a>, <a href="#p_view">View</a>, <a href="#p_wave">Wave</a>, <a href="#p_wind">Wind</a>, 
 <a href="#p_windows">Windows</a>.</p>
 <table border="0", class="none">
 <tr>
 <th>Section</th>
-<th>Properties</th>
+<th>Properties</th> 
 </tr>
 <tr class="none" id="p_base"><td><dfn><strong>[Base]</strong></dfn></td>
-<td>Base properties are:</p>
+<td>Base properties are:</p> 
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><dfn>existing</dfn></td>
@@ -427,7 +427,7 @@ The format is similar to a Windows INI file. If you want to create a new Model y
 <td class="none">Operations and Maintenance cost per peak MW. A suffix of K indicates thousands and M millions</td>
 </tr>
 </table>
-</td></tr>
+</td></tr> 
 <tr class="none" id="p_colors"><td><dfn><strong>[Colors]</strong></dfn></td>
 <td>Colours for things. It is possible to have different colours for different maps by appending the map_choice value to Colors, e.g. <em>[Colors1]</em>. It is possible to edit colours and save the changes via a menu option. Standard colours are:
 <p>white, black, red, darkRed, green, darkGreen, blue, darkBlue, cyan, darkCyan, magenta, darkMagenta, yellow, darkYellow, gray, darkGray, lightGray and transparent; or you can use #rrggbb to specify red-green-blue HTML colour shades.</p>
@@ -716,7 +716,7 @@ as embedded solar - Rooftop PV - installed on the grid but not registered with A
 <tr class="none">
 <td class="none"><dfn>debt_fraction</dfn></td>
 <td class="none">Debt fraction. Can be suffixed with % for readability, for example, 0%</td>
-</tr>
+</tr> 
 <tr class="none">
 <td class="none"><dfn>depr_fed_sl_years</dfn></td>
 <td class="none">Federal depreciation straight-line Years (e.g. 20)</td>
@@ -823,7 +823,7 @@ as embedded solar - Rooftop PV - installed on the grid but not registered with A
 <td class="none">Operations and Maintenance cost per peak MW. A suffix of K indicates thousands and M millions</td>
 </tr>
 </table>
-</td></tr>
+</td></tr> 
 <tr class="none" id="p_fossil_coal"><td><dfn><strong>[Fossil Coal]</strong></dfn></td>
 <td>Specifics on Fossil Coal characteristics. Properties are:</p>
 <table border="0", class="none">
@@ -844,7 +844,7 @@ as embedded solar - Rooftop PV - installed on the grid but not registered with A
 <td class="none">Operations and Maintenance cost per peak MW. A suffix of K indicates thousands and M millions</td>
 </tr>
 </table>
-</td></tr>
+</td></tr> 
 <tr class="none" id="p_fossil_cogen"><td><dfn><strong>[Fossil Cogen]</strong></dfn></td>
 <td>Specifics on Fossil Cogeneration characteristics. Properties are:</p>
 <table border="0", class="none">
@@ -907,7 +907,7 @@ as embedded solar - Rooftop PV - installed on the grid but not registered with A
 <td class="none">Operations and Maintenance cost per peak MW. A suffix of K indicates thousands and M millions</td>
 </tr>
 </table>
-</td></tr>
+</td></tr> 
 <tr class="none" id="p_geothermal"><td><dfn><strong>[Geothermal]</strong></dfn></td>
 <td>Specifics on Geothermal characteristics. Properties are:</p>
 <table border="0", class="none">
@@ -928,7 +928,7 @@ as embedded solar - Rooftop PV - installed on the grid but not registered with A
 <td class="none">Operations and Maintenance cost per peak MW. A suffix of K indicates thousands and M millions</td>
 </tr>
 </table>
-</td></tr>
+</td></tr> 
 <tr class="none" id="p_grid"><td><dfn><strong>[Grid]</strong></dfn></td>
 <td>Grid properties are:</p>
 <table border="0", class="none">
@@ -1033,7 +1033,7 @@ Specifics on Hydrothermal characteristics (experimental). Properties are:</p>
 <td class="none">Operations and Maintenance cost per peak MW. A suffix of K indicates thousands and M millions</td>
 </tr>
 </table>
-</td></tr>
+</td></tr> 
 <tr class="none" id="p_map"><td><dfn><strong>[Map]</strong></dfn></td>
 <td>Details on the map including geographic boundaries. Properties are:</p>
 <table border="0", class="none">
@@ -1073,14 +1073,14 @@ Specifics on Hydrothermal characteristics (experimental). Properties are:</p>
 </table>
 </td></tr>
 <tr class="none" id="p_parents"><td><dfn><strong>[Parents]</strong></dfn></td>
-<td>Enables parent directories to be specified and substituted in the <dfn>[Files]</dfn> properties. The variables must be in lower case. It is suggested they have an unusual character, such as $, to avoid valid values being substituted</p>
+<td>Enables parent directories to be specified and substituted in the <dfn>[Files]</dfn> properties. The variables must be in lower case. It is suggested they have an unusual character, such as $, to avoid valid values being substituted</p> 
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><dfn>$samsdk</dfn></td>
 <td class="none">Example: pointer to location of SAM SDK folders</td>
 </tr>
 </table>
-</td></tr>
+</td></tr> 
 <tr class="none" id="p_other"><td><div class="experiment"><dfn><strong>[Other]</strong></dfn><br />(experimental)</div></td>
 <td><div class="experiment">Specifics on another technology as defined by you (experimental). You can cater for different technologies by appending a suffix to Other, e.g. [Other1]. Refer to <a href="#nonsam">Other Models used by SIREN (experimental)</a> for more details. Standard Properties are:
 <table border="0", class="none">
@@ -1106,7 +1106,7 @@ Specifics on Hydrothermal characteristics (experimental). Properties are:</p>
 </tr>
 </table>
 </div>
-</td></tr>
+</td></tr> 
 <tr class="none" id="power"><td><dfn><strong>[Power]</strong></dfn></td>
 <td>What processing, output and plots to produce for power model processing. Properties are True or False. Power options can be changed and saved when the Power Models menu option is selected. Properties are:</p>
 <table border="0", class="none">
@@ -1179,11 +1179,11 @@ Specifics on Hydrothermal characteristics (experimental). Properties are:</p>
 </tr>
 <tr class="none">
 <td class="none"><dfn>other_width</dfn></td>
-<td class="none">Line width for non-technology plot items (Cumulative generation, Load and Shortfall). Default value is 2.0 (twice normal width)
+<td class="none">Line width for non-technology plot items (Cumulative generation, Load and Shortfall). Default value is 2.0 (twice normal width) 
 </td>
 <tr class="none">
 <td class="none"><dfn>period</dfn></td>
-<td class="none">Display plots of the average 24 hour period for the periods defined by the <em>period&lt;n&gt;</em> properties.
+<td class="none">Display plots of the average 24 hour period for the periods defined by the <em>period&lt;n&gt;</em> properties. 
 </td>
 <tr class="none">
 <td class="none"><dfn>period&lt;n&gt;</dfn></td>
@@ -1248,7 +1248,7 @@ Specifics on Hydrothermal characteristics (experimental). Properties are:</p>
 <td class="none">Icon to display for this technology. Default is solar_pv_g.png</td>
 </tr>
 </table>
-</td></tr>
+</td></tr> 
 <tr class="none" id="p_rooftop_pv"><td><dfn><strong>[Rooftop PV]</strong></dfn></td>
 <td>Specifics on Rooftop PV characteristics. Properties are:</p>
 <table border="0", class="none">
@@ -1273,7 +1273,7 @@ Specifics on Hydrothermal characteristics (experimental). Properties are:</p>
 <td class="none">Operations and Maintenance cost per peak MW. A suffix of K indicates thousands and M millions</td>
 </tr>
 </table>
-</td></tr>
+</td></tr> 
 <tr class="none" id="p_sam_modules"><td><dfn><strong>[SAM_Modules]</strong></dfn></td>
 <td>SAM models (modules) and default variables for each technology currently implemented. The variables files can be either CSV or Excel files. Properties are:</p>
 <table border="0", class="none">
@@ -1385,7 +1385,7 @@ Specifics on Hydrothermal characteristics (experimental). Properties are:</p>
 <td class="none">Specify how large the storage on the grid is; in GWh. This can be a single figure indicating the amount of storage or two figures separated by a comma where the second value specifies the initial storage value</td>
 </tr>
 </table>
-</td></tr>
+</td></tr> 
 <tr class="none" id="p_tracking_pv"><td><dfn><strong>[Tracking PV]</strong></dfn></td>
 <td>Specifics on Tracking PV characteristics. Properties are:</p>
 <table border="0", class="none">
@@ -1410,7 +1410,7 @@ Specifics on Hydrothermal characteristics (experimental). Properties are:</p>
 <td class="none">Operations and Maintenance cost per peak MW. A suffix of K indicates thousands and M millions</td>
 </tr>
 </table>
-</td></tr>
+</td></tr> 
 <tr class="none" id="p_view"><td><dfn><strong>[View]</strong></dfn></td>
 <td>Default view options. Often these are True or False values that can be &ldquo;toggled&rdquo; in the model. Properties are:
 </p>
@@ -1542,7 +1542,7 @@ Specifics on Hydrothermal characteristics (experimental). Properties are:</p>
 </tr>
 </table>
 </div>
-</td></tr>
+</td></tr> 
 <tr class="none" id="p_wind"><td><dfn><strong>[Wind]</strong></dfn></td>
 <td>Specifics on Wind and turbine spacings. Properties are:</p>
 <table border="0", class="none">
@@ -1647,7 +1647,7 @@ Specifics on Hydrothermal characteristics (experimental). Properties are:</p>
 </table>
 <p><a href="#help">Back to top</a></p>
 <h2 id="menus">Menu Structure</h2>
-<p>The menus allow you to interact with the full simulation while right-clicking the mouse allows you to interact at the detail of an individual station. The majority of the menu options have a keyboard shortcut. The layout of the menus are set out below (<strong>Note:</strong> Sometimes the menu options will disappear from the menu bar. The easiest solution is to maximise the main window and then restore it to it's normal size)</p>
+<p>The menus allow you to interact with the full simulation while right-clicking the mouse allows you to interact at the detail of an individual station. The majority of the menu options have a keyboard shortcut. The layout of the menus are set out below (<strong>Note:</strong> Sometimes the menu options will disappear from the menu bar. The easiest solution is to maximise the main window and then restore it to it's normal size)</p> 	
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><dfn><strong>Scenario</strong></dfn></td>
@@ -1665,7 +1665,7 @@ Specifics on Hydrothermal characteristics (experimental). Properties are:</p>
 <td class="none"><img src="minus.png" alt="Remove">&nbsp;&nbsp;Remove
 <br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...Scenario(s)</td>
-<td class="none">Remove one of the open scenarios from the current model.
+<td class="none">Remove one of the open scenarios from the current model. 
 The <em>Existing</em> scenario allows you to remove existing stations from your session</td>
 </tr>
 <tr class="none">
@@ -2082,7 +2082,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <li><em>Power - Load duration</em> option produces load duration curves which show how much generation is produced for a percentage of the year</li>
 <li><em>Power - Shortfall analysis</em> option produces a table and line plots that attempt to assist with analysing shortfalls on a daily basis. The analysis iterations option will produce average shortfalls for that number of days, for example, 3 iterations will produce average shortfall figures for one, two and three days. The figures are calculated by &ldquo;averaging&rdquo; the generation shortfall over the chosen number of days. This option will also produce cumulative shortfall graphs that add the average hourly shortfall to generation to attempt to flatten out the shortfall over the year</li>
 </ul>
-<p>The tool used to produce the plots, matplotlib, has a navigation toolbar
+<p>The tool used to produce the plots, matplotlib, has a navigation toolbar 
 (<a href="http://matplotlib.org/users/navigation_toolbar.html" target="_blank">Interactive navigation</a>) to enable you to navigate and manipulate the plot (but doesn't allow you to change the plot data). It includes options to zoom into an area of the plot and to save the plot image (by default to the <em>scenarios</em> folder).</p>
 <h4>Tables</h4>
 <ul>
@@ -2157,7 +2157,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <td class="none">Increase station costs by the line costs to connect the station to the grid. This only includes the cost of the line to connect the station into the main grid and for the capacity of the station</td></tr>
 <tr><td class="lr"><dfn>Include full grid path in LCOE</dfn></td>
 <td class="none">Increase station costs by the line costs to connect the station to the grid. This includes the cost of the line to connect the station to the load centre for the capacity of the station. <strong>This option may over-inflate grid costs as each station path to the load centre is traced individually</strong></td></tr>
-<tr><td class="bottom"><strong>Proceed, Save Options, All Done</strong></td>
+<tr><td class="bottom"><strong>Proceed, Save Options, All Done</strong></td>	
 <td class="none">At the bottom of the menu is the <strong>Proceed</strong> button. If the button is not visible use the scroll bar to navigate down the table. You can also <strong>Save</strong> the options for future sessions; this writes the updated options to the Preferences file. The model will allow multiple iterations of the financial models. Use the <strong>All Done</strong> button to exit financial model processing</td></tr>
 </table>
 <p><a href="#help">Back to top</a></p>
@@ -2188,7 +2188,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <li>Displays the Power Model menu allowing you to specify initial options. This allows you to choose the stations of interest and the data options you want. This first display of the menu also allows you to save these options</li>
 <li>Calls the appropriate SAM module for each chosen station, or other options as specified</li>
 <li>Presents the tables and plots you have selected</li>
-<li>Redisplays the Power Model menu allowing you to specify different growth options, storage options and plots. A number of options, such as <em>Generation - from chosen stations</em> will no longer be available as they would require reprocessing the SAM models. To process these new options press the <strong>Proceed</strong> button. To exit this phase of processing press the
+<li>Redisplays the Power Model menu allowing you to specify different growth options, storage options and plots. A number of options, such as <em>Generation - from chosen stations</em> will no longer be available as they would require reprocessing the SAM models. To process these new options press the <strong>Proceed</strong> button. To exit this phase of processing press the 
 <strong>All Done</strong> or <strong>Do Financials</strong> button</li>
 <li>If you have chosen to run the Financial Models the Financial Model menu will be displayed, allowing you to specify initial finance options. Press the <strong>Proceed</strong> button to continue with these options</li>
 <li>Calls the SAM financial module for each chosen station</li>
@@ -2202,7 +2202,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <li>Save the data file. This file contains power output for all stations in the current simulation. It should be located in the same folder as your scenario files (<em>scenarios</em> property of <em>[Files]</em> Section). The data is saved as MWh with 4 decimal places because SAM uses kWh</li>
 <li>With your spreadsheet application (Excel) update the scenarios and stations that you want to use the saved data with. Either add or use the column headed <em>Power File</em> to specify the file name you've selected for the power output. For each station enter the full name and extension of the file, for example, <em>Power_Table_Saved.xls</em></li>
 <li>When you next run the simulation it will load this saved data rather than invoking the SAM module for each station that has an <em>Power File</em> entry</li>
-<li>If the file is not found the SAM module will be re-invoked. So you can simply delete or rename the Power data file and re-run the simulation to get a new set of data points</li>
+<li>If the file is not found the SAM module will be re-invoked. So you can simply delete or rename the Power data file and re-run the simulation to get a new set of data points</li> 
 </ol>
 </li>
 </ol>
@@ -2275,14 +2275,14 @@ Additional rows specify power output at speeds increasing by 1 m/s</td>
 </tr><tr class="none">
 <td class="none"><dfn>scenario</dfn></td>
 <td class="none">An Excel or CSV file containing stations for a scenario. The columns for the file are as defined in the Stations <a href="#objects">Simulation Objects</a>. The file names must start with the file name prefix specified in the <em>scenarios</em> Property in the <a href="#p_files">[Files]</a> Section of the Preferences file. It is possible to provide a brief description for the scenario in the first row of the file. This is indicated by a value of <em>Description:</em> in the top left cell followed by the description in the next cell</td>
-</tr>
+</tr> 
 <tr class="none">
 <td class="none"><dfn>solar_files</dfn></td>
 <td class="none">These are solar weather files in one of the formats defined by SAM. SIREN uses the file name to define the location and year for the file by separating the file name by an underscore as follows:- <em>anything_anything_latitude_longitude_year.filetype</em></td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>solar_index</dfn></td>
-<td class="none">Using this file you can specify a list of solar weather files to be used by SIREN. This option allows you to use filenames that don't conform to SIREN's convention, such as the TMY files provided by SAM. The file can be either CSV or Excel and contains three columns:
+<td class="none">Using this file you can specify a list of solar weather files to be used by SIREN. This option allows you to use filenames that don't conform to SIREN's convention, such as the TMY files provided by SAM. The file can be either CSV or Excel and contains three columns: 
 <ul>
 <li><em>Latitude</em>. Weather file latitude</li>
 <li><em>Longitude</em>. Weather file longitude</li>
@@ -2311,7 +2311,7 @@ Additional rows specify power output at speeds increasing by 1 m/s</td>
 <td class="none">These are wind weather files in one of the formats defined by SAM. SIREN uses the file name to define the location and year for the file by separating the file name by an underscore as follows:- <em>anything_anything_latitude_longitude_year.filetype</em></td>
 </tr><tr class="none">
 <td class="none"><dfn>wind_index</dfn></td>
-<td class="none">Using this file you can specify a list of wind weather files to be used by SIREN. This option allows you to use filenames that don't conform to SIREN's convention, such as the TMY files provided by SAM. The file can be either CSV or Excel and contains three columns:
+<td class="none">Using this file you can specify a list of wind weather files to be used by SIREN. This option allows you to use filenames that don't conform to SIREN's convention, such as the TMY files provided by SAM. The file can be either CSV or Excel and contains three columns: 
 <ul>
 <li><em>Latitude</em>. Weather file latitude</li>
 <li><em>Longitude</em>. Weather file longitude</li>
@@ -2363,7 +2363,7 @@ Additional rows specify power output at speeds increasing by 1 m/s</td>
 <table border="0", class="none">
 <tr>
 <th>Section</th>
-<th>Properties</th>
+<th>Properties</th> 
 </tr>
 <tr>
 <tr class="none"><td><dfn><strong>[Map]</strong></dfn></td>
@@ -2427,14 +2427,14 @@ Additional rows specify power output at speeds increasing by 1 m/s</td>
 <li><em>target=</em>Target File</li>
 <li><em>excel=</em>Excel File</li>
 </ul>
-<h4>Load Data</h4>
+<h4>Load Data</h4> 
 <p>The load data for the SWIS has been obtained from <a href="http://data.wa.aemo.com.au/#load-summary" target="_blank">Load Summary</a> data available from AEMO. SIREN use hourly load data rather than half hourly. This figures we use are derived by summing the &lsquo;Operational Load (MWh)&rsquo; data for the two half hourly intervals.</p>
 <p>The AEMO also publish <a href="http://data.wa.aemo.com.au/#facility-scada" target="_blank">facility SCADA data</a>.</p>
 <p><a href="#help">Back to top</a></p>
 <h3 id="merra">Obtaining and Using NASA MERRA-2 Data for SAM</h3>
 <h4 id="merra1">Using NASA MERRA-2 Data for input to SAM</h4>
 <p>SAM uses meteorological and solar data to model output of various renewable energy technologies.
-NASA MERRA-2 data is a suitable source to generate data files containing all weather variables required for input to SAM. It allows weather files to be created on a grid of 0.625 degree of longitude by 0.5 degree of latitude. This is approximately an area of 55 Km x 55 Km for the SWIS latitudes.</p>
+NASA MERRA-2 data is a suitable source to generate data files containing all weather variables required for input to SAM. It allows weather files to be created on a grid of 0.625 degree of longitude by 0.5 degree of latitude. This is approximately an area of 55 Km x 55 Km for the SWIS latitudes.</p> 
 <p>Initial correlations between generation calculated by SAM models using NASA MERRA data and actual observations from BOM data obtained by SEN in 2014 are strong enough to support the use of NASA MERRA-derived data for the purposes of the simulation. Average correlation was 0.77, varying from 0.70 to 0.83 for wind and 0.95 for the one utility scale PV farm on the SWIS network. The following figure graphically presents this correlation by showing progressive calculated generation (solid lines) with actual SCADA data (dotted lines) for each renewable generation station on the SWIS.</p>
 <p>
 <img src="scada_vs_sam_2014_detailed.png" alt="Correlation">
@@ -3230,8 +3230,6 @@ Wave_Height = 0.023 * 0.3048 * (Wind_Speed * 1.94384)<sup>2</sup></code>&nbsp;&n
 <td class="none">US Global Modeling and Assimilation Office</td></tr>
 <tr><td class="none"><dfn>GWh</dfn></td>
 <td class="none">Gigawatt hour</td></tr>
-<tr><td class="none"><dfn>HTML</dfn></td>
-<td class="none">Hyper Text Markup Language; used for describing web documents (web pages)</td></tr>
 <tr><td class="none"><dfn>IMO</dfn></td>
 <td class="none">WA Independent Market Operator. Formerly, responsible for operating the WEM</td></tr>
 <tr><td class="none"><dfn>INI</dfn></td>
@@ -3287,10 +3285,6 @@ Wave_Height = 0.023 * 0.3048 * (Wind_Speed * 1.94384)<sup>2</sup></code>&nbsp;&n
 <td class="none">Sustainable Energy Now</td></tr>
 <tr><td class="none"><dfn>SIREN</dfn></td>
 <td class="none">SEN's Interactive Renewable Energy Network tool</td></tr>
-<tr><td class="none"><dfn>SMW</dfn></td>
-<td class="none">A special SAM weather file format for sub-hourly simulations with the physical trough model. It contains only the weather data elements used by SAM's solar models</td></tr>
-<tr><td class="none"><dfn>SRW</dfn></td>
-<td class="none">A special SAM weather file format for the wind power model. The format allows you to use wind resource data at one or more heights above the ground</td></tr>
 <tr><td class="none"><dfn>SSC</dfn></td>
 <td class="none">SAM Simulation Core</td></tr>
 <tr><td class="none"><dfn>SWIS</dfn></td>
