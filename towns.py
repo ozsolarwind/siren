@@ -1,12 +1,12 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015 Sustainable Energy Now Inc., Angus King     
+#  Copyright (C) 2015 Sustainable Energy Now Inc., Angus King
 #
 #  towns.py - This file is part of SIREN.
 #
 #  SIREN is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as 
-#  published by the Free Software Foundation, either version 3 of 
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, either version 3 of
 #  the License, or (at your option) any later version.
 #
 #  SIREN is distributed in the hope that it will be useful,
@@ -14,12 +14,12 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU Affero General Public License for more details.
 #
-#  You should have received a copy of the GNU Affero General 
+#  You should have received a copy of the GNU Affero General
 #  Public License along with SIREN.  If not, see
 #  <http://www.gnu.org/licenses/>.
 #
 
-import ConfigParser # decode .ini file
+import ConfigParser    # decode .ini file
 import csv
 import os
 import sys
@@ -42,9 +42,9 @@ class Town:
         self.country = country
         self.elev = elev
         self.zone = zone
-    
+
 class Towns:
-    def get_config(self):    
+    def get_config(self):
         config = ConfigParser.RawConfigParser()
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
@@ -79,21 +79,21 @@ class Towns:
 
     def haversine(self, lat1, lon1, lat2, lon2):
         """
-        Calculate the great circle distance between two points 
+        Calculate the great circle distance between two points
         on the earth (specified in decimal degrees)
         """
-    # convert decimal degrees to radians 
+     # convert decimal degrees to radians
         lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
 
-    # haversine formula  
-        dlon = lon2 - lon1 
-        dlat = lat2 - lat1 
-        a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
-        c = 2 * asin(sqrt(a)) 
+     # haversine formula
+        dlon = lon2 - lon1
+        dlat = lat2 - lat1
+        a = sin(dlat / 2)**2 + cos(lat1) * cos(lat2) * sin(dlon / 2)**2
+        c = 2 * asin(sqrt(a))
 
-    # 6367 km is the radius of the Earth
+     # 6367 km is the radius of the Earth
         km = 6367 * c
-        return km 
+        return km
 
 #   might extend capability to restrict towns to network boundary
     def town_in_boundary(self, x, y, poly):
@@ -114,14 +114,14 @@ class Towns:
 
     def __init__(self, ul_lat=None, ul_lon=None, lr_lat=None, lr_lon=None, remove_duplicates=True):
         """Initializes the data."""
- 
+
         def read_town_csv(town_file):
             townfile = open(town_file)
             twns = csv.DictReader(townfile)
             if 'Town' in twns.fieldnames:
                 name_field = 'Town'
             else:
-                name_field = 'Site name' 
+                name_field = 'Site name'
             if remove_duplicates:
                 for twn in twns:
                     for town in self.towns:
@@ -141,7 +141,7 @@ class Towns:
                            float(twn['Latitude']) <= ul_lat and \
                            float(twn['Longitude']) >= ul_lon and \
                            float(twn['Longitude']) <= lr_lon):
-                            if 'Lid' in twns.fieldnames and twn['Lid'] != '': 
+                            if 'Lid' in twns.fieldnames and twn['Lid'] != '':
                                 self.towns.append(Town(twn[name_field], twn['Latitude'], twn['Longitude'], twn['Lid'], \
                                              twn['State'], twn['Country'], twn['Elev'], twn['Zone']))
                             else:
@@ -153,13 +153,13 @@ class Towns:
                        float(twn['Latitude']) <= ul_lat and \
                        float(twn['Longitude']) >= ul_lon and \
                        float(twn['Longitude']) <= lr_lon):
-                        if 'Lid' in twns.fieldnames and twn['Lid'] != '': 
+                        if 'Lid' in twns.fieldnames and twn['Lid'] != '':
                             self.towns.append(Town(twn[name_field], twn['Latitude'], twn['Longitude'], twn['Lid'], \
                                         twn['State'], twn['Country'], twn['Elev'], twn['Zone']))
                         else:
                             self.towns.append(Town(twn[name_field], twn['Latitude'], twn['Longitude']))
             townfile.close()
-            
+
         self.get_config()
         self.towns = []
 #   Process BOM stations first
@@ -257,7 +257,7 @@ class Towns:
                     '%s,%s,%s,%s,%s,%s,%s,%s,IWEC' % (town.lid, town.name, town.state, town.country, \
                     lat, lon, town.zone, town.elev)
                 distance = dist
-        return hdr 
+        return hdr
 
     def SMW_Header(self, lat, lon, year=2014):
 #   SAM SMW (Solar)
@@ -270,7 +270,7 @@ class Towns:
                 hdr = '%s,"%s",%s,%s,%s,%s,%s,3600.0,%s,0:30:00' % (town.lid, town.name, town.state, town.zone, \
                     lat, lon, town.elev, year)
                 distance = dist
-        return hdr   
+        return hdr
 
     def SRW_Header(self, lat, lon, year=2014):
 #   SRW (Wind)

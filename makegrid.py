@@ -1,12 +1,12 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King     
+#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King
 #
 #  makegrid.py - This file is part of SIREN.
 #
 #  SIREN is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as 
-#  published by the Free Software Foundation, either version 3 of 
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, either version 3 of
 #  the License, or (at your option) any later version.
 #
 #  SIREN is distributed in the hope that it will be useful,
@@ -14,18 +14,18 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU Affero General Public License for more details.
 #
-#  You should have received a copy of the GNU Affero General 
+#  You should have received a copy of the GNU Affero General
 #  Public License along with SIREN.  If not, see
 #  <http://www.gnu.org/licenses/>.
 #
 
 import datetime
 from math import *
-import os 
+import os
 import sys
 import time
 from PyQt4 import QtCore, QtGui
-import ConfigParser # decode .ini file
+import ConfigParser   # decode .ini file
 import xlwt
 
 import displayobject
@@ -33,13 +33,13 @@ from credits import fileVersion
 from senuser import getUser
 
 class makeFile():
-    
+
     def close(self):
         return
-    
+
     def getLog(self):
-        return self.log, self.property    
-        
+        return self.log, self.property
+
     def __init__(self, src_year, src_dir, wnd_dir, tgt_fil, detail='Daily By Month', rain=''):
         config = ConfigParser.RawConfigParser()
         if len(sys.argv) > 1:
@@ -118,21 +118,21 @@ class makeFile():
                 cell = []
                 for j in range(len(the_cols)):
                     cell.append(0.)
-                for i in range(12): # monthly averages
+                for i in range(12):   # monthly averages
                     valu.append(cell[:])
                 if self.hourly:
                     valh = []
-                    for i in range(24): # hourly averages
+                    for i in range(24):   # hourly averages
                         valh.append([])
-                        for j in range(12): # by month
+                        for j in range(12):   # by month
                             valh[-1].append([])
                             for k in range(len(the_cols)):
                                 valh[-1][-1].append(0.)
                 if self.daily:
                     vald = []
-                    for i in range(24): # hourly averages
+                    for i in range(24):   # hourly averages
                         vald.append([])
-                        for d in range(365): # by month
+                        for d in range(365):   # by month
                             vald[-1].append([])
                             for k in range(len(the_cols)):
                                 vald[-1][-1].append(0.)
@@ -211,7 +211,7 @@ class makeFile():
                                 break
                     else:
                         mth = int(bits[mth_col]) - 1
-                    for j in range(len(col)): 
+                    for j in range(len(col)):
                         if col[j] >= 0:
                             if col_min[1][j] < 0 or float(bits[col[j]]) < col_min[1][j]:
                                 col_min[1][j] = float(bits[col[j]])
@@ -297,7 +297,7 @@ class makeFile():
                 hrly_wind_values[key] = valh
             if self.daily:
                 daily_wind_values[key] = vald
-# and possibly rain if we haven't already got it 
+# and possibly rain if we haven't already got it
         if len(wind_values) > 0:
             for key in all_values:
                 for mth in range(12):
@@ -314,7 +314,7 @@ class makeFile():
                     for hr in range(24):
                         for dy in range(365):
                             daily_values[key][hr][dy][val_col] = daily_wind_values[key][hr][dy]
-# and possibly rain if we haven't already got it 
+# and possibly rain if we haven't already got it
         if self.do_rain and col[the_cols.index('Rainfall')] < 0:
             fils = os.listdir(self.rain_dir)
             val_col = the_cols.index('Rainfall')
@@ -441,7 +441,7 @@ class makeFile():
                     if i == the_cols.index('Rainfall'):
                         continue
                 ws.write(0, i + 3, the_cols[i])
-            row = 3 # allow two rows for min & max
+            row = 3   # allow two rows for min & max
             for key in all_values:
                 where = key.split('_')
                 value = all_values[key]
@@ -500,7 +500,7 @@ class makeFile():
             row = 1
             ws.write(row, 2, 'Min.')
             ws.write(row + 1, 2, 'Max.')
-            for j in range(len(col_min[0])): # n values
+            for j in range(len(col_min[0])):   # n values
                 if drop_rainfall:
                     if j == the_cols.index('Rainfall'):
                         continue
@@ -512,9 +512,9 @@ class makeFile():
             for c in range(len(lens)):
                 if lens[c] * 275 > ws.col(c).width:
                     ws.col(c).width = lens[c] * 275
-            ws.set_panes_frozen(True) # frozen headings instead of split panes
-            ws.set_horz_split_pos(1) # in general, freeze after last heading row
-            ws.set_remove_splits(True) # if user does unfreeze, don't leave a split there
+            ws.set_panes_frozen(True)  # frozen headings instead of split panes
+            ws.set_horz_split_pos(1)  # in general, freeze after last heading row
+            ws.set_remove_splits(True)  # if user does unfreeze, don't leave a split there
             wb.save(tgt_fil)
             if self.hourly:
                 for m in range(12):
@@ -537,7 +537,7 @@ class makeFile():
                     row = 1
                     ws.write(row, 2, 'Min.')
                     ws.write(row + 1, 2, 'Max.')
-                    for j in range(len(col_min[1])): # n values
+                    for j in range(len(col_min[1])):  # n values
                         if drop_rainfall:
                             if j == the_cols.index('Rainfall'):
                                 continue
@@ -547,16 +547,16 @@ class makeFile():
                     for key in hrly_values:
                         where = key.split('_')
                         valueh = hrly_values[key]
-                        for h in range(len(valueh)): # 24 hours
+                        for h in range(len(valueh)):  # 24 hours
                             ws.write(row, 0, where[0])
                             ws.write(row, 1, where[1])
                             ws.write(row, 2, where[2] + '-' + '{0:02d}'.format(m + 1) + \
                                      '_{0:02d}'.format(h + 1) + ':00')
-                            for j in range(len(valueh[0][m])): # n values
+                            for j in range(len(valueh[0][m])):  # n values
                                 if drop_rainfall:
                                     if j == the_cols.index('Rainfall'):
                                         continue
-                                valu = round(valueh[h][m][j] / the_days[m], 1) # need to multiply by 24
+                                valu = round(valueh[h][m][j] / the_days[m], 1)  # need to multiply by 24
                                 ws.write(row, j + 3, valu)
                             row += 1
                     lens = [8, 9, per_len + 1]
@@ -565,9 +565,9 @@ class makeFile():
                     for c in range(len(lens)):
                         if lens[c] * 275 > ws.col(c).width:
                             ws.col(c).width = lens[c] * 275
-                    ws.set_panes_frozen(True) # frozen headings instead of split panes
-                    ws.set_horz_split_pos(1) # in general, freeze after last heading row
-                    ws.set_remove_splits(True) # if user does unfreeze, don't leave a split there
+                    ws.set_panes_frozen(True)  # frozen headings instead of split panes
+                    ws.set_horz_split_pos(1)  # in general, freeze after last heading row
+                    ws.set_remove_splits(True)  # if user does unfreeze, don't leave a split there
                     tgt = tgt_fil[:yr_ndx] + '-{0:02d}'.format(m + 1) + tgt_fil[yr_ndx:]
                     wb.save(tgt)
             if self.daily:
@@ -597,7 +597,7 @@ class makeFile():
                     row = 1
                     ws.write(row, 2, 'Min.')
                     ws.write(row + 1, 2, 'Max.')
-                    for j in range(len(col_min[1])): # n values
+                    for j in range(len(col_min[1])):  # n values
                         if drop_rainfall:
                             if j == the_cols.index('Rainfall'):
                                 continue
@@ -607,12 +607,12 @@ class makeFile():
                     for key in daily_values:
                         where = key.split('_')
                         valueh = daily_values[key]
-                        for h in range(len(valueh)): # 24 hours
+                        for h in range(len(valueh)):  # 24 hours
                             ws.write(row, 0, where[0])
                             ws.write(row, 1, where[1])
                             ws.write(row, 2, where[2] + '-{0:02d}'.format(mth + 1) \
                                      + '-{0:02d}'.format(d) + '_{0:02d}'.format(h + 1) + ':00')
-                            for j in range(len(valueh[0][dy])): # n values
+                            for j in range(len(valueh[0][dy])):  # n values
                                 if drop_rainfall:
                                     if j == the_cols.index('Rainfall'):
                                         continue
@@ -625,9 +625,9 @@ class makeFile():
                     for c in range(len(lens)):
                         if lens[c] * 275 > ws.col(c).width:
                             ws.col(c).width = lens[c] * 275
-                    ws.set_panes_frozen(True) # frozen headings instead of split panes
-                    ws.set_horz_split_pos(1) # in general, freeze after last heading row
-                    ws.set_remove_splits(True) # if user does unfreeze, don't leave a split there
+                    ws.set_panes_frozen(True)  # frozen headings instead of split panes
+                    ws.set_horz_split_pos(1)  # in general, freeze after last heading row
+                    ws.set_remove_splits(True)  # if user does unfreeze, don't leave a split there
                     tgt = tgt_fil[:yr_ndx] + '-{0:02d}'.format(mth + 1) + '-{0:02d}'.format(d) + tgt_fil[yr_ndx:]
                     wb.save(tgt)
         else:
@@ -672,24 +672,24 @@ class makeFile():
                     line += ',' + str(val)
                 tf.write(line + '\n')
             tf.close()
-        self.log += '%s created' % tgt_fil[tgt_fil.rfind('/')+1:]
+        self.log += '%s created' % tgt_fil[tgt_fil.rfind('/') + 1:]
 
 
-class ClickableQLabel(QtGui.QLabel): 
+class ClickableQLabel(QtGui.QLabel):
     def __init(self, parent):
         QLabel.__init__(self, parent)
- 
+
     def mousePressEvent(self, event):
         QtGui.QApplication.widgetAt(event.globalPos()).setFocus()
         self.emit(QtCore.SIGNAL('clicked()'))
-         
+
 class getParms(QtGui.QWidget):
- 
+
     def __init__(self, help='help.html'):
         super(getParms, self).__init__()
         self.help = help
         self.initUI()
-        
+
     def initUI(self):
         config = ConfigParser.RawConfigParser()
         if len(sys.argv) > 1:
@@ -768,7 +768,7 @@ class getParms(QtGui.QWidget):
             self.resource_grid = self.resource_grid.replace('$YEAR$', self.base_year)
         except:
             self.resource_grid = ''
-        if self.resource_grid == '':    
+        if self.resource_grid == '':
             self.resource_grid = self.solarfiles + '/resource_$YEAR$.xls'
         self.grid = QtGui.QGridLayout()
         row = 0
@@ -836,13 +836,13 @@ class getParms(QtGui.QWidget):
         quit = QtGui.QPushButton('Quit', self)
         row += 1
         self.grid.addWidget(quit, row, 0)
-        quit.clicked.connect(self.quitClicked) 
+        quit.clicked.connect(self.quitClicked)
         QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
         dofile = QtGui.QPushButton('Produce Resource File', self)
         self.grid.addWidget(dofile, row, 1)
         dofile.clicked.connect(self.dofileClicked)
         help = QtGui.QPushButton('Help', self)
-    #    help.setMaximumWidth(wdth)
+     #    help.setMaximumWidth(wdth)
         self.grid.addWidget(help, row, 2)
         help.clicked.connect(self.helpClicked)
         QtGui.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
@@ -870,7 +870,7 @@ class getParms(QtGui.QWidget):
             self.msg.setText('')
         else:
             self.msg.setText('Sure you want this level of detail?')
-            
+
     def yearChanged(self, val):
         year = str(self.yearCombo.currentText())
         if self.checkbox.isChecked() and year != self.years[self.yrndx]:
@@ -893,21 +893,21 @@ class getParms(QtGui.QWidget):
         newdir = str(QtGui.QFileDialog.getExistingDirectory(self, 'Choose Solar Folder',
                  curdir, QtGui.QFileDialog.ShowDirsOnly))
         if newdir != '':
-            self.source.setText(newdir) 
+            self.source.setText(newdir)
 
     def rdirChanged(self):
         curdir = self.rsource.text()
         newdir = str(QtGui.QFileDialog.getExistingDirectory(self, 'Choose Rain Folder',
                  curdir, QtGui.QFileDialog.ShowDirsOnly))
         if newdir != '':
-            self.rsource.setText(newdir) 
+            self.rsource.setText(newdir)
 
     def wdirChanged(self):
         curdir = self.wsource.text()
         newdir = str(QtGui.QFileDialog.getExistingDirectory(self, 'Choose Wind Folder',
                  curdir, QtGui.QFileDialog.ShowDirsOnly))
         if newdir != '':
-            self.wsource.setText(newdir) 
+            self.wsource.setText(newdir)
 
     def tgtChanged(self):
         curtgt = self.target.text()
@@ -917,14 +917,14 @@ class getParms(QtGui.QWidget):
             i = newtgt.rfind('.')
             if i < 0:
                 newtgt += '.xls'
-            self.target.setText(newtgt) 
+            self.target.setText(newtgt)
 
-    def helpClicked(self):   
+    def helpClicked(self):
         dialog = displayobject.AnObject(QtGui.QDialog(), self.help, \
                  title='Help for SIREN makegrid (' + fileVersion() + ')', section='resource')
         dialog.exec_()
 
-    def quitClicked(self):      
+    def quitClicked(self):
         self.close()
 
     def dofileClicked(self):
@@ -933,7 +933,7 @@ class getParms(QtGui.QWidget):
             rain_dir = str(self.rsource.text())
         else:
             rain_dir = ''
-        resource = makeFile(year, str(self.source.text()), str(self.wsource.text()), str(self.target.text()), 
+        resource = makeFile(year, str(self.source.text()), str(self.wsource.text()), str(self.target.text()),
                    str(self.detailCombo.currentText()), rain=rain_dir)
         log, prop = resource.getLog()
         self.log.setText(log)
@@ -949,7 +949,7 @@ class getParms(QtGui.QWidget):
                 if props[1][:len(value)] == value:
                     if len(value) > l:
                         best_par = value
-                        best_key = key  
+                        best_key = key
                         l = len(value)
         if l > 0:
             prop = props[0] + '=' + best_key + props[1][len(best_par):]
@@ -964,7 +964,7 @@ class getParms(QtGui.QWidget):
 
 if "__main__" == __name__:
     app = QtGui.QApplication(sys.argv)
-    if len(sys.argv) > 2: # arguments
+    if len(sys.argv) > 2:  # arguments
         src_year = 2014
         src_dir_s = ''
         src_dir_w = ''

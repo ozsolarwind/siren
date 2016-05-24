@@ -1,12 +1,12 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King     
+#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King
 #
 #  samrun.py - This file is part of SIREN.
 #
 #  SIREN is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as 
-#  published by the Free Software Foundation, either version 3 of 
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, either version 3 of
 #  the License, or (at your option) any later version.
 #
 #  SIREN is distributed in the hope that it will be useful,
@@ -14,7 +14,7 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU Affero General Public License for more details.
 #
-#  You should have received a copy of the GNU Affero General 
+#  You should have received a copy of the GNU Affero General
 #  Public License along with SIREN.  If not, see
 #  <http://www.gnu.org/licenses/>.
 #
@@ -24,11 +24,11 @@ import sys
 from PyQt4 import QtCore, QtGui
 import subprocess as sp
 
-import ssc # contains all Python classes for accessing ssc
+import ssc   # contains all Python classes for accessing ssc
 
 from senuser import getUser
 
-def spaceSplit(string, dropquote=False) :
+def spaceSplit(string, dropquote=False):
     last = 0
     splits = []
     inQuote = None
@@ -38,7 +38,7 @@ def spaceSplit(string, dropquote=False) :
                 inQuote = None
                 if dropquote:
                     splits.append(string[last:i])
-                    last = i+1
+                    last = i + 1
                     continue
         else:
             if (letter == '"' or letter == "'"):
@@ -47,7 +47,7 @@ def spaceSplit(string, dropquote=False) :
                     last += 1
         if not inQuote and letter == ' ':
             splits.append(string[last:i])
-            last = i+1
+            last = i + 1
     if last < len(string):
         splits.append(string[last:])
     return splits
@@ -67,11 +67,11 @@ class RptDialog(QtGui.QDialog):
                 line_cnt += 2
                 cmt = comment.split('\n')
                 for i in range(len(cmt)):
-                    self.lines += '    ' + cmt[i] + '\n' 
+                    self.lines += '    ' + cmt[i] + '\n'
                     line_cnt += 1
                     if (len(cmt[i]) + 5) > max_line:
                         max_line = len(cmt[i]) + 5
-            else: 
+            else:
                 for i in range(len(self.parms)):
                     if i == 1:
                         self.lines += 'Parameters:\n'
@@ -131,14 +131,14 @@ class RptDialog(QtGui.QDialog):
         self.widget.setFont(QtGui.QFont('Courier New', 10))
         fnt = self.widget.fontMetrics()
         ln = (max_line + 5) * fnt.maxWidth()
-        ln2 = (line_cnt + 2) * fnt.height() 
+        ln2 = (line_cnt + 2) * fnt.height()
         screen = QtGui.QDesktopWidget().availableGeometry()
         if ln > screen.width() * .67:
             ln = int(screen.width() * .67)
         if ln2 > screen.height() * .67:
             ln2 = int(screen.height() * .67)
         self.widget.setSizePolicy(QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, \
-            QtGui.QSizePolicy.Expanding)) 
+            QtGui.QSizePolicy.Expanding))
         self.widget.resize(ln, ln2)
         self.widget.setPlainText(self.lines)
         layout = QtGui.QVBoxLayout()
@@ -147,31 +147,31 @@ class RptDialog(QtGui.QDialog):
         self.setLayout(layout)
         i = self.parms[0].rfind('/')
         parm = ''
-        for l in range(1,len(self.parms)):
+        for l in range(1, len(self.parms)):
             parm += ' ' + self.parms[l]
-        self.setWindowTitle('SIREN - Output from ' + self.parms[0][i+1:])
+        self.setWindowTitle('SIREN - Output from ' + self.parms[0][i + 1:])
         size = self.geometry()
-        self.setGeometry(1, 1 , ln + 10, ln2 + 35)
+        self.setGeometry(1, 1, ln + 10, ln2 + 35)
         size = self.geometry()
-        self.move((screen.width()-size.width())/2, \
-            (screen.height()-size.height())/2)
+        self.move((screen.width() - size.width()) / 2, \
+            (screen.height() - size.height()) / 2)
         self.widget.show()
 
     def accept(self):
         try:
-            i = self.parms[1].rfind('/') # fudge to see if first parm has a directory to use as an alternative
+            i = self.parms[1].rfind('/')   # fudge to see if first parm has a directory to use as an alternative
         except:
             i = 0
         if i > 0:
-            save_filename = self.parms[1][:i+1]
+            save_filename = self.parms[1][:i + 1]
         else:
             i = self.parms[0].rfind('/')
             j = self.parms[0].rfind('.')
             save_filename = self.parms[0][:j]
-        for k in range(1,len(self.parms)):
+        for k in range(1, len(self.parms)):
             i = self.parms[k].rfind('/')
             if i > 0:
-                save_filename += '_' + self.parms[k][i+1:]
+                save_filename += '_' + self.parms[k][i + 1:]
             else:
                 save_filename += '_' + self.parms[k]
         save_filename += '_' + str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'yyyy-MM-dd_hhmm'))

@@ -1,12 +1,12 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King     
+#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King
 #
 #  floatmenu.py - This file is part of SIREN.
 #
 #  SIREN is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as 
-#  published by the Free Software Foundation, either version 3 of 
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, either version 3 of
 #  the License, or (at your option) any later version.
 #
 #  SIREN is distributed in the hope that it will be useful,
@@ -14,13 +14,13 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU Affero General Public License for more details.
 #
-#  You should have received a copy of the GNU Affero General 
+#  You should have received a copy of the GNU Affero General
 #  Public License along with SIREN.  If not, see
 #  <http://www.gnu.org/licenses/>.
 #
 import os
 import sys
-import ConfigParser # decode .ini file
+import ConfigParser   # decode .ini file
 from PyQt4 import QtGui, QtCore
 
 from editini import SaveIni
@@ -29,13 +29,13 @@ from editini import SaveIni
 class FloatMenu(QtGui.QDialog):
     procStart = QtCore.pyqtSignal(str)
     procAction = QtCore.pyqtSignal(QtGui.QAction)
-    
+
     def __init__(self, menubar):
-        super(FloatMenu, self).__init__()  
+        super(FloatMenu, self).__init__()
         self.menubar = menubar
         self.initUI()
-        
-    def initUI(self): 
+
+    def initUI(self):
         config = ConfigParser.RawConfigParser()
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
@@ -79,7 +79,7 @@ class FloatMenu(QtGui.QDialog):
                             self.menus[-1][-1].append([str(lvl2.text()), lvl2.icon(), lvl2, '2'])
                 except:
                     pass
-            else: 
+            else:
                 self.menus.append([str(lvl1.text()), lvl1.icon(), lvl1.actions()[0], '1'])
         self.grid = QtGui.QGridLayout()
         ctr = 0
@@ -90,7 +90,7 @@ class FloatMenu(QtGui.QDialog):
             self.butn.append(QtGui.QPushButton(self.menus[i][0], self))
             self.butn[-1].setIcon(self.menus[i][1])
             self.butn[-1].setStyleSheet('QPushButton {color: #005fb6; border: 2px solid #e65900;' + \
-                               ' border-radius: 6px;}') 
+                               ' border-radius: 6px;}')
             self.butn[-1].clicked.connect(self.menuClicked)
             self.grid.addWidget(self.butn[-1], ctr, 0, 1, 3)
             ctr += 1
@@ -99,7 +99,7 @@ class FloatMenu(QtGui.QDialog):
                 for j in range(len(self.menus[i][3])):
                     self.butn.append(QtGui.QPushButton(self.menus[i][3][j][0], self))
                     self.butn[-1].setIcon(self.menus[i][3][j][1])
-               #     self.butn[-1].setStyleSheet('QPushButton {Text-align:left;}')
+                #     self.butn[-1].setStyleSheet('QPushButton {Text-align:left;}')
                     self.butn[-1].clicked.connect(self.buttonClicked)
                     self.butn[-1].hide()
                     self.buttons[self.menus[i][3][j][0]] = self.menus[i][3][j][2]
@@ -109,7 +109,7 @@ class FloatMenu(QtGui.QDialog):
                         for k in range(len(self.menus[i][3][j][3])):
                             self.butn.append(QtGui.QPushButton(self.menus[i][3][j][3][k][0], self))
                             self.butn[-1].setIcon(self.menus[i][3][j][3][k][1])
-                         #   self.butn[-1].setStyleSheet('QPushButton {Text-align:left;}')
+                          #   self.butn[-1].setStyleSheet('QPushButton {Text-align:left;}')
                             self.butn[-1].clicked.connect(self.buttonClicked)
                             self.butn[-1].hide()
                             self.buttons[self.menus[i][3][j][3][k][0]] = self.menus[i][3][j][3][k][2]
@@ -118,7 +118,7 @@ class FloatMenu(QtGui.QDialog):
             self.topmenus[self.menus[i][0]][2] = ctr
         quit = QtGui.QPushButton('Quit Menu', self)
         self.grid.addWidget(quit, ctr, 0)
-        quit.clicked.connect(self.close) 
+        quit.clicked.connect(self.close)
         QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.close)
         for mnu in open_menus:
             strt = self.topmenus[mnu][1]
@@ -143,7 +143,7 @@ class FloatMenu(QtGui.QDialog):
             except:
                 pass
         self.show()
-          
+
     def menuClicked(self, event):
         sender = self.sender()
         strt = self.topmenus[str(sender.text())][1]
@@ -156,27 +156,27 @@ class FloatMenu(QtGui.QDialog):
             for j in range(strt, stop):
                 self.butn[j].show()
             self.topmenus[str(sender.text())][0] = True
-   #     self.topmenus[str(sender.text())][0] = self.topmenus[str(sender.text())][0] != True
-   
-    @QtCore.pyqtSlot(QtGui.QAction)          
+    #     self.topmenus[str(sender.text())][0] = self.topmenus[str(sender.text())][0] != True
+
+    @QtCore.pyqtSlot(QtGui.QAction)
     def buttonClicked(self, event):
         sender = self.sender()
         self.thetext = str(sender.text())
         self.procAction.emit(self.buttons[str(sender.text())])
-          
-    @QtCore.pyqtSlot() 
+
+    @QtCore.pyqtSlot()
     def exit(self):
         self.be_open = False
         self.close()
 
     def text(self):
         return self.thetext
-  
+
     def closeEvent(self, event):
         if self.restorewindows:
             updates = {}
             lines = []
-            add = int((self.frameSize().width() - self.size().width()) / 2) # need to account for border
+            add = int((self.frameSize().width() - self.size().width()) / 2)   # need to account for border
             lines.append('menu_pos=%s,%s' % (str(self.pos().x() + add), str(self.pos().y() + add)))
             lines.append('menu_size=%s,%s' % (str(self.width()), str(self.height())))
             open_menus = ''
@@ -188,5 +188,5 @@ class FloatMenu(QtGui.QDialog):
             updates['Windows'] = lines
             SaveIni(updates)
         if self.be_open:
-            self.procStart.emit('goodbye')   
+            self.procStart.emit('goodbye')
         event.accept()
