@@ -1,12 +1,12 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King     
+#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King
 #
 #  credits.py - This file is part of SIREN.
 #
 #  SIREN is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as 
-#  published by the Free Software Foundation, either version 3 of 
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, either version 3 of
 #  the License, or (at your option) any later version.
 #
 #  SIREN is distributed in the hope that it will be useful,
@@ -14,7 +14,7 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU Affero General Public License for more details.
 #
-#  You should have received a copy of the GNU Affero General 
+#  You should have received a copy of the GNU Affero General
 #  Public License along with SIREN.  If not, see
 #  <http://www.gnu.org/licenses/>.
 #
@@ -22,7 +22,7 @@ from datetime import datetime
 import os
 import sys
 from PyQt4 import QtGui, QtCore
-import ConfigParser # decode .ini file
+import ConfigParser  # decode .ini file
 if sys.platform == 'win32' or sys.platform == 'cygwin':
     from win32api import GetFileVersionInfo, LOWORD, HIWORD
 
@@ -31,17 +31,17 @@ from editini import SaveIni
 def fileVersion():
     ver = '0.0.?.?'
     if sys.argv[0][-3:] == '.py':
-        modtime = datetime.fromtimestamp(os.path.getmtime(sys.argv[0]))     
+        modtime = datetime.fromtimestamp(os.path.getmtime(sys.argv[0]))
         ver = '0.0.%04d.%02d.%02d' % (modtime.year, modtime.month, modtime.day)
     else:
         if sys.platform == 'win32' or sys.platform == 'cygwin':
             try:
-                if sys.argv[0].find('\\') >= 0: # if full path
+                if sys.argv[0].find('\\') >= 0:  # if full path
                     info = GetFileVersionInfo(sys.argv[0], '\\')
                 else:
                     info = GetFileVersionInfo(os.getcwd() + '\\' + sys.argv[0], '\\')
                 ms = info['ProductVersionMS']
-             #  ls = info['FileVersionLS']
+              #  ls = info['FileVersionLS']
                 ls = info['ProductVersionLS']
                 ver = str(HIWORD(ms)) + '.' + str(LOWORD(ms)) + '.' + str(HIWORD(ls)) + '.' + str(LOWORD(ls))
             except:
@@ -50,13 +50,13 @@ def fileVersion():
 
 class Credits(QtGui.QDialog):
     procStart = QtCore.pyqtSignal(str)
-    
+
     def __init__(self, initial=False):
-        super(Credits, self).__init__()  
-        self.initial = initial      
+        super(Credits, self).__init__()
+        self.initial = initial
         self.initUI()
-        
-    def initUI(self): 
+
+    def initUI(self):
         config = ConfigParser.RawConfigParser()
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
@@ -96,17 +96,17 @@ class Credits(QtGui.QDialog):
             bold.setBold(True)
             labels = []
             labels.append("SIREN - SEN's Interactive Renewable Energy Network tool")
-            labels.append('Copyright (C) 2015 Sustainable Energy Now Inc., Angus King') 
-            labels.append('Release:' + fileVersion()) 
+            labels.append('Copyright (C) 2015 Sustainable Energy Now Inc., Angus King')
+            labels.append('Release:' + fileVersion())
             labels.append('SIREN is free software: you can redistribute it and/or modify it under the terms of the' + \
                           ' GNU Affero General Public License. The program is distributed WITHOUT ANY WARRANTY')
             labels.append('The SEN SAM simulation is used to calculate energy generation for renewable energy' + \
                           ' power stations using SAM models.')
-            labels.append('To get started press F1 (menu option Help -> Help) to view the SIREN Help file.') 
+            labels.append('To get started press F1 (menu option Help -> Help) to view the SIREN Help file.')
             labels.append('Capabilities, assumptions, limitations (ie transmission, geographic capabilities,' + \
                           ' etc), verification')
             labels.append('Contact angus@ozsolarwind.com for more information or alternative modelling' + \
-                          ' capabilities/suggestions needed') 
+                          ' capabilities/suggestions needed')
             labels.append('We acknowledge US DOE, NASA and OpenStreetMap as follows (press Ctrl+I, menu option' + \
                           ' Help -> About, for more details):')
             labels.append('SIREN uses System Advisor Model (SAM) modules for energy calculations. SAM is provided' +\
@@ -135,7 +135,7 @@ class Credits(QtGui.QDialog):
         else:
             pct = 0.90
         h = int(screen.height() * pct)
-        self.resize(pixmap.width() + 55, h)  	
+        self.resize(pixmap.width() + 55, h)
         frameGm = self.frameGeometry()
         screen = QtGui.QApplication.desktop().screenNumber(QtGui.QApplication.desktop().cursor().pos())
         tlPoint = QtGui.QApplication.desktop().availableGeometry(screen).topLeft()
@@ -150,37 +150,37 @@ class Credits(QtGui.QDialog):
                 self.move(int(mp[0]), int(mp[1]))
             except:
                 pass
-        self.show() 
-        
+        self.show()
+
     @QtCore.pyqtSlot()
     def help(self):
-        self.procStart.emit('help')   
-  
+        self.procStart.emit('help')
+
     def about(self):
-        self.procStart.emit('about')  
+        self.procStart.emit('about')
 
     def exit(self):
         self.be_open = False
         self.close()
- 
+
     def closeEvent(self, event):
         if self.be_open:
             reply = QtGui.QMessageBox.question(self, 'SIREN Credits',
-                    'Do you want to close Credits window?', QtGui.QMessageBox.Yes | 
+                    'Do you want to close Credits window?', QtGui.QMessageBox.Yes |
                     QtGui.QMessageBox.No, QtGui.QMessageBox.No)
             if reply == QtGui.QMessageBox.Yes:
                 pass
             else:
-                event.ignore()  
-                return      
+                event.ignore()
+                return
         if self.restorewindows:
             updates = {}
             lines = []
-            add = int((self.frameSize().width() - self.size().width()) / 2) # need to account for border
+            add = int((self.frameSize().width() - self.size().width()) / 2)  # need to account for border
             lines.append('credits_pos=%s,%s' % (str(self.pos().x() + add), str(self.pos().y() + add)))
             lines.append('credits_size=%s,%s' % (str(self.width()), str(self.height())))
             updates['Windows'] = lines
             SaveIni(updates)
         if self.be_open:
-            self.procStart.emit('goodbye')   
+            self.procStart.emit('goodbye')
         event.accept()

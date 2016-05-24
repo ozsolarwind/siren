@@ -1,12 +1,12 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King     
+#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King
 #
 #  viewresource.py - This file is part of SIREN.
 #
 #  SIREN is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as 
-#  published by the Free Software Foundation, either version 3 of 
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, either version 3 of
 #  the License, or (at your option) any later version.
 #
 #  SIREN is distributed in the hope that it will be useful,
@@ -14,7 +14,7 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU Affero General Public License for more details.
 #
-#  You should have received a copy of the GNU Affero General 
+#  You should have received a copy of the GNU Affero General
 #  Public License along with SIREN.  If not, see
 #  <http://www.gnu.org/licenses/>.
 #
@@ -22,7 +22,7 @@
 import os
 import sys
 from PyQt4 import QtCore, QtGui
-import ConfigParser # decode .ini file
+import ConfigParser   # decode .ini file
 
 from credits import fileVersion
 import displayobject
@@ -33,8 +33,8 @@ def gradient(lo, hi, steps=10):
     colours = []
     grad = []
     for i in range(3):
-        lo_1 = int(lo[i*2 + 1:i*2 + 3], base=16)
-        hi_1 = int(hi[i*2 + 1:i*2 + 3], base=16)
+        lo_1 = int(lo[i * 2 + 1:i * 2 + 3], base=16)
+        hi_1 = int(hi[i * 2 + 1:i * 2 + 3], base=16)
         incr = int((hi_1 - lo_1) / steps)
         grad.append([lo_1])
         for j in range(steps):
@@ -51,16 +51,16 @@ def gradient(lo, hi, steps=10):
         colours.append(colr)
     return colours
 
-         
+
 class Resource(QtGui.QDialog):
     procStart = QtCore.pyqtSignal(str)
- 
+
     def __init__(self, year=None, resource_grid=None):
         super(Resource, self).__init__()
         self.year = year
         self.resource_grid = resource_grid
         self.initUI()
-        
+
     def initUI(self):
         self.be_open = True
         self.colours = {'dhi': ['DHI (Diffuse)', '#717100', '#ffff00', None], \
@@ -158,7 +158,7 @@ class Resource(QtGui.QDialog):
         except:
             pass
         if self.resource_grid is None:
-            # get path variables to create resource grid
+             # get path variables to create resource grid
             try:
                 rf = config.get('Files', 'resource_grid')
                 self.resource_grid = rf
@@ -183,13 +183,13 @@ class Resource(QtGui.QDialog):
         self.skipCombo = QtGui.QComboBox()
         self.skipdayCombo = QtGui.QComboBox()
         for det in self.detail:
-            self.detailCombo.addItem(det)        
+            self.detailCombo.addItem(det)
         if len(self.detail) > 1:
             self.grid.addWidget(QtGui.QLabel('Weather Detail:'), row, 0)
-            self.grid.addWidget(self.detailCombo, row, 1, 1, 2) 
-            self.grid.addWidget(self.skipCombo, row, 3, 1, 2) 
+            self.grid.addWidget(self.detailCombo, row, 1, 1, 2)
+            self.grid.addWidget(self.skipCombo, row, 3, 1, 2)
             self.skipCombo.hide()
-            self.grid.addWidget(self.skipdayCombo, row, 5) 
+            self.grid.addWidget(self.skipdayCombo, row, 5)
             self.skipdayCombo.hide()
             row += 1
         self.grid.addWidget(QtGui.QLabel('Weather Period:'), row, 0)
@@ -198,17 +198,17 @@ class Resource(QtGui.QDialog):
         self.periodCombo.currentIndexChanged[str].connect(self.periodChange)
         self.skipCombo.currentIndexChanged[str].connect(self.skip)
         self.skipdayCombo.currentIndexChanged[str].connect(self.skipday)
-        self.grid.addWidget(self.periodCombo, row, 1, 1, 2) 
+        self.grid.addWidget(self.periodCombo, row, 1, 1, 2)
         loop = QtGui.QPushButton('Next', self)
         self.grid.addWidget(loop, row, 3, 1, 4)
-        loop.clicked.connect(self.loopClicked) 
-     #   self.grid.addWidget(QtGui.QLabel('Period Loop:'), 1, 0)
-     #   self.loopSpin = QtGui.QSpinBox()
-     #   self.loopSpin.setRange(0, 10)
-     #   self.loopSpin.setValue(0)
-     #   self.loopSpin.valueChanged[str].connect(self.loopChanged)
-     #   self.grid.addWidget(self.loopSpin, 1, 1, 1, 2)
-     #   self.grid.addWidget(QtGui.QLabel('(seconds)'), 1, 3, 1, 3)
+        loop.clicked.connect(self.loopClicked)
+      #   self.grid.addWidget(QtGui.QLabel('Period Loop:'), 1, 0)
+      #   self.loopSpin = QtGui.QSpinBox()
+      #   self.loopSpin.setRange(0, 10)
+      #   self.loopSpin.setValue(0)
+      #   self.loopSpin.valueChanged[str].connect(self.loopChanged)
+      #   self.grid.addWidget(self.loopSpin, 1, 1, 1, 2)
+      #   self.grid.addWidget(QtGui.QLabel('(seconds)'), 1, 3, 1, 3)
         row += 1
         self.grid.addWidget(QtGui.QLabel('Weather Variable:'), row, 0)
         self.whatCombo = QtGui.QComboBox()
@@ -217,7 +217,7 @@ class Resource(QtGui.QDialog):
             if variable == self.colours[key][0]:
                 self.whatCombo.setCurrentIndex(self.whatCombo.count() - 1)
         self.whatCombo.currentIndexChanged[str].connect(self.periodChange)
-        self.grid.addWidget(self.whatCombo, row, 1, 1, 2)      
+        self.grid.addWidget(self.whatCombo, row, 1, 1, 2)
         if len(self.detail) > 1:
             self.detailCombo.currentIndexChanged[str].connect(self.changeDetail)
         row += 1
@@ -267,7 +267,7 @@ class Resource(QtGui.QDialog):
                 self.btn[-1].clicked.connect(self.colourChanged)
                 self.btn[-1].setStyleSheet('QPushButton {background-color: %s; color: %s;}' % \
                                  (value.name(), value.name()))
-                self.grid.addWidget(self.btn[-1], row, 2)   
+                self.grid.addWidget(self.btn[-1], row, 2)
             if self.stepSpin.value() > 0:
                 colors = gradient(self.colours[key][1], self.colours[key][2], self.stepSpin.value())
                 for i in range(len(colors)):
@@ -277,17 +277,17 @@ class Resource(QtGui.QDialog):
             row += 1
         quit = QtGui.QPushButton('Quit', self)
         self.grid.addWidget(quit, row, 0)
-        quit.clicked.connect(self.quitClicked) 
+        quit.clicked.connect(self.quitClicked)
         QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
         doit = QtGui.QPushButton('Show', self)
         self.grid.addWidget(doit, row, 1)
         doit.clicked.connect(self.periodChange)
         hide = QtGui.QPushButton('Hide', self)
         self.grid.addWidget(hide, row, 2)
-        hide.clicked.connect(self.hideClicked) 
+        hide.clicked.connect(self.hideClicked)
         save = QtGui.QPushButton('Save', self)
         self.grid.addWidget(save, row, 3, 1, 4)
-        save.clicked.connect(self.saveClicked) 
+        save.clicked.connect(self.saveClicked)
         help = QtGui.QPushButton('Help', self)
         self.grid.addWidget(help, row, 7, 1, 4)
         help.clicked.connect(self.helpClicked)
@@ -298,7 +298,7 @@ class Resource(QtGui.QDialog):
         self.scroll.setWidgetResizable(True)
         self.scroll.setWidget(frame)
         self.layout = QtGui.QVBoxLayout(self)
-        self.layout.addWidget(self.scroll) 
+        self.layout.addWidget(self.scroll)
         self.setWindowTitle('SIREN - Renewable Resource Overlay')
         self.stepChanged('a')
         if sys.platform == 'win32' or sys.platform == 'cygwin':
@@ -412,8 +412,8 @@ class Resource(QtGui.QDialog):
                                              '-{0:02d}'.format(d + 1) + \
                                              '_{0:02d}'.format(j + 1) + ':00')
             self.skipCombo.show()
-          #  for d in range(31):
-           #     self.skipdayCombo.addItem('{0:02d}'.format(d + 1))
+           #  for d in range(31):
+            #     self.skipdayCombo.addItem('{0:02d}'.format(d + 1))
             self.skipdayCombo.show()
         self.periodCombo.setCurrentIndex(0)
 
@@ -435,42 +435,42 @@ class Resource(QtGui.QDialog):
                                   (value.name(), value.name()))
                     val = []
                     for j in range(3):
-                        val.append(str(int(self.colours[key][3][i][j*2 + 1:j*2 + 3], base=16)))
+                        val.append(str(int(self.colours[key][3][i][j * 2 + 1:j * 2 + 3], base=16)))
                     val.append(str(self.opacitySpin.value() * 100))
                     it = 'QLabel {background-color: rgba(%s,%s,%s,%s%%); color: rgba(%s,%s,%s,%s%%)}' % \
                          (val[0], val[1], val[2], val[3], val[0], val[1], val[2], val[3])
                     self.gradients[row - self.first_row][i].setStyleSheet(it)
                 row += 1
-        self.procStart.emit('show') 
+        self.procStart.emit('show')
 
     @QtCore.pyqtSlot()
     def exit(self):
         self.be_open = False
         self.close()
- 
+
     def closeEvent(self, event):
         if self.restorewindows:
             updates = {}
             lines = []
-            add = int((self.frameSize().width() - self.size().width()) / 2) # need to account for border
+            add = int((self.frameSize().width() - self.size().width()) / 2)   # need to account for border
             lines.append('resource_pos=%s,%s' % (str(self.pos().x() + add), str(self.pos().y() + add)))
             lines.append('resource_size=%s,%s' % (str(self.width()), str(self.height())))
             updates['Windows'] = lines
             SaveIni(updates)
         if self.be_open:
-            self.procStart.emit('goodbye')   
+            self.procStart.emit('goodbye')
         event.accept()
 
-    def quitClicked(self):      
+    def quitClicked(self):
         self.close()
 
     def periodChange(self):
         if self.periodCombo.currentText() == '':
             return
-        self.procStart.emit('show') 
+        self.procStart.emit('show')
 
     def hideClicked(self):
-        self.procStart.emit('hide')   
+        self.procStart.emit('hide')
 
     def saveClicked(self):
         updates = {}
@@ -486,7 +486,7 @@ class Resource(QtGui.QDialog):
         view_lines.append('resource_variable=%s' % str(self.whatCombo.currentText()))
         updates['View'] = view_lines
         SaveIni(updates)
-        
+
     def Results(self):
         for key in self.colours:
             if self.colours[key][0] == self.whatCombo.currentText():
@@ -494,7 +494,7 @@ class Resource(QtGui.QDialog):
                 break
         return str(self.periodCombo.currentText()), str(self.whatCombo.currentText()), \
                self.stepSpin.value(), self.opacitySpin.value(), colours
-    
+
     def colourChanged(self):
         sender = str(self.sender().text()).split('_')
         key = sender[0]

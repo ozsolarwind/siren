@@ -1,12 +1,12 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King     
+#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King
 #
 #  turbine.py - This file is part of SIREN.
 #
 #  SIREN is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as 
-#  published by the Free Software Foundation, either version 3 of 
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, either version 3 of
 #  the License, or (at your option) any later version.
 #
 #  SIREN is distributed in the hope that it will be useful,
@@ -14,7 +14,7 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU Affero General Public License for more details.
 #
-#  You should have received a copy of the GNU Affero General 
+#  You should have received a copy of the GNU Affero General
 #  Public License along with SIREN.  If not, see
 #  <http://www.gnu.org/licenses/>.
 #
@@ -25,13 +25,13 @@ import math
 import os
 import sys
 
-import ConfigParser # decode .ini file
+import ConfigParser    # decode .ini file
 
 from senuser import getUser
 
 class Power_Curve:
 
-    def get_config(self):    
+    def get_config(self):
         config = ConfigParser.RawConfigParser()
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
@@ -72,15 +72,15 @@ class Power_Curve:
             x = []
             y = []
             last_valu = 0
-            for ln in range(5,len(lines)):
+            for ln in range(5, len(lines)):
                 try:
                     valu = float(lines[ln].strip('" \t\n\r'))
                     if valu > 0 and self.cutin == 0:
-                        self.cutin = float(ln-4)
+                        self.cutin = float(ln - 4)
                     if valu < last_valu:
                         if valu > 0 or ln > 5:
                             break
-                    x.append(float(ln-4))
+                    x.append(float(ln - 4))
                     y.append(float(valu))
                     last_valu = valu
                 except:
@@ -90,7 +90,7 @@ class Power_Curve:
             self.capacity = last_valu
         else:
             print 'No', pow_file
-     
+
     def Power(self, wind_speed):
         """return power for wind speed."""
         if wind_speed < self.cutin or wind_speed > self.cutout:
@@ -106,7 +106,7 @@ class Power_Curve:
 class Turbine:
     """Specifications for a Wind Turbine (Power Curve, ...)."""
 
-    def get_config(self):    
+    def get_config(self):
         config = ConfigParser.RawConfigParser()
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
@@ -162,7 +162,7 @@ class Turbine:
                  self.powers = []
                  self.speeds = []
                  last_pow = 0
-                 for ws in range(161): # 0 to 40 by 0.25
+                 for ws in range(161):   # 0 to 40 by 0.25
                      self.speeds.append(ws / 4.)
                      powr = round(pow_turbine.Power(ws / 4.), 2)
                      if powr > 0:

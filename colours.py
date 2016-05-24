@@ -1,12 +1,12 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King     
+#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King
 #
 #  colours.py - This file is part of SIREN.
 #
 #  SIREN is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as 
-#  published by the Free Software Foundation, either version 3 of 
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, either version 3 of
 #  the License, or (at your option) any later version.
 #
 #  SIREN is distributed in the hope that it will be useful,
@@ -14,7 +14,7 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU Affero General Public License for more details.
 #
-#  You should have received a copy of the GNU Affero General 
+#  You should have received a copy of the GNU Affero General
 #  Public License along with SIREN.  If not, see
 #  <http://www.gnu.org/licenses/>.
 #
@@ -22,15 +22,15 @@ import os
 import sys
 from PyQt4 import QtGui
 from PyQt4.QtCore import Qt
-import ConfigParser # decode .ini file
+import ConfigParser  # decode .ini file
 
 
 class Colours(QtGui.QDialog):
-    
+
     def __init__(self):
         super(Colours, self).__init__()
         self.initUI()
-        
+
     def initUI(self):
         def add_item(key, value, i):
             wht = key.replace('_', ' ').title()
@@ -68,12 +68,12 @@ class Colours(QtGui.QDialog):
             config_file = 'SIREN.ini'
         config.read(config_file)
         groups = ['Fossil Technologies', 'Grid', 'Map', 'Plot', 'Resource', 'Technologies', 'The Rest']
-        map_colours = ['background', 'border', 'fossil', 'fossil_name', 'station', 'station_name', 
+        map_colours = ['background', 'border', 'fossil', 'fossil_name', 'station', 'station_name',
                        'town', 'town_name']
         plot_colours = ['cumulative', 'gross_load', 'load', 'shortfall']
-        resource_colours = ['dhi_high', 'dhi_low', 'dni_high', 'dni_low', 'ghi_high', 'ghi_low', 
-                            'rain_high', 'rain_low', 'temp_high', 'temp_low', 'wind50_high', 
-                            'wind50_low', 'wind_high', 'wind_low'] 
+        resource_colours = ['dhi_high', 'dhi_low', 'dni_high', 'dni_low', 'ghi_high', 'ghi_low',
+                            'rain_high', 'rain_low', 'temp_high', 'temp_low', 'wind50_high',
+                            'wind50_low', 'wind_high', 'wind_low']
         colour_groups = {}
         for group in groups:
             colour_groups[group] = []
@@ -82,12 +82,12 @@ class Colours(QtGui.QDialog):
             technologies = technologies.split(' ')
         except:
             technologies = []
-        try: 
+        try:
             fossil_technologies = config.get('Power', 'fossil_technologies')
             fossil_technologies = fossil_technologies.split(' ')
         except:
             fossil_technologies = []
- 
+
         try:
             self.map = config.get('Map', 'map_choice')
         except:
@@ -171,7 +171,7 @@ class Colours(QtGui.QDialog):
         quit = QtGui.QPushButton('Quit', self)
         quit.setMaximumWidth(70)
         self.grid.addWidget(quit, i + 1, 0)
-        quit.clicked.connect(self.quitClicked) 
+        quit.clicked.connect(self.quitClicked)
         save = QtGui.QPushButton('Save && Exit', self)
         self.grid.addWidget(save, i + 1, 1)
         save.clicked.connect(self.saveClicked)
@@ -179,7 +179,7 @@ class Colours(QtGui.QDialog):
         self.grid.setColumnMinimumWidth(0, self.width)
         self.grid.setColumnMinimumWidth(1, self.width)
         if self.map != '':
-            self.grid.setColumnMinimumWidth(2, self.width)   
+            self.grid.setColumnMinimumWidth(2, self.width)
         frame = QtGui.QFrame()
         frame.setLayout(self.grid)
         self.scroll = QtGui.QScrollArea()
@@ -188,10 +188,10 @@ class Colours(QtGui.QDialog):
         self.layout = QtGui.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
         screen = QtGui.QDesktopWidget().availableGeometry()
-        self.resize(self.width * 3 + 80, int(screen.height() * .9))            
+        self.resize(self.width * 3 + 80, int(screen.height() * .9))
         self.setWindowTitle('SIREN - Color dialog')
-        QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked) 
-    
+        QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
+
     def mousePressEvent(self, event):
         if Qt.RightButton == event.button():
             for btn in self.btn:
@@ -201,7 +201,7 @@ class Colours(QtGui.QDialog):
                         self.colours[key] = ['', self.colours[key][1]]
                         btn.setStyleSheet(self.default_style)
                     break
-    
+
     def showDialog(self):
         sender = self.sender()
         if sender.text()[-5:] == '_base':
@@ -216,7 +216,7 @@ class Colours(QtGui.QDialog):
             col = QtGui.QColorDialog.getColor(QtGui.QColor(''))
         if col.isValid():
             if ndx == 0:
-                self.colours[key] = [col, self.colours[key][1]] 
+                self.colours[key] = [col, self.colours[key][1]]
             else:
                 self.colours[key] = [self.colours[key][0], col]
             for i in range(len(self.btn)):
@@ -224,7 +224,7 @@ class Colours(QtGui.QDialog):
                     self.btn[i].setStyleSheet('QPushButton {background-color: %s; color: %s;}' % (col.name(), col.name()))
                     break
 
-    def quitClicked(self):      
+    def quitClicked(self):
         self.close()
 
     def saveClicked(self):
@@ -237,22 +237,22 @@ class Colours(QtGui.QDialog):
         inf.close()
         in_color = False
         for i in range(len(lines)):
-            if lines[i][:8] == '[Colors]':                
+            if lines[i][:8] == '[Colors]':
                 in_color = True
             elif in_color:
                 if lines[i][0] == '[':
                     in_color = False
                     add_in_here = i
                 elif lines[i][0] != ';' and lines[i][0] != '#':
-                    bits = lines[i].split('=') 
-     
+                    bits = lines[i].split('=')
+
                     if bits[0] in self.colours:
                         lines[i] = bits[0] + '=' + self.colours[bits[0]][1].name() + '\n'
         if self.map != '':
             got_him = False
             del_lines = []
             for i in range(len(lines)):
-                if lines[i][:8 + len(self.map)] == '[Colors' + self.map + ']':                
+                if lines[i][:8 + len(self.map)] == '[Colors' + self.map + ']':
                     in_color = True
                     got_him = True
                 elif in_color:
@@ -260,7 +260,7 @@ class Colours(QtGui.QDialog):
                         in_color = False
                         add_in_here = i
                     elif lines[i][0] != ';' and lines[i][0] != '#':
-                        bits = lines[i].split('=')      
+                        bits = lines[i].split('=')
                         if bits[0] in self.colours:
                             if self.colours[bits[0]][0] == '':
                                 del_lines.append(i)

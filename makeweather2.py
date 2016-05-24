@@ -1,12 +1,12 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King     
+#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King
 #
 #  makeweather2.py - This file is part of SIREN.
 #
 #  SIREN is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as 
-#  published by the Free Software Foundation, either version 3 of 
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, either version 3 of
 #  the License, or (at your option) any later version.
 #
 #  SIREN is distributed in the hope that it will be useful,
@@ -14,7 +14,7 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU Affero General Public License for more details.
 #
-#  You should have received a copy of the GNU Affero General 
+#  You should have received a copy of the GNU Affero General
 #  Public License along with SIREN.  If not, see
 #  <http://www.gnu.org/licenses/>.
 #
@@ -22,7 +22,7 @@
 import datetime
 import gzip
 from math import *
-import os 
+import os
 import sys
 if sys.platform == 'win32' or sys.platform == 'cygwin':
     import math
@@ -51,7 +51,7 @@ class makeWeather():
                 fin = gzip.open(inp_file, 'rb')
                 file_content = fin.read()
                 fin.close()
-                fou = open(out_file,'wb')
+                fou = open(out_file, 'wb')
                 fou.write(file_content)
                 fou.close()
             return out_file
@@ -61,123 +61,123 @@ class makeWeather():
                 self.return_code = 12
                 return None
             return inp_file
-    
+
     def getSpeed(self, vmi, umi):
-        try: 
+        try:
             um = umi.data
             vm = vmi.data
         except:
-            um = umi[:] 
-            vm = vmi[:] 
+            um = umi[:]
+            vm = vmi[:]
         sm = []
-        for hr in range(len(um)): # 24 hours
+        for hr in range(len(um)):   # 24 hours
             hm = []
-            for lat in range(len(um[hr])): # n latitudes
+            for lat in range(len(um[hr])):   # n latitudes
                 lm = []
-                for lon in range(len(um[hr][lat])): # m longitudes
-                    lm.append(round(math.sqrt(um[hr][lat][lon]*um[hr][lat][lon] + \
-                                    vm[hr][lat][lon]*vm[hr][lat][lon]),4))
+                for lon in range(len(um[hr][lat])):   # m longitudes
+                    lm.append(round(math.sqrt(um[hr][lat][lon] * um[hr][lat][lon] + \
+                                    vm[hr][lat][lon] * vm[hr][lat][lon]), 4))
                 hm.append(lm)
             sm.append(hm)
         return sm
-    
+
     def getDirn(self, vmi, umi):
-        try: 
+        try:
             um = umi.data
             vm = vmi.data
         except:
-            um = umi[:] 
+            um = umi[:]
             vm = vmi[:]
         dm = []
-        for hr in range(len(um)): # 24 hours
+        for hr in range(len(um)):   # 24 hours
             hm = []
-            for lat in range(len(um[hr])): # n latitudes
+            for lat in range(len(um[hr])):   # n latitudes
                 lm = []
-                for lon in range(len(um[hr][lat])): # m longitudes
-    # Calculate the wind direction
-                    if abs(vm[hr][lat][lon]) < 0.000001: # No v-component of velocity
+                for lon in range(len(um[hr][lat])):   # m longitudes
+     # Calculate the wind direction
+                    if abs(vm[hr][lat][lon]) < 0.000001:   # No v-component of velocity
                         if vm[hr][lat][lon] >= 0:
                             lm.append(270)
                         else:
                             lm.append(90)
-                    else: # Calculate angle and convert to degrees 
-                        theta = math.atan(um[hr][lat][lon] / vm[hr][lat][lon] )
+                    else:   # Calculate angle and convert to degrees
+                        theta = math.atan(um[hr][lat][lon] / vm[hr][lat][lon])
                         theta = math.degrees(theta)
                         if vm[hr][lat][lon] > 0:
                             lm.append(int(theta + 180.0))
-                        else: # Make sure angle is positive
+                        else:   # Make sure angle is positive
                             theta = theta + 360.0
                             lm.append(int(theta % 360.0))
                 hm.append(lm)
             dm.append(hm)
         return dm
-    
+
     def getTemp(self, tmi):
-        try: 
+        try:
             tm = tmi.data
         except:
-            tm = tmi[:] 
+            tm = tmi[:]
         tmp = []
-        for hr in range(len(tm)): # 24 hours
+        for hr in range(len(tm)):   # 24 hours
             ht = []
-            for lat in range(len(tm[hr])): # n latitudes
+            for lat in range(len(tm[hr])):   # n latitudes
                 lt = []
-                for lon in range(len(tm[hr][lat])): # m longitudes
-                    lt.append(round(tm[hr][lat][lon] - 273.15, 1)) # K to C
+                for lon in range(len(tm[hr][lat])):   # m longitudes
+                    lt.append(round(tm[hr][lat][lon] - 273.15, 1))   # K to C
                 ht.append(lt)
             tmp.append(ht)
         return tmp
-    
+
     def getPress(self, pmi):
         if self.fmat == 'srw':
-            div = 101325 # Pa to atm
+            div = 101325   # Pa to atm
             rnd = 6
         else:
-            div = 100. # Pa to mbar (hPa)
+            div = 100.   # Pa to mbar (hPa)
             rnd = 0
-        try: 
+        try:
             pm = pmi.data
         except:
-            pm = pmi[:] 
+            pm = pmi[:]
         ps = []
-        for hr in range(len(pm)): # 24 hours
+        for hr in range(len(pm)):   # 24 hours
             hp = []
-            for lat in range(len(pm[hr])): # n latitudes
+            for lat in range(len(pm[hr])):   # n latitudes
                 lp = []
-                for lon in range(len(pm[hr][lat])): # m longitudes
-                    lp.append(round(pm[hr][lat][lon] / div, rnd)) # Pa to mbar
+                for lon in range(len(pm[hr][lat])):   # m longitudes
+                    lp.append(round(pm[hr][lat][lon] / div, rnd))   # Pa to mbar
                 hp.append(lp)
             ps.append(hp)
         return ps
-    
+
     def getGHI(self, pmi):
-        try: 
+        try:
             pm = pmi.data
         except:
-            pm = pmi[:] 
+            pm = pmi[:]
         ps = []
-        for hr in range(len(pm)): # 24 hours
+        for hr in range(len(pm)):   # 24 hours
             hp = []
-            for lat in range(len(pm[hr])): # n latitudes
+            for lat in range(len(pm[hr])):   # n latitudes
                 lp = []
-                for lon in range(len(pm[hr][lat])): # m longitudes
+                for lon in range(len(pm[hr][lat])):   # m longitudes
                     lp.append(pm[hr][lat][lon])
                 hp.append(lp)
             ps.append(hp)
         return ps
-    
+
     def valu(self, data, lat1, lon1, lat_rat, lon_rat, rnd=4):
         if rnd > 0:
             return round(lat_rat * lon_rat * data[lat1][lon1] + \
                 (1.0 - lat_rat) * lon_rat * data[lat1 + 1][lon1] + \
                 lat_rat * (1.0 - lon_rat) * data[lat1][lon1 + 1] + \
-                (1.0 - lat_rat) * (1.0 - lon_rat) * data[lat1 + 1][lon1 + 1],rnd)
+                (1.0 - lat_rat) * (1.0 - lon_rat) * data[lat1 + 1][lon1 + 1], rnd)
         else:
             return int(lat_rat * lon_rat * data[lat1][lon1] + \
                 (1.0 - lat_rat) * lon_rat * data[lat1 + 1][lon1] + \
                 lat_rat * (1.0 - lon_rat) * data[lat1][lon1 + 1] + \
                 (1.0 - lat_rat) * (1.0 - lon_rat) * data[lat1 + 1][lon1 + 1])
-    
+
     def get_data(self, inp_file):
         unzip_file = self.unZip(inp_file)
         if self.return_code != 0:
@@ -186,17 +186,17 @@ class makeWeather():
             cdf_file = Dataset(unzip_file, 'r')
         else:
             cdf_file = NetCDFFile(unzip_file, 'r')
-    #   Variable Description                                          Units
-    #   -------- ---------------------------------------------------- --------
-    #   ps       Time averaged surface pressure                       PaStart: ' + self
-    #   u10m     Eastward wind at 10 m above displacement height      m/s
-    #   u2m      Eastward wind at 2 m above displacement height       m/s
-    #   u50m     Eastward wind at 50 m above surface                  m/s
-    #   v10m     Northward wind at 10 m above the displacement height m/s
-    #   v2m      Northward wind at 2 m above the displacement height  m/s
-    #   v50m     Northward wind at 50 m above surface                 m/s
-    #   t10m     Temperature at 10 m above the displacement height    K
-    #   t2m      Temperature at 2 m above the displacement height     K
+     #   Variable Description                                          Units
+     #   -------- ---------------------------------------------------- --------
+     #   ps       Time averaged surface pressure                       PaStart: ' + self
+     #   u10m     Eastward wind at 10 m above displacement height      m/s
+     #   u2m      Eastward wind at 2 m above displacement height       m/s
+     #   u50m     Eastward wind at 50 m above surface                  m/s
+     #   v10m     Northward wind at 10 m above the displacement height m/s
+     #   v2m      Northward wind at 2 m above the displacement height  m/s
+     #   v50m     Northward wind at 50 m above surface                 m/s
+     #   t10m     Temperature at 10 m above the displacement height    K
+     #   t2m      Temperature at 2 m above the displacement height     K
         self.lati = cdf_file.variables[self.vars['latitude']][:]
         self.longi = cdf_file.variables[self.vars['longitude']][:]
         self.tims = cdf_file.variables['time'][:]
@@ -216,7 +216,7 @@ class makeWeather():
             self.s50m += self.getSpeed(cdf_file.variables[self.vars['v50m']], cdf_file.variables[self.vars['u50m']])
             self.d50m += self.getDirn(cdf_file.variables[self.vars['v50m']], cdf_file.variables[self.vars['u50m']])
         cdf_file.close()
-    
+
     def get_rad_data(self, inp_file):
         unzip_file = self.unZip(inp_file)
         if self.return_code != 0:
@@ -225,9 +225,9 @@ class makeWeather():
              cdf_file = Dataset(unzip_file, 'r')
         else:
             cdf_file = NetCDFFile(unzip_file, 'r')
-    #   Variable Description                         Units
-    #   -------- ----------------------------------- --------
-    #   swgnt    Surface net downward shortwave flux W m-2
+     #   Variable Description                         Units
+     #   -------- ----------------------------------- --------
+     #   swgnt    Surface net downward shortwave flux W m-2
         self.lati = cdf_file.variables[self.vars['latitude']][:]
         self.longi = cdf_file.variables[self.vars['longitude']][:]
         self.tims = cdf_file.variables['time'][:]
@@ -245,24 +245,24 @@ class makeWeather():
             if int(round(self.longrange[1] / 15)) != self.src_zone:
                 self.log += 'MERRA east longitude (%s) in different time zone: %s\n' % ('{:0.4f}'.format(self.longrange[1]), \
                             int(round(self.longrange[1] / 15)))
-                self.return_code = 1  
+                self.return_code = 1
         return
- 
+
     def close(self):
         return
-    
+
     def getLog(self):
-        return self.log    
-        
+        return self.log
+
     def returnCode(self):
         return str(self.return_code)
 
     def getInfo(self, inp_file):
         if not os.path.exists(inp_file):
-            if inp_file.find('MERRA300') >= 0: 
+            if inp_file.find('MERRA300') >= 0:
                 inp_file = inp_file.replace('MERRA300', 'MERRA301')
             else:
-                return    
+                return
         if not os.path.exists(inp_file):
             return
         unzip_file = self.unZip(inp_file)
@@ -311,9 +311,9 @@ class makeWeather():
         for val in longi:
             vals += '{:0.4f}'.format(val) + ', '
         self.log += vals[:-2] + '\n'
-        cdf_file.close()   
+        cdf_file.close()
         return
-            
+
     def __init__(self, src_year, src_zone, src_dir_s, src_dir_w, tgt_dir, fmat, src_lat_lon=None, info=False):
         self.last_time = datetime.datetime.now()
         self.log = ''
@@ -327,8 +327,8 @@ class makeWeather():
         self.src_lat_lon = src_lat_lon
         self.src_s_pfx = ''
         self.src_s_sfx = ''
-        self.vars = {'latitude': 'lat', 'longitude': 'lon', 'ps': 'PS', 'swgnt': 'SWGNT', 
-                     'time': 'time', 't2m': 'T2M', 't10m': 'T10M', 't50m': 'T50M', 'u2m': 'U2M', 
+        self.vars = {'latitude': 'lat', 'longitude': 'lon', 'ps': 'PS', 'swgnt': 'SWGNT',
+                     'time': 'time', 't2m': 'T2M', 't10m': 'T10M', 't50m': 'T50M', 'u2m': 'U2M',
                      'u10m': 'U10M', 'u50m': 'U50M', 'v2m': 'V2M', 'v10m': 'V10M', 'v50m': 'V50M'}
         if self.src_dir_s != '':
             self.src_dir_s += '/'
@@ -344,7 +344,7 @@ class makeWeather():
             del fils
         if self.src_s_pfx.find('MERRA300') >= 0:
             for key in self.vars.keys():
-                self.vars[key] = self.vars[key].lower()                
+                self.vars[key] = self.vars[key].lower()
             self.vars['latitude'] = 'latitude'
             self.vars['longitude'] = 'longitude'
         self.src_w_pfx = ''
@@ -363,27 +363,27 @@ class makeWeather():
             del fils
         if self.src_w_pfx.find('MERRA300') >= 0:
             for key in self.vars.keys():
-                self.vars[key] = self.vars[key].lower()                
+                self.vars[key] = self.vars[key].lower()
             self.vars['latitude'] = 'latitude'
             self.vars['longitude'] = 'longitude'
         if self.tgt_dir != '':
             self.tgt_dir += '/'
         if info:
             inp_strt = '{0:04d}'.format(self.src_year) + '0101'
-            # get variables from "wind" file
+             # get variables from "wind" file
             inp_file = self.src_dir_w + self.src_w_pfx + inp_strt + self.src_w_sfx
             self.getInfo(inp_file)
-            # get variables from "solar" file
+             # get variables from "solar" file
             inp_file = self.src_dir_s + self.src_s_pfx + inp_strt + self.src_s_sfx
             self.getInfo(inp_file)
             return
         if self.src_zone.lower() == 'auto':
             self.auto_zone = True
             inp_strt = '{0:04d}'.format(self.src_year) + '0101'
-            # get longitude from "wind" file
+             # get longitude from "wind" file
             inp_file = self.src_dir_w + self.src_w_pfx + inp_strt + self.src_w_sfx
             if not os.path.exists(inp_file):
-                if inp_file.find('MERRA300') >= 0: 
+                if inp_file.find('MERRA300') >= 0:
                     inp_file = inp_file.replace('MERRA300', 'MERRA301')
             unzip_file = self.unZip(inp_file)
             if self.return_code != 0:
@@ -421,7 +421,7 @@ class makeWeather():
             self.return_code = 8
             return
         if self.fmat == 'wind':
-            self.fmat = 'srw' 
+            self.fmat = 'srw'
         if self.fmat == 'srw':
             self.make_wind = True
         else:
@@ -449,22 +449,22 @@ class makeWeather():
         self.d2m = []
         self.d50m = []
         self.t_2m = []
-        dys = [31,28,31,30,31,30,31,31,30,31,30,31]
+        dys = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
         if self.src_zone > 0:
             inp_strt = '{0:04d}'.format(self.src_year - 1) + '1231'
         elif self.src_zone <= 0:
             inp_strt = '{0:04d}'.format(self.src_year) + '0101'
-        # get variables from "wind" files
+         # get variables from "wind" files
         inp_file = self.src_dir_w + self.src_w_pfx + inp_strt + self.src_w_sfx
         if not os.path.exists(inp_file):
-            if inp_file.find('MERRA300') >= 0: 
+            if inp_file.find('MERRA300') >= 0:
                 inp_file = inp_file.replace('MERRA300', 'MERRA301')
-        self.get_data(inp_file) # get wind data
+        self.get_data(inp_file)   # get wind data
         if self.return_code != 0:
             return
         if self.src_zone != 0:
-        # last self.src_zone hours of (self.src_year -1) GMT = first self.src_zone of self.src_year
-        # first self.src_zone hours of self.src_year GMT = last self.src_zone of (self.src_year - 1)
+         # last self.src_zone hours of (self.src_year -1) GMT = first self.src_zone of self.src_year
+         # first self.src_zone hours of self.src_year GMT = last self.src_zone of (self.src_year - 1)
             self.p_s = self.p_s[-self.src_zone:]
             if len(self.s10m) > 0:
                 self.s10m = self.s10m[-self.src_zone:]
@@ -477,7 +477,7 @@ class makeWeather():
                 self.d50m = self.d50m[-self.src_zone:]
                 self.t_2m = self.t_2m[-self.src_zone:]
         elif self.src_zone < 0:
-        # first self.src_zone hours of self.src_year GMT = last self.src_zone of (self.src_year - 1)
+         # first self.src_zone hours of self.src_year GMT = last self.src_zone of (self.src_year - 1)
             self.p_s = self.p_s[:self.src_zone]
             if len(self.s10m) > 0:
                 self.s10m = self.s10m[:self.src_zone]
@@ -490,21 +490,21 @@ class makeWeather():
                 self.d50m = self.d50m[:self.src_zone]
                 self.t_2m = self.t_2m[:self.src_zone]
         for mt in range(len(dys)):
-            self.log += 'Processing month %s wind\n' % str(mt+1)
+            self.log += 'Processing month %s wind\n' % str(mt + 1)
             for dy in range(1, dys[mt] + 1):
                 if self.src_zone <= 0:
                     if mt == 0 and dy == 1:
                         continue
                 inp_file = self.src_dir_w + self.src_w_pfx + '{0:04d}'.format(self.src_year) + \
-                           '{0:02d}'.format(mt+1) + '{0:02d}'.format(dy) + self.src_w_sfx
+                           '{0:02d}'.format(mt + 1) + '{0:02d}'.format(dy) + self.src_w_sfx
                 if not os.path.exists(inp_file):
-                    if inp_file.find('MERRA300') >= 0: 
+                    if inp_file.find('MERRA300') >= 0:
                         inp_file = inp_file.replace('MERRA300', 'MERRA301')
-                self.get_data(inp_file) # get wind data
+                self.get_data(inp_file)   # get wind data
                 if self.return_code != 0:
                     return
         if self.src_zone > 0:
-            for i in range(self.src_zone): # delete last n hours
+            for i in range(self.src_zone):   # delete last n hours
                 del self.p_s[-1]
             if len(self.s10m) > 0:
                 for i in range(self.src_zone):
@@ -523,12 +523,12 @@ class makeWeather():
             inp_file = self.src_dir_w + self.src_w_pfx + \
                        inp_strt + self.src_w_pfx
             if not os.path.exists(inp_file):
-                if inp_file.find('MERRA300') >= 0: 
+                if inp_file.find('MERRA300') >= 0:
                     inp_file = inp_file.replace('MERRA300', 'MERRA301')
             self.get_data(inp_file)
             if self.return_code != 0:
                 return
-            for i in range(24 + self.src_zone): # delete last n hours
+            for i in range(24 + self.src_zone):   # delete last n hours
                 del self.p_s[-1]
             if len(self.s10m) > 0:
                 for i in range(24 + self.src_zone):
@@ -536,7 +536,7 @@ class makeWeather():
                     del self.d10m[-1]
                     del self.t_10m[-1]
             if self.make_wind:
-                for i in range(24 + self.src_zone): # delete last n hours
+                for i in range(24 + self.src_zone):   # delete last n hours
                     del self.s2m[-1]
                     del self.s50m[-1]
                     del self.d2m[-1]
@@ -548,7 +548,7 @@ class makeWeather():
             if not os.path.exists(target_dir):
                 self.log += 'mkdir %s\n' % target_dir
                 os.makedirs(target_dir)
-            if self.src_lat is not None: # specific location(s)
+            if self.src_lat is not None:   # specific location(s)
                 for i in range(len(self.src_lat)):
                     for lat2 in range(len(self.lati)):
                         if self.src_lat[i] <= self.lati[lat2]:
@@ -604,7 +604,7 @@ class makeWeather():
                                 str(self.valu(self.d50m[hr], lat1, lon1, lat_rat, lon_rat, rnd=0)) + ',' + \
                                 str(self.valu(self.s50m[hr], lat1, lon1, lat_rat, lon_rat)) + '\n')
                     tf.close()
-                    self.log += '%s created\n' % out_file[out_file.rfind('/')+1:]
+                    self.log += '%s created\n' % out_file[out_file.rfind('/') + 1:]
             else:
                 for lat in range(len(self.s50m[0])):
                     for lon in range(len(self.s50m[0][0])):
@@ -645,27 +645,27 @@ class makeWeather():
                                         str(self.d2m[hr][lat][lon]) + ',' + str(self.s2m[hr][lat][lon]) + ',' + \
                                         str(self.d50m[hr][lat][lon]) + ',' + str(self.s50m[hr][lat][lon]) + '\n')
                         tf.close()
-                        self.log += '%s created\n' % out_file[out_file.rfind('/')+1:]
-                        self.checkZone() 
-            return # that's it for wind    
-        # get variable from solar files
+                        self.log += '%s created\n' % out_file[out_file.rfind('/') + 1:]
+                        self.checkZone()
+            return  # that's it for wind
+         # get variable from solar files
         if self.src_zone > 0:
             inp_strt = '{0:04d}'.format(self.src_year - 1) + '1231'
         elif self.src_zone <= 0:
             inp_strt = '{0:04d}'.format(self.src_year) + '0101'
         inp_file = self.src_dir_s + self.src_s_pfx + inp_strt + self.src_s_sfx
         if not os.path.exists(inp_file):
-            if inp_file.find('MERRA300') >= 0: 
+            if inp_file.find('MERRA300') >= 0:
                 inp_file = inp_file.replace('MERRA300', 'MERRA301')
-        self.get_rad_data(inp_file) # get solar data
+        self.get_rad_data(inp_file)  # get solar data
         if self.return_code != 0:
             return
         if self.src_zone != 0:
-        # last self.src_zone hours of (self.src_year -1) GMT = first self.src_zone of self.src_year
-        # first self.src_zone hours of self.src_year GMT = last self.src_zone of (self.src_year - 1)
+         # last self.src_zone hours of (self.src_year -1) GMT = first self.src_zone of self.src_year
+         # first self.src_zone hours of self.src_year GMT = last self.src_zone of (self.src_year - 1)
             self.swgnt = self.swgnt[-self.src_zone:]
         elif self.src_zone < 0:
-        # first self.src_zone hours of self.src_year GMT = last self.src_zone of (self.src_year - 1)
+         # first self.src_zone hours of self.src_year GMT = last self.src_zone of (self.src_year - 1)
             self.swgnt = self.swgnt[:self.src_zone]
         for mt in range(len(dys)):
             self.log += 'Processing month %s solar\n' % str(mt + 1)
@@ -674,29 +674,29 @@ class makeWeather():
                     if mt == 0 and dy == 1:
                         continue
                 inp_file = self.src_dir_s + self.src_s_pfx + '{0:04d}'.format(self.src_year) + \
-                           '{0:02d}'.format(mt+1) + '{0:02d}'.format(dy) + self.src_s_sfx
+                           '{0:02d}'.format(mt + 1) + '{0:02d}'.format(dy) + self.src_s_sfx
                 if not os.path.exists(inp_file):
-                    if inp_file.find('MERRA300') >= 0: 
+                    if inp_file.find('MERRA300') >= 0:
                         inp_file = inp_file.replace('MERRA300', 'MERRA301')
-                self.get_rad_data(inp_file) # get solar data
+                self.get_rad_data(inp_file)  # get solar data
         if self.src_zone > 0:
-            for i in range(self.src_zone): # delete last n hours
+            for i in range(self.src_zone):  # delete last n hours
                 del self.swgnt[-1]
         elif self.src_zone < 0:
             inp_strt = '{0:04d}'.format(self.src_year + 1) + '0101'
             inp_file = self.src_dir_s + self.src_s_pfx + inp_strt + self.src_s_sfx
             if not os.path.exists(inp_file):
-                if inp_file.find('MERRA300') >= 0: 
+                if inp_file.find('MERRA300') >= 0:
                     inp_file = inp_file.replace('MERRA300', 'MERRA301')
             self.get_rad_data(inp_file)
-            for i in range(24 + self.src_zone): # delete last n hours
+            for i in range(24 + self.src_zone):  # delete last n hours
                 del self.swgnt[-1]
         target_dir = self.tgt_dir
         self.log += 'Target directory is %s\n' % target_dir
         if not os.path.exists(target_dir):
             self.log += 'mkdir %s\n' % target_dir
             os.makedirs(target_dir)
-        if self.src_lat is not None: # specific location(s)
+        if self.src_lat is not None:  # specific location(s)
             for i in range(len(self.src_lat)):
                 for lat2 in range(len(self.lati)):
                     if self.src_lat[i] <= self.lati[lat2]:
@@ -732,11 +732,11 @@ class makeWeather():
                     hour = 1
                     for hr in range(len(self.s10m)):
                         ghi = self.valu(self.swgnt[hr], lat1, lon1, lat_rat, lon_rat)
-                        dni = getDNI(ghi, hour=hr+1, lat=self.src_lat[i], lon=self.src_lon[i], \
+                        dni = getDNI(ghi, hour=hr + 1, lat=self.src_lat[i], lon=self.src_lon[i], \
                               press=self.valu(self.p_s[hr], lat1, \
                               lon1, lat_rat, lon_rat, rnd=0), zone=self.src_zone)
-                        dhi = getDHI(ghi, dni, hour=hr+1, lat=self.src_lat[i])
-                        tf.write(str(self.src_year) + ',' + str(mth+1) + ',' + 
+                        dhi = getDHI(ghi, dni, hour=hr + 1, lat=self.src_lat[i])
+                        tf.write(str(self.src_year) + ',' + str(mth + 1) + ',' +
                         str(day) + ',' + str(hour) + ',' + \
                         str(int(ghi)) + ',' + str(int(dni)) + ',' + str(int(dhi)) + ',' + \
                         str(self.valu(self.t_10m[hr], lat1, lon1, lat_rat, lon_rat, rnd=1)) + ',' + \
@@ -758,10 +758,10 @@ class makeWeather():
                     tf.write(hdr)
                     for hr in range(len(self.s10m)):
                         ghi = self.valu(self.swgnt[hr], lat1, lon1, lat_rat, lon_rat)
-                        dni = getDNI(ghi, hour=hr+1, lat=self.src_lat[i], lon=self.src_lon[i], \
+                        dni = getDNI(ghi, hour=hr + 1, lat=self.src_lat[i], lon=self.src_lon[i], \
                               press=self.valu(self.p_s[hr], lat1, lon1, lat_rat, \
                               lon_rat, rnd=0), zone=self.src_zone)
-                        dhi = getDHI(ghi, dni, hour=hr+1, lat=self.src_lat[i])
+                        dhi = getDHI(ghi, dni, hour=hr + 1, lat=self.src_lat[i])
                         tf.write(str(self.valu(self.t_10m[hr], lat1, lon1, lat_rat, lon_rat, rnd=1)) + \
                         ',-999,-999,-999,' + \
                         str(self.valu(self.s10m[hr], lat1, lon1, lat_rat, lon_rat)) + ',' + \
@@ -769,8 +769,8 @@ class makeWeather():
                         str(self.valu(self.p_s[hr], lat1, lon1, lat_rat, lon_rat, rnd=1)) + ',' + \
                         str(int(ghi)) + ',' + str(int(dni)) + ',' + str(int(dhi)) + \
                         ',-999,-999,\n')
-                tf.close()        
-                self.log += '%s created\n' % out_file[out_file.rfind('/')+1:]
+                tf.close()
+                self.log += '%s created\n' % out_file[out_file.rfind('/') + 1:]
         else:
             for lat in range(len(self.s10m[0])):
                 for lon in range(len(self.s10m[0][0])):
@@ -798,10 +798,10 @@ class makeWeather():
                         hour = 1
                         for hr in range(len(self.s10m)):
                             ghi = self.swgnt[hr][lat][lon]
-                            dni = getDNI(ghi, hour=hr+1, lat=self.lati[lat], lon=self.longi[lon], \
+                            dni = getDNI(ghi, hour=hr + 1, lat=self.lati[lat], lon=self.longi[lon], \
                                   press=self.p_s[hr][lat][lon], zone=self.src_zone)
-                            dhi = getDHI(ghi, dni, hour=hr+1, lat=self.lati[lat])
-                            tf.write(str(self.src_year) + ',' + '{0:02d}'.format(mth+1) + ',' + 
+                            dhi = getDHI(ghi, dni, hour=hr + 1, lat=self.lati[lat])
+                            tf.write(str(self.src_year) + ',' + '{0:02d}'.format(mth + 1) + ',' +
                                 '{0:02d}'.format(day) + ',' + '{0:02d}'.format(hour) + ',' + \
                                 '{:0.1f}'.format(ghi) + ',' + '{:0.1f}'.format(dni) + ',' + \
                                 '{:0.1f}'.format(dhi) + ',' + \
@@ -824,9 +824,9 @@ class makeWeather():
                         tf.write(hdr)
                         for hr in range(len(self.s10m)):
                             ghi = self.swgnt[hr][lat][lon]
-                            dni = getDNI(ghi, hour=hr+1, lat=self.lati[lat], lon=self.longi[lon], \
+                            dni = getDNI(ghi, hour=hr + 1, lat=self.lati[lat], lon=self.longi[lon], \
                                   press=self.p_s[hr][lat][lon], zone=self.src_zone)
-                            dhi = getDHI(ghi, dni, hour=hr+1, lat=self.lati[lat])
+                            dhi = getDHI(ghi, dni, hour=hr + 1, lat=self.lati[lat])
                             tf.write(str(self.t_10m[hr][lat][lon]) + \
                                 ',-999,-999,-999,' + \
                                 str(self.s10m[hr][lat][lon]) + ',' + \
@@ -835,24 +835,24 @@ class makeWeather():
                                 str(int(ghi)) + ',' + str(int(dni)) + ',' + str(int(dhi)) + \
                                 ',-999,-999,\n')
                     tf.close()
-                    self.log += '%s created\n' % out_file[out_file.rfind('/')+1:]
+                    self.log += '%s created\n' % out_file[out_file.rfind('/') + 1:]
         self.checkZone()
 
-class ClickableQLabel(QtGui.QLabel): 
+class ClickableQLabel(QtGui.QLabel):
     def __init(self, parent):
         QLabel.__init__(self, parent)
- 
+
     def mousePressEvent(self, event):
         QtGui.QApplication.widgetAt(event.globalPos()).setFocus()
         self.emit(QtCore.SIGNAL('clicked()'))
-         
+
 class getParms(QtGui.QWidget):
- 
+
     def __init__(self, help='help.html'):
         super(getParms, self).__init__()
         self.help = help
         self.initUI()
-        
+
     def initUI(self):
         self.yearSpin = QtGui.QSpinBox()
         now = datetime.datetime.now()
@@ -897,7 +897,7 @@ class getParms(QtGui.QWidget):
             self.grid.addWidget(self.dirs[i], 5 + i, 1, 1, 4)
         quit = QtGui.QPushButton('Quit', self)
         self.grid.addWidget(quit, 8, 0)
-        quit.clicked.connect(self.quitClicked) 
+        quit.clicked.connect(self.quitClicked)
         QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
         dosolar = QtGui.QPushButton('Produce Solar Files', self)
         wdth = dosolar.fontMetrics().boundingRect(dosolar.text()).width() + 9
@@ -916,7 +916,7 @@ class getParms(QtGui.QWidget):
         info.setMaximumWidth(wdth)
         self.grid.addWidget(info, 8, 4)
         info.clicked.connect(self.infoClicked)
-     #   self.grid.setColumnStretch(4, 2)
+      #   self.grid.setColumnStretch(4, 2)
         frame = QtGui.QFrame()
         frame.setLayout(self.grid)
         self.scroll = QtGui.QScrollArea()
@@ -960,18 +960,18 @@ class getParms(QtGui.QWidget):
         newdir = str(QtGui.QFileDialog.getExistingDirectory(self, 'Choose ' + self.dir_labels[i] + ' Folder',
                  curdir, QtGui.QFileDialog.ShowDirsOnly))
         if newdir != '':
-            self.dirs[i].setText(newdir) 
+            self.dirs[i].setText(newdir)
             if self.checkbox.isChecked():
                 if i == 0:
-                    self.dirs[1].setText(newdir) 
-                    self.dirs[2].setText(newdir) 
+                    self.dirs[1].setText(newdir)
+                    self.dirs[2].setText(newdir)
 
-    def helpClicked(self):   
+    def helpClicked(self):
         dialog = displayobject.AnObject(QtGui.QDialog(), self.help, \
                  title='Help for SIREN makeweather2 (' + fileVersion() + ')', section='merra3')
         dialog.exec_()
 
-    def quitClicked(self):      
+    def quitClicked(self):
         self.close()
 
     def dosolarClicked(self):
@@ -994,7 +994,7 @@ class getParms(QtGui.QWidget):
         dialr.exec_()
         del solar
         del dialr
-        
+
     def dowindClicked(self):
         coords = str(self.coords.toPlainText())
         if coords != '':
@@ -1016,7 +1016,7 @@ class getParms(QtGui.QWidget):
         dialr.exec_()
         del wind
         del dialr
-        
+
     def infoClicked(self):
         coords = str(self.coords.toPlainText())
         if coords != '':
@@ -1039,14 +1039,14 @@ class getParms(QtGui.QWidget):
         del wind
         del dialr
 
-        
+
 class RptDialog(QtGui.QDialog):
     def __init__(self, year, zone, solar_dir, wind_dir, tgt_dir, fmat, coords, return_code, output):
         super(RptDialog, self).__init__()
         self.parms = [str(year), str(zone), fmat, tgt_dir, solar_dir, wind_dir]
         max_line = 0
         self.lines = 'Parameters:\n    Year: %s\n    Time Zone: %s\n    Output Format: %s\n' % \
-                     (year, zone, fmat) 
+                     (year, zone, fmat)
         if fmat != 'srw':
             self.lines += '    Solar Files: %s\n' % solar_dir
         self.lines += '    Wind Files: %s\n' % wind_dir
@@ -1076,14 +1076,14 @@ class RptDialog(QtGui.QDialog):
         self.widget.setFont(QtGui.QFont('Courier New', 11))
         fnt = self.widget.fontMetrics()
         ln = (max_line + 5) * fnt.maxWidth()
-        ln2 = (line_cnt + 2) * fnt.height() 
+        ln2 = (line_cnt + 2) * fnt.height()
         screen = QtGui.QDesktopWidget().availableGeometry()
         if ln > screen.width() * .67:
             ln = int(screen.width() * .67)
         if ln2 > screen.height() * .67:
             ln2 = int(screen.height() * .67)
         self.widget.setSizePolicy(QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, \
-            QtGui.QSizePolicy.Expanding)) 
+            QtGui.QSizePolicy.Expanding))
         self.widget.resize(ln, ln2)
         self.widget.setPlainText(self.lines)
         layout = QtGui.QVBoxLayout()
@@ -1092,17 +1092,17 @@ class RptDialog(QtGui.QDialog):
         self.setLayout(layout)
         self.setWindowTitle('Output from makeweather2')
         size = self.geometry()
-        self.setGeometry(1, 1 , ln + 10, ln2 + 35)
+        self.setGeometry(1, 1, ln + 10, ln2 + 35)
         size = self.geometry()
-        self.move((screen.width()-size.width())/2, \
-            (screen.height()-size.height())/2)
+        self.move((screen.width() - size.width()) / 2, \
+            (screen.height() - size.height()) / 2)
         self.widget.show()
 
     def accept(self):
-        i = sys.argv[0].rfind('/') # fudge to see if program has a directory to use as an alternative
+        i = sys.argv[0].rfind('/')  # fudge to see if program has a directory to use as an alternative
         j = sys.argv[0].rfind('.')
         if i > 0:
-            save_filename = sys.argv[0][i+1:j]
+            save_filename = sys.argv[0][i + 1:j]
         else:
             save_filename = sys.argv[0][:j]
         last_bit = ''
@@ -1111,9 +1111,9 @@ class RptDialog(QtGui.QDialog):
                 continue
             i = self.parms[k].rfind('/')
             if i > 0:
-                if self.parms[k][i+1:] != last_bit:
-                    save_filename += '_' + self.parms[k][i+1:]
-                    last_bit = self.parms[k][i+1:]
+                if self.parms[k][i + 1:] != last_bit:
+                    save_filename += '_' + self.parms[k][i + 1:]
+                    last_bit = self.parms[k][i + 1:]
             else:
                 if self.parms[k] != last_bit:
                     save_filename += '_' + self.parms[k]
@@ -1132,7 +1132,7 @@ class RptDialog(QtGui.QDialog):
 
 if "__main__" == __name__:
     app = QtGui.QApplication(sys.argv)
-    if len(sys.argv) > 1: # arguments
+    if len(sys.argv) > 1:  # arguments
         src_lat_lon = ''
         src_year = 2014
         src_zone = 0
@@ -1143,7 +1143,7 @@ if "__main__" == __name__:
         for i in range(1, len(sys.argv)):
             if sys.argv[i][:5] == 'year=':
                 src_year = int(sys.argv[i][5:])
-            elif sys.argv[i][:7] == 'latlon=' or sys.argv[i][:7] == 'coords=': # lat and lon
+            elif sys.argv[i][:7] == 'latlon=' or sys.argv[i][:7] == 'coords=':  # lat and lon
                 src_lat_lon = sys.argv[i][7:]
             elif sys.argv[i][:5] == 'zone=':
                 src_zone = int(sys.argv[i][5:])

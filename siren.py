@@ -1,12 +1,12 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2016 Sustainable Energy Now Inc., Angus King     
+#  Copyright (C) 2016 Sustainable Energy Now Inc., Angus King
 #
 #  sirens.py - This file is part of SIREN.
 #
 #  SIREN is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as 
-#  published by the Free Software Foundation, either version 3 of 
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, either version 3 of
 #  the License, or (at your option) any later version.
 #
 #  SIREN is distributed in the hope that it will be useful,
@@ -14,12 +14,12 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU Affero General Public License for more details.
 #
-#  You should have received a copy of the GNU Affero General 
+#  You should have received a copy of the GNU Affero General
 #  Public License along with SIREN.  If not, see
 #  <http://www.gnu.org/licenses/>.
 #
 
-import ConfigParser # decode .ini file
+import ConfigParser   # decode .ini file
 import datetime
 from functools import partial
 import os
@@ -73,25 +73,25 @@ class TabDialog(QtGui.QDialog):
                         if not os.path.exists(self.about):
                             self.about = ''
                     except:
-                        pass  
+                        pass
                 if self.help == '':
                     try:
                         self.help = config.get('Files', 'help')
                         if not os.path.exists(self.help):
                             self.help = ''
                     except:
-                        pass                   
+                        pass
         if len(entries) == 0:
             self.new()
-    #    if len(entries) == 1:
-    #        self.invoke(entries[0][0])
-    #        sys.exit()
+     #    if len(entries) == 1:
+     #        self.invoke(entries[0][0])
+     #        sys.exit()
         self.setWindowTitle('Select SIREN Model')
         buttonLayout = QtGui.QHBoxLayout()
         self.quitButton = QtGui.QPushButton(self.tr('&Quit'))
         buttonLayout.addWidget(self.quitButton)
         self.connect(self.quitButton, QtCore.SIGNAL('clicked()'), self.quit)
-        QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quit) 
+        QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quit)
         self.newButton = QtGui.QPushButton(self.tr('&New Model'))
         buttonLayout.addWidget(self.newButton)
         self.connect(self.newButton, QtCore.SIGNAL('clicked()'), self.new)
@@ -124,8 +124,8 @@ class TabDialog(QtGui.QDialog):
             ln = int(screen.width() * .9)
         if ln2 > screen.height() * .9:
             ln2 = int(screen.height() * .9)
-        layout.addWidget(QtGui.QLabel('Click on row for Desired Model'), 0, 0) 
-        layout.addWidget(self.table, 1, 0) 
+        layout.addWidget(QtGui.QLabel('Click on row for Desired Model'), 0, 0)
+        layout.addWidget(self.table, 1, 0)
         layout.addWidget(buttons, 2, 0)
         menubar = QtGui.QMenuBar()
         utilities = ['getmap', 'makeweather2']
@@ -137,7 +137,7 @@ class TabDialog(QtGui.QDialog):
                 if os.path.exists(utilities[i] + '.exe'):
                     spawns.append(utilities[i] + '.exe')
                     icons.append(utilicon[i])
-                else: 
+                else:
                     if os.path.exists(utilities[i] + '.py'):
                         spawns.append(utilities[i] + '.py')
                         icons.append(utilicon[i])
@@ -167,9 +167,9 @@ class TabDialog(QtGui.QDialog):
         about.setStatusTip('About')
         about.triggered.connect(self.showAbout)
         helpMenu = menubar.addMenu('&Help')
-        helpMenu.addAction(help)        
-        helpMenu.addAction(about)            
-            
+        helpMenu.addAction(help)
+        helpMenu.addAction(about)
+
         self.setLayout(layout)
         size = QtCore.QSize(ln, ln2)
         self.resize(size)
@@ -184,7 +184,7 @@ class TabDialog(QtGui.QDialog):
         if sys.platform == 'win32' or sys.platform == 'cygwin':
             if os.path.exists('sirenm.exe'):
                 pid = subprocess.Popen(['sirenm.exe', ent]).pid
-            elif os.path.exists('sirenm.py'):                    
+            elif os.path.exists('sirenm.py'):
                 pid = subprocess.Popen(['sirenm.py', ent], shell=True).pid
         else:
             pid = subprocess.Popen(['python', 'sirenm.py', ent]).pid
@@ -195,11 +195,11 @@ class TabDialog(QtGui.QDialog):
         if do_new.ini_file != '':
             self.invoke(do_new.ini_file)
             self.quit()
-                       
+
     def showAbout(self):
         dialog = displayobject.AnObject(QtGui.QDialog(), self.about, title='About SENs SAM Model')
         dialog.exec_()
-        
+
     def showHelp(self):
         webbrowser.open_new(self.help)
 
@@ -228,23 +228,23 @@ class TabDialog(QtGui.QDialog):
         self.close()
 
 
-class ClickableQLabel(QtGui.QLabel): 
+class ClickableQLabel(QtGui.QLabel):
     def __init(self, parent):
         QLabel.__init__(self, parent)
- 
+
     def mousePressEvent(self, event):
         QtGui.QApplication.widgetAt(event.globalPos()).setFocus()
         self.emit(QtCore.SIGNAL('clicked()'))
 
 
 class makeNew(QtGui.QDialog):
- 
+
     def __init__(self, help='help.html'):
         super(makeNew, self).__init__()
         self.help = help
         self.ini_file = ''
         self.initUI()
-        
+
     def initUI(self):
         if sys.platform == 'win32' or sys.platform == 'cygwin':
             ini_file = 'siren_windows_default.ini'
@@ -253,7 +253,7 @@ class makeNew(QtGui.QDialog):
         if not os.path.exists(ini_file):
             return
         file_sects = ['[Parents]', '[Files]', '[SAM Modules]']
-        dir_props = ['pow_files', 'sam_sdk', 'solar_files', 'variable_files', 'wind_files'] 
+        dir_props = ['pow_files', 'sam_sdk', 'solar_files', 'variable_files', 'wind_files']
         inf = open(ini_file, 'r')
         lines = inf.readlines()
         inf.close()
@@ -292,7 +292,7 @@ class makeNew(QtGui.QDialog):
                 self.fields.append(['[Base]', 'txt', key, value, QtGui.QLineEdit()])
                 if key == 'year':
                     self.fields[-1][3] = str((now.year - 1))
-                if self.fields[row][0] != self.fields[row-1][0]:
+                if self.fields[row][0] != self.fields[row - 1][0]:
                     self.grid.addWidget(QtGui.QLabel(self.fields[row][0]), row, 0)
                 self.grid.addWidget(QtGui.QLabel(self.fields[row][2]), row, 1)
                 self.fields[row][4].setText(self.fields[row][3])
@@ -305,7 +305,7 @@ class makeNew(QtGui.QDialog):
                 self.parents[key] = value
                 row += 1
                 self.fields.append(['[Parents]', '?', key, value, '?'])
-                if self.fields[row][0] != self.fields[row-1][0]:
+                if self.fields[row][0] != self.fields[row - 1][0]:
                     self.grid.addWidget(QtGui.QLabel(self.fields[row][0]), row, 0)
                 self.grid.addWidget(QtGui.QLabel(self.fields[row][2]), row, 1)
                 if key == '$USER$' or key == '$YEAR$':
@@ -326,7 +326,7 @@ class makeNew(QtGui.QDialog):
                 for prop in props:
                     row += 1
                     self.fields.append([section, '?', prop[0], prop[1], '?'])
-                    if self.fields[row][0] != self.fields[row-1][0]:
+                    if self.fields[row][0] != self.fields[row - 1][0]:
                         self.grid.addWidget(QtGui.QLabel(self.fields[row][0]), row, 0)
                     self.grid.addWidget(QtGui.QLabel(self.fields[row][2]), row, 1)
                     if prop[0] == 'map' or (prop[0][:3] == 'map' and prop[0][3] != '_'):
@@ -344,7 +344,7 @@ class makeNew(QtGui.QDialog):
                 for prop in props:
                     row += 1
                     self.fields.append([section, '?', prop[0], prop[1], '?'])
-                    if self.fields[row][0] != self.fields[row-1][0]:
+                    if self.fields[row][0] != self.fields[row - 1][0]:
                         self.grid.addWidget(QtGui.QLabel(self.fields[row][0]), row, 0)
                     self.grid.addWidget(QtGui.QLabel(self.fields[row][2]), row, 1)
                     self.fields[row][3] = prop[1]
@@ -361,7 +361,7 @@ class makeNew(QtGui.QDialog):
                 for prop in props:
                     row += 1
                     self.fields.append([section, 'txt', prop[0], prop[1], QtGui.QLineEdit()])
-                    if self.fields[row][0] != self.fields[row-1][0]:
+                    if self.fields[row][0] != self.fields[row - 1][0]:
                         self.grid.addWidget(QtGui.QLabel(self.fields[row][0]), row, 0)
                     self.grid.addWidget(QtGui.QLabel(self.fields[row][2]), row, 1)
                     self.fields[row][4].setText(self.fields[row][3])
@@ -369,7 +369,7 @@ class makeNew(QtGui.QDialog):
         row += 1
         quit = QtGui.QPushButton('Quit', self)
         self.grid.addWidget(quit, row, 0)
-        quit.clicked.connect(self.quitClicked) 
+        quit.clicked.connect(self.quitClicked)
         QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
         save = QtGui.QPushButton('Save', self)
         self.grid.addWidget(save, row, 1)
@@ -405,7 +405,7 @@ class makeNew(QtGui.QDialog):
                 if os.path.exists(utilities[i] + '.exe'):
                     spawns.append(utilities[i] + '.exe')
                     icons.append(utilicon[i])
-                else: 
+                else:
                     if os.path.exists(utilities[i] + '.py'):
                         spawns.append(utilities[i] + '.py')
                         icons.append(utilicon[i])
@@ -428,7 +428,7 @@ class makeNew(QtGui.QDialog):
                 spawnMenu.addAction(spawnitem[-1])
             self.layout.setMenuBar(menubar)
         self.setWindowTitle('SIREN (' + fileVersion() + ') - Create Preferences file')
-        self.show()   
+        self.show()
 
     def filenameChanged(self):
         if str(self.fields[0][4].text()).lower() == 'siren_default.ini' or \
@@ -439,7 +439,7 @@ class makeNew(QtGui.QDialog):
         else:
             self.msg.setText('')
 
-    def helpClicked(self):   
+    def helpClicked(self):
         dialog = displayobject.AnObject(QtGui.QDialog(), self.help, \
                  title='Help for SIREN Preferences file (' + fileVersion() + ')', section='prefs')
         dialog.exec_()
@@ -452,8 +452,8 @@ class makeNew(QtGui.QDialog):
                     upd_field = upd_field.replace(key, value)
                 if self.fields[i][1] == 'dir':
                     curdir = upd_field
-                    newone = str(QtGui.QFileDialog.getExistingDirectory(self, 
-                             'Choose ' + self.fields[i][2] + ' Folder', curdir, 
+                    newone = str(QtGui.QFileDialog.getExistingDirectory(self,
+                             'Choose ' + self.fields[i][2] + ' Folder', curdir,
                              QtGui.QFileDialog.ShowDirsOnly))
                     if newone != '':
                         newone = newone.replace('\\', '/')
@@ -474,7 +474,7 @@ class makeNew(QtGui.QDialog):
                         self.fields[i][4].setText(newone)
                 elif self.fields[i][1] == 'fil':
                     curfil = upd_field
-                    newone = str(QtGui.QFileDialog.getOpenFileName(self, 
+                    newone = str(QtGui.QFileDialog.getOpenFileName(self,
                              'Choose ' + self.fields[i][2] + ' File', curfil))
                     if newone != '':
                         newone = newone.replace('\\', '/')
@@ -491,8 +491,8 @@ class makeNew(QtGui.QDialog):
                             newone = newone.replace(self.parents['$USER$'], '$USER$')
                         self.fields[i][4].setText(newone)
                 break
-        
-    def quitClicked(self):      
+
+    def quitClicked(self):
         self.close()
 
     def saveClicked(self):
@@ -502,12 +502,12 @@ class makeNew(QtGui.QDialog):
     def saveEdit(self):
         self.saveIni()
         dialr = EdtDialog(self.new_ini)
-        dialr.exec_()    
+        dialr.exec_()
         self.close()
 
     def saveLaunch(self):
         self.saveIni()
-        self.ini_file = self.new_ini     
+        self.ini_file = self.new_ini
         self.close()
 
     def saveIni(self):
@@ -578,7 +578,7 @@ class makeNew(QtGui.QDialog):
             for i in range(len(properties)):
                 props.append(properties[i].split('=')[0])
             for i in range(len(lines)):
-                if lines[i][:len(section)] == section:                
+                if lines[i][:len(section)] == section:
                     in_section = True
                 elif in_section:
                     if lines[i][0] == '[':
@@ -586,9 +586,9 @@ class makeNew(QtGui.QDialog):
                         break
                     elif lines[i][0] != ';' and lines[i][0] != '#':
                         bits = lines[i].split('=')
-                        for j in range(len(properties) -1, -1, -1):
+                        for j in range(len(properties) - 1, -1, -1):
                             if bits[0] == props[j]:
-                                lines[i] = properties[j]  + '\n'
+                                lines[i] = properties[j] + '\n'
                                 del properties[j]
                                 del props[j]
             if len(properties) > 0:
@@ -602,7 +602,7 @@ class makeNew(QtGui.QDialog):
         for i in range(len(lines)):
             sou.write(lines[i])
         sou.close()
-        
+
     def spawn(self, who):
         if type(who) is list:
             if os.path.exists(who[0]):

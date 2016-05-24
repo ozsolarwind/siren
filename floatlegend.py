@@ -1,12 +1,12 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2016 Sustainable Energy Now Inc., Angus King     
+#  Copyright (C) 2016 Sustainable Energy Now Inc., Angus King
 #
 #  floatlegend.py - This file is part of SIREN.
 #
 #  SIREN is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as 
-#  published by the Free Software Foundation, either version 3 of 
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, either version 3 of
 #  the License, or (at your option) any later version.
 #
 #  SIREN is distributed in the hope that it will be useful,
@@ -14,28 +14,28 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU Affero General Public License for more details.
 #
-#  You should have received a copy of the GNU Affero General 
+#  You should have received a copy of the GNU Affero General
 #  Public License along with SIREN.  If not, see
 #  <http://www.gnu.org/licenses/>.
 #
 
 import sys
 from PyQt4 import QtCore, QtGui
-import ConfigParser # decode .ini file
+import ConfigParser   # decode .ini file
 
 from editini import SaveIni
-         
+
 
 class FloatLegend(QtGui.QDialog):
     procStart = QtCore.pyqtSignal(str)
- 
+
     def __init__(self, techdata, stations, flags):
         super(FloatLegend, self).__init__()
         self.stations = stations
         self.techdata = techdata
         self.flags = flags
         self.initUI()
-        
+
     def initUI(self):
         config = ConfigParser.RawConfigParser()
         if len(sys.argv) > 1:
@@ -109,14 +109,14 @@ class FloatLegend(QtGui.QDialog):
                 else:
                     txt += ' ' + txts[i]
                     ln += len(txts[i]) + 1
-        self.grid.addWidget(QtGui.QLabel(txt), row, 1, 1, 2) 
+        self.grid.addWidget(QtGui.QLabel(txt), row, 1, 1, 2)
         self.grid.setRowStretch(row, 1)
-        row += 1             
+        row += 1
         quit = QtGui.QPushButton('Quit', self)
         self.grid.addWidget(quit, row, 1)
         self.grid.setRowStretch(row, 1)
         self.grid.setVerticalSpacing(10)
-        quit.clicked.connect(self.quitClicked) 
+        quit.clicked.connect(self.quitClicked)
         QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
         frame = QtGui.QFrame()
         frame.setLayout(self.grid)
@@ -124,7 +124,7 @@ class FloatLegend(QtGui.QDialog):
         self.scroll.setWidgetResizable(True)
         self.scroll.setWidget(frame)
         self.layout = QtGui.QVBoxLayout(self)
-        self.layout.addWidget(self.scroll) 
+        self.layout.addWidget(self.scroll)
         self.setWindowTitle('SIREN - Legend')
         move_right = True
         frameGm = self.frameGeometry()
@@ -165,24 +165,24 @@ class FloatLegend(QtGui.QDialog):
         self.resize(win_width, win_height)
         self.move(win_left, win_top)
         self.show()
-        
+
     @QtCore.pyqtSlot()
     def exit(self):
         self.be_open = False
         self.close()
- 
+
     def closeEvent(self, event):
         if self.restorewindows:
             updates = {}
             lines = []
-            add = int((self.frameSize().width() - self.size().width()) / 2) # need to account for border
+            add = int((self.frameSize().width() - self.size().width()) / 2)   # need to account for border
             lines.append('legend_pos=%s,%s' % (str(self.pos().x() + add), str(self.pos().y() + add)))
             lines.append('legend_size=%s,%s' % (str(self.width()), str(self.height())))
             updates['Windows'] = lines
             SaveIni(updates)
         if self.be_open:
-            self.procStart.emit('goodbye')   
+            self.procStart.emit('goodbye')
         event.accept()
 
-    def quitClicked(self):      
+    def quitClicked(self):
         self.close()

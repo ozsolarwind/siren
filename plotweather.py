@@ -1,12 +1,12 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King     
+#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King
 #
 #  plotweather.py - This file is part of SIREN.
 #
 #  SIREN is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as 
-#  published by the Free Software Foundation, either version 3 of 
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, either version 3 of
 #  the License, or (at your option) any later version.
 #
 #  SIREN is distributed in the hope that it will be useful,
@@ -14,7 +14,7 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU Affero General Public License for more details.
 #
-#  You should have received a copy of the GNU Affero General 
+#  You should have received a copy of the GNU Affero General
 #  Public License along with SIREN.  If not, see
 #  <http://www.gnu.org/licenses/>.
 #
@@ -31,7 +31,7 @@ import ssc
 import types
 import xlrd
 
-import ConfigParser # decode .ini file
+import ConfigParser  # decode .ini file
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 
@@ -41,8 +41,8 @@ from sammodels import getZenith
 
 the_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
-       
-class whatPlots(QtGui.QDialog):    
+
+class whatPlots(QtGui.QDialog):
     def __init__(self, plots, plot_order, hdrs, spacers, base_year, comment):
         self.plots = plots
         self.plot_order = plot_order
@@ -52,7 +52,7 @@ class whatPlots(QtGui.QDialog):
         self.comment = comment
         super(whatPlots, self).__init__()
         self.initUI()
-        
+
     def initUI(self):
         self.grid = QtGui.QGridLayout()
         self.checkbox = []
@@ -66,13 +66,13 @@ class whatPlots(QtGui.QDialog):
                 self.grid.addWidget(label, i, 0) #, 1, 1)
                 i += 1
             self.checkbox.append(QtGui.QCheckBox(self.hdrs[self.plot_order[plot]], self))
-            if self.plots[self.plot_order[plot]]: 
+            if self.plots[self.plot_order[plot]]:
                 self.checkbox[plot].setCheckState(Qt.Checked)
             self.grid.addWidget(self.checkbox[-1], i, 0) #, 1, 1)
             i += 1
         self.grid.connect(self.checkbox[0], QtCore.SIGNAL('stateChanged(int)'), self.check_all)
         show = QtGui.QPushButton('Proceed', self)
-        show.clicked.connect(self.showClicked) 
+        show.clicked.connect(self.showClicked)
         self.grid.addWidget(show, i, 0)
         frame = QtGui.QFrame()
         frame.setLayout(self.grid)
@@ -97,14 +97,14 @@ class whatPlots(QtGui.QDialog):
             for i in range(len(self.checkbox)):
                 self.plots[self.plot_order[i]] = True
                 self.checkbox[i].setCheckState(Qt.Unchecked)
-    
+
     def closeEvent(self, event):
         if not self.show_them:
-            self.plots = None    
+            self.plots = None
         event.accept()
 
     def quitClicked(self):
-        self.plots = None    
+        self.plots = None
         self.close()
 
     def showClicked(self):
@@ -115,27 +115,27 @@ class whatPlots(QtGui.QDialog):
                 self.plots[self.plot_order[plot]] = False
         self.show_them = True
         self.close()
-        
+
     def getValues(self):
-        return self.plots 
+        return self.plots
 
 
 class PlotWeather():
     def haversine(self, lat1, lon1, lat2, lon2):
         """
-        Calculate the great circle distance between two points 
+        Calculate the great circle distance between two points
         on the earth (specified in decimal degrees)
         """
-  #     convert decimal degrees to radians 
+   #     convert decimal degrees to radians
         lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
 
-  #     haversine formula  
-        dlon = lon2 - lon1 
-        dlat = lat2 - lat1 
-        a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
-        c = 2 * asin(sqrt(a)) 
+   #     haversine formula
+        dlon = lon2 - lon1
+        dlat = lat2 - lat1
+        a = sin(dlat / 2)**2 + cos(lat1) * cos(lat2) * sin(dlon / 2)**2
+        c = 2 * asin(sqrt(a))
 
-  #     6367 km is the radius of the Earth
+   #     6367 km is the radius of the Earth
         km = 6367 * c
         return km
 
@@ -215,7 +215,7 @@ class PlotWeather():
         return closest, dist, close_lat, close_lon
 
     def showGraphs(self, ly, x, locn):
-        def dayPlot(self, period, data, locn, per_labels=None, x_labels=None): 
+        def dayPlot(self, period, data, locn, per_labels=None, x_labels=None):
             plt.figure(period)
             plt.suptitle(self.hdrs[period] + locn, fontsize=16)
             maxy = 0
@@ -231,7 +231,7 @@ class PlotWeather():
                 if len(data[0]) == 4:
                     xl = 2
                     yl = [0, 2]
-                    yl2 = [1, 3] 
+                    yl2 = [1, 3]
                 else:
                     xl = 0
                     yl = yl2 = [0, 1]
@@ -319,7 +319,7 @@ class PlotWeather():
                 if item[:6] == 'period':
                     if item == 'period':
                         continue
-                    i = int(item[6:])-1
+                    i = int(item[6:]) - 1
                     periods[i] = values.split(',')
                     for j in range(1, len(periods[i])):
                         periods[i][j] = int(periods[i][j]) - 1
@@ -341,12 +341,12 @@ class PlotWeather():
         for i in range(len(seasons)):
             ssn_labels.append('%s (%s-%s)' % (seasons[i][0], mth_labels[seasons[i][1]],
                                mth_labels[seasons[i][-1]]))
-     #   ssn_labels = ['Summer (Dec, Jan-Feb)', 'Autumn (Mar-May)', 'Winter (Jun-Aug)', 'Spring(Sep-Nov)']
+      #   ssn_labels = ['Summer (Dec, Jan-Feb)', 'Autumn (Mar-May)', 'Winter (Jun-Aug)', 'Spring(Sep-Nov)']
         smp_labels = []
         for i in range(len(periods)):
             smp_labels.append('%s (%s-%s)' % (periods[i][0], mth_labels[periods[i][1]],
                                mth_labels[periods[i][-1]]))
-    #    smp_labels = ['Winter (May-Oct)', 'Summer (Nov-Apr)']
+     #    smp_labels = ['Winter (May-Oct)', 'Summer (Nov-Apr)']
         labels = ['0:00', '4:00', '8:00', '12:00', '16:00', '20:00', '24:00']
         mth_xlabels = ['0:', '4:', '8:', '12:', '16:', '20:', '24:']
         m = 0
@@ -367,7 +367,7 @@ class PlotWeather():
         s24 = []
         t12 = []
         for i in range(24):
-            x24.append(i+1)
+            x24.append(i + 1)
         for i in range(len(self.ly)):
             if self.plots['total']:
                 l24.append([])
@@ -429,21 +429,21 @@ class PlotWeather():
                 for key, value in iter(sorted(self.ly.iteritems())):
                     j += 1
                     if self.plots['total']:
-                        l24[j][k] += value[i+k]
+                        l24[j][k] += value[i + k]
                     if self.plots['month']:
-                        m24[j][m][k] = m24[j][m][k] + value[i+k]
+                        m24[j][m][k] = m24[j][m][k] + value[i + k]
                     if self.plots['season']:
                         for q in range(len(seasons)):
                             if m in seasons[q]:
                                 break
-                        q24[j][q][k] = q24[j][q][k] + value[i+k]
+                        q24[j][q][k] = q24[j][q][k] + value[i + k]
                     if self.plots['period']:
                         for s in range(len(periods)):
                             if m in periods[s]:
                                 break
-                        s24[j][s][k] = s24[j][s][k] + value[i+k]
+                        s24[j][s][k] = s24[j][s][k] + value[i + k]
                     if self.plots['monthly']:
-                        t12[j][m + 1] = t12[j][m + 1] + value[i+k]
+                        t12[j][m + 1] = t12[j][m + 1] + value[i + k]
         for i in range(len(ly)):
             for k in range(24):
                 if self.plots['total']:
@@ -471,7 +471,7 @@ class PlotWeather():
                     hx2.plot(x, value, linewidth=lw, label=key, color=self.colours[key])
                 else:
                     hx.plot(x, value, linewidth=lw, label=key, color=self.colours[key])
-                    maxy = max(maxy, max(value)) 
+                    maxy = max(maxy, max(value))
             hx.set_ylim([0, maxy])
             plt.xlim([0, len(x)])
             plt.xticks(range(12, len(x), 168))
@@ -516,7 +516,7 @@ class PlotWeather():
                     tx2.plot(x24, l24[i], linewidth=lw, label=key, color=self.colours[key])
                 else:
                     tx.plot(x24, l24[i], linewidth=lw, label=key, color=self.colours[key])
-                    maxy = max(maxy, max(l24[i])) 
+                    maxy = max(maxy, max(l24[i]))
             tx.set_ylim([0, maxy])
             plt.xlim([1, 25])
             plt.xticks(range(0, 25, 4))
@@ -553,7 +553,7 @@ class PlotWeather():
             dayPlot(self, 'period', s24, locn, smp_labels, labels)
         if 'pdf' in self.plots.keys():
             if self.plots['pdf'] and self.plots['wind']:
-                j = int(ceil(max(self.ly['wind']))) 
+                j = int(ceil(max(self.ly['wind'])))
                 figp = plt.figure('pdf')
                 plt.grid(True)
                 px = figp.add_subplot(111)
@@ -581,7 +581,7 @@ class PlotWeather():
                     tx2.step(x24[:14], t12[i], linewidth=lw, label=key, color=self.colours[key])
                 else:
                     tx.step(x24[:14], t12[i], linewidth=lw, label=key, color=self.colours[key])
-                    maxy = max(maxy, max(t12[i]) + 1) 
+                    maxy = max(maxy, max(t12[i]) + 1)
             tx.set_ylim([0, maxy])
             tick_spot = []
             for i in range(12):
@@ -613,7 +613,7 @@ class PlotWeather():
             else:
                 plt.draw()
         if not self.plots['block']:
-            plt.show()            
+            plt.show()
 
     def __init__(self, latitude, longitude, year=None, adjust_wind=None):
         config = ConfigParser.RawConfigParser()
@@ -684,7 +684,7 @@ class PlotWeather():
         except:
             pass
         self.windy = adjust_wind
-      # find closest solar file
+       # find closest solar file
         self.solar_file, dist, lat, lon = self.find_closest(latitude, longitude)
         if os.path.exists(self.solar_files + '/' + self.solar_file):
             comment = 'Solar: %s\n            at %s, %s (%s Km away)' % (self.solar_file, lat, lon, '{:0,.0f}'.format(dist))
@@ -695,13 +695,13 @@ class PlotWeather():
             comment += 'Wind: %s\n            at %s, %s (%s Km away)' % (self.wind_file, lat, lon, '{:0,.0f}'.format(dist))
         plot_order = ['show_menu', 'dhi', 'dni', 'ghi', 'temp', 'wind']
         if rain:
-            plot_order.append('rain') 
-        plot_order2 = ['hour', 'total', 'month', 'season', 'period', 'block'] # , 'pdf']
+            plot_order.append('rain')
+        plot_order2 = ['hour', 'total', 'month', 'season', 'period', 'block']  # , 'pdf']
         for plt in plot_order2:
             plot_order.append(plt)
         if rain:
-            plot_order.append('monthly') 
-        self.hdrs = {'show_menu' : 'Check / Uncheck all',
+            plot_order.append('monthly')
+        self.hdrs = {'show_menu': 'Check / Uncheck all',
                 'dhi': 'Solar - DHI (Diffuse)',
                 'dni': 'Solar - DNI (Beam)',
                 'ghi': 'Solar - GHI (Global)',
@@ -731,7 +731,7 @@ class PlotWeather():
         if 'rain' not in self.plots.keys():
             self.plots['monthly'] = False
             self.plots['rain'] = False
-        self.x = [] 
+        self.x = []
         self.ly = {}
         self.text = ''
         rain_col = -1
@@ -749,10 +749,10 @@ class PlotWeather():
                     self.ly['ghi'] = []
                 if self.plots['temp']:
                     self.ly['temp'] = []
-                if self.plots['wind']: # on the off chance there's no wind file we'll use what we can from solar
+                if self.plots['wind']:  # on the off chance there's no wind file we'll use what we can from solar
                     self.ly['wind'] = []
                     wind_col = -1
-                if self.plots['rain']: 
+                if self.plots['rain']:
                     self.ly['rain'] = []
                 if self.solar_file[-4:] == '.smw':
                     dhi_col = 9
@@ -775,7 +775,7 @@ class PlotWeather():
                                 src_lat = float(bits[i])
                             elif cols[i].lower() in ['longitude', 'lon', 'long', 'lng']:
                                 src_lon = float(bits[i])
-                            elif cols[i].lower() in ['tz', 'timezone' , 'time zone']:
+                            elif cols[i].lower() in ['tz', 'timezone', 'time zone']:
                                 src_zne = float(bits[i])
                     cols = lines[fst_row - 1].strip().split(',')
                     for i in range(len(cols)):
@@ -822,7 +822,7 @@ class PlotWeather():
                     lines = tf.readlines()
                     tf.close()
                     fst_row = len(lines) - 8760
-                    self.ly['wind'] = [] # we'll override and wind from the solar file
+                    self.ly['wind'] = []  # we'll override and wind from the solar file
                     if self.windy is None:
                         pass
                     else:
@@ -846,7 +846,7 @@ class PlotWeather():
                 else:
                     return
         if self.plots['rain'] and rain_col < 0:
-            if self.rain_files != '':         
+            if self.rain_files != '':
                 self.rain_file, dist, lat, lon = self.find_closest(latitude, longitude, wind=True)
                 if os.path.exists(self.rain_files + '/' + self.rain_file):
                     if comment != '':
@@ -856,7 +856,7 @@ class PlotWeather():
                     lines = tf.readlines()
                     tf.close()
                     fst_row = len(lines) - 8760
-                    self.ly['rain'] = [] # we'll override and wind from the solar file
+                    self.ly['rain'] = []  # we'll override and wind from the solar file
                     cols = lines[fst_row - 1].strip().split(',')
                     for i in range(len(cols)):
                         if cols[i].lower() in ['rain', 'rainfall', 'rainfall (mm)']:
@@ -868,7 +868,7 @@ class PlotWeather():
         len_x = 8760
         for i in range(len_x):
             self.x.append(i)
-        self.colours = {'dhi': 'r', 'dni': 'y', 'ghi': 'orange', 'rain': 'c', 'temp': 'g', 'wind': 'b', 'wind2': 'black'} 
+        self.colours = {'dhi': 'r', 'dni': 'y', 'ghi': 'orange', 'rain': 'c', 'temp': 'g', 'wind': 'b', 'wind2': 'black'}
         self.two_axes = False
         self.ylabel = ['Irradiance (W/m2)', 'Irrad (W/m2)']
         if (self.plots['dhi'] or self.plots['dni'] or self.plots['ghi']):
@@ -884,10 +884,10 @@ class PlotWeather():
         elif self.plots['temp']:
             self.ylabel = ['Temperature. (oC)', 'Temp. (oC)']
             if self.plots['wind']:
-                self.two_axes = True 
-                self.ylabel2 = [['wind'], 'Wind Speed (m/s)', 'Wind (m/s)']  
+                self.two_axes = True
+                self.ylabel2 = [['wind'], 'Wind Speed (m/s)', 'Wind (m/s)']
         elif self.plots['wind']:
-            self.ylabel = ['Wind Speed (m/s)', 'Wind (m/s)']  
+            self.ylabel = ['Wind Speed (m/s)', 'Wind (m/s)']
         elif self.plots['rain']:
-            self.ylabel = ['Rainfall (mm)', 'Rain (mm)']  
+            self.ylabel = ['Rainfall (mm)', 'Rain (mm)']
         self.showGraphs(self.ly, self.x, ' for location %s, %s - %s' % (latitude, longitude, self.base_year))

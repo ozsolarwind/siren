@@ -1,12 +1,12 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King     
+#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King
 #
 #  siren.py - This file is part of SIREN.
 #
 #  SIREN is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as 
-#  published by the Free Software Foundation, either version 3 of 
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, either version 3 of
 #  the License, or (at your option) any later version.
 #
 #  SIREN is distributed in the hope that it will be useful,
@@ -14,7 +14,7 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU Affero General Public License for more details.
 #
-#  You should have received a copy of the GNU Affero General 
+#  You should have received a copy of the GNU Affero General
 #  Public License along with SIREN.  If not, see
 #  <http://www.gnu.org/licenses/>.
 #
@@ -23,8 +23,8 @@ import csv
 import math
 import os
 import sys
-#import types
-from Tkinter import tkinter # to get TkAgg
+# import types
+from Tkinter import tkinter  # to get TkAgg
 import Tkinter
 import matplotlib
 matplotlib.use('TkAgg')
@@ -34,7 +34,7 @@ import xlwt
 from functools import partial
 from datetime import datetime
 
-import ConfigParser # decode .ini file
+import ConfigParser  # decode .ini file
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import SIGNAL
 import subprocess
@@ -49,7 +49,7 @@ from senuser import getUser
 from station import Station, Stations
 from wascene import WAScene
 from editini import EdtDialog, EditTech, EditSect, SaveIni
-from dijkstra_4 import Shortest 
+from dijkstra_4 import Shortest
 from credits import Credits, fileVersion
 from viewresource import Resource
 from floatmenu import FloatMenu
@@ -58,17 +58,17 @@ from floatstatus import FloatStatus
 from sirenicons import Icons
 
 def p2str(p):
-    return '(%.4f,%.4f)' %(p.y(), p.x())
+    return '(%.4f,%.4f)' % (p.y(), p.x())
 
 class Description(QtGui.QDialog):
-    def __init__(self, who, desc='', parent = None):
+    def __init__(self, who, desc='', parent=None):
         super(Description, self).__init__(parent)
         layout = QtGui.QVBoxLayout(self)
         layout.addWidget(QtGui.QLabel('Set Description for ' + who))
         self.text = QtGui.QPlainTextEdit()
         self.text.setPlainText(desc)
         layout.addWidget(self.text)
-        # OK and Cancel buttons
+         # OK and Cancel buttons
         buttons = QtGui.QDialogButtonBox(
             QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel,
             QtCore.Qt.Horizontal, self)
@@ -80,12 +80,12 @@ class Description(QtGui.QDialog):
     def description(self):
         return str(self.text.toPlainText())
 
-    # static method to create the dialog and return 
+     # static method to create the dialog and return
     @staticmethod
-    def getDescription(who, desc='', parent = None):
+    def getDescription(who, desc='', parent=None):
         dialog = Description(who, desc, parent)
         result = dialog.exec_()
-        return (dialog.description()) #, result == QtGui.QDialog.Accepted)
+        return (dialog.description())  #, result == QtGui.QDialog.Accepted)
 
 class MapView(QtGui.QGraphicsView):
     def __init__(self, scene, zoom=.8):
@@ -95,7 +95,7 @@ class MapView(QtGui.QGraphicsView):
         QtGui.QShortcut(QtGui.QKeySequence('pgdown'), self, self.zoomOut)
         QtGui.QShortcut(QtGui.QKeySequence('Ctrl++'), self, self.zoomIn)
         QtGui.QShortcut(QtGui.QKeySequence('Ctrl+-'), self, self.zoomOut)
-   #     self.scene = scene
+    #     self.scene = scene
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
 
@@ -105,18 +105,18 @@ class MapView(QtGui.QGraphicsView):
         self._shown = set()
         self._show_places = set(xrange(1, 10))
         self._station_to_move = None
-        self._move_station = False 
-        self._move_grid = False  
-        self._grid_start = None 
+        self._move_station = False
+        self._move_grid = False
+        self._grid_start = None
         self._grid_line = None
-        self._grid_coord = None     
-        self.ruler_items = [] 
+        self._grid_coord = None
+        self.ruler_items = []
         self.legend_items = []
         self.legend_pos = None
         self.trace_items = []
         self.resource_items = []
         self.resource_range = None
-        
+
 #        QtGui.QShortcut(QtGui.QKeySequence('t'), self, self.toggleTotal)
     def destinationxy(self, lon1, lat1, bearing, distance):
         """
@@ -124,12 +124,12 @@ class MapView(QtGui.QGraphicsView):
         the destination point and final bearing travelling along a
         (shortest distance) great circle arc
         """
-        radius = 6367. # km is the radius of the Earth
-    # convert decimal degrees to radians 
+        radius = 6367.  # km is the radius of the Earth
+     # convert decimal degrees to radians
         ln1, lt1, baring = map(math.radians, [lon1, lat1, bearing])
-    # "reverse" haversine formula  
+     # "reverse" haversine formula
         lat2 = math.asin(math.sin(lt1) * math.cos(distance / radius) + \
-               math.cos(lt1) * math.sin(distance / radius) * math.cos(baring) )
+               math.cos(lt1) * math.sin(distance / radius) * math.cos(baring))
         lon2 = ln1 + math.atan2(math.sin(baring) * math.sin(distance / radius) * math.cos(lt1), \
                math.cos(distance / radius) - math.sin(lt1) * math.sin(lat2))
         return QtCore.QPointF(math.degrees(lon2), math.degrees(lat2))
@@ -148,18 +148,18 @@ class MapView(QtGui.QGraphicsView):
         self.scale(zoom, zoom)
 
     def zoomIn(self):
-        self.scale(1/self.zoom, 1/self.zoom)
+        self.scale(1 / self.zoom, 1 / self.zoom)
 
     def zoomOut(self):
         self.scale(self.zoom, self.zoom)
 
-    def delStation(self, st): # remove stations graphic items
+    def delStation(self, st):  # remove stations graphic items
         for itm in self.scene()._stationGroups[st.name]:
             self.scene().removeItem(itm)
         del self.scene()._stationGroups[st.name]
-        for i in range(len(self.scene().lines.lines) -1, -1, -1):
+        for i in range(len(self.scene().lines.lines) - 1, -1, -1):
             if self.scene().lines.lines[i].name == st.name:
-                del self.scene().lines.lines[i]  
+                del self.scene().lines.lines[i]
 
     def mousePressEvent(self, event):
         if QtCore.Qt.LeftButton == event.button():
@@ -167,7 +167,7 @@ class MapView(QtGui.QGraphicsView):
             if self._move_station:
                 self.delStation(self._station_to_move)
                 self._station_to_move.lon = where.x()
-                self._station_to_move.lat = where.y()             
+                self._station_to_move.lat = where.y()
                 self.scene().addStation(self._station_to_move)
                 comment = 'Placed station %s (%s MW at %s,%s) ' % (self._station_to_move.name, \
                           '{:0.0f}'.format(self._station_to_move.capacity), \
@@ -177,19 +177,19 @@ class MapView(QtGui.QGraphicsView):
                 if not self.scene().show_station_name:
                     self.scene()._current_name.setText(self._station_to_move.name)
                     pp = self.mapFromLonLat(QtCore.QPointF(where.x(), where.y()))
-                    self.scene()._current_name.setPos(pp + QtCore.QPointF(1.5,-0.5))
+                    self.scene()._current_name.setPos(pp + QtCore.QPointF(1.5, -0.5))
                     if self._station_to_move.technology[:6] == 'Fossil':
                         self.scene()._current_name.setBrush(QtGui.QColor(self.scene().colors['fossil_name']))
                     else:
                         self.scene()._current_name.setBrush(QtGui.QColor(self.scene().colors['station_name']))
                 self._move_station = False
                 self.scene().refreshGrid()
-            elif self._move_grid:     # allow multi point grid line       
+            elif self._move_grid:      # allow multi point grid line
                 color = QtGui.QColor()
                 color.setNamedColor(self.scene().colors['new_grid'])
                 pen = QtGui.QPen(color, self.scene().line_width)
                 pen.setJoinStyle(QtCore.Qt.RoundJoin)
-                pen.setCapStyle(QtCore.Qt.RoundCap)            
+                pen.setCapStyle(QtCore.Qt.RoundCap)
                 end = QtCore.QPointF(self.mapToScene(event.pos()))
                 lin = QtGui.QGraphicsLineItem(QtCore.QLineF(self._grid_start, end))
                 lin.setPen(pen)
@@ -201,7 +201,7 @@ class MapView(QtGui.QGraphicsView):
                     self._grid_coord = [[coord.y(), coord.x()]]
                 else:
                     self._grid_line.append(lin)
-                    self._grid_coord.append([coord.y(), coord.x()])     
+                    self._grid_coord.append([coord.y(), coord.x()])
                 self._grid_start = end
             else:
                 try:
@@ -215,7 +215,7 @@ class MapView(QtGui.QGraphicsView):
                         fossil=self.scene().show_fossil)
                     if self.scene().center_on_click:
                         go_to = self.mapFromLonLat(QtCore.QPointF(station.lon, station.lat))
-                        self.centerOn(go_to)    
+                        self.centerOn(go_to)
                     if not self.scene().show_station_name:
                         self.scene()._current_name.setText(station.name)
                         pp = self.mapFromLonLat(QtCore.QPointF(station.lon, station.lat))
@@ -224,17 +224,17 @@ class MapView(QtGui.QGraphicsView):
                             self.scene()._current_name.setBrush(QtGui.QColor(self.scene().colors['fossil_name']))
                         else:
                             self.scene()._current_name.setBrush(QtGui.QColor(self.scene().colors['station_name']))
-  # highlight grid line
+   # highlight grid line
                     self.emit(SIGNAL('statusmsg'), p2str(self.mapToLonLat(event.pos())) + ' ' + \
-                      station.name + ' ({:0.0f}'.format(station.capacity) +' MW; {:0.0f} Km away; '.format(st_dist) + \
-                      'Nearest town: ' + town_name +  ' {:0.0f} Km away)'.format(to_dist))
+                      station.name + ' ({:0.0f}'.format(station.capacity) + ' MW; {:0.0f} Km away; '.format(st_dist) + \
+                      'Nearest town: ' + town_name + ' {:0.0f} Km away)'.format(to_dist))
                 except:
                     self.emit(SIGNAL('statusmsg'), p2str(self.mapToLonLat(event.pos())) + ' ' + \
-                      'Nearest town: ' + town_name +  ' {:0.0f} Km away)'.format(to_dist))
+                      'Nearest town: ' + town_name + ' {:0.0f} Km away)'.format(to_dist))
                 self._drag_start = QtCore.QPoint(event.pos())
                 hb = self.horizontalScrollBar()
                 vb = self.verticalScrollBar()
-                self._sb_start = QtCore.QPoint(hb.value(), vb.value()) 
+                self._sb_start = QtCore.QPoint(hb.value(), vb.value())
 
     def mouseMoveEvent(self, event):
         if QtCore.Qt.LeftButton == event.buttons() and self._drag_start:
@@ -246,7 +246,7 @@ class MapView(QtGui.QGraphicsView):
             p = self.mapToScene(event.pos())
             x, y = map(int, [p.x(), p.y()])
             try:
-                stations = self.view.scene().positions()[(x,y)]
+                stations = self.view.scene().positions()[(x, y)]
                 for st in self._shown.difference(stations):
                     self._show_places.add(st.hideInfo())
                 for st in set(stations).difference(self._shown):
@@ -264,12 +264,12 @@ class MapView(QtGui.QGraphicsView):
             except:
                 pass
         pl = self.mapToLonLat(event.pos())
-     #   self.emit(SIGNAL('statusmsg'), p2str(pl) + ' ' + p2str(event.pos()))
+      #   self.emit(SIGNAL('statusmsg'), p2str(pl) + ' ' + p2str(event.pos()))
 
     def mouseDoubleClickEvent(self, event):
         if self._move_grid:
             p = self.mapToLonLat(event.pos())
-            self._grid_coord.append([p.y(), p.x()])     
+            self._grid_coord.append([p.y(), p.x()])
             self.delStation(self._station_to_move)
             self._station_to_move.grid_line = '(' + str(self._grid_coord[0][0]) + ',' + str(self._grid_coord[0][1]) + ')'
             for i in range(1, len(self._grid_coord)):
@@ -284,13 +284,13 @@ class MapView(QtGui.QGraphicsView):
                 else:
                     self.scene()._current_name.setBrush(QtGui.QColor(self.scene().colors['station_name']))
             self._move_grid = False
-            self._grid_start = None 
+            self._grid_start = None
             for itm in self._grid_line:
                 self.scene().removeItem(itm)
             self._grid_line = None
-            self._grid_coord = None 
-            self.scene().refreshGrid()    
-    
+            self._grid_coord = None
+            self.scene().refreshGrid()
+
     def mouseReleaseEvent(self, event):
         if QtCore.Qt.LeftButton == event.button():
             if self._move_grid:
@@ -304,7 +304,7 @@ class MapView(QtGui.QGraphicsView):
         self.zoomIn()
         self.zoomOut()
 
-    def show_Ruler(self, ruler, ruler_ticks=None, pos=None):   
+    def show_Ruler(self, ruler, ruler_ticks=None, pos=None):
         def do_ruler():
             if ruler_ticks is None or ruler_ticks <= 0:
                 ticks = int(ruler / 5.)
@@ -317,7 +317,7 @@ class MapView(QtGui.QGraphicsView):
             self.ruler_items.append(QtGui.QGraphicsLineItem(QtCore.QLineF(start, end)))
             self.ruler_items[-1].setPen(pen)
             self.ruler_items[-1].setZValue(0)
-            self.scene().addItem(self.ruler_items[-1])     
+            self.scene().addItem(self.ruler_items[-1])
             toll = self.destinationxy(frll.x(), frll.y(), 90, ruler)
             end = self.mapFromLonLat(toll)
             self.ruler_items.append(QtGui.QGraphicsLineItem(QtCore.QLineF(start, end)))
@@ -325,7 +325,7 @@ class MapView(QtGui.QGraphicsView):
             self.ruler_items[-1].setZValue(0)
             self.scene().addItem(self.ruler_items[-1])
             for i in range(ticks + 1):
-                strt = self.destinationxy(frll.x(), frll.y(), 90, ruler * i / ticks) 
+                strt = self.destinationxy(frll.x(), frll.y(), 90, ruler * i / ticks)
                 start = self.mapFromLonLat(strt)
                 toll = self.destinationxy(strt.x(), strt.y(), 0, ruler / 50)
                 end = self.mapFromLonLat(toll)
@@ -333,7 +333,7 @@ class MapView(QtGui.QGraphicsView):
                 self.ruler_items[-1].setPen(pen)
                 self.ruler_items[-1].setZValue(0)
                 self.scene().addItem(self.ruler_items[-1])
-            self.ruler_items.append(QtGui.QGraphicsSimpleTextItem(str(int(ruler))+' Km'))
+            self.ruler_items.append(QtGui.QGraphicsSimpleTextItem(str(int(ruler)) + ' Km'))
             new_font = self.ruler_items[-1].font()
             new_font.setPointSizeF(self.scene().width() / 90.)
             up = float(QtGui.QFontMetrics(new_font).height())
@@ -343,14 +343,14 @@ class MapView(QtGui.QGraphicsView):
             self.ruler_items[-1].setZValue(0)
             self.scene().addItem(self.ruler_items[-1])
             for i in range(ticks + 1):
-                strt = self.destinationxy(frll.x(), frll.y(), 0, ruler * i / ticks) 
+                strt = self.destinationxy(frll.x(), frll.y(), 0, ruler * i / ticks)
                 start = self.mapFromLonLat(strt)
                 toll = self.destinationxy(strt.x(), strt.y(), 90, ruler / 50)
                 end = self.mapFromLonLat(toll)
                 self.ruler_items.append(QtGui.QGraphicsLineItem(QtCore.QLineF(start, end)))
                 self.ruler_items[-1].setPen(pen)
                 self.ruler_items[-1].setZValue(0)
-                self.scene().addItem(self.ruler_items[-1])      
+                self.scene().addItem(self.ruler_items[-1])
         self.ruler_items = []
         if pos is None:
             p = QtCore.QPoint(50, self.height() - 50)
@@ -372,22 +372,22 @@ class MapView(QtGui.QGraphicsView):
                     c = ig.pixel(x, y)
                     colors = QtGui.QColor(c).getRgbF()
                     colorsum += (colors[0] + colors[1] + colors[2])
-            if colorsum <= 50.: # more black than white 
-                color.setNamedColor('white') 
+            if colorsum <= 50.:   # more black than white
+                color.setNamedColor('white')
             else:
                 color.setNamedColor('black')
         else:
-            color.setNamedColor(self.scene().colors['ruler']) 
+            color.setNamedColor(self.scene().colors['ruler'])
         pen = QtGui.QPen(color, 0)
         pen.setJoinStyle(QtCore.Qt.RoundJoin)
         pen.setCapStyle(QtCore.Qt.RoundCap)
-        do_ruler()       
+        do_ruler()
 
     def hide_Ruler(self):
         for i in range(len(self.ruler_items)):
             self.scene().removeItem(self.ruler_items[i])
         del self.ruler_items
-        
+
     def show_Legend(self, pos=None, where=None):
         self.legend_pos = pos
         if where is not None:
@@ -401,8 +401,8 @@ class MapView(QtGui.QGraphicsView):
                 continue
             if st.technology not in tech_sizes:
                 tech_sizes[st.technology] = 0.
-       #     if st.technology[:6] == 'Fossil' or st.technology == 'Rooftop PV':
-        #       continue
+        #     if st.technology[:6] == 'Fossil' or st.technology == 'Rooftop PV':
+         #       continue
             if st.technology == 'Wind':
                 tech_sizes[st.technology] += self.scene().areas[st.technology] * float(st.no_turbines) \
                                              * pow((st.rotor * .001), 2)
@@ -418,7 +418,7 @@ class MapView(QtGui.QGraphicsView):
             fh = int(QtGui.QFontMetrics(new_font).height() * 1.1)
             p = QtCore.QPointF(self.scene().lower_right[0] + fh, self.scene().upper_left[1] + fh)
             frll = self.scene().mapToLonLat(p)
-            p = self.mapFromLonLat(QtCore.QPointF(frll.x(), frll.y()))  
+            p = self.mapFromLonLat(QtCore.QPointF(frll.x(), frll.y()))
             p = QtCore.QPoint(p.x(), p.y())
         elif where is None:
             p = self.mapToScene(pos)
@@ -439,12 +439,12 @@ class MapView(QtGui.QGraphicsView):
                     c = ig.pixel(x, y)
                     colors = QtGui.QColor(c).getRgbF()
                     colorsum += (colors[0] + colors[1] + colors[2])
-            if colorsum <= 50.: # more black than white 
-                color.setNamedColor('white') 
+            if colorsum <= 50.:   # more black than white
+                color.setNamedColor('white')
             else:
                 color.setNamedColor('black')
         else:
-            color.setNamedColor(self.scene().colors['ruler']) 
+            color.setNamedColor(self.scene().colors['ruler'])
         pen = QtGui.QPen(color, 0)
         pen.setJoinStyle(QtCore.Qt.RoundJoin)
         pen.setCapStyle(QtCore.Qt.RoundCap)
@@ -461,16 +461,16 @@ class MapView(QtGui.QGraphicsView):
         tot_area = 0
         for key, value in iter(sorted(tech_sizes.iteritems())):
             tot_area += value
-            self.legend_items.append(QtGui.QGraphicsPolygonItem(QtGui.QPolygonF([QtCore.QPointF(p.x(), p.y() + int(fh * .45)), 
+            self.legend_items.append(QtGui.QGraphicsPolygonItem(QtGui.QPolygonF([QtCore.QPointF(p.x(), p.y() + int(fh * .45)),
                                      QtCore.QPointF(p.x() + int(fh * .4), p.y() + int(fh * .05)),
-                                     QtCore.QPointF(p.x() + int(fh * .8), p.y() + int(fh * .45)), 
+                                     QtCore.QPointF(p.x() + int(fh * .8), p.y() + int(fh * .45)),
                                      QtCore.QPointF(p.x() + int(fh * .4), p.y() + int(fh * .85)),
                                      QtCore.QPointF(p.x(), p.y() + int(fh * .45))])))
-         #   if self.scene().station_square:
-         #       self.legend_items.append(QtGui.QGraphicsRectItem(p.x(), p.y(), int(fh * .8), int(fh * .8)))
-         #   else:
-         #       self.legend_items.append(QtGui.QGraphicsEllipseItem(p.x(), p.y(), int(fh * .8), int(fh * .8)))
-            self.legend_items[-1].setBrush(QtGui.QColor(self.scene().colors[key]))	
+          #   if self.scene().station_square:
+          #       self.legend_items.append(QtGui.QGraphicsRectItem(p.x(), p.y(), int(fh * .8), int(fh * .8)))
+          #   else:
+          #       self.legend_items.append(QtGui.QGraphicsEllipseItem(p.x(), p.y(), int(fh * .8), int(fh * .8)))
+            self.legend_items[-1].setBrush(QtGui.QColor(self.scene().colors[key]))
             if self.scene().colors['border'] != '':
                 self.legend_items[-1].setPen(QtGui.QColor(self.scene().colors['border']))
             else:
@@ -491,7 +491,7 @@ class MapView(QtGui.QGraphicsView):
             else:
                 txt += 'generation in MWh'
             self.legend_items.append(QtGui.QGraphicsSimpleTextItem(txt))
-            new_font = self.legend_items[-1].font() 
+            new_font = self.legend_items[-1].font()
             new_font.setPointSizeF(self.scene().width() / 110.)
             fh = int(QtGui.QFontMetrics(new_font).height() * 1.1)
             self.legend_items[-1].setFont(new_font)
@@ -505,7 +505,7 @@ class MapView(QtGui.QGraphicsView):
                     avg_capacity = tot_capacity / tot_stns
                     last_yd = 0
                     while True:
-                        avg_capacity = round(avg_capacity, -(len(str(int(avg_capacity))) -1))
+                        avg_capacity = round(avg_capacity, -(len(str(int(avg_capacity))) - 1))
                         size = math.sqrt(avg_capacity * self.scene().capacity_area / math.pi)
                         frl = self.scene().mapToLonLat(p)
                         e = self.destinationxy(frl.x(), frl.y(), 90., size)
@@ -541,9 +541,9 @@ class MapView(QtGui.QGraphicsView):
             if self.scene().show_capacity or self.scene().show_generation:
                 txt += '(Inner) '
             txt += 'Circles'
-        txt += ' show\n estimated area in sq. Km' 
+        txt += ' show\n estimated area in sq. Km'
         self.legend_items.append(QtGui.QGraphicsSimpleTextItem(txt))
-        new_font = self.legend_items[-1].font() 
+        new_font = self.legend_items[-1].font()
         new_font.setPointSizeF(self.scene().width() / 110.)
         fh = int(QtGui.QFontMetrics(new_font).height() * 1.1)
         self.legend_items[-1].setFont(new_font)
@@ -561,7 +561,7 @@ class MapView(QtGui.QGraphicsView):
         self.scene().addItem(self.legend_items[-1])
         p.setY(p.y() + fh * 2)
         frl = self.scene().mapToLonLat(p)
-        for key, value in sorted(tech_sizes.iteritems(), key=lambda x: x[1]): 
+        for key, value in sorted(tech_sizes.iteritems(), key=lambda x: x[1]):
             size = math.sqrt(value)
             e = self.destinationxy(frl.x(), frl.y(), 90., size)
             s = self.destinationxy(frl.x(), frl.y(), 180., size)
@@ -572,7 +572,7 @@ class MapView(QtGui.QGraphicsView):
             x_d = pe.x() - p.x()
             y_d = ps.y() - p.y()
             self.legend_items.append(QtGui.QGraphicsRectItem(p.x(), p.y(), x_d, y_d))
-            self.legend_items[-1].setBrush(QtGui.QColor(self.scene().colors[key]))	
+            self.legend_items[-1].setBrush(QtGui.QColor(self.scene().colors[key]))
             if self.scene().colors['border'] != '':
                 self.legend_items[-1].setPen(QtGui.QColor(self.scene().colors['border']))
             else:
@@ -583,10 +583,10 @@ class MapView(QtGui.QGraphicsView):
         x = self.scene().upper_left[0]
         y = self.scene().upper_left[1]
         w = self.scene().lower_right[0]
-        h = self.scene().lower_right[1] 
-        self.scene().setSceneRect(-w * 0.05, -h * 0.05, w * 1.1, h * 1.1)  
+        h = self.scene().lower_right[1]
+        self.scene().setSceneRect(-w * 0.05, -h * 0.05, w * 1.1, h * 1.1)
         x = y = r = b = 0
-        for itm in self.legend_items: 
+        for itm in self.legend_items:
             if isinstance(itm, QtGui.QGraphicsSimpleTextItem):
                 xi = itm.pos().x()
                 yi = itm.pos().y()
@@ -611,7 +611,7 @@ class MapView(QtGui.QGraphicsView):
         y = round(y - h * 0.05, 1)
         r = round(r + w * 0.1, 1)
         b = round(b + h * 0.1, 1)
-        self.scene().setSceneRect(x, y, r, b)  
+        self.scene().setSceneRect(x, y, r, b)
 
     def hide_Legend(self, pos=None):
         for i in range(len(self.legend_items)):
@@ -623,7 +623,7 @@ class MapView(QtGui.QGraphicsView):
         y = self.scene().upper_left[1]
         w = self.scene().lower_right[0]
         h = self.scene().lower_right[1]
-        self.scene().setSceneRect(-w * 0.05, -h * 0.05, w * 1.1, h * 1.1) 
+        self.scene().setSceneRect(-w * 0.05, -h * 0.05, w * 1.1, h * 1.1)
 
     def clear_Trace(self):
         try:
@@ -655,7 +655,7 @@ class MapView(QtGui.QGraphicsView):
                           self.scene().load_centre[i][2], dims[0], dims[1])
                 if thisone < nearest:
                     nearest = thisone
-                    j = i  
+                    j = i
             path = Shortest(self.scene().lines.lines, self.scene().lines.lines[li].coordinates[0], \
                    [self.scene().load_centre[j][1], self.scene().load_centre[j][2]], self.scene().grid_lines)
             route = path.getPath()
@@ -673,11 +673,11 @@ class MapView(QtGui.QGraphicsView):
         st_scn = self.mapFromLonLat(QtCore.QPointF(route[0][1], route[0][0]))
         for i in range(1, len(route)):
             en_scn = self.mapFromLonLat(QtCore.QPointF(route[i][1], route[i][0]))
-            grid_path_len += self.scene().lines.actualDistance(route[i-1][0], route[i-1][1], route[i][0], route[i][1])
+            grid_path_len += self.scene().lines.actualDistance(route[i - 1][0], route[i - 1][1], route[i][0], route[i][1])
             self.trace_items.append(QtGui.QGraphicsLineItem(QtCore.QLineF(st_scn, en_scn)))
             self.trace_items[-1].setPen(pen)
             self.trace_items[-1].setZValue(3)
-            self.scene().addItem(self.trace_items[-1])      
+            self.scene().addItem(self.trace_items[-1])
             st_scn = en_scn
         return grid_path_len
 
@@ -712,7 +712,7 @@ class MapView(QtGui.QGraphicsView):
             self.resource_items = []
             lo_valu = 99999.
             hi_valu = 0.
-            calc_minmax=True
+            calc_minmax = True
             cells = []
             if resource_file[-4:] == '.xls' or resource_file[-5:] == '.xlsx':
                 var = {}
@@ -728,7 +728,7 @@ class MapView(QtGui.QGraphicsView):
                 curr_row = 1
                 if worksheet.cell_value(curr_row, var['Period']) == 'Min.' and \
                   worksheet.cell_value(curr_row + 1, var['Period']) == 'Max.':
-                    calc_minmax=False
+                    calc_minmax = False
                     lo_valu = worksheet.cell_value(curr_row, var[variable])
                     hi_valu = worksheet.cell_value(curr_row + 1, var[variable])
                     curr_row += 1
@@ -736,9 +736,9 @@ class MapView(QtGui.QGraphicsView):
                     curr_row += 1
                     a_lat = float(worksheet.cell_value(curr_row, var['Latitude']))
                     a_lon = float(worksheet.cell_value(curr_row, var['Longitude']))
-                    if in_map(a_lat - 0.25, a_lat + 0.25, self.scene().map_lower_right[0], 
+                    if in_map(a_lat - 0.25, a_lat + 0.25, self.scene().map_lower_right[0],
                               self.scene().map_upper_left[0]) \
-                      and in_map(a_lon - 0.3333, a_lon + 0.3333, 
+                      and in_map(a_lon - 0.3333, a_lon + 0.3333,
                               self.scene().map_upper_left[1], self.scene().map_lower_right[1]):
                         try:
                             if worksheet.cell_value(curr_row, var['Period']) == period:
@@ -758,9 +758,9 @@ class MapView(QtGui.QGraphicsView):
                 for cell in things:
                     a_lat = float(cell['Latitude'])
                     a_lon = float(cell['Longitude'])
-                    if in_map(a_lat - 0.25, a_lat + 0.25, self.scene().map_lower_right[0], 
+                    if in_map(a_lat - 0.25, a_lat + 0.25, self.scene().map_lower_right[0],
                               self.scene().map_upper_left[0]) \
-                      and in_map(a_lon - 0.3333, a_lon + 0.3333, 
+                      and in_map(a_lon - 0.3333, a_lon + 0.3333,
                               self.scene().map_upper_left[1], self.scene().map_lower_right[1]):
                         if cell['Period'] == period:
                             cells.append(cell['Latitude'], cell['Longitude'], cell[variable])
@@ -777,9 +777,9 @@ class MapView(QtGui.QGraphicsView):
             lo_colour = []
             hi_colour = []
             for i in range(3):
-                lo_1 = int(colours[0][i*2 + 1:i*2 + 3], base=16)
+                lo_1 = int(colours[0][i * 2 + 1:i * 2 + 3], base=16)
                 lo_colour.append(lo_1)
-                hi_1 = int(colours[-1][i*2 + 1:i*2 + 3], base=16)
+                hi_1 = int(colours[-1][i * 2 + 1:i * 2 + 3], base=16)
                 hi_colour.append(hi_1)
         lo_per = 99999.
         hi_per = 0.
@@ -792,7 +792,7 @@ class MapView(QtGui.QGraphicsView):
             lons = sorted(lons)
             lon_cell = (lons[1] - lons[0]) / 2.
             del lons
-        for cell in cells: 
+        for cell in cells:
             p = self.mapFromLonLat(QtCore.QPointF(cell[1] - lon_cell, cell[0] + .25))
             pe = self.mapFromLonLat(QtCore.QPointF(cell[1] + lon_cell, cell[0] + .25))
             ps = self.mapFromLonLat(QtCore.QPointF(cell[1] - lon_cell, cell[0] - .25))
@@ -801,18 +801,18 @@ class MapView(QtGui.QGraphicsView):
             y_d = ps.y() - p.y()
             self.resource_items.append(QtGui.QGraphicsRectItem(p.x(), p.y(), x_d, y_d))
             if steps > 0:
-                step = int(round((cell[2] - lo_valu) /  incr))
+                step = int(round((cell[2] - lo_valu) / incr))
                 a_colour = QtGui.QColor(colours[step])
             else:
                 colr = []
                 pct = (cell[2] - lo_valu) / (hi_valu - lo_valu)
-                for i in range(3): 
+                for i in range(3):
                     colr.append(((hi_colour[i] - lo_colour[i]) * pct + lo_colour[i]) / 255.)
                 a_colour = QtGui.QColor()
                 a_colour.setRgbF(colr[0], colr[1], colr[2])
             self.resource_items[-1].setBrush(a_colour)
             self.resource_items[-1].setPen(a_colour)
-            self.resource_items[-1].setOpacity(opacity)	
+            self.resource_items[-1].setOpacity(opacity)
             self.resource_items[-1].setZValue(1)
             self.scene().addItem(self.resource_items[-1])
             if cell[2] < lo_per:
@@ -820,11 +820,11 @@ class MapView(QtGui.QGraphicsView):
             if cell[2] > hi_per:
                 hi_per = cell[2]
         self.resource_range = [variable, period, lo_valu, hi_valu, lo_per, hi_per]
-        
-class MainWindow(QtGui.QMainWindow): 
+
+class MainWindow(QtGui.QMainWindow):
     mySignal = QtCore.pyqtSignal()
 
-    def get_config(self):    
+    def get_config(self):
         config = ConfigParser.RawConfigParser()
         if len(sys.argv) > 1:
             self.config_file = sys.argv[1]
@@ -883,11 +883,11 @@ class MainWindow(QtGui.QMainWindow):
             self.scenarios = self.scenarios.replace('$USER$', getUser())
             self.scenarios = self.scenarios.replace('$YEAR$', self.base_year)
             i = self.scenarios.rfind('/')
-            self.scenarios_filter = self.scenarios[i+1:]
+            self.scenarios_filter = self.scenarios[i + 1:]
             if self.scenarios_filter[-1] != '*':
                 self.scenarios_filter += '*'
-            self.scenarios = self.scenarios[:i+1]  
-        #    if sys.platform != 'win32' and sys.platform != 'cygwin':   
+            self.scenarios = self.scenarios[:i + 1]
+         #    if sys.platform != 'win32' and sys.platform != 'cygwin':
             matplotlib.rcParams['savefig.directory'] = self.scenarios
         except:
             self.scenarios = ''
@@ -900,7 +900,7 @@ class MainWindow(QtGui.QMainWindow):
             self.scenario = self.scenario.replace('$YEAR$', self.base_year)
         except:
             self.scenario = ''
-        str1 = self.scenarios_filter[:-1] # a bit of mucking about to remove duplicate leading/trailing chars
+        str1 = self.scenarios_filter[:-1]   # a bit of mucking about to remove duplicate leading/trailing chars
         str2 = str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'yyyy-MM-dd_hhmm')) + '.xls'
         ndx = 0
         for i in range(len(str1)):
@@ -973,7 +973,7 @@ class MainWindow(QtGui.QMainWindow):
     def __init__(self, scene):
         QtGui.QMainWindow.__init__(self)
         self.get_config()
-      #  self.setWindowFlags(QtCore.Qt.FramelessWindowHint)
+       #  self.setWindowFlags(QtCore.Qt.FramelessWindowHint)
         self.view = MapView(scene, self.zoom)
         self.view.scale(1., 1.)
         self._mv = self.view
@@ -983,7 +983,7 @@ class MainWindow(QtGui.QMainWindow):
 
         w = QtGui.QWidget()
         lay = QtGui.QVBoxLayout(w)
-        lay.addWidget(self.view) 
+        lay.addWidget(self.view)
         self.setCentralWidget(w)
 
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
@@ -1020,31 +1020,31 @@ class MainWindow(QtGui.QMainWindow):
         self.addExist.triggered.connect(self.addExisting)
         menubar = self.menuBar()
         self.fileMenu = menubar.addMenu('&Scenario')
-        self.fileMenu.addAction(openFile)        
-        self.fileMenu.addAction(addFile)     
-        self.subMenu = self.fileMenu.addMenu('Remove')     
+        self.fileMenu.addAction(openFile)
+        self.fileMenu.addAction(addFile)
+        self.subMenu = self.fileMenu.addMenu('Remove')
         self.subMenu2 = self.fileMenu.addMenu('Edit Descr.')
-        self.fileMenu.addAction(saveFile)      
-        self.fileMenu.addAction(savedFile)       
-        self.fileMenu.addAction(saveasFile)   
-        self.fileMenu.addAction(exitModel)   
-        self.fileMenu.addAction(quitModel)  
-        for scen_filter, chng, desc in self.view.scene()._scenarios:         
+        self.fileMenu.addAction(saveFile)
+        self.fileMenu.addAction(savedFile)
+        self.fileMenu.addAction(saveasFile)
+        self.fileMenu.addAction(exitModel)
+        self.fileMenu.addAction(quitModel)
+        for scen_filter, chng, desc in self.view.scene()._scenarios:
             subFile = QtGui.QAction(QtGui.QIcon('minus.png'), scen_filter, self)
             subFile.setStatusTip('Remove Scenario ' + scen_filter)
             subFile.triggered.connect(self.removeScenario)
-            self.subMenu.addAction(subFile)    
-            if scen_filter != 'Existing':    
+            self.subMenu.addAction(subFile)
+            if scen_filter != 'Existing':
                 subFile2 = QtGui.QAction(QtGui.QIcon('edit.png'), scen_filter, self)
                 subFile2.setStatusTip('Edit Description for ' + scen_filter)
                 subFile2.triggered.connect(self.editDescription)
                 self.subMenu2.addAction(subFile2)
         if not self.existing:
-            self.fileMenu.addAction(self.addExist)  
+            self.fileMenu.addAction(self.addExist)
         getPower = QtGui.QAction(QtGui.QIcon('power.png'), 'Power for ' + self.base_year, self)
         getPower.setShortcut('Ctrl+P')
         getPower.setStatusTip('Get Generation for ' + self.base_year)
-        getPower.triggered.connect(self.get_Power)  
+        getPower.triggered.connect(self.get_Power)
         listStations = QtGui.QAction(QtGui.QIcon('power-plant-icon.png'), 'List Stations', self)
         listStations.setStatusTip('List Stations')
         listStations.setShortcut('Ctrl+L')
@@ -1060,8 +1060,8 @@ class MainWindow(QtGui.QMainWindow):
         powerMenu = menubar.addMenu('&Power')
         powerMenu.addAction(getPower)
         if self.years is not None:
-            subPowerMenu = powerMenu.addMenu('&Power for year')  
-            for year in self.years:         
+            subPowerMenu = powerMenu.addMenu('&Power for year')
+            for year in self.years:
                 subPower = QtGui.QAction(QtGui.QIcon('power.png'), year, self)
                 subPower.triggered.connect(self.get_Power)
                 subPowerMenu.addAction(subPower)
@@ -1215,19 +1215,19 @@ class MainWindow(QtGui.QMainWindow):
         credit = QtGui.QAction(QtGui.QIcon('about.png'), 'Credits', self)
         credit.setShortcut('F2')
         credit.setStatusTip('Credits')
-        credit.triggered.connect(self.showCredits)     
-        windowMenu.addAction(credit)  
+        credit.triggered.connect(self.showCredits)
+        windowMenu.addAction(credit)
         windowMenu.addAction(self.showResource)
         if self.years is not None:
-            subWindowMenu = windowMenu.addMenu('Resource for year')  
-            for year in self.years:         
+            subWindowMenu = windowMenu.addMenu('Resource for year')
+            for year in self.years:
                 subResource = QtGui.QAction(QtGui.QIcon('grid.png'), year, self)
                 subResource.triggered.connect(self.show_Resource)
                 subWindowMenu.addAction(subResource)
-        windowMenu.addAction(self.showFloatLegend) 
-        windowMenu.addAction(self.showFloatMenu)  
-        windowMenu.addAction(self.showFloatStatus)  
-        self.credits = None 
+        windowMenu.addAction(self.showFloatLegend)
+        windowMenu.addAction(self.showFloatMenu)
+        windowMenu.addAction(self.showFloatStatus)
+        self.credits = None
         self.resource = None
         self.floatmenu = None
         self.floatlegend = None
@@ -1249,7 +1249,7 @@ class MainWindow(QtGui.QMainWindow):
                     else:
                         spawns.append(utilities[i] + '.exe')
                     icons.append(utilicon[i])
-                else: 
+                else:
                     if os.path.exists(utilities[i] + '.py'):
                         if utilini[i] and len(sys.argv) > 1:
                             spawns.append([utilities[i] + '.py', sys.argv[1]])
@@ -1288,13 +1288,13 @@ class MainWindow(QtGui.QMainWindow):
         about.setStatusTip('About')
         about.triggered.connect(self.showAbout)
         helpMenu = menubar.addMenu('&Help')
-        helpMenu.addAction(help)        
+        helpMenu.addAction(help)
         helpMenu.addAction(about)
-        
+
     def editIniFile(self):
         dialr = EdtDialog(self.config_file)
         dialr.exec_()
-        self.get_config() # refresh config values
+        self.get_config()   # refresh config values
         comment = self.config_file + ' edited. Reload may be required.'
         self.view.emit(SIGNAL('statusmsg'), comment)
 
@@ -1304,11 +1304,11 @@ class MainWindow(QtGui.QMainWindow):
                 el.setPen(QtGui.QColor(new_color))
             if el.brush().color().name() != '#000000':
                 el.setBrush(QtGui.QColor(new_color))
-        
+
     def editColours(self):
         dialr = Colours()
         dialr.exec_()
-      # refresh some config values
+       # refresh some config values
         config = ConfigParser.RawConfigParser()
         config.read(self.config_file)
         technologies = config.get('Power', 'technologies')
@@ -1348,12 +1348,12 @@ class MainWindow(QtGui.QMainWindow):
                 self.changeColours(colour, self.view.scene()._stationCircles[itm])
         comment = 'Colours edited. Reload may be required.'
         self.view.emit(SIGNAL('statusmsg'), comment)
-        
+
     def editTechs(self):
         EditTech(self.scenarios)
         comment = 'Technologies edited. Reload may be required.'
         self.view.emit(SIGNAL('statusmsg'), comment)
-        
+
     def editSects(self):
         config = ConfigParser.RawConfigParser()
         config.read(self.config_file)
@@ -1370,15 +1370,15 @@ class MainWindow(QtGui.QMainWindow):
             EditSect(section, self.scenarios)
             comment = section + ' Section edited. Reload may be required.'
             self.view.emit(SIGNAL('statusmsg'), comment)
-        
+
     def showStables(self):
-        fields=['capacity', 'cost per km', 'lines']
+        fields = ['capacity', 'cost per km', 'lines']
         if 'Substation' in self.sender().text():
             field = self.view.scene().lines.substation_costs
-            fields=['line', 'cost']
+            fields = ['line', 'cost']
         elif 'Costs' in self.sender().text():
             field = self.view.scene().lines.line_costs
-            fields=['line', 'cost per km']
+            fields = ['line', 'cost per km']
         elif 'Dispatchable' in self.sender().text():
             field = self.view.scene().lines.d_line_table
         else:
@@ -1398,14 +1398,14 @@ class MainWindow(QtGui.QMainWindow):
         return p
 
     def editDescription(self, scenario):
-        if scenario == False: # called from sub menu
+        if scenario == False:   # called from sub menu
             scenario = self.sender().text()
         if scenario == 'Existing':
-            return       
+            return
         for i in range(len(self.view.scene()._scenarios)):
             if self.view.scene()._scenarios[i][0] == scenario:
-                self.view.scene()._scenarios[i][2] = Description.getDescription(self.view.scene()._scenarios[i][0], 
-                                                     self.view.scene()._scenarios[i][2]) # get a description
+                self.view.scene()._scenarios[i][2] = Description.getDescription(self.view.scene()._scenarios[i][0],
+                                                     self.view.scene()._scenarios[i][2])   # get a description
                 self.view.scene()._scenarios[i][1] = True
                 break
         comment = 'Edited description for %s' % (scenario)
@@ -1413,21 +1413,21 @@ class MainWindow(QtGui.QMainWindow):
 
     def removeScenario(self, scenario):
         reshow_float = False
-        if scenario == False: # called from sub menu
+        if scenario == False:   # called from sub menu
             scenario = self.sender().text()
             try:
                 self.subMenu.removeAction(self.sender())
             except:
                 for act in self.subMenu.actions():
-                    if act.text() == self.sender().text(): 
+                    if act.text() == self.sender().text():
                         self.subMenu.removeAction(act)
                         reshow_float = True
                         break
             for act in self.subMenu2.actions():
-                if act.text() == self.sender().text(): 
+                if act.text() == self.sender().text():
                     self.subMenu2.removeAction(act)
                     break
-        for i in range(len(self.view.scene()._stations.stations) -1, -1, -1):
+        for i in range(len(self.view.scene()._stations.stations) - 1, -1, -1):
             if self.view.scene()._stations.stations[i].scenario == scenario:
                 self.delStation(self.view.scene()._stations.stations[i])
                 del self.view.scene()._stations.stations[i]
@@ -1439,37 +1439,37 @@ class MainWindow(QtGui.QMainWindow):
         if scenario == 'Existing':
             self.fileMenu.addAction(self.addExist)
             reshow_float = True
-        self.view.clear_Trace()  
+        self.view.clear_Trace()
         if reshow_float:
             self.reshow_FloatMenu()
         self.reshow_FloatLegend()
         if self.floatstatus:
-            self.floatstatus.emit(SIGNAL('scenarios'), self.view.scene()._scenarios) 
+            self.floatstatus.emit(SIGNAL('scenarios'), self.view.scene()._scenarios)
         comment = 'Removed scenario %s' % (scenario)
         self.view.emit(SIGNAL('statusmsg'), comment)
 
-    def delStation(self, st): # remove stations graphic items
+    def delStation(self, st):  # remove stations graphic items
         if self.view.scene()._current_name.text() == st.name:
             self.view.scene()._current_name.setText('')
-        try: # ignore error to cater for duplicate station names in different scenarios	
+        try:  # ignore error to cater for duplicate station names in different scenarios
             for itm in self.view.scene()._stationGroups[st.name]:
-            #    if isinstance(self._stationGroups[self.lines.lines[i].name][j], QtGui.QGraphicsLineItem):
+             #    if isinstance(self._stationGroups[self.lines.lines[i].name][j], QtGui.QGraphicsLineItem):
                 try:
-                    self.view.scene().removeItem(itm) # here's the error
+                    self.view.scene().removeItem(itm)  # here's the error
                 except:
                     self.scene().removeItem(itm)
             del self.view.scene()._stationGroups[st.name]
         except:
-            pass 
-        for i in range(len(self.view.scene().lines.lines) -1, -1, -1):
+            pass
+        for i in range(len(self.view.scene().lines.lines) - 1, -1, -1):
             if self.view.scene().lines.lines[i].name == st.name:
-                del self.view.scene().lines.lines[i] 
+                del self.view.scene().lines.lines[i]
 
     def saveScenariod(self):
         for i in range(len(self.view.scene()._scenarios)):
             if self.view.scene()._scenarios[i][1]:
-                self.view.scene()._scenarios[i][2] = Description.getDescription(self.view.scene()._scenarios[i][0], 
-                                                     self.view.scene()._scenarios[i][2]) # get a description
+                self.view.scene()._scenarios[i][2] = Description.getDescription(self.view.scene()._scenarios[i][0],
+                                                     self.view.scene()._scenarios[i][2])  # get a description
         self.saveScenario()
 
     def saveScenario(self):
@@ -1479,11 +1479,11 @@ class MainWindow(QtGui.QMainWindow):
                 for stn in self.view.scene()._stations.stations:
                     if stn.scenario == self.view.scene()._scenarios[i][0]:
                         break
-                else: # don't save empty scenario
+                else:  # don't save empty scenario
                     continue
                 self.writeStations(self.view.scene()._scenarios[i][0], self.view.scene()._scenarios[i][2])
                 comment += self.view.scene()._scenarios[i][0] + ' '
-                self.view.scene()._scenarios[i][1] = False   
+                self.view.scene()._scenarios[i][1] = False
         self.view.emit(SIGNAL('statusmsg'), comment)
 
     def saveAsScenario(self):
@@ -1494,14 +1494,14 @@ class MainWindow(QtGui.QMainWindow):
         else:
             i = self.scenarios_filter.find('*')
             prefix = self.scenarios_filter[:i]
-            suffix = self.scenarios_filter[i+1:]
+            suffix = self.scenarios_filter[i + 1:]
             new = False
-        fname = QtGui.QFileDialog.getSaveFileName(self, 'Save scenario file', 
-                self.scenarios + prefix, 'Scenarios (' + self.scenarios_filter + ')') 
+        fname = QtGui.QFileDialog.getSaveFileName(self, 'Save scenario file',
+                self.scenarios + prefix, 'Scenarios (' + self.scenarios_filter + ')')
         if fname != '':
             fname = str(fname)
             i = fname.rfind('/')
-            save_as = fname[i+1:]
+            save_as = fname[i + 1:]
             if not new:
                 if save_as[:len(prefix)] != prefix:
                     save_as = prefix + save_as
@@ -1512,13 +1512,13 @@ class MainWindow(QtGui.QMainWindow):
                 if self.view.scene()._scenarios[i][0] == save_as:
                     desc = self.view.scene()._scenarios[i][2]
                     break
-            description = Description.getDescription(save_as, desc) # get a description
+            description = Description.getDescription(save_as, desc)  # get a description
             for i in range(len(self.view.scene()._stations.stations)):
                 if self.view.scene()._stations.stations[i].scenario != 'Existing':
                     self.view.scene()._stations.stations[i].scenario = save_as
             self.writeStations(save_as, description)
             exist = False
-            for i in range(len(self.view.scene()._scenarios) -1, -1, -1):
+            for i in range(len(self.view.scene()._scenarios) - 1, -1, -1):
                 if self.view.scene()._scenarios[i][0] == 'Existing':
                     exist = True
                 else:
@@ -1528,60 +1528,60 @@ class MainWindow(QtGui.QMainWindow):
             subFile = QtGui.QAction(QtGui.QIcon('minus.png'), save_as, self)
             subFile.setStatusTip('Remove Scenario ' + save_as)
             subFile.triggered.connect(self.removeScenario)
-            self.subMenu.addAction(subFile) 
+            self.subMenu.addAction(subFile)
             if exist:
                 subFile = QtGui.QAction(QtGui.QIcon('minus.png'), 'Existing', self)
                 subFile.setStatusTip('Remove Scenario Existing')
-                subFile.triggered.connect(self.removeScenario) 
+                subFile.triggered.connect(self.removeScenario)
                 self.subMenu.addAction(subFile)
             self.subMenu2.clear()
             subFile2 = QtGui.QAction(QtGui.QIcon('edit.png'), save_as, self)
             subFile2.setStatusTip('Edit Description for ' + save_as)
             subFile2.triggered.connect(self.editDescription)
-            self.subMenu2.addAction(subFile2) 
+            self.subMenu2.addAction(subFile2)
             if self.floatstatus:
-                self.floatstatus.emit(SIGNAL('scenarios'), self.view.scene()._scenarios) 
+                self.floatstatus.emit(SIGNAL('scenarios'), self.view.scene()._scenarios)
             self.reshow_FloatMenu()
-            comment = 'Saved as scenario: ' + save_as   
-            self.view.emit(SIGNAL('statusmsg'), comment)    
+            comment = 'Saved as scenario: ' + save_as
+            self.view.emit(SIGNAL('statusmsg'), comment)
 
     def addExisting(self):
         stations = Stations()
         for st in stations.stations:
             self.view.scene()._stations.stations.append(st)
-            self.view.scene().addStation(st)      
+            self.view.scene().addStation(st)
         self.view.scene()._scenarios.append(['Existing', False, 'Existing stations'])
         try:
             self.fileMenu.removeAction(self.sender())
         except:
             for act in self.fileMenu.actions():
-                if act.text() == self.sender().text(): 
+                if act.text() == self.sender().text():
                     self.fileMenu.removeAction(act)
-                    break  
+                    break
         subFile = QtGui.QAction(QtGui.QIcon('minus.png'), 'Existing', self)
         subFile.setStatusTip('Remove Scenario Existing')
         subFile.triggered.connect(self.removeScenario)
         self.subMenu.addAction(subFile)
         self.reshow_FloatMenu()
-        self.reshow_FloatLegend() 
+        self.reshow_FloatLegend()
         if self.floatstatus:
-            self.floatstatus.emit(SIGNAL('scenarios'), self.view.scene()._scenarios) 
+            self.floatstatus.emit(SIGNAL('scenarios'), self.view.scene()._scenarios)
         self.view.emit(SIGNAL('statusmsg'), 'Added Existing stations')
-            
+
     def addScenario(self):
-        fname = QtGui.QFileDialog.getOpenFileName(self, 'Open scenario file', 
-                self.scenarios, 'Scenarios (' + self.scenarios_filter + ')') 
+        fname = QtGui.QFileDialog.getOpenFileName(self, 'Open scenario file',
+                self.scenarios, 'Scenarios (' + self.scenarios_filter + ')')
         fname = str(fname)
         if os.path.exists(fname):
             if self.sender().text() == 'Open':
-                for i in range(len(self.view.scene()._scenarios) -1, -1, -1):
+                for i in range(len(self.view.scene()._scenarios) - 1, -1, -1):
                     scen = self.view.scene()._scenarios[i][0]
                     self.removeScenario(scen)
                 self.subMenu.clear()
                 self.subMenu2.clear()
             self.view.scene()._setupScenario(fname)
             i = fname.rfind('/')
-            scen_filter = fname[i+1:]
+            scen_filter = fname[i + 1:]
             comment = 'Added scenario %s' % (scen_filter)
             subFile = QtGui.QAction(QtGui.QIcon('minus.png'), scen_filter, self)
             subFile.setStatusTip('Remove Scenario ' + scen_filter)
@@ -1592,9 +1592,9 @@ class MainWindow(QtGui.QMainWindow):
             subFile2.triggered.connect(self.editDescription)
             self.subMenu2.addAction(subFile2)
             self.reshow_FloatMenu()
-            self.reshow_FloatLegend() 
+            self.reshow_FloatLegend()
             if self.floatstatus:
-                self.floatstatus.emit(SIGNAL('scenarios'), self.view.scene()._scenarios) 
+                self.floatstatus.emit(SIGNAL('scenarios'), self.view.scene()._scenarios)
             self.altered_stations = True
             self.view.emit(SIGNAL('statusmsg'), comment)
 
@@ -1621,7 +1621,7 @@ class MainWindow(QtGui.QMainWindow):
                          QtCore.Qt.WindowMinMaxButtonsHint)
             self.credits.procStart.connect(self.getCredits)
             self.credits.show()
-    #        self.credits.exec_()
+     #        self.credits.exec_()
 
     @QtCore.pyqtSlot(str)
     def getCredits(self, text):
@@ -1642,20 +1642,20 @@ class MainWindow(QtGui.QMainWindow):
             self.floatstatus.setWindowModality(QtCore.Qt.WindowModal)
             self.floatstatus.setWindowFlags(self.floatstatus.windowFlags() |
                          QtCore.Qt.WindowSystemMenuHint |
-                         QtCore.Qt.WindowMinMaxButtonsHint) 
-            self.floatstatus.procStart.connect(self.getStatus)  
-            if  self.log_status:         
-                self.connect(self.floatstatus, SIGNAL('log'), self.floatstatus.log)          
+                         QtCore.Qt.WindowMinMaxButtonsHint)
+            self.floatstatus.procStart.connect(self.getStatus)
+            if self.log_status:
+                self.connect(self.floatstatus, SIGNAL('log'), self.floatstatus.log)
             self.connect(self.floatstatus, SIGNAL('scenarios'), self.floatstatus.updateScenarios)
             self.floatstatus.show()
             self.activateWindow()
-    #        self.credits.exec_()
-    
+     #        self.credits.exec_()
+
     @QtCore.pyqtSlot(str)
     def getStatus(self, text):
         if text == 'goodbye':
             self.floatstatus = None
-            
+
     def showAbout(self):
         dialog = displayobject.AnObject(QtGui.QDialog(), self.aboutfile, title='About SENs SAM Model')
         dialog.exec_()
@@ -1668,7 +1668,7 @@ class MainWindow(QtGui.QMainWindow):
                 self.floatstatus.emit(SIGNAL('log'), '%s. %s' % \
                             (str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), \
                             'hh:mm:ss')), text))
-     #   self.statusBar().clearMessage()
+      #   self.statusBar().clearMessage()
         self.statusBar().showMessage(text)
 
     def go_To(self):
@@ -1682,7 +1682,7 @@ class MainWindow(QtGui.QMainWindow):
         try:
             self.icons
         except:
-            self.icons = Icons()    
+            self.icons = Icons()
         if stns_to_show > 25:
             submenus = []
             submenus.append(QtGui.QMenu('A...'))
@@ -1698,14 +1698,14 @@ class MainWindow(QtGui.QMainWindow):
                 stns.append(submenus[-1].addAction(QtGui.QIcon(icon), station.name))
                 stns[-1].setIconVisibleInMenu(True)
                 ctr += 1
-                if ctr > 25 :
+                if ctr > 25:
                     titl += station.name
                     submenus[-1].setTitle(titl)
                     titl = ''
                     menu.addMenu(submenus[-1])
-                    submenus.append(QtGui.QMenu(station.name[0]+'...'))
+                    submenus.append(QtGui.QMenu(station.name[0] + '...'))
                     ctr = 0
-                last_stn = station.name 
+                last_stn = station.name
             titl += last_stn
             submenus[-1].setTitle(titl)
             menu.addMenu(submenus[-1])
@@ -1727,20 +1727,20 @@ class MainWindow(QtGui.QMainWindow):
             if not self.view.scene().show_station_name:
                 self.view.scene()._current_name.setText(station.name)
                 pp = self.mapFromLonLat(QtCore.QPointF(station.lon, station.lat))
-                self.view.scene()._current_name.setPos(pp + QtCore.QPointF(1.5,-0.5))
+                self.view.scene()._current_name.setPos(pp + QtCore.QPointF(1.5, -0.5))
                 if station.technology[:6] == 'Fossil':
                     self.view.scene()._current_name.setBrush(QtGui.QColor(self.view.scene().colors['fossil_name']))
                 else:
                     self.view.scene()._current_name.setBrush(QtGui.QColor(self.view.scene().colors['station_name']))
 # highlight grid line
-            comment = '(%s,%s) Centred on station %s' % ('{:0.4f}'.format(station.lat), '{:0.4f}'.format(station.lon) , \
+            comment = '(%s,%s) Centred on station %s' % ('{:0.4f}'.format(station.lat), '{:0.4f}'.format(station.lon), \
                           station.name)
-            self.view.emit(SIGNAL('statusmsg'), comment)   
+            self.view.emit(SIGNAL('statusmsg'), comment)
 
     def go_ToTown(self):
-    #   to cater for windows I've created submenus
+     #   to cater for windows I've created submenus
         menu = QtGui.QMenu()
-        twns = []	
+        twns = []
         submenus = []
         submenus.append(QtGui.QMenu('A...'))
         titl = ''
@@ -1751,12 +1751,12 @@ class MainWindow(QtGui.QMainWindow):
             twns.append(submenus[-1].addAction(town.name))
             twns[-1].setIconVisibleInMenu(True)
             ctr += 1
-            if ctr > 25 :
+            if ctr > 25:
                 titl += town.name
                 submenus[-1].setTitle(titl)
                 titl = ''
                 menu.addMenu(submenus[-1])
-                submenus.append(QtGui.QMenu(town.name[0]+'...'))
+                submenus.append(QtGui.QMenu(town.name[0] + '...'))
                 ctr = 0
         titl += town.name
         submenus[-1].setTitle(titl)
@@ -1768,9 +1768,9 @@ class MainWindow(QtGui.QMainWindow):
             town = self.view.scene()._towns.Get_Town(action.text())
             go_to = self.mapFromLonLat(QtCore.QPointF(town.lon, town.lat))
             self.view.centerOn(go_to)
-            comment = '(%s,%s) Centred on town %s' % ('{:0.4f}'.format(town.lon), '{:0.4f}'.format(town.lat) , \
+            comment = '(%s,%s) Centred on town %s' % ('{:0.4f}'.format(town.lon), '{:0.4f}'.format(town.lat), \
                           town.name)
-            self.view.emit(SIGNAL('statusmsg'), comment)   
+            self.view.emit(SIGNAL('statusmsg'), comment)
 
     def go_ToLoad(self):
         if len(self.view.scene().load_centre) == 1:
@@ -1780,7 +1780,7 @@ class MainWindow(QtGui.QMainWindow):
             ctrs = []
             for ctr in self.view.scene().load_centre:
                 ctrs.append(menu.addAction(ctr[0]))
-          #      ctrs[-1].setIconVisibleInMenu(True)
+           #      ctrs[-1].setIconVisibleInMenu(True)
             x = self.frameGeometry().left() + 50
             y = self.frameGeometry().y() + 50
             action = menu.exec_(QtCore.QPoint(x, y))
@@ -1796,7 +1796,7 @@ class MainWindow(QtGui.QMainWindow):
                       '{:0.4f}'.format(self.view.scene().load_centre[j][1]), \
                       '{:0.4f}'.format(self.view.scene().load_centre[j][2]), \
                       self.view.scene().load_centre[j][0])
-            self.view.emit(SIGNAL('statusmsg'), comment)   
+            self.view.emit(SIGNAL('statusmsg'), comment)
 
     def save_View(self):
         outputimg = QtGui.QPixmap(self.view.width(), self.view.height())
@@ -1805,7 +1805,7 @@ class MainWindow(QtGui.QMainWindow):
         sourcerect = QtCore.QRect(0, 0, self.view.width(), self.view.height())
         self.view.render(painter, targetrect, sourcerect)
         fname = self.new_scenario[:self.new_scenario.rfind('.')] + '.png'
-        fname = QtGui.QFileDialog.getSaveFileName(self, 'Save image file', 
+        fname = QtGui.QFileDialog.getSaveFileName(self, 'Save image file',
                 self.scenarios + fname, 'Image Files (*.png *.jpg *.bmp)')
         if fname != '':
             fname = str(fname)
@@ -1813,9 +1813,9 @@ class MainWindow(QtGui.QMainWindow):
             if i < 0:
                 fname = fname + '.png'
                 i = fname.rfind('.')
-            outputimg.save(fname, fname[i+1:])
+            outputimg.save(fname, fname[i + 1:])
             try:
-                comment = 'View saved to ' + fname[fname.rfind('/')+1:]
+                comment = 'View saved to ' + fname[fname.rfind('/') + 1:]
             except:
                 comment = 'View saved to ' + fname
             self.view.emit(SIGNAL('statusmsg'), comment)
@@ -1847,7 +1847,7 @@ class MainWindow(QtGui.QMainWindow):
     def popup(self, pos):
         def check_scenario():
             self.altered_stations = True
-            station = self.view.scene()._stations.stations[-1] # point to last station
+            station = self.view.scene()._stations.stations[-1]  # point to last station
             for i in range(len(self.view.scene()._scenarios)):
                 if self.view.scene()._scenarios[i][0] == station.scenario:
                     self.view.scene()._scenarios[i][1] = True
@@ -1862,9 +1862,9 @@ class MainWindow(QtGui.QMainWindow):
                 subFile2.setStatusTip('Edit Description for ' + station.scenario)
                 subFile2.triggered.connect(self.editDescription)
                 self.subMenu2.addAction(subFile2)
-                self.reshow_FloatMenu() 
+                self.reshow_FloatMenu()
                 if self.floatstatus:
-                    self.floatstatus.emit(SIGNAL('scenarios'), self.view.scene()._scenarios) 
+                    self.floatstatus.emit(SIGNAL('scenarios'), self.view.scene()._scenarios)
                 self.altered_stations = True
                 self.view.scene()._scenarios[-1][1] = True
             self.reshow_FloatLegend()
@@ -1872,12 +1872,12 @@ class MainWindow(QtGui.QMainWindow):
         where = self.view.mapToLonLat(pos)
         menu = QtGui.QMenu()
         station = None
-        if len(self.view.scene()._stations.stations) > 0: # some stations
+        if len(self.view.scene()._stations.stations) > 0:  # some stations
             station, st_dist = self.view.scene()._stations.Nearest(where.y(), where.x(), \
             distance=True, fossil=self.view.scene().show_fossil)
             titl = 'Nearest station: %s (%s MW; %s Km away)' % (station.name, '{:0.0f}'.format(station.capacity), \
                    '{:0.0f}'.format(st_dist))
-        #    act1 = 'Run SAM API (%s)' % model
+         #    act1 = 'Run SAM API (%s)' % model
             if station.technology == 'Hydro' or station.technology == 'Wave' or station.technology[:5] == 'Other':
                 act2 = 'Run Power Model for %s' % station.name
             else:
@@ -1902,7 +1902,7 @@ class MainWindow(QtGui.QMainWindow):
         act10 = 'Position ruler here'
         act11 = 'Position legend here'
         act14 = 'Show weather for here'
-        if station is not None: # a stations
+        if station is not None:  # a stations
             noAction = menu.addAction(titl)
             if station.technology[:6] != 'Fossil':
                 run1Action = menu.addAction(QtGui.QIcon('power.png'), act2)
@@ -2025,7 +2025,7 @@ class MainWindow(QtGui.QMainWindow):
                             chg_station.name = new_name
                     self.delStation(station)
                     for atr in dir(chg_station):
-                        if atr[:2] != '__' and atr[-2:] !=  '__':
+                        if atr[:2] != '__' and atr[-2:] != '__':
                             setattr(station, atr, getattr(chg_station, atr))
                     self.view.scene().addStation(station)
                     self.altered_stations = True
@@ -2046,7 +2046,7 @@ class MainWindow(QtGui.QMainWindow):
                 self.view.emit(SIGNAL('statusmsg'), 'Grid traced for %s (%s Km)' % (station.name, \
                               '{:0.1f}'.format(grid_path_len)))
             except:
-                self.view.emit(SIGNAL('statusmsg'), 'No Grid line for %s' % station.name)  
+                self.view.emit(SIGNAL('statusmsg'), 'No Grid line for %s' % station.name)
         elif action == run1Action:
             power = PowerModel([station])
             generated = power.getValues()
@@ -2054,7 +2054,7 @@ class MainWindow(QtGui.QMainWindow):
             comment = 'Power plot completed for %s. %s MWh; CF %s' % (station.name, \
                       '{:0,.1f}'.format(generated[0].generation), \
                       '{:0.2f}'.format(generated[0].cf))
-            self.view.emit(SIGNAL('statusmsg'), comment) 
+            self.view.emit(SIGNAL('statusmsg'), comment)
         elif action == cpyAction:
             self.view.clear_Trace()
             new_station = Station(station.name + ' 2', station.technology, station.lat, \
@@ -2076,7 +2076,7 @@ class MainWindow(QtGui.QMainWindow):
                     else:
                         name_ok = True
                     if new_name != new_station.name:
-                        new_station.name = new_name  
+                        new_station.name = new_name
                 self.view.scene()._stations.stations.append(new_station)
                 self.view.scene().addStation(new_station)
                 where.x = new_station.lon
@@ -2113,7 +2113,7 @@ class MainWindow(QtGui.QMainWindow):
             p = self.mapFromLonLat(QtCore.QPointF(station.lon, station.lat))
             comment = 'Removed station %s (%s,%s) ' % (station.name, \
                       '{:0.4f}'.format(station.lat), '{:0.4f}'.format(station.lon))
-            for i in range(len(self.view.scene()._stations.stations) -1, -1, -1):
+            for i in range(len(self.view.scene()._stations.stations) - 1, -1, -1):
                 if self.view.scene()._stations.stations[i].name == station.name:
                     self.delStation(self.view.scene()._stations.stations[i])
                     for j in range(len(self.view.scene()._scenarios)):
@@ -2130,14 +2130,14 @@ class MainWindow(QtGui.QMainWindow):
             self.view.clear_Trace()
             p = self.mapFromLonLat(QtCore.QPointF(station.lon, station.lat))
             self.view._move_grid = True
-            self.view._grid_start  = p
-            self.view._station_to_move = station         
+            self.view._grid_start = p
+            self.view._station_to_move = station
             self.altered_stations = True
             for i in range(len(self.view.scene()._scenarios)):
                 if self.view.scene()._scenarios[i][0] == station.scenario:
                     self.view.scene()._scenarios[i][1] = True
-                    break   
-            self.view.emit(SIGNAL('statusmsg'), 'Edit Grid Line for ' + station.name + '. Double-click to finish')   
+                    break
+            self.view.emit(SIGNAL('statusmsg'), 'Edit Grid Line for ' + station.name + '. Double-click to finish')
 
     def get_Power(self):
         if self.sender().text()[:4] == 'Powe':
@@ -2149,11 +2149,11 @@ class MainWindow(QtGui.QMainWindow):
             station = self.view.scene()._stations.Get_Station(stn.name)
             station.generation = stn.generation
             self.view.scene().addGeneration(station)
-        comment = 'Power plot completed' 
+        comment = 'Power plot completed'
         pct = power.getPct()
         if pct is not None:
             comment += ' (generation meets ' + pct[2:]
-        self.view.emit(SIGNAL('statusmsg'), comment)   
+        self.view.emit(SIGNAL('statusmsg'), comment)
 
     def list_Stations(self):
         ctr = [0, 0]
@@ -2164,19 +2164,19 @@ class MainWindow(QtGui.QMainWindow):
                     ctr[1] += 1
         fields = ['name', 'technology', 'capacity']
         units = 'capacity=MW'
-        sumfields = ['capacity']    
+        sumfields = ['capacity']
         if ctr[1] > 1:
             fields.append('generation')
             units += ' generation=MWh'
-            sumfields.append('generation')        
+            sumfields.append('generation')
         fields.append('scenario')
         dialog = displaytable.Table(self.view.scene()._stations.stations, \
                  fossil=self.view.scene().show_fossil, fields=fields, \
                  units=units, sumby='technology', sumfields=sumfields, \
                  save_folder=self.scenarios)
         dialog.exec_()
-        comment = 'Stations Displayed' 
-        self.view.emit(SIGNAL('statusmsg'), comment)   
+        comment = 'Stations Displayed'
+        self.view.emit(SIGNAL('statusmsg'), comment)
 
     def list_Grid(self):
         if self.view.scene().cost_existing:
@@ -2215,13 +2215,13 @@ class MainWindow(QtGui.QMainWindow):
                          'peak_loss', 'coordinates', 'connector'], \
                  units='length=Km line_cost=$ substation_cost=$ peak_load=MW peak_dispatchable=MW peak_loss=MW', \
                  sumfields=['length', 'line_cost', 'substation_cost'], \
-                 save_folder=self.scenarios) # '#', 'connector', 
+                 save_folder=self.scenarios)  # '#', 'connector',
         dialog.exec_()
-        comment = 'Grid Displayed' 
+        comment = 'Grid Displayed'
         self.view.emit(SIGNAL('statusmsg'), comment)
 
     def show_Capacity(self):
-        comment = 'Capacity Circles Toggled' 
+        comment = 'Capacity Circles Toggled'
         if self.view.scene().show_capacity:
             self.showCapacity.setIcon(QtGui.QIcon('blank.png'))
             self.view.scene().show_capacity = False
@@ -2236,10 +2236,10 @@ class MainWindow(QtGui.QMainWindow):
                 self.view.scene()._fcapacityGroup.setVisible(True)
             comment += ' On'
         self.reshow_FloatLegend()
-        self.view.emit(SIGNAL('statusmsg'), comment) 
+        self.view.emit(SIGNAL('statusmsg'), comment)
 
     def show_Generation(self):
-        comment = 'Generation Circles Toggled' 
+        comment = 'Generation Circles Toggled'
         if self.view.scene().show_generation:
             self.showGeneration.setIcon(QtGui.QIcon('blank.png'))
             self.view.scene().show_generation = False
@@ -2251,10 +2251,10 @@ class MainWindow(QtGui.QMainWindow):
             self.view.scene()._generationGroup.setVisible(True)
             comment += ' On'
         self.reshow_FloatLegend()
-        self.view.emit(SIGNAL('statusmsg'), comment) 
+        self.view.emit(SIGNAL('statusmsg'), comment)
 
     def show_Fossil(self):
-        comment = 'Fossil-fueled Stations Toggled' 
+        comment = 'Fossil-fueled Stations Toggled'
         if self.view.scene().show_fossil:
             self.showFossil.setIcon(QtGui.QIcon('blank.png'))
             self.view.scene().show_fossil = False
@@ -2272,10 +2272,10 @@ class MainWindow(QtGui.QMainWindow):
                 self.view.scene()._fnameGroup.setVisible(True)
             comment += ' On'
         self.reshow_FloatLegend()
-        self.view.emit(SIGNAL('statusmsg'), comment) 
+        self.view.emit(SIGNAL('statusmsg'), comment)
 
     def show_Towns(self):
-        comment = 'Towns Toggled' 
+        comment = 'Towns Toggled'
         if self.view.scene().show_towns:
             self.showTowns.setIcon(QtGui.QIcon('blank.png'))
             self.view.scene().show_towns = False
@@ -2286,10 +2286,10 @@ class MainWindow(QtGui.QMainWindow):
             self.view.scene().show_towns = True
             self.view.scene()._townGroup.setVisible(True)
             comment += ' On'
-        self.view.emit(SIGNAL('statusmsg'), comment) 
+        self.view.emit(SIGNAL('statusmsg'), comment)
 
     def show_OldGrid(self):
-        comment = 'Existing Grid Toggled' 
+        comment = 'Existing Grid Toggled'
         if self.view.scene().existing_grid:
             self.showOldg.setIcon(QtGui.QIcon('blank.png'))
             self.view.scene().existing_grid = False
@@ -2300,10 +2300,10 @@ class MainWindow(QtGui.QMainWindow):
             self.view.scene().existing_grid = True
             self.view.scene()._gridGroup.setVisible(True)
             comment += ' On'
-        self.view.emit(SIGNAL('statusmsg'), comment) 
+        self.view.emit(SIGNAL('statusmsg'), comment)
 
     def show_OldGrid2(self):
-        comment = 'Existing Grid2 Toggled' 
+        comment = 'Existing Grid2 Toggled'
         if self.view.scene().existing_grid2:
             self.showOldg2.setIcon(QtGui.QIcon('blank.png'))
             self.view.scene().existing_grid2 = False
@@ -2314,22 +2314,22 @@ class MainWindow(QtGui.QMainWindow):
             self.view.scene().existing_grid2 = True
             self.view.scene()._gridGroup2.setVisible(True)
             comment += ' On'
-        self.view.emit(SIGNAL('statusmsg'), comment) 
+        self.view.emit(SIGNAL('statusmsg'), comment)
 
     def clear_Trace(self):
         self.view.clear_Trace()
-        self.view.emit(SIGNAL('statusmsg'), 'Grid Trace cleared') 
+        self.view.emit(SIGNAL('statusmsg'), 'Grid Trace cleared')
 
     def refresh_Grid(self):
         self.view.clear_Trace()
         self.view.scene().refreshGrid()
-        self.view.emit(SIGNAL('statusmsg'), 'Grid Refreshed') 
+        self.view.emit(SIGNAL('statusmsg'), 'Grid Refreshed')
 
     def show_Grid(self):
         self.view.clear_Trace()
         menu = QtGui.QMenu()
         lins = []
-      #  for li in range(len(self.view.scene().lines.lines)): #.grid_lines):
+       #  for li in range(len(self.view.scene().lines.lines)): #.grid_lines):
         for li in range(self.view.scene().grid_lines):
             lins.append(menu.addAction(self.view.scene().lines.lines[li].name))
             lins[-1].setIconVisibleInMenu(True)
@@ -2353,22 +2353,22 @@ class MainWindow(QtGui.QMainWindow):
                 self.view.emit(SIGNAL('statusmsg'), 'No Grid line for %s' % action.text())
 
     def show_Ruler(self):
-        comment = 'Scale Ruler Toggled' 
-        if self.view.scene().show_ruler:       
-            self.view.hide_Ruler() 
+        comment = 'Scale Ruler Toggled'
+        if self.view.scene().show_ruler:
+            self.view.hide_Ruler()
             self.showRuler.setIcon(QtGui.QIcon('blank.png'))
             self.view.scene().show_ruler = False
             comment += ' Off'
         else:
-            self.view.show_Ruler(self.view.scene().ruler, self.view.scene().ruler_ticks) 
+            self.view.show_Ruler(self.view.scene().ruler, self.view.scene().ruler_ticks)
             self.showRuler.setIcon(QtGui.QIcon(self.check_icon))
             self.view.scene().show_ruler = True
             comment += ' On'
-        self.view.emit(SIGNAL('statusmsg'), comment) 
+        self.view.emit(SIGNAL('statusmsg'), comment)
 
     def show_Resource(self):
-  #      if self.resource_grid == '':
-      #      return
+   #      if self.resource_grid == '':
+       #      return
         if self.resource is None:
             if self.sender().text()[:4] == 'Show':
                 self.resource_year = self.base_year
@@ -2382,12 +2382,12 @@ class MainWindow(QtGui.QMainWindow):
             self.resource.procStart.connect(self.getResource)
             self.view.emit(SIGNAL('statusmsg'), 'Resource Window opened')
             self.resource.show()
-      #      self.resource.exec_()
+       #      self.resource.exec_()
 
     @QtCore.pyqtSlot(str)
     def getResource(self, text):
         if text == 'goodbye':
-         #   self.view.resourceGrid('hide')
+          #   self.view.resourceGrid('hide')
             self.resource = None
             comment = 'Resource Window closed'
         elif text == 'hide':
@@ -2401,7 +2401,7 @@ class MainWindow(QtGui.QMainWindow):
                       '{:0.1f}'.format(self.view.resource_range[4]), \
                       '{:0.1f}'.format(self.view.resource_range[5]))
         self.view.emit(SIGNAL('statusmsg'), comment)
-        
+
     def show_FloatMenu(self):
         if self.floatmenu is None:
             self.floatmenu = FloatMenu(self.menuBar())
@@ -2413,7 +2413,7 @@ class MainWindow(QtGui.QMainWindow):
             self.floatmenu.procAction.connect(self.getFloatAction)
             self.view.emit(SIGNAL('statusmsg'), 'Floating Menu opened')
             self.floatmenu.show()
-     #       self.floatmenu.exec_()
+      #       self.floatmenu.exec_()
 
     @QtCore.pyqtSlot(str)
     def getFloatMenu(self, text):
@@ -2425,18 +2425,18 @@ class MainWindow(QtGui.QMainWindow):
     @QtCore.pyqtSlot(QtGui.QAction)
     def getFloatAction(self, action):
         action.trigger()
-        
-    def reshow_FloatMenu(self): 
+
+    def reshow_FloatMenu(self):
         if self.floatmenu is None:
             return
         self.floatmenu.exit()
         self.floatmenu = None
         self.show_FloatMenu()
-        
+
     def show_FloatLegend(self, make_comment=True):
         if self.floatlegend is None:
             tech_data = {}
-            flags = [self.view.scene().show_capacity, self.view.scene().show_generation, 
+            flags = [self.view.scene().show_capacity, self.view.scene().show_generation,
                      self.view.scene().station_square, self.view.scene().show_fossil]
             for key in self.view.scene().areas.keys():
                 tech_data[key] = [self.view.scene().areas[key], self.view.scene().colors[key], flags]
@@ -2450,7 +2450,7 @@ class MainWindow(QtGui.QMainWindow):
                 self.view.emit(SIGNAL('statusmsg'), 'Floating Legend opened')
             self.floatlegend.show()
             self.activateWindow()
-     #       self.floatmenu.exec_()
+      #       self.floatmenu.exec_()
 
     @QtCore.pyqtSlot(str)
     def getFloatLegend(self, text):
@@ -2458,8 +2458,8 @@ class MainWindow(QtGui.QMainWindow):
             self.floatlegend = None
             comment = 'Floating Legend closed'
         self.view.emit(SIGNAL('statusmsg'), comment)
-        
-    def reshow_FloatLegend(self): 
+
+    def reshow_FloatLegend(self):
         if self.floatlegend is not None:
             self.floatlegend.exit()
             self.floatlegend = None
@@ -2467,23 +2467,23 @@ class MainWindow(QtGui.QMainWindow):
         if self.view.scene().show_legend:
             self.view.hide_Legend(self.view.legend_pos)
             self.view.show_Legend(self.view.legend_pos)
-  
+
     def show_Legend(self):
-        comment = 'Legend Toggled' 
-        if self.view.scene().show_legend:       
-            self.view.hide_Legend() 
+        comment = 'Legend Toggled'
+        if self.view.scene().show_legend:
+            self.view.hide_Legend()
             self.showLegend.setIcon(QtGui.QIcon('blank.png'))
             self.view.scene().show_legend = False
             comment += ' Off'
         else:
-            self.view.show_Legend() 
+            self.view.show_Legend()
             self.showLegend.setIcon(QtGui.QIcon(self.check_icon))
             self.view.scene().show_legend = True
             comment += ' On'
-        self.view.emit(SIGNAL('statusmsg'), comment) 
-          
+        self.view.emit(SIGNAL('statusmsg'), comment)
+
     def show_Name(self):
-        comment = 'Station Names Toggled' 
+        comment = 'Station Names Toggled'
         if self.view.scene().show_station_name:
             self.showName.setIcon(QtGui.QIcon('blank.png'))
             self.view.scene().show_station_name = False
@@ -2497,7 +2497,7 @@ class MainWindow(QtGui.QMainWindow):
             if self.view.scene().show_fossil:
                 self.view.scene()._fnameGroup.setVisible(True)
             comment += ' On'
-        self.view.emit(SIGNAL('statusmsg'), comment) 
+        self.view.emit(SIGNAL('statusmsg'), comment)
 
     def exit(self):
         if self.altered_stations:
@@ -2508,8 +2508,8 @@ class MainWindow(QtGui.QMainWindow):
         if self.restorewindows:
             updates = {}
             lines = []
-            add = int((self.frameSize().width() - self.size().width()) / 2) # need to account for border
-            lines.append('main_pos=%s,%s' % (str(self.pos().x() + add), str(self.pos().y() + add))) 
+            add = int((self.frameSize().width() - self.size().width()) / 2)  # need to account for border
+            lines.append('main_pos=%s,%s' % (str(self.pos().x() + add), str(self.pos().y() + add)))
             lines.append('main_size=%s,%s' % (str(self.size().width()), str(self.size().height())))
             lines.append('main_view=%s,%s,%s,%s' % (str(self.view.mapToScene(0, 0).x()), str(self.view.mapToScene(0, 0).y()), \
                          str(self.view.mapToScene(self.view.width(), self.view.height()).x()), \
@@ -2523,10 +2523,10 @@ class MainWindow(QtGui.QMainWindow):
                     lines.append('resource_pos=%s,%s' % (str(self.resource.pos().x() + add), str(self.resource.pos().y() + add)))
                     lines.append('resource_size=%s,%s' % (str(self.resource.size().width()), str(self.resource.size().height())))
                 if self.floatlegend is not None:
-                    lines.append('legend_pos=%s,%s' % (str(self.floatlegend.pos().x() + add), 
+                    lines.append('legend_pos=%s,%s' % (str(self.floatlegend.pos().x() + add),
                                  str(self.floatlegend.pos().y() + add)))
                     lines.append('legend_show=True')
-                    lines.append('legend_size=%s,%s' % (str(self.floatlegend.size().width()), 
+                    lines.append('legend_size=%s,%s' % (str(self.floatlegend.size().width()),
                                  str(self.floatlegend.size().height())))
                 if self.floatmenu is None:
                     lines.append('menu_show=False')
@@ -2535,14 +2535,14 @@ class MainWindow(QtGui.QMainWindow):
                     lines.append('menu_show=True')
                     lines.append('menu_size=%s,%s' % (str(self.floatmenu.size().width()), str(self.floatmenu.size().height())))
                 if self.floatstatus is not None:
-                    lines.append('log_pos=%s,%s' % (str(self.floatstatus.pos().x() + add), 
+                    lines.append('log_pos=%s,%s' % (str(self.floatstatus.pos().x() + add),
                                  str(self.floatstatus.pos().y() + add)))
-                    lines.append('log_size=%s,%s' % (str(self.floatstatus.size().width()), 
+                    lines.append('log_size=%s,%s' % (str(self.floatstatus.size().width()),
                                  str(self.floatstatus.size().height())))
             updates['Windows'] = lines
             SaveIni(updates)
         if self.credits is not None:
-            if self.credits.initial: # rude way to close all windows and exit
+            if self.credits.initial:  # rude way to close all windows and exit
                 sys.exit()
             self.credits.exit()
         if self.resource is not None:
@@ -2553,8 +2553,8 @@ class MainWindow(QtGui.QMainWindow):
             self.floatlegend.exit()
         if self.floatstatus is not None:
             self.floatstatus.exit()
-    #    event.accept()
-        
+     #    event.accept()
+
     def writeStations(self, scenario, description):
         the_scenario = scenario
         if scenario[-4:] == '.csv' or scenario[-4:] == '.xls' or scenario[-5:] == '.xlsx':
@@ -2610,7 +2610,7 @@ class MainWindow(QtGui.QMainWindow):
                             new_line.append(str(stn.power_file))
                         if stn.grid_line is not None:
                             new_line.append('"' + str(stn.grid_line) + '"')
-              # need to add fields for storage hours + fix 
+               # need to add fields for storage hours + fix
                         if stn.direction is not None:
                             new_line.append(str(stn.direction))
                         upd_writer.writerow(new_line)
@@ -2633,7 +2633,7 @@ class MainWindow(QtGui.QMainWindow):
                 r = 0
                 while i >= 0:
                     r += 1
-                    i = description.find('\n', i + 1) 
+                    i = description.find('\n', i + 1)
                 ws.write_merge(ctr, ctr, 1, 9, description)
                 if r > 1:
                     ws.row(0).height = int((fnt.height * 1.2)) * r
@@ -2687,9 +2687,9 @@ class MainWindow(QtGui.QMainWindow):
             for c in range(9):
                 if lens[c] * 275 > ws.col(c).width:
                     ws.col(c).width = lens[c] * 275
-            ws.set_panes_frozen(True) # frozen headings instead of split panes
-            ws.set_horz_split_pos(1 - d) # in general, freeze after last heading row
-            ws.set_remove_splits(True) # if user does unfreeze, don't leave a split there
+            ws.set_panes_frozen(True)  # frozen headings instead of split panes
+            ws.set_horz_split_pos(1 - d)  # in general, freeze after last heading row
+            ws.set_remove_splits(True)  # if user does unfreeze, don't leave a split there
             wb.save(self.scenarios + the_scenario)
         if self.floatstatus and self.log_status:
             self.floatstatus.emit(SIGNAL('log'), '%s. Saved %s station(s) to %s' % \
@@ -2701,8 +2701,8 @@ def main():
     app = QtGui.QApplication(sys.argv)
     scene = WAScene()
     mw = MainWindow(scene)
-    QtGui.QShortcut(QtGui.QKeySequence('q'), mw, mw.close) 
-    QtGui.QShortcut(QtGui.QKeySequence('x'), mw, mw.exit) 
+    QtGui.QShortcut(QtGui.QKeySequence('q'), mw, mw.close)
+    QtGui.QShortcut(QtGui.QKeySequence('x'), mw, mw.exit)
     ver = fileVersion()
     mw.setWindowTitle('SIREN (' + ver + ' - Beta) - ' + scene.model_name)
     scene_ratio = float(mw.view.scene().width()) / mw.view.scene().height()
@@ -2713,7 +2713,7 @@ def main():
     else:
         pct = 0.90
     if screen_ratio > scene_ratio:
-        h = int(screen.height() * pct)	
+        h = int(screen.height() * pct)
         w = int(screen.height() * pct * scene_ratio)
     else:
         w = int(screen.width() * pct)
@@ -2775,7 +2775,7 @@ def main():
         mw.show_FloatMenu()
     if show_floatlegend:
         mw.show_FloatLegend()
- #   mw.activateWindow()
+  #   mw.activateWindow()
     app.exec_()
     app.deleteLater()
     sys.exit()

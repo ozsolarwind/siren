@@ -1,12 +1,12 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015 Sustainable Energy Now Inc., Angus King     
+#  Copyright (C) 2015 Sustainable Energy Now Inc., Angus King
 #
 #  inisyntax.py - This file is part of SIREN.
 #
 #  SIREN is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as 
-#  published by the Free Software Foundation, either version 3 of 
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, either version 3 of
 #  the License, or (at your option) any later version.
 #
 #  SIREN is distributed in the hope that it will be useful,
@@ -14,7 +14,7 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU Affero General Public License for more details.
 #
-#  You should have received a copy of the GNU Affero General 
+#  You should have received a copy of the GNU Affero General
 #  Public License along with SIREN.  If not, see
 #  <http://www.gnu.org/licenses/>.
 #
@@ -65,14 +65,14 @@ class IniHighlighter (QSyntaxHighlighter):
             for g in self.group]
         rules += [(r'%s' % o, 0, STYLES['operator'])
            for o in self.operators]
-        # Build a QRegExp for each pattern
+         # Build a QRegExp for each pattern
         self.rules = [(QRegExp(pat), index, fmt)
             for (pat, index, fmt) in rules]
 
     def highlightBlock(self, text):
         """Apply syntax highlighting to the given block of text.
         """
-        # Do other syntax formatting
+         # Do other syntax formatting
         for expression, nth, format in self.rules:
             index = expression.indexIn(text, 0)
             if index == 0:

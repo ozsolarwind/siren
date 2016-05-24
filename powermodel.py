@@ -1,12 +1,12 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King     
+#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King
 #
 #  powermodel.py - This file is part of SIREN.
 #
 #  SIREN is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as 
-#  published by the Free Software Foundation, either version 3 of 
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, either version 3 of
 #  the License, or (at your option) any later version.
 #
 #  SIREN is distributed in the hope that it will be useful,
@@ -14,7 +14,7 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU Affero General Public License for more details.
 #
-#  You should have received a copy of the GNU Affero General 
+#  You should have received a copy of the GNU Affero General
 #  Public License along with SIREN.  If not, see
 #  <http://www.gnu.org/licenses/>.
 #
@@ -33,7 +33,7 @@ import types
 import xlrd
 import xlwt
 
-import ConfigParser # decode .ini file
+import ConfigParser  # decode .ini file
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 
@@ -43,7 +43,7 @@ import displaytable
 from editini import SaveIni
 from grid import Grid
 from sirenicons import Icons
-#import Station
+# import Station
 from turbine import Turbine
 
 the_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
@@ -65,7 +65,7 @@ def split_array(array):
         for bit in bits:
             arry.append(int(bit))
     return arry
-                    
+
 def split_matrix(matrix):
     mtrx = []
     varbl = matrix.replace('(', '[')
@@ -101,7 +101,7 @@ def the_date(year, h):
         mm += 1
     return '%s-%s-%s %s:00' % (year, str(mm + 1).zfill(2), str(dy).zfill(2), str(hr).zfill(2))
 
-                    
+
 class PowerSummary:
     def __init__(self, name, technology, generation, capacity, transmitted=None):
         self.name = name
@@ -116,7 +116,7 @@ class PowerSummary:
             self.transmitted = int(round(transmitted))
         else:
             self.transmitted = None
-        
+
 
 class ColumnData:
     def __init__(self, hour, period, value, values=None):
@@ -150,10 +150,10 @@ class DailyData:
                 setattr(self, values, round(value, 2))
             else:
                 setattr(self, 'value', round(value, 2))
-        
-        
-class whatPlots(QtGui.QDialog):    
-    def __init__(self, plots, plot_order, hdrs, spacers, load_growth, base_year, load_year, 
+
+
+class whatPlots(QtGui.QDialog):
+    def __init__(self, plots, plot_order, hdrs, spacers, load_growth, base_year, load_year,
                  iterations, storage, discharge, recharge, initials=None, initial=False, helpfile=None):
         self.plots = plots
         self.plot_order = plot_order
@@ -174,7 +174,7 @@ class whatPlots(QtGui.QDialog):
             self.initials = None
         super(whatPlots, self).__init__()
         self.initUI()
-        
+
     def initUI(self):
         self.grid = QtGui.QGridLayout()
         self.checkbox = []
@@ -183,7 +183,7 @@ class whatPlots(QtGui.QDialog):
         bold.setBold(True)
         for plot in range(len(self.plot_order)):
             if self.plot_order[plot] in self.spacers:
-                if self.plot_order[plot] == 'maximise': # fudge to add in growth stuff
+                if self.plot_order[plot] == 'maximise':  # fudge to add in growth stuff
                     self.percentLabel = QtGui.QLabel('        Growth. Set annual ' \
                                                      + 'Load growth & target year')
                     self.percentSpin = QtGui.QDoubleSpinBox()
@@ -220,7 +220,7 @@ class whatPlots(QtGui.QDialog):
                     i += 1
                     label = QtGui.QLabel('        Discharge cap (MW) & loss (%)')
                     self.dischargeSpin = QtGui.QSpinBox()
-                    self.dischargeSpin.setRange(0, 50000) # max is 10% of capacity
+                    self.dischargeSpin.setRange(0, 50000)  # max is 10% of capacity
                     self.dischargeSpin.setValue(self.discharge[0])
                     self.dischargeSpin.setSingleStep(5)
                     self.dischargepctSpin = QtGui.QSpinBox()
@@ -232,7 +232,7 @@ class whatPlots(QtGui.QDialog):
                     i += 1
                     label = QtGui.QLabel('        Recharge cap (MW) & loss (%)')
                     self.rechargeSpin = QtGui.QSpinBox()
-                    self.rechargeSpin.setRange(0, 50000) # max is 10% of capacity
+                    self.rechargeSpin.setRange(0, 50000)  # max is 10% of capacity
                     self.rechargeSpin.setValue(self.recharge[0])
                     self.rechargeSpin.setSingleStep(5)
                     self.rechargepctSpin = QtGui.QSpinBox()
@@ -242,7 +242,7 @@ class whatPlots(QtGui.QDialog):
                     self.grid.addWidget(self.rechargeSpin, i, 1)
                     self.grid.addWidget(self.rechargepctSpin, i, 2)
                     i += 1
-                elif self.plot_order[plot] == 'summary': # fudge to add in iterations stuff
+                elif self.plot_order[plot] == 'summary':  # fudge to add in iterations stuff
                     self.iterLabel = QtGui.QLabel('        Shortfall. Choose analysis iterations')
                     self.iterSpin = QtGui.QSpinBox()
                     self.iterSpin.setRange(0, 3)
@@ -252,13 +252,13 @@ class whatPlots(QtGui.QDialog):
                     i += 1
                 label = QtGui.QLabel(self.spacers[self.plot_order[plot]])
                 label.setFont(bold)
-                self.grid.addWidget(label, i, 0) #, 1, 1)
+                self.grid.addWidget(label, i, 0)  #, 1, 1)
                 i += 1
             self.checkbox.append(QtGui.QCheckBox(self.hdrs[self.plot_order[plot]], self))
-            if self.plots[self.plot_order[plot]]: 
+            if self.plots[self.plot_order[plot]]:
                 self.checkbox[plot].setCheckState(Qt.Checked)
             if not self.initial:
-                if self.plot_order[plot] in self.initials: 
+                if self.plot_order[plot] in self.initials:
                     self.checkbox[plot].setEnabled(False)
             self.grid.addWidget(self.checkbox[-1], i, 0) #, 1, 1)
             if self.plot_order[plot] == 'save_balance':
@@ -266,19 +266,19 @@ class whatPlots(QtGui.QDialog):
             i += 1
         self.grid.connect(self.checkbox[0], QtCore.SIGNAL('stateChanged(int)'), self.check_all)
         show = QtGui.QPushButton('Proceed', self)
-        show.clicked.connect(self.showClicked) 
+        show.clicked.connect(self.showClicked)
         self.grid.addWidget(show, i, 0)
         if self.initial:
             save = QtGui.QPushButton('Save Options', self)
-            save.clicked.connect(self.saveClicked) 
+            save.clicked.connect(self.saveClicked)
             self.grid.addWidget(save, i, 1)
         else:
             if self.plots['financials']:
-                quitxt = 'Do Financials' 
+                quitxt = 'Do Financials'
             else:
                 quitxt = 'All Done'
             quit = QtGui.QPushButton(quitxt, self)
-            quit.clicked.connect(self.quitClicked) 
+            quit.clicked.connect(self.quitClicked)
             self.grid.addWidget(quit, i, 1)
         frame = QtGui.QFrame()
         frame.setLayout(self.grid)
@@ -294,12 +294,12 @@ class whatPlots(QtGui.QDialog):
         help.setStatusTip('Help')
         help.triggered.connect(self.showHelp)
         helpMenu = menubar.addMenu('&Help')
-        helpMenu.addAction(help) 
+        helpMenu.addAction(help)
         self.layout.setMenuBar(menubar)
-        # 
+        #
         screen = QtGui.QDesktopWidget().availableGeometry()
         h = int(screen.height() * .9)
-        self.resize(600, h)    
+        self.resize(600, h)
         self.setWindowTitle('SIREN - Power dialog for ' + str(self.base_year))
         QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
         self.show_them = False
@@ -314,7 +314,7 @@ class whatPlots(QtGui.QDialog):
         summ = '{:0.1f}%'.format((summ - 1) * 100)
         self.totalOutput.setText(summ)
         self.totalOutput.adjustSize()
-               
+
     def check_all(self):
         if self.checkbox[0].isChecked():
             for i in range(len(self.checkbox)):
@@ -332,20 +332,20 @@ class whatPlots(QtGui.QDialog):
                     if self.plot_order[i] in self.initials:
                         continue
                 self.checkbox[i].setCheckState(Qt.Unchecked)
-               
+
     def check_balance(self, event):
         if event:
             for i in range(len(self.checkbox)):
                 if self.plot_order[i] == 'show_load' or self.plot_order[i] == 'grid_losses':
                     self.checkbox[i].setCheckState(Qt.Checked)
-    
+
     def closeEvent(self, event):
         if not self.show_them:
-            self.plots = None    
+            self.plots = None
         event.accept()
 
     def quitClicked(self):
-        self.plots = None    
+        self.plots = None
         self.close()
 
     def showClicked(self):
@@ -388,25 +388,25 @@ class whatPlots(QtGui.QDialog):
         power_lines.append('shortfall_iterations=%s' % str(self.iterSpin.value()))
         updates['Power'] = power_lines
         SaveIni(updates)
-        
+
     def getValues(self):
-        load_multiplier = pow(1 + self.percentSpin.value() / 100, 
+        load_multiplier = pow(1 + self.percentSpin.value() / 100,
                               (self.counterSpin.value() - self.base_year)) - 1
         return self.plots, self.percentSpin.value() / 100, str(self.counterSpin.value()), \
                load_multiplier, \
                self.iterations, [self.storageSpin.value(), self.storpctSpin.value()], \
                [self.dischargeSpin.value(), (1. - self.dischargepctSpin.value() / 100.)], \
-               [self.rechargeSpin.value(), (1. - self.rechargepctSpin.value() / 100.)] 
+               [self.rechargeSpin.value(), (1. - self.rechargepctSpin.value() / 100.)]
 
 
-class whatStations(QtGui.QDialog):    
+class whatStations(QtGui.QDialog):
     def __init__(self, stations, gross_load=False, actual=False, helpfile=None):
         self.stations = stations
         self.gross_load = gross_load
         self.actual = actual
         super(whatStations, self).__init__()
         self.initUI()
-        
+
     def initUI(self):
         self.chosen = []
         self.grid = QtGui.QGridLayout()
@@ -424,7 +424,7 @@ class whatStations(QtGui.QDialog):
             self.checkbox.append(QtGui.QCheckBox(stn.name, self))
             icon = icons.getIcon(stn.technology)
             if icon != '':
-                self.checkbox[-1].setIcon(QtGui.QIcon(icon))   
+                self.checkbox[-1].setIcon(QtGui.QIcon(icon))
             i += 1
             self.grid.addWidget(self.checkbox[-1], i, c)
             if i > 25:
@@ -433,13 +433,13 @@ class whatStations(QtGui.QDialog):
         self.grid.connect(self.checkbox[0], QtCore.SIGNAL('stateChanged(int)'), self.check_all)
         show = QtGui.QPushButton('Choose', self)
         self.grid.addWidget(show, i + 1, c)
-        show.clicked.connect(self.showClicked) 
+        show.clicked.connect(self.showClicked)
         self.setLayout(self.grid)
         self.setWindowTitle('SIREN - Power Stations dialog')
         QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
         self.show_them = False
         self.show()
-            
+
     def check_all(self):
         if self.checkbox[0].isChecked():
             for i in range(len(self.checkbox)):
@@ -447,10 +447,10 @@ class whatStations(QtGui.QDialog):
         else:
             for i in range(len(self.checkbox)):
                 self.checkbox[i].setCheckState(Qt.Unchecked)
-    
+
     def closeEvent(self, event):
         if not self.show_them:
-            self.chosen = None    
+            self.chosen = None
         event.accept()
 
     def quitClicked(self):
@@ -465,9 +465,9 @@ class whatStations(QtGui.QDialog):
 
     def getValues(self):
         return self.chosen
-        
-        
-class whatFinancials(QtGui.QDialog):    
+
+
+class whatFinancials(QtGui.QDialog):
     def __init__(self, helpfile=None):
         super(whatFinancials, self).__init__()
         self.proceed = False
@@ -544,7 +544,7 @@ class whatFinancials(QtGui.QDialog):
             self.spin[-1].setRange(item[2], item[3])
             self.grid.addWidget(self.labels[-1], i, 0)
             self.grid.addWidget(self.spin[-1], i, 1)
-            i += 1  
+            i += 1
         self.checkbox = []
         for item in self.financials:
             if isinstance(item[2], bool) and isinstance(item[3], bool):
@@ -561,11 +561,11 @@ class whatFinancials(QtGui.QDialog):
                         self.checkbox[-1].setCheckState(Qt.Checked)
                     i += 1
         show = QtGui.QPushButton('Proceed', self)
-        show.clicked.connect(self.showClicked) 
+        show.clicked.connect(self.showClicked)
         save = QtGui.QPushButton('Save Options', self)
-        save.clicked.connect(self.saveClicked) 
+        save.clicked.connect(self.saveClicked)
         quit = QtGui.QPushButton('All Done', self)
-        quit.clicked.connect(self.quitClicked) 
+        quit.clicked.connect(self.quitClicked)
         self.grid.addWidget(show, i + 1, 0)
         self.grid.addWidget(save, i + 1, 1)
         self.grid.addWidget(quit, i + 1, 2)
@@ -583,7 +583,7 @@ class whatFinancials(QtGui.QDialog):
         help.setStatusTip('Help')
         help.triggered.connect(self.showHelp)
         helpMenu = menubar.addMenu('&Help')
-        helpMenu.addAction(help) 
+        helpMenu.addAction(help)
         self.layout.setMenuBar(menubar)
         #
         screen = QtGui.QDesktopWidget().availableGeometry()
@@ -596,7 +596,7 @@ class whatFinancials(QtGui.QDialog):
     def showHelp(self):
         dialog = displayobject.AnObject(QtGui.QDialog(), self.helpfile, title='Help', section='fopts')
         dialog.exec_()
-            
+
     def closeEvent(self, event):
         event.accept()
 
@@ -617,7 +617,7 @@ class whatFinancials(QtGui.QDialog):
                     finance_lines.append(key + '=True')
                 else:
                     finance_lines.append(key + '=False')
-            else: 
+            else:
                 finance_lines.append(key + '=' + str(values[key]))
         beans = {'Financial': finance_lines}
         SaveIni(beans)
@@ -647,7 +647,7 @@ class whatFinancials(QtGui.QDialog):
                     break
         return values
 
-class Adjustments(QtGui.QDialog):    
+class Adjustments(QtGui.QDialog):
     def __init__(self, keys, load_key=None, load=None, data=None, base_year=None):
         super(Adjustments, self).__init__()
         self.adjusts = {}
@@ -672,42 +672,42 @@ class Adjustments(QtGui.QDialog):
             self.adjusts[key].setSingleStep(.1)
             self.adjusts[key].setRange(0, max(25., self.adjusts[key].value()))
             self.skeys.append(key)
-            self.grid.addWidget(QtGui.QLabel(key), ctr, 0)   
+            self.grid.addWidget(QtGui.QLabel(key), ctr, 0)
             self.grid.addWidget(self.adjusts[key], ctr, 1)
             if load is not None:
                 self.checkbox[key] = QtGui.QCheckBox('', self)
-                self.checkbox[key].setCheckState(Qt.Checked) 
+                self.checkbox[key].setCheckState(Qt.Checked)
                 self.grid.addWidget(self.checkbox[key], ctr, 2)
             ctr += 1
-        if load is not None: 
+        if load is not None:
             for key in data.keys():
                 if key[:4] == 'Load':
                     self.lkey = key
                     break
             self.load = load
             self.data = data
-        # add pulldown list to optimise for year, month, none
+         # add pulldown list to optimise for year, month, none
             self.grid.addWidget(QtGui.QLabel('Optimise for:'), ctr, 0)
             self.periodCombo = QtGui.QComboBox()
             self.periodCombo.addItem('None')
             self.periodCombo.addItem(base_year)
             for i in range(1, 13):
                 self.periodCombo.addItem(base_year + '-' + '{0:02d}'.format(i))
-            self.grid.addWidget(self.periodCombo, ctr, 1) 
+            self.grid.addWidget(self.periodCombo, ctr, 1)
             self.optmsg = QtGui.QLabel('')
             self.grid.addWidget(self.optmsg, ctr, 2)
             ctr += 1
         quit = QtGui.QPushButton('Quit', self)
         self.grid.addWidget(quit, ctr, 0)
-        quit.clicked.connect(self.quitClicked) 
+        quit.clicked.connect(self.quitClicked)
         show = QtGui.QPushButton('Proceed', self)
         self.grid.addWidget(show, ctr, 1)
-        show.clicked.connect(self.showClicked) 
-        if load is not None: 
+        show.clicked.connect(self.showClicked)
+        if load is not None:
             optimise = QtGui.QPushButton('Optimise', self)
             self.grid.addWidget(optimise, ctr, 2)
-            optimise.clicked.connect(self.optimiseClicked) 
- #       self.setLayout(self.grid)
+            optimise.clicked.connect(self.optimiseClicked)
+  #       self.setLayout(self.grid)
         frame = QtGui.QFrame()
         frame.setLayout(self.grid)
         self.scroll = QtGui.QScrollArea()
@@ -718,7 +718,7 @@ class Adjustments(QtGui.QDialog):
         self.setWindowTitle('SIREN - Gen Adj. multiplier')
         QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
         self.show()
-    
+
     def closeEvent(self, event):
         event.accept()
 
@@ -760,42 +760,42 @@ class Adjustments(QtGui.QDialog):
             gen.append([])
         okeys = []
         for key in self.skeys:
-            if self.checkbox[key].isChecked(): 
+            if self.checkbox[key].isChecked():
                 okeys.append(key)
                 for i in range(len(gen)):
                     gen[i].append(0.)
-                if daily:        
+                if daily:
                     h = 0
                     for i in range(strt, stop):
                         gen[h][-1] += self.data[key][i]
                         if h == 23:
                             h = 0
                         else:
-                            h += 1 
+                            h += 1
                 else:
                     for i in range(strt, stop):
                         gen[-1].append(self.data[key][i])
-            else:    
-                if daily:        
+            else:
+                if daily:
                     h = 0
                     for i in range(strt, stop):
                         load[h] -= self.data[key][i] * self.adjusts[key].value()
                         if h == 23:
                             h = 0
                         else:
-                            h += 1 
+                            h += 1
                 else:
                     for i in range(strt, stop):
                         load[i] -= self.data[key][i] * self.adjusts[key].value()
         B = array(load)
         A = array(gen)
-        res = linalg.lstsq(A, B) # least squares solution of the generation vs load
+        res = linalg.lstsq(A, B)  # least squares solution of the generation vs load
         x = res[0]
-        self.optmsg.setText('') 
+        self.optmsg.setText('')
         do_corr = True
         for i in range(len(okeys)):
             if x[i] < 0:
-               self.optmsg.setText('-ve results') 
+               self.optmsg.setText('-ve results')
                do_corr = False
             if x[i] > self.adjusts[okeys[i]].maximum():
                 self.adjusts[okeys[i]].setMaximum(round(x[i], 2))
@@ -818,24 +818,24 @@ class Adjustments(QtGui.QDialog):
 
     def getValues(self):
         return self.results
-                
-        
+
+
 class SuperPower():
     def haversine(self, lat1, lon1, lat2, lon2):
         """
-        Calculate the great circle distance between two points 
+        Calculate the great circle distance between two points
         on the earth (specified in decimal degrees)
         """
-  #     convert decimal degrees to radians 
+   #     convert decimal degrees to radians
         lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
 
-  #     haversine formula  
-        dlon = lon2 - lon1 
-        dlat = lat2 - lat1 
-        a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
-        c = 2 * asin(sqrt(a)) 
+   #     haversine formula
+        dlon = lon2 - lon1
+        dlat = lat2 - lat1
+        a = sin(dlat / 2)**2 + cos(lat1) * cos(lat2) * sin(dlon / 2)**2
+        c = 2 * asin(sqrt(a))
 
-  #     6367 km is the radius of the Earth
+   #     6367 km is the radius of the Earth
         km = 6367 * c
         return km
 
@@ -1157,7 +1157,7 @@ class SuperPower():
             self.scenarios = self.scenarios.replace('$USER$', getUser())
             self.scenarios = self.scenarios.replace('$YEAR$', self.base_year)
             i = self.scenarios.rfind('/')
-            self.scenarios = self.scenarios[:i+1]
+            self.scenarios = self.scenarios[:i + 1]
         except:
             self.scenarios = ''
         if not os.path.exists(self.scenarios + self.actual_power):
@@ -1186,12 +1186,12 @@ class SuperPower():
             self.line_loss = 0.
         self.gen_pct = None
         ssc_api = ssc.API()
-# to supress messages    
+# to supress messages
         if not self.expert:
             ssc_api.set_print(0)
 
     def getPower(self):
-        self.x = [] 
+        self.x = []
         self.stored = []
         self.ly = {}
         if self.plots['save_data'] or self.plots['financials']:
@@ -1273,7 +1273,7 @@ class SuperPower():
                     self.ly[key].append(0.)
             total_power = 0.
             total_energy = 0.
-            for i in range(len(power)):  
+            for i in range(len(power)):
                 if self.plots['grid_losses']:
                     if stn.grid_path_len is not None:
                         enrgy = power[i] * (1 - self.line_loss * stn.grid_path_len - self.subs_loss)
@@ -1344,10 +1344,10 @@ class SuperPower():
                 try:
                     h = pwr_data.fieldnames.index('Hourly energy | (kWh)')
                 except:
-                    try: 
+                    try:
                         h = pwr_data.fieldnames.index('Hourly Energy | (kW)')
                     except:
-                        try: 
+                        try:
                             h = pwr_data.fieldnames.index('Power generated by system | (kW)')
                         except:
                             h = pwr_data.fieldnames.index(station.name)
@@ -1362,10 +1362,10 @@ class SuperPower():
                     try:
                         h = pwr_data.fieldnames.index('Hourly energy | (kWh)')
                     except:
-                        try: 
+                        try:
                             h = pwr_data.fieldnames.index('Hourly Energy | (kW)')
                         except:
-                            try: 
+                            try:
                                 h = pwr_data.fieldnames.index('Power generated by system | (kW)')
                             except:
                                 h = pwr_data.fieldnames.index(station.name)
@@ -1399,7 +1399,7 @@ class SuperPower():
             self.data.set_number('system_capacity', no_turbines * turbine.capacity * 1000)
             pc_wind = turbine.speeds
             pc_power = turbine.powers
-            self.data.set_array('wind_turbine_powercurve_windspeeds', pc_wind) 
+            self.data.set_array('wind_turbine_powercurve_windspeeds', pc_wind)
             self.data.set_array('wind_turbine_powercurve_powerout', pc_power)
             t_rows = int(ceil(sqrt(no_turbines)))
             ctr = no_turbines
@@ -1415,7 +1415,7 @@ class SuperPower():
                         break
             self.data.set_array('wind_farm_xCoordinates', wt_x)
             self.data.set_array('wind_farm_yCoordinates', wt_y)
-            self.data.set_number('wind_turbine_rotor_diameter', turbine.rotor)  
+            self.data.set_number('wind_turbine_rotor_diameter', turbine.rotor)
             self.data.set_number('wind_turbine_cutin', turbine.cutin)
             module = ssc.Module('windpower')
             if (module.exec_(self.data)):
@@ -1426,7 +1426,7 @@ class SuperPower():
                 idx = 0
                 msg = module.log(idx)
                 while (msg is not None):
-                    print 'windpower error [', idx,' ]: ' , msg
+                    print 'windpower error [', idx, ' ]: ', msg
                     idx += 1
                     msg = module.log(idx)
                 del module
@@ -1464,7 +1464,7 @@ class SuperPower():
                 msg = module.log(idx)
                 while (msg is not None):
                     idx += 1
-                    msg = module.log(idx)                
+                    msg = module.log(idx)
                 del module
                 if station.capacity != base_capacity:
                     for i in range(len(farmpwr)):
@@ -1474,7 +1474,7 @@ class SuperPower():
                 idx = 0
                 msg = module.log(idx)
                 while (msg is not None):
-                    print 'tcsmolten_salt error [', idx,' ]: ' , msg
+                    print 'tcsmolten_salt error [', idx, ' ]: ', msg
                     idx += 1
                     msg = module.log(idx)
                 del module
@@ -1505,9 +1505,9 @@ class SuperPower():
                     if station.direction >= 0 and station.direction <= 360:
                         azi = station.direction
                 else:
-                    dirns = {'N': 0, 'NNE': 23, 'NE': 45,  'ENE': 68, 'E': 90, 'ESE': 113,
+                    dirns = {'N': 0, 'NNE': 23, 'NE': 45, 'ENE': 68, 'E': 90, 'ESE': 113,
                              'SE': 135, 'SSE': 157, 'S': 180, 'SSW': 203, 'SW': 225,
-                             'WSW': 248, 'W': 270, 'WNW': 293, 'NW': 315, 'NNW': 338} 
+                             'WSW': 248, 'W': 270, 'WNW': 293, 'NW': 315, 'NNW': 338}
                     try:
                         azi = dirns[station.direction]
                     except:
@@ -1522,7 +1522,7 @@ class SuperPower():
                 idx = 0
                 msg = module.log(idx)
                 while (msg is not None):
-                    print 'pvwattsv5 error [', idx,' ]: ' , msg
+                    print 'pvwattsv5 error [', idx, ' ]: ', msg
                     idx += 1
                     msg = module.log(idx)
                 del module
@@ -1548,7 +1548,7 @@ class SuperPower():
                 idx = 0
                 msg = module.log(idx)
                 while (msg is not None):
-                    print 'biomass error [', idx,' ]: ' , msg
+                    print 'biomass error [', idx, ' ]: ', msg
                     idx += 1
                     msg = module.log(idx)
                 del module
@@ -1572,17 +1572,17 @@ class SuperPower():
                 idx = 0
                 msg = module.log(idx)
                 while (msg is not None):
-                    print 'geothermal error [', idx,' ]: ' , msg
+                    print 'geothermal error [', idx, ' ]: ', msg
                     idx += 1
                     msg = module.log(idx)
                 del module
                 return None
-        elif station.technology == 'Hydro': # fudge Hydro purely by Capacity Factor
+        elif station.technology == 'Hydro':   # fudge Hydro purely by Capacity Factor
             pwr = station.capacity * 1000 * self.hydro_cf
             for hr in range(8760):
                 farmpwr.append(pwr)
             return farmpwr
-        elif station.technology == 'Wave': # fudge Wave using 10m wind speed
+        elif station.technology == 'Wave':   # fudge Wave using 10m wind speed
             closest = self.find_closest(station.lat, station.lon)
             tf = open(self.solar_files + '/' + closest, 'r')
             lines = tf.readlines()
@@ -1594,8 +1594,8 @@ class SuperPower():
                 if float(bits[wnd_col]) == 0:
                     farmpwr.append(0.)
                 else:
-                    wave_height = 0.0070104 * pow(float(bits[wnd_col]) * 1.94384, 2) # 0.023 * 0.3048 = 0.0070104 ft to metres 
-                    if self.wave_cutout > 0 and wave_height > self.wave_cutout: 
+                    wave_height = 0.0070104 * pow(float(bits[wnd_col]) * 1.94384, 2)   # 0.023 * 0.3048 = 0.0070104 ft to metres
+                    if self.wave_cutout > 0 and wave_height > self.wave_cutout:
                         farmpwr.append(0.)
                     else:
                         wave_period = 0.45 * float(bits[wnd_col]) * 1.94384
@@ -1651,8 +1651,8 @@ class SuperPower():
                 operators = '+-*/%'
                 for i in range(len(operators)):
                     formula = formula.replace(operators[i], ' ' + operators[i] + ' ')
-                formula.replace(' /  / ',' // ')
-                formula.replace(' *  * ',' ** ')
+                formula.replace(' /  / ', ' // ')
+                formula.replace(' *  * ', ' ** ')
                 propty['formula'] = formula
                 if formula.find('wind50') >= 0:
                     closest = self.find_closest(station.lat, station.lon, wind=True)
@@ -1710,10 +1710,10 @@ class SuperPower():
             return farmpwr
         else:
             return None
-            
+
     def getValues(self):
         return self.power_summary
-            
+
     def getPct(self):
         return self.gen_pct
 
@@ -1751,7 +1751,7 @@ class FinancialModel():
         worksheet = workfile.sheet_by_index(0)
         num_rows = worksheet.nrows - 1
         num_cols = worksheet.ncols - 1
-  # get column names
+   # get column names
         curr_col = -1
         while curr_col < num_cols:
             curr_col += 1
@@ -1790,11 +1790,11 @@ class FinancialModel():
         return data, output_variables
 
     def __init__(self, name, technology, capacity, power, grid, path, year=None):
-        def set_grid_variables(): 
+        def set_grid_variables():
             self.dispatchable = None
-            self.line_loss=0.
-            self.subs_cost=0.
-            self.subs_loss=0.
+            self.line_loss = 0.
+            self.subs_cost = 0.
+            self.subs_loss = 0.
             try:
                 itm = config.get('Grid', 'dispatchable')
                 itm = itm.replace('_', ' ').title()
@@ -1876,7 +1876,7 @@ class FinancialModel():
                                        ippppa_data.get_number('inflation_rate'))
             module = ssc.Module('ippppa')
             if (module.exec_(ippppa_data)):
-            # return the relevant outputs desired
+             # return the relevant outputs desired
                 energy = ippppa_data.get_array('gen')
                 generation = 0.
                 for i in range(len(energy)):
@@ -1891,10 +1891,10 @@ class FinancialModel():
                 idx = 0
                 msg = module.log(idx)
                 while (msg is not None):
-                    print 'ippppa Error [', idx,' ]: ' , msg
+                    print 'ippppa Error [', idx, ' ]: ', msg
                     idx += 1
                     msg = module.log(idx)
-            #    sys.exit('ippppa example failed')
+             #    sys.exit('ippppa example failed')
             del module
 
         self.stations = []
@@ -1956,14 +1956,14 @@ class FinancialModel():
             return
         ssc_api = ssc.API()
 # to suppress messages
-        if not self.expert:   
+        if not self.expert:
             ssc_api.set_print(0)
         ippppa_data, ippppa_outputs = self.get_variables(ippppa_file, overrides=ippas)
         costs = {}
         do_grid_loss = False
         do_grid_cost = False
         do_grid_path_cost = False
-        if 'grid_losses' in ippas or 'grid_costs' in ippas or 'grid_path_costs' in ippas: 
+        if 'grid_losses' in ippas or 'grid_costs' in ippas or 'grid_path_costs' in ippas:
             set_grid_variables()
             try:
                 if ippas['grid_losses']:
@@ -1971,7 +1971,7 @@ class FinancialModel():
             except:
                 pass
             if 'grid_costs' in ippas or 'grid_path_costs' in ippas:
-                self.grid = Grid() # open grid here to access cost table
+                self.grid = Grid()  # open grid here to access cost table
                 try:
                     if ippas['grid_costs']:
                         do_grid_cost = True
@@ -2005,7 +2005,7 @@ class FinancialModel():
             net_hourly = None
             module = ssc.Module('annualoutput')
             if (module.exec_(annual_data)):
-            # return the relevant outputs desired
+             # return the relevant outputs desired
                 net_hourly = annual_data.get_array('hourly_energy')
                 net_annual = annual_data.get_array('annual_energy')
                 degradation = annual_data.get_array('annual_degradation')
@@ -2015,13 +2015,13 @@ class FinancialModel():
                 idx = 0
                 msg = module.log(idx)
                 while (msg is not None):
-                    print 'Error [', idx,' ]: ' , msg
+                    print 'Error [', idx, ' ]: ', msg
                     idx += 1
                     msg = module.log(idx)
-               #     sys.exit('annualoutput example failed')
+                #     sys.exit('annualoutput example failed')
                 del module
 
-    def getValues(self): 
+    def getValues(self):
         return self.stations
 
 
@@ -2051,7 +2051,7 @@ class ProgressModel(QtGui.QDialog):
         if not self._active:
             self._active = True
             if self.progressbar.value() == self.progressbar.maximum():
-               # self.progressbar.reset()
+                # self.progressbar.reset()
                 self.button.setText('Finished')
             else:
                 self.button.setText('Stop')
@@ -2124,7 +2124,7 @@ class ProgressModel(QtGui.QDialog):
                     self.model.ly[key] = []
                     for i in range(len(self.model.x)):
                         self.model.ly[key].append(0.)
-                for i in range(len(power)): 
+                for i in range(len(power)):
                     if self.model.plots['grid_losses']:
                         if stn.grid_path_len is not None:
                             enrgy = power[i] * (1 - self.model.line_loss * stn.grid_path_len - \
@@ -2134,7 +2134,7 @@ class ProgressModel(QtGui.QDialog):
                         self.model.ly[key][i] += enrgy / 1000.
                         total_energy += enrgy / 1000.
                         self.model.ly['Generation'][i] += power[i] / 1000.
-                    else: 
+                    else:
                         self.model.ly[key][i] += power[i] / 1000.
                     total_power += power[i] / 1000.
                     if self.model.plots['save_data'] or self.model.plots['financials']:
@@ -2169,7 +2169,7 @@ class ProgressModel(QtGui.QDialog):
 
     def getStnOuts(self):
         return self.model.getStnOuts()
-        
+
 
 class PowerModel():
     def showGraphs(self, ydata, x):
@@ -2184,8 +2184,8 @@ class PowerModel():
                 return key
             else:
                 return oukey
-        
-        def stepPlot(self, period, data, x_labels=None):  
+
+        def stepPlot(self, period, data, x_labels=None):
             if self.plots['cumulative']:
                 pc = 1
             else:
@@ -2232,7 +2232,7 @@ class PowerModel():
                 for d in range(len(data[i])):
                    dval.append(0.)
                    for k in range(len(data[i][0])):
-                       dval[-1] += data[i][d][k] / 1000 
+                       dval[-1] += data[i][d][k] / 1000
                 maxy = max(maxy, max(dval))
                 lw = self.other_width
                 if self.plots['cumulative'] and key[:4] != 'Load' and key != 'Storage':
@@ -2248,17 +2248,17 @@ class PowerModel():
             if self.plots['show_pct']:
                 self.gen_pct = ' (%s%% of load)' % '{:0,.1f}'.format(gen_sum * 100. / load_sum)
                 plt.title(self.hdrs['by_' + period].title() + self.suffix + self.gen_pct)
-               #plt.annotate(pct, xy=(1.0, 3.0)) 
+               #plt.annotate(pct, xy=(1.0, 3.0))
             if self.plots['cumulative']:
                 bbdx.step(xs, cumulative, linewidth=self.other_width, label='Tot. Generation', color=self.colours['cumulative'])
                 maxy = max(maxy, max(cumulative))
-            try: 
+            try:
                 rndup = pow(10, round(log10(maxy * 1.5) - 1)) / 2
                 maxy = ceil(maxy / rndup) * rndup
             except:
                 pass
             if (self.plots['shortfall'] and self.do_load):
-                load2 = [] 
+                load2 = []
                 if storage is None:
                     for i in range(len(cumulative)):
                         load2.append(cumulative[i] - load[i])
@@ -2276,10 +2276,10 @@ class PowerModel():
             plt.ylim([miny, maxy])
             plt.xlim([0, len(data[0])])
             if (len(ydata) + pc) > 9:
-                # Shrink current axis by 5%
+                 # Shrink current axis by 5%
                 box = bbdx.get_position()
                 bbdx.set_position([box.x0, box.y0, box.width * 0.95, box.height])
-                # Put a legend to the right of the current axis
+                 # Put a legend to the right of the current axis
                 bbdx.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop=lbl_font)
             else:
                 bbdx.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(ydata) + pc),
@@ -2298,7 +2298,7 @@ class PowerModel():
             bbdx.set_xticklabels(x_labels, rotation=rotn)
             bbdx.set_xlabel(period.title() + ' of the year')
             bbdx.set_ylabel('Energy (MWh)')
-            if self.plots['maximise']: 
+            if self.plots['maximise']:
                 mng = plt.get_current_fig_manager()
                 if sys.platform == 'win32' or sys.platform == 'cygwin':
                     if plt.get_backend() == 'TkAgg':
@@ -2312,7 +2312,7 @@ class PowerModel():
             else:
                 plt.draw()
 
-        def dayPlot(self, period, data, per_labels=None, x_labels=None):  
+        def dayPlot(self, period, data, per_labels=None, x_labels=None):
             if self.plots['cumulative']:
                 pc = 1
             else:
@@ -2394,7 +2394,7 @@ class PowerModel():
                     maxy = max(maxy, max(cumulative))
                 if self.plots['gross_load'] and 'Existing Rooftop PV' in ydata.keys():
                     px.plot(x24, gross_load, linewidth=1.0, label='Gross Load', color=self.colours['gross_load'])
-                    maxy = max(maxy, max(gross_load)) 
+                    maxy = max(maxy, max(gross_load))
                 if self.plots['shortfall'] and self.do_load:
                     load2 = []
                     for i in range(len(x24)):
@@ -2408,7 +2408,7 @@ class PowerModel():
                     px.set_xlabel('Hour of the Day')
                 if p in yl:
                     px.set_ylabel('Power (MW)')
-            try: 
+            try:
                 rndup = pow(10, round(log10(maxy * 1.5) - 1)) / 2
                 maxy = ceil(maxy / rndup) * rndup
             except:
@@ -2424,10 +2424,10 @@ class PowerModel():
                     pct = ' (%s%%)' % '{:0,.1f}'.format(gen_sum[p] * 100. / load_sum[p])
                     titl = px.get_title()
                     px.set_title(titl + pct)
-                   #  px.annotate(pct, xy=(1.0, 3.0))
+                    #  px.annotate(pct, xy=(1.0, 3.0))
             px = plt.subplot(p1, p2, len(data[0]))
-        #    px.legend(bbox_to_anchor=[1., -0.15], loc='best', ncol=min((len(ly) + pc), 9),
-        # prop=lbl_font)
+         #    px.legend(bbox_to_anchor=[1., -0.15], loc='best', ncol=min((len(ly) + pc), 9),
+         # prop=lbl_font)
             if (len(ydata) + pc) > 9:
                 if len(data[0]) == 2:
                     do_in = [1, 2]
@@ -2436,11 +2436,11 @@ class PowerModel():
                 else:
                     do_in = [1, 5, 9, 2, 6, 10, 3, 7, 11, 4, 12, 8]
                 for i in range(len(do_in)):
-                    px = plt.subplot(p1, p2, do_in[i])  
-                # Shrink current axis by 5%
+                    px = plt.subplot(p1, p2, do_in[i])
+                 # Shrink current axis by 5%
                     box = px.get_position()
                     px.set_position([box.x0, box.y0, box.width * 0.95, box.height])
-                # Put a legend to the right of the current axis
+                 # Put a legend to the right of the current axis
                 px.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop=lbl_font)
             else:
                 px.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(ydata) + pc),
@@ -2452,7 +2452,7 @@ class PowerModel():
                 self.gen_pct = ' (%s%%) of load)' % '{:0,.1f}'.format(gen_sum[0] * 100. / load_sum[0])
                 titl = px.get_title()
                 plt.suptitle(self.hdrs[period] + self.suffix + self.gen_pct, fontsize=16)
-            if self.plots['maximise']: 
+            if self.plots['maximise']:
                 mng = plt.get_current_fig_manager()
                 if sys.platform == 'win32' or sys.platform == 'cygwin':
                     if plt.get_backend() == 'TkAgg':
@@ -2485,7 +2485,7 @@ class PowerModel():
                 techs = {}
                 for i in range(len(self.power_summary)):
                     stns[self.power_summary[i].name] = i
-                    techs[self.power_summary[i].technology] = [0., 0., 0.] 
+                    techs[self.power_summary[i].technology] = [0., 0., 0.]
                 if data_file[-4:] == '.csv':
                     tf = open(data_file, 'w')
                     line = 'Generation Summary Table'
@@ -2506,10 +2506,10 @@ class PowerModel():
                             techs[self.power_summary[value].technology][2] += self.power_summary[value].transmitted
                         else:
                             ts = ''
-                        line = '"%s",%s,%s,%s,%s,%s' % (self.power_summary[value].name, 
+                        line = '"%s",%s,%s,%s,%s,%s' % (self.power_summary[value].name,
                                                self.power_summary[value].technology,
                                                '{:0.2f}'.format(self.power_summary[value].capacity),
-                                               cf, 
+                                               cf,
                                                '{:0.0f}'.format(self.power_summary[value].generation),
                                                ts)
                         techs[self.power_summary[value].technology][0] += self.power_summary[value].capacity
@@ -2517,24 +2517,24 @@ class PowerModel():
                         tf.write(line + '\n')
                     total = [0., 0., 0.]
                     for key, value in iter(sorted(techs.iteritems())):
-                        total[0] += value[0] 
-                        total[1] += value[1] 
-                        if value[2] > 0: 
+                        total[0] += value[0]
+                        total[1] += value[1]
+                        if value[2] > 0:
                             v2 = ',{:0.0f}'.format(value[2])
-                            total[2] += value[2] 
+                            total[2] += value[2]
                         else:
-                            v2 = '' 
-                        line = ',%s,%s,,%s%s' % (key, 
-                                               '{:0.2f}'.format(value[0]), 
+                            v2 = ''
+                        line = ',%s,%s,,%s%s' % (key,
+                                               '{:0.2f}'.format(value[0]),
                                                '{:0.0f}'.format(value[1]),
                                                v2)
                         tf.write(line + '\n')
-                    if total[2] > 0: 
+                    if total[2] > 0:
                         v2 = ',{:0.0f}'.format(total[2])
-                        total[2] += value[2] 
+                        total[2] += value[2]
                     else:
-                        v2 = '' 
-                    line = ',Total,%s,,%s%s' % ('{:0.2f}'.format(total[0]), 
+                        v2 = ''
+                    line = ',Total,%s,,%s%s' % ('{:0.2f}'.format(total[0]),
                                                '{:0.0f}'.format(total[1]),
                                                v2)
                     tf.write(line + '\n')
@@ -2548,14 +2548,14 @@ class PowerModel():
                         tf.write(line + '\n')
                     tf.close()
                 else:
-#tl = xlwt.easyxf('border: left thick, top thick')
-#t = xlwt.easyxf('border: top thick')
-#tr = xlwt.easyxf('border: right thick, top thick')
-#r = xlwt.easyxf('border: right thick')
-#br = xlwt.easyxf('border: right thick, bottom thick')
-#b = xlwt.easyxf('border: bottom thick')
-#bl = xlwt.easyxf('border: left thick, bottom thick')
-#l = xlwt.easyxf('border: left thick') 
+# tl = xlwt.easyxf('border: left thick, top thick')
+# t = xlwt.easyxf('border: top thick')
+# tr = xlwt.easyxf('border: right thick, top thick')
+# r = xlwt.easyxf('border: right thick')
+# br = xlwt.easyxf('border: right thick, bottom thick')
+# b = xlwt.easyxf('border: bottom thick')
+# bl = xlwt.easyxf('border: left thick, bottom thick')
+# l = xlwt.easyxf('border: left thick')
                     wb = xlwt.Workbook()
                     fnt = xlwt.Font()
                     fnt.bold = True
@@ -2590,7 +2590,7 @@ class PowerModel():
                         ws.write(row, col + 1, shortstuff[i].period)
                         xl_lens[col + 1] = max(xl_lens[col + 1], len(shortstuff[i].period))
                         ws.write(row, col + 2, shortstuff[i].shortfall, style2db)
-                        row += 1 
+                        row += 1
                     row = 0
                     col = len(shrt_cols) + 1
                     ws.write(row, col, 'Generation Summary Table', styleb)
@@ -2622,26 +2622,26 @@ class PowerModel():
                             techs[self.power_summary[value].technology][2] += self.power_summary[value].transmitted
                         row += 1
                     total = [0., 0., 0.]
-                    for key, value in iter(sorted(techs.iteritems())): 
-                        ws.write(row, col + 1, key)   
-                        ws.write(row, col + 2, value[0], style2db)  
-                        total[0] += value[0] 
-                        ws.write(row, col + 4, value[1], style0db)  
-                        total[1] += value[1] 
+                    for key, value in iter(sorted(techs.iteritems())):
+                        ws.write(row, col + 1, key)
+                        ws.write(row, col + 2, value[0], style2db)
+                        total[0] += value[0]
+                        ws.write(row, col + 4, value[1], style0db)
+                        total[1] += value[1]
                         if value[2] > 0:
-                            ws.write(row, col + 5, value[2], style0d)  
-                            total[2] += value[2] 
-                        row += 1 
-                    ws.write(row, col + 1, 'Total')   
-                    ws.write(row, col + 2, total[0], style2db) 
-                    ws.write(row, col + 4, total[1], style0db) 
-                    if total[2] > 0:   
-                        ws.write(row, col + 5, total[2], style0d) 
+                            ws.write(row, col + 5, value[2], style0d)
+                            total[2] += value[2]
+                        row += 1
+                    ws.write(row, col + 1, 'Total')
+                    ws.write(row, col + 2, total[0], style2db)
+                    ws.write(row, col + 4, total[1], style0db)
+                    if total[2] > 0:
+                        ws.write(row, col + 5, total[2], style0d)
                     for key in xl_lens:
                         if xl_lens[key] * 275 > ws.col(key).width:
-                            ws.col(key).width = xl_lens[key] * 275 
+                            ws.col(key).width = xl_lens[key] * 275
                     ws.row(1).height_mismatch = True
-                    ws.row(1).height = 256 * 3                       
+                    ws.row(1).height = 256 * 3
                     ws.set_panes_frozen(True)
                     ws.set_horz_split_pos(2)
                     ws.set_remove_splits(True)
@@ -2657,7 +2657,7 @@ class PowerModel():
             map = config.get('Map', 'map_choice')
         except:
             map = ''
-        self.colours = {'cumulative': '#006400', 'gross_load': '#a9a9a9', 'load': '#000000', 
+        self.colours = {'cumulative': '#006400', 'gross_load': '#a9a9a9', 'load': '#000000',
                         'shortfall': '#8b0000'}
         try:
             colors = config.items('Colors')
@@ -2705,7 +2705,7 @@ class PowerModel():
             if item[:6] == 'period':
                 if item == 'period':
                     continue
-                i = int(item[6:])-1
+                i = int(item[6:]) - 1
                 periods[i] = values.split(',')
                 for j in range(1, len(periods[i])):
                     periods[i][j] = int(periods[i][j]) - 1
@@ -2743,7 +2743,7 @@ class PowerModel():
         s24 = []
         d365 = []
         for i in range(24):
-            x24.append(i+1)
+            x24.append(i + 1)
         for i in range(len(ydata)):
             if self.plots['total']:
                 l24.append([])
@@ -2809,21 +2809,21 @@ class PowerModel():
 
                     j += 1
                     if self.plots['total']:
-                        l24[j][k] += value[i+k]
+                        l24[j][k] += value[i + k]
                     if self.plots['by_day']:
-                        d365[j][d][0] += value[i+k]
+                        d365[j][d][0] += value[i + k]
                     if self.plots['month'] or self.plots['by_month']:
-                        m24[j][m][k] = m24[j][m][k] + value[i+k]
+                        m24[j][m][k] = m24[j][m][k] + value[i + k]
                     if self.plots['season'] or self.plots['by_season']:
                         for q in range(len(seasons)):
                             if m in seasons[q]:
                                 break
-                        q24[j][q][k] = q24[j][q][k] + value[i+k]
+                        q24[j][q][k] = q24[j][q][k] + value[i + k]
                     if self.plots['period'] or self.plots['by_period']:
                         for s in range(len(periods)):
                             if m in periods[s]:
                                 break
-                        s24[j][s][k] = s24[j][s][k] + value[i+k]
+                        s24[j][s][k] = s24[j][s][k] + value[i + k]
         if self.plots['cumulative']:
             pc = 1
         else:
@@ -2910,7 +2910,7 @@ class PowerModel():
                             gen_sum += value[i]
                             if self.plots['gross_load'] and key == 'Existing Rooftop PV':
                                 load_sum += value[i]
-                maxy = max(maxy, max(value)) 
+                maxy = max(maxy, max(value))
                 lw = self.other_width
                 if self.plots['cumulative'] and key[:4] != 'Load' and key != 'Storage':
                     lw = 1.0
@@ -2932,7 +2932,7 @@ class PowerModel():
             if self.plots['gross_load'] and 'Existing Rooftop PV' in ydata.keys():
                 hx.plot(x, gross_load, linewidth=1.0, label='Gross Load', color=self.colours['gross_load'])
                 maxy = max(maxy, max(gross_load))
-            try: 
+            try:
                 rndup = pow(10, round(log10(maxy * 1.5) - 1)) / 2
                 maxy = ceil(maxy / rndup) * rndup
             except:
@@ -2955,10 +2955,10 @@ class PowerModel():
             plt.ylim([miny, maxy])
             plt.xlim([0, len(x)])
             if (len(ydata) + pc) > 9:
-                # Shrink current axis by 5%
+                 # Shrink current axis by 5%
                 box = hx.get_position()
                 hx.set_position([box.x0, box.y0, box.width * 0.95, box.height])
-                # Put a legend to the right of the current axis
+                 # Put a legend to the right of the current axis
                 hx.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop=lbl_font)
             else:
                 hx.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(ydata) + pc),
@@ -2970,8 +2970,8 @@ class PowerModel():
             if self.plots['show_pct']:
                 self.gen_pct = ' (%s%% of load)' % '{:0,.1f}'.format(gen_sum * 100. / load_sum)
                 plt.title(self.hdrs['hour'] + self.suffix + self.gen_pct)
-               #plt.annotate(pct, xy=(1.0, 3.0)) 
-            if self.plots['maximise']: 
+               #plt.annotate(pct, xy=(1.0, 3.0))
+            if self.plots['maximise']:
                 mng = plt.get_current_fig_manager()
                 if sys.platform == 'win32' or sys.platform == 'cygwin':
                     if plt.get_backend() == 'TkAgg':
@@ -3017,13 +3017,13 @@ class PowerModel():
                     lw = 1.0
                     for i in range(len(x)):
                         cumulative[i] += value[i]
-                maxy = max(maxy, max(sortydata)) 
+                maxy = max(maxy, max(sortydata))
                 dx.plot(x, sortydata, linewidth=lw, label=shrinkKey(key), color=self.colours[key],
                         linestyle=self.linestyle[key])
             if self.plots['cumulative']:
                 sortydata = sorted(cumulative, reverse=True)
                 dx.plot(x, sortydata, linewidth=self.other_width, label='Tot. Generation', color=self.colours['cumulative'])
-            try: 
+            try:
                 rndup = pow(10, round(log10(maxy * 1.5) - 1)) / 2
                 maxy = ceil(maxy / rndup) * rndup
             except:
@@ -3031,11 +3031,11 @@ class PowerModel():
             plt.ylim([0, maxy])
             plt.xlim([0, len(x)])
             if (len(ydata) + pc) > 9:
-                # Shrink current axis by 10%
+                 # Shrink current axis by 10%
                 box = dx.get_position()
                 dx.set_position([box.x0, box.y0, box.width * 0.95, box.height])
 
-                # Put a legend to the right of the current axis
+                 # Put a legend to the right of the current axis
                 dx.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop=lbl_font)
             else:
                 dx.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(ydata) + pc),
@@ -3048,8 +3048,8 @@ class PowerModel():
             if self.plots['show_pct']:
                 self.gen_pct = ' (%s%% of load)' % '{:0,.1f}'.format(gen_sum * 100. / load_sum)
                 plt.title(self.hdrs['duration'] + self.suffix + self.gen_pct)
-               #plt.annotate(pct, xy=(1.0, 3.0)) 
-            if self.plots['maximise']: 
+               #plt.annotate(pct, xy=(1.0, 3.0))
+            if self.plots['maximise']:
                 mng = plt.get_current_fig_manager()
                 if sys.platform == 'win32' or sys.platform == 'cygwin':
                     if plt.get_backend() == 'TkAgg':
@@ -3064,15 +3064,15 @@ class PowerModel():
                 plt.draw()
             if self.do_load:
                 hdr = self.hdrs['duration'].replace('Power - ', '')
-          #      fig = plt.figure(hdr + self.suffix)
+           #      fig = plt.figure(hdr + self.suffix)
                 plt.figure(hdr + ' 2')
                 plt.grid(True)
                 plt.title(self.hdrs['duration'] + ' with renewable contribution')
                 lx = plt.subplot(111)
                 maxy = 0
                 miny = 0
-                load = [] # use for this and next graph
-                rgen = [] # use for this and next graph
+                load = []  # use for this and next graph
+                rgen = []  # use for this and next graph
                 rgendiff = []
                 for i in range(len(self.x)):
                     rgen.append(0.)
@@ -3082,7 +3082,7 @@ class PowerModel():
                     gen_sum = 0.
                 for key, value in ydata.iteritems():
                     if key == 'Generation':
-                        continue 
+                        continue
                     if self.plots['show_pct']:
                         for i in range(len(value)):
                             if key[:4] == 'Load':
@@ -3101,10 +3101,10 @@ class PowerModel():
                 for i in range(len(load)):
                     rgendiff[i] = load[i] - rgen[i]
                 sortly1 = sorted(load, reverse=True)
-                maxy = max(maxy, max(load)) 
-                maxy = max(maxy, max(rgendiff)) 
+                maxy = max(maxy, max(load))
+                maxy = max(maxy, max(rgendiff))
                 miny = min(miny, min(rgendiff))
-                try: 
+                try:
                     rndup = pow(10, round(log10(maxy * 1.5) - 1)) / 2
                     maxy = ceil(maxy / rndup) * rndup
                     if miny < 0:
@@ -3132,8 +3132,8 @@ class PowerModel():
                     self.gen_pct = ' (%s%% of load)' % '{:0,.1f}'.format(gen_sum * 100. / load_sum)
                     plt.title(self.hdrs['duration'] + ' with renewable contribution' + \
                               self.gen_pct)
-                   #plt.annotate(pct, xy=(1.0, 3.0)) 
-                if self.plots['maximise']: 
+                   #plt.annotate(pct, xy=(1.0, 3.0))
+                if self.plots['maximise']:
                     mng = plt.get_current_fig_manager()
                     if sys.platform == 'win32' or sys.platform == 'cygwin':
                         if plt.get_backend() == 'TkAgg':
@@ -3145,12 +3145,12 @@ class PowerModel():
             if self.plots['block']:
                 plt.show(block=True)
             else:
-                plt.draw()    
+                plt.draw()
         if not self.plots['block']:
             plt.show(block=True)
         if (self.plots['shortfall_detail'] or self.plots['save_balance']) and self.do_load:
-            load = [] 
-            rgen = [] 
+            load = []
+            rgen = []
             shortfall = [[], [], [], []]
             generation = []
             for i in range(len(self.x)):
@@ -3166,11 +3166,11 @@ class PowerModel():
                         rgen[i] += value[i]
             shortfall[0][0] = rgen[0] - load[0]
             for i in range(1, len(load)):
-                shortfall[0][i] = shortfall[0][i-1] + rgen[i] - load[i]
+                shortfall[0][i] = shortfall[0][i - 1] + rgen[i] - load[i]
             d_short = [[], [0], [0, 0]]
             for i in range(0, len(load), 24):
                 d_short[0].append(0.)
-                for j in range(i, i+24):
+                for j in range(i, i + 24):
                     d_short[0][-1] += rgen[i] - load[i]
             if self.iterations > 0:
                 for i in range(1, len(d_short[0])):
@@ -3193,7 +3193,7 @@ class PowerModel():
                 del shortstuff
                 xs = []
                 for i in range(len(d_short[0])):
-                    xs.append(i + 1)  
+                    xs.append(i + 1)
                 plt.figure('daily shortfall')
                 plt.grid(True)
                 plt.title('Daily Shortfall')
@@ -3218,7 +3218,7 @@ class PowerModel():
                     sdfx.axhline(lin, linestyle='--', color=colours[i])
                 lin = sum(d_short[0]) / len(d_short[0])
                 sdfx.axhline(lin, linestyle='--', color='black')
-                if self.plots['maximise']: 
+                if self.plots['maximise']:
                     mng = plt.get_current_fig_manager()
                     if sys.platform == 'win32' or sys.platform == 'cygwin':
                         if plt.get_backend() == 'TkAgg':
@@ -3228,7 +3228,7 @@ class PowerModel():
                     else:
                         mng.resize(*mng.window.maxsize())
                 plt.show(block=True)
-                h_storage = [-(shortfall[0][-1] / len(shortfall[0]))] # average shortfall
+                h_storage = [-(shortfall[0][-1] / len(shortfall[0]))]  # average shortfall
                 for s in range(1, self.iterations + 1):
                     for i in range(len(self.x)):
                         shortfall[s].append(0.)
@@ -3241,13 +3241,13 @@ class PowerModel():
                         still_short[1] += rgen[0] - load[0] + h_storage[-1]
                     shortfall[s][0] = rgen[0] - load[0] + h_storage[-1]
                     for i in range(1, len(load)):
-                        shortfall[s][i] = shortfall[s][i-1] + rgen[i] - load[i] + h_storage[-1]
+                        shortfall[s][i] = shortfall[s][i - 1] + rgen[i] - load[i] + h_storage[-1]
                         if rgen[i] - load[i] + h_storage[-1] < 0:
                             still_short[0] += rgen[i] - load[i] + h_storage[-1]
                             ctr += 1
                         else:
                             still_short[1] += rgen[i] - load[i] + h_storage[-1]
-   #                 h_storage.append(h_storage[-1] - still_short[0] / len(self.x))
+    #                 h_storage.append(h_storage[-1] - still_short[0] / len(self.x))
                     h_storage.append(-(shortfall[0][-1] + still_short[0]) / len(self.x))
                 dimen = log10(fabs(shortfall[0][-1]))
                 unit = 'MW'
@@ -3287,7 +3287,7 @@ class PowerModel():
                 sfx.set_xlabel('Day of the year')
                 sfx.set_ylabel('Power (' + unit + ')')
                 sfx.legend(loc='best', prop=lbl_font)
-                if self.plots['maximise']: 
+                if self.plots['maximise']:
                     mng = plt.get_current_fig_manager()
                     if sys.platform == 'win32' or sys.platform == 'cygwin':
                         if plt.get_backend() == 'TkAgg':
@@ -3324,7 +3324,7 @@ class PowerModel():
                 sfx.set_ylabel('Power (MW)')
                 plt.xlim([0, len(x)])
                 sfx.legend(loc='best', prop=lbl_font)
-                if self.plots['maximise']: 
+                if self.plots['maximise']:
                     mng = plt.get_current_fig_manager()
                     if sys.platform == 'win32' or sys.platform == 'cygwin':
                         if plt.get_backend() == 'TkAgg':
@@ -3342,7 +3342,7 @@ class PowerModel():
                 vals = ['load', 'generation', 'transmitted', 'shortfall']
                 short2 = [shortfall[0][0]]
                 for i in range(1, len(self.x)):
-                 #   short2.append(shortfall[0][i] - shortfall[0][i - 1])
+                  #   short2.append(shortfall[0][i] - shortfall[0][i - 1])
                     short2.append(shortfall[0][i])
                 for i in range(0, len(load)):
                     shortstuff.append(ColumnData(i + 1, the_date(self.load_year, i), [load[i],
@@ -3396,7 +3396,7 @@ class PowerModel():
                             gen_sum += l24[i][j]
                             if self.plots['gross_load'] and key == 'Existing Rooftop PV':
                                 load_sum += l24[i][j]
-                maxy = max(maxy, max(l24[i])) 
+                maxy = max(maxy, max(l24[i]))
                 lw = self.other_width
                 if self.plots['cumulative'] and key[:4] != 'Load' and key != 'Storage':
                     lw = 1.0
@@ -3418,7 +3418,7 @@ class PowerModel():
             if self.plots['gross_load'] and 'Existing Rooftop PV' in ydata.keys():
                 tx.plot(x24, gross_load, linewidth=1.0, label='Gross Load', color=self.colours['gross_load'])
                 maxy = max(maxy, max(gross_load))
-            try: 
+            try:
                 rndup = pow(10, round(log10(maxy * 1.5) - 1)) / 2
                 maxy = ceil(maxy / rndup) * rndup
             except:
@@ -3441,15 +3441,15 @@ class PowerModel():
             plt.ylim([miny, maxy])
             plt.xlim([1, 25])
             plt.xticks(range(0, 25, 4))
-         #   tx.legend(loc='lower left', numpoints = 2, prop=lbl_font)
+          #   tx.legend(loc='lower left', numpoints = 2, prop=lbl_font)
             tx.set_xticklabels(labels)
             tx.set_xlabel('Hour of the Day')
             tx.set_ylabel('Power (MW)')
             if (len(ydata) + pc) > 9:
-                # Shrink current axis by 5%
+                 # Shrink current axis by 5%
                 box = tx.get_position()
                 tx.set_position([box.x0, box.y0, box.width * 0.95, box.height])
-                # Put a legend to the right of the current axis
+                 # Put a legend to the right of the current axis
                 tx.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop=lbl_font)
             else:
                 tx.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(ydata) + pc),
@@ -3457,8 +3457,8 @@ class PowerModel():
             if self.plots['show_pct']:
                 self.gen_pct = ' (%s%% of load)' % '{:0,.1f}'.format(gen_sum * 100. / load_sum)
                 plt.title(self.hdrs['total'] + self.suffix + self.gen_pct)
-               #plt.annotate(pct, xy=(1.0, 3.0)) 
-            if self.plots['maximise']: 
+               #plt.annotate(pct, xy=(1.0, 3.0))
+            if self.plots['maximise']:
                 mng = plt.get_current_fig_manager()
                 if sys.platform == 'win32' or sys.platform == 'cygwin':
                     if plt.get_backend() == 'TkAgg':
@@ -3514,7 +3514,7 @@ class PowerModel():
             self.scenarios = self.scenarios.replace('$USER$', getUser())
             self.scenarios = self.scenarios.replace('$YEAR$', self.base_year)
             i = self.scenarios.rfind('/')
-            self.scenarios = self.scenarios[:i+1]
+            self.scenarios = self.scenarios[:i + 1]
         except:
             self.scenarios = ''
         try:
@@ -3553,13 +3553,13 @@ class PowerModel():
 #       choose what power data to collect (once only)
 #
         self.plot_order = ['show_menu', 'actual', 'cumulative', 'by_station', 'adjust',
-                           'show_load', 'shortfall', 'grid_losses', 'gross_load', 'maximise', 
+                           'show_load', 'shortfall', 'grid_losses', 'gross_load', 'maximise',
                            'block', 'show_pct', 'by_day', 'by_month', 'by_season',
                            'by_period', 'hour', 'total', 'month', 'season', 'period',
                            'duration', 'shortfall_detail', 'summary', 'save_data', 'save_balance', 'financials']
-        self.initials = ['actual', 'by_station', 'grid_losses', 'save_data', 'gross_load', 
-                         'summary', 'financials', 'show_menu'] 
-        self.hdrs = {'show_menu' : 'Check / Uncheck all',
+        self.initials = ['actual', 'by_station', 'grid_losses', 'save_data', 'gross_load',
+                         'summary', 'financials', 'show_menu']
+        self.hdrs = {'show_menu': 'Check / Uncheck all',
                 'actual': 'Generation - use actual generation figures',
                 'cumulative': 'Generation - total (cumulative)',
                 'by_station': 'Generation - from chosen stations',
@@ -3633,7 +3633,7 @@ class PowerModel():
             pass
         try:
             self.show_menu = self.plots['show_menu']
-        except  :
+        except:
             self.show_menu = True
         try:
             self.discharge[0] = float(config.get('Storage', 'discharge_max'))
@@ -3653,13 +3653,13 @@ class PowerModel():
             self.plot_order.remove('save_data')
         if len(self.stations) == 1:
             self.plot_order.remove('cumulative')
-            self.plot_order.remove('by_station') 
-            self.plot_order.remove('gross_load')            
+            self.plot_order.remove('by_station')
+            self.plot_order.remove('gross_load')
         if self.show_menu:
             if __name__ == '__main__':
                 app = QtGui.QApplication(sys.argv)
-            what_plots = whatPlots(self.plots, self.plot_order, self.hdrs, self.spacers, 
-                                   self.load_growth,self.base_year, self.load_year, 
+            what_plots = whatPlots(self.plots, self.plot_order, self.hdrs, self.spacers,
+                                   self.load_growth, self.base_year, self.load_year,
                                    self.iterations, self.storage, self.discharge,
                                    self.recharge, initial=True, helpfile=helpfile)
             what_plots.exec_()
@@ -3692,7 +3692,7 @@ class PowerModel():
            else:
                ctr = 0
                for st in stations:
-                   if st.technology[:6] != 'Fossil': 
+                   if st.technology[:6] != 'Fossil':
                        ctr += 1
                try:
                    if int(progress_bar) > ctr:
@@ -3771,7 +3771,7 @@ class PowerModel():
                         line += self.stn_outs[i] + ','
                         if len(self.stn_pows[i]) > max_outs:
                              max_outs = len(self.stn_pows[i])
-                    tf.write(line + '\n')  
+                    tf.write(line + '\n')
                     for i in range(max_outs):
                         line = str(i + 1) + ','
                         for j in range(len(self.stn_outs)):
@@ -3779,7 +3779,7 @@ class PowerModel():
                                 line += str(self.stn_pows[j][i]) + ','
                             except:
                                  line += ','
-                        tf.write(line + '\n')  
+                        tf.write(line + '\n')
                     tf.close()
                 else:
                     wb = xlwt.Workbook()
@@ -3792,14 +3792,14 @@ class PowerModel():
                     for i in range(len(self.stn_outs)):
                         ws.write(0, i + 2, self.stn_outs[i])
                         for j in range(len(self.stn_pows[i])):
-                            ws.write(j + 1, i + 2, round(self.stn_pows[i][j], 4)) # or , 3
-                    ws.set_panes_frozen(True) # frozen headings instead of split panes
-                    ws.set_horz_split_pos(1) # in general, freeze after last heading row
-                    ws.set_remove_splits(True) # if user does unfreeze, dont leave a split there
+                            ws.write(j + 1, i + 2, round(self.stn_pows[i][j], 4))  # or , 3
+                    ws.set_panes_frozen(True)  # frozen headings instead of split panes
+                    ws.set_horz_split_pos(1)  # in general, freeze after last heading row
+                    ws.set_remove_splits(True)  # if user does unfreeze, dont leave a split there
                     wb.save(data_file)
         if self.plots['summary']:
             fields = ['name', 'technology', 'capacity', 'cf', 'generation']
-            sumfields=['capacity', 'generation']
+            sumfields = ['capacity', 'generation']
             if getattr(self.power_summary[0], 'transmitted') != None:
                 fields.append('transmitted')
                 sumfields.append('transmitted')
@@ -3816,13 +3816,13 @@ class PowerModel():
             show_summ = True
         else:
             show_summ = False
-     #   plot_opts = ['by_day', 'by_month', 'by_season', 'by_period', 'hour', 'total', 'month',
-      #               'season', 'period', 'duration', 'shortfall_detail']
+      #   plot_opts = ['by_day', 'by_month', 'by_season', 'by_period', 'hour', 'total', 'month',
+       #               'season', 'period', 'duration', 'shortfall_detail']
         do_plots = True
-      #  for pl in plot_opts:
-       #     if self.plots[pl]:
-        #        do_plots = True
-         #       break
+       #  for pl in plot_opts:
+        #     if self.plots[pl]:
+         #        do_plots = True
+          #       break
 #
 #       loop around processing plots
 #
@@ -3844,25 +3844,25 @@ class PowerModel():
             self.adjustby = None
             while True:
                 wrkly = {}
-                summs = {} 
+                summs = {}
                 if self.load_key != '':
                     try:
                         del wrkly[self.load_key]
                     except:
                         pass
-                    self.load_key = '' 
+                    self.load_key = ''
                 if (self.plots['show_load'] or self.plots['save_balance']) and self.can_do_load:
                     if self.load_data is None:
                         tf = open(self.load_file, 'r')
                         lines = tf.readlines()
                         tf.close()
-                        self.load_data = []   
-                        for i in range(1,len(lines)):
+                        self.load_data = []
+                        for i in range(1, len(lines)):
                             self.load_data.append(float(lines[i].rstrip()))
                     if self.load_multiplier != 0:
                         key = 'Load ' + self.load_year
                     else:
-                        key = 'Load' # lines[0].rstrip()
+                        key = 'Load'  # lines[0].rstrip()
                     self.load_key = key
                     wrkly[key] = []
                     if self.load_multiplier != 0:
@@ -3894,15 +3894,15 @@ class PowerModel():
                         wrkly[key] = []
                         if key == 'Generation':
                             for i in range(len(self.ly[key])):
-                                wrkly[key].append(self.ly[key][i]) 
+                                wrkly[key].append(self.ly[key][i])
                         else:
                             for i in range(len(self.ly[key])):
-                                wrkly[key].append(self.ly[key][i] * self.adjustby[key])     
+                                wrkly[key].append(self.ly[key][i] * self.adjustby[key])
                 if self.plots['shortfall'] or self.plots['shortfall_detail'] or self.plots['save_balance']:
                     self.plots['show_load'] = True
                     self.plots['cumulative'] = True
-             #   if self.plots['save_balance']:
-              #      self.plots['show_load'] = True
+              #   if self.plots['save_balance']:
+               #      self.plots['show_load'] = True
                 try:
                     del wrkly['Storage']
                 except:
@@ -3939,7 +3939,7 @@ class PowerModel():
                     for i in range(len(self.x)):
                         gap = gape = total_gen[i] - wrkly[self.load_key][i]
                         storage_loss = 0.
-                        if gap >= 0: # excess generation
+                        if gap >= 0:  # excess generation
                             if self.recharge[0] > 0 and gap > self.recharge[0]:
                                 gap = self.recharge[0]
                             if storage_carry >= storage_cap:
@@ -3951,18 +3951,18 @@ class PowerModel():
                                 storage_carry += gap - storage_loss
                                 if gape - gap > 0:
                                     wrkly['Excess'][i] = gape - gap
-                                if storage_carry > storage_cap:    
+                                if storage_carry > storage_cap:
                                     storage_carry = storage_cap
                         else:
                             if self.discharge[0] > 0 and -gap > self.discharge[0]:
-                                gap = -self.discharge[0] 
-                            if storage_carry > -gap / self.discharge[1]: # extra storage
+                                gap = -self.discharge[0]
+                            if storage_carry > -gap / self.discharge[1]:  # extra storage
                                 wrkly['Storage'][i] = -gap
                                 storage_loss = gap * self.discharge[1] - gap
                                 storage_carry += gap - storage_loss
-                            else: # not enough storage
+                            else:  # not enough storage
                                 if self.discharge[0] > 0 and storage_carry > self.discharge[0]:
-                                    storage_carry = self.discharge[0] 
+                                    storage_carry = self.discharge[0]
                                 wrkly['Storage'][i] = storage_carry * (1 / (2 - self.discharge[1]))
                                 storage_loss = storage_carry - wrkly['Storage'][i]
                                 storage_carry = 0
@@ -3978,10 +3978,10 @@ class PowerModel():
                             summs['Shortfall'][0] += shortfall
                             shortstuff.append(ColumnData(i + 1, the_date(self.load_year, i),
                                               [wrkly[self.load_key][i], total_gen[i],
-                                              wrkly['Storage'][i], storage_losses[i], 
+                                              wrkly['Storage'][i], storage_losses[i],
                                               storage_bal[i], shortfall, wrkly['Excess'][i]],
-                                              values=['load', 'generation' ,'storage_used',
-                                                      'storage_loss', 'storage_balance', 
+                                              values=['load', 'generation', 'storage_used',
+                                                      'storage_loss', 'storage_balance',
                                                       'shortfall', 'excess']))
                         dialog = displaytable.Table(shortstuff, title='Storage',
                                                     save_folder=self.scenarios,
@@ -3992,8 +3992,8 @@ class PowerModel():
                         del dialog
                         del shortstuff
                         summs['Shortfall'][0] = round(summs['Shortfall'][0], 1)
-                if show_summ and self.adjustby is not None:  
-                    keys = []                  
+                if show_summ and self.adjustby is not None:
+                    keys = []
                     for key in wrkly:
                         keys.append(key)
                         gen = 0.
@@ -4007,16 +4007,16 @@ class PowerModel():
                             except:
                                 incr = ''
                         try:
-                            summs[key] = [round(gen, 1), round(incr, 2), 0] 
+                            summs[key] = [round(gen, 1), round(incr, 2), 0]
                         except:
-                            summs[key] = [round(gen, 1), '', 0] 
+                            summs[key] = [round(gen, 1), '', 0]
                     keys.sort()
                     xtra = ['Generation', 'Load', 'Gen. - Load', 'Storage Capacity', 'Storage', 'Excess', 'Shortfall']
                     o = 0
                     gen = 0.
                     lk = ''
                     if self.storage[0] > 0:
-                        summs['Storage Capacity'] = [self.storage[0] * 1000., '', 0] 
+                        summs['Storage Capacity'] = [self.storage[0] * 1000., '', 0]
                     for i in range(len(keys)):
                         if keys[i][:4] == 'Load':
                             xtra[1] = keys[i]
@@ -4067,7 +4067,7 @@ class PowerModel():
 #
 #       loop around doing financials
 #
-        # run the financials model
+         # run the financials model
         if do_financials:
             while True:
                 self.financials = FinancialModel(self.stn_outs, self.stn_tech, self.stn_size,
@@ -4093,7 +4093,7 @@ class PowerModel():
                 del dialog
 
     def getValues(self):
-        return self.power_summary    
-            
+        return self.power_summary
+
     def getPct(self):
-        return self.gen_pct  
+        return self.gen_pct
