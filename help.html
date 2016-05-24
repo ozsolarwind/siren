@@ -1,0 +1,3313 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+div.experiment {
+  border: 1px solid red;
+} 
+table {
+    border: 1px solid black;
+    border-collapse: collapse;
+    vertical-align: top;
+}
+table.none {
+    border: none;
+    vertical-align: top;
+}
+td {
+    border: 1px solid black;
+    border-collapse: collapse;
+    padding: 3px;
+    vertical-align: top;
+}
+td.none {
+    border: none;
+    padding: 3px;
+    vertical-align: top;
+}
+td.lr {
+    border: none;
+    border-left: 1px solid black;
+    border-right: 1px solid black;
+    padding: 3px;
+    vertical-align: top;
+}
+td.top {
+    border: none;
+    border-top: 1px solid black;
+    border-left: 1px solid black;
+    border-right: 1px solid black;
+    padding: 3px;
+    vertical-align: top;
+}
+td.bottom {
+    border: none;
+    border-bottom: 1px solid black;
+    border-left: 1px solid black;
+    border-right: 1px solid black;
+    padding: 3px;
+    vertical-align: top;
+}
+td.right {
+    border: 1px solid black;
+    border-collapse: collapse;
+    padding: 3px;
+    text-align: right;
+    vertical-align: top;
+}
+th {
+    border: 1px solid black;
+    border-collapse: collapse;
+    padding: 3px;
+    vertical-align: top;
+}
+th.none {
+    border: none;
+    padding: 3px;
+    vertical-align: top;
+}
+ul.none {
+    display: block;
+    list-style-type: none;
+    margin-top: 1 em;
+    margin-bottom: 1 em;
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 40px;
+} 
+ul {
+    display: block;
+    list-style-type: disc;
+    margin-top: 1 em;
+    margin-bottom: 1 em;
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 40px;
+} 
+</style>
+</head>
+<body>
+<h1 id="help"><img src="sen_icon32.png" alt="SIM">SIREN Help</h1>
+<p><strong>All acronyms used in this help are defined in the list of <a href="#acronyms">acronyms</a></strong></p>
+<h3>SIREN - SEN's Interactive Renewable Energy Network tool</h3>
+<p>The SEN SAM simulation, SIREN, is used to calculate energy generation for renewable energy power stations. The program uses the SAM SDK API for energy calculations. SAM is provided by the NREL. This help briefly describes how to use the simulation.</p>
+<h2>Contents</h2>
+<ul class="none">
+<li><a href="#overview">Overview</a></li>
+<li><a href="#install">Installation</a></li>
+<li><a href="#setup">Setting Up</a></li>
+<li><a href="#objects">Simulation Objects</a></li>
+<ul class="none">
+<li><a href="#stations">Stations</a></li>
+<li><a href="#gridlines">Grid Lines</a></li>
+<li><a href="#grid">Types of Grid Lines</a></li>
+</ul>
+<li><a href="#prefs">Preferences</a></li>
+<li><a href="#menus">Menu Structure</a></li>
+<ul class="none">
+<li><a href="#mouse">Right Mouse Click</a></li>
+</ul>
+<li><a href="#usage">Using the Simulation</a></li>
+<ul class="none">
+<li><a href="#popts">Power Model Options</a></li>
+<li><a href="#fopts">Financial Model Options</a></li>
+<li><a href="#resourcegrid">Renewable Resource Grids</a></li>
+<li><a href="#tricks">Performance Tricks</a></li>
+</ul>
+<li><a href="#feedback">Feedback</a></li>
+<li><a href="#files">SIREN File Formats</a></li>
+<li><a href="#notes">Supporting Notes</a></li>
+<ul class="none">
+<li><a href="#map">Obtaining a Suitable Map Image</a></li>
+<li><a href="#swisupd">Obtaining Current SWIS Facilities</a></li>
+<li><a href="#merra">Obtaining and Using NASA MERRA-2 Data for SAM</a></li>
+<li><a href="#index">Using other Weather Files</a></li>
+<li><a href="#resource">Visualising Renewable Resource Attributes</a></li>
+<li><a href="#sam">SAM Models used by SIREN</a></li>
+<li><a href="#nonsam">Other Models used by SIREN (experimental)</a></li>
+</ul>
+<li><a href="#acronyms">Acronyms</a></li>
+</ul>
+<h2 id="overview">Overview</h2>
+<p>Welcome to SEN's renewable energy conceptual simulation - SIREN.</p>
+<p>The worlds renewable energy resources could provide many times the amount of fossil-fuelled energy currently used. SEN's computer simulation models an electricity network and allows you to create, cost and evaluate scenarios for supplying electricity using a mixture of renewable energy sources.</p>
+<p>By placing virtual renewable energy plants around the area of interest, you will be able to determine the optimal locations to access renewable energy sources, minimise grid connection costs and meet the varying demand on the grid, while achieving the best in terms of efficiency, cost effectiveness and energy security.</p>
+<p>This version of the Simulation uses the SAM SDK API for energy calculations. SAM is provided by the NREL.</p>
+<h3>Southern Western Australia (WA)</h3>
+<p>WA's renewable energy resources could provide many times the amount of fossil-fuelled energy currently used in the state. SEN's computer simulation models the SWIS and allows you to create, cost and evaluate scenarios for supplying our electricity using a mixture of renewable energy sources.</p>
+<p>By placing virtual renewable energy plants around WA, you will be able to determine the optimal locations to access renewable energy sources, minimise grid connection costs and meet the varying demand on the SWIS, while achieving the best efficiency, cost effectiveness, energy security, job creation and carbon reduction for Southern WA.</p>
+<p><strong>Note:</strong> The default data provided with the simulation focuses on the SWIS but the program(s) have been constructed to cover any geographic area with the appropriate input files. The techniques to create the required data files is documented in <a href="#notes">Supporting Notes</a>.</p>
+<h3>About SEN</h3>
+Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn.au</a>), is a not-for-profit association incorporated in Western Australia (WA) with a focus on renewable energy.
+<p><strong>Our Definition of Sustainable Energy</strong>: &ldquo;Energy that is renewable within a human lifetime and can be produced safely and equitably for all time with minimal impact on the environment and future inhabitants&rdquo;. We believe this does not include nuclear power with its many unresolved issues.</p>
+<p><strong>Our Focus</strong>: To raise awareness of how a mix of renewable energy technologies are able to meet WA's energy needs, with a particular focus on the main electricity grid, the SWIS.</p>
+<p><strong>Our Computer Simulation (SIREN)</strong>: To demonstrate how electricity demand on the SWIS may be met by a mix of renewable energy sources. Users are able to explore potential location and scale of renewable energy sources (stations, storage, transmission) to meet electricity demand.</p>
+<p><a href="#help">Back to top</a></p>
+<h2 id="install">Installation</h2>
+<p>At present there is a packaged version of the simulation for Windows (don't know why only Windows because I'm a Linux fan; the package has been created with PyInstaller). To execute the simulation open <em>siren.exe</em> in the upper folder, <em>siren</em>. You can easily set up a Desktop shortcut to point to the model. The package contains a number of folders with default files that can be replaced with your own. The location of these files are defined in a Preferences file as documented in <a href="#prefs">Preferences</a>. The default files are located in the following folders:</p>
+<ul class="none">
+<li><em>sample_files</em> contains a range of files to enable operation of the simulation</li>
+<li><em>sam-sdk</em> contains a Windows version of the SAM SDK, <em>sam-sdk-2015-06-30</em></li>
+<li><em>solar_weather</em> (if present) contains solar (.smw) weather files for the SWIS for 2014 and 2015</li>
+<li><em>source</em> contains the Python source programs for SIREN</li>
+<li><em>wind_weather</em> (if present) contains wind (.srw) weather files for the SWIS for 2014 and 2015</li>
+</ul>
+<p>When you open SIREN you will be presented with a list of SIREN Models (Preferences files). Choose the SIREN Model you want by clicking on your choice. If want to use a specific Preferences file you can open the simulation passing the alternate file name as a parameter, for example:</p>
+<ul class="none"> 
+<li><em>siren.exe SIREN_NWIS.ini</em></li>
+</ul>
+<p>If you want to create a new Model press the <em>New Model</em> button on the start up menu. You will be presented with a small list of Properties to update to create a new Preferences file. Many of these properties relate to files and file locations as described in <a href="#setup">Setting Up</a>. It's important to ensure they're correct for the new model to open. For the file fields click on the field to navigate to the desired file or folder. At the bottom of the Create Preferences file menu you have options to Save the new file, Save the new file and edit it, or Save it and open (launch) the new model.
+<div class="experiment">
+<p><strong>Experimental features</strong></p>
+<p>There are some experimental features in SIREN which may or may not be further developed. These are identified within this help by a red bounding box.</p> 
+</div>
+<p><a href="#help">Back to top</a></p>
+<h2 id="setup">Setting Up</h2>
+<p>The simulation uses external &ldquo;data files&rdquo; to model the potential for renewable energy generation for a geographic region. The approach is to model the data on an hourly basis for a desired year (ignoring leap days, that is, 8,760 hours). The following data files are required / desirable. Due to the initial source for each data file the format for each is different (see <a href="#files">SIREN File Formats</a> for further details). Please <a href="#feedback">feedback</a> any desired formats as it's relatively easy to accommodate standard file formats.</p>
+<ul>
+<li>A map of the area of interest (identified in the <a href="#p_map">[Map]</a> Section of the Preferences file). A simple JPEG or PNG image is fine although most conventional image formats should be acceptable. The map covers a geographically rectangular area of the earth. Obtaining a suitable map image is described in <a href="#map">Obtaining a Suitable Map Image</a></li>
+<li>Names and locations of towns. Two files are used as input (either or both can be specified): 
+<ol>
+<li>An Excel file containing a list of weather stations from the BOM (identified by <em>bom</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file)</li>
+<li>A CSV file containing the location of additional towns or localities (identified by <em>towns</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file)</li>
+</ol>
+</li>
+<li>Names, technologies and locations of existing power stations (identified by <em>grid_stations</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file). This is either a CSV or Excel file which contains details of existing Facilities (Stations) registered with the local electricity regulator (AEMO in the case of the SWIS) augmented by geographic location of the station and details on turbines for wind farms. The CSV file may be either a specific format or a normal scenario file. You can update this file for the SWIS as described in <a href="#swisupd">Obtaining Current SWIS Facilities</a>. 
+<br>
+You can also create additional stations, such as Rooftop PV, to be included in the list of existing stations by creating an additional Stations file and setting the <em>grid_stations2</em> property in the <a href="#p_files">[Files]</a> Section of the Preferences file</li>
+<li>A layout of the existing electrical grid. A KML file showing the layout of the major power lines in the grid and an outline of the network (SWIS) boundary. This should be a simplified version of the grid network with all lines connecting exactly for SIREN to correctly connect new stations into the grid
+<br>
+<strong>Note:</strong> The intention of these two files is to describe the existing fossil and renewable Stations on the electricity network</li>
+<li>Hourly load details for the electricity grid. A simple CSV file with a single column of electrical load data for the 8,760 hours in the year of interest (identified by <em>load</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file)</li>
+<li>Hourly solar and weather details for the area of interest (identified by <em>solar_files</em> and <em>wind_files</em> properties of the <a href="#p_files">[Files]</a> Section of the Preferences file). This data is in formats required for input to SAM and contains entries for the 8,760 hours in the year of interest. A SAM weather file is a text file that contains one year's worth of data describing the solar resource, wind speed, temperature, and other weather characteristics at a particular location. The approach we have adopted is to use NASA MERRA-2 data for the desired geographic area and year to create appropriately formatted weather files. This is described in <a href="#merra">Obtaining and Using NASA MERRA-2 Data for SAM</a>. 
+<br>
+You can also use TMY files such as those provided with SAM. If you have a number of weather files you can create an index of these files for SIREN. This is described in <a href="#index">Using other Weather Files</a></li>
+<li>SIREN allows you to visualise renewable resource attributes. This utilises a summary file to avoid having to process all the weather files covered by the map (identified by <em>resource_grid</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file). This is described in <a href="#resource">Visualising Renewable Resource Attributes</a></li>
+</ul>
+<p>You can successfully use the simulation with just the map and weather data while existing load and network data enhance it's usefulness.
+<p><a href="#help">Back to top</a></p>
+<h2 id="objects">Simulation Objects</h2>
+<p>The simulation has two main objects, stations and grid lines. Stations can be saved as scenarios in either an Excel or CSV file format while grid lines are constructed during the simulation rather than being saved to a file (unless you have manually created the grid line).</p>
+<h3 id="stations">Stations</h3>
+<p>Stations represent either existing generation stations on the grid or new ones you have created during a simulation session. The station files can be updated outside of the simulation. The fields for a station are:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>Station Name</dfn></td>
+<td class="none">The name you assigned to the station. They must be unique within a simulation session. If you add a new scenario with a station that has the same name as one already active the program will append a number to make the name(s) unique</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>Technology</dfn></td>
+<td class="none">One of the defined technologies:- Biomass, Fixed PV, Geothermal, Solar Thermal, Rooftop PV, Tracking PV, Wind (refer to <a href="#sam">SAM Models used by SIREN</a>), and
+<div  class="experiment">Hydro, Wave and Other (refer to <a href="#nonsam">Other Models used by SIREN (experimental)</a>)</div>
+</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>Latitude</dfn></td>
+<td class="none">Southern latitudes are negative</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>Longitude</dfn></td>
+<td class="none">Western longitudes are negative</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>Maximum Capacity (MW)</dfn></td>
+<td class="none">Maximum capacity of the station. This is the amount of power the station produces for export into the network</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>Turbine</dfn></td>
+<td class="none">The type of turbine for a Wind station. The name must be either one of the turbines in the Turbine file provided by SAM or the name of a turbine power (.POW) file</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>Rotor Diam</dfn></td>
+<td class="none">The rotor diameter of the turbine for a Wind station</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>No. turbines</dfn></td>
+<td class="none">The number of turbines in the wind farm</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>Area</dfn></td>
+<td class="none">The estimated area for the station. This is (currently) calculated by the simulation so you need not enter a value. Stations will be displayed on the map with either a square or circle representing their physical footprint (the shape can be set by setting <em>station_shape</em> in the <a href="#p_grid">[Grid]</a> Section of the Preferences file)</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>Power File</dfn></td>
+<td class="none">If the technology you're interested in is not available in the simulation or you encounter problems you can provide your own power file which contains power output for each hour of the year. This can be produced using SAM itself. Within SAM you display output data, select the Hourly energy data and export the file as either CSV or Excel, and place the file in the same location as your scenario files. When the Power Model is run the program will use this data rather than invoking the SAM module for that station</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>Storage Hours</dfn></td>
+<td class="none">The number of hours of storage for Solar Thermal stations. If the value isn't set SIREN will use the <em>tshours</em> property in the <a href="#p_solar_thermal">[Solar Thermal]</a> Section of the Preferences file</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>Grid Line</dfn></td>
+<td class="none">If you have edited the grid line for a station (see <a href="#mouse">Right Mouse Click</a>) this will record the coordinates for the grid line as a series of latitude, longitude values</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>Direction</dfn></td>
+<td class="none">For PV stations you can specify the direction in which the panels are facing as a character representation of the direction. Acceptable values are:- N, NNE, NE, ENE, E, ESE, SE, SSE, S, SSW, SW, WSW, W, WNW, NW or NNW. The default is N for southern latitude stations and S for northern latitude (that is, towards the midday sun)</td>
+</tr>
+</table>
+<p>When you display a Station with SIREN it will also show the Scenario the Station is in. For new Stations (i.e. not Existing) it is possible to update this value to one of the other scenarios that are currently &ldquo;open&ldquo;. This will move the Station into that scenario and, if the scenario is saved move it permanently into that Scenario.</p>
+<h3 id="gridlines">Grid Lines</h3>
+<p>Grid lines connect new stations to either existing or other new grid lines. By default the grid line will connect a station to the nearest point on the grid. You can edit a grid line if you wish to connect it elsewhere in the grid. Grid lines are recalculated when you add or modify stations but are not normally saved. You can, however, list the (new) grid lines and save the table listed. The fields for a grid are:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>Name</dfn></td>
+<td class="none">The name of the station the grid line connects from</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>Coordinates</dfn></td>
+<td class="none">Coordinates for the start and end of the grid line as latitude, longitude values</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>Dispatchable</dfn></td>
+<td class="none">If the grid connects &ldquo;dispatchable&rdquo; technology this will be set to <em>Y</em></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>Length</dfn></td>
+<td class="none">The length of the grid line</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>Line Cost</dfn></td>
+<td class="none">The estimated cost of the grid line. This is based upon the length and type of line(s)</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>Line Table</dfn></td>
+<td class="none">This describes the type and number of grid line types for this line. A grid line in the simulation may represent a number of different grid lines to enable the peak load to be carried. The grid line types are described below </td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>Peak Dispatchable</dfn></td>
+<td class="none">The sum of capacities for dispatchable stations connected to/by this grid line</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>Peak Load</dfn></td>
+<td class="none">The sum of capacities for all stations connected to/by this grid line</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>Peak Loss</dfn></td>
+<td class="none">An estimate of the peak loss for the line. This is calculated by applying the grid loss value to the sum of all station capacities connected to/by this grid line</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>Substation Cost</dfn></td>
+<td class="none">There are a range of costs related to the infrastructure at both ends of the line. We'll use the term substation_costs to embrace all these costs. Each line that ultimately ends up reaching the load centre will have a peak load for all stations that follow that particular path to the load centre. These lines will have substation costs based upon the peak load. The costs will/may be allocated across all stations in the path</td>
+</tr>
+</table>
+<h3 id="grid">Types of Grid Lines</h3>
+<p>A grid is built up of a number of different types of line to enable differing loads to be carried. Each line has a maximum carrying capacity. Greater loads require additional lines to be added; so in this simulation one line may represent multiple grid lines as described in the <em>Line Table</em> for the line. For dispatchable transmission we need an extra path for backup purposes (N-1) while no such backup is required for non-dispatchable loads (N-0). For a line carrying both we'll use a criteria of N-0 for total load plus N-1 for dispatchable load. Within this simulation line types and costs can be specified (somewhat cryptically) in the <a href="#p_grid">[Grid]</a> Section of the Preferences file. The default set of lines are:</p>
+<table border="0", class="none">
+<tr class="none">
+<th>&nbsp;</td>
+<th colspan="3">non-Dispatchable</th>
+<th colspan="3">Dispatchable</th>
+</tr>
+<tr class="none">
+<th>Power range (MW)</th>
+<th>Line Type(s)</th>
+<th>Cost per Km</th>
+<th>Substation Cost</th>
+<th>Line Type(s)</th>
+<th>Cost per Km</th>
+<th>Substation Cost</th>
+</tr>
+<tr class="none">
+<td>0 - 250</td>
+<td>220_s</td>
+<td class="right">$0.6M</td>
+<td class="right">$7.0M</td>
+<td>220_d</td>
+<td class="right">$0.9M</td>
+<td class="right">$8.0M</td>
+</tr>
+<tr class="none">
+<td>250 - 500</td>
+<td>330_s</td>
+<td class="right">$1.0M</td>
+<td class="right">$8.0M</td>
+<td>330_d</td>
+<td class="right">$1.5M</td>
+<td class="right">$10.0M</td>
+</tr>
+<tr class="none">
+<td>500 - 1,000</td>
+<td>330_d</td>
+<td class="right">$1.5M</td>
+<td class="right">$10.0M</td>
+<td>330_d + 330_s</td>
+<td class="right">$2.5M</td>
+<td class="right">$18.0M</td>
+</tr>
+<tr class="none">
+<td>1,000 - 1,500</td>
+<td>330_d + 330_s</td>
+<td class="right">$2.5M</td>
+<td class="right">$18.0M</td>
+<td>330_d x 2</td>
+<td class="right">$3.0M</td>
+<td class="right">$20.0M</td>
+</tr>	 	 	
+</table>
+<p>Above 500MW it's a case of alternately adding 330_s and 330_d costs.</p>
+<p><a href="#help">Back to top</a></p>
+<h2 id="prefs">Preferences</h2>
+<p>Many options can be specified by a Preferences file. When you open SIREN you will be presented with a list of available Preferences files (SIREN Models) to choose from. These files (must) reside in the same directory as the SIREN itself.
+The format is similar to a Windows INI file. If you want to create a new Model you can press the <em>New Model</em> button on the start up menu. You will be presented with a small list of Properties to update to create a new Preferences file. 
+<p>The Preferences file has the following Sections and properties. The file is a simple text file which must be saved in the <em>siren</em> folder and have a file type of <em>.ini</em> (INI File). The sample <em>siren_default.ini</em> or <em>siren_windows_default.ini</em> file will provide a useful guide as to the content.</p>
+<p>There are three special strings which will be replaced in the Files properties variables:</p>
+<ul class="none">
+<li><em>$USER$</em>&nbsp;will be replaced with the current userid</li>
+<li><em>$YEAR$</em>&nbsp;will be replaced with the base year value</li>
+<li><em>$dirn</em>&nbsp;will be replaced with the corresponding variable from the <dfn>[Parents]</dfn> Section</li>
+</ul>
+<p>(Skip to <a href="#menus">Menus</a>)</p>
+<p>Shortcut to Sections:- <a href="#p_base">Base</a>, <a href="#p_biomass">Biomass</a>, <a href="#p_colors">Colors</a>, 
+<a href="#p_files">Files</a>, <a href="#financial">Financial</a>, <a href="#p_fixed_pv">Fixed PV</a>, 
+<a href="#p_fossil_coal">Fossil Coal</a>, <a href="#p_fossil_cogen">Fossil Cogen</a>, <a href="#p_fossil_gas">Fossil Gas</a>, 
+<a href="#p_fossil_mixed">Fossil Mixed</a>, <a href="#p_geothermal">Geothermal</a>, <a href="#p_grid">Grid</a>, 
+<a href="#p_hydro">Hydro</a>, <a href="#p_map">Map</a>, <a href="#p_other">Other</a>, <a href="#p_parents">Parents</a>, 
+<a href="#power">Power</a>, <a href="#p_pv">PV</a>, <a href="#p_rooftop_pv">Rooftop PV</a>, 
+<a href="#p_sam_modules">SAM Modules</a>, <a href="#p_solar_thermal">Solar Thermal</a>, <a href="#p_storage">Storage</a>, 
+<a href="#p_tracking_pv">Tracking PV</a>, <a href="#p_view">View</a>, <a href="#p_wave">Wave</a>, <a href="#p_wind">Wind</a>, 
+<a href="#p_windows">Windows</a>.</p>
+<table border="0", class="none">
+<tr>
+<th>Section</th>
+<th>Properties</th> 
+</tr>
+<tr class="none" id="p_base"><td><dfn><strong>[Base]</strong></dfn></td>
+<td>Base properties are:</p> 
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>existing</dfn></td>
+<td class="none">Include/exclude existing power stations on startup</td>
+</tr>
+<!--
+<tr class="none">
+<td class="none"><dfn>expert_mode</dfn></td>
+<td class="none">If True, run the model in <em>expert</em> mode, allowing specification of many SAM variables. The default is <em>normal/novice</em> mode, requiring minimal input of parameters for the SAM models</td>
+</tr>
+-->
+<tr class="none">
+<td class="none"><dfn>name</dfn></td>
+<td class="none">A brief name for the model represented by this Preferences file</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>year</dfn></td>
+<td class="none">Year of interest</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>years</dfn></td>
+<td class="none">Specify the range of years available for processing. This can be specified as a list separated by commas and/or a range of years separated by a hyphen. For example, <em>2008, 2010-2015</em></td>
+</tr>
+</table>
+</td></tr>
+<tr class="none" id="p_biomass"><td><dfn><strong>[Biomass]</strong></dfn></td>
+<td>Specifics on Biomass characteristics. Properties are:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>area</dfn></td>
+<td class="none">Estimated area in km<sup>2</sup> per MW</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>capital_cost</dfn></td>
+<td class="none">Capital cost per peak MW. A suffix of K indicates thousands and M millions</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>fuel_cost</dfn></td>
+<td class="none">Fuel cost per tonne (of biomass)</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>icon</dfn></td>
+<td class="none">Icon to display for this technology. Default is biomass_g.png</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>multiplier</dfn></td>
+<td class="none">Multiply the station capacity by this value to simulate the appropriate level of feedstock. A figure of between 8.2 and 8.5 gives Capacity Factors between 0.65 and 0.92</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>o_m_cost</dfn></td>
+<td class="none">Operations and Maintenance cost per peak MW. A suffix of K indicates thousands and M millions</td>
+</tr>
+</table>
+</td></tr> 
+<tr class="none" id="p_colors"><td><dfn><strong>[Colors]</strong></dfn></td>
+<td>Colours for things. It is possible to have different colours for different maps by appending the map_choice value to Colors, e.g. <em>[Colors1]</em>. It is possible to edit colours and save the changes via a menu option. Standard colours are:
+<p>white, black, red, darkRed, green, darkGreen, blue, darkBlue, cyan, darkCyan, magenta, darkMagenta, yellow, darkYellow, gray, darkGray, lightGray and transparent; or you can use #rrggbb to specify red-green-blue HTML colour shades.</p>
+<p>Colour properties are:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>background</dfn></td>
+<td class="none">Colour for the background surrounding the map</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>border</dfn></td>
+<td class="none">Provide a border colour for station circles</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>fossil_name</dfn></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>grid_boundary</dfn></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>grid_trace</dfn></td>
+<td class="none">The colour for tracing a grid connection</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>new_grid</dfn></td>
+<td class="none">Additional grid lines for new stations</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>ruler</dfn></td>
+<td class="none">Colour for the ruler and legend text. If you specify a value of <em>guess</em> the ruler should display white on dark and black on light (but it's not perfect)</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>station</dfn></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>station_name</dfn></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>town</dfn></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>town_name</dfn></td>
+</tr>
+</table>
+<p>There are colours for each of the energy technologies:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>biomass</dfn></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>fixed_pv</dfn></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>geothermal</dfn></td>
+</tr>
+<!--
+<tr class="none">
+<td class="none"><dfn>pumped_hydro</dfn></td>
+</tr>
+-->
+<tr class="none">
+<td class="none"><dfn>rooftop_pv</dfn></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>solar_thermal</dfn></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>tracking_pv</dfn></td>
+</tr>
+<!--
+<tr class="none">
+<td class="none"><dfn>wave</dfn></td>
+</tr>
+-->
+<tr class="none">
+<td class="none"><dfn>wave</dfn></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>wind</dfn></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>fossil</dfn></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>fossil_coal</dfn></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>fossil_cogen</dfn></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>fossil_distillate</dfn></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>fossil_gas</dfn></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>fossil_mixed</dfn></td>
+</tr>
+</table>
+<p>There are colours used for the electricity grid transmission lines. The values are in part defined by the elements of the grid KML files as described in <a href="#files">SIREN File Formats</a>:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>grid_&lt;line_capacity&gt;</dfn> for the grid network used by SIREN</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>grid2_&lt;line_capacity&gt;</dfn> for the detailed grid network not used by SIREN</td>
+</tr>
+</table>
+<p>There are colours used for the resource grids:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>dhi_high</dfn></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>dhi_low</dfn></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>dni_high</dfn></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>dni_low</dfn></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>ghi_high</dfn></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>ghi_low</dfn></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>temp_high</dfn></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>temp_low</dfn></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>wind_high</dfn></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>wind_low</dfn></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>wind50_high</dfn></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>wind50_low</dfn></td>
+</tr>
+</table>
+<p>There are colours used for non-technology plot items:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>cumulative</dfn></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>gross_load</dfn></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>load</dfn></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>shortfall</dfn></td>
+</tr>
+</table>
+</td></tr>
+<tr class="none" id="p_files"><td><dfn><strong>[Files]</strong></dfn></td>
+<td>Files and directories. Properties are:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>about</dfn></td>
+<td class="none">About file</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>actual_power</dfn></td>
+<td class="none">File containing actual generation data. If the actual property in <em>[Power]</em> is True generation data will be derived from this file rather than using SAM. The files must reside in the scenarios folder</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>bom</dfn></td>
+<td class="none">List of BOM weather stations in WA</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>data_file</dfn></td>
+<td class="none">File to save power output if the save_data property in <em>[Power]</em> is True</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>grid_boundary</dfn></td>
+<td class="none">Electricity network (SWIS) boundary file (KML file)</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>grid_network</dfn></td>
+<td class="none">Schematic of Electricity network (KML file). This version of the network is used by SIREN to connect new stations into the network. This should be a very simple version of the grid with all network lines accurately connected</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>grid_network2</dfn></td>
+<td class="none">Schematic of Electricity network (KML file). This version of the network can be used to provide a more detailed view of the actual network. It isn't used by SIREN</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>grid_stations</dfn></td>
+<td class="none">List of power stations on the grid. These stations will be identified as <em>Existing</em>. For the SWIS Grid these are obtained from AEMO (<a href="http://data.wa.aemo.com.au/#facilities" target="_blank">http://data.wa.aemo.com.au/#facilities</a>)</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>grid_stations2</dfn></td>
+<td class="none">Additional power stations you want to include in the set of Existing stations. This can cater for such things
+as embedded solar - Rooftop PV - installed on the grid but not registered with AEMO</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>help</dfn></td>
+<td class="none">Help file</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>load</dfn></td>
+<td class="none">Hourly load data for the grid. For the SWIS Grid these are obtained from AEMO Operational Load data (<a href="http://data.wa.aemo.com.au/#load-summary" target="_blank">http://data.wa.aemo.com.au/#load-summary</a>)</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>pow_files</dfn></td>
+<td class="none">Location of turbine power curve files for those not in SAM's file</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>resource_grid</dfn></td>
+<td class="none">File to assist with showing the resource grid</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>sam_sdk</dfn></td>
+<td class="none">Location of SAM SDK folders</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>sam_turbines</dfn></td>
+<td class="none">SAM's turbine file; including power curves</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>scenario</dfn></td>
+<td class="none">Default initial scenario</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>scenarios</dfn></td>
+<td class="none">Location of and file name prefix for scenarios of additional/proposed renewable power stations. The value should end with an <em>*</em> (e.g. <em>Scenario*</em> and all scenarios must start with this value (less the *)</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>solar_files</dfn></td>
+<td class="none">Location of solar (.smw) weather files. If there is no <em>solar_index</em> file the file name must includes the geographic location of the file to enable a search for the file nearest to a location. The format is &lt;location_latitude_longitude_year.smw&gt;</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>solar_index</dfn>
+<td class="none">An index of file names and geographic locations for solar weather files. If specified this will be used to find the nearest solar weather file to a location</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>towns</dfn></td>
+<td class="none">List of towns in WA. Augments list of BOM weather stations</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>variable_files</dfn></td>
+<td class="none">Location of SAM module default variables files</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>wind_files</dfn></td>
+<td class="none">Location of wind (.srw) weather files. If there is no <em>wind_index</em> file the file name includes the geographic location of the file - &lt;location_latitude_longitude_year.srw&gt;</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>wind_index</dfn></td>
+<td class="none">An index of file names and geographic locations for wind weather files.</td>
+</tr>
+<tr class="none">
+</table>
+<div class="experiment">
+<table border="0", class="none">
+<tr class="none">
+<td class="none">&nbsp;</td>
+<td class="none">Rainfall (experimental)</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>rain_files&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</dfn></td>
+<td class="none">Location of rainfall weather files. The file name includes the geographic location of the file - &lt;location_latitude_longitude_year.csv&gt;</td>
+</tr>
+</table>
+</div>
+</td></tr>
+<tr class="none" id="financial"><td><dfn><strong>[Financial]</strong></dfn></td>
+<td>Financial options. When running the financial Power Models you will be presented with this list of properties. They can be altered and saved. Properties are:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>analysis_period</dfn></td>
+<td class="none">Analysis period in years (e.g. 30)</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>bid_price_esc</dfn></td>
+<td class="none">PPA escalation (Price escalation). Can be suffixed with % for readability, for example, 0%</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>debt_fraction</dfn></td>
+<td class="none">Debt fraction. Can be suffixed with % for readability, for example, 0%</td>
+</tr> 
+<tr class="none">
+<td class="none"><dfn>depr_fed_sl_years</dfn></td>
+<td class="none">Federal depreciation straight-line Years (e.g. 20)</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>depr_fed_type</dfn></td>
+<td class="none">Federal depreciation type. 2 = straight line</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>federal_tax_rate</dfn></td>
+<td class="none">Federal Tax Rate. Can be suffixed with % for readability, for example, 30%</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>grid_costs</dfn></td>
+<td class="none">Include Grid costs in LCOE calculations for financial models. This only includes the cost of the grid to connect the station into the main grid and for the capacity of the station</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>grid_losses</dfn></td>
+<td class="none">Reduce power figures by the amount of grid losses before running financial models</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>grid_path_costs</dfn></td>
+<td class="none">Include Grid path costs in LCOE calculations for financial models. This includes the cost of the grid to connect the station to the load centre for the capacity of the station. At present it excludes substation costs. This option may over-inflate grid costs as each station path to the load centre is traced individually</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>inflation_rate</dfn></td>
+<td class="none">Inflation rate. Can be suffixed with % for readability, for example, 0%</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>insurance_rate</dfn></td>
+<td class="none">Insurance rate. Can be suffixed with % for readability, for example, 0%</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>loan_rate</dfn></td>
+<td class="none">Loan rate. Can be suffixed with % for readability, for example, 0%</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>loan_term</dfn></td>
+<td class="none">Loan term in years (e.g. 0)</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>market</dfn></td>
+<td class="none">Utility IPP (0) or Commercial PPA (1)</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>min_dscr_target</dfn></td>
+<td class="none">Minimum required DSCR (e.g. 1.4)</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>min_dscr_required</dfn></td>
+<td class="none">Minimum DSCR required (e.g. 1)</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>min_irr_target</dfn></td>
+<td class="none">Minimum required IRR. Can be suffixed with % for readability, for example, 15%</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>optimize_lcoe_wrt_debt_fraction</dfn></td>
+<td class="none">Optimise LCOE with respect to debt percent (e.g. 0)</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>optimize_lcoe_wrt_ppa_escalation</dfn></td>
+<td class="none">Optimise LCOE with respect to PPA escalation (e.g. 0)</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>positive_cashflow_required</dfn></td>
+<td class="none">Positive cash flow required. 1 = yes</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>ppa_escalation</dfn></td>
+<td class="none">PPA escalation ??. Can be suffixed with % for readability, for example, 0.6%</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>real_discount_rate</dfn></td>
+<td class="none">Real discount rate. Can be suffixed with % for readability, for example, 0%</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>salvage_percentage</dfn></td>
+<td class="none">Salvage percentage. Can be suffixed with % for readability, for example, 0%</td>
+</tr>
+</table>
+</td></tr>
+<tr class="none" id="p_fixed_pv"><td><dfn><strong>[Fixed PV]</strong></dfn></td>
+<td>Specifics on Fixed PV characteristics. Properties are:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>area</dfn></td>
+<td class="none">Estimated area in km<sup>2</sup> per MW</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>capital_cost</dfn></td>
+<td class="none">Capital cost per peak MW. A suffix of K indicates thousands and M millions</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>dc_ac_ratio</dfn></td>
+<td class="none">DC to AC ratio. Default value is as specified in the <dfn>[PV]</dfn> Section</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>icon</dfn></td>
+<td class="none">Icon to display for this technology. Default is solar_pv_g.png</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>o_m_cost</dfn></td>
+<td class="none">Operations and Maintenance cost per peak MW. A suffix of K indicates thousands and M millions</td>
+</tr>
+</table>
+</td></tr> 
+<tr class="none" id="p_fossil_coal"><td><dfn><strong>[Fossil Coal]</strong></dfn></td>
+<td>Specifics on Fossil Coal characteristics. Properties are:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>area</dfn></td>
+<td class="none">Estimated area in km<sup>2</sup> per MW</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>capital_cost</dfn></td>
+<td class="none">Capital cost per peak MW. A suffix of K indicates thousands and M millions</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>icon</dfn></td>
+<td class="none">Icon to display for this technology. Default is fossil_g.png</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>o_m_cost</dfn></td>
+<td class="none">Operations and Maintenance cost per peak MW. A suffix of K indicates thousands and M millions</td>
+</tr>
+</table>
+</td></tr> 
+<tr class="none" id="p_fossil_cogen"><td><dfn><strong>[Fossil Cogen]</strong></dfn></td>
+<td>Specifics on Fossil Cogeneration characteristics. Properties are:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>area</dfn></td>
+<td class="none">Estimated area in km<sup>2</sup> per MW</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>capital_cost</dfn></td>
+<td class="none">Capital cost per peak MW. A suffix of K indicates thousands and M millions</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>icon</dfn></td>
+<td class="none">Icon to display for this technology. Default is fossil_g.png</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>o_m_cost</dfn></td>
+<td class="none">Operations and Maintenance cost per peak MW. A suffix of K indicates thousands and M millions</td>
+</tr>
+</table>
+</td></tr>
+<tr class="none" id="p_fossil_gas"><td><dfn><strong>[Fossil Gas]</strong></dfn></td>
+<td>Specifics on Fossil Gas characteristics. Properties are:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>area</dfn></td>
+<td class="none">Estimated area in km<sup>2</sup> per MW</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>capital_cost</dfn></td>
+<td class="none">Capital cost per peak MW. A suffix of K indicates thousands and M millions</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>icon</dfn></td>
+<td class="none">Icon to display for this technology. Default is fossil_g.png</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>o_m_cost</dfn></td>
+<td class="none">Operations and Maintenance cost per peak MW. A suffix of K indicates thousands and M millions</td>
+</tr>
+</table>
+</td></tr>
+<tr class="none" id="p_fossil_mixed"><td><dfn><strong>[Fossil Mixed]</strong></dfn></td>
+<td>Specifics on Fossil Mixed fuel characteristics. Properties are:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>area</dfn></td>
+<td class="none">Estimated area in km<sup>2</sup> per MW</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>capital_cost</dfn></td>
+<td class="none">Capital cost per peak MW. A suffix of K indicates thousands and M millions</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>icon</dfn></td>
+<td class="none">Icon to display for this technology. Default is fossil_g.png</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>o_m_cost</dfn></td>
+<td class="none">Operations and Maintenance cost per peak MW. A suffix of K indicates thousands and M millions</td>
+</tr>
+</table>
+</td></tr> 
+<tr class="none" id="p_geothermal"><td><dfn><strong>[Geothermal]</strong></dfn></td>
+<td>Specifics on Geothermal characteristics. Properties are:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>area</dfn></td>
+<td class="none">Estimated area in km<sup>2</sup> per MW</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>capital_cost</dfn></td>
+<td class="none">Capital cost per peak MW. A suffix of K indicates thousands and M millions</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>icon</dfn></td>
+<td class="none">Icon to display for this technology. Default is hot_rocks_g.png</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>o_m_cost</dfn></td>
+<td class="none">Operations and Maintenance cost per peak MW. A suffix of K indicates thousands and M millions</td>
+</tr>
+</table>
+</td></tr> 
+<tr class="none" id="p_grid"><td><dfn><strong>[Grid]</strong></dfn></td>
+<td>Grid properties are:</p>
+<table border="0", class="none">
+<!--
+<tr class="none">
+<td class="none"><dfn>capacity_cap</dfn></td>
+<td class="none">In costing (currently) the existing grid this option allows stepwise increments in costing grid capacity. If the peak load on a grid line exceeds this value the cost of the line will multiplied by the number of times it exceeds it. If no second value is given the increment will be 100% of the increase, otherwise it will be by the second step value. For example, setting a value of <em>1000</em> will cost the lines in 1000 MW limits while <em>1000,100</em> will cost lines greater than 1000 MW in 100 MW steps</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>converter_cost</dfn></td>
+<td class="none">HVAC converter costs per Peak MW. A suffix of K indicates thousands and M millions</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>converter_loss</dfn></td>
+<td class="none">HVAC converter loss. Can be suffixed with % for readability, for example, 0.62%</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>d_line_cost</dfn></td>
+<td class="none">Dispatchable transmission line price per kilometre. A suffix of K indicates thousands and M millions. For example, 3M = $3,000,000</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>s_line_cost</dfn></td>
+<td class="none">Normal (standard) transmission line price per kilometre. Example: 2M = $2,000,000</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>substation_costs</dfn></td>
+<td class="none">
+This entails all costs associated with connecting a power station to the network such as sub-stations, shunt capacitors, and dynamic reactive power compensation and so forth. There is a lower end cap for either dispatchable or non-dispatchable power. If the total generation capacity is less than the lower cap the costs will be distributed across all power stations based upon their capacity and dispatchable nature. Above the lower cap costs will be prorated</td>
+</tr>
+-->
+<tr class="none">
+<td class="none"><dfn>cost_existing</dfn></td>
+<td class="none">If set to True grid costs will include costing the existing grid. Thus, you can assume the existing grid is at capacity and allow a new grid to be built that follows the same corridors</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>dispatchable</dfn></td>
+<td class="none">The list of technologies to be treated as &ldquo;dispatchable&rdquo;. These technologies may require a more robust transmission line. The list is:- <em>pumped_hydro, geothermal, biomass, solar_thermal</em></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>d_lines</dfn></td>
+<td class="none">Defines a table for grid lines to support varying amounts of peak dispatchable power. It defines dispatchable transmission line types for increasing loads of peak dispatchable power. It uses the table defined by <em>line_costs</em> to produce lines types and costs. The format of each entry is <em>(peak_power=line_types)</em> to define the maximum power for each set of line types. Entries are enclosed in brackets. You can also specify a loop to create a table of increasing values. Example: <em>(250=220_d),(for(n=1,10,(n*1000-500=330_d*n),(n*1000=330_d*n + 330_s)))</em> will create the dispatchable line cost entries in <a href="#grid">Types of Grid Lines</a> up to a maximum of 10,000MW</td>
+</tr>
+<tr class="none">
+<td class="none">
+<dfn>line_costs</dfn></td>
+<td class="none">A list of the line types and their costs per Km separated by commas. A suffix of K indicates thousands and M millions. Example: <em>(220_s=0.6M, 220_d=0.9M, 330_s=1.0M, 330_d=1.5M)</em> describes the lines in <a href="#grid">Types of Grid Lines</a></td>
+</tr>
+<tr class="none">
+<td class="none">
+<dfn>line_loss</dfn></td>
+<td class="none">Line loss percentage per 1,000 kilometres. Can be suffixed with % for readability, for example, 6.93%</td>
+</tr>
+<tr class="none">
+<td class="none">
+<dfn>load_centre</dfn></td>
+<td class="none">To assist with tracing grid lines for a station you can specify &ldquo;load centres&rdquo; where a grid could connect towards (not yet to). This is a series of latitudes and longitudes separated by commas. You can also precede the coordinates with a name for the centre, for example <em>(Perth, -31.9231, 115.8840)</em>. The geographic location of the load centre also needs to be included in the coordinates for the network lines (as defined in the <dfn>grid_network</dfn> file)</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>s_lines</dfn></td>
+<td class="none">Defines a table for grid lines to support varying amounts of peak non-dispatchable power. It defines non-dispatchable transmission line types for increasing loads of peak power. It uses the table defined by <em>line_costs</em> to produce lines types and costs. The format of each entry is <em>(peak_power=line_types)</em> to define the maximum power for each set of line types. Entries are enclosed in brackets. You can also specify a loop to create a table of increasing values. Example: <em>(250=220_s),(500=330_s),(for(n=1,10,(n*1000=330_d*n),(n*1000+500=330_d*n + 330_s)))</em> will create the dispatchable line cost entries in <a href="#grid">Types of Grid Lines</a> up to a maximum of 10,500MW</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>substation_costs</dfn></td>
+<td class="none">A list of the line types and their substation costs separated by commas. A suffix of K indicates thousands and M millions. Example: <em>(220_s=7M, 220_d=8M, 330_s=8M, 330_d=10M)</em> describes the lines in <a href="#grid">Types of Grid Lines</a></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>substation_loss</dfn></td>
+<td class="none">Losses associated with substation infrastructure. Can be suffixed with % for readability, for example, 0.62%</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>trace grid</dfn></td>
+<td class="none">If set to True this option will cause the model to trace grid connections as far back as possible and add this downstream capacity to peak load for each grid line</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>trace_existing</dfn></td>
+<td class="none">If set to True this option will cause the model to trace grid connections for existing stations as well. If there are a large number of existing stations (and a complex grid) this can take a long time to process</td>
+</tr>
+</table>
+</td></tr>
+<tr class="none" id="p_hydro"><td><div class="experiment"><dfn><strong>[Hydro]</strong></dfn><br />(experimental)</div></td>
+<td><div class="experiment">
+Specifics on Hydrothermal characteristics (experimental). Properties are:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>area</dfn></td>
+<td class="none">Estimated area in km<sup>2</sup> per MW</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>capital_cost</dfn></td>
+<td class="none">Capital cost per peak MW. A suffix of K indicates thousands and M millions</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>cf</dfn></td>
+<td class="none">Capacity Factor. As SAM does not have a model for Hydro the approach SIREN uses is to simulate power generation using a capacity factor to produce a &ldquo;straight line&rdquo; power output</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>icon</dfn></td>
+<td class="none">Icon to display for this technology. Default is hydro_g.png</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>o_m_cost</dfn></td>
+<td class="none">Operations and Maintenance cost per peak MW. A suffix of K indicates thousands and M millions</td>
+</tr>
+</table>
+</td></tr> 
+<tr class="none" id="p_map"><td><dfn><strong>[Map]</strong></dfn></td>
+<td>Details on the map including geographic boundaries. Properties are:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>map</dfn></td>
+<td class="none">Map file showing area of interest. The map can be any graphic image, even a blank image such as provided in the sample files as <em>blank.jpg</em></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>map_choice</dfn></td>
+<td class="none">It is possible to choose one of a number of maps using the map_choice parameter. Properties suffixed with the map_choice value will override the default values. For example, <em>map_choice=1</em> will use values from <em>map1</em> etc. and will use colours from the <em>[Colors1]</em> section. It is also possible (in fact may be the only thing that works) to suffix the map properties with the map_choice value to provide a value for each map
+</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>projection</dfn></td>
+<td class="none">Map projection such as <em>EPSG:3857</em>. EPSG:3857 (WGS 84 / Popular Visualisation Pseudo-Mercator) is a Spherical Mercator projection coordinate system popularised by web services such as Google and later OpenStreetMap. It allows an area of the earth to be projected as a rectangle</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>lower_right</dfn></td>
+<td class="none">lower right corner of the map in format <em>latitude, longitude</em>. Suffixed by <em>map_choice</em>. For example, <em>map_choice=1</em> will use <em>lower_right1</em></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>lower_right&lt;map&gt;</dfn></td>
+<td class="none">lower right corner of the map for <em>map_choice=map</em> in format <em>latitude, longitude</em></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>scale</dfn></td>
+<td class="none">Scale of renewable station areas. True=scale renewable station areas to true size; False=display as a standard size</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>upper_left</dfn></td>
+<td class="none">Upper left corner of the map in format <em>latitude, longitude. Suffixed by <em>map_choice</em>. For example, <em>map_choice=1</em> will use <em>upper_left1</em></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>upper_left&lt;map&gt;</dfn></td>
+<td class="none">Upper left corner of the map for <em>map_choice=map</em> in format <em>latitude, longitude</em></td>
+</tr>
+</table>
+</td></tr>
+<tr class="none" id="p_parents"><td><dfn><strong>[Parents]</strong></dfn></td>
+<td>Enables parent directories to be specified and substituted in the <dfn>[Files]</dfn> properties. The variables must be in lower case. It is suggested they have an unusual character, such as $, to avoid valid values being substituted</p> 
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>$samsdk</dfn></td>
+<td class="none">Example: pointer to location of SAM SDK folders</td>
+</tr>
+</table>
+</td></tr> 
+<tr class="none" id="p_other"><td><div class="experiment"><dfn><strong>[Other]</strong></dfn><br />(experimental)</div></td>
+<td><div class="experiment">Specifics on another technology as defined by you (experimental). You can cater for different technologies by appending a suffix to Other, e.g. [Other1]. Refer to <a href="#nonsam">Other Models used by SIREN (experimental)</a> for more details. Standard Properties are:
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>area</dfn></td>
+<td class="none">Estimated area in km<sup>2</sup> per MW</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>capital_cost</dfn></td>
+<td class="none">Capital cost per peak MW. A suffix of K indicates thousands and M millions</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>formula</dfn></td>
+<td class="none">Formula to calculate the power generated for each hour</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>icon</dfn></td>
+<td class="none">Icon to display for this technology. Default is question.png</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>o_m_cost</dfn></td>
+<td class="none">Operations and Maintenance cost per peak MW. A suffix of K indicates thousands and M millions</td>
+</tr>
+</table>
+</div>
+</td></tr> 
+<tr class="none" id="power"><td><dfn><strong>[Power]</strong></dfn></td>
+<td>What processing, output and plots to produce for power model processing. Properties are True or False. Power options can be changed and saved when the Power Models menu option is selected. Properties are:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>actual</dfn></td>
+<td class="none">If True, generation data will be derived from actual power data rather than calculated using a SAM model</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>block</dfn></td>
+<td class="none">If True, plots will be displayed individually. Each plot will have to be closed before the next one will display</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>by_day</dfn></td>
+<td class="none">Display plots of daily results, that is, a figure for each day</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>by_month</dfn></td>
+<td class="none">Display plots of monthly results, that is, a figure for each month</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>by_period</dfn></td>
+<td class="none">Display plots of period results. The periods are defined by the <em>period&lt;n&gt;</em> properties. These are typically two six month seasons. As SAM data files cover a calendar year one period may include the first n month(s) and last m month(s) of the year. Each month covers the first to last day of the month</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>by_season</dfn></td>
+<td class="none">Display plots of seasonal results, that is, a figure for each season. The seasons are defined by the <em>season&lt;n&gt;</em> properties. These are typically the four three month seasons. As SAM data files cover a calendar year the summer or winter figures will include the first n month(s) and last m month(s) of the year</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>by_station</dfn></td>
+<td class="none">Display plots for individual stations</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>cumulative</dfn></td>
+<td class="none">Include a cumulative curve for renewables</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>duration</dfn></td>
+<td class="none">Display load duration curves</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>financials</dfn></td>
+<td class="none">Run SAM financial models on the power results produced</td>
+</tr><tr class="none">
+<td class="none"><dfn>fossil_technologies</dfn></td>
+<td class="none">The list of fossil technologies - <em>fossil_coal fossil_cogen fossil_distillate fossil_gas fossil_mixed</em></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>grid_losses</dfn></td>
+<td class="none">Reduce plot figures by the amount of grid losses</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>gross_load</dfn></td>
+<td class="none">Create additional load curve which includes Rooftop PV. This increases load to simulate the hidden capacity/demand being met by Rooftop PV</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>hour</dfn></td>
+<td class="none">Display plots of hourly results</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>load_growth</dfn></td>
+<td class="none">Default annual load growth when looking into the future. Can be suffixed with % for readability, for example, 2%</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>maximise</dfn></td>
+<td class="none">Maximise plot windows</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>month</dfn></td>
+<td class="none">Display plots of the average 24 hour period for each month</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>other_width</dfn></td>
+<td class="none">Line width for non-technology plot items (Cumulative generation, Load and Shortfall). Default value is 2.0 (twice normal width) 
+</td>
+<tr class="none">
+<td class="none"><dfn>period</dfn></td>
+<td class="none">Display plots of the average 24 hour period for the periods defined by the <em>period&lt;n&gt;</em> properties. 
+</td>
+<tr class="none">
+<td class="none"><dfn>period&lt;n&gt;</dfn></td>
+<td class="none">The months covered by period <em>n</em>. The format is <em>&lt;period_name&gt;,n1,n2,...n6</em> for month n1 through n6. For example, <em>period2=Summer,11,12,1,2,3,4</em> names the second period <em>Summer</em> and covers November to December plus January to April
+</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>save_data</dfn></td>
+<td class="none">Save data outputs produced by the model</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>season</dfn></td>
+<td class="none">Display plots of the average 24 hour period for the seasons defined by the <em>season&lt;n&gt;</em> properties
+</td>
+<tr class="none">
+<td class="none"><dfn>season&lt;n&gt;</dfn></td>
+<td class="none">The months covered by season <em>n</em>. The format is <em>&lt;season_name&gt;,n1,n2,...n3</em> for month n1 through n3. For example, <em>season1=Summer,12,1,2</em> names the first season <em>Summer</em> and covers December, January and February
+</td>
+<tr class="none">
+<td class="none"><dfn>shortfall</dfn></td>
+<td class="none">Display shortfall of network load not met by renewable generation</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>shortfall_detail</dfn></td>
+<td class="none">Display additional shortfall graphs and data to assist detailed analysis of generation shortfall</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>shortfall_iterations</dfn></td>
+<td class="none">Choose the number of iterations for the additional shortfall graphs</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>show_load</dfn></td>
+<td class="none">Display network load on plots</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>show_menu</dfn></td>
+<td class="none">Present a menu to specify what processing and plots to produce. This option should also be set to True to enable choices on plots, tables and financial options</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>summary</dfn></td>
+<td class="none">Present a table summarising power produced</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>technologies</dfn></td>
+<td class="none">The list of technologies - <em>biomass, fixed_pv, geothermal, rooftop_pv, solar_thermal, tracking_pv, wind</em></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>total</dfn></td>
+<td class="none">Display plots of the average 24 hour period for the full year</td>
+</tr>
+</table>
+</td></tr>
+<tr class="none" id="p_pv"><td><dfn><strong>[PV]</strong></dfn></td>
+<td>Specifics on PV characteristics. Properties are:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>dc_ac_ratio</dfn></td>
+<td class="none">DC to AC ratio. Default value is 1.1</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>icon</dfn></td>
+<td class="none">Icon to display for this technology. Default is solar_pv_g.png</td>
+</tr>
+</table>
+</td></tr> 
+<tr class="none" id="p_rooftop_pv"><td><dfn><strong>[Rooftop PV]</strong></dfn></td>
+<td>Specifics on Rooftop PV characteristics. Properties are:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>area</dfn></td>
+<td class="none">Estimated area in km<sup>2</sup> per MW. A value of 0 is acceptable</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>capital_cost</dfn></td>
+<td class="none">Capital cost per peak MW. A suffix of K indicates thousands and M millions</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>dc_ac_ratio</dfn></td>
+<td class="none">DC to AC ratio. Default value is as specified in the <dfn>[PV]</dfn> Section</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>icon</dfn></td>
+<td class="none">Icon to display for this technology. Default is solar_pv_g.png</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>o_m_cost</dfn></td>
+<td class="none">Operations and Maintenance cost per peak MW. A suffix of K indicates thousands and M millions</td>
+</tr>
+</table>
+</td></tr> 
+<tr class="none" id="p_sam_modules"><td><dfn><strong>[SAM_Modules]</strong></dfn></td>
+<td>SAM models (modules) and default variables for each technology currently implemented. The variables files can be either CSV or Excel files. Properties are:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>annualoutput_variables</dfn></td>
+<td class="none">Default values required for the annual output module. This is the first of two models used to determine the financial aspects of the simulation. It calculates annual output for the analysis period</td>
+</tr>
+<!--
+<tr class="none">
+<td class="none"><dfn>biomass</dfn></td>
+<td class="none">SAM model program to run for biomass stations</td>
+</tr>
+-->
+<tr class="none">
+<td class="none"><dfn>biomass_variables</dfn></td>
+<td class="none">Default values required for the biomass module</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>ippppa_variables</dfn></td>
+<td class="none">Default values required for the Utility IPP/Commercial PPA Finance module. This is the second of the financial models for the simulation</td>
+</tr>
+<!--
+<tr class="none">
+<td class="none"><dfn>pv</dfn></td>
+<td class="none">SAM model program to run for PV stations</td>
+</tr>
+-->
+<tr class="none">
+<td class="none"><dfn>pv_variables</dfn></td>
+<td class="none">Default values required for the three PV technologies (Fixed, Tracking, Rooftop)</td>
+</tr>
+<!--
+<tr class="none">
+<td class="none"><dfn>solar_thermal</dfn></td>
+<td class="none">SAM model program to run for solar thermal stations</td>
+</tr>
+-->
+<tr class="none">
+<td class="none"><dfn>solar_thermal_variables</dfn></td>
+<td class="none">Default values required for the solar thermal module</td>
+</tr>
+<!--
+<tr class="none">
+<td class="none"><dfn>wind</dfn></td>
+<td class="none">SAM model program to run for wind stations</td>
+</tr>
+-->
+<tr class="none">
+<td class="none"><dfn>wind_variables</dfn></td>
+<td class="none">Default values required for the wind module</td>
+</tr>
+</table>
+</td></tr>
+<tr class="none" id="p_solar_thermal"><td><dfn><strong>[Solar Thermal]</strong></dfn></td>
+<td>Specifics on Solar Thermal characteristics. Properties are:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>area</dfn></td>
+<td class="none">Estimated area in km<sup>2</sup> per MW</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>capital_cost</dfn></td>
+<td class="none">Capital cost per peak MW. A suffix of K indicates thousands and M millions</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>gross_net</dfn></td>
+<td class="none">Estimated gross to net power conversion factor</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>icon</dfn></td>
+<td class="none">Icon to display for this technology. Default is solar_g.png</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>o_m_cost</dfn></td>
+<td class="none">Operations and Maintenance cost per peak MW. A suffix of K indicates thousands and M millions</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>tshours</dfn></td>
+<td class="none">Hours of storage. The default is 0</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>volume</dfn></td>
+<td class="none">Storage volume in m<sup>3</sup> per MW per hour of storage. Default is 12.9858</td>
+</tr>
+</table>
+</td></tr>
+<tr class="none" id="p_storage"><td><dfn><strong>[Storage]</strong></dfn></td>
+<td>Specifics on (generic) storage characteristics. Properties are:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>discharge_eff</dfn></td>
+<td class="none">Losses incurred in discharging storage. It is a percentage value, e.g. 0.05 means 5%</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>discharge_max</dfn></td>
+<td class="none">The maximum amount of storage in MW(h) that can be added to address generation shortfall</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>recharge_eff</dfn></td>
+<td class="none">Losses incurred in recharging storage. It is a percentage value, e.g. 0.05 means 5%</td>
+</tr></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>recharge_max</dfn></td>
+<td class="none">The maximum amount of excess generation in MW(h) that can be added to storage</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>storage</dfn></td>
+<td class="none">Specify how large the storage on the grid is; in GWh. This can be a single figure indicating the amount of storage or two figures separated by a comma where the second value specifies the initial storage value</td>
+</tr>
+</table>
+</td></tr> 
+<tr class="none" id="p_tracking_pv"><td><dfn><strong>[Tracking PV]</strong></dfn></td>
+<td>Specifics on Tracking PV characteristics. Properties are:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>area</dfn></td>
+<td class="none">Estimated area in km<sup>2</sup> per MW</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>capital_cost</dfn></td>
+<td class="none">Capital cost per peak MW. A suffix of K indicates thousands and M millions</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>dc_ac_ratio</dfn></td>
+<td class="none">DC to AC ratio. Default value is as specified in the <dfn>[PV]</dfn> Section</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>icon</dfn></td>
+<td class="none">Icon to display for this technology. Default is solar_pv_g.png</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>o_m_cost</dfn></td>
+<td class="none">Operations and Maintenance cost per peak MW. A suffix of K indicates thousands and M millions</td>
+</tr>
+</table>
+</td></tr> 
+<tr class="none" id="p_view"><td><dfn><strong>[View]</strong></dfn></td>
+<td>Default view options. Often these are True or False values that can be &ldquo;toggled&rdquo; in the model. Properties are:
+</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>capacity</dfn></td>
+<td class="none">Show station areas based upon capacity. The size of the circles is determined by the capacity of the station and the <em>capacity_area</em> value. The intent is to highlight generation based upon capacity. There is an additional option to display circles based upon generation. These circles can be displayed once the Power Model has been run. They are, again, based upon the capacity_area value reduced to provide circles of the same magnitude as the capacity circles. These circles can be toggled on or off. When both are off station areas will be displayed</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>capacity_area</dfn></td>
+<td class="none">Size of Capacity circles in km<sup>2</sup> per MW</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>capacity_fill</dfn></td>
+<td class="none">For capacity circle either display just the boundary (False) or fill the whole area (True). It is also possible to display a partially opaque circle by specifying a value between 0 (clear) and 1 (opaque)</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>centre_on_click</dfn></td>
+<td class="none">If True then centre on nearest station on left-click</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>existing_grid</dfn></td>
+<td class="none">Display existing grid lines</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>fossil</dfn></td>
+<td class="none">Show fossil generators</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>group_colours</dfn></td>
+<td class="none">If set to True when you invoke the Edit Colours menu item colours will be grouped into a number of sections:- Fossil Technologies, Grid, Map, Plot, Resource, Technologies, and any others. The default is False</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>leave_help_open</dfn></td>
+<td class="none">If set to True this will open the help in your browser rather than within SIREN</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>line_width</dfn></td>
+<td class="none">Width of grid lines on the map in pixels. A line width of zero indicates a cosmetic pen. This means that the pen width is always drawn one pixel wide, independent of the level of zoom. This is the default. A value &gt; 0 will show lines at this width irrespective of the size of the map. A value &lt; 1 and &gt; 0 will be used to calculate the number of pixels by multiplying the width of the map image by this value. A useful value is 0.0016. For example a map image 12,000 pixels wide will have grid lines 19.2 pixels wide</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>menu_background</dfn></td>
+<td class="none">Two icons (toggle ticks and grid network) can be lost in the windows menu background colour. If you set menu background to any value other than <em>b</em> these icons will be replaced with black ones which will show up more clearly</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>new_grid</dfn></td>
+<td class="none">Include grid lines for new power stations</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>progress_bar</dfn></td>
+<td class="none">Display progress bar for power calculations; if numeric then only display the bar if there are at least this many stations</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>resource_max_steps</dfn></td>
+<td class="none">Maximum number of colour steps for resource grids. Default value is 10</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>resource_opacity</dfn></td>
+<td class="none">Opacity of Resource grid. A value between 0 (clear) and 1 (opaque)</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>resource_period</dfn></td>
+<td class="none">Initial resource period to be displayed when Resource grid displayed</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>resource_steps</dfn></td>
+<td class="none">Number of colour steps for resource grids</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>resource_variable</dfn></td>
+<td class="none">Initial resource variable to be displayed when Resource grid displayed</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>ruler</dfn></td>
+<td class="none">Length of ruler in kilometres in format <em<length></em> or <em>length, ticks</em> where <em>length</em> specifies the total length of the ruler and <em>ticks</em> ticks indicates the length of tick marks along the ruler</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>show_towns</dfn></td>
+<td class="none">Display towns. Default is True</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>station_name</dfn></td>
+<td class="none">Display station names. If False then only the nearest station name will be displayed</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>station_shape</dfn></td>
+<td class="none">The shape of the station areas. The default is circles; squares can be set by setting this option to <em>square</em></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>zoom_rate</dfn></td>
+<td class="none">The zoom rate for the map view. Each zoom in or zoom out action will alter the displayed map by this amount. Values can be between .75 (75% or 133%) and 0.95 (95% or 105%). The default value is 0.8</td>
+</tr>
+</table>
+<div class="experiment">
+<table border="0", class="none">
+<tr class="none">
+<td class="none">&nbsp;</td>
+<td class="none">Rainfall (experimental)</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>resource_rainfall&nbsp;&nbsp;&nbsp;&nbsp;</dfn></td>
+<td class="none">If set to True this will allow rainfall to appear in the resource grid and weather displays</td>
+</tr>
+</table>
+</div>
+</tr>
+<tr class="none" id="p_wave"><td><div class="experiment"><dfn><strong>[Wave]</strong></dfn><br />(experimental)</div></td>
+<td><div class="experiment">Specifics on Wave characteristics (experimental). Properties are:
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>area</dfn></td>
+<td class="none">Estimated area in km<sup>2</sup> per MW</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>capital_cost</dfn></td>
+<td class="none">Capital cost per peak MW. A suffix of K indicates thousands and M millions</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>efficiency</dfn></td>
+<td class="none">Conversion efficiency. Can be suffixed with % for readability, for example, 40%</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>icon</dfn></td>
+<td class="none">Icon to display for this technology. Default is wave_g.png</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>o_m_cost</dfn></td>
+<td class="none">Operations and Maintenance cost per peak MW. A suffix of K indicates thousands and M millions</td>
+</tr>
+</table>
+</div>
+</td></tr> 
+<tr class="none" id="p_wind"><td><dfn><strong>[Wind]</strong></dfn></td>
+<td>Specifics on Wind and turbine spacings. Properties are:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>area</dfn></td>
+<td class="none">Multiplier to compute an area of <em>area x number of turbines x rotor diameter<sup>2</sup></em></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>capital_cost</dfn></td>
+<td class="none">Capital cost per peak MW. A suffix of K indicates thousands and M millions</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>icon</dfn></td>
+<td class="none">Icon to display for this technology. Default is wind_g.png</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>o_m_cost</dfn></td>
+<td class="none">Operations and Maintenance cost per peak MW. A suffix of K indicates thousands and M millions</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>offset_spacing</dfn></td>
+<td class="none">Offset between adjacent rows in multiples of rotor diameter</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>row_spacing</dfn></td>
+<td class="none">Distance between rows in multiples of rotor diameter</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>turbine_spacing</dfn></td>
+<td class="none">Distance between turbines in multiples of rotor diameter</td>
+</tr>
+</table>
+</td></tr>
+<tr class="none" id="p_windows"><td><dfn><strong>[Windows]</strong></dfn></td>
+<td>Provides options to remember window layouts between sessions. If active these values are updated by SIREN when windows are closed. Windows will be restored as close as possible to their previous position. Properties are:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>credits_pos</dfn></td>
+<td class="none">Position of Credits window</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>credits_size</dfn></td>
+<td class="none">Size of Credits window</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>legend_pos</dfn></td>
+<td class="none">Position of floating Legend</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>legend_size</dfn></td>
+<td class="none">Size of floating Legend</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>log_pos</dfn></td>
+<td class="none">Position of floating status window</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>log_size</dfn></td>
+<td class="none">Size of floating status window</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>log_status</dfn></td>
+<td class="none">If set to False the status messages will not be logged in the status window</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>main_pos</dfn></td>
+<td class="none">Position of main window</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>main_size</dfn></td>
+<td class="none">Size of main window</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>main_view</dfn></td>
+<td class="none">Dimensions of map in main window view. This allows the original window to be zoomed to the approximate position on windows close</td>
+<tr class="none">
+<td class="none"><dfn>menu_pos</dfn></td>
+<td class="none">Position of floating menu window</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>menu_show</dfn></td>
+<td class="none">Display floating menu on startup (True or False). If the floating menu is active when you exit SIREN this flag will indicate to reshow it the next time you run SIREN</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>menu_size</dfn></td>
+<td class="none">Size of floating menu window</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>restorewindows</dfn></td>
+<td class="none">If True SIREN will remember window layouts between sessions. Default is False</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>resource_pos</dfn></td>
+<td class="none">Position of Resource Overlay window</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>resource_size</dfn></td>
+<td class="none">Size of Resource Overlay window</td>
+</tr>
+</table>
+</td></tr>
+</table>
+<p><a href="#help">Back to top</a></p>
+<h2 id="menus">Menu Structure</h2>
+<p>The menus allow you to interact with the full simulation while right-clicking the mouse allows you to interact at the detail of an individual station. The majority of the menu options have a keyboard shortcut. The layout of the menus are set out below (<strong>Note:</strong> Sometimes the menu options will disappear from the menu bar. The easiest solution is to maximise the main window and then restore it to it's normal size)</p> 	
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn><strong>Scenario</strong></dfn></td>
+<td class="none">Work with scenarios. It is possible to edit the scenarios outside of the simulation as they are simple Excel or CSV files. The type of file is indicated by the file type - <em>.csv</em> for a CSV file, <em>.xls</em> or <em>.xlsx</em> for an Excel file. If the file type isn't specified any scenario will be saved in Excel format.</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><img src="open.png" alt="Open">&nbsp;&nbsp;Open (Ctrl+O)</td>
+<td class="none">Open an existing scenario. This will open the selected scenario and replace all stations in the current session with those in the chosen scenario</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="plus.png" alt="Add">&nbsp;&nbsp;Add (Ctrl+A)</td>
+<td class="none">Add an existing scenario to the current session</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="minus.png" alt="Remove">&nbsp;&nbsp;Remove
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...Scenario(s)</td>
+<td class="none">Remove one of the open scenarios from the current model. 
+The <em>Existing</em> scenario allows you to remove existing stations from your session</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="edit.png" alt="Edit Description">&nbsp;&nbsp;Edit Descr.
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...Scenario(s)</td>
+<td class="none">Edit the description for a scenario in the current model</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="save.png" alt="Save">&nbsp;&nbsp;Save (Ctrl+S)</td>
+<td class="none">Save any scenarios modified in the current model</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="save_d.png" alt="Save + Desc">&nbsp;&nbsp;Save + Desc</td>
+<td class="none">Save any scenarios modified in the current model and allow descriptions to be updated</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="save_as.png" alt="Save as...">&nbsp;&nbsp;Save As...</td>
+<td class="none">Save the current model as a new scenario</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="exit.png" alt="Exit">&nbsp;&nbsp;Exit (Ctrl+X)</td>
+<td class="none">Save any modified scenarios and exit the simulation</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="quit.png" alt="Quit">&nbsp;&nbsp;Quit (Ctrl+Q)</td>
+<td class="none">Quit the simulation without saving any changes</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="plus.png" alt="Quit">&nbsp;&nbsp;Add Existing</td>
+<td class="none">If you have removed Existing Stations this option will allow you to add them back</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn><strong>Power</strong></dfn></td>
+<td class="none">Run SAM models for the current model or list details on new infrastructure in the model</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><img src="power.png" alt="Get Generation">&nbsp;&nbsp;Run SAM Power Models (Ctrl+P)</td>
+<td class="none">Run SAM models for the base year for each station in the current model and display power curves for the full model</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="blank.png" alt="Power for year">&nbsp;&nbsp;Power for year
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...years(s)</td>
+<td class="none">Run the SAM Power Models for one of the years available</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="power-plant-icon.png" alt="List Stations">&nbsp;&nbsp;List Stations (Ctrl+L)</td>
+<td class="none">List all stations in the current model. By right-clicking a column header you can sort by that column in ascending and then descending order. By left or right-clicking a station you can display the details for that station</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="network_b.png" alt="List New Grid">&nbsp;&nbsp;List New Grid (Wires; Ctrl+W)</td>
+<td class="none">List all new grid network lines in the current model. By right-clicking a column header you can sort by that column in ascending and then descending order. If <em>[Grid]</em> <em>trace_existing</em> is set existing grid lines will also be displayed</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn><strong>View</strong></dfn></td>
+<td class="none">Modify the view of certain elements of the simulation. Those identifies with a tick icon can be toggled on or off</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><img src="check-mark_b.png" alt="Toggle Capacity">&nbsp;&nbsp;Capacity Circles (Ctrl+C)</td>
+<td class="none">Display circles for the stations based upon Capacity (True) or station area (False)</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="check-mark_b.png" alt="Toggle Generation">&nbsp;&nbsp;Generation Circles (Ctrl+K)</td>
+<td class="none">Display circles for the stations based upon Generation (True). This will only display circles for stations that have had the Power model run for them</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="check-mark_b.png" alt="Toggle Names">&nbsp;&nbsp;Station Names (Ctrl+N)</td>
+<td class="none">Display all station names (True) or just the current one (False)</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="check-mark_b.png" alt="Toggle Fossil">&nbsp;&nbsp;Fossil-fuelled Stations (Ctrl+F)</td>
+<td class="none">Display fossil-fuelled stations (True)</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="check-mark_b.png" alt="Scale Ruler">&nbsp;&nbsp;Scale Ruler (Ctrl+R)</td>
+<td class="none">If True Display a Scale Ruler. If you want to move the ruler you need to toggle it off and then back on again</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="check-mark_b.png" alt="Legend">&nbsp;&nbsp;Show Legend</td>
+<td class="none">If True Display a legend. The legend displays coloured circles for each technology on the map and squares indicating the <strong>total</strong> land area occupied by these technologies. The legend will be placed (top) right of the map</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="check-mark_b.png" alt="Show Towns">&nbsp;&nbsp;Show Towns</td>
+<td class="none">Display Towns (True)</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="check-mark_b.png" alt="Show Existing Grid">&nbsp;&nbsp;Show Existing Grid (Ctrl+H)</td>
+<td class="none">Display the existing grid network (True)</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="check-mark_b.png" alt="Show Existing Grid">&nbsp;&nbsp;Show Existing Grid (Ctrl+2)</td>
+<td class="none">Display the existing grid network (True)</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="blank.png" alt="Clear Grid Trace">&nbsp;&nbsp;Clear Grid Trace</td>
+<td class="none">Clear any grid trace</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="line.png" alt="Show Grid Line">&nbsp;&nbsp;Show Grid Line (Ctrl+J)</td>
+<td class="none">The option allows you to choose an existing grid line to trace it's path</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="refresh.png" alt="Refresh Grid">&nbsp;&nbsp;Refresh Grid</td>
+<td class="none">This is a temporary option to refresh the Grid if the grid tracing and shortest path algorithms misbehave</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="arrow.png" alt="Go to Station">&nbsp;&nbsp;Go to Station (Ctrl+G)</td>
+<td class="none">Centre the view on a particular station selected from a list</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="arrowt.png" alt="Go to Town">&nbsp;&nbsp;Go to Town (Ctrl+T)</td>
+<td class="none">Centre the view on a particular town selected from a list</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="arrow.png" alt="Go to Load Centre">&nbsp;&nbsp;Go to Load Centre (Ctrl+M)</td>
+<td class="none">Centre the view on a Load Centre</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="camera.png" alt="Save View">&nbsp;&nbsp;Save View (Ctrl+V)</td>
+<td class="none">Save the current view to an image file</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn><strong>Preferences</strong></dfn></td></p>
+<td class="none">Edit or display aspects of the Preferences file. Changes for some variables will take effect immediately on exit from the edit program while others (such as the map) will require you to restart the simulation</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><img src="edit.png" alt="Edit Preferences">&nbsp;&nbsp;Edit Preferences File(Ctrl+E)</td>
+<td class="none">Edit the Preferences file, either <em>SIREN.ini</em> or that file passed as a parameter when you invoked the simulation. This option invokes a simple text editor to allow the whole file to be edited</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="rainbow-icon.png" alt="Edit Colours">&nbsp;&nbsp;Edit Colours (Ctrl+U)</td>
+<td class="none">Edit colours for the current map. This will allow to change both the default colours and the colours for the current <em>map_choice</em></td>
+</tr>
+<tr class="none">
+<td class="none"><img src="arrow.png" alt="Edit Section">&nbsp;&nbsp;Edit Section</td>
+<td class="none">Edit a specific Section of the Preferences file. You will be presented with a list of Sections to choose the desired one. The edit program will then present a table of current Properties and their values</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="blank.png" alt="Edit Technologies">&nbsp;&nbsp;Edit Technologies</td>
+<td class="none">Edit standard Properties for all Technologies. This option allows you to edit the &ldquo;standard&rdquo; variables for all technologies (<em>area</em>, <em>capital_cost</em> and <em>o_m_cost</em>)</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="network_b.png" alt="Dispatchable Lines">&nbsp;&nbsp;Dispatchable Lines Table</td>
+<td class="none">This will list the <em>dispatchable_lines</em> table showing the range of dispatchable lines for each level of peak dispatchable capacity</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="network_b.png" alt="Standard Lines">&nbsp;&nbsp;Standard Lines Table</td>
+<td class="none">This will list the <em>standard_lines</em> table showing the range of standard lines for each level of peak capacity</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="blank.png" alt="Line Costs">&nbsp;&nbsp;Line Costs</td>
+<td class="none">List the cost per Km for each type of line</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="blank.png" alt="Substation Costs">&nbsp;&nbsp;Substation Costs</td>
+<td class="none">List the substation cost for each type of line</td>
+</tr>
+</table>
+</td>
+</tr><tr class="none" id="windows">
+<td class="none"><dfn><strong>Windows</strong></dfn></td>
+<td class="none">Display additional (floating) windows. These windows can be opened and still allow interaction with the main SIREN window. if <em>restorewindows</em> is set SIREN will remember the placement of windows and restore them as closely as possible to these positions when they are next opened.</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><img src="about.png" alt="Credits">&nbsp;&nbsp;Credits (F2)</td>
+<td class="none">Display Credits window - brief details about SIREN, acknowledgements and licensing</td>
+</tr></td>
+</tr>
+<tr class="none">
+<td class="none"><img src="grid.png" alt="View Resource">&nbsp;&nbsp;Show Resource Grid (Ctrl+B)</td>
+<td class="none">Invoke Resource Grid window to display gridded resource data on the map</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="blank.png" alt="Resource for year">&nbsp;&nbsp;Resource for year
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...years(s)</td>
+<td class="none">Invoke Resource Grid window for one of the years available</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="list.png" alt="View Legend">&nbsp;&nbsp;Show Floating Legend</td>
+<td class="none">Invoke Floating Legend to display a legend in a floating window</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="list.png" alt="View Menu">&nbsp;&nbsp;Show Floating Menu</td>
+<td class="none">Invoke Floating menu window to display SIREN menu options</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="log.png" alt="View Status">&nbsp;&nbsp;Show Status Window</td>
+<td class="none">Invoke floating window to display a log of SIREN session activity and open scenarios</td>
+</tr>
+</table>
+</td>
+<tr class="none">
+<td class="none"><dfn><strong>Tools</strong></dfn></td>
+<td class="none">Invoke SIREN tools. This will launch the chosen tool as a new task</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><img src="map.png" alt="getmap">&nbsp;&nbsp;getmap</td>
+<td class="none">Invoke getmap to create a map image for SIREN (see <a href="#map">Obtaining a Suitable Map Image</a>)</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="list.png" alt="indexweather">&nbsp;&nbsp;indexweather</td>
+<td class="none">Invoke indexweather to create an index for weather files (see <a href="#index">Using other Weather Files</a>)</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="grid.png" alt="makegrid">&nbsp;&nbsp;makegrid</td>
+<td class="none">Invoke makegrid to create resource grid file (see <a href="#resource">Visualising Renewable Resource Attributes</a>)</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="weather.png" alt="makeweather2">&nbsp;&nbsp;makeweather2</td>
+<td class="none">Invoke makeweather2 to create weather files for SAM (see <a href="#merra3">Produce wind and solar files</a>)</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="list.png" alt="updateswis">&nbsp;&nbsp;updateswis</td>
+<td class="none">Invoke updateswis to update the list of existing SWIS Stations (facilities; see <a href="#updateswis">Existing Stations (Facilities)</a>)</td>
+</tr>
+</table>
+<div class="experiment">
+<table border="0", class="none">
+<td class="none">&nbsp;</td>
+<td class="none">Rainfall (experimental)</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="rain.png" alt="makerainfall2">&nbsp;&nbsp;makerainfall2&nbsp;</td>
+<td class="none">Invoke makerainfall2 to create rainfall files (see <a href="#merrar">Produce rainfall files (experimental)</a>)</td>
+</tr>
+</table>
+</div>
+</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn><strong>Help</strong></dfn></td>
+<td class="none">Display some help about the program</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><img src="help.png" alt="Help">&nbsp;&nbsp;Help (F1)</td>
+<td class="none">Display the help file. The default help file, <em>help.html</em>, is a standard HTML file which can be displayed with your browser</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="about.png" alt="About">&nbsp;&nbsp;About (Ctrl+I)</td>
+<td class="none">Display details about the simulation including any licensing conditions</td>
+</tr></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+<!--
+<p>Ctrl Keys: A, B, C, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, 2
+-->
+<p><a href="#help">Back to top</a></p>
+<h3 id="mouse">Right Mouse Click</h3>
+<p>Clicking the right mouse button allows various actions for the nearest station. Dependent on the nearest station some options will not be available. The full list is as follows:</p>
+<table border="0", class="none">
+<!--
+<tr class="none">
+<td class="none"><img src="gears_run.png" alt="Run SAM API">&nbsp;&nbsp;Run SAM API</td>
+<td class="none">Run SAM API for the nearest station. This option requires you to have Python installed as it invokes a Python program/script outside of the packaged simulation</td>
+</tr>
+-->
+<tr class="none">
+<td class="none"><img src="power.png" alt="Run Power">&nbsp;&nbsp;Run SAM Model</td>
+<td class="none">Run SAM Power Model for nearest station</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="copy.png" alt="Copy Station">&nbsp;&nbsp;Copy station</td>
+<td class="none">Copy nearest station. After selecting this option and updating any changed details move the mouse to the new location and press the left mouse button to locate the new station</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="zoom.png" alt="Centre on Station">&nbsp;&nbsp;Centre view</td>
+<td class="none">Centre view on nearest station</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="info_green.png" alt="Station Info">&nbsp;&nbsp;Show/Edit details</td>
+<td class="none">Show details for nearest station. If it is a new station you can also edit the stations details</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="move.png" alt="Move Station">&nbsp;&nbsp;Move</td>
+<td class="none">Move nearest station. After selecting this option move the mouse to the new location and press the left mouse button to relocate the station</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="minus.png" alt="Delete Station">&nbsp;&nbsp;Delete</td>
+<td class="none">Delete nearest station</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="network_b.png" alt="Edit Grid">&nbsp;&nbsp;Edit grid line for station</td>
+<td class="none">Edit Grid line for station at (this) location. This option allows you to override the default process of connecting the grid line to the nearest existing grid line. By clicking the left mouse button you can indicate where you want the grid line to be positioned; each click adds a new leg to the grid line; double-clicking terminates the edit and connects the grid to the (now) nearest grid line</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="line.png" alt="Trace Grid">&nbsp;&nbsp;Trace grid for station</td>
+<td class="none">Trace Grid for station at (this) location. This option will trace the grid connection between the station and the (nearest) load centre</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="plus.png" alt="Add Station">&nbsp;&nbsp;Add station</td>
+<td class="none">Add station at (this) location</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="weather.png" alt="Weather">&nbsp;&nbsp;Show weather for here</td>
+<td class="none">Present a menu to allow you to plot weather values (DHI, DNI, GHI, temperature, wind speed) for this location. You select the weather values you want to display and one of a series of plots to display either by hour or the average for a period. There is also an option to display chosen plots one at a time or all together, that is, display them all and allow you to navigate between them</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="info.png" alt="Town Info">&nbsp;&nbsp;Show details</td>
+<td class="none">Show details for nearest town</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="ruler.png" alt="Scale Ruler">&nbsp;&nbsp;Position ruler here</td>
+<td class="none">Position ruler here. Position will be approximate</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="list.png" alt="Legend">&nbsp;&nbsp;Position legend here</td>
+<td class="none">Position legend here. Position will be approximate</td>
+</tr>
+</table>
+<p><a href="#help">Back to top</a></p>
+<h2 id="usage">Using the Simulation</h2>
+<p>The simulation allows you to build scenarios for the energy mix for your area of interest. It is based around the map of your chosen area and allows you to visualise the layout of the existing electricity network plus the additional stations you place on the map to build your scenario(s). The map initially shows the main skeleton of the existing electricity grid infrastructure and current generation stations.</p>
+<p>To add a new station simply right-click on the map at the desired location and then update the details for the station (Name, Technology, Capacity and so forth) and press <em>Save &amp; Exit</em>. You can also copy an existing station and other options as specified above. </p>
+<p>As you build your scenario, the simulation adds additional infrastructure to connect the new generation plants to the grid. The colours for the majority of the items on the map are as you specify in the Preferences file. You navigate around the map using normal mouse movements to scroll, zoom, etc. and interact with it as described previously (<a href="#menus">Menus</a>). Using the various menu options you can model your whole scenario, or by right-clicking you can deal with an individual station. There are a number of additional windows, such as menu options, that can be opened to assist with using SIREN (see <a href="#windows">Windows</a>)</p>
+<p>You can save multiple scenarios and add them and remove them as you wish. When you exit the simulation normally or <em>Save</em> scenarios (Ctrl+S) any modified scenarios will be saved. When you add new stations to your model they will be added as a new scenario which includes the date and time in its name, for example, Scenario_2015-06-09_1000. You can save all open scenarios as a single new scenario by using the <em>Save As...</em> option.</p>
+<p>The strength of the simulation is in running the SAM Power Models (e.g. Ctrl+P). This will run the appropriate SAM model for each station you have chosen or for all renewable stations in your current simulation. SAM calculates a list of power outputs for each hour of the year (8,760 points). If the <em>show_menu</em> property is True you will be presented with a menu to specify what processing and plots to produce (see below). If you choose to run the Financial Models you will be presented with an additional menu of options.</p>
+<p><a href="#help">Back to top</a></p>
+<h3 id="popts">Power Model Options</h3>
+<p>The Power Model options menu are as set out here. The default values are specified in the <a href="#power">[Power]</a> Section of the Preferences file. The associated property is indicated in brackets at the end of the description. If you hover over the window title bar or press F1 a help for the Options will be displayed.</p>
+<table border="0" class="none">
+<tr><td class="top" style="width: 30%;"><dfn>Check / Uncheck all</dfn></td>
+<td class="none">A button to check or uncheck all option buttons</td></tr>
+<tr><td class="lr"><strong>Show in Plot</strong></td>
+<td class="none">Choose what to show in the plots</td></tr>
+<tr><td class="lr"><dfn>Generation - use actual generation figures</dfn></td>
+<td class="none">Use actual generation figures rather than invoking a SAM module. For example, you may have actual generation (e.g. SCADA) data that you wish to use rather than using a SAM model (<em>actual</em>)</td></tr>
+<tr><td class="lr"><dfn>Generation - total (cumulative renewables)</dfn></td>
+<td class="none">Include a cumulative curve for renewables (<em>cumulative</em>)</td></tr>
+<tr><td class="lr"><dfn>Generation - from chosen stations</dfn></td>
+<td class="none">Display plots for individual stations. An option to to select any number of individual stations to process. This will cause an additional menu to be presented after you press the <em>Proceed</em> button (<em>by_station</em>)</td></tr>
+<tr><td class="lr"><dfn>Generation - adjust generation</dfn></td>
+<td class="none">This option allows you to adjust the generation figures for either technologies or specific stations by a defined multiplier of between 0 and 25 times. The option multiplies the figures calculated by SAM to enable analysis of changes to the technology mix to the overall simulation result without having to modify individual station(s). See <a href="#optimise">Adjust Generation</a> (below) for further details (<em>adjust</em>)</td></tr>
+<tr><td class="lr"><dfn>Generation - show Load</dfn></td>
+<td class="none">Display network load on plots (<em>show_load</em>)</td></tr>
+<tr><td class="lr"><dfn>Generation - show shortfall from Load</dfn></td>
+<td class="none">Display shortfall of network load not met by renewable generation (<em>shortfall</em>)</td></tr>
+<tr><td class="lr"><dfn>Generation - reduce generation by grid losses</dfn></td>
+<td class="none">Reduce calculated generation by the amount of grid losses (substation and transmission losses) (<em>grid_losses</em>)</td></tr>
+<tr><td class="lr"><dfn>Add Existing Rooftop PV to Load (Gross Load)</dfn></td>
+<td class="none">Create additional load curve which includes Rooftop PV. This increases the Load curve by the amount of Rooftop PV in an attempt to simulate it's contribution to load reduction (<em>gross_load</em>)</td></tr>
+<tr><td class="lr"><dfn>Growth options</dfn></td>
+<td class="none">Options to set an annual load (demand) growth target and project a number of years into the future. This takes the existing load and increases it by the specified percentage for the number of years into the future</td></tr>
+<tr><td class="lr"><strong>Storage</strong></td>
+<td class="none">Options related to (generic) storage within the network</td></tr>
+<tr><td class="lr"><dfn>Storage Capacity</dfn></td>
+<td class="none">Options to specify how much storage is in the network, in GWh, and the initial capacity. Generation over Load will be added to storage up to this figure while generation shortfall will be met from storage until it is exhausted</td></tr>
+<tr><td class="lr"><dfn>Discharge cap</dfn></td>
+<td class="none">Options to specify the maximum amount of storage in MW(h) that can be added to address generation shortfall and the losses incurred in using this storage</td></tr>
+<tr><td class="lr"><dfn>Recharge cap</dfn></td>
+<td class="none">Options to specify the maximum amount of excess generation in MW(h) that can be added to storage and the losses incurred in adding this to storage</td></tr>
+<tr><td class="lr"><strong>Choose plots</strong></td>
+<td class="none">Choose what plots to show. All plots are based upon the full year of data. Energy by options produce a step chart of generation for the chosen time frame; Power - daily average options produce a line graph of the average 24 hour period for the chosen time frame.</td></tr>
+<tr><td class="lr"><dfn>Maximise Plot windows</dfn></td>
+<td class="none">Plots will display at maximum window size (<em>show_load</em>)</td></tr>
+<tr><td class="lr"><dfn>Show plots one at a time</dfn></td>
+<td class="none">If checked chosen plots will be displayed one at a time, otherwise where possible they will be displayed all together, that is, display them all and allow you to navigate between them (<em>block</em>)</td></tr>
+<tr><td class="lr"><dfn>Show generation as a percentage of load</dfn></td>
+<td class="none">Where possible display (renewable) percentage of load within the plot title (<em>show_pct</em>)</td></tr>
+<tr><td class="lr"><dfn>Energy by day</dfn></td>
+<td class="none">Display plots of daily results, that is, a figure for each day (<em>by_day</em>)</td></tr>
+<tr><td class="lr"><dfn>Energy by month</dfn></td>
+<td class="none">Display plots of monthly results, that is, a figure for each month (<em>by_month</em>)</td></tr>
+<tr><td class="lr"><dfn>Energy by season</dfn></td>
+<td class="none">Display plots of seasonal results, that is, a figure for each season (<em>by_season</em>)</td></tr>
+<tr><td class="lr"><dfn>Energy by Winter-Summer</dfn></td>
+<td class="none">Display plots of 6 month seasonal results (<em>by_period</em>)</td></tr>
+<tr><td class="lr"><dfn>Power by hour</dfn></td>
+<td class="none">Display plots of hourly results (<em>hour</em>)</td></tr>
+<tr><td class="lr"><dfn>Power - diurnal profile</dfn></td>
+<td class="none">Display plots of average 24 hour period for the full year (<em>total</em>)</td></tr>
+<tr><td class="lr"><dfn>Power - diurnal profile by month</dfn></td>
+<td class="none">Display plots of average 24 hour period for each month (<em>month</em>)</td></tr>
+<tr><td class="lr"><dfn>Power - diurnal profile by season</dfn></td>
+<td class="none">Display plots of average 24 hour period for each season (<em>season</em>)</td></tr>
+<tr><td class="lr"><dfn>Power - diurnal profile by Winter-Summer</dfn></td>
+<td class="none">Display plots of average 24 hour period for the two 6 month periods (<em>period</em>)</td></tr>
+<tr><td class="lr"><dfn>Power - Load duration</dfn></td>
+<td class="none">Display load duration curves (<em>duration</em>)</td></tr>
+<tr><td class="lr"><dfn>Power - Shortfall analysis</dfn></td>
+<td class="none">Display additional shortfall graphs and data to assist detailed analysis of generation shortfall (<em>shortfall_detail</em>)</td></tr>
+<tr><td class="lr"><strong>Choose tables</strong></td>
+<td class="none">Choose what tables to present</td></tr>
+<tr><td class="lr"><dfn>Show Summary/Other Tables</dfn></td>
+<td class="none">Present a brief summary table of Capacity and Output for each selected station (<em>summary</em>) plus other tables dependent on options chosen</td></tr>
+<tr><td class="lr"><dfn>Save Hourly Data Output</dfn></td>
+<td class="none">Save the hourly data for each renewable station. This is the hourly output calculated by the SAM model (<em>save_data</em>)</td></tr>
+<tr><td class="lr"><dfn>Save Powerbalance data</dfn></td>
+<td class="none">Save the input data for Powerbalance. Powerbalance uses the hourly shortfalls and overall generation figures in its computations. This option saves this data in a spreadsheet to simplify copying it into a Powerbalance workbook. If you check this option it will check two options that are required for Powerbalance (&lsquo;Generation - show Load&rsquo; and &lsquo;Generation - reduce generation by grid losses&rsquo;). (<em>save_balance</em>)</td></tr>
+<tr><td class="lr"><dfn>Run Financial Models</dfn></td>
+<td class="none">Run SAM financial models on the power results for each station and produces a summary table showing additional financial outputs (<em>financials</em>)</td></tr>
+<tr><td class="bottom"><strong>Proceed, Save Options / Do Financials</strong></td>
+<td class="none">At the bottom of the menu is the <strong>Proceed</strong> button. If the button is not visible use the scroll bar to navigate down the table. You can invoke the menu multiple times to specify different growth options, storage options and plots. The first display of the menu gives the option to <strong>Save</strong> the options for future sessions; this writes the updated options to the Preferences file. To exit this phase of processing press the <strong>All Done</strong> or <strong>Do Financials</strong> button</td></tr>
+</table>
+<p>The plots and tables are intended to assist with analysing the chosen scenario.</p>
+<h4>Plots</h4>
+<ul>
+<li><em>Energy by ...</em> options produce step plots that aggregate data into the chosen period</li>
+<li><em>Power by hour</em> option produce line plots for each hour of the year</li>
+<li><em>Power - diurnal ...</em> options produce line plots that summarise data to produce an average diurnal (daily) plot for each of the chosen periods</li>
+<li><em>Power - Load duration</em> option produces load duration curves which show how much generation is produced for a percentage of the year</li>
+<li><em>Power - Shortfall analysis</em> option produces a table and line plots that attempt to assist with analysing shortfalls on a daily basis. The analysis iterations option will produce average shortfalls for that number of days, for example, 3 iterations will produce average shortfall figures for one, two and three days. The figures are calculated by &ldquo;averaging&rdquo; the generation shortfall over the chosen number of days. This option will also produce cumulative shortfall graphs that add the average hourly shortfall to generation to attempt to flatten out the shortfall over the year</li>
+</ul>
+<p>The tool used to produce the plots, matplotlib, has a navigation toolbar 
+(<a href="http://matplotlib.org/users/navigation_toolbar.html" target="_blank">Interactive navigation</a>) to enable you to navigate and manipulate the plot (but doesn't allow you to change the plot data). It includes options to zoom into an area of the plot and to save the plot image (by default to the <em>scenarios</em> folder).</p>
+<h4>Tables</h4>
+<ul>
+<li><em>Save Hourly Data Output</em> option will save generation in MWh for each chosen station for each hour of the year (8,760 hours). This can be used in detailed analysis or as an option to avoid having to reprocess the station in the future, by updating a Station's </em>Power File</em> field. The default file name can be set using the <em>data_file</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file; otherwise it will in the format of <em>Power_Table_yyyy-mm-dd_hhmm...</em></li>
+<li><em>Save Powerbalance data</em> option will save save the input data for Powerbalance. Powerbalance uses the hourly shortfalls and overall generation figures in its computations. This option saves this data in a spreadsheet to simplify copying it into a Powerbalance workbook. The cells required for Powerbalance are highlighted in colour. The worksheet contains the generation summary data followed by the shortfall data</li>
+<li><em>Show Summary/Other Tables</em> option will cause various tables to be presented:
+<ul>
+<li>A brief summary table of Capacity and Output for each selected station. The default file name will in the format of <em>powermodel_Table_yyyy-mm-dd_hhmm</em></li>
+<li>If Storage values are specified a storage table is produced showing hourly figures for Load, Generation, Storage Used, Storage Losses (determined by Discharge and Recharge loss percentages), Storage Balance, Shortfall and Excess. Shortfall indicates the shortfall against Load (Load less Generation, Storage Used and Losses); Excess indicates excess generation that could not be stored due to either the Storage Capacity limit or Recharge cap. The default file name will in the format of <em>Storage_Table_yyyy-mm-dd_hhmm</em></li>
+<li><em>Generation Summary</em> table is a brief summary of the overall generation for the current execution of the Power model. The figures are summations of the 8,760 hourly figures. Some comments on the table:
+<ul>
+<li>The Multiplier column indicates any multipliers from the adjust generation option (plus load if load is grown)</li>
+<li>The Row column is merely a technique to display the rows in a suitable order</li>
+<li>The initial rows are the totals for each of the technologies, followed by the total of all generation and the load to be met</li>
+<li><em>Gen. - Load</em> is a raw indicator of generation versus load but ignoring any timing issues. A negative value indicates a shortfall in overall generation while a positive value indicates excess overall generation</li>
+<li><em>Storage Capacity</em> is the amount of storage in this execution</li>
+<li><em>Storage Used</em> is how much storage has been used to meet shortfall in generation for any period. This is that portion of renewable generation that has been stored and then reused</li>
+<li><em>Excess Gen.</em> is energy generation that has been lost/dumped due to either full storage or constraints on storage recharge</li>
+<li><em>Shortfall</em> is the lack of available energy (generation plus storage) to meet load</li>
+</ul>
+</ul>
+</li>
+<li>The <em>Power - Shortfall analysis</em> Plot option produces a table showing hourly figures for Load, Generation, Shortfall, and, optionally, grid losses. If iterations are chosen an additional table showing daily shortfalls for each iteration will also be produced. The default file(s) name will in the format of <em>Hourly Shortfall_Table_yyyy-mm-dd_hhmm</em> and <em>Daily Shortfall_Table_yyyy-mm-dd_hhmm</em></li>
+</ul>
+<p><a href="#help">Back to top</a></p>
+<h3 id="fopts">Financial Model Options</h3>
+<p>If you have chosen to run the Financial models you will be presented with an additional options menu as set out here. The default values are specified in the <a href="#financial">[Financial]</a> Section of the Preferences file. The associated property is indicated in brackets at the end of the description. If you hover over the window title bar or press F1 a help for the Options will be displayed.</p>
+<table border="0" class="none">
+<tr><td class="top" style="width: 30%;"><dfn>Analysis period</dfn></td>
+<td class="none"> (<em>analysis_period</em>)</td></tr>
+<tr><td class="lr"><dfn>Federal tax rate</dfn></td>
+<td class="none"> (<em>federal_tax_rate</em>)</td></tr>
+<tr><td class="lr"><dfn>Real discount rate</dfn></td>
+<td class="none"> (<em>real_discount_rate</em>)</td></tr>
+<tr><td class="lr"><dfn>Inflation rate</dfn></td>
+<td class="none"> (<em>inflation_rate</em>)</td></tr>
+<tr><td class="lr"><dfn>Insurance rate</dfn></td>
+<td class="none"> (<em>insurance_rate</em>)</td></tr>
+<tr><td class="lr"><dfn>Loan term</dfn></td>
+<td class="none"> (<em>loan_term</em>)</td></tr>
+<tr><td class="lr"><dfn>Loan rate</dfn></td>
+<td class="none"> (<em>loan_rate</em>)</td></tr>
+<tr><td class="lr"><dfn>Debt percentage</dfn></td>
+<td class="none"> (<em>debt_fraction</em>)</td></tr>
+<tr><td class="lr"><dfn>Federal depreciation type</dfn></td>
+<td class="none">2=straight line (<em>depr_fed_type</em>)</td></tr>
+<tr><td class="lr"><dfn>Federal depreciation Years</dfn></td>
+<td class="none">Federal depreciation straight-line Years (<em>depr_fed_sl_years</em>)</td></tr>
+<tr><td class="lr"><dfn>Bid Price escalation</dfn></td>
+<td class="none"> (<em>bid_price_esc</em>)</td></tr>
+<tr><td class="lr"><dfn>Salvage value percentage</dfn></td>
+<td class="none"> (<em>salvage_percentage</em>)</td></tr>
+<tr><td class="lr"><dfn>Minimum required DSCR</dfn></td>
+<td class="none"> (<em>min_dscr_target</em>)</td></tr>
+<tr><td class="lr"><dfn>Minimum required IRR</dfn></td>
+<td class="none"> (<em>min_irr_target</em>)</td></tr>
+<tr><td class="lr"><dfn>PPA escalation</dfn></td>
+<td class="none"> (<em>ppa_escalation</em>)</td></tr>
+<tr><td class="lr"><dfn>IPP option</dfn></td>
+<td class="none">0=Utility IPP or 1=Commercial PPA (<em>market</em>)</td></tr>
+<tr><td class="lr"><dfn>Minimum DSCR required</dfn></td>
+<td class="none"> (<em>min_dscr_required</em>)</td></tr>
+<tr><td class="lr"><dfn>Positive cash flow required</dfn></td>
+<td class="none"> (<em>positive_cashflow_required</em>)</td></tr>
+<tr><td class="lr"><dfn>Optimise LCOE with respect to debt percent</dfn></td>
+<td class="none"> (<em>optimize_lcoe_wrt_debt_fraction</em>)</td></tr>
+<tr><td class="lr"><dfn>Optimise LCOE with respect to PPA escalation</dfn></td>
+<td class="none"> (<em>optimize_lcoe_wrt_ppa_escalation</em>)</td></tr>
+<tr><td class="lr"><dfn>Reduce power by Grid losses</dfn></td>
+<td class="none">Reduce the power passed to the financial model by the amount of grid losses. This will slightly increase LCOE. If chosen this will reduce power by losses related to the line connecting the station into the grid. To reduce power by losses for the the full grid path length to the load centre you need to also choose the <em>Include full grid path ...</em> option (below)</td></tr>
+<tr><td class="lr"><dfn>Include Grid costs in LCOE</dfn></td>
+<td class="none">Increase station costs by the line costs to connect the station to the grid. This only includes the cost of the line to connect the station into the main grid and for the capacity of the station</td></tr>
+<tr><td class="lr"><dfn>Include full grid path in LCOE</dfn></td>
+<td class="none">Increase station costs by the line costs to connect the station to the grid. This includes the cost of the line to connect the station to the load centre for the capacity of the station. <strong>This option may over-inflate grid costs as each station path to the load centre is traced individually</strong></td></tr>
+<tr><td class="bottom"><strong>Proceed, Save Options, All Done</strong></td>	
+<td class="none">At the bottom of the menu is the <strong>Proceed</strong> button. If the button is not visible use the scroll bar to navigate down the table. You can also <strong>Save</strong> the options for future sessions; this writes the updated options to the Preferences file. The model will allow multiple iterations of the financial models. Use the <strong>All Done</strong> button to exit financial model processing</td></tr>
+</table>
+<p><a href="#help">Back to top</a></p>
+<h3 id="resourcegrid">Resource Grids</h3>
+<p>To assist with placement of renewable energy stations SIREN can display a grid of renewable resource attributes derived from the SAM weather files. The grid can be displayed by invoking the <em>Show Resource Grid</em> (Ctrl+B) menu option. The Resource Overlay menu presented has the following fields:</p>
+<ul>
+<li><em>Weather Detail</em>. If appropriate resource files are found you'll be presented this menu option. Possible choices are:- Daily By Month (default), Hourly By Month, or Hourly By Day. With the Hourly options you'll also have additional options to navigate to a particular month and, for By Day, day</li>
+<li><em>Weather Period</em>. This pulldown menu allows you to select the desired period to display. Options are for the full year, a month of the year, a season and, in the case of Hourly Weather Detail, for an hour of the day. Beside this field is a <em>Next</em> button which allows you to &ldquo;step&rdquo; through the weather periods. You can also use <em>Page Down</em> and <em>Page Up</em> to step forward and back through the weather periods.</li>
+<li><em>Weather Variable</em>. This pulldown menu allows you to select the desired variable to display</li>
+<li><em>Colour Steps</em>. The grid displayed can have values grouped in to up to 10 steps. A value of 0 will give a smooth graduation rather than stepped colours</li>
+<li><em>Opacity</em>. Gives the degree of opacity of grid colours. A value of 1 is completely opaque while a value of 0 is completely transparent</li>
+<li><em>Low Colour</em> and <em>High Colour</em>. These options present a set of buttons for each weather variable. Pressing the appropriate button will allow you to alter the upper or lower colour value for each variable. The range of colours steps will be displayed beside the buttons</li>
+</ul>
+<p>Altering any field will cause the revised grid to be overlaid on the SIREN map. There are four buttons:</p>
+<ul>
+<li><em>Quit</em> will close the Resource Overlay menu. Any grid will continue to be displayed</li>
+<li><em>Show</em> will cause the grid to be displayed. This allows you to display the grid without changing any of the fields</li>
+<li><em>Hide</em> will hide the resource grid</li>
+<li><em>Save</em> will save modified fields. This updates the Preferences file for future executions of SIREN</li>
+</ul>
+<p>This feature utilises summary data stored in a file rather than having to process hourly data from the weather files (see <a href="#resource">Visualising Renewable Resource Attributes</a>).</p>
+<p><a href="#help">Back to top</a></p>
+<h3 id="tricks">Performance Tricks</h3>
+<p>Processing a simulation with a large number of stations can take a while to process, especially with Solar Thermal stations. You can minimise this processing by using either of these two options:</p>
+<ol>
+<li>When you invoke Power Model processing it allows you to process Plot (and Table) options multiple times without reprocessing the stations. You can then process Financial options multiple times. The process SIREN uses is as follows:
+<ol>
+<li>Displays the Power Model menu allowing you to specify initial options. This allows you to choose the stations of interest and the data options you want. This first display of the menu also allows you to save these options</li>
+<li>Calls the appropriate SAM module for each chosen station, or other options as specified</li>
+<li>Presents the tables and plots you have selected</li>
+<li>Redisplays the Power Model menu allowing you to specify different growth options, storage options and plots. A number of options, such as <em>Generation - from chosen stations</em> will no longer be available as they would require reprocessing the SAM models. To process these new options press the <strong>Proceed</strong> button. To exit this phase of processing press the 
+<strong>All Done</strong> or <strong>Do Financials</strong> button</li>
+<li>If you have chosen to run the Financial Models the Financial Model menu will be displayed, allowing you to specify initial finance options. Press the <strong>Proceed</strong> button to continue with these options</li>
+<li>Calls the SAM financial module for each chosen station</li>
+<li>Presents the financial table</li>
+<li>Redisplays the Financial Model menu allowing you to specify different options. Press the <strong>Proceed</strong> button to invoke these new options. To exit this phase of processing press the <strong>All Done</strong> button</li>
+</ol>
+<p>
+<li>If the location and size of stations haven't changed you can avoid reprocessing stations by used Power data from a previous simulation run, using the following approach.
+<ol>
+<li>Choose the <em>Save Hourly Data Output</em> (<em>save_data</em>) Power Model option</li>
+<li>Save the data file. This file contains power output for all stations in the current simulation. It should be located in the same folder as your scenario files (<em>scenarios</em> property of <em>[Files]</em> Section). The data is saved as MWh with 4 decimal places because SAM uses kWh</li>
+<li>With your spreadsheet application (Excel) update the scenarios and stations that you want to use the saved data with. Either add or use the column headed <em>Power File</em> to specify the file name you've selected for the power output. For each station enter the full name and extension of the file, for example, <em>Power_Table_Saved.xls</em></li>
+<li>When you next run the simulation it will load this saved data rather than invoking the SAM module for each station that has an <em>Power File</em> entry</li>
+<li>If the file is not found the SAM module will be re-invoked. So you can simply delete or rename the Power data file and re-run the simulation to get a new set of data points</li> 
+</ol>
+</li>
+</ol>
+<h4 id="optimise">Adjust Generation</h4>
+<p>The <em>Generation - adjust generation</em> option allows you to easily adjust the contribution of each technology to the overall model by allowing you to apply a multiplier to the generation figures. The multiplier multiplies each hourly generation figure to approximate increasing the station by this size. This enables you to assess changes to the technology mix without having to alter individual stations. If you also choose the <em>Generation - from chosen stations</em> option you can also do this adjustment for each station rather than each technology. This approach allows you to &ldquo;experiment&rdquo; with the generation mix without having to add or alter stations.</p>
+<strong>Note:</strong> that the multiplied figures are not passed to the Financial model(s).</p>
+<div class="experiment">
+<p><strong>Optimise (experimental)</strong></p>
+<p>SIREN also has an experimental approach to optimise the mix of technologies. If Load data is available the menu presented to adjust generation will have an option to &ldquo;optimise&rdquo; the renewable energy mix. You will be presented with an <em>Optimise for:</em> pulldown list of periods to optimise for. You choose the desired period and then press the <em>Optimise</em> button. This will then do a least squares solution for adjustment multipliers to produce a generation profile that best matches the total load and load profile for that period. The data analysis is performed on the average 24 hour figures for the chosen period. If you don't wish to include a technology (or station(s)) then uncheck the checkbox (to the right of the multiplier) for that technology. The generation produced by that technology (multiplied by it's current multiplier) will be removed from the Load and analysis undertaken on the remaining technologies and load. Any computed negative multiplier will be set to zero, which is likely to result in the computed generation exceeding the load. The analysis is based upon the stations in your scenario and doesn't take into account how well placed they are within the network.
+</div>
+<p><a href="#help">Back to top</a></p>
+<h2 id="feedback">Feedback</h2>
+<p>This model is very much a work in progress. To improve it's usefulness to a wider community we encourage any feedback on how it might be improved. Feedback to <a href="mailto:siren@sen.asn.au?Subject=SIREN%20Feedback">siren@sen.asn.au</a>.
+<p><a href="#help">Back to top</a></p>
+<h2 id="files">SIREN File Formats</h2>
+<p>SIREN accepts a number of file formats for each of the data files it uses. Due to the initial source for each data file the format for each is different. For Excel and CSV files the first cell for each column is usually taken as the column name. The files and formats are:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>actual_power</dfn></td>
+<td class="none">An Excel or CSV file containing a column of hourly generation in MWh for each (existing) station for each hour of the year (8,760 hours)</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>bom</dfn></td>
+<td class="none">An Excel or CSV file containing details on those BOM sites you want displayed on the map. This file format is the same as <em>towns</em> (see below) with some additional column name options</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>grid_boundary</dfn></td>
+<td class="none">A KML file defining the boundary for the grid. Any string of &lt;coordinates&gt; in a &lt;LinearRing&gt; is used to draw the grid boundary or boundaries. Colour for the grid boundary can be set by either the <em>grid_boundary</em> Colour option or by a &lt;styleUrl&gt; colour element in the KML file</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>grid_network</dfn></td>
+<td class="none">A KML file defining the grid network. Any string of &lt;coordinates&gt; in a &lt;LineString&gt; is used to draw a grid line. The &lt;name&gt; will be used as the Line name. This file defines the grid network SIREN uses to add in additional stations and trace their paths to load centres. As such, this should be a very simplified grid and relies on all lines connecting to one another in a true grid network. Making this grid too complex slows down the process of connecting lines and tracing paths. Colours for the lines can be set by either &lt;styleUrl&gt; colour elements in the KML file or <em>grid_colour</em> Colour options, where <em>colour</em> equals the lines' &lt;styleUrl&gt;, e.g.<em>grid_s_66kv=#774110</em>.</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>grid_network2</dfn></td>
+<td class="none">A KML file defining the actual grid network. Any string of &lt;coordinates&gt; in a &lt;LineString&gt; is used to draw a grid line. &lt;styleUrl&gt; colour elements may be used for the line colour. Alternatively, a standard set of colours based upon line capacity, as defined by &lt;SimpleData name="CAPACITY_kV"&gt; elements, can be used. These values can be set by <em>grid2_line_capacity</em> Colour properties where <em>line_capacity</em> is the line capacity, e.g. <em>grid2_66=#774110</em> for a 66kV line. It can be a detailed as you like and doesn't require accurate connections (SIREN makes no use of it)</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>grid_stations</dfn></td>
+<td class="none">A file defining actual stations on the grid. This can be either a CSV file or Excel file in the same format as <em>scenario</em> files (there is also a special CSV format for SWIS stations based upon the AEMO facilities file)</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>grid_stations2
+<td class="none">A file defining additional stations on the grid. This can be either a CSV file or Excel file in the same format as <em>scenario</em> files. This additional file allows you to specify stations that you want to include that are not part of the existing grid, such as Rooftop PV stations</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>load</em></dfn></td>
+<td class="none">An Excel or CSV file containing a single column of hourly load demand for each hour of the year (8,760 hours)</td>
+</tr><tr class="none">
+<td class="none"><dfn>pow_files</dfn></td>
+<td class="none">To augment the list of turbines provided by SAM you can create individual files in WAsP Power Curve format. SIREN uses the data in these files to produce a power curve in the same format as SAM by running a 13th order polynomial on the POW file. The file is a simple text file with rows defined as set out here. All values are enclosed in double quotes. Row contents are:
+<ol>
+<li>Turbine name</li>
+<li>Hub height</li>
+<li>ignored</li>
+<li>Cut out speed (m/s)</li>
+<li>Cut in speed (m/s)</li>
+<li>Power output in kW at 0 m/s</li>
+<li>Power output in kW at 1 m/s</li>
+</ol>
+Additional rows specify power output at speeds increasing by 1 m/s</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>resource_grid</dfn></td>
+<td class="none">An Excel or CSV file File used by SIREN to assist with showing the resource grid. This file is created to summarise weather variables for certain periods to enable a grid of resource variables to be overlaid on the map</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>sam_turbines</dfn></td>
+<td class="none">This file format is defined by SAM. It is possible to produce a subset of wind turbines by creating a copy of the file provided by SAM (remember to always retain the (three) header rows)</td>
+</tr><tr class="none">
+<td class="none"><dfn>scenario</dfn></td>
+<td class="none">An Excel or CSV file containing stations for a scenario. The columns for the file are as defined in the Stations <a href="#objects">Simulation Objects</a>. The file names must start with the file name prefix specified in the <em>scenarios</em> Property in the <a href="#p_files">[Files]</a> Section of the Preferences file. It is possible to provide a brief description for the scenario in the first row of the file. This is indicated by a value of <em>Description:</em> in the top left cell followed by the description in the next cell</td>
+</tr> 
+<tr class="none">
+<td class="none"><dfn>solar_files</dfn></td>
+<td class="none">These are solar weather files in one of the formats defined by SAM. SIREN uses the file name to define the location and year for the file by separating the file name by an underscore as follows:- <em>anything_anything_latitude_longitude_year.filetype</em></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>solar_index</dfn></td>
+<td class="none">Using this file you can specify a list of solar weather files to be used by SIREN. This option allows you to use filenames that don't conform to SIREN's convention, such as the TMY files provided by SAM. The file can be either CSV or Excel and contains three columns: 
+<ul>
+<li><em>Latitude</em>. Weather file latitude</li>
+<li><em>Longitude</em>. Weather file longitude</li>
+<li><em>Filename</em>. Weather file name</li>
+</ul></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>towns</dfn></td>
+<td class="none">An Excel or CSV file containing details on towns/locations you want displayed on the map. As a minimum the file should have columns for town, latitude and longitude. The columns recognised by SIREN are:
+<ul>
+<li><em>Country</em>. The location's country. The default is currently AUS</li>
+<li><em>Elev</em>. The location's elevation</li>
+<li><em>Latitude</em>. The location's latitude</li>
+<li><em>Lid</em>. Location ID, such as a BOM station identifier</li>
+<li><em>Longitude</em>. The location's longitude</li>
+<li><em>State</em>. The location's State</li>
+<li><em>Town</em>, <em>Site Name</em> or <em>Station Name</em>. The name for the location</li>
+</ul></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>variable_files</dfn></td>
+<td class="none">SAM technology models use a variety of input and output variables to process a renewable energy station. These variable files are used by SIREN to pass appropriate values to SAM, as defined in the DEFAULT column. A value of <em>Input</em> means the value will be provided by SIREN from details for the station or as specified in the Preferences file. It is possible to create your own copy of the files provided by SIREN to override any of the input variables. the files can be CSV or Excel format</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>wind_files</dfn></td>
+<td class="none">These are wind weather files in one of the formats defined by SAM. SIREN uses the file name to define the location and year for the file by separating the file name by an underscore as follows:- <em>anything_anything_latitude_longitude_year.filetype</em></td>
+</tr><tr class="none">
+<td class="none"><dfn>wind_index</dfn></td>
+<td class="none">Using this file you can specify a list of wind weather files to be used by SIREN. This option allows you to use filenames that don't conform to SIREN's convention, such as the TMY files provided by SAM. The file can be either CSV or Excel and contains three columns: 
+<ul>
+<li><em>Latitude</em>. Weather file latitude</li>
+<li><em>Longitude</em>. Weather file longitude</li>
+<li><em>Filename</em>. Weather file name</li>
+</ul></td>
+</tr>
+</table>
+<div class="experiment">
+<table border="0", class="none">
+<tr class="none">
+<td class="none">&nbsp;</td>
+<td class="none">Rainfall (experimental)</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>rainfall_files</dfn>&nbsp;&nbsp;&nbsp;</td>
+<td class="none">These are rainfall weather files in a format similar to solar CSV files. SIREN uses the file name to define the location and year for the file by separating the file name by an underscore as follows:- <em>anything_anything_latitude_longitude_year.filetype</em>
+</td>
+</tr>
+</table>
+</div>
+<p><a href="#help">Back to top</a></p>
+<h2 id="notes">Supporting Notes</h2>
+<h3 id="map">Obtaining a Suitable Map Image</h3>
+<p>Among other publicly available resources, MapQuest provides a set of open aerial map tiles which can be stitched together into a single image. Map data &copy; OpenStreetMap contributors CC-BY-SA <a href="http://www.openstreetmap.org/copyright" target="_blank"> http://www.openstreetmap.org/copyright</a>.</p>
+<h4>getmap</h4>
+<p><i>getmap.py</i> is a Python program that can be used to create a map image for any area of the globe. Using this program you specify the bounding coordinates for the chosen area, a zoom level and a name for the file to create a suitable map image. You can invoke the program either by choosing <em>getmap</em> from the SIREN Tools menu or in Windows by running <em>getmap.exe</em> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to allow you to define the map/image desired. The window fields are:</p>
+<ul>
+<li><em>Area of interest</em>. You specify the boundaries for the area of the world you want a map generated for. You can either use the arrows to increase or decrease each coordinate by 5 degrees or type in a value. North and South can range from -85 to +85 degrees and East and West from -180 to +180</li>
+<li><em>Map Scale (Zoom)</em>. The scale of the map can be from 0 - 1:500 million - to 11 - 1:250,000. These are the scale of maps available from MapQuest. You can either use the arrows to increase or decrease the level or type in a value. The program will show an approximate scale for the level chosen</li>
+<li><em>Image File name</em>. Use this to specify the name and location for the map file. If you click on the field it will allow you to specify an alternative name and location for the file (you can't type into the field itself). If you specify a filetype it must be a suitable image format. The default format is <em>.png</em></li>
+<li><em>Properties</em>. This is a read only field that is filled in when a map is created. These properties should be copied into the <a href="#p_map">[Map]</a> Section of the Preferences file</li>
+</ul>
+<p>There are four buttons:</p>
+<ul>
+<li><em>Quit</em> will exit the program</li>
+<li><em>Query Map</em> will calculate the size of the map and indicate the boundaries for the map</li>
+<li><em>Get Map</em> will produce the map. It downloads map tiles from MapQuest and stitches them into a single image file at the location specified. It will update the Properties field with the valuables to be added into the Preferences file. If you are downloading a map with many tile this may take some time so <strong>please be patient</strong></li>
+<li><em>Help</em> Display this help</li>
+</ul>
+<p>After producing the map you should copy the contents of the <em>Properties</em> field into the <a href="#p_map">[Map]</a> Section of the Preferences file.</p>
+<p>You can also run the program on the command line. In this case the parameters are passed to the program as follows:</p>
+<ul class="none">
+<li><em>getmap.exe</em> &lt;north_latitude west_longitude south_latitude east_longitude zoom output_file_name&gt;</li>
+</ul>
+<p>The parameters are positional.</p>
+<p>An output_file_name of <em>?</em> will calculate the size of the map and indicate the boundaries for the map</p>
+<h4>Map Preferences</h4>
+<p>Many options can be specified by a preferences file. The following properties in the <strong>[Map]</strong> Section are created by <i>getmap</i>.</p>
+<table border="0", class="none">
+<tr>
+<th>Section</th>
+<th>Properties</th> 
+</tr>
+<tr>
+<tr class="none"><td><dfn><strong>[Map]</strong></dfn></td>
+<td>Details on the map including geographic boundaries. Properties are:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>map</dfn></td>
+<td class="none">Map file showing area of interest. The map can be any graphic image, even a blank image such as provided in the sample files as <em>blank.jpg</em></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>map_choice</dfn></td>
+<td class="none">It is possible to choose one of a number of maps using the map_choice parameter. Properties suffixed with the map_choice value will override the default values. For example, <em>map_choice=1</em> will use values from <em>map1</em> etc. and will use colours from the <em>[Colors1]</em> section
+</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>projection</dfn></td>
+<td class="none">Map projection such as <em>EPSG:3857</em>. EPSG:3857 (WGS 84 / Popular Visualisation Pseudo-Mercator) is a Spherical Mercator projection coordinate system popularised by web services such as Google and later OpenStreetMap. It allows an area of the earth to be projected as a rectangle. This is the format created by <i>getmap</i></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>lower_right</dfn></td>
+<td class="none">lower right corner of the map in format <em>latitude, longitude</em></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>upper_left</dfn></td>
+<td class="none">Upper left corner of the map in format <em>latitude, longitude</em></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+<p><a href="#help">Back to top</a></p>
+<h3 id="swisupd">Obtaining Current SWIS Facilities</h3>
+<p>The initial SWIS data provided with SIREN is for 2014 and 2015 with existing renewable stations at that time. Updates to this data are available on the <a href="http://data.wa.aemo.com.au/" target="_blank">AEMO Market Data website</a>. The SWIS data used by SIREN is as follows.</p>
+<h4>SWIS Network</h4>
+<p>SIREN uses a simplified network to reduce the overhead in adding stations into the network and to trace there links to the Perth Load Centre. This simple network was derived from a national network diagram for Australia available as a KML file from Geoscience Australia (<a href="http://www.ga.gov.au/corporate_data/83105/NationalElectricityTransmissionLines.kml" target="_blank">National Electricity Transmission Lines</a>; accessed Nov 2015)</p>
+<p>There is also a list of Australian power stations available as a KML file (<a href="http://www.ga.gov.au/corporate_data/82326/NationalMajorPowerStations.kml" target="_blank">NationalMajorPowerStations</a>; accessed Nov 2015)</p>
+<h4 id="updateswis">Existing Stations (Facilities)</h4>
+<p>SIREN uses the list of <a href="http://data.wa.aemo.com.au/#facilities" target="_blank">registered facilities</a> available from AEMO (specifically <a href="http://data.wa.aemo.com.au/datafiles/facilities/facilities.csv" target="_blank">facilities.csv</a>) for it's existing stations. If you want an updated version you can use <em>updateswis</em> to obtain the current list.</p>
+<h5>updateswis</h5>
+<p><em>updateswis.py</em> is a Python program that can be used to access the current list of facilities (power stations) for the SWIS. The program will download the list of existing stations and optionally update the file SIREN uses for existing stations (<em>grid_stations</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file. To aid readability you can optionally produce an additional file, Excel or CSV, that will save the list in the same format as a SIREN scenario file. You can invoke the program either by choosing <em>updateswis</em> from the SIREN Tools menu or in Windows by running <em>updateswis.exe</em> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
+<ul>
+<li><em>Host site</em>. The URL of the AEMO Market Data website</li>
+<li><em>File location</em>. The location of the file on the AEMO Market Data website</li>
+<li><em>Target File</em>. The target file for the existing stations. The tool will examine and existing file and evaluate what changes have been made. The file name is derived from the <em>grid_stations</em> property</li>
+<li><em>Excel file</em>. Setting a file name here will cause an additional file to be created in SIREN scenario format</li>
+</ul>
+<p>There are three buttons:</p>
+<ul>
+<li><em>Quit</em> will exit the program</li>
+<li><em>Update Existing Stations</em> will download the current file on the AEMO site and compare it to the existing list available to SIREN. If there are changes you will be presented with a brief summary of changes and given the option to replace the existing file. The initial window will then be displayed with a brief message</li>
+<li><em>Help</em> Display this help</li>
+</ul>
+<p>You can also run the program on the command line. In this case the parameters are passed to the program as follows:</p>
+<ul class="none">
+<li><em>updateswis.exe</em> &lt;parm1=value parm2=value&gt;</li>
+</ul>
+<p>Parameters are as described above and can be passed to the program as follows:</p>
+<ul>
+<li><em>host=</em> Host site</li>
+<li><em>url=</em> File location</li>
+<li><em>target=</em>Target File</li>
+<li><em>excel=</em>Excel File</li>
+</ul>
+<h4>Load Data</h4> 
+<p>The load data for the SWIS has been obtained from <a href="http://data.wa.aemo.com.au/#load-summary" target="_blank">Load Summary</a> data available from AEMO. SIREN use hourly load data rather than half hourly. This figures we use are derived by summing the &lsquo;Operational Load (MWh)&rsquo; data for the two half hourly intervals.</p>
+<p>The AEMO also publish <a href="http://data.wa.aemo.com.au/#facility-scada" target="_blank">facility SCADA data</a>.</p>
+<p><a href="#help">Back to top</a></p>
+<h3 id="merra">Obtaining and Using NASA MERRA-2 Data for SAM</h3>
+<h4 id="merra1">Using NASA MERRA-2 Data for input to SAM</h4>
+<p>SAM uses meteorological and solar data to model output of various renewable energy technologies.
+NASA MERRA-2 data is a suitable source to generate data files containing all weather variables required for input to SAM. It allows weather files to be created on a grid of 0.625 degree of longitude by 0.5 degree of latitude. This is approximately an area of 55 Km x 55 Km for the SWIS latitudes.</p> 
+<p>Initial correlations between generation calculated by SAM models using NASA MERRA data and actual observations from BOM data obtained by SEN in 2014 are strong enough to support the use of NASA MERRA-derived data for the purposes of the simulation. Average correlation was 0.77, varying from 0.70 to 0.83 for wind and 0.95 for the one utility scale PV farm on the SWIS network. The following figure graphically presents this correlation by showing progressive calculated generation (solid lines) with actual SCADA data (dotted lines) for each renewable generation station on the SWIS.</p>
+<p>
+<img src="scada_vs_sam_2014_detailed.png" alt="Correlation">
+</p>
+<p>Two MERRA-2 data files are appropriate for our needs:</p>
+<ul>
+<li><em>tavg1_2d_slv_Nx</em> for wind</li>
+<li><em>tavg1_2d_rad_Nx</em> for solar</li>
+<div class="experiment">
+<li><em>tavg1_2d_flx_Nx</em>, <em>tavg1_2d_lnd_Nx</em> or <em>tavg1_2d_mld_Nx</em> for rainfall (experimental)</li>
+</div>
+</ul>
+<h4 id="merra2">Obtaining MERRA-2 Data</h4>
+<p>MERRA-2 Data is publicly available and the following steps can be used to obtain the required data.</p>
+<ol>
+<li>Enter the MERRA-2 data subset URL, <a href="http://disc.sci.gsfc.nasa.gov/daac-bin/FTPSubset2.pl" target="_blank">http://disc.sci.gsfc.nasa.gov/daac-bin/FTPSubset2.pl</a> in your browser
+<li>Within the MDISC Data Subset page choose appropriate options as follows:
+<ol>
+<li>Data Product<br/>
+Select Data Product from the pulldown list:
+<ol>
+<li>MERRA-2 <em>tavg1_2d_slv_Nx</em> for wind</li>
+<li>MERRA-2 <em>tavg1_2d_rad_Nx</em> for solar</li>
+<div class="experiment">
+<li>MERRA-2 <em>tavg1_2d_flx_Nx</em>, <em>tavg1_2d_lnd_Nx</em> or <em>tavg1_2d_mld_Nx</em> for rainfall (experimental)</li>
+</div>
+</ol>
+</li>
+<li>Spatial Search<br/>
+Select area of interest. For the SWIS choose:<br/>
+<em>W: 113 N:-26 S: -37 E: 123</em><br/>
+Press <em>Update Map</em> to check geographic spread
+</li>
+<li>
+Temporal Order Option<br/>
+Select range of dates. It is most convenient to select full years. As times are UTC we need the last last day of the prior period (year) to obtain data for the initial hours of the first day in the local time-zone (8 hours for WA)
+</li>
+<li>
+Parameters<br/>
+To reduce the size of the data files select just those variables we need:
+<ol>
+<li>tavg1_2d_slv_Nx<br>
+<em>ps u10m u2m u50m v10m v2m v50m t10m t2m</em></li>
+<li>tavg1_2d_rad_Nx<br>
+<em>swgnt</em></li>
+<div class="experiment">
+<li>tavg1_2d_flx_Nx, tavg1_2d_lnd_Nx or tavg1_2d_mld_Nx (experimental)<br>
+<em>prectot</em></li>
+</div>
+</ol>
+</li>
+<li>Output File Format<br/>
+Select <em>NetCDF</em> from the pulldown list
+</li>
+<li>
+Press <em>Start Search</em>
+</li>
+</ol>
+</li>
+<li>
+Follow the instruction on the resulting FTP Subset Results page
+<ol>
+<li>
+Save the list of URLs
+</li>
+<li>
+Copy the file to the sub-folder you want the files downloaded to
+</li>
+</ol>
+</li>
+<li>Open a terminal window and navigate to the sub-folder you want the files downloaded to
+<ol>
+<li>
+Run the wget command as displayed in the FTP Subset Results page. This uses the downloaded list. You can copy and paste the command into the terminal window. The command will be something like<br/>
+<em>wget --content-disposition -i wget_...</em>
+</li>
+</ol>
+</li>
+</ol>
+<p>This process uses <em>wget</em> to download the MERRA-2 data files. Typically there is a single file for each day of interest so using wget simplifies the process of downloading them. Wget is a free network utility to retrieve files from the World Wide Web using HTTP and FTP, the two most widely used Internet protocols. There are versions available for most platforms.</p>
+<h4 id="merra3">Produce wind and solar files</h4>
+<h5>makeweather2</h5>
+<p><em>makeweather2.py</em> is a Python program that can be used to produce solar and/or wind weather files for input to SAM. The program generates SMW (preferred for SAM) or CSV format solar resource files and SRW format wind resource files. These file formats have been chosen as they're easier to generate than other formats. Using the program you specify the source folder for the MERRA-2 data files, the time zone for the area of interest, a file format and target folder for the weather files. The program will generate files for each of the MERRA-2 grid squares within the chosen MERRA-2 data files or optionally for a number of latitude and longitude positions. You can invoke the program either by choosing <em>makeweather2</em> from the SIREN Tools menu or in Windows by running <em>makeweather2.exe</em> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
+<ul>
+<li><em>Year</em>. Year of interest. The naming conventions for MERRA-2 files include the date so this defines the date range. The tool processes dates from the last day of the prior year through to the first day of the next year (ignoring 29 February)</li>
+<li><em>Time Zone</em>. The (solar) time zone for the area of interest. This is used to create suitable weather files where the first hour in the file is the first hour of the year in the local time zone. A value of <em>auto</em> will cause the program to use the (first) longitude in the MERRA-2 data files to calculate the time zone</li>
+<li><em>Solar Format</em>. The solar option can produce weather files in either of two formats - SMW or CSV format. This option allows you to choose your preferred one. SMW format is suitable for SAM while it may have trouble with the CSV format</li>
+<li><em>Coordinates</em>. Rather than producing weather files for each grid cell in the chosen area you can restrict it by passing a string of comma-separated latitude and longitude values. The tool will then generate files for just these coordinates</li>
+<li><em>Copy folder down</em>. This is an ease of use field. If this is checked any changes to the Solar Source Folder field will be propagated to the other two Folder fields</li>
+<li><em>Solar Source Folder</em>. Use this to specify the location for the MERRA-2 solar (<em>tavg1_2d_rad_Nx</em>) files. To change the location you need to click on the field and navigate to the correct folder (you can't type into the field). This location is only used for solar files</li>
+<li><em>Wind Source Folder</em>. Use this to specify the location for the MERRA-2 wind (<em>tavg1_2d_slv_Nx</em>) files. To change the location you need to click on the field and navigate to the correct folder (you can't type into the field). This location is used for both solar and wind files so you need to specify it in all cases</li>
+<li><em>Target Folder</em>. Use this to specify the location for the weather files produced by the tool. To change the location you need to click on the field and navigate to the correct folder (you can't type into the field)</li>
+</ul>
+<p>There are five buttons:</p>
+<ul>
+<li><em>Quit</em> will exit the program</li>
+<li><em>Produce Solar Files</em> will produce solar weather files</li>
+<li><em>Produce Wind Files</em> will produce wind weather files</li>
+<li><em>Help</em> Display this help</li>
+<li><em>File Info</em> Display details about the weather file dimensions and variables</li>
+</ul>
+<p>Creation of weather files may take some time so please be patient. The tool will produce an output report which will include the list of weather files produced. The report will include a return code as follows:</p>
+<ol class="none">
+<li value="0">Successful execution</li>
+<li value="1">Successful execution, however, the time zone chosen does not match the time zone(s) suggested by the MERRA-2 data files. If you chose <em>auto</em> this indicates more than one time zone is suggested by the MERRA-2 data files</li>
+<li value="4">Error with coordinates field</li>
+<li value="8">Invalid output file format specified. It must be one of <em>csv</em>, <em>smw</em>, <em>srw</em>, or <em>wind</em></li>
+<li value="12">MERRA-2 data file not found. The program requires file name(s) to be in a specific format so either the file name doesn't match that format or the source folder is incorrect</li>
+</ol>
+<p>You can also run the program on the command line. In this case the parameters are passed to the program as follows:</p>
+<ul class="none">
+<li><em>makeweather2.exe</em> &lt;parm1=value parm2=value&gt;</li>
+</ul>
+<p>Parameters are as described above and can be passed to the program as follows:</p>
+<ul>
+<li><em>year=</em> Year of interest</li>
+<li><em>zone=</em> or <em>timezone=</em> The (solar) time zone for the area of interest</li>
+<li><em>fmat=</em> Weather file format</li>
+<li><em>coords=</em> or <em>latlon=</em> A string of comma-separated latitude and longitude values</li>
+<li><em>solar=</em> Location of the MERRA-2 solar (<em>tavg1_2d_rad_Nx</em>) files</li>
+<li><em>wind=</em> Location of the MERRA-2 wind (<em>tavg1_2d_slv_Nx</em>) files</li>
+<li><em>target=</em> or <em>tgtdir=</em> Location for the weather files produced</li>
+</ul>
+</p>
+<p><strong>Note:</strong> The program should also handle MERRA (version 1) data files downloaded (probably) prior to February 2016.</p>
+<p>
+<h5 id="merra4">Wind Files</h5>
+<p>SRW format wind files are one of the formats acceptable to SAM. This format has been chosen as it's easier to generate than other formats. MERRA-2 variables from tavg1_2d_slv_Nx data files are used to create the SRW variables.</p>
+<table border="1">
+<thead>
+<tr>
+<td colspan="3">
+SRW Variables
+</td>
+<td colspan="3">
+MERRA-2 Variables
+</td>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Column</td>
+<td>Variable</td>
+<td>Units</td>
+<td>&nbsp;</td>
+<td>Description</td>
+<td>Units</td>
+</tr>
+<tr>
+<td>1</td>
+<td>Temperature (at 2m)</td>
+<td><sup>o</sup>C</td>
+<td>t2m</td>
+<td>Temperature at 2 m above the displacement height</td>
+<td><sup>o</sup>K</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Pressure (at 0m)</td>
+<td>atm</td>
+<td>ps</td>
+<td>Time averaged surface pressure</td>
+<td>Pa</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Direction (at 2m)</td>
+<td>degrees</td>
+<td>u2m</td>
+<td>Eastward wind at 2 m above displacement height</td>
+<td>m/s</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Speed (at 2m)</td>
+<td>m/s</td>
+<td>v2m</td>
+<td>Northward wind at 2 m above the displacement height</td>
+<td>m/s</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Temperature (at 10m)</td>
+<td><sup>o</sup>C</td>
+<td>t10m</td>
+<td>Temperature at 10 m above the displacement height</td>
+<td><sup>o</sup>K</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Direction (at 10m)</td>
+<td>degrees</td>
+<td>u10m</td>
+<td>Eastward wind at 10 m above displacement height</td>
+<td>m/s</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Speed</td>
+<td>m/s</td>
+<td>v10m</td>
+<td>Northward wind at 10 m above the displacement height</td>
+<td>m/s</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Direction (at 50m)</td>
+<td>degrees</td>
+<td>u50m</td>
+<td>Eastward wind at 50 m above surface</td>
+<td>m/s</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Speed (at 50m)</td>
+<td>m/s</td>
+<td>v50m</td>
+<td>Northward wind at 50 m above surface</td>
+<td>m/s</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>The wind direction and speed variables are both produced using the northward and eastward MERRA-2 Variables for each height</li>
+<li>The 10m variables are only produced if they exist in the MERRA-2 data files</li>
+</ul>
+<h5>Solar Files</h5>
+<p>SMW format solar files are one of the formats acceptable to SAM. This format has been chosen as it's easier to generate than other formats. MERRA-2 variables from both tavg1_2d_rad_Nx and tavg1_2d_slv_Nx data files are used to create the SMW variables.</p>
+<table border="1">
+<thead>
+<tr>
+<td colspan="3">SMW Variables</td>
+<td colspan="3">MERRA-2 Variables</td>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Column</td>
+<td>Variable</td>
+<td>Units</td>
+<td>&nbsp;</td>
+<td>Description</td>
+<td>Units</td>
+</tr>
+<tr>
+<td>1</td>
+<td>Tdry</td>
+<td><sup>o</sup>C</td>
+<td>t10m</td>
+<td>Temperature at 10 m above the displacement height</td>
+<td><sup>o</sup>K</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Wspd</td>
+<td>m/s</td>
+<td>u10m</td>
+<td>Eastward wind at 10 m above displacement height</td>
+<td>m/s</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Wdir</td>
+<td>degrees</td>
+<td>v10m</td>
+<td>Northward wind at 10 m above the displacement height</td>
+<td>m/s</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Pres</td>
+<td>ps<td>
+<td>Time averaged surface pressure</td>
+<td>Pa</td>
+</tr>
+<tr>
+<tr>
+<td>8</td>
+<td>GHI</td>
+<td>W/m<sup>2</sup></td>
+<td>swgnt</td>
+<td>Surface net downward shortwave flux
+<br/>(from tavg1_2d_rad_Nx data files)</td>
+<td>W/m<sup>2</sup></td>
+</tr>
+<tr>
+<td>9</td>
+<td>DNI</td>
+<td>W/m<sup>2</sup></td>
+<td>swgnt</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+</tr>
+<tr>
+<td>10</td>
+<td>DHI</td>
+<td>W/m<sup>2</sup></td>
+<td>swgnt</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>The wind direction and speed variables are both produced using the northward and eastward MERRA-2 Variables for each height</li>
+<li>DNI is computed using formulae derived from the NREL Centre for Renewable Energy Resources DISC DNI Model</li>
+<li>DHI is computed using formulae derived from the NREL DNI-GHI to DHI Calculator</li>
+</ul>
+<h4 id="merra34">Background on MERRA-2</h4>
+<p>&ldquo;The Modern Era Retrospective-analysis for Research and Applications, Version 2 (MERRA-2) is a NASA atmospheric data reanalysis for the satellite era using a major new version of the Goddard Earth Observing System Data Assimilation System Version 5 (GEOS-5). MERRA-2 focuses on historical analyses of the hydrological cycle on a broad range of weather and climate time scales, and places the NASA EOS suite of observations in a climate context.&rdquo;</p>
+<ul>
+<li>Each time-averaged collection consists of a continuous sequence of data averaged over the indicated interval and time stamped with the central time of the interval. For hourly data, for example, these times are 00:30 GMT, 01:30 GMT, 02:30 GMT, etc..</li>
+<li>I interpret each grid is centred on the latitude / longitude for that set of variables, that is, the value extends outwards in all directions from that point</li>
+</ul>
+<p><a href="#help">Back to top</a></p>
+<div class="experiment">
+<h4 id="merrar">Produce rainfall files (experimental)</h4>
+<h5>makerainfall2</h5>
+<p><em>makerainfall2.py</em> is a Python program that can be used to produce rainfall weather files. The program generates CSV format files that resembles solar resource files with a single Rainfall variable. Using the program you specify the source folder for the MERRA-2 data files, the time zone for the area of interest, a file format and target folder for the weather files. The program will generate files for each of the MERRA-2 grid squares within the chosen MERRA-2 data files or optionally for a number of latitude and longitude positions. You can invoke the program either by choosing <em>makerainfall2</em> from the SIREN Tools menu or in Windows by running <em>makerainfall2.exe</em> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
+<ul>
+<li><em>Year</em>. Year of interest. The naming conventions for MERRA-2 files include the date so this defines the date range. The tool processes dates from the last day of the prior year through to the first day of the next year (ignoring 29 February)</li>
+<li><em>Time Zone</em>. The (solar) time zone for the area of interest. This is used to create suitable weather files where the first hour in the file is the first hour of the year in the local time zone. A value of <em>auto</em> will cause the program to use the (first) longitude in the MERRA-2 data files to calculate the time zone</li>
+<li><em>File Format</em>. The MERRA-2 input file format. This is three-letter group mnemonic - <em>flx</em>, <em>lnd</em> or <em>mld</em></li>
+<li><em>Coordinates</em>. Rather than producing weather files for each grid cell in the chosen area you can restrict it by passing a string of comma-separated latitude and longitude values. The tool will then generate files for just these coordinates</li>
+<li><em>Copy folder down</em>. This is an ease of use field. If this is checked any changes to the Rainfall Source Folder field will be propagated to the Target Folder fields</li>
+<li><em>Rainfall Source Folder</em>. Use this to specify the location for the MERRA-2 source files. To change the location you need to click on the field and navigate to the correct folder (you can't type into the field)</li>
+<li><em>Target Folder</em>. Use this to specify the location for the weather files produced by the tool. To change the location you need to click on the field and navigate to the correct folder (you can't type into the field)</li>
+</ul>
+<p>There are three buttons:</p>
+<ul>
+<li><em>Quit</em> will exit the program</li>
+<li><em>Produce Rainfall Files</em> will produce rainfall weather files</li>
+<li><em>Help</em> Display this help</li>
+</ul>
+<p>Creation of weather files may take some time so please be patient. The tool will produce an output report which will include the list of weather files produced. The report will include a return code as follows:</p>
+<ol class="none">
+<li value="0">Successful execution</li>
+<li value="1">Successful execution, however, the time zone chosen does not match the time zone(s) suggested by the MERRA-2 data files. If you chose <em>auto</em> this indicates more than one time zone is suggested by the MERRA-2 data files</li>
+<li value="4">Error with coordinates field</li>
+<li value="8">Invalid output file format specified. It must be either <em>csv</em> or <em>rainfall</em></li>
+<li value="12">MERRA-2 data file not found. The program requires file name(s) to be in a specific format so either the file name doesn't match that format or the source folder is incorrect</li>
+</ol>
+<p>You can also run the program on the command line. In this case the parameters are passed to the program as follows:</p>
+<ul class="none">
+<li><em>makerainfall2.exe</em> &lt;parm1=value parm2=value&gt;</li>
+</ul>
+<p>Parameters are as described above and can be passed to the program as follows:</p>
+<ul>
+<li><em>year=</em> Year of interest</li>
+<li><em>zone=</em> or <em>timezone=</em> The (solar) time zone for the area of interest</li>
+<li><em>fmat=</em> Weather file format</li>
+<li><em>coords=</em> or <em>latlon=</em> A string of comma-separated latitude and longitude values</li>
+<li><em>source=</em> Location of the MERRA-2 source files</li>
+<li><em>target=</em> or <em>tgtdir=</em> Location for the weather files produced</li>
+</ul>
+</p>
+<p><strong>Note:</strong> The program should also handle MERRA (version 1) data files downloaded (probably) prior to February 2016.</p>
+<h5 id="merrar2">Rainfall Files</h5>
+<p>MERRA-2 variables from tavg1_2d_flx_Nx, tavg1_2d_lnd_Nx, or avg1_2d_mld_Nx data files are used to create a CSV format file with a single Rainfall variable.</p>
+<table border="1">
+<thead>
+<tr>
+<td colspan="3">
+CSV Variable
+</td>
+<td colspan="3">
+MERRA-2 Variable
+</td>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Column</td>
+<td>Variable</td>
+<td>Units</td>
+<td>&nbsp;</td>
+<td>Description</td>
+<td>Units</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Rainfall</td>
+<td>mm</td>
+<td>prectot</td>
+<td>Total surface precipitation flux</td>
+<td>kg/m<sup>2</sup>/s</td>
+</tr>
+</tbody>
+</table>
+<p><a href="#help">Back to top</a></p>
+</div>
+<h3 id="index">Using other Weather Files</h3>
+<p>The use of MERRA data for the weather files is not necessary but provides a way of obtaining (gridded) weather data for any geographic area. Any weather files suitable for SAM can be used by SIREN. <a href="https://sam.nrel.gov/weather" target="_blank">Weather Data</a> describes these file formats and <a href="https://sam.nrel.gov/content/weather-data-non-us-locations" target="_blank">Weather Data for non-U.S. Locations</a> gives some details on where non-U.S. weather data may be obtained.</p>
+<p>SIREN has two approaches for obtaining weather files:</p>
+<ol>
+<li>Having the geographic location of the file as part of the file name. This option uses file name formats of &lt;location_latitude_longitude_year&gt; and includes files created from MERRA-2 data by <em>makeweather2</em>. The location for weather files for solar and wind are defined by the <em>solar_files</em> and <em>wind_files</em> properties in the <a href="#p_files">[Files]</a> Section of the Preferences file</li>
+<li>By using an index file. To use other files you need to create index files that contain the latitude, longitude and file name for each weather file, where the filename is relative to the location for the weather files. Index files for solar and wind are defined by the <em>solar_index</em> and <em>wind_index</em> properties. You can either create these files manually or use <em>indexweather</em> to create an index</li>
+</ol>
+<h5>indexweather</h5>
+<p><em>indexweather.py</em> is a Python program that can be used to create an index of solar and/or wind weather files for input to SAM. The program generates an index file that contains latitude, longitude and file name for each weather file. You can invoke the program either by choosing <em>indexweather</em> from the SIREN Tools menu or in Windows by running <em>indexweather.exe</em> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
+<ul>
+<li><em>Solar files</em>. Location of solar weather files</li>
+<li><em>Solar index</em>. Name and location for solar index file</li>
+<li><em>Wind files</em>. Location of wind weather files</li>
+<li><em>Wind index</em>. Name and location for wind index file</li>
+</ul>
+<p>There are four buttons:</p>
+<ul>
+<li><em>Quit</em> will exit the program</li>
+<li><em>Produce Solar Index</em> will produce a solar index file</li>
+<li><em>Produce Wind Index</em> will produce a wind index file</li>
+<li><em>Help</em> Display this help</li>
+</ul>
+<p>You can also run the program on the command line. In this case the parameters are passed to the program as follows:</p>
+<ul class="none">
+<li><em>indexweather.exe</em> &lt;parm1=value parm2=value&gt;</li>
+</ul>
+<p>Parameters are as described above and can be passed to the program as follows:</p>
+<ul>
+<li><em>solar=</em> Location of the solar weather files</li>
+<li><em>wind=</em> Location of the wind weather files</li>
+<li><em>target=</em> name of the index file to produce</li>
+</ul>
+<p><a href="#help">Back to top</a></p>
+<h3 id="resource">Visualising Renewable Resource Attributes</h3>
+<p>To assist with placement of renewable energy stations SIREN can display a grid of renewable resource attributes derived from the SAM format weather files. This feature utilises summary data stored in a file rather than having to process hourly data from the weather files. The weather data values available are:</p>
+<ul>
+<li><em>DHI (Diffuse)</em>. Average daily DHI insolation (W)</li>
+<li><em>DNI (Normal)</em>. Average daily DNI insolation (W). Important for Solar Thermal generation</li>
+<li><em>GHI (Direct)</em>. Average daily GHI insolation (W). Important for PV generation</li>
+<div class="experiment">
+<li><em>Rainfall</em>. Average hourly rainfall (mm) (experimental)</li>
+</div>
+<li><em>Temperature</em>. Average hourly temperature (<sup>o</sup>C)</li>
+<li><em>Wind Speed</em>. Average hourly wind speed at 10m height (m/s)</li>
+<li><em>Wind @ 50m</em>. Average hourly wind speed at 50m height (m/s). Important for Wind generation</li>
+</ul>
+<p>The Resource Grid window allows you to choose the period and weather variable to display and how it will appear on the SIREN map. By default the period can be either the full year, a month or a season. If there are appropriate files you can also display the variable for an hour within a month or a day. The window also has a <em>Next</em> button which allows you to &ldquo;step&rdquo; through the weather periods. You can also use <em>Page Down</em> and <em>Page Up</em> to step forward and back through the weather periods.</p>
+<p>The resource files, created by <em>makegrid</em>, summarise weather data for each grid cell to avoid having to process each weather file to obtain the data for the desired time period or hour. There are three possible levels of detail:</p>
+<ul>
+<li>Daily By Month (default). These files summarise the average daily figures for a year, month or season. It provides a gross view to see variances at the monthly level. This is a single spreadsheet with a very approximate disk requirement of about 11Kb per cell</li>
+<li>Hourly By Month. These files summarise the average hourly figures for each month. It provides hourly variances at the monthly level. This is a spreadsheet for each month with a very approximate disk requirement of about 190Kb per cell (15Kb per month)</li>
+<li>Hourly By Day. These files have hourly figures for each day. It provides hourly variances at the daily level. This is a spreadsheet for each day with a very approximate disk requirement of about 5.8Mb per cell (15Kb per day). It allows you to visualise the actual movement of weather events (sun, wind fronts) at the expense of significantly larger disk storage requirements</li>
+</ul>
+<h4>makegrid</h4>
+<p><i>makegrid.py</i> is a Python program that can be used to create the resource grid file used by SIREN. You can invoke the program in Windows by running <em>makegrid.exe</em> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to allow you to define what file to create. The window fields are:</p>
+<ul>
+<li><em>Year</em>. Year of interest</li>
+<li><em>Update year</em>. If this is checked changes to the year selected will be propagated to the two Folder and Resource File fields</li>
+<li><em>Level of Detail</em>. Specify the resource files to be created. Values are:- Daily By Month, Hourly By Month, or Hourly By Day</li>
+<li><em>Solar Folder</em>. Source folder for the solar weather files</li>
+<li><em>Wind Folder</em>. Source folder for the wind weather files</li>
+<div class="experiment">
+<li><em>Rain Folder</em>. Source folder for the rain weather files (experimental)</li>
+</div>
+<li><em>Resource File</em>. Target file. This can be either a CSV or Excel file. For an Excel file if you append <em>$MM$</em> to the year in the file name hourly variable values will be produced</li>
+<li><em>Properties</em>. This is a read only field that is filled in when the file is created. This property should be copied into the <a href="#p_files">[Files]</a> Section of the Preferences file</li>
+</ul>
+<p>There are three buttons:</p>
+<ul>
+<li><em>Quit</em> will exit the program</li>
+<li><em>Produce Resource File</em> will produce the file</li>
+<li><em>Help</em> Display this help</li>
+</ul>
+<p>After producing the file you may want to copy contents of the <em>Properties</em> field into the <a href="#p_files">[Files]</a> Section of the Preferences file.</p>
+<p>You can also run the program on the command line. In this case the parameters are passed to the program as follows:</p>
+<ul class="none">
+<li><em>makegrid.exe</em> &lt;parm1=value parm2=value&gt;</li>
+</ul>
+<p>Parameters are as described above and can be passed to the program as follows:</p>
+<ul>
+<li><em>year=</em> Year of interest</li>
+<div class="experiment">
+<li><em>rain=</em> Location of the rain weather files (experimental)</li>
+</div>
+<li><em>solar=</em> Location of the solar weather files</li>
+<li><em>wind=</em> Location of the wind weather files</li>
+<li><em>target=</em> or <em>tgtfil=</em> Resource grid file to be produced</li>
+</ul>
+<p>If the source folder(s) contains other CSV files <em>makegrid</em> may fail. If this happens it is probably safer to copy the weather files to a separate folder.
+<p><a href="#help">Back to top</a></p>
+<h3 id="sam">SAM Models used by SIREN</h3>
+<p>SIREN uses the NREL SAM SDK API for energy calculations. This is a collection of tools developed by NREL for creating renewable energy system models. See <a href="https://sam.nrel.gov/sdk" target="_blank">SAM Simulation Core SDK</a> for details on the SDK. NREL also provide a user-friendly front end, <a href="https://sam.nrel.gov/" target="_blank">SAM</a>, to facilitate usage of the SAM models.</p>
+<p>The SAM models are very comprehensive and can be quite complex. For example, there are around 200 input variables possible for the Solar Thermal model SIREN uses. To simplify the interface to SAM, SIREN uses a variable file for each technology to store default values for most variables and only requires a minimal number of variables to be set by the user, such as Capacity. The models used by SIREN and their variable files are as follows:</p>
+<table class="none">
+<tr class="none">
+<th>Technology</th>
+<th>SAM Model</th>
+<th>[SAM Module] property</th>
+</tr>
+<tr class="none">
+<td>Biomass</td>
+<td>biomass</td>
+<td>biomass_variables</td>
+</tr>
+<tr class="none">
+<td>Financial model 1</td>
+<td>annualoutput</td>
+<td>annualoutput_variables</td>
+</tr>
+<tr class="none">
+<td>Financial model 2</td>
+<td>ippppa</td>
+<td>ippppa_variables</td>
+</tr>
+<tr class="none">
+<td>Geothermal</td>
+<td>geothermal</td>
+<td>geothermal_variables</td>
+</tr>
+<tr class="none">
+<td>PV<br>Fixed PV<br>Rooftop PV<br>Tracking PV</td>
+<td>pvwattsv5</td>
+<td>pv_variables</td>
+</tr>
+<tr class="none">
+<td>Solar Thermal</td>
+<td>tcsmolten_salt</td>
+<td>solar_thermal_variables</td>
+</tr>
+<tr class="none">
+<td>Wind</td>
+<td>windpower</td>
+<td>wind_variables</td>
+</tr>
+</table>
+<p>The variables SIREN requires are as follows. Those from the Preferences file are preceded with the Section they are in:</p>
+<table class="none">
+<tr class="none">
+<th>SAM Model</th>
+<th>SAM Variable</th>
+<th>Source</th>
+<th>Comment</th>
+</tr>
+<tr class="none">
+<td>annualoutput</td>
+<td>system_hourly_energy</td>
+<td>Power models</td>
+<td>Output from Power models</td>
+</tr>
+<tr class="none">
+<td rowspan="6">biomass</td>
+<td>biopwr.feedstock.total</td>
+<td>[Biomass] multiplier</td>
+<td>Multiply by Station Capacity</td>
+</tr>
+<tr class="none">
+<td>biopwr.feedstock.total_biomass</td>
+<td>[Biomass] multiplier</td>
+<td>Multiply by Station Capacity</td>
+</tr>
+<tr class="none">
+<td>biopwr.feedstock.total_c</td>
+<td>&nbsp;</td>
+<td>Computed from above plus carbon pct</td>
+</tr>
+<tr class="none">
+<td>biopwr.plant.nameplate</td>
+<td>Station Capacity</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="none">
+<td>file_name</td>
+<td>Station location</td>
+<td>Determines solar weather file to use</td>
+</tr>
+<tr class="none">
+<td>system_capacity</td>
+<td>Station Capacity</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="none">
+<td rowspan="2">geothermal</td>
+<td>file_name</td>
+<td>Station location</td>
+<td>Determines wind weather file to use</td>
+</tr>
+<tr class="none">
+<td>nameplate</td>
+<td>Station Capacity</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="none">
+<td rowspan="4">ippppa</td>
+<td>construction_financing_cost</td>
+<td>capital_cost + grid_cost</td>
+<td>capital_cost from [&lt;technology&gt;],
+<br>grid_cost from [Grid] calculations</td>
+</tr>
+<tr class="none">
+<td>gen</td>
+<td>Power models</td>
+<td>Output from Power models</td>
+</tr>
+<tr class="none">
+<td>system_capacity</td>
+<td>Station Capacity</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="none">
+<td>total_installed_cost</td>
+<td>capital_cost + grid_cost</td>
+<td>Same as construction_financing_cost</td>
+</tr>
+<tr class="none">
+<td rowspan="5">pvwattsv5</td>
+<td>array_type</td>
+<td>Station Technology</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="none">
+<td>azimuth</td>
+<td>Station Direction</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="none">
+<td>dc_ac_ratio</td>
+<td>[PV] dc_ac_ratio</td>
+<td>May also specify for [Fixed PV],
+<br>[Rooftop PV], [Tracking PV]</td>
+</tr>
+<tr class="none">
+<td>solar_resource_file</td>
+<td>Station location</td>
+<td>Determines wind weather file to use</td>
+</tr>
+<tr class="none">
+<td>system_capacity</td>
+<td>Station Capacity</td>
+<td>Multiplied by dc_ac_ratio</td>
+</tr>
+<tr class="none">
+<td rowspan="8">tcsmolten_salt</td>
+<td>Design_power</td>
+<td>Station Capacity</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="none">
+<td>P_ref</td>
+<td>Station Capacity /<br>[Geothermal] gross_net</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="none">
+<td>solar_resource_file</td>
+<td>Station location</td>
+<td>Determines wind weather file to use</td>
+</tr>
+<tr class="none">
+<td>system_capacity</td>
+<td>Station Capacity</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="none">
+<td>tshours</td>
+<td>Station Storage_Hours or<br>[Solar Thermal] tshours</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="none">
+<td>W_pb_design</td>
+<td>Station Capacity /<br>[Geothermal] gross_net</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="none">
+<td>weekday_schedule</td>
+<td>n/a</td>
+<td>Computed by SIREN</td>
+</tr>
+<tr class="none">
+<td>weekend_schedule</td>
+<td>n/a</td>
+<td>Computed by SIREN</td>
+</tr>
+<tr class="none">
+<td rowspan="7">windpower</td>
+<td>system_capacity</td>
+<td>Station Capacity</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="none">
+<td>wind_farm_xCoordinates<br>wind_farm_yCoordinates</td>
+<td>[Wind] offset_spacing<br>[Wind] turbine_spacing<br>[Wind] row_spacing</td>
+<td>Computed from these values</td>
+</tr>
+<tr class="none">
+<td>wind_resource_filename</td>
+<td>Station location</td>
+<td>Determines wind weather file to use</td>
+</tr>
+<tr class="none">
+<td>wind_turbine_rotor_diameter</td>
+<td>Station Rotor</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="none">
+<td>wind_turbine_powercurve_windspeeds</td>
+<td>Station Turbine</td>
+<td>From turbine details</td>
+</tr>
+<tr class="none">
+<td>wind_turbine_powercurve_powerout</td>
+<td>Station Turbine</td>
+<td>From turbine details</td>
+</tr>
+<tr class="none">
+<td>wind_turbine_cutin</td>
+<td>Station Turbine</td>
+<td>From turbine details</td>
+</tr>
+</table>
+<p>
+<h4>Using the full power of SAM</h4>
+<p>It is possible to use the full capabilities of SAM by one of two methods:</p>
+<ol>
+<li>Use SAM:
+<ol>
+<li>Run the appropriate model and parameters for the station of interest</li>
+<li>Save the hourly power generation figures produce by SAM</li>
+<li>Update the Power File field for the station to point this file</li>
+<li>Rather than running the Power Model SIREN will access this data file to obtain the hourly figures</li>
+</ol>
+</li>
+<li>Create a specific variables file for the technology you're interested in</li>
+<ol>
+<li>Using the existing file as a starting point create you own version of the file. The structure of the file is generally self-explanatory. Most of the file is created from the SDK with an addition <em>DEFAULT</em> column </li>
+<li>Update the appropriate property in the <a href="#p_sam_modules">[SAM Modules]</a> Section of the Preferences file to point to your file</li>
+<li>SIREN will then use your file to process that technology</li>
+<li>If you require different options for different stations with the same technology you can use the <em>Save Hourly Data Output</em> option to save the output for each station. Using <em>Generation - from chosen stations</em> you can create a more specific file</li>
+</ol>
+</li>
+</ol>
+<p><a href="#help">Back to top</a></p>
+<div class="experiment">
+<h3 id="nonsam">Other Models used by SIREN (experimental)</h3>
+<p>SIREN will support models to accommodate other technologies not supported by SAM models. As well as this it is possible to provide a list of generation figures for a Station using the <em>Power File</em> field (see <a href="#stations">Stations</a>).
+<h4>Hydro</h4>
+<p>The Hydro model used in SIREN is a very simplistic model computed by multiplying station capacity by the defined capacity factor for Hydro.</p>
+<h4>Wave</h4>
+<p>The Wave model used in SIREN is (currently) a very simplistic model computed using wind speed (after Bretschneider and Sverdrup and Munk):
+<p><code>
+Wave_Height = 0.023 * 0.3048 * (Wind_Speed * 1.94384)<sup>2</sup></code>&nbsp;&nbsp;(0.3048 converts feet to metres, 1.94384 converts knots to m/s)
+<br /><code>Wave_Period = 0.45 * Wind_Speed * 1.94384
+<br />Wave_Power = Wave_Height<sup>2</sup> * Wave_Period * Efficiency of technology
+</code>
+
+<p>There is no constraint (such as being in water) on where Stations may be placed. The CFs are probably too high but can be reduced by capping wave height (<em>[Wave] cutout</em>) to, say, around 2.?m</p>
+<h4>Other</h4>
+<p>SIREN will also support creation of you own model to support other technologies. The approach is to execute a model formula that you create for each of the 8,760 hours of appropriate weather data to calculate the power produced for that hour. The formula can be created by referencing each of the weather data variables, any other variables you define for that technology plus normal mathematical operators (refer to <a href="https://en.wikibooks.org/wiki/Python_Programming/Basic_Math#Mathematical_Operators" target="_blank">en.wikibooks.org/wiki/Python_Programming/Basic_Math#Mathematical_Operators</a>). The weather variables recognised are: <em>dhi</em>, <em>dni</em>, <em>ghi</em>, <em>temp</em>, <em>wind</em>, and <em>wind50</em>. To achieve this you need to:
+<ol>
+<li>Identify the technology by giving it a name of <em>Other</em> plus a suffix, say <em>Other1</em> and create a Section with that name in the Preferences file</li>
+<li>Create appropriate Properties for that technology and any other variables you want for it (see the <a href="#p_other">[Other]</a> Section in the Preferences file)</li>
+<li>There are standard Properties of <em>area</em>, <em>capital_cost</em>, <em>icon</em>, and <em>o_m_cost</em>.</li>
+<li>The formula is identified by the <em>formula</em> Property. Any calculated value will be capped at 1 to prevent a CF greater than 1</li>
+<li>Add the technology (lower case) as a colour Property in the <a href="#p_color">[Color]</a> Section of the Preferences file</li>
+<li>Add the technology (lower case) to the <em>technologies</em> Property in the <a href="#power">[Power]</a> Section of the Preferences file</li>
+<li>If the technology can be regarded as dispatchable you can also add it to the <em>dispatchable</em> Property in the <a href="#p_grid">[Grid]</a> Section of the Preferences file</li>
+</ol>
+</p>The following sample defines a technology, Other1, similar to the Wave model (above but with no cutout).
+<p><code>
+[Other1]
+<br />area=&lt;area per MW&gt;
+<br />capital_cost&lt;Capital cost per peak MW&gt;
+<br />efficiency=&lt;technology efficiency&gt;
+<br />o_m_cost=&lt;Operations and Maintenance cost per peak MW&gt;
+<br />formula=pow(0.0070104 * ( wind * 1.94384)**2,2) * 0.45 * wind * 1.94384 * efficiency * .125
+</code></p>
+</div>
+<p><a href="#help">Back to top</a></p>
+<h2 id="acronyms">Acronyms</h2>
+<table border="0" class="none">
+<tr><td class="none"><dfn>AEMO</dfn></td>
+<td class="none">Australian Energy Market Operator. Responsible for operating the WEM</td></tr>
+<tr><td class="none"><dfn>API</dfn></td>
+<td class="none">Application Programming Interface</td></tr>
+<tr><td class="none"><dfn>BOM</dfn></td>
+<td class="none">Australian Bureau of Meteorology</td></tr>
+<tr><td class="none"><dfn>CF</dfn></td>
+<td class="none">Capacity Factor. Average power generated divided by rated capacity (peak power)</td></tr>
+<tr><td class="none"><dfn>CSV</dfn></td>
+<td class="none">comma-separated-variable file</td></tr>
+<tr><td class="none"><dfn>DHI</dfn></td>
+<td class="none">Diffuse Horizontal Irradiance</td></tr>
+<tr><td class="none"><dfn>DNI</dfn></td>
+<td class="none">Direct Normal Irradiance</td></tr>
+<tr><td class="none"><dfn>DSCR</dfn></td>
+<td class="none">Debt-Service Coverage Ratio</td></tr>
+<tr><td class="none"><dfn>EOS</dfn></td>
+<td class="none">Earth Observing System</td></tr>
+<tr><td class="none"><dfn>GEOS-5</dfn></td>
+<td class="none">Goddard Earth Observing System Data Assimilation System Version 5</td></tr>
+<tr><td class="none"><dfn>GHI</dfn></td>
+<td class="none">Global Horizontal Irradiance</td></tr>
+<tr><td class="none"><dfn>GMAO</dfn></td>
+<td class="none">US Global Modeling and Assimilation Office</td></tr>
+<tr><td class="none"><dfn>GWh</dfn></td>
+<td class="none">Gigawatt hour</td></tr>
+<tr><td class="none"><dfn>IMO</dfn></td>
+<td class="none">WA Independent Market Operator. Formerly, responsible for operating the WEM</td></tr>
+<tr><td class="none"><dfn>INI</dfn></td>
+<td class="none">Initialisation or configuration file popularised by early version of Windows</td></tr>
+<tr><td class="none"><dfn>IPP</dfn></td>
+<td class="none">Independent power producer</td></tr>
+<tr><td class="none"><dfn>IRR</dfn></td>
+<td class="none">Internal rate or return</td></tr>
+<tr><td class="none"><dfn>JPEG or JPG</dfn></td>
+<td class="none">Joint Photographic Experts Group. A compressed image file format</td></tr>
+<tr><td class="none"><dfn>Kb</dfn></td>
+<td class="none">kilobytes - 1,000 or 1,024 bytes</td></tr>
+<tr><td class="none"><dfn>Km</dfn></td>
+<td class="none">Kilometre (or kilometer)</td></tr>
+<tr><td class="none"><dfn>KML</dfn></td>
+<td class="none">Keyhole Markup Language. An XML based file format used to display geographic data in an Earth browser such as Google Earth, Google Maps
+</td></tr>
+<tr><td class="none"><dfn>kW</dfn></td>
+<td class="none">Kilowatts</td></tr>
+<tr><td class="none"><dfn>kWh</dfn></td>
+<td class="none">Kilowatt hour</td></tr>
+<tr><td class="none"><dfn>LCOE</dfn></td>
+<td class="none">Levelised cost of electricity</td></tr>
+<tr><td class="none"><dfn>m/s</dfn></td>
+<td class="none">metres per second</td></tr>
+<tr><td class="none"><dfn>Mb</dfn></td>
+<td class="none">megabytes - 1,000 or 1,024 Kb</td></tr>
+<tr><td class="none"><dfn>MERRA</dfn></td>
+<td class="none">Modern Era Retrospective-analysis for Research and Applications is a NASA atmospheric data reanalysis for the satellite era</td></tr>
+<tr><td class="none"><dfn>MERRA-2</dfn></td>
+<td class="none">Modern Era Retrospective-analysis for Research and Applications, Version 2 is a NASA atmospheric data reanalysis for the satellite era</td></tr>
+<tr><td class="none"><dfn>MW</dfn></td>
+<td class="none">Megawatt</td></tr>
+<tr><td class="none"><dfn>MWh</dfn></td>
+<td class="none">Megawatt hour</td></tr>
+<tr><td class="none"><dfn>NASA</dfn></td>
+<td class="none">US National Aeronautics and Space Administration</td></tr>
+<tr><td class="none"><dfn>NREL</dfn></td>
+<td class="none">US National Renewable Energy Laboratory</td></tr>
+<tr><td class="none"><dfn>PNG</dfn></td>
+<td class="none">Portable Network Graphics. A lossless compressed image file format</td></tr>
+<tr><td class="none"><dfn>POW</dfn></td>
+<td class="none">A power curve file format associated with WAsp. The power curve file contains the wind turbine power output and, optionally, the thrust coefficient as a function of hub-height wind speed</td></tr>
+<tr><td class="none"><dfn>PPA</dfn></td>
+<td class="none">Power purchase agreement</td></tr>
+<tr><td class="none"><dfn>SAM</dfn></td>
+<td class="none">System Advisor Model</td></tr>
+<tr><td class="none"><dfn>SCADA</dfn></td>
+<td class="none">Supervisory Control And Data Acquisition. A system for remote monitoring and control
+<tr><td class="none"><dfn>SDK</dfn></td>
+<td class="none">Software Development Kit</td></tr>
+<tr><td class="none"><dfn>SEN</dfn></td>
+<td class="none">Sustainable Energy Now</td></tr>
+<tr><td class="none"><dfn>SIREN</dfn></td>
+<td class="none">SEN's Interactive Renewable Energy Network tool</td></tr>
+<tr><td class="none"><dfn>SSC</dfn></td>
+<td class="none">SAM Simulation Core</td></tr>
+<tr><td class="none"><dfn>SWIS</dfn></td>
+<td class="none">South West Interconnected System. The electricity network for the south west of WA</td></tr>
+<tr><td class="none"><dfn>TMY</dfn></td>
+<td class="none">Typical Meteorological Year. Selected weather data for a specific location, generated from a data bank much longer than a year in duration. Gives annual averages that are consistent with the long-term averages for the location in question</td></tr>
+<tr><td class="none"><dfn>URL</dfn></td>
+<td class="none">Uniform Resource Locator. A reference (an address) to a resource on the Internet</td></tr>
+<tr><td class="none"><dfn>U.S., US or USA</dfn></td>
+<td class="none">United States (of America)</td></tr>
+<tr><td class="none"><dfn>UTC</dfn></td>
+<td class="none">Coordinated Universal Time</td></tr>
+<tr><td class="none"><dfn>W</dfn></td>
+<td class="none">Watts</td></tr>
+<tr><td class="none"><dfn>WA</dfn></td>
+<td class="none">Western Australia or Western Australian</td></tr>
+<tr><td class="none"><dfn>WAsP</dfn></td>
+<td class="none">Wind Atlas Analysis and Application Program</td></tr>
+<tr><td class="none"><dfn>WEM</dfn></td>
+<td class="none">Wholesale Electricity Market for the SWIS</td></tr>
+<tr><td class="none"><dfn>XML</dfn></td>
+<td class="none">Extensible Markup Language. A markup language that defines a set of rules for encoding documents in a format which is both human-readable and machine-readable.</td></tr>
+</table>
+<p><a href="#help">Back to top</a></p>
+</body>
+</html>
