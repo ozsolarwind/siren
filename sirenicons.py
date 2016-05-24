@@ -62,7 +62,7 @@ class Icons:
         elif 'PV' in technology:
             tech = 'PV'
         elif technology[:6] == 'Fossil':
-            tech = stn.technology[:6]
+            tech = 'Fossil'
         try:
             return self.icons[tech]
         except:
