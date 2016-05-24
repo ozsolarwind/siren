@@ -1,12 +1,12 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King     
+#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King
 #
 #  Editini.py - This file is part of SIREN.
 #
 #  SIREN is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as 
-#  published by the Free Software Foundation, either version 3 of 
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, either version 3 of
 #  the License, or (at your option) any later version.
 #
 #  SIREN is distributed in the hope that it will be useful,
@@ -14,7 +14,7 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU Affero General Public License for more details.
 #
-#  You should have received a copy of the GNU Affero General 
+#  You should have received a copy of the GNU Affero General
 #  Public License along with SIREN.  If not, see
 #  <http://www.gnu.org/licenses/>.
 #
@@ -22,7 +22,7 @@
 from datetime import datetime, timedelta
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtGui import QDesktopWidget
-import ConfigParser # decode .ini file
+import ConfigParser   # decode .ini file
 import os
 import sys
 
@@ -66,7 +66,7 @@ class EdtDialog(QtGui.QDialog):
             self.widget.setFont(QtGui.QFont('Courier New', 12))
         fnt = self.widget.fontMetrics()
         ln = (ln + 5) * fnt.maxWidth()
-        ln2 = (ln2 + 4) * fnt.height() 
+        ln2 = (ln2 + 4) * fnt.height()
         screen = QDesktopWidget().availableGeometry()
         if ln > screen.width() * .67:
             ln = int(screen.width() * .67)
@@ -78,12 +78,12 @@ class EdtDialog(QtGui.QDialog):
         layout.addWidget(self.widget)
         layout.addLayout(buttonLayout)
         self.setLayout(layout)
-        self.setWindowTitle('SIREN - Edit - ' + self.in_file[self.in_file.rfind(os.sep)+1:])
+        self.setWindowTitle('SIREN - Edit - ' + self.in_file[self.in_file.rfind(os.sep) + 1:])
         size = self.geometry()
-        self.setGeometry(1, 1 , ln + 10, ln2 + 35)
+        self.setGeometry(1, 1, ln + 10, ln2 + 35)
         size = self.geometry()
-        self.move((screen.width()-size.width())/2, \
-            (screen.height()-size.height())/2)
+        self.move((screen.width() - size.width()) / 2, \
+            (screen.height() - size.height()) / 2)
         self.widget.show()
 
     def accept(self):
@@ -115,7 +115,7 @@ class EditSect():
         for key, value in section_items:
             section_dict[key] = value
         dialog = displaytable.Table(section_dict, fields=['property', 'value'], title=self.section + ' Parameters', \
-                 save_folder=save_folder, edit=True) 
+                 save_folder=save_folder, edit=True)
         dialog.exec_()
         values = dialog.getValues()
         if values is None:
@@ -126,7 +126,7 @@ class EditSect():
             section_items.append(key + '=' + values[key][0][6:])
         section_dict[self.section] = section_items
         SaveIni(section_dict)
-        
+
 
 class EditTech():
     def __init__(self, save_folder):
@@ -146,12 +146,12 @@ class EditTech():
         tech_dict = {}
         for technology in technologies:
             area = 0.
-            capital_cost = ''  
+            capital_cost = ''
             o_m_cost = ''
             try:
                 area = float(config.get(technology, 'area'))
             except:
-                pass  
+                pass
             try:
                 capital_cost = config.get(technology, 'capital_cost')
                 if capital_cost[-1] == 'K':
@@ -161,7 +161,7 @@ class EditTech():
                 else:
                     capital_cost = float(capital_cost)
             except:
-                pass  
+                pass
             try:
                 o_m_cost = config.get(technology, 'o_m_cost')
                 if o_m_cost[-1] == 'K':
@@ -171,8 +171,8 @@ class EditTech():
                 else:
                     o_m_cost = float(o_m_cost)
             except:
-                pass  
-            tech_dict[technology] = [area, capital_cost, o_m_cost]  
+                pass
+            tech_dict[technology] = [area, capital_cost, o_m_cost]
         dialog = displaytable.Table(tech_dict, fields=['technology', 'area', 'capital_cost', 'o_m_cost'], \
                  save_folder=save_folder, title='Technologies', edit=True)
         dialog.exec_()
@@ -180,7 +180,7 @@ class EditTech():
         if values is None:
             return
         SaveIni(values)
-    
+
 
 class SaveIni():
     def __init__(self, values):
@@ -198,7 +198,7 @@ class SaveIni():
             for i in range(len(properties)):
                 props.append(properties[i].split('=')[0])
             for i in range(len(lines)):
-                if lines[i][:len(section) + 2] == '[' + section + ']':                
+                if lines[i][:len(section) + 2] == '[' + section + ']':
                     in_section = True
                 elif in_section:
                     if lines[i][0] == '[':
@@ -206,9 +206,9 @@ class SaveIni():
                         break
                     elif lines[i][0] != ';' and lines[i][0] != '#':
                         bits = lines[i].split('=')
-                        for j in range(len(properties) -1, -1, -1):
+                        for j in range(len(properties) - 1, -1, -1):
                             if bits[0] == props[j]:
-                                lines[i] = properties[j]  + '\n'
+                                lines[i] = properties[j] + '\n'
                                 del properties[j]
                                 del props[j]
             if len(properties) > 0:
@@ -224,4 +224,4 @@ class SaveIni():
         sou = open(ini_file, 'w')
         for i in range(len(lines)):
             sou.write(lines[i])
-        sou.close()    
+        sou.close()

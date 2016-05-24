@@ -1,12 +1,12 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King     
+#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King
 #
 #  station.py - This file is part of SIREN.
 #
 #  SIREN is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as 
-#  published by the Free Software Foundation, either version 3 of 
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, either version 3 of
 #  the License, or (at your option) any later version.
 #
 #  SIREN is distributed in the hope that it will be useful,
@@ -14,7 +14,7 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU Affero General Public License for more details.
 #
-#  You should have received a copy of the GNU Affero General 
+#  You should have received a copy of the GNU Affero General
 #  Public License along with SIREN.  If not, see
 #  <http://www.gnu.org/licenses/>.
 #
@@ -26,7 +26,7 @@ from math import radians, cos, sin, asin, sqrt, pow
 import xlrd
 import xlwt
 
-import ConfigParser # decode .ini file
+import ConfigParser   # decode .ini file
 
 from senuser import getUser
 
@@ -69,7 +69,7 @@ class Station:
 
 
 class Stations:
-    def get_config(self):    
+    def get_config(self):
         config = ConfigParser.RawConfigParser()
         config_file = 'SIREN.ini'
         if __name__ == '__main__':
@@ -132,7 +132,7 @@ class Stations:
                     self.areas[itm] = 0.
         except:
             pass
-        try: 
+        try:
             technologies = config.get('Power', 'fossil_technologies')
             technologies = technologies.split(' ')
             for item in technologies:
@@ -172,19 +172,19 @@ class Stations:
 
     def haversine(self, lat1, lon1, lat2, lon2):
         """
-        Calculate the great circle distance between two points 
+        Calculate the great circle distance between two points
         on the earth (specified in decimal degrees)
         """
-    # convert decimal degrees to radians 
+     # convert decimal degrees to radians
         lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
 
-    # haversine formula  
-        dlon = lon2 - lon1 
-        dlat = lat2 - lat1 
-        a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
-        c = 2 * asin(sqrt(a)) 
+     # haversine formula
+        dlon = lon2 - lon1
+        dlat = lat2 - lat1
+        a = sin(dlat / 2)**2 + cos(lat1) * cos(lat2) * sin(dlon / 2)**2
+        c = 2 * asin(sqrt(a))
 
-    # 6367 km is the radius of the Earth
+     # 6367 km is the radius of the Earth
         km = 6367 * c
         return km
 
@@ -201,7 +201,7 @@ class Stations:
         sam_turbines = csv.DictReader(sam)
         for fac_file in self.fac_files:
             if os.path.exists(fac_file):
-                if fac_file[-4:] == '.csv': 
+                if fac_file[-4:] == '.csv':
                     facile = open(fac_file)
                     facilities = csv.DictReader(facile)
                     for facility in facilities:
@@ -209,7 +209,7 @@ class Stations:
                             if not within_map(float(facility['Latitude']), \
                               float(facility['Longitude']), self.map_polygon):
                                 continue
-                            if 'Facility Code' in facilities.fieldnames: # IMO format
+                            if 'Facility Code' in facilities.fieldnames:   # IMO format
                                 bit = facility['Facility Code'].split('_')
                                 rotor = 0.
                                 turbine = ''
@@ -239,11 +239,11 @@ class Stations:
                                                 if turb['Name'] == turbine:
                                                     rotor = turb['Rotor Diameter']
                                     no_turbines = int(facility['No. turbines'])
-                                    try: 
+                                    try:
                                         rotor = float(rotor)
                                     except:
                                         pass
-                                    area = self.areas[tech] * float(no_turbines) * pow((rotor * .001), 2) 
+                                    area = self.areas[tech] * float(no_turbines) * pow((rotor * .001), 2)
                                 elif bit[-1][:2] == 'PV':
                                     tech = 'Fixed PV'
                                     area = self.areas[tech] * float(facility['Maximum Capacity (MW)'])
@@ -267,7 +267,7 @@ class Stations:
                                         tech += 'Coal'
                                     else:
                                         tech += 'Mixed'
-                                      #  tech += 'Distillate'
+                                       #  tech += 'Distillate'
                                     area = self.areas[tech] * float(facility['Maximum Capacity (MW)'])
                                 if code:
                                     nice_name = facility['Facility Code']
@@ -283,18 +283,18 @@ class Stations:
                                         else:
                                             nice_name = facility['Facility Code']
                                 stn = self.Get_Station(nice_name)
-                                if stn is None: # new station?
+                                if stn is None:   # new station?
                                     self.stations.append(Station(nice_name, tech, \
                                         float(facility['Latitude']), float(facility['Longitude']), \
                                         float(facility['Maximum Capacity (MW)']), turbine, rotor, no_turbines, area, 'Existing'))
-                                else: # additional generator in existing station
+                                else:   # additional generator in existing station
                                     if stn.technology != tech:
                                         if stn.technology[:6] == 'Fossil' and tech[:6] == 'Fossil':
                                             stn.technology = 'Fossil Mixed'
                                     stn.capacity = stn.capacity + float(facility['Maximum Capacity (MW)'])
                                     stn.area += area
                                     stn.no_turbines = stn.no_turbines + no_turbines
-                            else: # SIREN format
+                            else:   # SIREN format
                                 try:
                                     turbs = int(facility['No. turbines'])
                                 except:
@@ -333,7 +333,7 @@ class Stations:
                                                 for turb in sam_turbines:
                                                     if turb['Name'] == turbine:
                                                         rotor = turb['Rotor Diameter']
-                                    try: 
+                                    try:
                                         self.stations[-1].rotor = float(rotor)
                                     except:
                                         pass
@@ -344,7 +344,7 @@ class Stations:
                                                                  pow((self.stations[-1].rotor * .001), 2)
                                     else:
                                         self.stations[-1].area = self.areas[self.stations[-1].technology] * \
-                                                                 float(self.stations[-1].capacity) 
+                                                                 float(self.stations[-1].capacity)
                                 try:
                                     if facility['Power File'] != '':
                                         self.stations[-1].power_file = facility['Power File']
@@ -354,9 +354,9 @@ class Stations:
                                     if facility['Grid Line'] != '':
                                         self.stations[-1].grid_line = facility['Grid Line']
                                 except:
-                                    pass    
+                                    pass
                                 if 'PV' in self.stations[-1].technology:
-                                    try:                                    
+                                    try:
                                         if facility['Direction'] != '':
                                             self.stations[-1].direction = facility['Direction']
                                     except:
@@ -368,7 +368,7 @@ class Stations:
                                     except:
                                         pass
                     facile.close()
-                else: # assume excel and in our format
+                else:   # assume excel and in our format
                     var = {}
                     workbook = xlrd.open_workbook(fac_file)
                     worksheet = workbook.sheet_by_index(0)
@@ -424,7 +424,7 @@ class Stations:
                                         for turb in sam_turbines:
                                             if turb['Name'] == turbine:
                                                 rotor = turb['Rotor Diameter']
-                                try: 
+                                try:
                                     self.stations[-1].rotor = float(rotor)
                                 except:
                                     pass
@@ -435,31 +435,31 @@ class Stations:
                                                          pow((self.stations[-1].rotor * .001), 2)
                             else:
                                 self.stations[-1].area = self.areas[self.stations[-1].technology] * \
-                                                         float(self.stations[-1].capacity) 
+                                                         float(self.stations[-1].capacity)
                         try:
                             power_file = worksheet.cell_value(curr_row, var['Power File'])
                             if power_file != '':
-                                self.stations[-1].power_file = power_file 
+                                self.stations[-1].power_file = power_file
                         except:
                             pass
-                        try: 
+                        try:
                             grid_line = worksheet.cell_value(curr_row, var['Grid Line'])
                             if grid_line != '':
-                                self.stations[-1].grid_line = grid_line 
+                                self.stations[-1].grid_line = grid_line
                         except:
                             pass
                         if 'PV' in self.stations[-1].technology:
-                            try: 
+                            try:
                                 direction = worksheet.cell_value(curr_row, var['Direction'])
                                 if direction != '':
-                                    self.stations[-1].direction = direction 
+                                    self.stations[-1].direction = direction
                             except:
                                 pass
                         if self.stations[-1].technology == 'Solar Thermal':
-                            try: 
+                            try:
                                 storage_hours = worksheet.cell_value(curr_row, var['Storage Hours'])
                                 if storage_hours != '':
-                                    self.stations[-1].storage_hours = storage_hours 
+                                    self.stations[-1].storage_hours = storage_hours
                             except:
                                 pass
         sam.close()
@@ -500,7 +500,7 @@ class Stations:
     def Get_Station(self, name):
         for station in self.stations:
             if station.name == name:
-                return station	
+                return station
         return None
 
     def Description(self):

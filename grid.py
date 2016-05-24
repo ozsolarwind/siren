@@ -1,12 +1,12 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King     
+#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King
 #
 #  grid.py - This file is part of SIREN.
 #
 #  SIREN is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as 
-#  published by the Free Software Foundation, either version 3 of 
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, either version 3 of
 #  the License, or (at your option) any later version.
 #
 #  SIREN is distributed in the hope that it will be useful,
@@ -14,7 +14,7 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU Affero General Public License for more details.
 #
-#  You should have received a copy of the GNU Affero General 
+#  You should have received a copy of the GNU Affero General
 #  Public License along with SIREN.  If not, see
 #  <http://www.gnu.org/licenses/>.
 #
@@ -23,12 +23,12 @@ import os
 import sys
 from math import *
 
-import ConfigParser # decode .ini file
+import ConfigParser   # decode .ini file
 from xml.etree.ElementTree import ElementTree
 
 from senuser import getUser
 
-RADIUS = 6367.  # radius of earth in km
+RADIUS = 6367.   # radius of earth in km
 
 def within_map(x, y, poly):
     n = len(poly)
@@ -67,10 +67,10 @@ class Line:
         self.substation_cost = substation_cost
 
 
-class Grid:        
+class Grid:
     def decode2(self, proces, substation=False):
         operands = ['+', '-', '*', '/', 'x']
-        proces = proces.replace(' ','')
+        proces = proces.replace(' ', '')
         proces = proces.split('=')
         numbr = [0., 0.]
         for p in range(len(proces)):
@@ -120,7 +120,7 @@ class Grid:
                 break
             r = s_lines.find(')', l)
             l2 = s_lines.find('(', l + 1)
-            if l2 > r: # normal
+            if l2 > r:   # normal
                 proces = s_lines[l + 1:r]
                 l += 1
             else:
@@ -158,7 +158,7 @@ class Grid:
                 new_lines.append(self.decode2(proces))
         return new_lines
 
-    def get_config(self):    
+    def get_config(self):
         config = ConfigParser.RawConfigParser()
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
@@ -331,11 +331,11 @@ class Grid:
         styl = ''
         root = ElementTree(file=kml_file)
         folder = False
-#Create an iterator
+         # Create an iterator
         iterat = root.getiterator()
         placemark_id = ''
         for element in iterat:
-            elem = element.tag[element.tag.find('}')+1:]
+            elem = element.tag[element.tag.find('}') + 1:]
             if elem == 'Style':
                 for name, value in element.items():
                     if name == 'id':
@@ -384,25 +384,25 @@ class Grid:
                         self.lines.append(Line(line_name, styl, coords, length=grid_len))
                     else:
                         self.lines.append(Line(line_name, style[styl], coords, length=grid_len))
-    # connect together
-    # if load_centres connect closest end to closest load centre
-    #    for i in range(len(self.lines)):
-    #        connect = []
-    #        con = -1
-    #        connect.append(self.gridConnect(self.lines[i].coordinates[0][0], self.lines[i].coordinates[0][1], \
-    #                       ignore=[i]))
-    #        connect.append(self.gridConnect(self.lines[i].coordinates[-1][0], self.lines[i].coordinates[-1][1], \
-    #                       ignore=[i]))
-    #        if connect[0][0] > 0:
-    #            if connect[1][0] < connect[0][0]:
-    #                con = connect[1][2]
-    #                self.lines[i].coordinates.append([connect[1][1], connect[1][2]])
-    #            else:
-    #                con = connect[0][2]
-    #                self.lines[i].coordinates.insert(0, [connect[0][1], connect[0][2]])
-    #        self.lines[i].connector = con
+     # connect together
+     # if load_centres connect closest end to closest load centre
+     #    for i in range(len(self.lines)):
+     #        connect = []
+     #        con = -1
+     #        connect.append(self.gridConnect(self.lines[i].coordinates[0][0], self.lines[i].coordinates[0][1], \
+     #                       ignore=[i]))
+     #        connect.append(self.gridConnect(self.lines[i].coordinates[-1][0], self.lines[i].coordinates[-1][1], \
+     #                       ignore=[i]))
+     #        if connect[0][0] > 0:
+     #            if connect[1][0] < connect[0][0]:
+     #                con = connect[1][2]
+     #                self.lines[i].coordinates.append([connect[1][1], connect[1][2]])
+     #            else:
+     #                con = connect[0][2]
+     #                self.lines[i].coordinates.insert(0, [connect[0][1], connect[0][2]])
+     #        self.lines[i].connector = con
 
-    def dust(self, pyd, pxd, y1d, x1d, y2d, x2d):  # debug
+    def dust(self, pyd, pxd, y1d, x1d, y2d, x2d):   # debug
         px = radians(pxd)
         py = radians(pyd)
         x1 = radians(x1d)
@@ -411,7 +411,7 @@ class Grid:
         y2 = radians(y2d)
         p_x = x2 - x1
         p_y = y2 - y1
-        something = p_x*p_x + p_y*p_y
+        something = p_x * p_x + p_y * p_y
         u = ((px - x1) * p_x + (py - y1) * p_y) / float(something)
         if u > 1:
             u = 1
@@ -421,16 +421,16 @@ class Grid:
         y = y1 + u * p_y
         dx = x - px
         dy = y - py
-        dist = sqrt(dx*dx + dy*dy)
+        dist = sqrt(dx * dx + dy * dy)
         return [round(abs(dist) * RADIUS, 2), round(degrees(y), 6), round(degrees(x), 6)]
 
     def gridConnect(self, lat, lon, ignore=[]):
         shortest = [99999, -1., -1., -1]
-   #     print '(423)', lat, lon
+    #     print '(423)', lat, lon
         for l in range(len(self.lines)):
             if l in ignore:
                 continue
-      #      print '(427)', l, self.lines[l].name, len(self.lines[l].coordinates), self.lines[l].coordinates
+       #      print '(427)', l, self.lines[l].name, len(self.lines[l].coordinates), self.lines[l].coordinates
             for i in range(len(self.lines[l].coordinates) - 1):
                 if self.dummy_fix:
                     dist = self.dust(lat, lon, self.lines[l].coordinates[i][0], self.lines[l].coordinates[i][1], \
@@ -446,7 +446,7 @@ class Grid:
                     shortest.append(l)
         if shortest[0] == 99999:
              shortest[0] = -1
-        return shortest # length, lat, lon, line#
+        return shortest   # length, lat, lon, line#
 
     def DistancePointLine(self, pyd, pxd, y1d, x1d, y2d, x2d):
 # px,py is the point to test.
@@ -475,11 +475,11 @@ class Grid:
             iy = y1
         else:
             dst = self.Distance(iy, ix, py, px)
-            if d13 < dst: # must be another way but this'll do for now
+            if d13 < dst:   # must be another way but this'll do for now
                 dst = d13
                 ix = x1
                 iy = y1
-        if d23 < dst: # must be another way but this'll do for now
+        if d23 < dst:   # must be another way but this'll do for now
             dst = d23
             ix = x2
             iy = y2
@@ -495,7 +495,7 @@ class Grid:
         dx = x2 - x1
         ra13 = pow(sin(dy / 2.), 2) + cos(y1) * cos(y2) * pow(sin(dx / 2.), 2)
         return 2 * asin(min(1, sqrt(ra13)))
-        
+
     def actualDistance(self, y1d, x1d, y2d, x2d):
         x1 = radians(x1d)
         y1 = radians(y1d)
@@ -503,7 +503,7 @@ class Grid:
         y2 = radians(y2d)
         dst = self.Distance(y1, x1, y2, x2)
         return round(abs(dst) * RADIUS, 2)
-        
+
     def Line_Cost(self, peak_load, peak_dispatchable):
         if peak_dispatchable is None or peak_dispatchable == 0:
             s = 0
@@ -516,14 +516,14 @@ class Grid:
                 p += 1
             return self.d_line_table[p][1], self.d_line_table[p][2]
         else:
-            if peak_load > peak_dispatchable + peak_dispatchable: 
+            if peak_load > peak_dispatchable + peak_dispatchable:
                 p = 0
                 while self.d_line_table[p][0] < peak_load and (p + 1) < len(self.d_line_table):
                     p += 1
                 return self.d_line_table[p][1], self.d_line_table[p][2]
             p = 0
             while self.d_line_table[p][0] < peak_dispatchable and (p + 1) < len(self.d_line_table):
-                p += 1   
+                p += 1
             s = 0
             while self.s_line_table[s][0] < peak_load - peak_dispatchable and (s + 1) < len(self.s_line_table):
                 s += 1
@@ -531,15 +531,15 @@ class Grid:
                 return self.d_line_table[p][1], self.d_line_table[p][2]
             else:
                 return self.d_line_table[p][1], self.d_line_table[p][2]
-        
+
     def Substation_Cost(self, line):
         if line in self.substation_costs:
             return self.substation_costs[line]
         return 0.
-        
- 
+
+
 class Grid_Boundary:
-    def get_config(self):    
+    def get_config(self):
         config = ConfigParser.RawConfigParser()
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
@@ -607,10 +607,10 @@ class Grid_Boundary:
         style = {}
         styl = ''
         root = ElementTree(file=self.kml_file)
-#Create an iterator
+         # Create an iterator
         iterat = root.getiterator()
         for element in iterat:
-            elem = element.tag[element.tag.find('}')+1:]
+            elem = element.tag[element.tag.find('}') + 1:]
             if elem == 'Style':
                 for name, value in element.items():
                     if name == 'id':
@@ -625,8 +625,8 @@ class Grid_Boundary:
                 coords = []
                 coordinates = ' '.join(element.text.split()).split(' ')
                 for i in range(len(coordinates)):
-                    coords.append([round(float(coordinates[i].split(',')[1]),6), \
-                      round(float(coordinates[i].split(',')[0]),6)])
+                    coords.append([round(float(coordinates[i].split(',')[1]), 6), \
+                      round(float(coordinates[i].split(',')[0]), 6)])
                 i = int(len(coords) / 2)
                 if within_map(coords[0][0], coords[0][1], self.map_polygon) and \
                    within_map(coords[i][0], coords[i][1], self.map_polygon):

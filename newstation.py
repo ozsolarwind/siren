@@ -1,12 +1,12 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King     
+#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King
 #
 #  newstation.py - This file is part of SIREN.
 #
 #  SIREN is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as 
-#  published by the Free Software Foundation, either version 3 of 
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, either version 3 of
 #  the License, or (at your option) any later version.
 #
 #  SIREN is distributed in the hope that it will be useful,
@@ -14,7 +14,7 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU Affero General Public License for more details.
 #
-#  You should have received a copy of the GNU Affero General 
+#  You should have received a copy of the GNU Affero General
 #  Public License along with SIREN.  If not, see
 #  <http://www.gnu.org/licenses/>.
 #
@@ -24,7 +24,7 @@ import os
 import sys
 import types
 
-import ConfigParser # decode .ini file
+import ConfigParser  # decode .ini file
 from PyQt4 import QtGui, QtCore
 
 from senuser import getUser
@@ -34,7 +34,7 @@ from turbine import Turbine
 
 class AnObject(QtGui.QDialog):
 
-    def get_config(self):    
+    def get_config(self):
         config = ConfigParser.RawConfigParser()
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
@@ -108,7 +108,7 @@ class AnObject(QtGui.QDialog):
             self.tshours = float(config.get('Solar Thermal', 'tshours'))
         except:
             pass
-        
+
 
     def __init__(self, dialog, anobject, scenarios=None):
         super(AnObject, self).__init__()
@@ -125,10 +125,10 @@ class AnObject(QtGui.QDialog):
             self.scenarios = None
         dialog.setObjectName('Dialog')
         self.initUI()
-        
+
     def initUI(self):
         self.save = False
-        self.field = ['name', 'technology', 'lat', 'lon', 'capacity' , 'turbine', 'rotor', \
+        self.field = ['name', 'technology', 'lat', 'lon', 'capacity', 'turbine', 'rotor', \
                   'no_turbines', 'area', 'scenario', 'power_file', 'grid_line', 'storage_hours', 'direction']
         self.label = []
         self.edit = []
@@ -137,7 +137,7 @@ class AnObject(QtGui.QDialog):
         widths = [0, 0]
         heights = 0
         self.turbines = [['', '', 0.]]
-      #  self.turbine_class = ['']
+       #  self.turbine_class = ['']
         grid = QtGui.QGridLayout()
         turbcombo = QtGui.QComboBox(self)
         sam = open(self.sam_file)
@@ -159,7 +159,7 @@ class AnObject(QtGui.QDialog):
             if pow[-4:] == '.pow':
                 turb = Turbine(pow[:-4])
                 self.turbines.append([pow[:-4], '', str(turb.rotor)])
-             #   self.turbine_class.append('')
+              #   self.turbine_class.append('')
         self.turbines.sort()
         j = -1
         for i in range(len(self.turbines)):
@@ -223,7 +223,7 @@ class AnObject(QtGui.QDialog):
             elif self.field[i] == 'capacity':
                 self.capacity = attr
                 self.capacity_was = attr
-                self.edit.append(QtGui.QDoubleSpinBox()) # QtGui.QLineEdit(str(self.capacity)))
+                self.edit.append(QtGui.QDoubleSpinBox())  # QtGui.QLineEdit(str(self.capacity)))
                 self.edit[-1].setRange(0, 10000)
                 self.edit[-1].setValue(self.capacity)
                 self.edit[-1].setDecimals(1)
@@ -249,7 +249,7 @@ class AnObject(QtGui.QDialog):
                 self.no_turbines = attr
                 self.no_turbines_was = attr
                 self.show_hide['no_turbines'] = len(self.edit)
-                self.edit.append(QtGui.QSpinBox()) # QtGui.QLineEdit(str(self.no_turbines)))
+                self.edit.append(QtGui.QSpinBox())  # QtGui.QLineEdit(str(self.no_turbines)))
                 self.edit[-1].setRange(0, 299)
                 if self.no_turbines == '':
                     self.edit[-1].setValue(0)
@@ -309,13 +309,13 @@ class AnObject(QtGui.QDialog):
         msg_font.setBold(True)
         self.message.setFont(msg_font)
         msg_palette = QtGui.QPalette()
-        msg_palette.setColor(QtGui.QPalette.Foreground,QtCore.Qt.red)
+        msg_palette.setColor(QtGui.QPalette.Foreground, QtCore.Qt.red)
         self.message.setPalette(msg_palette)
         grid.addWidget(self.message, i + 1, 0, 1, 2)
         i += 1
         quit = QtGui.QPushButton("Quit", self)
         grid.addWidget(quit, i + 1, 0)
-        quit.clicked.connect(self.quitClicked) 
+        quit.clicked.connect(self.quitClicked)
         save = QtGui.QPushButton("Save && Exit", self)
         grid.addWidget(save, i + 1, 1)
         save.clicked.connect(self.saveClicked)
@@ -323,8 +323,8 @@ class AnObject(QtGui.QDialog):
         self.resize(widths[0] + widths[1] + 40, heights * i)
         self.setWindowTitle('SIREN - Edit ' + getattr(self.anobject, '__module__'))
         QtGui.QShortcut(QtGui.QKeySequence("q"), self, self.quitClicked)
-      #  self.connect(self, SIGNAL('status_text'), self.setStatusText)
-       # self.emit(SIGNAL('status_text'), 'Well Hello!')
+       #  self.connect(self, SIGNAL('status_text'), self.setStatusText)
+        # self.emit(SIGNAL('status_text'), 'Well Hello!')
 
     def technologyChanged(self, val):
         wind_fields = ['turbine', 'rotor', 'no_turbines']
@@ -385,7 +385,7 @@ class AnObject(QtGui.QDialog):
             Turbine(str(self.turbine.currentText())).PowerCurve()
         return
 
-    def quitClicked(self):      
+    def quitClicked(self):
         self.close()
 
     def saveClicked(self):
@@ -407,7 +407,7 @@ class AnObject(QtGui.QDialog):
                             return
                     except:
                         setattr(self, self.field[i], str(self.edit[i].text()))
-                        if self.direction.upper() in ['', 'N', 'NNE', 'NE',  'ENE', 'E', 'ESE', \
+                        if self.direction.upper() in ['', 'N', 'NNE', 'NE', 'ENE', 'E', 'ESE', \
                                                       'SE', 'SSE', 'S', 'SSW', 'SW', \
                                                       'WSW', 'W', 'WNW', 'NW', 'NNW']:
                             self.direction = self.direction.upper()
@@ -471,30 +471,30 @@ class AnObject(QtGui.QDialog):
             turbine = Turbine(self.turbine)
             if self.capacity != self.capacity_was or \
               (self.turbine != self.turbine_was and self.no_turbines == self.no_turbines_was):
-                self.no_turbines = int(round((self.capacity  * 1000.) / turbine.capacity))
-            self.capacity = self.no_turbines * turbine.capacity / 1000. # reduce from kW to MW
+                self.no_turbines = int(round((self.capacity * 1000.) / turbine.capacity))
+            self.capacity = self.no_turbines * turbine.capacity / 1000.  # reduce from kW to MW
             self.rotor = turbine.rotor
             self.area = self.areas[self.technology] * float(self.no_turbines) * pow((self.rotor * .001), 2)
         elif self.technology == 'Solar Thermal':
-            self.area = self.areas[self.technology] * float(self.capacity) # temp calc. Should be 3.83 x collector area
+            self.area = self.areas[self.technology] * float(self.capacity)  # temp calc. Should be 3.83 x collector area
         elif self.technology == 'Geothermal':
-            self.area = self.areas[self.technology] * float(self.capacity) 
+            self.area = self.areas[self.technology] * float(self.capacity)
         elif self.technology == 'Wave':
-            self.area = self.areas[self.technology] * float(self.capacity) 
+            self.area = self.areas[self.technology] * float(self.capacity)
         elif self.technology == 'Hydro':
-            self.area = self.areas[self.technology] * float(self.capacity) 
+            self.area = self.areas[self.technology] * float(self.capacity)
         elif self.technology[:5] == 'Other':
-            self.area = self.areas[self.technology] * float(self.capacity) 
+            self.area = self.areas[self.technology] * float(self.capacity)
         else:
             self.message.setText('This technology not yet implemented. Choose another.')
             self.edit[1].setFocus()
             return
         self.save = True
-        self.close()   
+        self.close()
 
     def getValues(self):
         if self.save:
-            station = Station(str(self.name), self.technology, self.lat, self.lon, self.capacity , self.turbine, self.rotor, \
+            station = Station(str(self.name), self.technology, self.lat, self.lon, self.capacity, self.turbine, self.rotor, \
                       self.no_turbines, self.area, self.scenario, power_file=self.power_file)
             if self.grid_line is not None:
                 station.grid_line = self.grid_line

@@ -1,12 +1,12 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2016 Sustainable Energy Now Inc., Angus King     
+#  Copyright (C) 2016 Sustainable Energy Now Inc., Angus King
 #
 #  floatstatus.py - This file is part of SIREN.
 #
 #  SIREN is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as 
-#  published by the Free Software Foundation, either version 3 of 
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, either version 3 of
 #  the License, or (at your option) any later version.
 #
 #  SIREN is distributed in the hope that it will be useful,
@@ -14,20 +14,20 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU Affero General Public License for more details.
 #
-#  You should have received a copy of the GNU Affero General 
+#  You should have received a copy of the GNU Affero General
 #  Public License along with SIREN.  If not, see
 #  <http://www.gnu.org/licenses/>.
 #
 import os
 import sys
-import ConfigParser # decode .ini file
+import ConfigParser   # decode .ini file
 from PyQt4 import QtGui, QtCore
 
 from editini import SaveIni
 
 class FloatStatus(QtGui.QDialog):
     procStart = QtCore.pyqtSignal(str)
-    
+
     def __init__(self, mainwindow, scenarios_folder, scenarios):
         super(FloatStatus, self).__init__()
         self.mainwindow = mainwindow
@@ -64,7 +64,7 @@ class FloatStatus(QtGui.QDialog):
             line_cnt1 += 1
             if len(line[0]) > max_line:
                 max_line = len(line[0])
-        if self.log_status: 
+        if self.log_status:
             lines2 = '%s. %s' % (str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), \
                                 'hh:mm:ss')), 'SIREN log started')
             line_cnt2 = 1
@@ -73,9 +73,9 @@ class FloatStatus(QtGui.QDialog):
         else:
             line_cnt2 = 0
         self.saveButton = QtGui.QPushButton(self.tr('Save Log'))
-        self.saveButton.clicked.connect(self.save) 
+        self.saveButton.clicked.connect(self.save)
         self.quitButton = QtGui.QPushButton('Quit')
-        self.quitButton.clicked.connect(self.close) 
+        self.quitButton.clicked.connect(self.close)
         QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.close)
         buttonLayout = QtGui.QHBoxLayout()
         buttonLayout.addStretch(1)
@@ -85,32 +85,32 @@ class FloatStatus(QtGui.QDialog):
         self.scenarios.setFont(QtGui.QFont('Courier New', 10))
         fnt = self.scenarios.fontMetrics()
         self.scenarios.setSizePolicy(QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, \
-            QtGui.QSizePolicy.Expanding)) 
+            QtGui.QSizePolicy.Expanding))
         self.scenarios.setPlainText(lines1)
-        self.scenarios.setReadOnly(True) 
+        self.scenarios.setReadOnly(True)
         screen = QtGui.QDesktopWidget().availableGeometry()
         ln = (max_line + 5) * fnt.maxWidth()
         if ln > screen.width() * .80:
             ln = int(screen.width() * .80)
-        h1 = (line_cnt1 + 1) * fnt.height() 
-        if self.log_status:     
+        h1 = (line_cnt1 + 1) * fnt.height()
+        if self.log_status:
             self.loglines = QtGui.QPlainTextEdit()
             self.loglines.setFont(QtGui.QFont('Courier New', 10))
-            h2 = (line_cnt2 + 2) * fnt.height() 
+            h2 = (line_cnt2 + 2) * fnt.height()
             if h1 + h2 > screen.height() * .80:
-      #      h1 = max(int(screen.height() * float(h1 / h2)), int(fnt.height()))
+       #      h1 = max(int(screen.height() * float(h1 / h2)), int(fnt.height()))
                 h2 = int(screen.height() * .80) - h1
             self.loglines.setSizePolicy(QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, \
-                QtGui.QSizePolicy.Expanding)) 
+                QtGui.QSizePolicy.Expanding))
             self.loglines.setPlainText(lines2)
-            self.loglines.setReadOnly(True) 
+            self.loglines.setReadOnly(True)
             self.loglines.resize(ln, h2)
         self.scenarios.resize(ln, h1)
-        self.scenarios.setFixedHeight(h1) 
+        self.scenarios.setFixedHeight(h1)
         layout = QtGui.QVBoxLayout()
         layout.addWidget(QtGui.QLabel('Open scenarios'))
         layout.addWidget(self.scenarios)
-        if self.log_status:     
+        if self.log_status:
             layout.addWidget(QtGui.QLabel('Session log'))
             layout.addWidget(self.loglines)
         layout.addLayout(buttonLayout)
@@ -132,7 +132,7 @@ class FloatStatus(QtGui.QDialog):
         save_filename += '.txt'
         fileName = QtGui.QFileDialog.getSaveFileName(self, self.tr("QFileDialog.getSaveFileName()"),
                    save_filename, self.tr("All Files (*);;Text Files (*.txt)"))
-        # save scenarios list and log
+         # save scenarios list and log
         if not fileName.isEmpty():
             s = open(fileName, 'w')
             s.write('Scenarios:\n')
@@ -150,43 +150,43 @@ class FloatStatus(QtGui.QDialog):
                         s.write(lin + '\n')
             s.close()
             self.logged = False
-          
-    @QtCore.pyqtSlot() 
+
+    @QtCore.pyqtSlot()
     def exit(self):
         if self.log_status:
             self.log('%s. %s' % (str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), \
                      'hh:mm:ss')), 'SIREN log stopped'))
         self.be_open = False
         self.close()
-          
-    @QtCore.pyqtSlot() 
+
+    @QtCore.pyqtSlot()
     def log(self, text):
         self.loglines.appendPlainText(text)
         self.logged = True
-          
-    @QtCore.pyqtSlot() 
+
+    @QtCore.pyqtSlot()
     def updateScenarios(self, scenarios):
         lines1 = ''
         for line in scenarios:
             lines1 += line[0] + '\n'
         self.scenarios.setPlainText(lines1)
-  
+
     def closeEvent(self, event):
         if self.logged:
             reply = QtGui.QMessageBox.question(self, 'SIREN Status',
-                    'Do you want to save Session log?', QtGui.QMessageBox.Yes | 
+                    'Do you want to save Session log?', QtGui.QMessageBox.Yes |
                     QtGui.QMessageBox.No, QtGui.QMessageBox.No)
             if reply == QtGui.QMessageBox.Yes:
-                self.save() 
+                self.save()
         if self.restorewindows:
             updates = {}
             lines = []
-            add = int((self.frameSize().width() - self.size().width()) / 2) # need to account for border
+            add = int((self.frameSize().width() - self.size().width()) / 2)   # need to account for border
             lines.append('log_pos=%s,%s' % (str(self.pos().x() + add), str(self.pos().y() + add)))
             lines.append('log_size=%s,%s' % (str(self.width()), str(self.height())))
             open_menus = ''
             updates['Windows'] = lines
             SaveIni(updates)
         if self.be_open:
-            self.procStart.emit('goodbye')   
+            self.procStart.emit('goodbye')
         event.accept()

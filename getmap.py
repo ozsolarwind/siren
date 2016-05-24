@@ -1,12 +1,12 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King     
+#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King
 #
 #  getmap.py - This file is part of SIREN.
 #
 #  SIREN is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as 
-#  published by the Free Software Foundation, either version 3 of 
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, either version 3 of
 #  the License, or (at your option) any later version.
 #
 #  SIREN is distributed in the hope that it will be useful,
@@ -14,7 +14,7 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU Affero General Public License for more details.
 #
-#  You should have received a copy of the GNU Affero General 
+#  You should have received a copy of the GNU Affero General
 #  Public License along with SIREN.  If not, see
 #  <http://www.gnu.org/licenses/>.
 #
@@ -28,20 +28,20 @@ from PyQt4 import QtGui, QtCore
 import displayobject
 from credits import fileVersion
 
-scale = {0: '1:500 million' , 1: '1:250 million', 2: '1:150 million', 3: '1:70 million', \
+scale = {0: '1:500 million', 1: '1:250 million', 2: '1:150 million', 3: '1:70 million', \
          4: '1:35 million', 5: '1:15 million', 6: '1:10 million', 7: '1:4 million', \
          8: '1:2 million', 9: '1:1 million', 10: '1:500,000', 11: '1:250,000', \
          12: '1:150,000', 13: '1:70,000', 14: '1:35,000', 15: '1:15,000', 16: '1:8,000', \
          17: '1:4,000', 18: '1:2,000', 19: '1:1,000'}
-    
+
 class retrieveMap():
 
     def numTiles(self, z):
          return(float(pow(2, z)))
-    
+
     def mercatorToLat(self, mercatorY):
         return(math.degrees(math.atan(math.sinh(mercatorY))))
-      
+
     def latEdges(self, y, z):
         n = self.numTiles(z)
         unit = 1 / n
@@ -56,19 +56,19 @@ class retrieveMap():
         else:
             lat2 = self.mercatorToLat(math.pi * (1 - 2 * relY2))
         return(lat1, lat2)
-    
+
     def lonEdges(self, x, z):
         n = self.numTiles(z)
         unit = 360 / n
         lon1 = -180 + x * unit
         lon2 = lon1 + unit
         return(lon1, lon2)
-      
+
     def tileEdges(self, x, y, z):
         lat1, lat2 = self.latEdges(y, z)
         lon1, lon2 = self.lonEdges(x, z)
-        return((lat2, lon1, lat1, lon2)) # S,W,N,E
-    
+        return((lat2, lon1, lat1, lon2))   # S,W,N,E
+
     def deg2num(self, lat_deg, lon_deg, zoom):
         lat_rad = math.radians(lat_deg)
         n = 2.0 ** zoom
@@ -78,7 +78,7 @@ class retrieveMap():
         except:
             ytile = 0
         return (xtile, ytile)
-    
+
     def writetile(self, x, y, zoom):
         if self.sub == '1':
             self.sub = '2'
@@ -90,11 +90,11 @@ class retrieveMap():
             self.sub = '1'
         file_name = str(x) + '_' + str(y) + '.jpg'
         if len(sys.argv) > 1:
-            print 'otile' + self.sub + '.mqcdn.com/tiles/1.0.0/sat/' + str(zoom) + '/' + str(x) + '/' + str(y) + '.jpg' 
+            print 'otile' + self.sub + '.mqcdn.com/tiles/1.0.0/sat/' + str(zoom) + '/' + str(x) + '/' + str(y) + '.jpg'
         conn = httplib.HTTPConnection('otile' + self.sub + '.mqcdn.com')
         if len(sys.argv) > 1:
             print 'Retrieving /' + str(zoom) + '/' + str(x) + '/' + str(y) + '.jpg'
-     #   conn.addheaders = [('User-agent', 'Mozilla/5.0')]
+      #   conn.addheaders = [('User-agent', 'Mozilla/5.0')]
         conn.request('GET', '/tiles/1.0.0/sat/' + str(zoom) + '/' + str(x) + '/' + str(y) + '.jpg')
         response = conn.getresponse()
         if response.status == 200 and response.reason == 'OK':
@@ -109,7 +109,7 @@ class retrieveMap():
                 print str(response.status) + ' ' + response.reason
         conn.close()
         return file_name
-    
+
     def __init__(self, upper_lat, upper_lon, lower_lat, lower_lon, zoom, output):
         self.log = ''
         self.properties = ''
@@ -120,8 +120,8 @@ class retrieveMap():
         st, wt, nt, et = self.tileEdges(top_left[0], top_left[1], zoom)
         sb, wb, nb, eb = self.tileEdges(bottom_right[0], bottom_right[1], zoom)
         if len(sys.argv) > 1:
-            print '(116)', '%d: %d,%d --> %1.3f :: %1.3f, %1.3f :: %1.3f' % (zoom,top_left[0],top_left[1],st,nt,wt,et)
-            print '(117)', '%d: %d,%d --> %1.3f :: %1.3f, %1.3f :: %1.3f' % (zoom,bottom_right[0],bottom_right[1],sb,nb,wb,eb)
+            print '(116)', '%d: %d,%d --> %1.3f :: %1.3f, %1.3f :: %1.3f' % (zoom, top_left[0], top_left[1], st, nt, wt, et)
+            print '(117)', '%d: %d,%d --> %1.3f :: %1.3f, %1.3f :: %1.3f' % (zoom, bottom_right[0], bottom_right[1], sb, nb, wb, eb)
         w = bottom_right[0] - top_left[0] + 1
         h = bottom_right[1] - top_left[1] + 1
         if len(sys.argv) > 1:
@@ -155,33 +155,33 @@ class retrieveMap():
             print 'Saving map to ' + fname
         else:
             self.log += '\nSaving map to ' + fname
-        for x in range(top_left[0], bottom_right[0]+1):
-            for y in range(top_left[1], bottom_right[1]+1):
+        for x in range(top_left[0], bottom_right[0] + 1):
+            for y in range(top_left[1], bottom_right[1] + 1):
                 foo = QtGui.QImage(self.tmp_location + self.writetile(x, y, zoom))
                 painter.drawImage(QtCore.QPoint(256 * (x - top_left[0]), 256 * (y - top_left[1])), foo)
-        outputimg.save(fname, fname[i+1:])
+        outputimg.save(fname, fname[i + 1:])
         painter.end()
         if len(sys.argv) == 1:
             self.log += '\nDone'
-        
+
     def getLog(self):
-        return self.log     
-        
+        return self.log
+
     def getProperties(self):
-        return self.properties 
-   
+        return self.properties
+
     def getCoords(self):
         return [self.nt, self.wt, self.sb, self.eb]
-    
-class ClickableQLabel(QtGui.QLabel): 
+
+class ClickableQLabel(QtGui.QLabel):
     def __init(self, parent):
         QLabel.__init__(self, parent)
- 
+
     def mousePressEvent(self, event):
         self.emit(QtCore.SIGNAL('clicked()'))
-         
+
 class getMap(QtGui.QWidget):
-    
+
     def deg2num(self, lat_deg, lon_deg):
         if lat_deg > 85:
             ld = 85.
@@ -197,12 +197,12 @@ class getMap(QtGui.QWidget):
         except:
             ytile = 0
         return (xtile, ytile)
-    
+
     def __init__(self, help='help.html'):
         super(getMap, self).__init__()
         self.help = help
         self.initUI()
-        
+
     def initUI(self):
         north = QtGui.QLabel('North')
         south = QtGui.QLabel('South')
@@ -239,7 +239,7 @@ class getMap(QtGui.QWidget):
         self.grid.addWidget(north, 0, 1)
         if os.path.exists('world.jpg'):
             self.do_world = True
-            self.wmap = QtGui.QLabel() 
+            self.wmap = QtGui.QLabel()
             world = QtGui.QImage('world.jpg')
             self.world_width = world.width()
             self.world_height = world.height()
@@ -286,7 +286,7 @@ class getMap(QtGui.QWidget):
         self.grid.addWidget(self.log, 8, 1, 3, 5)
         quit = QtGui.QPushButton('Quit', self)
         self.grid.addWidget(quit, 12, 0)
-        quit.clicked.connect(self.quitClicked) 
+        quit.clicked.connect(self.quitClicked)
         QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
         query = QtGui.QPushButton('Query Map', self)
         wdth = query.fontMetrics().boundingRect(query.text()).width() + 9
@@ -331,19 +331,19 @@ class getMap(QtGui.QWidget):
 
     def fileChanged(self):
         self.filename.setText(QtGui.QFileDialog.getSaveFileName(self, 'Save Image File',
-                              self.filename.text(), 
-                              'Images (*.jpeg *.jpg *.mng *.pbm *.pgm *.png *.ppm *.svg *.tiff *.xbm *.xpm)')) 
+                              self.filename.text(),
+                              'Images (*.jpeg *.jpg *.mng *.pbm *.pgm *.png *.ppm *.svg *.tiff *.xbm *.xpm)'))
         if self.filename.text() != '':
             i = str(self.filename.text()).rfind('.')
             if i < 0:
                 self.filename.setText(self.filename.text() + '.png')
 
-    def helpClicked(self):   
+    def helpClicked(self):
         dialog = displayobject.AnObject(QtGui.QDialog(), self.help, \
                  title='Help for SIREN getmap (' + fileVersion() + ')', section='map')
         dialog.exec_()
 
-    def quitClicked(self):      
+    def quitClicked(self):
         self.close()
 
     def queryClicked(self):
@@ -356,7 +356,7 @@ class getMap(QtGui.QWidget):
             self.eastSpin.setValue(self.westSpin.value())
             self.westSpin.setValue(l)
         mapp = retrieveMap(self.northSpin.value(), self.westSpin.value(), self.southSpin.value(), self.eastSpin.value(), \
-               self.zoomSpin.value(), '?') 
+               self.zoomSpin.value(), '?')
         self.properties.setPlainText(mapp.getProperties())
         self.log.setText(mapp.getLog())
         if self.do_world:

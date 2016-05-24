@@ -1,12 +1,12 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King     
+#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King
 #
 #  displayobject.py - This file is part of SIREN.
 #
 #  SIREN is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as 
-#  published by the Free Software Foundation, either version 3 of 
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, either version 3 of
 #  the License, or (at your option) any later version.
 #
 #  SIREN is distributed in the hope that it will be useful,
@@ -14,7 +14,7 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU Affero General Public License for more details.
 #
-#  You should have received a copy of the GNU Affero General 
+#  You should have received a copy of the GNU Affero General
 #  Public License along with SIREN.  If not, see
 #  <http://www.gnu.org/licenses/>.
 #
@@ -52,7 +52,7 @@ class AnObject(QtGui.QDialog):
         else:
             quit = QtGui.QPushButton('Quit', self)
         grid.addWidget(quit, i + 1, 0)
-        quit.clicked.connect(self.quitClicked) 
+        quit.clicked.connect(self.quitClicked)
         if not self.readonly:
             save = QtGui.QPushButton("Save", self)
             grid.addWidget(save, i + 1, 1)
@@ -73,8 +73,8 @@ class AnObject(QtGui.QDialog):
             else:
                 self.setWindowTitle('SIREN - ' + self.title)
         else:
-            self.setWindowTitle('SIREN - Review ' + getattr(self.anobject, '__module__')) 
-        
+            self.setWindowTitle('SIREN - Review ' + getattr(self.anobject, '__module__'))
+
     def initUI(self):
         fields = []
         label = []
@@ -112,7 +112,7 @@ class AnObject(QtGui.QDialog):
                             j = line[i].find(' (see <a href=')
                             if j > 0:
                                 k = line[i].find('</a>)', j)
-                                line[i] = line[i][:j] + line[i][k+5:]
+                                line[i] = line[i][:j] + line[i][k + 5:]
                             html += line[i] + '\n'
                         for i in range(i, len(line)):
                             if line[i].strip() == '</body>':
@@ -185,14 +185,14 @@ class AnObject(QtGui.QDialog):
                 if self.readonly:
                     self.edit[-1].setReadOnly(True)
                 i += 1
-                grid.addWidget(label[-1], i+1, 0)
-                grid.addWidget(self.edit[-1], i+1, 1)
+                grid.addWidget(label[-1], i + 1, 0)
+                grid.addWidget(self.edit[-1], i + 1, 1)
                 self.set_stuff(grid, widths, heights, i)
         else:
             units = {'area': 'sq. Km', 'capacity': 'MW', 'rotor': 'm', 'generation': 'MWh', 'grid_len': 'Km',
                      'grid_path_len': 'Km'}
             for prop in dir(self.anobject):
-                if prop[:2] != '__' and prop[-2:] !=  '__':
+                if prop[:2] != '__' and prop[-2:] != '__':
                     attr = getattr(self.anobject, prop)
                     if type(attr) is types.IntType:
                          self.field_type.append('int')
@@ -218,14 +218,14 @@ class AnObject(QtGui.QDialog):
                     if self.readonly:
                         self.edit[-1].setReadOnly(True)
                     i += 1
-                    grid.addWidget(label[-1], i+1, 0)
-                    grid.addWidget(self.edit[-1], i+1, 1)
+                    grid.addWidget(label[-1], i + 1, 0)
+                    grid.addWidget(self.edit[-1], i + 1, 1)
                     if prop in units.keys():
-                        grid.addWidget(QtGui.QLabel(units[prop]), i+1, 2)
+                        grid.addWidget(QtGui.QLabel(units[prop]), i + 1, 2)
                     if prop == 'turbine':
                         i += 1
                         curve = QtGui.QPushButton('Show Power Curve', self)
-                        grid.addWidget(curve, i+1, 1)
+                        grid.addWidget(curve, i + 1, 1)
                         curve.clicked.connect(self.curveClicked)
                         self.turbine = attr
             self.set_stuff(grid, widths, heights, i)
@@ -234,7 +234,7 @@ class AnObject(QtGui.QDialog):
         Turbine(self.turbine).PowerCurve()
         return
 
-    def quitClicked(self):      
+    def quitClicked(self):
         self.close()
 
     def saveClicked(self):

@@ -1,12 +1,12 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King     
+#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King
 #
 #  updateswis.py - This file is part of SIREN.
 #
 #  SIREN is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as 
-#  published by the Free Software Foundation, either version 3 of 
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, either version 3 of
 #  the License, or (at your option) any later version.
 #
 #  SIREN is distributed in the hope that it will be useful,
@@ -14,7 +14,7 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU Affero General Public License for more details.
 #
-#  You should have received a copy of the GNU Affero General 
+#  You should have received a copy of the GNU Affero General
 #  Public License along with SIREN.  If not, see
 #  <http://www.gnu.org/licenses/>.
 #
@@ -23,11 +23,11 @@ import csv
 import datetime
 import httplib
 from math import *
-import os 
+import os
 import sys
 import time
 from PyQt4 import QtCore, QtGui
-import ConfigParser # decode .ini file
+import ConfigParser   # decode .ini file
 import xlwt
 
 import displayobject
@@ -36,13 +36,13 @@ from senuser import getUser
 from station import Station, Stations
 
 class makeFile():
-    
+
     def close(self):
         return
-    
+
     def getLog(self):
         return self.log
-        
+
     def __init__(self, host, url, tgt_fil, excel=''):
         self.host = host
         self.url = url
@@ -97,13 +97,13 @@ class makeFile():
                                     continue
                             except:
                                 pass
-                            self.log +=  "Changed field in '%s:'\n    '%s' was '%s', now '%s'\n" % \
+                            self.log += "Changed field in '%s:'\n    '%s' was '%s', now '%s'\n" % \
                                          (facility['Facility Code'], field, facility[field], \
                                           new_facility[field])
                             changes += 1
                     break
             else:
-                self.log +=  'New facility', new_facility['Facility Code'] + '\n'
+                self.log += 'New facility', new_facility['Facility Code'] + '\n'
         facile.seek(0)
         for facility in facilities:
             new_facilities = csv.DictReader(datas)
@@ -111,7 +111,7 @@ class makeFile():
                 if new_facility['Facility Code'] == facility['Facility Code']:
                     break
             else:
-                self.log +=  "Facility '%s' no longer on file\n" % facility['Facility Code']
+                self.log += "Facility '%s' no longer on file\n" % facility['Facility Code']
         if changes > 0:
             msgbox = QtGui.QMessageBox()
             msgbox.setWindowTitle('updateswis Status')
@@ -128,7 +128,7 @@ class makeFile():
                 upd_writer.writerow(common_fields + extra_fields)
                 new_facilities = csv.DictReader(datas)
                 for new_facility in new_facilities:
-                    if new_facility['Facility Code'] == 'Facility Code': # for some reason headers are duplicated
+                    if new_facility['Facility Code'] == 'Facility Code':   # for some reason headers are duplicated
                         continue
                     new_line = []
                     for field in common_fields:
@@ -148,7 +148,7 @@ class makeFile():
                     os.remove(fac_file + '~')
                 os.rename(fac_file, fac_file + '~')
                 os.rename(fac_file + '.csv', fac_file)
-            self.log = '%s updated' % tgt_fil[tgt_fil.rfind('/')+1:]
+            self.log = '%s updated' % tgt_fil[tgt_fil.rfind('/') + 1:]
         else:
             self.log = 'No changes to existing file. No update required.'
         if self.excel != '':
@@ -233,27 +233,27 @@ class makeFile():
                 for c in range(9):
                     if lens[c] * 275 > ws.col(c).width:
                         ws.col(c).width = lens[c] * 275
-                ws.set_panes_frozen(True) # frozen headings instead of split panes
-                ws.set_horz_split_pos(1 - d) # in general, freeze after last heading row
-                ws.set_remove_splits(True) # if user does unfreeze, don't leave a split there
+                ws.set_panes_frozen(True)   # frozen headings instead of split panes
+                ws.set_horz_split_pos(1 - d)   # in general, freeze after last heading row
+                ws.set_remove_splits(True)   # if user does unfreeze, don't leave a split there
                 wb.save(self.excel)
 
 
-class ClickableQLabel(QtGui.QLabel): 
+class ClickableQLabel(QtGui.QLabel):
     def __init(self, parent):
         QLabel.__init__(self, parent)
- 
+
     def mousePressEvent(self, event):
         QtGui.QApplication.widgetAt(event.globalPos()).setFocus()
         self.emit(QtCore.SIGNAL('clicked()'))
-         
+
 class getParms(QtGui.QWidget):
- 
+
     def __init__(self, help='help.html'):
         super(getParms, self).__init__()
         self.help = help
         self.initUI()
-        
+
     def initUI(self):
         config = ConfigParser.RawConfigParser()
         if len(sys.argv) > 1:
@@ -327,7 +327,7 @@ class getParms(QtGui.QWidget):
         self.grid.addWidget(self.log, 4, 1, 1, 3)
         quit = QtGui.QPushButton('Quit', self)
         self.grid.addWidget(quit, 5, 0)
-        quit.clicked.connect(self.quitClicked) 
+        quit.clicked.connect(self.quitClicked)
         QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
         dofile = QtGui.QPushButton('Update Existing Stations', self)
         self.grid.addWidget(dofile, 5, 1)
@@ -353,28 +353,28 @@ class getParms(QtGui.QWidget):
         screen = QtGui.QApplication.desktop().screenNumber(QtGui.QApplication.desktop().cursor().pos())
         centerPoint = QtGui.QApplication.desktop().availableGeometry(screen).center()
         frameGm.moveCenter(centerPoint)
-        self.move(frameGm.topLeft()) 
+        self.move(frameGm.topLeft())
 
     def tgtChanged(self):
         curtgt = self.target.text()
         newtgt = str(QtGui.QFileDialog.getSaveFileName(self, 'Choose Target File',
                  curtgt))
         if newtgt != '':
-            self.target.setText(newtgt) 
+            self.target.setText(newtgt)
 
     def excelChanged(self):
         curtgt = self.excel.text()
         newtgt = str(QtGui.QFileDialog.getSaveFileName(self, 'Choose Excel File',
                  curtgt))
         if newtgt != '':
-            self.excel.setText(newtgt) 
+            self.excel.setText(newtgt)
 
-    def helpClicked(self):   
+    def helpClicked(self):
         dialog = displayobject.AnObject(QtGui.QDialog(), self.help, \
                  title='Help for SIREN updateswis (' + fileVersion() + ')', section='updateswis')
         dialog.exec_()
 
-    def quitClicked(self):      
+    def quitClicked(self):
         self.close()
 
     def dofileClicked(self):
@@ -386,7 +386,7 @@ class getParms(QtGui.QWidget):
 
 if "__main__" == __name__:
     app = QtGui.QApplication(sys.argv)
-    if len(sys.argv) > 2: # arguments
+    if len(sys.argv) > 2:   # arguments
         host = 'data.wa.aemo.com.au'
         url = '/datafiles/facilities/facilities.csv'
         tgt_fil = ''

@@ -1,12 +1,12 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2016 Sustainable Energy Now Inc., Angus King     
+#  Copyright (C) 2016 Sustainable Energy Now Inc., Angus King
 #
 #  indexweather.py - This file is part of SIREN.
 #
 #  SIREN is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU Affero General Public License as 
-#  published by the Free Software Foundation, either version 3 of 
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, either version 3 of
 #  the License, or (at your option) any later version.
 #
 #  SIREN is distributed in the hope that it will be useful,
@@ -14,18 +14,18 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU Affero General Public License for more details.
 #
-#  You should have received a copy of the GNU Affero General 
+#  You should have received a copy of the GNU Affero General
 #  Public License along with SIREN.  If not, see
 #  <http://www.gnu.org/licenses/>.
 #
 
 import datetime
 from math import *
-import os 
+import os
 import sys
 import time
 from PyQt4 import QtCore, QtGui
-import ConfigParser # decode .ini file
+import ConfigParser   # decode .ini file
 import xlwt
 
 import displayobject
@@ -33,13 +33,13 @@ from credits import fileVersion
 from senuser import getUser
 
 class makeIndex():
-    
+
     def close(self):
         return
-    
+
     def getLog(self):
         return self.log
-        
+
     def __init__(self, what, src_dir, tgt_fil):
         config = ConfigParser.RawConfigParser()
         if len(sys.argv) > 1:
@@ -99,9 +99,9 @@ class makeIndex():
             for c in range(len(lens)):
                 if lens[c] * 275 > ws.col(c).width:
                     ws.col(c).width = lens[c] * 275
-            ws.set_panes_frozen(True) # frozen headings instead of split panes
-            ws.set_horz_split_pos(1) # in general, freeze after last heading row
-            ws.set_remove_splits(True) # if user does unfreeze, don't leave a split there
+            ws.set_panes_frozen(True)   # frozen headings instead of split panes
+            ws.set_horz_split_pos(1)   # in general, freeze after last heading row
+            ws.set_remove_splits(True)   # if user does unfreeze, don't leave a split there
             wb.save(tgt_fil)
         else:
             tf = open(tgt_fil, 'w')
@@ -111,24 +111,24 @@ class makeIndex():
                 line = '%s,%s,"%s"\n' % (files[i][0], files[i][1], files[i][2])
                 tf.write(line)
             tf.close()
-        self.log += '%s created' % tgt_fil[tgt_fil.rfind('/')+1:]
+        self.log += '%s created' % tgt_fil[tgt_fil.rfind('/') + 1:]
 
 
-class ClickableQLabel(QtGui.QLabel): 
+class ClickableQLabel(QtGui.QLabel):
     def __init(self, parent):
         QLabel.__init__(self, parent)
- 
+
     def mousePressEvent(self, event):
         QtGui.QApplication.widgetAt(event.globalPos()).setFocus()
         self.emit(QtCore.SIGNAL('clicked()'))
-         
+
 class getParms(QtGui.QWidget):
- 
+
     def __init__(self, help='help.html'):
         super(getParms, self).__init__()
         self.help = help
         self.initUI()
-        
+
     def initUI(self):
         config = ConfigParser.RawConfigParser()
         if len(sys.argv) > 1:
@@ -161,7 +161,7 @@ class getParms(QtGui.QWidget):
             self.solarindex = self.solarindex.replace('$YEAR$', self.base_year)
         except:
             self.solarindex = ''
-        if self.solarindex == '':    
+        if self.solarindex == '':
             self.solarindex = self.solarfiles + '/solar_index.xls'
         try:
             self.windfiles = config.get('Files', 'wind_files')
@@ -179,7 +179,7 @@ class getParms(QtGui.QWidget):
             self.windindex = self.windindex.replace('$YEAR$', self.base_year)
         except:
             self.windindex = ''
-        if self.windindex == '':    
+        if self.windindex == '':
             self.windindex = self.windfiles + '/wind_index.xls'
         self.grid = QtGui.QGridLayout()
         self.grid.addWidget(QtGui.QLabel('Solar Folder:'), 1, 0)
@@ -214,7 +214,7 @@ class getParms(QtGui.QWidget):
         self.grid.addWidget(self.log, 6, 1, 1, 4)
         quit = QtGui.QPushButton('Quit', self)
         self.grid.addWidget(quit, 7, 0)
-        quit.clicked.connect(self.quitClicked) 
+        quit.clicked.connect(self.quitClicked)
         QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
         dosolar = QtGui.QPushButton('Produce Solar Index', self)
         wdth = dosolar.fontMetrics().boundingRect(dosolar.text()).width() + 9
@@ -254,35 +254,35 @@ class getParms(QtGui.QWidget):
         newdir = str(QtGui.QFileDialog.getExistingDirectory(self, 'Choose Solar Folder',
                  curdir, QtGui.QFileDialog.ShowDirsOnly))
         if newdir != '':
-            self.ssource.setText(newdir) 
+            self.ssource.setText(newdir)
 
     def wdirChanged(self):
         curdir = self.wsource.text()
         newdir = str(QtGui.QFileDialog.getExistingDirectory(self, 'Choose Wind Folder',
                  curdir, QtGui.QFileDialog.ShowDirsOnly))
         if newdir != '':
-            self.wsource.setText(newdir) 
+            self.wsource.setText(newdir)
 
     def stgtChanged(self):
         curtgt = self.starget.text()
         newtgt = str(QtGui.QFileDialog.getSaveFileName(self, 'Choose Solar Index',
                  curtgt))
         if newtgt != '':
-            self.starget.setText(newtgt) 
+            self.starget.setText(newtgt)
 
     def wtgtChanged(self):
         curtgt = self.starget.text()
         newtgt = str(QtGui.QFileDialog.getSaveFileName(self, 'Choose Wind Index',
                  curtgt))
         if newtgt != '':
-            self.wtarget.setText(newtgt) 
+            self.wtarget.setText(newtgt)
 
-    def helpClicked(self):   
-        dialog = displayobject.AnObject(QtGui.QDialog(),  self.help, \
+    def helpClicked(self):
+        dialog = displayobject.AnObject(QtGui.QDialog(), self.help, \
                  title='Help for SIREN indexweather (' + fileVersion() + ')', section='index')
         dialog.exec_()
 
-    def quitClicked(self):      
+    def quitClicked(self):
         self.close()
 
     def dosolarClicked(self):
@@ -300,7 +300,7 @@ class getParms(QtGui.QWidget):
 
 if "__main__" == __name__:
     app = QtGui.QApplication(sys.argv)
-    if len(sys.argv) > 2: # arguments
+    if len(sys.argv) > 2:   # arguments
         src_dir_s = ''
         src_dir_w = ''
         tgt_fil = ''
