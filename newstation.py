@@ -22,7 +22,6 @@
 import csv
 import os
 import sys
-import types
 
 import ConfigParser  # decode .ini file
 from PyQt4 import QtGui, QtCore
@@ -108,7 +107,6 @@ class AnObject(QtGui.QDialog):
             self.tshours = float(config.get('Solar Thermal', 'tshours'))
         except:
             pass
-
 
     def __init__(self, dialog, anobject, scenarios=None):
         super(AnObject, self).__init__()
@@ -200,9 +198,9 @@ class AnObject(QtGui.QDialog):
         units = {'area': 'sq. Km', 'capacity': 'MW'}
         for i in range(len(self.field)):
             attr = getattr(self.anobject, self.field[i])
-            if type(attr) is types.IntType:
+            if isinstance(attr, int):
                 self.field_type.append('int')
-            elif type(attr) is types.FloatType:
+            elif isinstance(attr, float):
                 self.field_type.append('float')
             else:
                 self.field_type.append('str')

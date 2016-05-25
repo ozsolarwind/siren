@@ -20,7 +20,6 @@
 #
 
 import os
-import types
 import xlwt
 from PyQt4 import QtCore
 from PyQt4 import QtGui
@@ -247,13 +246,13 @@ class Table(QtGui.QDialog):
                     if attr is None:
                         continue
                     if prop not in self.labels:
-                        if type(attr) is types.IntType:
+                        if isinstance(attr, int):
                             self.labels[prop] = 'int'
-                        elif type(attr) is types.FloatType:
+                        elif isinstance(attr, float):
                             self.labels[prop] = 'float'
                         else:
                             self.labels[prop] = 'str'
-                    if type(attr) is types.IntType:
+                    if isinstance(attr, int):
                         if self.labels[prop] == 'str':
                             self.labels[prop] = 'int'
                         if prop in self.lens:
@@ -261,7 +260,7 @@ class Table(QtGui.QDialog):
                                 self.lens[prop][0] = len(str(attr))
                         else:
                             self.lens[prop] = [len(str(attr)), 0]
-                    elif type(attr) is types.FloatType:
+                    elif isinstance(attr, float):
                         if self.labels[prop] == 'str':
                             self.labels[prop] = 'float'
                         a = str(attr)

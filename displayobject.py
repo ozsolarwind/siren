@@ -21,7 +21,6 @@
 
 import os
 import sys
-import types
 from PyQt4 import QtCore
 from PyQt4 import QtGui
 
@@ -195,9 +194,9 @@ class AnObject(QtGui.QDialog):
             for prop in dir(self.anobject):
                 if prop[:2] != '__' and prop[-2:] != '__':
                     attr = getattr(self.anobject, prop)
-                    if type(attr) is types.IntType:
+                    if isinstance(attr, int):
                          self.field_type.append('int')
-                    elif type(attr) is types.FloatType:
+                    elif isinstance(attr, float):
                          self.field_type.append('float')
                     else:
                          self.field_type.append('str')
@@ -231,6 +230,7 @@ class AnObject(QtGui.QDialog):
                         self.turbine = attr
             self.set_stuff(grid, widths, heights, i)
         QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
+
     def curveClicked(self):
         Turbine(self.turbine).PowerCurve()
         return
