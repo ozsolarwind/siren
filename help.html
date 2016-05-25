@@ -2520,6 +2520,7 @@ Run the wget command as displayed in the FTP Subset Results page. This uses the 
 <p><em>makeweather2.py</em> is a Python program that can be used to produce solar and/or wind weather files for input to SAM. The program generates SMW (preferred for SAM) or CSV format solar resource files and SRW format wind resource files. These file formats have been chosen as they're easier to generate than other formats. Using the program you specify the source folder for the MERRA-2 data files, the time zone for the area of interest, a file format and target folder for the weather files. The program will generate files for each of the MERRA-2 grid squares within the chosen MERRA-2 data files or optionally for a number of latitude and longitude positions. You can invoke the program either by choosing <em>makeweather2</em> from the SIREN Tools menu or in Windows by running <em>makeweather2.exe</em> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
 <ul>
 <li><em>Year</em>. Year of interest. The naming conventions for MERRA-2 files include the date so this defines the date range. The tool processes dates from the last day of the prior year through to the first day of the next year (ignoring 29 February)</li>
+<li><em>Wrap to prior year</em>. To enable you to use (more) recent weather data this option will indicate that weather data should wrap to the prior year. As an example, if you have downloaded MERRA-2 data up until April for the current year makeweather2 will use weather data from the prior year for May onwards to give a full year of data. The MERRA data for both years must reside in the same folder</li>
 <li><em>Time Zone</em>. The (solar) time zone for the area of interest. This is used to create suitable weather files where the first hour in the file is the first hour of the year in the local time zone. A value of <em>auto</em> will cause the program to use the (first) longitude in the MERRA-2 data files to calculate the time zone</li>
 <li><em>Solar Format</em>. The solar option can produce weather files in either of two formats - SMW or CSV format. This option allows you to choose your preferred one. SMW format is suitable for SAM while it may have trouble with the CSV format</li>
 <li><em>Coordinates</em>. Rather than producing weather files for each grid cell in the chosen area you can restrict it by passing a string of comma-separated latitude and longitude values. The tool will then generate files for just these coordinates</li>
@@ -2551,6 +2552,7 @@ Run the wget command as displayed in the FTP Subset Results page. This uses the 
 <p>Parameters are as described above and can be passed to the program as follows:</p>
 <ul>
 <li><em>year=</em> Year of interest</li>
+<li><em>wrap=</em> A value starting with <em>y</em> (yes) or <em>t</em> (true) indicates tp wrap back to the prior year</li>
 <li><em>zone=</em> or <em>timezone=</em> The (solar) time zone for the area of interest</li>
 <li><em>fmat=</em> Weather file format</li>
 <li><em>coords=</em> or <em>latlon=</em> A string of comma-separated latitude and longitude values</li>
@@ -2756,6 +2758,7 @@ MERRA-2 Variables
 <p><em>makerainfall2.py</em> is a Python program that can be used to produce rainfall weather files. The program generates CSV format files that resembles solar resource files with a single Rainfall variable. Using the program you specify the source folder for the MERRA-2 data files, the time zone for the area of interest, a file format and target folder for the weather files. The program will generate files for each of the MERRA-2 grid squares within the chosen MERRA-2 data files or optionally for a number of latitude and longitude positions. You can invoke the program either by choosing <em>makerainfall2</em> from the SIREN Tools menu or in Windows by running <em>makerainfall2.exe</em> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
 <ul>
 <li><em>Year</em>. Year of interest. The naming conventions for MERRA-2 files include the date so this defines the date range. The tool processes dates from the last day of the prior year through to the first day of the next year (ignoring 29 February)</li>
+<li><em>Wrap to prior year</em>. To enable you to use (more) recent weather data this option will indicate that weather data should wrap to the prior year. As an example, if you have downloaded MERRA-2 data up until April for the current year makeweather2 will use weather data from the prior year for May onwards to give a full year of data. The MERRA data for both years must reside in the same folder</li>
 <li><em>Time Zone</em>. The (solar) time zone for the area of interest. This is used to create suitable weather files where the first hour in the file is the first hour of the year in the local time zone. A value of <em>auto</em> will cause the program to use the (first) longitude in the MERRA-2 data files to calculate the time zone</li>
 <li><em>File Format</em>. The MERRA-2 input file format. This is three-letter group mnemonic - <em>flx</em>, <em>lnd</em> or <em>mld</em></li>
 <li><em>Coordinates</em>. Rather than producing weather files for each grid cell in the chosen area you can restrict it by passing a string of comma-separated latitude and longitude values. The tool will then generate files for just these coordinates</li>
@@ -2784,6 +2787,7 @@ MERRA-2 Variables
 <p>Parameters are as described above and can be passed to the program as follows:</p>
 <ul>
 <li><em>year=</em> Year of interest</li>
+<li><em>wrap=</em> A value starting with <em>y</em> (yes) or <em>t</em> (true) indicates to wrap back to the prior year</li>
 <li><em>zone=</em> or <em>timezone=</em> The (solar) time zone for the area of interest</li>
 <li><em>fmat=</em> Weather file format</li>
 <li><em>coords=</em> or <em>latlon=</em> A string of comma-separated latitude and longitude values</li>
@@ -3222,6 +3226,10 @@ Wave_Height = 0.023 * 0.3048 * (Wind_Speed * 1.94384)<sup>2</sup></code>&nbsp;&n
 <td class="none">Debt-Service Coverage Ratio</td></tr>
 <tr><td class="none"><dfn>EOS</dfn></td>
 <td class="none">Earth Observing System</td></tr>
+<tr><td class="none"><dfn>FTP</dfn></td>
+<td class="none">File Transfer Protocol. A standard network protocol used to transfer computer files between a client and server on a computer network</td></tr>
+<tr><td class="none"><dfn>GMT</dfn></td>
+<td class="none">Greenwich Mean Time. It is the mean solar time at the Royal Observatory in Greenwich, London. GMT was formerly used as the international civil time standard, now superseded in that function by Coordinated Universal Time (UTC).</td></tr>
 <tr><td class="none"><dfn>GEOS-5</dfn></td>
 <td class="none">Goddard Earth Observing System Data Assimilation System Version 5</td></tr>
 <tr><td class="none"><dfn>GHI</dfn></td>
@@ -3232,6 +3240,8 @@ Wave_Height = 0.023 * 0.3048 * (Wind_Speed * 1.94384)<sup>2</sup></code>&nbsp;&n
 <td class="none">Gigawatt hour</td></tr>
 <tr><td class="none"><dfn>HTML</dfn></td>
 <td class="none">Hyper Text Markup Language; used for describing web documents (web pages)</td></tr>
+<tr><td class="none"><dfn>HTTP</dfn></td>
+<td class="none">Hypertext Transfer Protocol. An application protocol for distributed, collaborative, hypermedia information systems. HTTP is the foundation of data communication for the World Wide Web</td></tr>
 <tr><td class="none"><dfn>IMO</dfn></td>
 <td class="none">WA Independent Market Operator. Formerly, responsible for operating the WEM</td></tr>
 <tr><td class="none"><dfn>INI</dfn></td>
