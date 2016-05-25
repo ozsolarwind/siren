@@ -19,7 +19,6 @@
 #  <http://www.gnu.org/licenses/>.
 #
 
-import os
 import sys
 from PyQt4 import QtCore, QtGui
 import subprocess as sp

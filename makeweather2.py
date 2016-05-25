@@ -28,7 +28,6 @@ if sys.platform == 'win32' or sys.platform == 'cygwin':
     from netCDF4 import Dataset
 else:
     from Scientific.IO.NetCDF import *
-import time
 from PyQt4 import QtCore, QtGui
 import displayobject
 from sammodels import getDNI, getDHI

@@ -24,15 +24,12 @@ import math
 import os
 import sys
 # import types
-from Tkinter import tkinter  # to get TkAgg
-import Tkinter
 import matplotlib
 matplotlib.use('TkAgg')
 import webbrowser
 import xlrd
 import xlwt
 from functools import partial
-from datetime import datetime
 
 import ConfigParser  # decode .ini file
 from PyQt4 import QtCore, QtGui

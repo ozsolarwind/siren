@@ -19,8 +19,6 @@
 #  <http://www.gnu.org/licenses/>.
 #
 
-import sys
-
 from PyQt4.QtCore import QRegExp
 from PyQt4.QtGui import QColor, QTextCharFormat, QFont, QSyntaxHighlighter
 

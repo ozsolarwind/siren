@@ -19,7 +19,6 @@
 #  <http://www.gnu.org/licenses/>.
 #
 
-from datetime import datetime, timedelta
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtGui import QDesktopWidget
 import ConfigParser   # decode .ini file

@@ -8,7 +8,7 @@
 # #####################################################################
 
 
-import string, sys, struct, math
+import sys, struct
 from ctypes import *
 
 import os

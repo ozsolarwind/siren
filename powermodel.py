@@ -22,14 +22,12 @@
 from math import asin, ceil, cos, fabs, floor, log10, pow, radians, sin, sqrt
 import pylab as plt
 from matplotlib.font_manager import FontProperties
-from matplotlib.ticker import MultipleLocator, FormatStrFormatter
 import numpy.linalg as linalg
 from numpy import *
 import csv
 import os
 import sys
 import ssc
-import types
 import xlrd
 import xlwt
 

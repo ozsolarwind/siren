@@ -21,7 +21,6 @@
 
 import datetime
 import gzip
-import math
 import os
 import sys
 if sys.platform == 'win32' or sys.platform == 'cygwin':
@@ -31,7 +30,6 @@ else:
 import time
 from PyQt4 import QtCore, QtGui
 import displayobject
-from sammodels import getDNI, getDHI
 from credits import fileVersion
 
 class makeRainfall():

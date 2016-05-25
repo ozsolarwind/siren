@@ -24,7 +24,6 @@ import datetime
 from functools import partial
 import os
 from PyQt4 import QtCore, QtGui
-from PyQt4.QtCore import SIGNAL
 import subprocess
 import sys
 import webbrowser

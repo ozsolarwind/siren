@@ -27,7 +27,7 @@ import sys
 import xlrd
 
 import ConfigParser   # decode .ini file
-from PyQt4 import QtCore, QtGui, QtSvg
+from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import Qt
 import mpl_toolkits.basemap.pyproj as pyproj   # Import the pyproj module
 

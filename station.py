@@ -24,7 +24,6 @@ import os
 import sys
 from math import radians, cos, sin, asin, sqrt, pow
 import xlrd
-import xlwt
 
 import ConfigParser   # decode .ini file
 

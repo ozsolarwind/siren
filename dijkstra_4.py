@@ -25,7 +25,6 @@
 
 import sys
 from math import *
-from grid import Line
 
 RADIUS = 6367.   # radius of earth in km
 

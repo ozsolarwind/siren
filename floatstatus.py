@@ -18,7 +18,6 @@
 #  Public License along with SIREN.  If not, see
 #  <http://www.gnu.org/licenses/>.
 #
-import os
 import sys
 import ConfigParser   # decode .ini file
 from PyQt4 import QtGui, QtCore

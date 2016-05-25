@@ -24,7 +24,6 @@ import sys
 from PyQt4 import QtCore, QtGui
 import ConfigParser   # decode .ini file
 
-from credits import fileVersion
 import displayobject
 from editini import SaveIni
 

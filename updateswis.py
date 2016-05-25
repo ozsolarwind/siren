@@ -20,7 +20,6 @@
 #
 
 import csv
-import datetime
 import httplib
 from math import *
 import os
@@ -33,7 +32,7 @@ import xlwt
 import displayobject
 from credits import fileVersion
 from senuser import getUser
-from station import Station, Stations
+from station import Stations
 
 class makeFile():
 

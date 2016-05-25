@@ -19,9 +19,7 @@
 #  <http://www.gnu.org/licenses/>.
 #
 
-import csv
 import os
-import sys
 import types
 import xlwt
 from PyQt4 import QtCore
