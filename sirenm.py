@@ -1786,7 +1786,7 @@ class MainWindow(QtGui.QMainWindow):
                     if action.text() == self.view.scene().load_centre[j][0]:
                         break
         if j < len(self.view.scene().load_centre):
-            go_to = self.mapFromLonLat(QtCore.QPointF(self.view.scene().load_centre[j][2],o
+            go_to = self.mapFromLonLat(QtCore.QPointF(self.view.scene().load_centre[j][2],
                     self.view.scene().load_centre[j][1]))
             self.view.centerOn(go_to)
             comment = '(%s,%s) Centred on %s Load Centre' % (
@@ -2690,7 +2690,7 @@ class MainWindow(QtGui.QMainWindow):
             wb.save(self.scenarios + the_scenario)
         if self.floatstatus and self.log_status:
             self.floatstatus.emit(SIGNAL('log'), '%s. Saved %s station(s) to %s' %
-                            (str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),o
+                            (str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),
                             'hh:mm:ss')), str(ctr + d), the_scenario))
 
 
