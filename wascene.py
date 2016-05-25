@@ -27,7 +27,7 @@ import sys
 import xlrd
 
 import ConfigParser   # decode .ini file
-from PyQt4 import QtCore, QtGui, QtSvg
+from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import Qt
 import mpl_toolkits.basemap.pyproj as pyproj   # Import the pyproj module
 
@@ -112,10 +112,10 @@ class WAScene(QtGui.QGraphicsScene):
                  self.map_lower_right[1] = float(upper_right[1].strip())
              except:
                  pass
-        self.map_polygon = [[self.map_upper_left[0], self.map_upper_left[1]], \
-                            [self.map_upper_left[0], self.map_lower_right[1]], \
-                            [self.map_lower_right[0], self.map_lower_right[1]], \
-                            [self.map_lower_right[0], self.map_upper_left[1]], \
+        self.map_polygon = [[self.map_upper_left[0], self.map_upper_left[1]],
+                            [self.map_upper_left[0], self.map_lower_right[1]],
+                            [self.map_lower_right[0], self.map_lower_right[1]],
+                            [self.map_lower_right[0], self.map_upper_left[1]],
                             [self.map_upper_left[0], self.map_upper_left[1]]]
         self.scale = False
         try:
@@ -364,7 +364,7 @@ class WAScene(QtGui.QGraphicsScene):
             except:
                 self.load_centre = [[load_centre[0], float(load_centre[1]), float(load_centre[2])]]
                 for j in range(3, len(load_centre), 3):
-                    self.load_centre.append([load_centre[j], float(load_centre[j + 1]), \
+                    self.load_centre.append([load_centre[j], float(load_centre[j + 1]),
                         float(load_centre[j + 2])])
         except:
             pass
@@ -429,9 +429,9 @@ class WAScene(QtGui.QGraphicsScene):
         ln1, lt1, baring = map(radians, [lon1, lat1, bearing])
 
      # "reverse" haversine formula
-        lat2 = asin(sin(lt1) * cos(distance / radius) + \
+        lat2 = asin(sin(lt1) * cos(distance / radius) +
                                 cos(lt1) * sin(distance / radius) * cos(baring))
-        lon2 = ln1 + atan2(sin(baring) * sin(distance / radius) * cos(lt1), \
+        lon2 = ln1 + atan2(sin(baring) * sin(distance / radius) * cos(lt1),
                                             cos(distance / radius) - sin(lt1) * sin(lat2))
         return degrees(lon2), degrees(lat2)
 
@@ -452,7 +452,7 @@ class WAScene(QtGui.QGraphicsScene):
                 brush = QtGui.QBrush(QtGui.QColor('white'))
                 painter.fillRect(QtCore.QRectF(0, 0, 200 * ratio, 200), brush)
                 painter.setPen(QtGui.QColor('lightgray'))
-                painter.drawText(QtCore.QRectF(0, 0, 200 * ratio, 200), QtCore.Qt.AlignCenter, \
+                painter.drawText(QtCore.QRectF(0, 0, 200 * ratio, 200), QtCore.Qt.AlignCenter,
                                  'Map not found.')
                 painter.end()
         self.addPixmap(pixMap)
@@ -520,7 +520,7 @@ class WAScene(QtGui.QGraphicsScene):
 
     def _setupTowns(self):
         self._towns = {}
-        self._towns = Towns(ul_lat=self.upper_left[3], ul_lon=self.upper_left[2], \
+        self._towns = Towns(ul_lat=self.upper_left[3], ul_lon=self.upper_left[2],
                       lr_lat=self.lower_right[3], lr_lon=self.lower_right[2])
         for st in self._towns.towns:
             p = self.mapFromLonLat(QtCore.QPointF(st.lon, st.lat))
@@ -595,15 +595,15 @@ class WAScene(QtGui.QGraphicsScene):
                 while curr_row < num_rows:
                     curr_row += 1
                     try:
-                        new_st = Station(str(worksheet.cell_value(curr_row, var['Station Name'])), \
-                                                 str(worksheet.cell_value(curr_row, var['Technology'])), \
-                                                 worksheet.cell_value(curr_row, var['Latitude']), \
-                                                 worksheet.cell_value(curr_row, var['Longitude']), \
-                                                 worksheet.cell_value(curr_row, var['Maximum Capacity (MW)']), \
-                                                 str(worksheet.cell_value(curr_row, var['Turbine'])), \
-                                                 worksheet.cell_value(curr_row, var['Rotor Diam']), \
-                                                 worksheet.cell_value(curr_row, var['No. turbines']), \
-                                                 worksheet.cell_value(curr_row, var['Area']), \
+                        new_st = Station(str(worksheet.cell_value(curr_row, var['Station Name'])),
+                                                 str(worksheet.cell_value(curr_row, var['Technology'])),
+                                                 worksheet.cell_value(curr_row, var['Latitude']),
+                                                 worksheet.cell_value(curr_row, var['Longitude']),
+                                                 worksheet.cell_value(curr_row, var['Maximum Capacity (MW)']),
+                                                 str(worksheet.cell_value(curr_row, var['Turbine'])),
+                                                 worksheet.cell_value(curr_row, var['Rotor Diam']),
+                                                 worksheet.cell_value(curr_row, var['No. turbines']),
+                                                 worksheet.cell_value(curr_row, var['Area']),
                                                  scen_filter)
                         name_ok = False
                         new_name = new_st.name
@@ -667,8 +667,8 @@ class WAScene(QtGui.QGraphicsScene):
                     scene.seek(0)
                 new_stations = csv.DictReader(scene)
                 for st in new_stations:
-                    new_st = Station(st['Station Name'], st['Technology'], float(st['Latitude']), \
-                             float(st['Longitude']), float(st['Maximum Capacity (MW)']), \
+                    new_st = Station(st['Station Name'], st['Technology'], float(st['Latitude']),
+                             float(st['Longitude']), float(st['Maximum Capacity (MW)']),
                              st['Turbine'], float(st['Rotor Diam']), int(st['No. turbines']), float(st['Area']), scen_filter)
                     if new_st.area == 0:
                         if new_st.technology == 'Wind':
@@ -744,7 +744,7 @@ class WAScene(QtGui.QGraphicsScene):
                     size = sqrt(st.area / pi) * 2.   # need diameter
                 except:
                     if st.technology == 'Wind':
-                        size = sqrt(self.areas[st.technology] * float(st.no_turbines) * pow((float(st.rotor) * .001), 2) \
+                        size = sqrt(self.areas[st.technology] * float(st.no_turbines) * pow((float(st.rotor) * .001), 2)
                                / pi) * 2.
                     else:
                         size = sqrt(self.areas[st.technology] * float(st.capacity) / pi) * 2.
@@ -863,7 +863,7 @@ class WAScene(QtGui.QGraphicsScene):
                     nearest = 99999
                     j = -1
                     for i in range(len(self.load_centre)):
-                        thisone = self.lines.actualDistance(self.load_centre[i][1], self.load_centre[i][2], \
+                        thisone = self.lines.actualDistance(self.load_centre[i][1], self.load_centre[i][2],
                                   dims[-1][0], dims[-1][1])
                         if thisone < nearest:
                             nearest = thisone
@@ -874,7 +874,7 @@ class WAScene(QtGui.QGraphicsScene):
                     grid_point[3] = -1
                 else:
                     try:
-                        nearest, dist = self._stations.Nearest(dims[-1][0], dims[-1][1], distance=True, fossil=True, \
+                        nearest, dist = self._stations.Nearest(dims[-1][0], dims[-1][1], distance=True, fossil=True,
                                         ignore=st.name)
                     except:
                         return
@@ -889,7 +889,7 @@ class WAScene(QtGui.QGraphicsScene):
                     dispatchable = 'Y'
                 else:
                     dispatchable = ''
-                l = Line(st.name, self.colors['new_grid'], dims, round(grid_len, 1), grid_point[3], dispatchable, 0, \
+                l = Line(st.name, self.colors['new_grid'], dims, round(grid_len, 1), grid_point[3], dispatchable, 0,
                     0.)
             #     l.peak_loss = round(st.capacity * self.line_loss * l.length + self.subs_loss * st.capacity, 3)
               #   subs_cost = self.subs_cost * st.capacity
@@ -904,12 +904,12 @@ class WAScene(QtGui.QGraphicsScene):
                     nearest = 99999
                     j = -1
                     for i in range(len(self.load_centre)):
-                        thisone = self.lines.actualDistance(self.load_centre[i][1], self.load_centre[i][2], \
+                        thisone = self.lines.actualDistance(self.load_centre[i][1], self.load_centre[i][2],
                                   dims[0][0], dims[0][1])
                         if thisone < nearest:
                             nearest = thisone
                             j = i
-                    path = Shortest(self.lines.lines, dims[0], [self.load_centre[j][1], \
+                    path = Shortest(self.lines.lines, dims[0], [self.load_centre[j][1],
                            self.load_centre[j][2]], self.grid_lines)
                     line = path.getLines()
                     for li in line:
@@ -934,7 +934,7 @@ class WAScene(QtGui.QGraphicsScene):
                                     route = route[i:]
                                     break
                     for i in range(1, len(route)):
-                        grid_path_len += self.lines.actualDistance(route[i - 1][0], route[i - 1][1], \
+                        grid_path_len += self.lines.actualDistance(route[i - 1][0], route[i - 1][1],
                                          route[i][0], route[i][1])
                 else:
                     if self.lines.lines[next].peak_load is None:
@@ -954,10 +954,10 @@ class WAScene(QtGui.QGraphicsScene):
                 pen = QtGui.QPen(color, self.line_width)
                 pen.setJoinStyle(QtCore.Qt.RoundJoin)
                 pen.setCapStyle(QtCore.Qt.RoundCap)
-                start = self.mapFromLonLat(QtCore.QPointF(l.coordinates[0][1], \
+                start = self.mapFromLonLat(QtCore.QPointF(l.coordinates[0][1],
                   l.coordinates[0][0]))
                 for i in range(1, len(l.coordinates)):
-                    end = self.mapFromLonLat(QtCore.QPointF(l.coordinates[i][1], \
+                    end = self.mapFromLonLat(QtCore.QPointF(l.coordinates[i][1],
                       l.coordinates[i][0]))
                     ln = QtGui.QGraphicsLineItem(QtCore.QLineF(start, end))
                     ln.setPen(pen)

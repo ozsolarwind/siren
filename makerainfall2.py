@@ -21,7 +21,6 @@
 
 import datetime
 import gzip
-import math
 import os
 import sys
 if sys.platform == 'win32' or sys.platform == 'cygwin':
@@ -31,7 +30,6 @@ else:
 import time
 from PyQt4 import QtCore, QtGui
 import displayobject
-from sammodels import getDNI, getDHI
 from credits import fileVersion
 
 class makeRainfall():
@@ -79,14 +77,14 @@ class makeRainfall():
 
     def valu(self, data, lat1, lon1, lat_rat, lon_rat, rnd=4):
         if rnd > 0:
-            return round(lat_rat * lon_rat * data[lat1][lon1] + \
-                (1.0 - lat_rat) * lon_rat * data[lat1 + 1][lon1] + \
-                lat_rat * (1.0 - lon_rat) * data[lat1][lon1 + 1] + \
+            return round(lat_rat * lon_rat * data[lat1][lon1] +
+                (1.0 - lat_rat) * lon_rat * data[lat1 + 1][lon1] +
+                lat_rat * (1.0 - lon_rat) * data[lat1][lon1 + 1] +
                 (1.0 - lat_rat) * (1.0 - lon_rat) * data[lat1 + 1][lon1 + 1], rnd)
         else:
-            return int(lat_rat * lon_rat * data[lat1][lon1] + \
-                (1.0 - lat_rat) * lon_rat * data[lat1 + 1][lon1] + \
-                lat_rat * (1.0 - lon_rat) * data[lat1][lon1 + 1] + \
+            return int(lat_rat * lon_rat * data[lat1][lon1] +
+                (1.0 - lat_rat) * lon_rat * data[lat1 + 1][lon1] +
+                lat_rat * (1.0 - lon_rat) * data[lat1][lon1 + 1] +
                 (1.0 - lat_rat) * (1.0 - lon_rat) * data[lat1 + 1][lon1 + 1])
 
     def get_data(self, inp_file):
@@ -115,12 +113,12 @@ class makeRainfall():
         self.return_code = 0
         if self.longrange[0] is not None:
             if int(round(self.longrange[0] / 15)) != self.src_zone:
-                self.log += 'MERRA west longitude (%s) in different time zone: %s\n' % ('{:0.4f}'.format(self.longrange[0]), \
+                self.log += 'MERRA west longitude (%s) in different time zone: %s\n' % ('{:0.4f}'.format(self.longrange[0]),
                             int(round(self.longrange[0] / 15)))
                 self.return_code = 1
         if self.longrange[1] is not None:
             if int(round(self.longrange[1] / 15)) != self.src_zone:
-                self.log += 'MERRA east longitude (%s) in different time zone: %s\n' % ('{:0.4f}'.format(self.longrange[1]), \
+                self.log += 'MERRA east longitude (%s) in different time zone: %s\n' % ('{:0.4f}'.format(self.longrange[1]),
                             int(round(self.longrange[1] / 15)))
                 self.return_code = 1
         return
@@ -248,7 +246,7 @@ class makeRainfall():
                 cdf_file = NetCDFFile(unzip_file, 'r')
             longitude = cdf_file.variables[self.vars['longitude']][:]
             self.src_zone = int(round(longitude[0] / 15))
-            self.log += 'Time zone: %s based on MERRA (west) longitude (%s to %s)\n' % (str(self.src_zone), \
+            self.log += 'Time zone: %s based on MERRA (west) longitude (%s to %s)\n' % (str(self.src_zone),
                         '{:0.4f}'.format(longitude[0]), '{:0.4f}'.format(longitude[-1]))
             cdf_file.close()
         else:
@@ -270,10 +268,10 @@ class makeRainfall():
         else:
             self.src_lat = None
             self.src_lon = None
-        if self.src_dir[0] == self.src_dir[-1] and (self.src_dir[0] == '"' or \
+        if self.src_dir[0] == self.src_dir[-1] and (self.src_dir[0] == '"' or
            self.src_dir[0] == "'"):
             self.src_dir = self.src_dir[1:-1]
-        if self.tgt_dir[0] == self.tgt_dir[-1] and (self.tgt_dir[0] == '"' or \
+        if self.tgt_dir[0] == self.tgt_dir[-1] and (self.tgt_dir[0] == '"' or
            self.tgt_dir[0] == "'"):
             self.tgt_dir = self.tgt_dir[1:-1]
         self.lati = []
@@ -361,7 +359,7 @@ class makeRainfall():
                            str(self.src_lon[i]) + '_' + str(self.src_year) + '.csv'
                 tf = open(out_file, 'w')
                 hdr = 'Location,City,Region,Country,Latitude,Longitude,Time Zone,Elevation,Source\n' + \
-                      'id,<city>,<state>,<country>,%s,%s,%s,0,MERRA\n' % (round(self.src_lat[i], 4), \
+                      'id,<city>,<state>,<country>,%s,%s,%s,0,MERRA\n' % (round(self.src_lat[i], 4),
                       round(self.src_lon[i], 4), str(self.src_zone))
                 tf.write(hdr)
                 tf.write('Year,Month,Day,Hour,Rainfall (mm)' + '\n')
@@ -369,7 +367,7 @@ class makeRainfall():
                 day = 1
                 hour = 1
                 for hr in range(len(self.rain)):
-                    tf.write(str(self.src_year) + ',' + str(mth + 1) + ',' + str(day) + ',' + str(hour) + ',' + \
+                    tf.write(str(self.src_year) + ',' + str(mth + 1) + ',' + str(day) + ',' + str(hour) + ',' +
                              str(self.valu(self.rain[hr], lat1, lon1, lat_rat, lon_rat, rnd=1)) + '\n')
                     hour += 1
                     if hour > 24:
@@ -398,7 +396,7 @@ class makeRainfall():
                                '_' + '{:0.4f}'.format(self.longi[lon]) + '_' + str(self.src_year) + '.csv'
                     tf = open(out_file, 'w')
                     hdr = 'Location,City,Region,Country,Latitude,Longitude,Time Zone,Elevation,Source\n' + \
-                          'id,<city>,<state>,<country>,%s,%s,%s,0,MERRA\n' % (round(self.lati[lat], 4), \
+                          'id,<city>,<state>,<country>,%s,%s,%s,0,MERRA\n' % (round(self.lati[lat], 4),
                           round(self.longi[lon], 4), str(self.src_zone))
                     tf.write(hdr)
                     tf.write('Year,Month,Day,Hour,Rainfall (mm)' + '\n')
@@ -406,7 +404,7 @@ class makeRainfall():
                     day = 1
                     hour = 1
                     for hr in range(len(self.rain)):
-                        tf.write(str(self.src_year) + ',' + str(mth + 1) + ',' + str(day) + ',' + str(hour) + ',' + \
+                        tf.write(str(self.src_year) + ',' + str(mth + 1) + ',' + str(day) + ',' + str(hour) + ',' +
                                  str(self.rain[hr][lat][lon]) + '\n')
                         hour += 1
                         if hour > 24:
@@ -545,7 +543,7 @@ class getParms(QtGui.QWidget):
                     self.dirs[1].setText(newdir)
 
     def helpClicked(self):
-        dialog = displayobject.AnObject(QtGui.QDialog(), self.help, \
+        dialog = displayobject.AnObject(QtGui.QDialog(), self.help,
                  title='Help for SIREN makerainfall2 (' + fileVersion() + ')', section='merrar')
         dialog.exec_()
 
@@ -564,10 +562,10 @@ class getParms(QtGui.QWidget):
             zone = 'auto'
         else:
             zone = str(self.zoneCombo.currentIndex() - 13)
-        rain = makeRainfall(str(self.yearSpin.value()), zone, str(self.dirs[0].text()), \
+        rain = makeRainfall(str(self.yearSpin.value()), zone, str(self.dirs[0].text()),
                             str(self.dirs[1].text()), str(self.fmatcombo.currentText()), coords)
-        dialr = RptDialog(str(self.yearSpin.value()), zone, str(self.dirs[0].text()), \
-                          str(self.dirs[1].text()), str(self.fmatcombo.currentText()), \
+        dialr = RptDialog(str(self.yearSpin.value()), zone, str(self.dirs[0].text()),
+                          str(self.dirs[1].text()), str(self.fmatcombo.currentText()),
                           coords, rain.returnCode(), rain.getLog())
         dialr.exec_()
         del rain
@@ -585,10 +583,10 @@ class getParms(QtGui.QWidget):
             zone = 'auto'
         else:
             zone = str(self.zoneCombo.currentIndex() - 13)
-        rain = makeRainfall(str(self.yearSpin.value()), zone, str(self.dirs[0].text()), \
+        rain = makeRainfall(str(self.yearSpin.value()), zone, str(self.dirs[0].text()),
                             str(self.dirs[1].text()), str(self.fmatcombo.currentText()), coords, info=True)
-        dialr = RptDialog(str(self.yearSpin.value()), zone, str(self.dirs[0].text()), \
-                          str(self.dirs[1].text()), str(self.fmatcombo.currentText()), \
+        dialr = RptDialog(str(self.yearSpin.value()), zone, str(self.dirs[0].text()),
+                          str(self.dirs[1].text()), str(self.fmatcombo.currentText()),
                           coords, rain.returnCode(), rain.getLog())
         dialr.exec_()
         del rain
@@ -621,9 +619,9 @@ class RptDialog(QtGui.QDialog):
         buttonLayout.addStretch(1)
         buttonLayout.addWidget(self.saveButton)
         buttonLayout.addWidget(self.cancelButton)
-        self.connect(self.saveButton, QtCore.SIGNAL('clicked()'), self, \
+        self.connect(self.saveButton, QtCore.SIGNAL('clicked()'), self,
                      QtCore.SLOT('accept()'))
-        self.connect(self.cancelButton, QtCore.SIGNAL('clicked()'), \
+        self.connect(self.cancelButton, QtCore.SIGNAL('clicked()'),
                      self, QtCore.SLOT('reject()'))
         self.widget = QtGui.QTextEdit()
         self.widget.setFont(QtGui.QFont('Courier New', 11))
@@ -635,7 +633,7 @@ class RptDialog(QtGui.QDialog):
             ln = int(screen.width() * .67)
         if ln2 > screen.height() * .67:
             ln2 = int(screen.height() * .67)
-        self.widget.setSizePolicy(QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, \
+        self.widget.setSizePolicy(QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding,
             QtGui.QSizePolicy.Expanding))
         self.widget.resize(ln, ln2)
         self.widget.setPlainText(self.lines)
@@ -647,7 +645,7 @@ class RptDialog(QtGui.QDialog):
         size = self.geometry()
         self.setGeometry(1, 1, ln + 10, ln2 + 35)
         size = self.geometry()
-        self.move((screen.width() - size.width()) / 2, \
+        self.move((screen.width() - size.width()) / 2,
             (screen.height() - size.height()) / 2)
         self.widget.show()
 

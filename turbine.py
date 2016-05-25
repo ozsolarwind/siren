@@ -21,7 +21,6 @@
 
 import pylab as plt
 import csv
-import math
 import os
 import sys
 

@@ -24,7 +24,6 @@ import datetime
 from functools import partial
 import os
 from PyQt4 import QtCore, QtGui
-from PyQt4.QtCore import SIGNAL
 import subprocess
 import sys
 import webbrowser
@@ -440,7 +439,7 @@ class makeNew(QtGui.QDialog):
             self.msg.setText('')
 
     def helpClicked(self):
-        dialog = displayobject.AnObject(QtGui.QDialog(), self.help, \
+        dialog = displayobject.AnObject(QtGui.QDialog(), self.help,
                  title='Help for SIREN Preferences file (' + fileVersion() + ')', section='prefs')
         dialog.exec_()
 

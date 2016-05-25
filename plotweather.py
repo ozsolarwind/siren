@@ -19,16 +19,13 @@
 #  <http://www.gnu.org/licenses/>.
 #
 
-from math import asin, ceil, cos, fabs, floor, log10, pow, radians, sin, sqrt
+from math import asin, ceil, cos, radians, sin, sqrt
 import pylab as plt
 from matplotlib.font_manager import FontProperties
-from matplotlib.ticker import MultipleLocator, FormatStrFormatter
 import matplotlib.lines as mlines
 import csv
 import os
 import sys
-import ssc
-import types
 import xlrd
 
 import ConfigParser  # decode .ini file
@@ -36,7 +33,6 @@ from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt
 
 from senuser import getUser
-from editini import SaveIni
 from sammodels import getZenith
 
 the_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]

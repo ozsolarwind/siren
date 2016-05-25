@@ -18,7 +18,6 @@
 #  Public License along with SIREN.  If not, see
 #  <http://www.gnu.org/licenses/>.
 #
-import os
 import sys
 import ConfigParser   # decode .ini file
 from PyQt4 import QtGui, QtCore
@@ -70,7 +69,7 @@ class FloatMenu(QtGui.QDialog):
                                 self.menus[-1][-1].append([str(lvl2.text()).replace('&', ''), None, None, []])
                             try:
                                 for lvl3 in lvl2.menu().actions():
-                                    self.menus[-1][-1][-1][-1].append([str(lvl3.text()), \
+                                    self.menus[-1][-1][-1][-1].append([str(lvl3.text()),
                                         lvl3.icon(), lvl3, '3'])
                             except:
                                 pass
@@ -89,7 +88,7 @@ class FloatMenu(QtGui.QDialog):
         for i in range(len(self.menus)):
             self.butn.append(QtGui.QPushButton(self.menus[i][0], self))
             self.butn[-1].setIcon(self.menus[i][1])
-            self.butn[-1].setStyleSheet('QPushButton {color: #005fb6; border: 2px solid #e65900;' + \
+            self.butn[-1].setStyleSheet('QPushButton {color: #005fb6; border: 2px solid #e65900;' +
                                ' border-radius: 6px;}')
             self.butn[-1].clicked.connect(self.menuClicked)
             self.grid.addWidget(self.butn[-1], ctr, 0, 1, 3)

@@ -42,7 +42,7 @@ class Colours(QtGui.QDialog):
                 self.btn.append(QtGui.QPushButton(key, self))
                 self.btn[-1].clicked.connect(self.showDialog)
                 if value[0] != '':
-                    self.btn[-1].setStyleSheet('QPushButton {background-color: %s; color: %s;}' % \
+                    self.btn[-1].setStyleSheet('QPushButton {background-color: %s; color: %s;}' %
                                  (value[0].name(), value[0].name()))
                 self.grid.addWidget(self.btn[-1], i, 1)
                 metrics = self.btn[-1].fontMetrics()
@@ -55,7 +55,7 @@ class Colours(QtGui.QDialog):
                 height = metrics.boundingRect(self.btn[-1].text()).height()
             self.btn[-1].clicked.connect(self.showDialog)
             if value[1] != '':
-                self.btn[-1].setStyleSheet('QPushButton {background-color: %s; color: %s;}' % \
+                self.btn[-1].setStyleSheet('QPushButton {background-color: %s; color: %s;}' %
                              (value[1].name(), value[1].name()))
             self.grid.addWidget(self.btn[-1], i, default_col)
             if metrics.boundingRect(self.btn[-1].text()).width() > self.width:

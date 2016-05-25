@@ -19,11 +19,9 @@
 #  <http://www.gnu.org/licenses/>.
 #
 
-import datetime
 from math import *
 import os
 import sys
-import time
 from PyQt4 import QtCore, QtGui
 import ConfigParser   # decode .ini file
 import xlwt
@@ -278,7 +276,7 @@ class getParms(QtGui.QWidget):
             self.wtarget.setText(newtgt)
 
     def helpClicked(self):
-        dialog = displayobject.AnObject(QtGui.QDialog(), self.help, \
+        dialog = displayobject.AnObject(QtGui.QDialog(), self.help,
                  title='Help for SIREN indexweather (' + fileVersion() + ')', section='index')
         dialog.exec_()
 

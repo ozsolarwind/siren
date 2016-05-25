@@ -98,18 +98,18 @@ class Credits(QtGui.QDialog):
             labels.append("SIREN - SEN's Interactive Renewable Energy Network tool")
             labels.append('Copyright (C) 2015 Sustainable Energy Now Inc., Angus King')
             labels.append('Release:' + fileVersion())
-            labels.append('SIREN is free software: you can redistribute it and/or modify it under the terms of the' + \
+            labels.append('SIREN is free software: you can redistribute it and/or modify it under the terms of the' +
                           ' GNU Affero General Public License. The program is distributed WITHOUT ANY WARRANTY')
-            labels.append('The SEN SAM simulation is used to calculate energy generation for renewable energy' + \
+            labels.append('The SEN SAM simulation is used to calculate energy generation for renewable energy' +
                           ' power stations using SAM models.')
             labels.append('To get started press F1 (menu option Help -> Help) to view the SIREN Help file.')
-            labels.append('Capabilities, assumptions, limitations (ie transmission, geographic capabilities,' + \
+            labels.append('Capabilities, assumptions, limitations (ie transmission, geographic capabilities,' +
                           ' etc), verification')
-            labels.append('Contact angus@ozsolarwind.com for more information or alternative modelling' + \
+            labels.append('Contact angus@ozsolarwind.com for more information or alternative modelling' +
                           ' capabilities/suggestions needed')
-            labels.append('We acknowledge US DOE, NASA and OpenStreetMap as follows (press Ctrl+I, menu option' + \
+            labels.append('We acknowledge US DOE, NASA and OpenStreetMap as follows (press Ctrl+I, menu option' +
                           ' Help -> About, for more details):')
-            labels.append('SIREN uses System Advisor Model (SAM) modules for energy calculations. SAM is provided' +\
+            labels.append('SIREN uses System Advisor Model (SAM) modules for energy calculations. SAM is provided' +
                           ' by NREL for the US DOE')
             labels.append('SIREN may use weather data obtained from MERRA data, a NASA atmospheric data set')
             labels.append('SIREN may use a map derived from OpenStreetMap (MapQuest) Open Aerial Tiles')

@@ -28,10 +28,10 @@ from PyQt4 import QtGui, QtCore
 import displayobject
 from credits import fileVersion
 
-scale = {0: '1:500 million', 1: '1:250 million', 2: '1:150 million', 3: '1:70 million', \
-         4: '1:35 million', 5: '1:15 million', 6: '1:10 million', 7: '1:4 million', \
-         8: '1:2 million', 9: '1:1 million', 10: '1:500,000', 11: '1:250,000', \
-         12: '1:150,000', 13: '1:70,000', 14: '1:35,000', 15: '1:15,000', 16: '1:8,000', \
+scale = {0: '1:500 million', 1: '1:250 million', 2: '1:150 million', 3: '1:70 million',
+         4: '1:35 million', 5: '1:15 million', 6: '1:10 million', 7: '1:4 million',
+         8: '1:2 million', 9: '1:1 million', 10: '1:500,000', 11: '1:250,000',
+         12: '1:150,000', 13: '1:70,000', 14: '1:35,000', 15: '1:15,000', 16: '1:8,000',
          17: '1:4,000', 18: '1:2,000', 19: '1:1,000'}
 
 class retrieveMap():
@@ -133,7 +133,7 @@ class retrieveMap():
             if output == '?' or output == '':
                 sys.exit()
         else:
-            self.log = '%s x %s = %s tiles. %s x %s pixels (approx. %s uncompressed bytes)' % (w, h, w * h, \
+            self.log = '%s x %s = %s tiles. %s x %s pixels (approx. %s uncompressed bytes)' % (w, h, w * h,
                        '{:,}'.format(w * 256), '{:,}'.format(h * 256), "{:,}".format(w * 256 * h * 256))
             self.properties = 'map_choice=%s' % (zoom)
             self.properties += '\nmap%s=%s' % (zoom, output)
@@ -301,7 +301,7 @@ class getMap(QtGui.QWidget):
         self.grid.addWidget(help, 12, 3)
         help.clicked.connect(self.helpClicked)
         QtGui.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
-        note = QtCore.QString('Map data ' + unichr(169) + ' OpenStreetMap contributors CC-BY-SA ' + \
+        note = QtCore.QString('Map data ' + unichr(169) + ' OpenStreetMap contributors CC-BY-SA ' +
                '(http://www.openstreetmap.org/copyright)')
         self.grid.addWidget(QtGui.QLabel(note), 13, 0, 1, 6)
         frame = QtGui.QFrame()
@@ -339,7 +339,7 @@ class getMap(QtGui.QWidget):
                 self.filename.setText(self.filename.text() + '.png')
 
     def helpClicked(self):
-        dialog = displayobject.AnObject(QtGui.QDialog(), self.help, \
+        dialog = displayobject.AnObject(QtGui.QDialog(), self.help,
                  title='Help for SIREN getmap (' + fileVersion() + ')', section='map')
         dialog.exec_()
 
@@ -355,7 +355,7 @@ class getMap(QtGui.QWidget):
             l = self.eastSpin.value()
             self.eastSpin.setValue(self.westSpin.value())
             self.westSpin.setValue(l)
-        mapp = retrieveMap(self.northSpin.value(), self.westSpin.value(), self.southSpin.value(), self.eastSpin.value(), \
+        mapp = retrieveMap(self.northSpin.value(), self.westSpin.value(), self.southSpin.value(), self.eastSpin.value(),
                self.zoomSpin.value(), '?')
         self.properties.setPlainText(mapp.getProperties())
         self.log.setText(mapp.getLog())
@@ -374,7 +374,7 @@ class getMap(QtGui.QWidget):
             self.wmap.setPixmap(QtGui.QPixmap.fromImage(world))
 
     def makeClicked(self):
-        mapp = retrieveMap(self.northSpin.value(), self.westSpin.value(), self.southSpin.value(), self.eastSpin.value(), \
+        mapp = retrieveMap(self.northSpin.value(), self.westSpin.value(), self.southSpin.value(), self.eastSpin.value(),
                self.zoomSpin.value(), str(self.filename.text()))
         self.properties.setPlainText(mapp.getProperties())
         self.log.setText(mapp.getLog())

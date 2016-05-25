@@ -19,7 +19,6 @@
 #  <http://www.gnu.org/licenses/>.
 #
 
-import os
 import sys
 from PyQt4 import QtCore, QtGui
 import subprocess as sp
@@ -123,9 +122,9 @@ class RptDialog(QtGui.QDialog):
         buttonLayout.addStretch(1)
         buttonLayout.addWidget(self.saveButton)
         buttonLayout.addWidget(self.cancelButton)
-        self.connect(self.saveButton, QtCore.SIGNAL('clicked()'), self, \
+        self.connect(self.saveButton, QtCore.SIGNAL('clicked()'), self,
                      QtCore.SLOT('accept()'))
-        self.connect(self.cancelButton, QtCore.SIGNAL('clicked()'), \
+        self.connect(self.cancelButton, QtCore.SIGNAL('clicked()'),
                      self, QtCore.SLOT('reject()'))
         self.widget = QtGui.QTextEdit()
         self.widget.setFont(QtGui.QFont('Courier New', 10))
@@ -137,7 +136,7 @@ class RptDialog(QtGui.QDialog):
             ln = int(screen.width() * .67)
         if ln2 > screen.height() * .67:
             ln2 = int(screen.height() * .67)
-        self.widget.setSizePolicy(QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, \
+        self.widget.setSizePolicy(QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding,
             QtGui.QSizePolicy.Expanding))
         self.widget.resize(ln, ln2)
         self.widget.setPlainText(self.lines)
@@ -153,7 +152,7 @@ class RptDialog(QtGui.QDialog):
         size = self.geometry()
         self.setGeometry(1, 1, ln + 10, ln2 + 35)
         size = self.geometry()
-        self.move((screen.width() - size.width()) / 2, \
+        self.move((screen.width() - size.width()) / 2,
             (screen.height() - size.height()) / 2)
         self.widget.show()
 
@@ -189,7 +188,7 @@ class RptDialog(QtGui.QDialog):
 
 class SAMRun():
     def __init__(self, program, parameters=None, comment=None):
-	ssc_api = ssc.API()
+    ssc_api = ssc.API()
         parms = ['python']
         parms.append(program)
         bit = None
@@ -210,6 +209,6 @@ class SAMRun():
 
 if "__main__" == __name__:
     app = QtGui.QApplication(sys.argv)
-    fil = SAMRun('windpower_ak2.py', parameters=['Enercon E66_1870kw(MG)', '/home/' + \
-      getUser() + \
+    fil = SAMRun('windpower_ak2.py', parameters=['Enercon E66_1870kw(MG)', '/home/' +
+      getUser() +
      '/Dropbox/SEN stuff/Tech Team/SIREN App/SAM_wind_files/Albany_-35.0000_118.0000_2014.srw'])

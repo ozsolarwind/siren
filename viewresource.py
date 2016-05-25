@@ -24,7 +24,6 @@ import sys
 from PyQt4 import QtCore, QtGui
 import ConfigParser   # decode .ini file
 
-from credits import fileVersion
 import displayobject
 from editini import SaveIni
 
@@ -63,11 +62,11 @@ class Resource(QtGui.QDialog):
 
     def initUI(self):
         self.be_open = True
-        self.colours = {'dhi': ['DHI (Diffuse)', '#717100', '#ffff00', None], \
-                        'dni': ['DNI (Normal)', '#734c00', '#ff5500', None], \
-                        'ghi': ['GHI (Direct)', '#8b0000', '#ff0000', None], \
-                        'temp': ['Temperature', '#0d52e7', '#e8001f', None], \
-                        'wind': ['Wind Speed', '#82b2ff', '#0000b6', None], \
+        self.colours = {'dhi': ['DHI (Diffuse)', '#717100', '#ffff00', None],
+                        'dni': ['DNI (Normal)', '#734c00', '#ff5500', None],
+                        'ghi': ['GHI (Direct)', '#8b0000', '#ff0000', None],
+                        'temp': ['Temperature', '#0d52e7', '#e8001f', None],
+                        'wind': ['Wind Speed', '#82b2ff', '#0000b6', None],
                         'wind50': ['Wind @ 50m', '#82b2ff', '#0000b6', None]}
         self.hourly = False
         self.daily = False
@@ -247,7 +246,7 @@ class Resource(QtGui.QDialog):
             self.gradients.append([])
             for i in range(self.stepSpin.maximum() + 1):
                 self.gradients[-1].append(QtGui.QLabel('__'))
-                self.gradients[-1][-1].setStyleSheet('QLabel {background-color: %s; color: %s;}' % \
+                self.gradients[-1][-1].setStyleSheet('QLabel {background-color: %s; color: %s;}' %
                                                     (value.name(), value.name()))
                 self.grid.addWidget(self.gradients[-1][-1], row, i + 3)
             row += 1
@@ -258,21 +257,21 @@ class Resource(QtGui.QDialog):
                 value = QtGui.QColor(self.colours[key][1])
                 self.btn.append(QtGui.QPushButton(key + '_1', self))
                 self.btn[-1].clicked.connect(self.colourChanged)
-                self.btn[-1].setStyleSheet('QPushButton {background-color: %s; color: %s;}' % \
+                self.btn[-1].setStyleSheet('QPushButton {background-color: %s; color: %s;}' %
                                  (value.name(), value.name()))
                 self.grid.addWidget(self.btn[-1], row, 1)
             if self.colours[key][2] != '':
                 value = QtGui.QColor(self.colours[key][2])
                 self.btn.append(QtGui.QPushButton(key + '_2', self))
                 self.btn[-1].clicked.connect(self.colourChanged)
-                self.btn[-1].setStyleSheet('QPushButton {background-color: %s; color: %s;}' % \
+                self.btn[-1].setStyleSheet('QPushButton {background-color: %s; color: %s;}' %
                                  (value.name(), value.name()))
                 self.grid.addWidget(self.btn[-1], row, 2)
             if self.stepSpin.value() > 0:
                 colors = gradient(self.colours[key][1], self.colours[key][2], self.stepSpin.value())
                 for i in range(len(colors)):
                     value = QtGui.QColor(colors[i])
-                    self.gradients[row - self.first_row][i].setStyleSheet('QLabel {background-color: %s; color: %s;}' % \
+                    self.gradients[row - self.first_row][i].setStyleSheet('QLabel {background-color: %s; color: %s;}' %
                                     (value.name(), value.name()))
             row += 1
         quit = QtGui.QPushButton('Quit', self)
@@ -366,13 +365,13 @@ class Resource(QtGui.QDialog):
         if self.detailCombo.currentText() == 'Hourly by Month':
             self.periodCombo.setCurrentIndex(self.periodCombo.findText(self.skipCombo.currentText() + '_01:00'))
         elif self.detailCombo.currentText() == 'Hourly by Day':
-            self.periodCombo.setCurrentIndex(self.periodCombo.findText(self.skipCombo.currentText() + \
+            self.periodCombo.setCurrentIndex(self.periodCombo.findText(self.skipCombo.currentText() +
                 '-' + self.skipdayCombo.currentText() + '_01:00'))
 
     def skipday(self):
         if self.skipdayCombo.currentText() == '':
             return
-        self.periodCombo.setCurrentIndex(self.periodCombo.findText(self.skipCombo.currentText() + \
+        self.periodCombo.setCurrentIndex(self.periodCombo.findText(self.skipCombo.currentText() +
             '-' + self.skipdayCombo.currentText() + '_01:00'))
 
     def setPeriod(self, period=None):
@@ -396,7 +395,7 @@ class Resource(QtGui.QDialog):
             for i in range(12):
                 self.skipCombo.addItem(self.year + '-{0:02d}'.format(i + 1))
                 for j in range(24):
-                    self.periodCombo.addItem(self.year + '-{0:02d}'.format(i + 1) + \
+                    self.periodCombo.addItem(self.year + '-{0:02d}'.format(i + 1) +
                                              '_{0:02d}'.format(j + 1) + ':00')
                 if period == self.year + '-' + '{0:02d}'.format(i):
                     self.periodCombo.setCurrentIndex(i)
@@ -408,8 +407,8 @@ class Resource(QtGui.QDialog):
                 self.skipCombo.addItem(self.year + '-{0:02d}'.format(i + 1))
                 for d in range(the_days[i]):
                     for j in range(24):
-                        self.periodCombo.addItem(self.year + '-{0:02d}'.format(i + 1) + \
-                                             '-{0:02d}'.format(d + 1) + \
+                        self.periodCombo.addItem(self.year + '-{0:02d}'.format(i + 1) +
+                                             '-{0:02d}'.format(d + 1) +
                                              '_{0:02d}'.format(j + 1) + ':00')
             self.skipCombo.show()
            #  for d in range(31):
@@ -421,7 +420,7 @@ class Resource(QtGui.QDialog):
         value = self.palette().color(QtGui.QPalette.Window)
         for i in range(len(self.gradients)):
             for j in range(len(self.gradients[i])):
-                self.gradients[i][j].setStyleSheet('QLabel {background-color: %s; color: %s;}' % \
+                self.gradients[i][j].setStyleSheet('QLabel {background-color: %s; color: %s;}' %
                                                     (value.name(), value.name()))
         if self.stepSpin.value() > 0:
             row = self.first_row
@@ -430,8 +429,8 @@ class Resource(QtGui.QDialog):
                 for i in range(len(self.colours[key][3])):
                     value = QtGui.QColor(self.colours[key][3][i])
                     value.setAlphaF(self.opacitySpin.value())
-                    self.gradients[row - self.first_row][i].setStyleSheet( \
-                                  'QLabel {background-color: %s; color: %s; opacity: 50}' % \
+                    self.gradients[row - self.first_row][i].setStyleSheet(
+                                  'QLabel {background-color: %s; color: %s; opacity: 50}' %
                                   (value.name(), value.name()))
                     val = []
                     for j in range(3):

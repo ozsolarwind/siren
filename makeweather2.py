@@ -28,7 +28,6 @@ if sys.platform == 'win32' or sys.platform == 'cygwin':
     from netCDF4 import Dataset
 else:
     from Scientific.IO.NetCDF import *
-import time
 from PyQt4 import QtCore, QtGui
 import displayobject
 from sammodels import getDNI, getDHI
@@ -73,7 +72,7 @@ class makeWeather():
             for lat in range(len(um[hr])):   # n latitudes
                 lm = []
                 for lon in range(len(um[hr][lat])):   # m longitudes
-                    lm.append(round(math.sqrt(um[hr][lat][lon] * um[hr][lat][lon] + \
+                    lm.append(round(math.sqrt(um[hr][lat][lon] * um[hr][lat][lon] +
                                     vm[hr][lat][lon] * vm[hr][lat][lon]), 4))
                 hm.append(lm)
             sm.append(hm)
@@ -166,14 +165,14 @@ class makeWeather():
 
     def valu(self, data, lat1, lon1, lat_rat, lon_rat, rnd=4):
         if rnd > 0:
-            return round(lat_rat * lon_rat * data[lat1][lon1] + \
-                (1.0 - lat_rat) * lon_rat * data[lat1 + 1][lon1] + \
-                lat_rat * (1.0 - lon_rat) * data[lat1][lon1 + 1] + \
+            return round(lat_rat * lon_rat * data[lat1][lon1] +
+                (1.0 - lat_rat) * lon_rat * data[lat1 + 1][lon1] +
+                lat_rat * (1.0 - lon_rat) * data[lat1][lon1 + 1] +
                 (1.0 - lat_rat) * (1.0 - lon_rat) * data[lat1 + 1][lon1 + 1], rnd)
         else:
-            return int(lat_rat * lon_rat * data[lat1][lon1] + \
-                (1.0 - lat_rat) * lon_rat * data[lat1 + 1][lon1] + \
-                lat_rat * (1.0 - lon_rat) * data[lat1][lon1 + 1] + \
+            return int(lat_rat * lon_rat * data[lat1][lon1] +
+                (1.0 - lat_rat) * lon_rat * data[lat1 + 1][lon1] +
+                lat_rat * (1.0 - lon_rat) * data[lat1][lon1 + 1] +
                 (1.0 - lat_rat) * (1.0 - lon_rat) * data[lat1 + 1][lon1 + 1])
 
     def get_data(self, inp_file):
@@ -236,12 +235,12 @@ class makeWeather():
         self.return_code = 0
         if self.longrange[0] is not None:
             if int(round(self.longrange[0] / 15)) != self.src_zone:
-                self.log += 'MERRA west longitude (%s) in different time zone: %s\n' % ('{:0.4f}'.format(self.longrange[0]), \
+                self.log += 'MERRA west longitude (%s) in different time zone: %s\n' % ('{:0.4f}'.format(self.longrange[0]),
                             int(round(self.longrange[0] / 15)))
                 self.return_code = 1
         if self.longrange[1] is not None:
             if int(round(self.longrange[1] / 15)) != self.src_zone:
-                self.log += 'MERRA east longitude (%s) in different time zone: %s\n' % ('{:0.4f}'.format(self.longrange[1]), \
+                self.log += 'MERRA east longitude (%s) in different time zone: %s\n' % ('{:0.4f}'.format(self.longrange[1]),
                             int(round(self.longrange[1] / 15)))
                 self.return_code = 1
         return
@@ -392,7 +391,7 @@ class makeWeather():
                 cdf_file = NetCDFFile(unzip_file, 'r')
             longitude = cdf_file.variables[self.vars['longitude']][:]
             self.src_zone = int(round(longitude[0] / 15))
-            self.log += 'Time zone: %s based on MERRA (west) longitude (%s to %s)\n' % (str(self.src_zone), \
+            self.log += 'Time zone: %s based on MERRA (west) longitude (%s to %s)\n' % (str(self.src_zone),
                         '{:0.4f}'.format(longitude[0]), '{:0.4f}'.format(longitude[-1]))
             cdf_file.close()
         else:
@@ -424,13 +423,13 @@ class makeWeather():
             self.make_wind = True
         else:
             self.make_wind = False
-            if self.src_dir_s[0] == self.src_dir_s[-1] and (self.src_dir_s[0] == '"' or \
+            if self.src_dir_s[0] == self.src_dir_s[-1] and (self.src_dir_s[0] == '"' or
                self.src_dir_s[0] == "'"):
                 self.src_dir_s = self.src_dir_s[1:-1]
-        if self.src_dir_w[0] == self.src_dir_w[-1] and (self.src_dir_w[0] == '"' or \
+        if self.src_dir_w[0] == self.src_dir_w[-1] and (self.src_dir_w[0] == '"' or
            self.src_dir_w[0] == "'"):
             self.src_dir_w = self.src_dir_w[1:-1]
-        if self.tgt_dir[0] == self.tgt_dir[-1] and (self.tgt_dir[0] == '"' or \
+        if self.tgt_dir[0] == self.tgt_dir[-1] and (self.tgt_dir[0] == '"' or
            self.tgt_dir[0] == "'"):
             self.tgt_dir = self.tgt_dir[1:-1]
         self.lati = []
@@ -571,35 +570,35 @@ class makeWeather():
                     out_file = self.tgt_dir + 'wind_weather_' + str(self.src_lat[i]) + '_' + \
                                str(self.src_lon[i]) + '_' + str(self.src_year) + '.' + self.fmat
                     tf = open(out_file, 'w')
-                    hdr = 'id,<city>,<state>,<country>,%s,%s,%s,0,1,8760\n' % (str(self.src_year), \
+                    hdr = 'id,<city>,<state>,<country>,%s,%s,%s,0,1,8760\n' % (str(self.src_year),
                           round(self.src_lat[i], 4), round(self.src_lon[i], 4))
                     tf.write(hdr)
                     tf.write('Wind data derived from MERRA tavg1_2d_slv_Nx' + '\n')
                     if len(self.s10m) > 0:
-                        tf.write('Temperature,Pressure,Direction,Speed,Temperature,Direction,Speed,' + \
+                        tf.write('Temperature,Pressure,Direction,Speed,Temperature,Direction,Speed,' +
                                  'Direction,Speed' + '\n')
                         tf.write('C,atm,degrees,m/s,C,degrees,m/s,degrees,m/s' + '\n')
                         tf.write('2,0,2,2,10,10,10,50,50' + '\n')
                         for hr in range(len(self.s50m)):
-                            tf.write(str(self.valu(self.t_2m[hr], lat1, lon1, lat_rat, lon_rat, rnd=1)) + ',' + \
-                                str(self.valu(self.p_s[hr], lat1, lon1, lat_rat, lon_rat, rnd=6)) + ',' + \
-                                str(self.valu(self.d2m[hr], lat1, lon1, lat_rat, lon_rat, rnd=0)) + ',' + \
-                                str(self.valu(self.s2m[hr], lat1, lon1, lat_rat, lon_rat)) + ',' + \
-                                str(self.valu(self.t_10m[hr], lat1, lon1, lat_rat, lon_rat, rnd=1)) + ',' + \
-                                str(self.valu(self.d10m[hr], lat1, lon1, lat_rat, lon_rat, rnd=0)) + ',' + \
-                                str(self.valu(self.s10m[hr], lat1, lon1, lat_rat, lon_rat)) + ',' + \
-                                str(self.valu(self.d50m[hr], lat1, lon1, lat_rat, lon_rat, rnd=0)) + ',' + \
+                            tf.write(str(self.valu(self.t_2m[hr], lat1, lon1, lat_rat, lon_rat, rnd=1)) + ',' +
+                                str(self.valu(self.p_s[hr], lat1, lon1, lat_rat, lon_rat, rnd=6)) + ',' +
+                                str(self.valu(self.d2m[hr], lat1, lon1, lat_rat, lon_rat, rnd=0)) + ',' +
+                                str(self.valu(self.s2m[hr], lat1, lon1, lat_rat, lon_rat)) + ',' +
+                                str(self.valu(self.t_10m[hr], lat1, lon1, lat_rat, lon_rat, rnd=1)) + ',' +
+                                str(self.valu(self.d10m[hr], lat1, lon1, lat_rat, lon_rat, rnd=0)) + ',' +
+                                str(self.valu(self.s10m[hr], lat1, lon1, lat_rat, lon_rat)) + ',' +
+                                str(self.valu(self.d50m[hr], lat1, lon1, lat_rat, lon_rat, rnd=0)) + ',' +
                                 str(self.valu(self.s50m[hr], lat1, lon1, lat_rat, lon_rat)) + '\n')
                     else:
                         tf.write('Temperature,Pressure,Direction,Speed,Direction,Speed' + '\n')
                         tf.write('C,atm,degrees,m/s,degrees,m/s' + '\n')
                         tf.write('2,0,2,2,50,50' + '\n')
                         for hr in range(len(self.s50m)):
-                            tf.write(str(self.valu(self.t_2m[hr], lat1, lon1, lat_rat, lon_rat, rnd=1)) + ',' + \
-                                str(self.valu(self.p_s[hr], lat1, lon1, lat_rat, lon_rat, rnd=6)) + ',' + \
-                                str(self.valu(self.d2m[hr], lat1, lon1, lat_rat, lon_rat, rnd=0)) + ',' + \
-                                str(self.valu(self.s2m[hr], lat1, lon1, lat_rat, lon_rat)) + ',' + \
-                                str(self.valu(self.d50m[hr], lat1, lon1, lat_rat, lon_rat, rnd=0)) + ',' + \
+                            tf.write(str(self.valu(self.t_2m[hr], lat1, lon1, lat_rat, lon_rat, rnd=1)) + ',' +
+                                str(self.valu(self.p_s[hr], lat1, lon1, lat_rat, lon_rat, rnd=6)) + ',' +
+                                str(self.valu(self.d2m[hr], lat1, lon1, lat_rat, lon_rat, rnd=0)) + ',' +
+                                str(self.valu(self.s2m[hr], lat1, lon1, lat_rat, lon_rat)) + ',' +
+                                str(self.valu(self.d50m[hr], lat1, lon1, lat_rat, lon_rat, rnd=0)) + ',' +
                                 str(self.valu(self.s50m[hr], lat1, lon1, lat_rat, lon_rat)) + '\n')
                     tf.close()
                     self.log += '%s created\n' % out_file[out_file.rfind('/') + 1:]
@@ -619,28 +618,28 @@ class makeWeather():
                         out_file = self.tgt_dir + 'wind_weather_' + '{:0.4f}'.format(self.lati[lat]) + \
                                    '_' + '{:0.4f}'.format(self.longi[lon]) + '_' + str(self.src_year) + '.srw'
                         tf = open(out_file, 'w')
-                        hdr = 'id,<city>,<state>,<country>,%s,%s,%s,0,1,8760\n' % (str(self.src_year), \
+                        hdr = 'id,<city>,<state>,<country>,%s,%s,%s,0,1,8760\n' % (str(self.src_year),
                               round(self.lati[lat], 4), round(self.longi[lon], 4))
                         tf.write(hdr)
                         tf.write('Wind data derived from MERRA tavg1_2d_slv_Nx' + '\n')
                         if len(self.s10m) > 0:
-                            tf.write('Temperature,Pressure,Direction,Speed,Temperature,Direction,' + \
+                            tf.write('Temperature,Pressure,Direction,Speed,Temperature,Direction,' +
                                      'Speed,Direction,Speed' + '\n')
                             tf.write('C,atm,degrees,m/s,C,degrees,m/s,degrees,m/s' + '\n')
                             tf.write('2,0,2,2,10,10,10,50,50' + '\n')
                             for hr in range(len(self.s50m)):
-                                tf.write(str(self.t_2m[hr][lat][lon]) + ',' + str(self.p_s[hr][lat][lon]) + ',' + \
-                                        str(self.d2m[hr][lat][lon]) + ',' + str(self.s2m[hr][lat][lon]) + ',' + \
-                                        str(self.t_10m[hr][lat][lon]) + ',' + str(self.d10m[hr][lat][lon]) + ',' + \
-                                        str(self.s10m[hr][lat][lon]) + ',' + \
+                                tf.write(str(self.t_2m[hr][lat][lon]) + ',' + str(self.p_s[hr][lat][lon]) + ',' +
+                                        str(self.d2m[hr][lat][lon]) + ',' + str(self.s2m[hr][lat][lon]) + ',' +
+                                        str(self.t_10m[hr][lat][lon]) + ',' + str(self.d10m[hr][lat][lon]) + ',' +
+                                        str(self.s10m[hr][lat][lon]) + ',' +
                                         str(self.d50m[hr][lat][lon]) + ',' + str(self.s50m[hr][lat][lon]) + '\n')
                         else:
                             tf.write('Temperature,Pressure,Direction,Speed,Direction,Speed' + '\n')
                             tf.write('C,atm,degrees,m/s,degrees,m/s' + '\n')
                             tf.write('2,0,2,2,50,50' + '\n')
                             for hr in range(len(self.s50m)):
-                                tf.write(str(self.t_2m[hr][lat][lon]) + ',' + str(self.p_s[hr][lat][lon]) + ',' + \
-                                        str(self.d2m[hr][lat][lon]) + ',' + str(self.s2m[hr][lat][lon]) + ',' + \
+                                tf.write(str(self.t_2m[hr][lat][lon]) + ',' + str(self.p_s[hr][lat][lon]) + ',' +
+                                        str(self.d2m[hr][lat][lon]) + ',' + str(self.s2m[hr][lat][lon]) + ',' +
                                         str(self.d50m[hr][lat][lon]) + ',' + str(self.s50m[hr][lat][lon]) + '\n')
                         tf.close()
                         self.log += '%s created\n' % out_file[out_file.rfind('/') + 1:]
@@ -721,7 +720,7 @@ class makeWeather():
                 tf = open(out_file, 'w')
                 if self.fmat == 'csv':
                     hdr = 'Location,City,Region,Country,Latitude,Longitude,Time Zone,Elevation,Source\n' + \
-                          'id,<city>,<state>,<country>,%s,%s,%s,0,IWEC\n' % (round(self.src_lat[i], 4), \
+                          'id,<city>,<state>,<country>,%s,%s,%s,0,IWEC\n' % (round(self.src_lat[i], 4),
                           round(self.src_lon[i], 4), str(self.src_zone))
                     tf.write(hdr)
                     tf.write('Year,Month,Day,Hour,GHI,DNI,DHI,Tdry,Pres,Wspd,Wdir' + '\n')
@@ -730,16 +729,17 @@ class makeWeather():
                     hour = 1
                     for hr in range(len(self.s10m)):
                         ghi = self.valu(self.swgnt[hr], lat1, lon1, lat_rat, lon_rat)
-                        dni = getDNI(ghi, hour=hr + 1, lat=self.src_lat[i], lon=self.src_lon[i], \
-                              press=self.valu(self.p_s[hr], lat1, \
+                        dni = getDNI(ghi, hour=hr + 1, lat=self.src_lat[i], lon=self.src_lon[i],
+                              press=self.valu(self.p_s[hr], lat1,
                               lon1, lat_rat, lon_rat, rnd=0), zone=self.src_zone)
                         dhi = getDHI(ghi, dni, hour=hr + 1, lat=self.src_lat[i])
                         tf.write(str(self.src_year) + ',' + str(mth + 1) + ',' +
-                        str(day) + ',' + str(hour) + ',' + \
-                        str(int(ghi)) + ',' + str(int(dni)) + ',' + str(int(dhi)) + ',' + \
-                        str(self.valu(self.t_10m[hr], lat1, lon1, lat_rat, lon_rat, rnd=1)) + ',' + \
-                        str(self.valu(self.p_s[hr], lat1, lon1, lat_rat, lon_rat, rnd=0)) + ',' + \
-                        str(self.valu(self.s10m[hr], lat1, lon1, lat_rat, lon_rat)) + ',' + \
+                        str(day) + ',' + str(hour) + ',' +
+                        str(int(ghi)) + ',' + str(int(dni)) + ',' + str(int(dhi)) + ',' +
+                        str(self.valu(self.t_10m[hr], lat1, lon1, lat_rat, lon_rat, rnd=1)) + ',' +
+
+                        str(self.valu(self.p_s[hr], lat1, lon1, lat_rat, lon_rat, rnd=0)) + ',' +
+                        str(self.valu(self.s10m[hr], lat1, lon1, lat_rat, lon_rat)) + ',' +
                         str(self.valu(self.d10m[hr], lat1, lon1, lat_rat, lon_rat, rnd=0)) + '\n')
                         hour += 1
                         if hour > 24:
@@ -750,22 +750,22 @@ class makeWeather():
                                 day = 1
                                 hour = 1
                 else:
-                    hdr = 'id,<city>,<state>,%s,%s,%s,0,3600.0,%s,0:30:00\n' % (str(self.src_zone), \
-                          round(self.src_lat[i], 4), \
+                    hdr = 'id,<city>,<state>,%s,%s,%s,0,3600.0,%s,0:30:00\n' % (str(self.src_zone),
+                          round(self.src_lat[i], 4),
                           round(self.src_lon[i], 4), str(self.src_year))
                     tf.write(hdr)
                     for hr in range(len(self.s10m)):
                         ghi = self.valu(self.swgnt[hr], lat1, lon1, lat_rat, lon_rat)
-                        dni = getDNI(ghi, hour=hr + 1, lat=self.src_lat[i], lon=self.src_lon[i], \
-                              press=self.valu(self.p_s[hr], lat1, lon1, lat_rat, \
+                        dni = getDNI(ghi, hour=hr + 1, lat=self.src_lat[i], lon=self.src_lon[i],
+                              press=self.valu(self.p_s[hr], lat1, lon1, lat_rat,
                               lon_rat, rnd=0), zone=self.src_zone)
                         dhi = getDHI(ghi, dni, hour=hr + 1, lat=self.src_lat[i])
-                        tf.write(str(self.valu(self.t_10m[hr], lat1, lon1, lat_rat, lon_rat, rnd=1)) + \
-                        ',-999,-999,-999,' + \
-                        str(self.valu(self.s10m[hr], lat1, lon1, lat_rat, lon_rat)) + ',' + \
-                        str(self.valu(self.d10m[hr], lat1, lon1, lat_rat, lon_rat, rnd=0)) + ',' + \
-                        str(self.valu(self.p_s[hr], lat1, lon1, lat_rat, lon_rat, rnd=1)) + ',' + \
-                        str(int(ghi)) + ',' + str(int(dni)) + ',' + str(int(dhi)) + \
+                        tf.write(str(self.valu(self.t_10m[hr], lat1, lon1, lat_rat, lon_rat, rnd=1)) +
+                        ',-999,-999,-999,' +
+                        str(self.valu(self.s10m[hr], lat1, lon1, lat_rat, lon_rat)) + ',' +
+                        str(self.valu(self.d10m[hr], lat1, lon1, lat_rat, lon_rat, rnd=0)) + ',' +
+                        str(self.valu(self.p_s[hr], lat1, lon1, lat_rat, lon_rat, rnd=1)) + ',' +
+                        str(int(ghi)) + ',' + str(int(dni)) + ',' + str(int(dhi)) +
                         ',-999,-999,\n')
                 tf.close()
                 self.log += '%s created\n' % out_file[out_file.rfind('/') + 1:]
@@ -787,7 +787,7 @@ class makeWeather():
                     tf = open(out_file, 'w')
                     if self.fmat == 'csv':
                         hdr = 'Location,City,Region,Country,Latitude,Longitude,Time Zone,Elevation,Source\n' + \
-                              'id,<city>,<state>,<country>,%s,%s,%s,0,IWEC\n' % (round(self.lati[lat], 4), \
+                              'id,<city>,<state>,<country>,%s,%s,%s,0,IWEC\n' % (round(self.lati[lat], 4),
                               round(self.longi[lon], 4), str(self.src_zone))
                         tf.write(hdr)
                         tf.write('Year,Month,Day,Hour,GHI,DNI,DHI,Tdry,Pres,Wspd,Wdir' + '\n')
@@ -796,16 +796,16 @@ class makeWeather():
                         hour = 1
                         for hr in range(len(self.s10m)):
                             ghi = self.swgnt[hr][lat][lon]
-                            dni = getDNI(ghi, hour=hr + 1, lat=self.lati[lat], lon=self.longi[lon], \
+                            dni = getDNI(ghi, hour=hr + 1, lat=self.lati[lat], lon=self.longi[lon],
                                   press=self.p_s[hr][lat][lon], zone=self.src_zone)
                             dhi = getDHI(ghi, dni, hour=hr + 1, lat=self.lati[lat])
                             tf.write(str(self.src_year) + ',' + '{0:02d}'.format(mth + 1) + ',' +
-                                '{0:02d}'.format(day) + ',' + '{0:02d}'.format(hour) + ',' + \
-                                '{:0.1f}'.format(ghi) + ',' + '{:0.1f}'.format(dni) + ',' + \
-                                '{:0.1f}'.format(dhi) + ',' + \
-                                str(self.t_10m[hr][lat][lon]) + ',' + \
-                                str(self.p_s[hr][lat][lon]) + ',' + \
-                                str(self.s10m[hr][lat][lon]) + ',' + \
+                                '{0:02d}'.format(day) + ',' + '{0:02d}'.format(hour) + ',' +
+                                '{:0.1f}'.format(ghi) + ',' + '{:0.1f}'.format(dni) + ',' +
+                                '{:0.1f}'.format(dhi) + ',' +
+                                str(self.t_10m[hr][lat][lon]) + ',' +
+                                str(self.p_s[hr][lat][lon]) + ',' +
+                                str(self.s10m[hr][lat][lon]) + ',' +
                                 str(self.d10m[hr][lat][lon]) + '\n')
                             hour += 1
                             if hour > 24:
@@ -816,21 +816,21 @@ class makeWeather():
                                     day = 1
                                     hour = 1
                     else:
-                        hdr = 'id,<city>,<state>,%s,%s,%s,0,3600.0,%s,0:30:00\n' % (str(self.src_zone), \
-                              round(self.lati[lat], 4), \
+                        hdr = 'id,<city>,<state>,%s,%s,%s,0,3600.0,%s,0:30:00\n' % (str(self.src_zone),
+                              round(self.lati[lat], 4),
                               round(self.longi[lon], 4), str(self.src_year))
                         tf.write(hdr)
                         for hr in range(len(self.s10m)):
                             ghi = self.swgnt[hr][lat][lon]
-                            dni = getDNI(ghi, hour=hr + 1, lat=self.lati[lat], lon=self.longi[lon], \
+                            dni = getDNI(ghi, hour=hr + 1, lat=self.lati[lat], lon=self.longi[lon],
                                   press=self.p_s[hr][lat][lon], zone=self.src_zone)
                             dhi = getDHI(ghi, dni, hour=hr + 1, lat=self.lati[lat])
-                            tf.write(str(self.t_10m[hr][lat][lon]) + \
-                                ',-999,-999,-999,' + \
-                                str(self.s10m[hr][lat][lon]) + ',' + \
-                                str(self.d10m[hr][lat][lon]) + ',' + \
-                                str(self.p_s[hr][lat][lon]) + ',' + \
-                                str(int(ghi)) + ',' + str(int(dni)) + ',' + str(int(dhi)) + \
+                            tf.write(str(self.t_10m[hr][lat][lon]) +
+                                ',-999,-999,-999,' +
+                                str(self.s10m[hr][laot][lon]) + ',' +
+                                str(self.d10m[hr][lat][lon]) + ',' +
+                                str(self.p_s[hr][lat][lon]) + ',' +
+                                str(int(ghi)) + ',' + str(int(dni)) + ',' + str(int(dhi)) +
                                 ',-999,-999,\n')
                     tf.close()
                     self.log += '%s created\n' % out_file[out_file.rfind('/') + 1:]
@@ -965,7 +965,7 @@ class getParms(QtGui.QWidget):
                     self.dirs[2].setText(newdir)
 
     def helpClicked(self):
-        dialog = displayobject.AnObject(QtGui.QDialog(), self.help, \
+        dialog = displayobject.AnObject(QtGui.QDialog(), self.help,
                  title='Help for SIREN makeweather2 (' + fileVersion() + ')', section='merra3')
         dialog.exec_()
 
@@ -984,10 +984,10 @@ class getParms(QtGui.QWidget):
             zone = 'auto'
         else:
             zone = str(self.zoneCombo.currentIndex() - 13)
-        solar = makeWeather(str(self.yearSpin.value()), zone, str(self.dirs[0].text()), \
+        solar = makeWeather(str(self.yearSpin.value()), zone, str(self.dirs[0].text()),
                             str(self.dirs[1].text()), str(self.dirs[2].text()), str(self.fmatcombo.currentText()), coords)
-        dialr = RptDialog(str(self.yearSpin.value()), zone, str(self.dirs[0].text()), \
-                          str(self.dirs[1].text()), str(self.dirs[2].text()), str(self.fmatcombo.currentText()), \
+        dialr = RptDialog(str(self.yearSpin.value()), zone, str(self.dirs[0].text()),
+                          str(self.dirs[1].text()), str(self.dirs[2].text()), str(self.fmatcombo.currentText()),
                           coords, solar.returnCode(), solar.getLog())
         dialr.exec_()
         del solar
@@ -1005,11 +1005,11 @@ class getParms(QtGui.QWidget):
             zone = 'auto'
         else:
             zone = str(self.zoneCombo.currentIndex() - 13)
-        wind = makeWeather(str(self.yearSpin.value()), zone, str(self.dirs[0].text()), \
-                            str(self.dirs[1].text()), str(self.dirs[2].text()), \
+        wind = makeWeather(str(self.yearSpin.value()), zone, str(self.dirs[0].text()),
+                            str(self.dirs[1].text()), str(self.dirs[2].text()),
                             'wind', coords)
-        dialr = RptDialog(str(self.yearSpin.value()), zone, str(self.dirs[0].text()), \
-                          str(self.dirs[1].text()), str(self.dirs[2].text()), 'srw', \
+        dialr = RptDialog(str(self.yearSpin.value()), zone, str(self.dirs[0].text()),
+                          str(self.dirs[1].text()), str(self.dirs[2].text()), 'srw',
                           coords, wind.returnCode(), wind.getLog())
         dialr.exec_()
         del wind
@@ -1027,11 +1027,11 @@ class getParms(QtGui.QWidget):
             zone = 'auto'
         else:
             zone = str(self.zoneCombo.currentIndex() - 13)
-        wind = makeWeather(str(self.yearSpin.value()), zone, str(self.dirs[0].text()), \
-                            str(self.dirs[1].text()), str(self.dirs[2].text()), \
+        wind = makeWeather(str(self.yearSpin.value()), zone, str(self.dirs[0].text()),
+                            str(self.dirs[1].text()), str(self.dirs[2].text()),
                             'both', coords, info=True)
-        dialr = RptDialog(str(self.yearSpin.value()), zone, str(self.dirs[0].text()), \
-                          str(self.dirs[1].text()), str(self.dirs[2].text()), 'srw', \
+        dialr = RptDialog(str(self.yearSpin.value()), zone, str(self.dirs[0].text()),
+                          str(self.dirs[1].text()), str(self.dirs[2].text()), 'srw',
                           coords, wind.returnCode(), wind.getLog())
         dialr.exec_()
         del wind
@@ -1066,9 +1066,9 @@ class RptDialog(QtGui.QDialog):
         buttonLayout.addStretch(1)
         buttonLayout.addWidget(self.saveButton)
         buttonLayout.addWidget(self.cancelButton)
-        self.connect(self.saveButton, QtCore.SIGNAL('clicked()'), self, \
+        self.connect(self.saveButton, QtCore.SIGNAL('clicked()'), self,
                      QtCore.SLOT('accept()'))
-        self.connect(self.cancelButton, QtCore.SIGNAL('clicked()'), \
+        self.connect(self.cancelButton, QtCore.SIGNAL('clicked()'),
                      self, QtCore.SLOT('reject()'))
         self.widget = QtGui.QTextEdit()
         self.widget.setFont(QtGui.QFont('Courier New', 11))
@@ -1080,7 +1080,7 @@ class RptDialog(QtGui.QDialog):
             ln = int(screen.width() * .67)
         if ln2 > screen.height() * .67:
             ln2 = int(screen.height() * .67)
-        self.widget.setSizePolicy(QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, \
+        self.widget.setSizePolicy(QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding,
             QtGui.QSizePolicy.Expanding))
         self.widget.resize(ln, ln2)
         self.widget.setPlainText(self.lines)
@@ -1092,7 +1092,7 @@ class RptDialog(QtGui.QDialog):
         size = self.geometry()
         self.setGeometry(1, 1, ln + 10, ln2 + 35)
         size = self.geometry()
-        self.move((screen.width() - size.width()) / 2, \
+        self.move((screen.width() - size.width()) / 2,
             (screen.height() - size.height()) / 2)
         self.widget.show()
 

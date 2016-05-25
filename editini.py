@@ -19,7 +19,6 @@
 #  <http://www.gnu.org/licenses/>.
 #
 
-from datetime import datetime, timedelta
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtGui import QDesktopWidget
 import ConfigParser   # decode .ini file
@@ -54,9 +53,9 @@ class EdtDialog(QtGui.QDialog):
         buttonLayout.addStretch(1)
         buttonLayout.addWidget(self.saveButton)
         buttonLayout.addWidget(self.cancelButton)
-        self.connect(self.saveButton, QtCore.SIGNAL('clicked()'), self, \
+        self.connect(self.saveButton, QtCore.SIGNAL('clicked()'), self,
                      QtCore.SLOT('accept()'))
-        self.connect(self.cancelButton, QtCore.SIGNAL('clicked()'), \
+        self.connect(self.cancelButton, QtCore.SIGNAL('clicked()'),
                      self, QtCore.SLOT('reject()'))
         self.widget = QtGui.QPlainTextEdit()
         highlight = inisyntax.IniHighlighter(self.widget.document())
@@ -82,7 +81,7 @@ class EdtDialog(QtGui.QDialog):
         size = self.geometry()
         self.setGeometry(1, 1, ln + 10, ln2 + 35)
         size = self.geometry()
-        self.move((screen.width() - size.width()) / 2, \
+        self.move((screen.width() - size.width()) / 2,
             (screen.height() - size.height()) / 2)
         self.widget.show()
 
@@ -114,7 +113,7 @@ class EditSect():
         section_dict = {}
         for key, value in section_items:
             section_dict[key] = value
-        dialog = displaytable.Table(section_dict, fields=['property', 'value'], title=self.section + ' Parameters', \
+        dialog = displaytable.Table(section_dict, fields=['property', 'value'], title=self.section + ' Parameters',
                  save_folder=save_folder, edit=True)
         dialog.exec_()
         values = dialog.getValues()
@@ -173,7 +172,7 @@ class EditTech():
             except:
                 pass
             tech_dict[technology] = [area, capital_cost, o_m_cost]
-        dialog = displaytable.Table(tech_dict, fields=['technology', 'area', 'capital_cost', 'o_m_cost'], \
+        dialog = displaytable.Table(tech_dict, fields=['technology', 'area', 'capital_cost', 'o_m_cost'],
                  save_folder=save_folder, title='Technologies', edit=True)
         dialog.exec_()
         values = dialog.getValues()
