@@ -22,6 +22,7 @@
 from PyQt4.QtCore import QRegExp
 from PyQt4.QtGui import QColor, QTextCharFormat, QFont, QSyntaxHighlighter
 
+
 def format(color, style=''):
     """Return a QTextCharFormat with the given attributes.
     """

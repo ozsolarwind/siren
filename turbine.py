@@ -28,6 +28,7 @@ import ConfigParser    # decode .ini file
 
 from senuser import getUser
 
+
 class Power_Curve:
 
     def get_config(self):

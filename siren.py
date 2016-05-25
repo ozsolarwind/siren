@@ -33,6 +33,7 @@ import displayobject
 from editini import EdtDialog
 from senuser import getUser
 
+
 def commonprefix(args, sep='/'):
     arg2 = []
     for arg in args:
@@ -40,6 +41,7 @@ def commonprefix(args, sep='/'):
         if arg[-1] != sep:
             arg2[-1] += sep
     return os.path.commonprefix(arg2).rpartition(sep)[0]
+
 
 class TabDialog(QtGui.QDialog):
     def __init__(self, parent=None):

@@ -34,6 +34,7 @@ scale = {0: '1:500 million', 1: '1:250 million', 2: '1:150 million', 3: '1:70 mi
          12: '1:150,000', 13: '1:70,000', 14: '1:35,000', 15: '1:15,000', 16: '1:8,000',
          17: '1:4,000', 18: '1:2,000', 19: '1:1,000'}
 
+
 class retrieveMap():
 
     def numTiles(self, z):
@@ -173,12 +174,14 @@ class retrieveMap():
     def getCoords(self):
         return [self.nt, self.wt, self.sb, self.eb]
 
+
 class ClickableQLabel(QtGui.QLabel):
     def __init(self, parent):
         QLabel.__init__(self, parent)
 
     def mousePressEvent(self, event):
         self.emit(QtCore.SIGNAL('clicked()'))
+
 
 class getMap(QtGui.QWidget):
 

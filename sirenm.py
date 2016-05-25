@@ -54,8 +54,10 @@ from floatlegend import FloatLegend
 from floatstatus import FloatStatus
 from sirenicons import Icons
 
+
 def p2str(p):
     return '(%.4f,%.4f)' % (p.y(), p.x())
+
 
 class Description(QtGui.QDialog):
     def __init__(self, who, desc='', parent=None):
@@ -83,6 +85,7 @@ class Description(QtGui.QDialog):
         dialog = Description(who, desc, parent)
         result = dialog.exec_()
         return (dialog.description())  #, result == QtGui.QDialog.Accepted)
+
 
 class MapView(QtGui.QGraphicsView):
     def __init__(self, scene, zoom=.8):
@@ -817,6 +820,7 @@ class MapView(QtGui.QGraphicsView):
             if cell[2] > hi_per:
                 hi_per = cell[2]
         self.resource_range = [variable, period, lo_valu, hi_valu, lo_per, hi_per]
+
 
 class MainWindow(QtGui.QMainWindow):
     mySignal = QtCore.pyqtSignal()

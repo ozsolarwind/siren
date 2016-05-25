@@ -46,6 +46,7 @@ from turbine import Turbine
 
 the_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
+
 def split_array(array):
     arry = []
     varbl = array.replace('(', '[')
@@ -63,6 +64,7 @@ def split_array(array):
         for bit in bits:
             arry.append(int(bit))
     return arry
+
 
 def split_matrix(matrix):
     mtrx = []
@@ -89,6 +91,7 @@ def split_matrix(matrix):
             for bit in bits:
                 mtrx[-1].append(int(bit))
     return mtrx
+
 
 def the_date(year, h):
     mm = 0
@@ -644,6 +647,7 @@ class whatFinancials(QtGui.QDialog):
                             values[item[0]] = 0
                     break
         return values
+
 
 class Adjustments(QtGui.QDialog):
     def __init__(self, keys, load_key=None, load=None, data=None, base_year=None):

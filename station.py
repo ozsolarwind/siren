@@ -29,6 +29,7 @@ import ConfigParser   # decode .ini file
 
 from senuser import getUser
 
+
 def within_map(x, y, poly):
     n = len(poly)
     inside = False
@@ -44,6 +45,7 @@ def within_map(x, y, poly):
                         inside = not inside
         p1x, p1y = p2x, p2y
     return inside
+
 
 class Station:
     def __init__(self, name, technology, lat, lon, capacity, turbine, rotor, no_turbines, area, scenario, generation=None,

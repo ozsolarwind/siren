@@ -28,6 +28,7 @@ if sys.platform == 'win32' or sys.platform == 'cygwin':
 
 from editini import SaveIni
 
+
 def fileVersion():
     ver = '0.0.?.?'
     if sys.argv[0][-3:] == '.py':
@@ -47,6 +48,7 @@ def fileVersion():
             except:
                 pass
     return ver
+
 
 class Credits(QtGui.QDialog):
     procStart = QtCore.pyqtSignal(str)

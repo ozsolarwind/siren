@@ -30,6 +30,7 @@ import displayobject
 from credits import fileVersion
 from senuser import getUser
 
+
 class makeIndex():
 
     def close(self):
@@ -119,6 +120,7 @@ class ClickableQLabel(QtGui.QLabel):
     def mousePressEvent(self, event):
         QtGui.QApplication.widgetAt(event.globalPos()).setFocus()
         self.emit(QtCore.SIGNAL('clicked()'))
+
 
 class getParms(QtGui.QWidget):
 

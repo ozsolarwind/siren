@@ -32,6 +32,7 @@
 
 from math import *
 
+
 def getDNI(ghi=0, hour=0, lat=0, lon=0, press=1013.25, zone=8, debug=False):
     hour_of_year = hour
     day_of_year = int((hour_of_year - 1) / 24) + 1
@@ -107,6 +108,7 @@ def getDNI(ghi=0, hour=0, lat=0, lon=0, press=1013.25, zone=8, debug=False):
         if etr * (knc - kn) >= 0:
             return etr * (knc - kn)
     return 0.
+
 
 def getDHI(ghi=0, dni=0, hour=0, lat=0, azimuth=0., tilt=0., reflectance=0.2, debug=False):
 # Ic = Ib cos(i) + Idh cos^2(B/2) + p Ih sin^2(B/2)

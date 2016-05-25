@@ -43,6 +43,7 @@ class Town:
         self.elev = elev
         self.zone = zone
 
+
 class Towns:
     def get_config(self):
         config = ConfigParser.RawConfigParser()

@@ -22,6 +22,7 @@
 import ConfigParser   # decode .ini file
 import sys
 
+
 class Icons:
     def __init__(self):
         config = ConfigParser.RawConfigParser()

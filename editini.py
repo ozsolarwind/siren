@@ -28,6 +28,7 @@ import sys
 import displaytable
 import inisyntax
 
+
 class EdtDialog(QtGui.QDialog):
     def __init__(self, in_file, parent=None):
         self.in_file = in_file

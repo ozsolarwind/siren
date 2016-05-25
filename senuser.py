@@ -29,6 +29,7 @@ except:
     pass
 import sys
 
+
 def getUser():
     if sys.platform == 'win32' or sys.platform == 'cygwin':   # windows
         return os.environ.get("USERNAME")

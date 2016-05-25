@@ -16,6 +16,8 @@ import ConfigParser  # decode .ini file
 from senuser import getUser
 
 c_number = c_float  # must be c_double or c_float depending on how defined in sscapi.h
+
+
 class SSCAPI:
         config = ConfigParser.RawConfigParser()
         if len(sys.argv) > 1:

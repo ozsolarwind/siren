@@ -32,6 +32,7 @@ from PyQt4 import QtCore, QtGui
 import displayobject
 from credits import fileVersion
 
+
 class makeRainfall():
     def unZip(self, inp_file):
         if inp_file[-3] == '.gz':
@@ -419,6 +420,7 @@ class makeRainfall():
                     self.checkZone()
         return  # that's it
 
+
 class ClickableQLabel(QtGui.QLabel):
     def __init(self, parent):
         QLabel.__init__(self, parent)
@@ -426,6 +428,7 @@ class ClickableQLabel(QtGui.QLabel):
     def mousePressEvent(self, event):
         QtGui.QApplication.widgetAt(event.globalPos()).setFocus()
         self.emit(QtCore.SIGNAL('clicked()'))
+
 
 class getParms(QtGui.QWidget):
 

@@ -28,6 +28,7 @@ from math import *
 
 RADIUS = 6367.   # radius of earth in km
 
+
 class Vertex:
     def __init__(self, node):
         self.id = node
@@ -67,6 +68,7 @@ class Vertex:
 #    def __str__(self):
 #        return str(self.id) + ' adjacent: ' + str([x.id for x in self.adjacent])
 
+
 class Graph:
     def __init__(self):
         self.vert_dict = {}
@@ -104,6 +106,7 @@ class Graph:
     def get_previous(self, current):
         return self.previous
 
+
 def shortest(v, path):
     ''' make shortest path from v.previous'''
     if v.previous:
@@ -112,6 +115,7 @@ def shortest(v, path):
     return
 
 import heapq
+
 
 def dijkstra(aGraph, start):
    #  print '''Dijkstra's shortest path'''
@@ -152,6 +156,7 @@ def dijkstra(aGraph, start):
         unvisited_queue = [(v.get_distance(), v) for v in aGraph if not v.visited]
         heapq.heapify(unvisited_queue)
     return
+
 
 class Shortest:
     def isBetween(self, a, b, c):

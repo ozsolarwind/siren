@@ -24,6 +24,7 @@ from PyQt4 import QtGui, QtCore
 
 from editini import SaveIni
 
+
 class FloatStatus(QtGui.QDialog):
     procStart = QtCore.pyqtSignal(str)
 

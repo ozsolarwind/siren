@@ -33,6 +33,7 @@ import displayobject
 from sammodels import getDNI, getDHI
 from credits import fileVersion
 
+
 class makeWeather():
 
     def unZip(self, inp_file):
@@ -836,6 +837,7 @@ class makeWeather():
                     self.log += '%s created\n' % out_file[out_file.rfind('/') + 1:]
         self.checkZone()
 
+
 class ClickableQLabel(QtGui.QLabel):
     def __init(self, parent):
         QLabel.__init__(self, parent)
@@ -843,6 +845,7 @@ class ClickableQLabel(QtGui.QLabel):
     def mousePressEvent(self, event):
         QtGui.QApplication.widgetAt(event.globalPos()).setFocus()
         self.emit(QtCore.SIGNAL('clicked()'))
+
 
 class getParms(QtGui.QWidget):
 

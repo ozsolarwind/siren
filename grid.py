@@ -30,6 +30,7 @@ from senuser import getUser
 
 RADIUS = 6367.   # radius of earth in km
 
+
 def within_map(x, y, poly):
     n = len(poly)
     inside = False
@@ -45,6 +46,7 @@ def within_map(x, y, poly):
                         inside = not inside
         p1x, p1y = p2x, p2y
     return inside
+
 
 class Line:
     def __init__(self, name, style, coordinates, length=0., connector=-1, dispatchable=None, line_cost=None, peak_load=None,

@@ -28,6 +28,7 @@ from PyQt4 import QtGui
 import credits
 from turbine import Turbine
 
+
 class AnObject(QtGui.QDialog):
     procStart = QtCore.pyqtSignal(str)
 
