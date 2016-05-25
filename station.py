@@ -46,7 +46,7 @@ def within_map(x, y, poly):
     return inside
 
 class Station:
-    def __init__(self, name, technology, lat, lon, capacity, turbine, rotor, no_turbines, area, scenario, generation=None, \
+    def __init__(self, name, technology, lat, lon, capacity, turbine, rotor, no_turbines, area, scenario, generation=None,
                  power_file=None, grid_line=None, grid_len=None, grid_path_len=None, direction=None, storage_hours=None):
         self.name = name
         self.technology = technology
@@ -166,7 +166,7 @@ class Stations:
                  lower_right[1] = float(upper_right[1].strip())
              except:
                  pass
-        self.map_polygon = [upper_left, [upper_left[0], lower_right[1]], lower_right, \
+        self.map_polygon = [upper_left, [upper_left[0], lower_right[1]], lower_right,
            [lower_right[0], upper_left[1]], upper_left]
 
     def haversine(self, lat1, lon1, lat2, lon2):
@@ -205,7 +205,7 @@ class Stations:
                     facilities = csv.DictReader(facile)
                     for facility in facilities:
                         if facility['Longitude'] != '':
-                            if not within_map(float(facility['Latitude']), \
+                            if not within_map(float(facility['Latitude']),
                               float(facility['Longitude']), self.map_polygon):
                                 continue
                             if 'Facility Code' in facilities.fieldnames:   # IMO format
@@ -283,8 +283,8 @@ class Stations:
                                             nice_name = facility['Facility Code']
                                 stn = self.Get_Station(nice_name)
                                 if stn is None:   # new station?
-                                    self.stations.append(Station(nice_name, tech, \
-                                        float(facility['Latitude']), float(facility['Longitude']), \
+                                    self.stations.append(Station(nice_name, tech,
+                                        float(facility['Latitude']), float(facility['Longitude']),
                                         float(facility['Maximum Capacity (MW)']), turbine, rotor, no_turbines, area, 'Existing'))
                                 else:   # additional generator in existing station
                                     if stn.technology != tech:
@@ -298,15 +298,15 @@ class Stations:
                                     turbs = int(facility['No. turbines'])
                                 except:
                                     turbs = 0
-                                self.stations.append(Station(facility['Station Name'], \
-                                             facility['Technology'], \
-                                             float(facility['Latitude']), \
-                                             float(facility['Longitude']), \
-                                             float(facility['Maximum Capacity (MW)']), \
-                                             facility['Turbine'], \
-                                             0., \
-                                             turbs, \
-                                             float(facility['Area']), \
+                                self.stations.append(Station(facility['Station Name'],
+                                             facility['Technology'],
+                                             float(facility['Latitude']),
+                                             float(facility['Longitude']),
+                                             float(facility['Maximum Capacity (MW)']),
+                                             facility['Turbine'],
+                                             0.,
+                                             turbs,
+                                             float(facility['Area']),
                                              'Existing'))
                                 if self.stations[-1].technology == 'Wind':
                                     if self.stations[-1].rotor == 0 or self.stations[-1].rotor == '':
@@ -386,18 +386,18 @@ class Stations:
                         var[worksheet.cell_value(curr_row, curr_col)] = curr_col
                     while curr_row < num_rows:
                         curr_row += 1
-                        if not within_map(worksheet.cell_value(curr_row, var['Latitude']), \
+                        if not within_map(worksheet.cell_value(curr_row, var['Latitude']),
                           worksheet.cell_value(curr_row, var['Longitude']), self.map_polygon):
                             continue
-                        self.stations.append(Station(str(worksheet.cell_value(curr_row, var['Station Name'])), \
-                                             str(worksheet.cell_value(curr_row, var['Technology'])), \
-                                             worksheet.cell_value(curr_row, var['Latitude']), \
-                                             worksheet.cell_value(curr_row, var['Longitude']), \
-                                             worksheet.cell_value(curr_row, var['Maximum Capacity (MW)']), \
-                                             str(worksheet.cell_value(curr_row, var['Turbine'])), \
-                                             worksheet.cell_value(curr_row, var['Rotor Diam']), \
-                                             worksheet.cell_value(curr_row, var['No. turbines']), \
-                                             worksheet.cell_value(curr_row, var['Area']), \
+                        self.stations.append(Station(str(worksheet.cell_value(curr_row, var['Station Name'])),
+                                             str(worksheet.cell_value(curr_row, var['Technology'])),
+                                             worksheet.cell_value(curr_row, var['Latitude']),
+                                             worksheet.cell_value(curr_row, var['Longitude']),
+                                             worksheet.cell_value(curr_row, var['Maximum Capacity (MW)']),
+                                             str(worksheet.cell_value(curr_row, var['Turbine'])),
+                                             worksheet.cell_value(curr_row, var['Rotor Diam']),
+                                             worksheet.cell_value(curr_row, var['No. turbines']),
+                                             worksheet.cell_value(curr_row, var['Area']),
                                              'Existing'))
                         if self.stations[-1].technology == 'Wind':
                             if self.stations[-1].rotor == 0 or self.stations[-1].rotor == '':

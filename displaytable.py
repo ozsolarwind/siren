@@ -43,7 +43,7 @@ class FakeObject:
 
 
 class Table(QtGui.QDialog):
-    def __init__(self, objects, parent=None, fields=None, fossil=True, sumby=None, sumfields=None, units='', title=None, \
+    def __init__(self, objects, parent=None, fields=None, fossil=True, sumby=None, sumfields=None, units='', title=None,
                  save_folder='', edit=False, sortby=None):
         super(Table, self).__init__(parent)
         if isinstance(objects, list) and isinstance(objects[0], list):
@@ -101,16 +101,16 @@ class Table(QtGui.QDialog):
         self.message = QtGui.QLabel(msg)
         self.quitButton = QtGui.QPushButton(self.tr('&Quit'))
         buttonLayout.addWidget(self.quitButton)
-        self.connect(self.quitButton, QtCore.SIGNAL('clicked()'), \
+        self.connect(self.quitButton, QtCore.SIGNAL('clicked()'),
                     self.quit)
         if self.edit_table:
             self.replaceButton = QtGui.QPushButton(self.tr('Save'))
             buttonLayout.addWidget(self.replaceButton)
-            self.connect(self.replaceButton, QtCore.SIGNAL('clicked()'), \
+            self.connect(self.replaceButton, QtCore.SIGNAL('clicked()'),
                         self.replacetbl)
         self.saveButton = QtGui.QPushButton(self.tr(self.title_word[1]))
         buttonLayout.addWidget(self.saveButton)
-        self.connect(self.saveButton, QtCore.SIGNAL('clicked()'), \
+        self.connect(self.saveButton, QtCore.SIGNAL('clicked()'),
                     self.saveit)
         buttons = QtGui.QFrame()
         buttons.setLayout(buttonLayout)
@@ -185,7 +185,7 @@ class Table(QtGui.QDialog):
                     self.table.setItem(rw, clv[f], QtGui.QTableWidgetItem(fmat_str[f].format(value[f])))
                     self.table.item(rw, clv[f]).setTextAlignment(130)  # x'82'
                     if clp[f] > 0 and totl[f] > 0:
-                        self.table.setItem(rw, clp[f], QtGui.QTableWidgetItem('{:.1%}'.format(float(value[f]) / \
+                        self.table.setItem(rw, clp[f], QtGui.QTableWidgetItem('{:.1%}'.format(float(value[f]) /
                           float(totl[f])) + ' '))
                         self.table.item(rw, clp[f]).setTextAlignment(130)  # x'82'
         self.table.resizeColumnsToContents()
@@ -430,10 +430,10 @@ class Table(QtGui.QDialog):
                     self.table.setItem(rw, cl, QtGui.QTableWidgetItem(icon_item))
                 elif key == 'coordinates':
                     if len(value) > 2:
-                        trick = '(%s, %s)+%s+(%s, %s)' % (value[0][0], value[0][1], \
+                        trick = '(%s, %s)+%s+(%s, %s)' % (value[0][0], value[0][1],
                                 str(len(value) - 2), value[-1][0], value[-1][1])
                     else:
-                        trick = '(%s, %s)(%s, %s)' % (value[0][0], value[0][1], \
+                        trick = '(%s, %s)(%s, %s)' % (value[0][0], value[0][1],
                                 value[-1][0], value[-1][1])
                     self.table.setItem(rw, cl, QtGui.QTableWidgetItem(trick))
                 else:
@@ -521,7 +521,7 @@ class Table(QtGui.QDialog):
             iam = getattr(self.objects[0], '__module__')
         else:
             iam = self.title
-        data_file = '%s_Table_%s.xls' % (iam, \
+        data_file = '%s_Table_%s.xls' % (iam,
                     str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'yyyy-MM-dd_hhmm')))
         data_file = QtGui.QFileDialog.getSaveFileName(None, 'Save ' + iam + ' Table',
                     self.save_folder + data_file, 'Excel Files (*.xls*);;CSV Files (*.csv)')

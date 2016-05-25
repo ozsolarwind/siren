@@ -439,7 +439,7 @@ class makeNew(QtGui.QDialog):
             self.msg.setText('')
 
     def helpClicked(self):
-        dialog = displayobject.AnObject(QtGui.QDialog(), self.help, \
+        dialog = displayobject.AnObject(QtGui.QDialog(), self.help,
                  title='Help for SIREN Preferences file (' + fileVersion() + ')', section='prefs')
         dialog.exec_()
 

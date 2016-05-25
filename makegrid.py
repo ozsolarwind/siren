@@ -174,13 +174,13 @@ class makeFile():
                                 src_lon = float(bits[i])
                     cols = lines[fst_row - 1].strip().split(',')
                     for i in range(len(cols)):
-                        if cols[i].lower() in ['df', 'dhi', 'diffuse', 'diffuse horizontal', \
+                        if cols[i].lower() in ['df', 'dhi', 'diffuse', 'diffuse horizontal',
                                                'diffuse horizontal irradiance']:
                             col[the_cols.index('DHI (Diffuse)')] = i
-                        elif cols[i].lower() in ['dn', 'dni', 'beam', 'direct normal', \
+                        elif cols[i].lower() in ['dn', 'dni', 'beam', 'direct normal',
                                                  'direct normal irradiance']:
                             col[the_cols.index('DNI (Normal)')] = i
-                        elif cols[i].lower() in ['gh', 'ghi', 'global', 'global horizontal', \
+                        elif cols[i].lower() in ['gh', 'ghi', 'global', 'global horizontal',
                                                  'global horizontal irradiance']:
                             col[the_cols.index('GHI (Direct)')] = i
                         elif cols[i].lower() in ['temp', 'tdry']:
@@ -548,7 +548,7 @@ class makeFile():
                         for h in range(len(valueh)):  # 24 hours
                             ws.write(row, 0, where[0])
                             ws.write(row, 1, where[1])
-                            ws.write(row, 2, where[2] + '-' + '{0:02d}'.format(m + 1) + \
+                            ws.write(row, 2, where[2] + '-' + '{0:02d}'.format(m + 1) +
                                      '_{0:02d}'.format(h + 1) + ':00')
                             for j in range(len(valueh[0][m])):  # n values
                                 if drop_rainfall:
@@ -608,7 +608,7 @@ class makeFile():
                         for h in range(len(valueh)):  # 24 hours
                             ws.write(row, 0, where[0])
                             ws.write(row, 1, where[1])
-                            ws.write(row, 2, where[2] + '-{0:02d}'.format(mth + 1) \
+                            ws.write(row, 2, where[2] + '-{0:02d}'.format(mth + 1)
                                      + '-{0:02d}'.format(d) + '_{0:02d}'.format(h + 1) + ':00')
                             for j in range(len(valueh[0][dy])):  # n values
                                 if drop_rainfall:
@@ -918,7 +918,7 @@ class getParms(QtGui.QWidget):
             self.target.setText(newtgt)
 
     def helpClicked(self):
-        dialog = displayobject.AnObject(QtGui.QDialog(), self.help, \
+        dialog = displayobject.AnObject(QtGui.QDialog(), self.help,
                  title='Help for SIREN makegrid (' + fileVersion() + ')', section='resource')
         dialog.exec_()
 

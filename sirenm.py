@@ -125,9 +125,9 @@ class MapView(QtGui.QGraphicsView):
      # convert decimal degrees to radians
         ln1, lt1, baring = map(math.radians, [lon1, lat1, bearing])
      # "reverse" haversine formula
-        lat2 = math.asin(math.sin(lt1) * math.cos(distance / radius) + \
+        lat2 = math.asin(math.sin(lt1) * math.cos(distance / radius) +
                math.cos(lt1) * math.sin(distance / radius) * math.cos(baring))
-        lon2 = ln1 + math.atan2(math.sin(baring) * math.sin(distance / radius) * math.cos(lt1), \
+        lon2 = ln1 + math.atan2(math.sin(baring) * math.sin(distance / radius) * math.cos(lt1),
                math.cos(distance / radius) - math.sin(lt1) * math.sin(lat2))
         return QtCore.QPointF(math.degrees(lon2), math.degrees(lat2))
 
@@ -166,9 +166,9 @@ class MapView(QtGui.QGraphicsView):
                 self._station_to_move.lon = where.x()
                 self._station_to_move.lat = where.y()
                 self.scene().addStation(self._station_to_move)
-                comment = 'Placed station %s (%s MW at %s,%s) ' % (self._station_to_move.name, \
-                          '{:0.0f}'.format(self._station_to_move.capacity), \
-                          '{:0.4f}'.format(self._station_to_move.lat), \
+                comment = 'Placed station %s (%s MW at %s,%s) ' % (self._station_to_move.name,
+                          '{:0.0f}'.format(self._station_to_move.capacity),
+                          '{:0.4f}'.format(self._station_to_move.lat),
                           '{:0.4f}'.format(self._station_to_move.lon))
                 self.emit(SIGNAL('statusmsg'), comment)
                 if not self.scene().show_station_name:
@@ -208,7 +208,7 @@ class MapView(QtGui.QGraphicsView):
                     town_name = 'No towns found'
                     to_dist = 0
                 try:
-                    station, st_dist = self.scene()._stations.Nearest(where.y(), where.x(), distance=True, \
+                    station, st_dist = self.scene()._stations.Nearest(where.y(), where.x(), distance=True,
                         fossil=self.scene().show_fossil)
                     if self.scene().center_on_click:
                         go_to = self.mapFromLonLat(QtCore.QPointF(station.lon, station.lat))
@@ -222,11 +222,11 @@ class MapView(QtGui.QGraphicsView):
                         else:
                             self.scene()._current_name.setBrush(QtGui.QColor(self.scene().colors['station_name']))
    # highlight grid line
-                    self.emit(SIGNAL('statusmsg'), p2str(self.mapToLonLat(event.pos())) + ' ' + \
-                      station.name + ' ({:0.0f}'.format(station.capacity) + ' MW; {:0.0f} Km away; '.format(st_dist) + \
+                    self.emit(SIGNAL('statusmsg'), p2str(self.mapToLonLat(event.pos())) + ' ' +
+                      station.name + ' ({:0.0f}'.format(station.capacity) + ' MW; {:0.0f} Km away; '.format(st_dist) +
                       'Nearest town: ' + town_name + ' {:0.0f} Km away)'.format(to_dist))
                 except:
-                    self.emit(SIGNAL('statusmsg'), p2str(self.mapToLonLat(event.pos())) + ' ' + \
+                    self.emit(SIGNAL('statusmsg'), p2str(self.mapToLonLat(event.pos())) + ' ' +
                       'Nearest town: ' + town_name + ' {:0.0f} Km away)'.format(to_dist))
                 self._drag_start = QtCore.QPoint(event.pos())
                 hb = self.horizontalScrollBar()
@@ -549,7 +549,7 @@ class MapView(QtGui.QGraphicsView):
         self.legend_items[-1].setZValue(0)
         self.scene().addItem(self.legend_items[-1])
         p.setY(p.y() + fh * 2)
-        self.legend_items.append(QtGui.QGraphicsSimpleTextItem('Total land area by\n  technology (' + \
+        self.legend_items.append(QtGui.QGraphicsSimpleTextItem('Total land area by\n  technology (' +
           '{:0.0f}'.format(tot_area) + ' sq. Km):'))
         self.legend_items[-1].setFont(new_font)
         self.legend_items[-1].setPos(p.x(), p.y())
@@ -648,12 +648,12 @@ class MapView(QtGui.QGraphicsView):
             j = -1
             dims = self.scene().lines.lines[li].coordinates[0]
             for i in range(len(self.scene().load_centre)):
-                thisone = self.scene().lines.actualDistance(self.scene().load_centre[i][1], \
+                thisone = self.scene().lines.actualDistance(self.scene().load_centre[i][1],
                           self.scene().load_centre[i][2], dims[0], dims[1])
                 if thisone < nearest:
                     nearest = thisone
                     j = i
-            path = Shortest(self.scene().lines.lines, self.scene().lines.lines[li].coordinates[0], \
+            path = Shortest(self.scene().lines.lines, self.scene().lines.lines[li].coordinates[0],
                    [self.scene().load_centre[j][1], self.scene().load_centre[j][2]], self.scene().grid_lines)
             route = path.getPath()
 #           check we don't go through another load_centre
@@ -739,8 +739,8 @@ class MapView(QtGui.QGraphicsView):
                               self.scene().map_upper_left[1], self.scene().map_lower_right[1]):
                         try:
                             if worksheet.cell_value(curr_row, var['Period']) == period:
-                                cells.append([float(worksheet.cell_value(curr_row, var['Latitude'])), \
-                                             float(worksheet.cell_value(curr_row, var['Longitude'])), \
+                                cells.append([float(worksheet.cell_value(curr_row, var['Latitude'])),
+                                             float(worksheet.cell_value(curr_row, var['Longitude'])),
                                              worksheet.cell_value(curr_row, var[variable])])
                             if calc_minmax:
                                 if worksheet.cell_value(curr_row, var[variable]) < lo_valu:
@@ -1380,7 +1380,7 @@ class MainWindow(QtGui.QMainWindow):
             field = self.view.scene().lines.d_line_table
         else:
             field = self.view.scene().lines.s_line_table
-        dialog = displaytable.Table(field, fields=fields, title=self.sender().text(), \
+        dialog = displaytable.Table(field, fields=fields, title=self.sender().text(),
                  save_folder=self.scenarios)
         dialog.exec_()
         comment = self.sender().text() + ' Displayed.'
@@ -1662,8 +1662,8 @@ class MainWindow(QtGui.QMainWindow):
             return
         if self.floatstatus and self.log_status:
             if text[0] != '(':
-                self.floatstatus.emit(SIGNAL('log'), '%s. %s' % \
-                            (str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), \
+                self.floatstatus.emit(SIGNAL('log'), '%s. %s' %
+                            (str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),
                             'hh:mm:ss')), text))
       #   self.statusBar().clearMessage()
         self.statusBar().showMessage(text)
@@ -1730,7 +1730,7 @@ class MainWindow(QtGui.QMainWindow):
                 else:
                     self.view.scene()._current_name.setBrush(QtGui.QColor(self.view.scene().colors['station_name']))
 # highlight grid line
-            comment = '(%s,%s) Centred on station %s' % ('{:0.4f}'.format(station.lat), '{:0.4f}'.format(station.lon), \
+            comment = '(%s,%s) Centred on station %s' % ('{:0.4f}'.format(station.lat), '{:0.4f}'.format(station.lon),
                           station.name)
             self.view.emit(SIGNAL('statusmsg'), comment)
 
@@ -1765,7 +1765,7 @@ class MainWindow(QtGui.QMainWindow):
             town = self.view.scene()._towns.Get_Town(action.text())
             go_to = self.mapFromLonLat(QtCore.QPointF(town.lon, town.lat))
             self.view.centerOn(go_to)
-            comment = '(%s,%s) Centred on town %s' % ('{:0.4f}'.format(town.lon), '{:0.4f}'.format(town.lat), \
+            comment = '(%s,%s) Centred on town %s' % ('{:0.4f}'.format(town.lon), '{:0.4f}'.format(town.lat),
                           town.name)
             self.view.emit(SIGNAL('statusmsg'), comment)
 
@@ -1786,12 +1786,12 @@ class MainWindow(QtGui.QMainWindow):
                     if action.text() == self.view.scene().load_centre[j][0]:
                         break
         if j < len(self.view.scene().load_centre):
-            go_to = self.mapFromLonLat(QtCore.QPointF(self.view.scene().load_centre[j][2], \
+            go_to = self.mapFromLonLat(QtCore.QPointF(self.view.scene().load_centre[j][2],o
                     self.view.scene().load_centre[j][1]))
             self.view.centerOn(go_to)
-            comment = '(%s,%s) Centred on %s Load Centre' % (\
-                      '{:0.4f}'.format(self.view.scene().load_centre[j][1]), \
-                      '{:0.4f}'.format(self.view.scene().load_centre[j][2]), \
+            comment = '(%s,%s) Centred on %s Load Centre' % (
+                      '{:0.4f}'.format(self.view.scene().load_centre[j][1]),
+                      '{:0.4f}'.format(self.view.scene().load_centre[j][2]),
                       self.view.scene().load_centre[j][0])
             self.view.emit(SIGNAL('statusmsg'), comment)
 
@@ -1870,9 +1870,9 @@ class MainWindow(QtGui.QMainWindow):
         menu = QtGui.QMenu()
         station = None
         if len(self.view.scene()._stations.stations) > 0:  # some stations
-            station, st_dist = self.view.scene()._stations.Nearest(where.y(), where.x(), \
+            station, st_dist = self.view.scene()._stations.Nearest(where.y(), where.x(),
             distance=True, fossil=self.view.scene().show_fossil)
-            titl = 'Nearest station: %s (%s MW; %s Km away)' % (station.name, '{:0.0f}'.format(station.capacity), \
+            titl = 'Nearest station: %s (%s MW; %s Km away)' % (station.name, '{:0.0f}'.format(station.capacity),
                    '{:0.0f}'.format(st_dist))
          #    act1 = 'Run SAM API (%s)' % model
             if station.technology == 'Hydro' or station.technology == 'Wave' or station.technology[:5] == 'Other':
@@ -1944,10 +1944,10 @@ class MainWindow(QtGui.QMainWindow):
             pass
         if action == addsAction:
             try:
-                new_station = Station(town.name + ' Station', '', where.y(), where.x(), \
+                new_station = Station(town.name + ' Station', '', where.y(), where.x(),
                               0.0, '', 0.0, 0, 0.0, self.new_scenario)
             except:
-                new_station = Station('Station ' + str(where.y()) + ' ' + str(where.x()), '', where.y(), where.x(), \
+                new_station = Station('Station ' + str(where.y()) + ' ' + str(where.x()), '', where.y(), where.x(),
                               0.0, '', 0.0, 0, 0.0, self.new_scenario)
             dialog = newstation.AnObject(QtGui.QDialog(), new_station, scenarios=self.view.scene()._scenarios)
             dialog.exec_()
@@ -1970,8 +1970,8 @@ class MainWindow(QtGui.QMainWindow):
                 self.view.scene().addStation(new_station)
                 where.y = new_station.lat
                 where.x = new_station.lon
-                comment = 'Added station %s (%s MW at %s,%s) ' % (new_station.name, \
-                          '{:0.0f}'.format(new_station.capacity), '{:0.4f}'.format(new_station.lat), \
+                comment = 'Added station %s (%s MW at %s,%s) ' % (new_station.name,
+                          '{:0.0f}'.format(new_station.capacity), '{:0.4f}'.format(new_station.lat),
                           '{:0.4f}'.format(new_station.lon))
                 check_scenario()
                 self.view.emit(SIGNAL('statusmsg'), comment)
@@ -2030,7 +2030,7 @@ class MainWindow(QtGui.QMainWindow):
                         if self.view.scene()._scenarios[i][0] == station.scenario \
                         or self.view.scene()._scenarios[i][0] == s_was:
                             self.view.scene()._scenarios[i][1] = True
-                    comment = 'Altered station %s (%s,%s) ' % (station.name, \
+                    comment = 'Altered station %s (%s,%s) ' % (station.name,
                               '{:0.4f}'.format(station.lat), '{:0.4f}'.format(station.lon))
                     self.view.emit(SIGNAL('statusmsg'), comment)
                     self.reshow_FloatLegend()
@@ -2040,7 +2040,7 @@ class MainWindow(QtGui.QMainWindow):
         elif action == trcAction:
             grid_path_len = self.view.traceGrid(station)
             try:
-                self.view.emit(SIGNAL('statusmsg'), 'Grid traced for %s (%s Km)' % (station.name, \
+                self.view.emit(SIGNAL('statusmsg'), 'Grid traced for %s (%s Km)' % (station.name,
                               '{:0.1f}'.format(grid_path_len)))
             except:
                 self.view.emit(SIGNAL('statusmsg'), 'No Grid line for %s' % station.name)
@@ -2048,14 +2048,14 @@ class MainWindow(QtGui.QMainWindow):
             power = PowerModel([station])
             generated = power.getValues()
             station.generation = generated[0].generation
-            comment = 'Power plot completed for %s. %s MWh; CF %s' % (station.name, \
-                      '{:0,.1f}'.format(generated[0].generation), \
+            comment = 'Power plot completed for %s. %s MWh; CF %s' % (station.name,
+                      '{:0,.1f}'.format(generated[0].generation),
                       '{:0.2f}'.format(generated[0].cf))
             self.view.emit(SIGNAL('statusmsg'), comment)
         elif action == cpyAction:
             self.view.clear_Trace()
-            new_station = Station(station.name + ' 2', station.technology, station.lat, \
-                          station.lon, station.capacity, station.turbine, station.rotor, \
+            new_station = Station(station.name + ' 2', station.technology, station.lat,
+                          station.lon, station.capacity, station.turbine, station.rotor,
                           station.no_turbines, station.area, self.new_scenario)
             dialog = newstation.AnObject(QtGui.QDialog(), new_station, scenarios=self.view.scene()._scenarios)
             dialog.exec_()
@@ -2078,8 +2078,8 @@ class MainWindow(QtGui.QMainWindow):
                 self.view.scene().addStation(new_station)
                 where.x = new_station.lon
                 where.y = new_station.lat
-                comment = 'Added station %s (%s MW at %s,%s) ' % (new_station.name, \
-                          '{:0.0f}'.format(new_station.capacity), '{:0.4f}'.format(new_station.lat), \
+                comment = 'Added station %s (%s MW at %s,%s) ' % (new_station.name,
+                          '{:0.0f}'.format(new_station.capacity), '{:0.4f}'.format(new_station.lat),
                           '{:0.4f}'.format(new_station.lon))
                 check_scenario()
                 self.view._move_station = True
@@ -2101,14 +2101,14 @@ class MainWindow(QtGui.QMainWindow):
                     self.view.scene()._scenarios[i][1] = True
                     break
             self.reshow_FloatLegend()
-            comment = 'Moved station %s (%s MW at %s,%s) ' % (station.name, \
-                      '{:0.0f}'.format(station.capacity), '{:0.4f}'.format(station.lat), \
+            comment = 'Moved station %s (%s MW at %s,%s) ' % (station.name,
+                      '{:0.0f}'.format(station.capacity), '{:0.4f}'.format(station.lat),
                       '{:0.4f}'.format(station.lon))
             self.view.emit(SIGNAL('statusmsg'), comment)
         elif action == delAction:
             self.view.clear_Trace()
             p = self.mapFromLonLat(QtCore.QPointF(station.lon, station.lat))
-            comment = 'Removed station %s (%s,%s) ' % (station.name, \
+            comment = 'Removed station %s (%s,%s) ' % (station.name,
                       '{:0.4f}'.format(station.lat), '{:0.4f}'.format(station.lon))
             for i in range(len(self.view.scene()._stations.stations) - 1, -1, -1):
                 if self.view.scene()._stations.stations[i].name == station.name:
@@ -2167,9 +2167,9 @@ class MainWindow(QtGui.QMainWindow):
             units += ' generation=MWh'
             sumfields.append('generation')
         fields.append('scenario')
-        dialog = displaytable.Table(self.view.scene()._stations.stations, \
-                 fossil=self.view.scene().show_fossil, fields=fields, \
-                 units=units, sumby='technology', sumfields=sumfields, \
+        dialog = displaytable.Table(self.view.scene()._stations.stations,
+                 fossil=self.view.scene().show_fossil, fields=fields,
+                 units=units, sumby='technology', sumfields=sumfields,
                  save_folder=self.scenarios)
         dialog.exec_()
         comment = 'Stations Displayed'
@@ -2179,16 +2179,16 @@ class MainWindow(QtGui.QMainWindow):
         if self.view.scene().cost_existing:
             for i in range(self.view.scene().grid_lines):
                 cost, self.view.scene().lines.lines[i].line_table = \
-                        self.view.scene().lines.Line_Cost(self.view.scene().lines.lines[i].peak_load, \
+                        self.view.scene().lines.Line_Cost(self.view.scene().lines.lines[i].peak_load,
                         self.view.scene().lines.lines[i].peak_dispatchable)
                 self.view.scene().lines.lines[i].line_cost = cost * self.view.scene().lines.lines[i].length
         for i in range(len(self.view.scene().lines.lines)):
             for j in range(len(self.view.scene().load_centre)):
-                if self.view.scene().lines.lines[i].coordinates[-1] == [self.view.scene().load_centre[j][1], \
+                if self.view.scene().lines.lines[i].coordinates[-1] == [self.view.scene().load_centre[j][1],
                    self.view.scene().load_centre[j][2]]:
                     if self.view.scene().lines.lines[i].peak_load is not None:
                         a, self.view.scene().lines.lines[i].substation_cost, b = \
-                           self.view.scene().lines.decode2(str(self.view.scene().lines.lines[i].peak_load) + '=' + \
+                           self.view.scene().lines.decode2(str(self.view.scene().lines.lines[i].peak_load) + '=' +
                            self.view.scene().lines.lines[i].line_table, substation=True)
                     j = -1
                     break
@@ -2207,11 +2207,11 @@ class MainWindow(QtGui.QMainWindow):
                                 if value > cost:
                                     cost = value
                 self.view.scene().lines.lines[i].substation_cost = cost
-        dialog = displaytable.Table(self.view.scene().lines.lines, \
-                 fields=['name', 'line_table', 'length', 'line_cost', 'substation_cost', 'peak_load', 'peak_dispatchable', \
-                         'peak_loss', 'coordinates', 'connector'], \
-                 units='length=Km line_cost=$ substation_cost=$ peak_load=MW peak_dispatchable=MW peak_loss=MW', \
-                 sumfields=['length', 'line_cost', 'substation_cost'], \
+        dialog = displaytable.Table(self.view.scene().lines.lines,
+                 fields=['name', 'line_table', 'length', 'line_cost', 'substation_cost', 'peak_load', 'peak_dispatchable',
+                         'peak_loss', 'coordinates', 'connector'],
+                 units='length=Km line_cost=$ substation_cost=$ peak_load=MW peak_dispatchable=MW peak_loss=MW',
+                 sumfields=['length', 'line_cost', 'substation_cost'],
                  save_folder=self.scenarios)  # '#', 'connector',
         dialog.exec_()
         comment = 'Grid Displayed'
@@ -2332,7 +2332,7 @@ class MainWindow(QtGui.QMainWindow):
             lins[-1].setIconVisibleInMenu(True)
         for li in range(self.view.scene().grid_lines, len(self.view.scene().lines.lines)):
             for j in range(len(self.view.scene().load_centre)):
-                if self.view.scene().lines.lines[li].coordinates[-1] == [self.view.scene().load_centre[j][1], \
+                if self.view.scene().lines.lines[li].coordinates[-1] == [self.view.scene().load_centre[j][1],
                    self.view.scene().load_centre[j][2]]:
                     lins.append(menu.addAction(self.view.scene().lines.lines[li].name))
                     lins[-1].setIconVisibleInMenu(True)
@@ -2344,7 +2344,7 @@ class MainWindow(QtGui.QMainWindow):
                 if self.view.scene().lines.lines[li].name == action.text():
                     grid_path_len = self.view.traceGrid(None, coords=self.view.scene().lines.lines[li].coordinates)
             try:
-                self.view.emit(SIGNAL('statusmsg'), 'Grid traced for %s (%s, %s Km)' % (action.text(), \
+                self.view.emit(SIGNAL('statusmsg'), 'Grid traced for %s (%s, %s Km)' % (action.text(),
                                self.view.scene().lines.lines[li].line_table, '{:0.1f}'.format(grid_path_len)))
             except:
                 self.view.emit(SIGNAL('statusmsg'), 'No Grid line for %s' % action.text())
@@ -2393,9 +2393,9 @@ class MainWindow(QtGui.QMainWindow):
         elif text == 'show':
             self.view.resourceGrid('show', self.resource, year=self.resource_year)
             comment = 'Resource variable displayed. %s. Full Range: %s to %s; %s: %s to %s' % \
-                      (self.view.resource_range[0], '{:0.1f}'.format(self.view.resource_range[2]), \
-                      '{:0.1f}'.format(self.view.resource_range[3]), self.view.resource_range[1], \
-                      '{:0.1f}'.format(self.view.resource_range[4]), \
+                      (self.view.resource_range[0], '{:0.1f}'.format(self.view.resource_range[2]),
+                      '{:0.1f}'.format(self.view.resource_range[3]), self.view.resource_range[1],
+                      '{:0.1f}'.format(self.view.resource_range[4]),
                       '{:0.1f}'.format(self.view.resource_range[5]))
         self.view.emit(SIGNAL('statusmsg'), comment)
 
@@ -2508,8 +2508,8 @@ class MainWindow(QtGui.QMainWindow):
             add = int((self.frameSize().width() - self.size().width()) / 2)  # need to account for border
             lines.append('main_pos=%s,%s' % (str(self.pos().x() + add), str(self.pos().y() + add)))
             lines.append('main_size=%s,%s' % (str(self.size().width()), str(self.size().height())))
-            lines.append('main_view=%s,%s,%s,%s' % (str(self.view.mapToScene(0, 0).x()), str(self.view.mapToScene(0, 0).y()), \
-                         str(self.view.mapToScene(self.view.width(), self.view.height()).x()), \
+            lines.append('main_view=%s,%s,%s,%s' % (str(self.view.mapToScene(0, 0).x()), str(self.view.mapToScene(0, 0).y()),
+                         str(self.view.mapToScene(self.view.width(), self.view.height()).x()),
                          str(self.view.mapToScene(self.view.width(), self.view.height()).y())))
             if self.credits is None:
                 pass
@@ -2564,7 +2564,7 @@ class MainWindow(QtGui.QMainWindow):
             os.rename(self.scenarios + the_scenario, self.scenarios + the_scenario + '~')
         ctr = 0
         d = 0
-        fields = ['Station Name', 'Technology', 'Latitude', 'Longitude', 'Maximum Capacity (MW)', \
+        fields = ['Station Name', 'Technology', 'Latitude', 'Longitude', 'Maximum Capacity (MW)',
                   'Turbine', 'Rotor Diam', 'No. turbines', 'Area']
         for stn in self.view.scene()._stations.stations:
             if stn.power_file is not None:
@@ -2666,20 +2666,20 @@ class MainWindow(QtGui.QMainWindow):
                         lens[8] = max(lens[8], len(str(stn.area)))
                         if stn.power_file is not None:
                             ws.write(ctr, fields.index('Power File'), str(stn.power_file))
-                            lens[fields.index('Power File')] = max(lens[fields.index('Power File')], \
+                            lens[fields.index('Power File')] = max(lens[fields.index('Power File')],
                                                                len(str(stn.power_file)))
                         if stn.grid_line is not None:
                             ws.write(ctr, fields.index('Grid Line'), str(stn.grid_line))
-                            lens[fields.index('Grid Line')] = max(lens[fields.index('Grid Line')], \
+                            lens[fields.index('Grid Line')] = max(lens[fields.index('Grid Line')],
                                                                len(str(stn.grid_line)))
                         if stn.storage_hours is not None:
                             if stn.storage_hours != self.view.scene().tshours:
                                 ws.write(ctr, fields.index('Storage Hours'), stn.storage_hours)
-                                lens[fields.index('Storage Hours')] = max(lens[fields.index('Storage Hours')], \
+                                lens[fields.index('Storage Hours')] = max(lens[fields.index('Storage Hours')],
                                                                       len(str(stn.storage_hours)))
                         if stn.direction is not None:
                             ws.write(ctr, fields.index('Direction'), str(stn.direction))
-                            lens[fields.index('Direction')] = max(lens[fields.index('Direction')], \
+                            lens[fields.index('Direction')] = max(lens[fields.index('Direction')],
                                                                len(str(stn.direction)))
             for c in range(9):
                 if lens[c] * 275 > ws.col(c).width:
@@ -2689,8 +2689,8 @@ class MainWindow(QtGui.QMainWindow):
             ws.set_remove_splits(True)  # if user does unfreeze, don't leave a split there
             wb.save(self.scenarios + the_scenario)
         if self.floatstatus and self.log_status:
-            self.floatstatus.emit(SIGNAL('log'), '%s. Saved %s station(s) to %s' % \
-                            (str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), \
+            self.floatstatus.emit(SIGNAL('log'), '%s. Saved %s station(s) to %s' %
+                            (str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),o
                             'hh:mm:ss')), str(ctr + d), the_scenario))
 
 

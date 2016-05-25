@@ -276,7 +276,7 @@ class getParms(QtGui.QWidget):
             self.wtarget.setText(newtgt)
 
     def helpClicked(self):
-        dialog = displayobject.AnObject(QtGui.QDialog(), self.help, \
+        dialog = displayobject.AnObject(QtGui.QDialog(), self.help,
                  title='Help for SIREN indexweather (' + fileVersion() + ')', section='index')
         dialog.exec_()
 

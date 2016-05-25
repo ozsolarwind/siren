@@ -57,8 +57,8 @@ class makeFile():
             return
         datas = response.read().split('\n')
         conn.close()
-        common_fields = ['Facility Code', 'Participant Name', 'Participant Code', \
-                         'Facility Type', 'Balancing Status', 'Capacity Credits (MW)', \
+        common_fields = ['Facility Code', 'Participant Name', 'Participant Code',
+                         'Facility Type', 'Balancing Status', 'Capacity Credits (MW)',
                          'Maximum Capacity (MW)', 'Registered From']
         fac_file = self.tgt_fil
         facile = open(fac_file)
@@ -97,7 +97,7 @@ class makeFile():
                             except:
                                 pass
                             self.log += "Changed field in '%s:'\n    '%s' was '%s', now '%s'\n" % \
-                                         (facility['Facility Code'], field, facility[field], \
+                                         (facility['Facility Code'], field, facility[field],
                                           new_facility[field])
                             changes += 1
                     break
@@ -161,7 +161,7 @@ class makeFile():
                 os.rename(self.excel, self.excel + '~')
             ctr = 0
             d = 0
-            fields = ['Station Name', 'Technology', 'Latitude', 'Longitude', 'Maximum Capacity (MW)', \
+            fields = ['Station Name', 'Technology', 'Latitude', 'Longitude', 'Maximum Capacity (MW)',
                       'Turbine', 'Rotor Diam', 'No. turbines', 'Area']
             stations = Stations(stations2=False)
             if self.excel[-4:] == '.csv':
@@ -369,7 +369,7 @@ class getParms(QtGui.QWidget):
             self.excel.setText(newtgt)
 
     def helpClicked(self):
-        dialog = displayobject.AnObject(QtGui.QDialog(), self.help, \
+        dialog = displayobject.AnObject(QtGui.QDialog(), self.help,
                  title='Help for SIREN updateswis (' + fileVersion() + ')', section='updateswis')
         dialog.exec_()
 

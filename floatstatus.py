@@ -64,7 +64,7 @@ class FloatStatus(QtGui.QDialog):
             if len(line[0]) > max_line:
                 max_line = len(line[0])
         if self.log_status:
-            lines2 = '%s. %s' % (str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), \
+            lines2 = '%s. %s' % (str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),
                                 'hh:mm:ss')), 'SIREN log started')
             line_cnt2 = 1
             if len(lines2) > max_line:
@@ -83,7 +83,7 @@ class FloatStatus(QtGui.QDialog):
         self.scenarios = QtGui.QPlainTextEdit()
         self.scenarios.setFont(QtGui.QFont('Courier New', 10))
         fnt = self.scenarios.fontMetrics()
-        self.scenarios.setSizePolicy(QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, \
+        self.scenarios.setSizePolicy(QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding,
             QtGui.QSizePolicy.Expanding))
         self.scenarios.setPlainText(lines1)
         self.scenarios.setReadOnly(True)
@@ -99,7 +99,7 @@ class FloatStatus(QtGui.QDialog):
             if h1 + h2 > screen.height() * .80:
        #      h1 = max(int(screen.height() * float(h1 / h2)), int(fnt.height()))
                 h2 = int(screen.height() * .80) - h1
-            self.loglines.setSizePolicy(QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, \
+            self.loglines.setSizePolicy(QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding,
                 QtGui.QSizePolicy.Expanding))
             self.loglines.setPlainText(lines2)
             self.loglines.setReadOnly(True)
@@ -153,7 +153,7 @@ class FloatStatus(QtGui.QDialog):
     @QtCore.pyqtSlot()
     def exit(self):
         if self.log_status:
-            self.log('%s. %s' % (str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), \
+            self.log('%s. %s' % (str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),
                      'hh:mm:ss')), 'SIREN log stopped'))
         self.be_open = False
         self.close()

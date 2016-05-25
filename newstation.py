@@ -128,7 +128,7 @@ class AnObject(QtGui.QDialog):
 
     def initUI(self):
         self.save = False
-        self.field = ['name', 'technology', 'lat', 'lon', 'capacity', 'turbine', 'rotor', \
+        self.field = ['name', 'technology', 'lat', 'lon', 'capacity', 'turbine', 'rotor',
                   'no_turbines', 'area', 'scenario', 'power_file', 'grid_line', 'storage_hours', 'direction']
         self.label = []
         self.edit = []
@@ -407,8 +407,8 @@ class AnObject(QtGui.QDialog):
                             return
                     except:
                         setattr(self, self.field[i], str(self.edit[i].text()))
-                        if self.direction.upper() in ['', 'N', 'NNE', 'NE', 'ENE', 'E', 'ESE', \
-                                                      'SE', 'SSE', 'S', 'SSW', 'SW', \
+                        if self.direction.upper() in ['', 'N', 'NNE', 'NE', 'ENE', 'E', 'ESE',
+                                                      'SE', 'SSE', 'S', 'SSW', 'SW',
                                                       'WSW', 'W', 'WNW', 'NW', 'NNW']:
                             self.direction = self.direction.upper()
                         else:
@@ -494,7 +494,7 @@ class AnObject(QtGui.QDialog):
 
     def getValues(self):
         if self.save:
-            station = Station(str(self.name), self.technology, self.lat, self.lon, self.capacity, self.turbine, self.rotor, \
+            station = Station(str(self.name), self.technology, self.lat, self.lon, self.capacity, self.turbine, self.rotor,
                       self.no_turbines, self.area, self.scenario, power_file=self.power_file)
             if self.grid_line is not None:
                 station.grid_line = self.grid_line

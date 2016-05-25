@@ -40,15 +40,15 @@ def getDNI(ghi=0, hour=0, lat=0, lon=0, press=1013.25, zone=8, debug=False):
     day_angle = 6.283185 * (day_of_year - 1) / 365.
     time_zone = zone
     pressure = press
-    etr = 1370 * (1.00011 + 0.034221 * cos(day_angle) + 0.00128 * sin(day_angle) + \
+    etr = 1370 * (1.00011 + 0.034221 * cos(day_angle) + 0.00128 * sin(day_angle) +
           0.000719 * cos(2 * day_angle) + 0.000077 * sin(2 * day_angle))
-    dec = (0.006918 - 0.399912 * cos(day_angle) + 0.070257 * sin(day_angle) - \
-          0.006758 * cos(2 * day_angle) + 0.000907 * sin(2 * day_angle) - \
+    dec = (0.006918 - 0.399912 * cos(day_angle) + 0.070257 * sin(day_angle) -
+          0.006758 * cos(2 * day_angle) + 0.000907 * sin(2 * day_angle) -
           0.002697 * cos(3 * day_angle) + 0.00148 * sin(3 * day_angle)) * (180. / 3.14159)
-    eqt = (0.000075 + 0.001868 * cos(day_angle) - 0.032077 * sin(day_angle) - \
+    eqt = (0.000075 + 0.001868 * cos(day_angle) - 0.032077 * sin(day_angle) -
           0.014615 * cos(2 * day_angle) - 0.040849 * sin(2 * day_angle)) * (229.18)
     hour_angle = 15 * (hour_of_year - 12 - 0.5 + eqt / 60 + ((longitude - time_zone * 15) * 4) / 60)
-    zenith_angle = acos(cos(radians(dec)) * cos(radians(latitude)) * cos(radians(hour_angle)) + \
+    zenith_angle = acos(cos(radians(dec)) * cos(radians(latitude)) * cos(radians(hour_angle)) +
           sin(radians(dec)) * sin(radians(latitude))) * (180. / 3.14159)
     if zenith_angle < 80:
         am = 1 / (cos(radians(zenith_angle)) + 0.15 / pow(93.885 - zenith_angle, 1.253)) \
@@ -147,23 +147,23 @@ def getDHI(ghi=0, dni=0, hour=0, lat=0, azimuth=0., tilt=0., reflectance=0.2, de
     else:
         sun_rise_set_hsr = 'DOWN'
 # Q
-    altitude_angle = asin((sin(latitude * pi / 180.) * sin(declination_angle * pi / 180.)) + \
-                     (cos(latitude * pi / 180.) * cos(declination_angle * pi / 180.) * \
+    altitude_angle = asin((sin(latitude * pi / 180.) * sin(declination_angle * pi / 180.)) +
+                     (cos(latitude * pi / 180.) * cos(declination_angle * pi / 180.) *
                      cos(sun_rise_set_adjusted_hour_angle * pi / 180.))) * 180. / pi
 # R
     if sun_rise_set_adjusted_hour_angle > 0:
-        solar_azimuth = abs(acos(((cos(declination_angle * pi / 180.) * sin(latitude * pi / 180.) * \
-                        cos(sun_rise_set_adjusted_hour_angle * pi / 180.)) - \
-                        (sin(declination_angle * pi / 180.) * cos(latitude * pi / 180.))) / \
+        solar_azimuth = abs(acos(((cos(declination_angle * pi / 180.) * sin(latitude * pi / 180.) *
+                        cos(sun_rise_set_adjusted_hour_angle * pi / 180.)) -
+                        (sin(declination_angle * pi / 180.) * cos(latitude * pi / 180.))) /
                         cos(altitude_angle * pi / 180.)) * 180. / pi)
     else:
-        solar_azimuth = -1 * abs(acos(((cos(declination_angle * pi / 180.) * sin(latitude * pi / 180.) * \
-                        cos(sun_rise_set_adjusted_hour_angle * pi / 180.)) - \
-                        (sin(declination_angle * pi / 180.) * cos(latitude * pi / 180.))) / \
+        solar_azimuth = -1 * abs(acos(((cos(declination_angle * pi / 180.) * sin(latitude * pi / 180.) *
+                        cos(sun_rise_set_adjusted_hour_angle * pi / 180.)) -
+                        (sin(declination_angle * pi / 180.) * cos(latitude * pi / 180.))) /
                         cos(altitude_angle * pi / 180.)) * 180. / pi)
 # S
-    incidence_angle = acos((cos(altitude_angle * pi / 180.) * \
-        cos((solar_azimuth - azimuth) * pi / 180.) * sin(tilt * pi / 180.)) + \
+    incidence_angle = acos((cos(altitude_angle * pi / 180.) *
+        cos((solar_azimuth - azimuth) * pi / 180.) * sin(tilt * pi / 180.)) +
         ((sin(altitude_angle * pi / 180.) * cos(tilt * pi / 180.)))) * 180. / pi
 # T
     if incidence_angle < 90:
@@ -222,15 +222,15 @@ def getZenith(hour=0, lat=0, lon=0, zone=8, debug=False):
     longitude = lon
     day_angle = 6.283185 * (day_of_year - 1) / 365.
     time_zone = zone
-    etr = 1370 * (1.00011 + 0.034221 * cos(day_angle) + 0.00128 * sin(day_angle) + \
+    etr = 1370 * (1.00011 + 0.034221 * cos(day_angle) + 0.00128 * sin(day_angle) +
           0.000719 * cos(2 * day_angle) + 0.000077 * sin(2 * day_angle))
-    dec = (0.006918 - 0.399912 * cos(day_angle) + 0.070257 * sin(day_angle) - \
-          0.006758 * cos(2 * day_angle) + 0.000907 * sin(2 * day_angle) - \
+    dec = (0.006918 - 0.399912 * cos(day_angle) + 0.070257 * sin(day_angle) -
+          0.006758 * cos(2 * day_angle) + 0.000907 * sin(2 * day_angle) -
           0.002697 * cos(3 * day_angle) + 0.00148 * sin(3 * day_angle)) * (180. / 3.14159)
-    eqt = (0.000075 + 0.001868 * cos(day_angle) - 0.032077 * sin(day_angle) - \
+    eqt = (0.000075 + 0.001868 * cos(day_angle) - 0.032077 * sin(day_angle) -
           0.014615 * cos(2 * day_angle) - 0.040849 * sin(2 * day_angle)) * (229.18)
     hour_angle = 15 * (hour_of_year - 12 - 0.5 + eqt / 60 + ((longitude - time_zone * 15) * 4) / 60)
-    zenith_angle = acos(cos(radians(dec)) * cos(radians(latitude)) * cos(radians(hour_angle)) + \
+    zenith_angle = acos(cos(radians(dec)) * cos(radians(latitude)) * cos(radians(hour_angle)) +
           sin(radians(dec)) * sin(radians(latitude))) * (180. / 3.14159)
     if debug:
         print 'hour', hour

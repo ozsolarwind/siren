@@ -182,7 +182,7 @@ class whatPlots(QtGui.QDialog):
         for plot in range(len(self.plot_order)):
             if self.plot_order[plot] in self.spacers:
                 if self.plot_order[plot] == 'maximise':  # fudge to add in growth stuff
-                    self.percentLabel = QtGui.QLabel('        Growth. Set annual ' \
+                    self.percentLabel = QtGui.QLabel('        Growth. Set annual '
                                                      + 'Load growth & target year')
                     self.percentSpin = QtGui.QDoubleSpinBox()
                     self.percentSpin.setValue(self.load_growth)
@@ -488,9 +488,9 @@ class whatFinancials(QtGui.QDialog):
                       ['ppa_escalation', 'PPA escalation', 0, 100., 0.6],
                       ['min_dscr_required', 'Minimum DSCR required', 0, 1, 1],
                       ['positive_cashflow_required', 'Positive cash flow required', 0, 1, 1],
-                      ['optimize_lcoe_wrt_debt_fraction', 'Optimize LCOE with respect to debt' + \
+                      ['optimize_lcoe_wrt_debt_fraction', 'Optimize LCOE with respect to debt' +
                        ' percent', 0, 1, 0],
-                      ['optimize_lcoe_wrt_ppa_escalation', 'Optimize LCOE with respect to PPA' + \
+                      ['optimize_lcoe_wrt_ppa_escalation', 'Optimize LCOE with respect to PPA' +
                        ' escalation', 0, 1, 0],
                       ['grid_losses', 'Reduce power by Grid losses', False, True, False],
                       ['grid_costs', 'Include Grid costs in LCOE', False, True, False],
@@ -1317,7 +1317,7 @@ class SuperPower():
             if self.default_files['actual'] is None:
                 if os.path.exists(self.scenarios + self.actual_power):
                     if do_excel:
-                        self.default_files['actual'] = xlrd.open_workbook(self.scenarios + \
+                        self.default_files['actual'] = xlrd.open_workbook(self.scenarios +
                                                        self.actual_power)
                     else:
                         self.default_files['actual'] = open(self.scenarios + self.actual_power)
@@ -1406,7 +1406,7 @@ class SuperPower():
             for r in range(t_rows):
                 for c in range(t_rows):
                     wt_x.append(r * self.row_spacing * turbine.rotor)
-                    wt_y.append(c * self.turbine_spacing * turbine.rotor + \
+                    wt_y.append(c * self.turbine_spacing * turbine.rotor +
                                 (r % 2) * self.offset_spacing * turbine.rotor)
                     ctr -= 1
                     if ctr < 1:
@@ -1867,7 +1867,7 @@ class FinancialModel():
             ippppa_data.set_number('total_installed_cost', capital_cost + grid_cost)
             ippppa_data.set_array('om_capacity', [costs[technology[stn]][1]])
             if technology[stn] == 'Biomass':
-                ippppa_data.set_number('om_opt_fuel_1_usage', self.biomass_multiplier \
+                ippppa_data.set_number('om_opt_fuel_1_usage', self.biomass_multiplier
                                        * capacity[stn] * 1000)
                 ippppa_data.set_array('om_opt_fuel_1_cost', [costs[technology[stn]][2]])
                 ippppa_data.set_number('om_opt_fuel_1_cost_escal',
@@ -1990,11 +1990,11 @@ class FinancialModel():
             if do_grid_loss and grid[stn] != 0:
                 if do_grid_path_cost:
                     for hr in range(len(power[stn])):
-                        energy.append(power[stn][hr] * 1000 * (1 - self.line_loss * path[stn] - \
+                        energy.append(power[stn][hr] * 1000 * (1 - self.line_loss * path[stn] -
                                       self.subs_loss))
                 else:
                     for hr in range(len(power[stn])):
-                        energy.append(power[stn][hr] * 1000 * (1 - self.line_loss * grid[stn] - \
+                        energy.append(power[stn][hr] * 1000 * (1 - self.line_loss * grid[stn] -
                                       self.subs_loss))
             else:
                 for hr in range(len(power[stn])):
@@ -2125,7 +2125,7 @@ class ProgressModel(QtGui.QDialog):
                 for i in range(len(power)):
                     if self.model.plots['grid_losses']:
                         if stn.grid_path_len is not None:
-                            enrgy = power[i] * (1 - self.model.line_loss * stn.grid_path_len - \
+                            enrgy = power[i] * (1 - self.model.line_loss * stn.grid_path_len -
                                     self.model.subs_loss)
                         else:
                             enrgy = power[i] * (1 - self.model.subs_loss)
@@ -2379,7 +2379,7 @@ class PowerModel():
                         lw = 1.0
                         for j in range(len(x24)):
                             cumulative[j] += data[i][p][j]
-                    if self.plots['gross_load'] and (key[:4] == 'Load' or \
+                    if self.plots['gross_load'] and (key[:4] == 'Load' or
                       key == 'Existing Rooftop PV'):
                         for j in range(len(x24)):
                             gross_load[j] += data[i][p][j]
@@ -2465,7 +2465,7 @@ class PowerModel():
                 plt.draw()
 
         def saveBalance(self, shortstuff):
-            data_file = 'Powerbalance_data_%s.xls' % (\
+            data_file = 'Powerbalance_data_%s.xls' % (
                     str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'yyyy-MM-dd_hhmm')))
             data_file = QtGui.QFileDialog.getSaveFileName(None, 'Save Powerbalance data file',
                         self.scenarios + data_file, 'Excel Files (*.xls*);;CSV Files (*.csv)')
@@ -2495,7 +2495,7 @@ class PowerModel():
                     sums = {}
                     for key, value in iter(sorted(stns.iteritems())):
                         if self.power_summary[value].generation > 0:
-                            cf = '{:0.2f}'.format(self.power_summary[value].generation / \
+                            cf = '{:0.2f}'.format(self.power_summary[value].generation /
                                  (self.power_summary[value].capacity * 8760))
                         else:
                             cf = ''
@@ -2611,7 +2611,7 @@ class PowerModel():
                         ws.write(row, col + 2, self.power_summary[value].capacity, style2d)
                         techs[self.power_summary[value].technology][0] += self.power_summary[value].capacity
                         if self.power_summary[value].generation > 0:
-                            ws.write(row, col + 3, self.power_summary[value].generation / \
+                            ws.write(row, col + 3, self.power_summary[value].generation /
                                      (self.power_summary[value].capacity * 8760), style2d)
                         ws.write(row, col + 4, self.power_summary[value].generation, style0d)
                         techs[self.power_summary[value].technology][1] += self.power_summary[value].generation
@@ -2779,8 +2779,8 @@ class PowerModel():
             for j in range(1, len(seasons[i])):
                 d += the_days[seasons[i][j]]
             the_qtrs.append(d)
-        the_ssns = [the_days[4] + the_days[5] + the_days[6] + the_days[7] + the_days[8] + \
-                    the_days[9], the_days[10] + the_days[11] + the_days[0] + the_days[1] + \
+        the_ssns = [the_days[4] + the_days[5] + the_days[6] + the_days[7] + the_days[8] +
+                    the_days[9], the_days[10] + the_days[11] + the_days[0] + the_days[1] +
                     the_days[2] + the_days[3]]
         the_ssns = []
         for i in range(len(periods)):
@@ -2914,7 +2914,7 @@ class PowerModel():
                     lw = 1.0
                     for i in range(len(x)):
                         cumulative[i] += value[i]
-                if self.plots['gross_load'] and (key[:4] == 'Load' or \
+                if self.plots['gross_load'] and (key[:4] == 'Load' or
                       key == 'Existing Rooftop PV'):
                     for i in range(len(x)):
                         gross_load[i] += value[i]
@@ -3128,7 +3128,7 @@ class PowerModel():
                 lx.axhline(0, color='black')
                 if self.plots['show_pct']:
                     self.gen_pct = ' (%s%% of load)' % '{:0,.1f}'.format(gen_sum * 100. / load_sum)
-                    plt.title(self.hdrs['duration'] + ' with renewable contribution' + \
+                    plt.title(self.hdrs['duration'] + ' with renewable contribution' +
                               self.gen_pct)
                    #plt.annotate(pct, xy=(1.0, 3.0))
                 if self.plots['maximise']:
@@ -3400,7 +3400,7 @@ class PowerModel():
                     lw = 1.0
                     for j in range(len(x24)):
                         cumulative[j] += l24[i][j]
-                if self.plots['gross_load'] and (key[:4] == 'Load' or \
+                if self.plots['gross_load'] and (key[:4] == 'Load' or
                       key == 'Existing Rooftop PV'):
                     for j in range(len(x24)):
                         gross_load[j] += l24[i][j]

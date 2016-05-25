@@ -193,7 +193,7 @@ class Shortest:
             vert1 = str(self.lines[li].coordinates[0])
             for pt in range(1, len(self.lines[li].coordinates)):
                 vert2 = str(self.lines[li].coordinates[pt])
-                dist = self.actualDistance(self.lines[li].coordinates[pt][0], self.lines[li].coordinates[pt][1], \
+                dist = self.actualDistance(self.lines[li].coordinates[pt][0], self.lines[li].coordinates[pt][1],
                        self.lines[li].coordinates[pt - 1][0], self.lines[li].coordinates[pt - 1][1])
                 self.g.add_edge(vert1, vert2, dist)
                 self.edges[vert1 + vert2] = li
@@ -206,15 +206,15 @@ class Shortest:
                     if self.lines[l2].coordinates[pt - 1] == self.lines[li].coordinates[-1] or \
                       self.lines[l2].coordinates[pt] == self.lines[li].coordinates[-1]:
                         continue
-                    if self.isBetween(self.lines[l2].coordinates[pt - 1], self.lines[l2].coordinates[pt], \
+                    if self.isBetween(self.lines[l2].coordinates[pt - 1], self.lines[l2].coordinates[pt],
                       self.lines[li].coordinates[-1]):
-                        dist = self.actualDistance(self.lines[l2].coordinates[pt - 1][0], self.lines[l2].coordinates[pt - 1][1], \
+                        dist = self.actualDistance(self.lines[l2].coordinates[pt - 1][0], self.lines[l2].coordinates[pt - 1][1],
                                self.lines[li].coordinates[-1][0], self.lines[li].coordinates[-1][1])
                         vert1 = str(self.lines[l2].coordinates[pt - 1])
                         vert2 = str(self.lines[li].coordinates[-1])
                         self.g.add_edge(vert1, vert2, dist)
                         self.edges[vert1 + vert2] = l2
-                        dist = self.actualDistance(self.lines[l2].coordinates[pt][0], self.lines[l2].coordinates[pt][1], \
+                        dist = self.actualDistance(self.lines[l2].coordinates[pt][0], self.lines[l2].coordinates[pt][1],
                                self.lines[li].coordinates[-1][0], self.lines[li].coordinates[-1][1])
                         vert1 = str(self.lines[l2].coordinates[pt])
                         vert2 = str(self.lines[li].coordinates[-1])

@@ -47,7 +47,7 @@ def within_map(x, y, poly):
     return inside
 
 class Line:
-    def __init__(self, name, style, coordinates, length=0., connector=-1, dispatchable=None, line_cost=None, peak_load=None, \
+    def __init__(self, name, style, coordinates, length=0., connector=-1, dispatchable=None, line_cost=None, peak_load=None,
                  peak_dispatchable=None, peak_loss=None, line_table=None, substation_cost=None):
         self.name = name
         self.style = style
@@ -248,7 +248,7 @@ class Grid:
                  lower_right[1] = float(upper_right[1].strip())
              except:
                  pass
-        self.map_polygon = [upper_left, [upper_left[0], lower_right[1]], lower_right, \
+        self.map_polygon = [upper_left, [upper_left[0], lower_right[1]], lower_right,
            [lower_right[0], upper_left[1]], upper_left]
         self.default_length = -1
         try:
@@ -376,7 +376,7 @@ class Grid:
                     if self.default_length >= 0:
                         grid_len = 0.
                         for j in range(1, len(coords)):
-                            grid_len += self.actualDistance(coords[j - 1][0], coords[j - 1][1], \
+                            grid_len += self.actualDistance(coords[j - 1][0], coords[j - 1][1],
                                         coords[j][0], coords[j][1])
                     else:
                         grid_len = self.default_length
@@ -433,13 +433,13 @@ class Grid:
        #      print '(427)', l, self.lines[l].name, len(self.lines[l].coordinates), self.lines[l].coordinates
             for i in range(len(self.lines[l].coordinates) - 1):
                 if self.dummy_fix:
-                    dist = self.dust(lat, lon, self.lines[l].coordinates[i][0], self.lines[l].coordinates[i][1], \
+                    dist = self.dust(lat, lon, self.lines[l].coordinates[i][0], self.lines[l].coordinates[i][1],
                            self.lines[l].coordinates[i + 1][0], self.lines[l].coordinates[i + 1][1])
                 elif self.kml_file == '' and self.dummy_fix:
-                    dist = self.dust(lat, lon, self.lines[l].coordinates[i][0], self.lines[l].coordinates[i][1], \
+                    dist = self.dust(lat, lon, self.lines[l].coordinates[i][0], self.lines[l].coordinates[i][1],
                            self.lines[l].coordinates[i + 1][0], self.lines[l].coordinates[i + 1][1])
                 else:
-                    dist = self.DistancePointLine(lat, lon, self.lines[l].coordinates[i][0], self.lines[l].coordinates[i][1], \
+                    dist = self.DistancePointLine(lat, lon, self.lines[l].coordinates[i][0], self.lines[l].coordinates[i][1],
                            self.lines[l].coordinates[i + 1][0], self.lines[l].coordinates[i + 1][1])
                 if dist[0] >= 0 and dist[0] < shortest[0]:
                     shortest = dist[:]
@@ -596,7 +596,7 @@ class Grid_Boundary:
                  lower_right[1] = float(upper_right[1].strip())
              except:
                  pass
-        self.map_polygon = [upper_left, [upper_left[0], lower_right[1]], lower_right, \
+        self.map_polygon = [upper_left, [upper_left[0], lower_right[1]], lower_right,
            [lower_right[0], upper_left[1]], upper_left]
 
     def __init__(self):
@@ -625,7 +625,7 @@ class Grid_Boundary:
                 coords = []
                 coordinates = ' '.join(element.text.split()).split(' ')
                 for i in range(len(coordinates)):
-                    coords.append([round(float(coordinates[i].split(',')[1]), 6), \
+                    coords.append([round(float(coordinates[i].split(',')[1]), 6),
                       round(float(coordinates[i].split(',')[0]), 6)])
                 i = int(len(coords) / 2)
                 if within_map(coords[0][0], coords[0][1], self.map_polygon) and \

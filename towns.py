@@ -137,24 +137,24 @@ class Towns:
                                 break
                     else:
                         if ul_lat is None or \
-                          (float(twn['Latitude']) >= lr_lat and \
-                           float(twn['Latitude']) <= ul_lat and \
-                           float(twn['Longitude']) >= ul_lon and \
+                          (float(twn['Latitude']) >= lr_lat and
+                           float(twn['Latitude']) <= ul_lat and
+                           float(twn['Longitude']) >= ul_lon and
                            float(twn['Longitude']) <= lr_lon):
                             if 'Lid' in twns.fieldnames and twn['Lid'] != '':
-                                self.towns.append(Town(twn[name_field], twn['Latitude'], twn['Longitude'], twn['Lid'], \
+                                self.towns.append(Town(twn[name_field], twn['Latitude'], twn['Longitude'], twn['Lid'],
                                              twn['State'], twn['Country'], twn['Elev'], twn['Zone']))
                             else:
                                 self.towns.append(Town(twn[name_field], twn['Latitude'], twn['Longitude']))
             else:
                 for twn in twns:
                     if ul_lat is None or \
-                      (float(twn['Latitude']) >= lr_lat and \
-                       float(twn['Latitude']) <= ul_lat and \
-                       float(twn['Longitude']) >= ul_lon and \
+                      (float(twn['Latitude']) >= lr_lat and
+                       float(twn['Latitude']) <= ul_lat and
+                       float(twn['Longitude']) >= ul_lon and
                        float(twn['Longitude']) <= lr_lon):
                         if 'Lid' in twns.fieldnames and twn['Lid'] != '':
-                            self.towns.append(Town(twn[name_field], twn['Latitude'], twn['Longitude'], twn['Lid'], \
+                            self.towns.append(Town(twn[name_field], twn['Latitude'], twn['Longitude'], twn['Lid'],
                                         twn['State'], twn['Country'], twn['Elev'], twn['Zone']))
                         else:
                             self.towns.append(Town(twn[name_field], twn['Latitude'], twn['Longitude']))
@@ -213,25 +213,25 @@ class Towns:
                         if worksheet.cell_value(curr_row, c_nme) != '' \
                         and worksheet.cell_value(curr_row, c_closed).strip() == '':
                             if ul_lat is None or \
-                              (worksheet.cell_value(curr_row, c_lat) >= lr_lat and \
-                               worksheet.cell_value(curr_row, c_lat) <= ul_lat and \
-                               worksheet.cell_value(curr_row, c_lon) >= ul_lon and \
+                              (worksheet.cell_value(curr_row, c_lat) >= lr_lat and
+                               worksheet.cell_value(curr_row, c_lat) <= ul_lat and
+                               worksheet.cell_value(curr_row, c_lon) >= ul_lon and
                                worksheet.cell_value(curr_row, c_lon) <= lr_lon):
-                                self.towns.append(Town(worksheet.cell_value(curr_row, c_nme), \
-                                                       worksheet.cell_value(curr_row, c_lat), \
-                                                       worksheet.cell_value(curr_row, c_lon), \
-                                                       worksheet.cell_value(curr_row, c_id), \
-                                                       worksheet.cell_value(curr_row, c_state), \
+                                self.towns.append(Town(worksheet.cell_value(curr_row, c_nme),
+                                                       worksheet.cell_value(curr_row, c_lat),
+                                                       worksheet.cell_value(curr_row, c_lon),
+                                                       worksheet.cell_value(curr_row, c_id),
+                                                       worksheet.cell_value(curr_row, c_state),
                                                        elev=worksheet.cell_value(curr_row, c_elev)))
                     else:
                         if worksheet.cell_value(curr_row, c_nme) != '':
                             if ul_lat is None or \
-                              (worksheet.cell_value(curr_row, c_lat) >= lr_lat and \
-                               worksheet.cell_value(curr_row, c_lat) <= ul_lat and \
-                               worksheet.cell_value(curr_row, c_lon) >= ul_lon and \
+                              (worksheet.cell_value(curr_row, c_lat) >= lr_lat and
+                               worksheet.cell_value(curr_row, c_lat) <= ul_lat and
+                               worksheet.cell_value(curr_row, c_lon) >= ul_lon and
                                worksheet.cell_value(curr_row, c_lon) <= lr_lon):
-                                self.towns.append(Town(worksheet.cell_value(curr_row, c_nme), \
-                                                       worksheet.cell_value(curr_row, c_lat), \
+                                self.towns.append(Town(worksheet.cell_value(curr_row, c_nme),
+                                                       worksheet.cell_value(curr_row, c_lat),
                                                        worksheet.cell_value(curr_row, c_lon)))
                                 if c_id >= 0:
                                     self.towns[-1].lid = worksheet.cell_value(curr_row, c_id)
@@ -254,7 +254,7 @@ class Towns:
             dist = self.haversine(lat, lon, town.lat, town.lon)
             if dist < distance:
                 hdr = 'Location ID,City,State,Country,Latitude,Longitude,Time Zone,Elevation,Source\n' + \
-                    '%s,%s,%s,%s,%s,%s,%s,%s,IWEC' % (town.lid, town.name, town.state, town.country, \
+                    '%s,%s,%s,%s,%s,%s,%s,%s,IWEC' % (town.lid, town.name, town.state, town.country,
                     lat, lon, town.zone, town.elev)
                 distance = dist
         return hdr
@@ -267,7 +267,7 @@ class Towns:
         for town in self.towns:
             dist = self.haversine(lat, lon, town.lat, town.lon)
             if dist < distance:
-                hdr = '%s,"%s",%s,%s,%s,%s,%s,3600.0,%s,0:30:00' % (town.lid, town.name, town.state, town.zone, \
+                hdr = '%s,"%s",%s,%s,%s,%s,%s,3600.0,%s,0:30:00' % (town.lid, town.name, town.state, town.zone,
                     lat, lon, town.elev, year)
                 distance = dist
         return hdr
@@ -280,7 +280,7 @@ class Towns:
         for town in self.towns:
             dist = self.haversine(lat, lon, town.lon, town.lat)
             if dist < distance:
-                hdr = '%s,%s,%s,%s,%s,%s,%s,%s,1,8760' % (town.lid, town.name, town.state, town.country, \
+                hdr = '%s,%s,%s,%s,%s,%s,%s,%s,1,8760' % (town.lid, town.name, town.state, town.country,
                     year, round(lat, 4), round(lon, 4), town.elev)
                 distance = dist
         return hdr
