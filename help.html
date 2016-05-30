@@ -179,7 +179,7 @@ You can also create additional stations, such as Rooftop PV, to be included in t
 <br>
 <strong>Note:</strong> The intention of these two files is to describe the existing fossil and renewable Stations on the electricity network</li>
 <li>Hourly load details for the electricity grid. A simple CSV file with a single column of electrical load data for the 8,760 hours in the year of interest (identified by <em>load</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file)</li>
-<li>Hourly solar and weather details for the area of interest (identified by <em>solar_files</em> and <em>wind_files</em> properties of the <a href="#p_files">[Files]</a> Section of the Preferences file). This data is in formats required for input to SAM and contains entries for the 8,760 hours in the year of interest. A SAM weather file is a text file that contains one year's worth of data describing the solar resource, wind speed, temperature, and other weather characteristics at a particular location. The approach we have adopted is to use NASA MERRA-2 data for the desired geographic area and year to create appropriately formatted weather files. This is described in <a href="#merra">Obtaining and Using NASA MERRA-2 Data for SAM</a>.
+<li>Hourly solar and weather details for the area of interest (identified by <em>solar_files</em> and <em>wind_files</em> properties of the <a href="#p_files">[Files]</a> Section of the Preferences file). This data is in formats required for input to SAM and contains entries for the 8,760 hours in the year of interest. A SAM weather file is a text file that contains one (calendar) year's worth of data describing the solar resource, wind speed, temperature, and other weather characteristics at a particular location. The approach we have adopted is to use NASA MERRA-2 data for the desired geographic area and year to create appropriately formatted weather files. This is described in <a href="#merra">Obtaining and Using NASA MERRA-2 Data for SAM</a>. To enable more recent (part-year) data to be used it is possible to &ldquo;wrap&rdquo; the data by using the weather data for the prior year for the remaining part of the year.
 <br>
 You can also use TMY files such as those provided with SAM. If you have a number of weather files you can create an index of these files for SIREN. This is described in <a href="#index">Using other Weather Files</a></li>
 <li>SIREN allows you to visualise renewable resource attributes. This utilises a summary file to avoid having to process all the weather files covered by the map (identified by <em>resource_grid</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file). This is described in <a href="#resource">Visualising Renewable Resource Attributes</a></li>
@@ -1890,7 +1890,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 </tr>
 <tr class="none">
 <td class="none"><img src="list.png" alt="updateswis">&nbsp;&nbsp;updateswis</td>
-<td class="none">Invoke updateswis to update the list of existing SWIS Stations (facilities; see <a href="#updateswis">Existing Stations (Facilities)</a>)</td>
+<td class="none">Invoke updateswis to update the list of existing SWIS Stations (facilities; see <a href="#updateswis">Existing Stations (Facilities)</a>) or SWIS Load data</td>
 </tr>
 </table>
 <div class="experiment">
@@ -2398,38 +2398,58 @@ Additional rows specify power output at speeds increasing by 1 m/s</td>
 <h3 id="swisupd">Obtaining Current SWIS Facilities</h3>
 <p>The initial SWIS data provided with SIREN is for 2014 and 2015 with existing renewable stations at that time. Updates to this data are available on the <a href="http://data.wa.aemo.com.au/" target="_blank">AEMO Market Data website</a>. The SWIS data used by SIREN is as follows.</p>
 <h4>SWIS Network</h4>
-<p>SIREN uses a simplified network to reduce the overhead in adding stations into the network and to trace there links to the Perth Load Centre. This simple network was derived from a national network diagram for Australia available as a KML file from Geoscience Australia (<a href="http://www.ga.gov.au/corporate_data/83105/NationalElectricityTransmissionLines.kml" target="_blank">National Electricity Transmission Lines</a>; accessed Nov 2015)</p>
+<p>SIREN uses a simplified network to reduce the overhead in adding stations into the network and to trace their links to the Perth Load Centre. This simple network was derived from a national network diagram for Australia available as a KML file from Geoscience Australia (<a href="http://www.ga.gov.au/corporate_data/83105/NationalElectricityTransmissionLines.kml" target="_blank">National Electricity Transmission Lines</a>; accessed Nov 2015)</p>
 <p>There is also a list of Australian power stations available as a KML file (<a href="http://www.ga.gov.au/corporate_data/82326/NationalMajorPowerStations.kml" target="_blank">NationalMajorPowerStations</a>; accessed Nov 2015)</p>
 <h4 id="updateswis">Existing Stations (Facilities)</h4>
-<p>SIREN uses the list of <a href="http://data.wa.aemo.com.au/#facilities" target="_blank">registered facilities</a> available from AEMO (specifically <a href="http://data.wa.aemo.com.au/datafiles/facilities/facilities.csv" target="_blank">facilities.csv</a>) for it's existing stations. If you want an updated version you can use <em>updateswis</em> to obtain the current list.</p>
-<h5>updateswis</h5>
-<p><em>updateswis.py</em> is a Python program that can be used to access the current list of facilities (power stations) for the SWIS. The program will download the list of existing stations and optionally update the file SIREN uses for existing stations (<em>grid_stations</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file. To aid readability you can optionally produce an additional file, Excel or CSV, that will save the list in the same format as a SIREN scenario file. You can invoke the program either by choosing <em>updateswis</em> from the SIREN Tools menu or in Windows by running <em>updateswis.exe</em> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
+<p>SIREN uses the list of <a href="http://data.wa.aemo.com.au/#facilities" target="_blank">registered facilities</a> available from AEMO (specifically <a href="http://data.wa.aemo.com.au/datafiles/facilities/facilities.csv" target="_blank">facilities.csv</a>) for it's existing stations. If you want an updated version you can use <em>updateswis</em> to obtain the current list (see below).</p>
+<h4>Load Data</h4>
+<p>The load data for the SWIS has been obtained from <a href="http://data.wa.aemo.com.au/#load-summary" target="_blank">Load Summary</a> data available from AEMO. SIREN uses hourly load data rather than half hourly. The figures used are derived by summing the &lsquo;Operational Load (MWh)&rsquo; data for the two half hourly intervals. You can use <em>updateswis</em> to obtain the latest load data (see below). The SWIS load data is generally available mid-month for two months prior.</p>
+<p>The AEMO also publish <a href="http://data.wa.aemo.com.au/#facility-scada" target="_blank">facility SCADA data</a>.</p>
+<h4>updateswis</h4>
+<p><em>updateswis.py</em> is a Python program that can be used to access the current list of facilities (power stations) for the SWIS and to obtain recent load data.
+The program will download the list of existing stations and optionally update the file SIREN uses for existing stations (<em>grid_stations</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file). To aid readability you can optionally produce an additional file, Excel or CSV, that will save the list in the same format as a SIREN scenario file.
+Load data can also be downloaded for prior years to a filename defined by the <em>load</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file.</p>
+<p>You can run <em>updateswis</em> from the SIREN Tools menu or in Windows by running <em>updateswis.exe</em> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
 <ul>
 <li><em>Host site</em>. The URL of the AEMO Market Data website</li>
+<li>Existing Stations (Facilities)
+<ul>
 <li><em>File location</em>. The location of the file on the AEMO Market Data website</li>
-<li><em>Target File</em>. The target file for the existing stations. The tool will examine and existing file and evaluate what changes have been made. The file name is derived from the <em>grid_stations</em> property</li>
+<li><em>Target file</em>. The target file for the existing stations. The tool will examine and existing file and evaluate what changes have been made. The file name is derived from the <em>grid_stations</em> property</li>
 <li><em>Excel file</em>. Setting a file name here will cause an additional file to be created in SIREN scenario format</li>
 </ul>
-<p>There are three buttons:</p>
+</li>
+<li>System Load
+<ul>
+<li><em>Year</em>. The year you want load data for</li>
+<li><em>Wrap to prior year</em>. To enable you to use (more) recent load data you can check this option to indicate load data should wrap to the prior year. As an example, if load data is available up until April of the current year updateswis will use load data from the prior year for May onwards to give a full year of data</li>
+<li><em>Load File location</em>. The location of the file on the AEMO Market Data website. The year will be updated when you update the Year field so you shouldn't need to change this field</li>
+<li><em>Target load file</em>. The target file for the load data. The file name is derived from the <em>load</em> property. The year will be updated when you update the Year field so you shouldn't need to change this field</li>
+</ul>
+</li>
+</ul>
+<p>There are four buttons:</p>
 <ul>
 <li><em>Quit</em> will exit the program</li>
 <li><em>Update Existing Stations</em> will download the current file on the AEMO site and compare it to the existing list available to SIREN. If there are changes you will be presented with a brief summary of changes and given the option to replace the existing file. The initial window will then be displayed with a brief message</li>
+<li><em>Update Load file</em> will download load files from the AEMO site and create an updated load data file</li>
 <li><em>Help</em> Display this help</li>
 </ul>
 <p>You can also run the program on the command line. In this case the parameters are passed to the program as follows:</p>
 <ul class="none">
-<li><em>updateswis.exe</em> &lt;parm1=value parm2=value&gt;</li>
+<li><em>updateswis.exe</em> &lt;SIREN.ini parm1=value parm2=value&gt;</li>
 </ul>
-<p>Parameters are as described above and can be passed to the program as follows:</p>
+<p>Parameters are as described above and can be passed to the program as follows. If either wrap or year is passed as a parameter load data will be obtained, otherwise facility data will be obtained.</p>
 <ul>
+<li><em>SIREN.ini</em> is the SIREN Preferences file. It is required and must be the first parameter</li>
 <li><em>host=</em> Host site</li>
-<li><em>url=</em> File location</li>
-<li><em>target=</em>Target File</li>
-<li><em>excel=</em>Excel File</li>
+<li><em>url=</em> File location on the AEMO website</li>
+<li><em>target=</em> Target File</li>
+<li><em>excel=</em> Excel File</li>
+<li><em>wrap=</em> Indicate to wrap data or not</li>
+<li><em>year=</em> Indicate which year to obtain load data for</li>
 </ul>
-<h4>Load Data</h4>
-<p>The load data for the SWIS has been obtained from <a href="http://data.wa.aemo.com.au/#load-summary" target="_blank">Load Summary</a> data available from AEMO. SIREN use hourly load data rather than half hourly. This figures we use are derived by summing the &lsquo;Operational Load (MWh)&rsquo; data for the two half hourly intervals.</p>
-<p>The AEMO also publish <a href="http://data.wa.aemo.com.au/#facility-scada" target="_blank">facility SCADA data</a>.</p>
+</li>
 <p><a href="#help">Back to top</a></p>
 <h3 id="merra">Obtaining and Using NASA MERRA-2 Data for SAM</h3>
 <h4 id="merra1">Using NASA MERRA-2 Data for input to SAM</h4>
@@ -2552,7 +2572,7 @@ Run the wget command as displayed in the FTP Subset Results page. This uses the 
 <p>Parameters are as described above and can be passed to the program as follows:</p>
 <ul>
 <li><em>year=</em> Year of interest</li>
-<li><em>wrap=</em> A value starting with <em>y</em> (yes) or <em>t</em> (true) indicates tp wrap back to the prior year</li>
+<li><em>wrap=</em> A value starting with <em>y</em> (yes) or <em>t</em> (true) indicates to wrap back to the prior year</li>
 <li><em>zone=</em> or <em>timezone=</em> The (solar) time zone for the area of interest</li>
 <li><em>fmat=</em> Weather file format</li>
 <li><em>coords=</em> or <em>latlon=</em> A string of comma-separated latitude and longitude values</li>
