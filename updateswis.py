@@ -47,10 +47,8 @@ class makeFile():
         self.url = url
         self.tgt_fil = tgt_fil
         self.excel = excel
-        http_host = 'data.wa.aemo.com.au'
-        url = self.url
-        conn = httplib.HTTPConnection(http_host)
-        conn.request("GET", url)
+        conn = httplib.HTTPConnection(self.host)
+        conn.request("GET", self.url)
         response = conn.getresponse()
         if response.status != 200:
             self.log = 'Error Response: ' + str(response.status) + ' ' + response.reason
@@ -238,6 +236,76 @@ class makeFile():
                 wb.save(self.excel)
 
 
+class makeLoadFile():
+
+    def close(self):
+        return
+
+    def getLog(self):
+        return self.log
+
+    def __init__(self, host, url, tgt_fil, year, wrap):
+        load = {}
+        self.log = ''
+        the_year = int(year)
+        for yr in range(the_year - 1, the_year + 1):
+            last_url = url.replace(year, str(yr))
+            conn = httplib.HTTPConnection(host)
+            conn.request("GET", last_url)
+            response = conn.getresponse()
+            if response.status != 200:
+                self.log = 'Error Response: ' + str(response.status) + ' ' + response.reason
+                return
+            datas = response.read().split('\n')
+            conn.close()
+            load_detl = csv.DictReader(datas)
+            for itm in load_detl:
+                try:
+                    load[itm['Trading Interval']] = float(itm['Operational Load (MWh)'])
+                except:
+                    if itm['Operational Load (MWh)'] == '':
+                        try:
+                            load[itm['Trading Interval']] = float(itm['Metered Generation (Total; MWh)'])
+                        except:
+                            pass
+        hour = [[], []]
+        for key in sorted(load):
+            per = time.strptime(key, '%Y-%m-%d %H:%M:%S')
+            if per.tm_mon == 2 and per.tm_mday == 29:
+                continue
+            if per.tm_year == the_year - 1:
+                ndx = 0
+            elif per.tm_year == the_year:
+                ndx = 1
+            else:
+                continue
+            if per.tm_min == 0 or len(hour[ndx]) == 0:
+                hour[ndx].append(load[key])
+            else:
+                hour[ndx][-1] += load[key]
+        if len(hour[1]) < 8760:
+            if wrap:
+                self.log = '. Wrapped to prior year'
+                pad = len(hour[1]) - (8760 - len(hour[0]))
+                for i in range(pad, len(hour[0])):
+                    hour[1].append(hour[0][i])
+            else:
+                self.log = '. Padded with zeroes'
+                for i in range(len(hour[1]), 8760):
+                    hour[1].append(0.0)
+        if os.path.exists(tgt_fil):
+            if os.path.exists(tgt_fil + '~'):
+                os.remove(tgt_fil + '~')
+            os.rename(tgt_fil, tgt_fil + '~')
+        tf = open(tgt_fil, 'w')
+        tf.write('Load (MWh)\n')
+        for i in range(len(hour[1])):
+            tf.write(str(round(hour[1][i], 6))+'\n')
+        tf.close()
+        self.log = '%s created%s' % (tgt_fil[tgt_fil.rfind('/') + 1:], self.log)
+        return
+
+
 class ClickableQLabel(QtGui.QLabel):
     def __init(self, parent):
         QLabel.__init__(self, parent)
@@ -245,7 +313,6 @@ class ClickableQLabel(QtGui.QLabel):
     def mousePressEvent(self, event):
         QtGui.QApplication.widgetAt(event.globalPos()).setFocus()
         self.emit(QtCore.SIGNAL('clicked()'))
-
 
 class getParms(QtGui.QWidget):
 
@@ -266,6 +333,7 @@ class getParms(QtGui.QWidget):
         except:
             self.base_year = '2012'
         self.yrndx = -1
+        this_year = time.strftime('%Y')
         try:
             self.years = []
             years = config.get('Base', 'years')
@@ -281,8 +349,13 @@ class getParms(QtGui.QWidget):
                     if rngs[0].strip() == self.base_year:
                         self.yrndx = len(self.years)
                     self.years.append(rngs[0].strip())
+            if this_year not in self.years:
+                self.years.append(this_year)
         except:
-            self.years = self.base_year
+            if self.base_year != this_year:
+                self.years = [self.base_year, this_year]
+            else:
+                self.years = self.base_year
             self.yrndx = 0
         if self.yrndx < 0:
             self.yrndx = len(self.years)
@@ -302,38 +375,77 @@ class getParms(QtGui.QWidget):
             self.grid_stations = fac_file
         except:
             pass
+        self.load_file = ''
+        try:
+            fac_file = config.get('Files', 'load')
+            for key, value in parents:
+                fac_file = fac_file.replace(key, value)
+            fac_file = fac_file.replace('$USER$', getUser())
+            fac_file = fac_file.replace('$YEAR$', self.base_year)
+            self.load_file = fac_file
+        except:
+            pass
         self.grid = QtGui.QGridLayout()
         self.grid.addWidget(QtGui.QLabel('Host site:'), 0, 0)
         self.host = QtGui.QLineEdit()
         self.host.setText('data.wa.aemo.com.au')
         self.grid.addWidget(self.host, 0, 1, 1, 2)
-        self.grid.addWidget(QtGui.QLabel('File location:'), 1, 0)
+        self.grid.addWidget(QtGui.QLabel('Existing Stations (Facilities)'), 1, 0, 1, 2)
+        self.grid.addWidget(QtGui.QLabel('File location:'), 2, 0)
         self.url = QtGui.QLineEdit()
         self.url.setText('/datafiles/facilities/facilities.csv')
-        self.grid.addWidget(self.url, 1, 1, 1, 2)
-        self.grid.addWidget(QtGui.QLabel('Target file:'), 2, 0)
+        self.grid.addWidget(self.url, 2, 1, 1, 2)
+        self.grid.addWidget(QtGui.QLabel('Target file:'), 3, 0)
         self.target = ClickableQLabel()
         self.target.setText(self.grid_stations)
         self.target.setFrameStyle(6)
         self.connect(self.target, QtCore.SIGNAL('clicked()'), self.tgtChanged)
-        self.grid.addWidget(self.target, 2, 1, 1, 3)
-        self.grid.addWidget(QtGui.QLabel('Excel file:'), 3, 0)
+        self.grid.addWidget(self.target, 3, 1, 1, 4)
+        self.grid.addWidget(QtGui.QLabel('Excel file:'), 4, 0)
         self.excel = ClickableQLabel()
         self.excel.setText('')
         self.excel.setFrameStyle(6)
         self.connect(self.excel, QtCore.SIGNAL('clicked()'), self.excelChanged)
-        self.grid.addWidget(self.excel, 3, 1, 1, 3)
+        self.grid.addWidget(self.excel, 4, 1, 1, 3)
+        self.grid.addWidget(QtGui.QLabel('System Load'), 5, 0)
+        self.grid.addWidget(QtGui.QLabel('Year:'), 6, 0)
+        self.yearCombo = QtGui.QComboBox()
+        for i in range(len(self.years)):
+            self.yearCombo.addItem(self.years[i])
+        self.yearCombo.setCurrentIndex(self.yrndx)
+        self.yearCombo.currentIndexChanged[str].connect(self.yearChanged)
+        self.grid.addWidget(self.yearCombo, 6, 1)
+        self.grid.addWidget(QtGui.QLabel('Wrap to prior year:'), 7, 0)
+        self.wrapbox = QtGui.QCheckBox()
+        self.wrapbox.setCheckState(QtCore.Qt.Checked)
+        self.grid.addWidget(self.wrapbox, 7, 1)
+        self.grid.addWidget(QtGui.QLabel('If checked will wrap back to prior year'), 7, 2, 1, 3)
+        self.grid.addWidget(QtGui.QLabel('Load file location:'), 8, 0)
+        self.lurl = QtGui.QLineEdit()
+        self.lurl.setText('/datafiles/load-summary/load-summary-' + self.base_year + '.csv')
+        self.grid.addWidget(self.lurl, 8, 1, 1, 3)
+        self.grid.addWidget(QtGui.QLabel('Target load file:'), 9, 0)
+        self.targetl = ClickableQLabel()
+        self.targetl.setText(self.load_file)
+        self.targetl.setFrameStyle(6)
+        self.connect(self.targetl, QtCore.SIGNAL('clicked()'), self.tgtlChanged)
+        self.grid.addWidget(self.targetl, 9, 1, 1, 4)
         self.log = QtGui.QLabel(' ')
-        self.grid.addWidget(self.log, 4, 1, 1, 3)
+        self.grid.addWidget(self.log, 10, 1, 1, 3)
         quit = QtGui.QPushButton('Quit', self)
-        self.grid.addWidget(quit, 5, 0)
+        wdth = quit.fontMetrics().boundingRect(quit.text()).width() + 29
+        self.grid.addWidget(quit, 11, 0)
         quit.clicked.connect(self.quitClicked)
         QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
         dofile = QtGui.QPushButton('Update Existing Stations', self)
-        self.grid.addWidget(dofile, 5, 1)
+        self.grid.addWidget(dofile, 11, 1)
         dofile.clicked.connect(self.dofileClicked)
+        dofilel = QtGui.QPushButton('Update Load file', self)
+        self.grid.addWidget(dofilel, 11, 2)
+        dofilel.clicked.connect(self.dofilelClicked)
         help = QtGui.QPushButton('Help', self)
-        self.grid.addWidget(help, 5, 2)
+        help.setMaximumWidth(wdth)
+        self.grid.addWidget(help, 11, 3)
         help.clicked.connect(self.helpClicked)
         QtGui.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
         self.grid.setColumnStretch(3, 5)
@@ -344,7 +456,7 @@ class getParms(QtGui.QWidget):
         self.scroll.setWidget(frame)
         self.layout = QtGui.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
-        self.setWindowTitle('SIREN updateswis (' + fileVersion() + ') - Update SWIS Stations')
+        self.setWindowTitle('SIREN updateswis (' + fileVersion() + ') - Update SWIS Data')
         self.center()
         self.show()
 
@@ -357,10 +469,17 @@ class getParms(QtGui.QWidget):
 
     def tgtChanged(self):
         curtgt = self.target.text()
-        newtgt = str(QtGui.QFileDialog.getSaveFileName(self, 'Choose Target File',
+        newtgt = str(QtGui.QFileDialog.getSaveFileName(self, 'Choose Target file',
                  curtgt))
         if newtgt != '':
             self.target.setText(newtgt)
+
+    def tgtlChanged(self):
+        curtgt = self.targetl.text()
+        newtgt = str(QtGui.QFileDialog.getSaveFileName(self, 'Choose Target Load file',
+                 curtgt))
+        if newtgt != '':
+            self.targetl.setText(newtgt)
 
     def excelChanged(self):
         curtgt = self.excel.text()
@@ -368,6 +487,23 @@ class getParms(QtGui.QWidget):
                  curtgt))
         if newtgt != '':
             self.excel.setText(newtgt)
+
+    def yearChanged(self, val):
+        year = str(self.yearCombo.currentText())
+        if year != self.years[self.yrndx]:
+            lurl = str(self.lurl.text())
+            i = lurl.find(self.years[self.yrndx])
+            while i >= 0:
+                lurl = lurl[:i] + year + lurl[i + len(self.years[self.yrndx]):]
+                i = lurl.find(self.years[self.yrndx])
+            self.lurl.setText(lurl)
+            targetl = str(self.targetl.text())
+            i = targetl.find(self.years[self.yrndx])
+            while i >= 0:
+                targetl = targetl[:i] + year + targetl[i + len(self.years[self.yrndx]):]
+                i = targetl.find(self.years[self.yrndx])
+            self.targetl.setText(targetl)
+            self.yrndx = self.years.index(year)
 
     def helpClicked(self):
         dialog = displayobject.AnObject(QtGui.QDialog(), self.help,
@@ -383,14 +519,27 @@ class getParms(QtGui.QWidget):
         log = resource.getLog()
         self.log.setText(log)
 
+    def dofilelClicked(self):
+        if self.wrapbox.isChecked():
+            wrap = True
+        else:
+            wrap = False
+        resource = makeLoadFile(str(self.host.text()), str(self.lurl.text()), str(self.targetl.text()),
+                   str(self.yearCombo.currentText()), wrap)
+        log = resource.getLog()
+        self.log.setText(log)
+
 
 if "__main__" == __name__:
     app = QtGui.QApplication(sys.argv)
     if len(sys.argv) > 2:   # arguments
         host = 'data.wa.aemo.com.au'
-        url = '/datafiles/facilities/facilities.csv'
+        furl = '/datafiles/facilities/facilities.csv'
+        lurl = '/datafiles/load-summary/load-summary-' + time.strftime('%Y') + '.csv'
         tgt_fil = ''
         excel = ''
+        wrap = ''
+        year = ''
         for i in range(1, len(sys.argv)):
             if sys.argv[i][:5] == 'host=':
                 host = int(sys.argv[i][5:])
@@ -400,7 +549,23 @@ if "__main__" == __name__:
                 tgt_fil = sys.argv[i][7:]
             elif sys.argv[i][:6] == 'excel=':
                 excel = sys.argv[i][6:]
-        files = makeFile(host, url, tgt_fil, excel)
+            elif sys.argv[i][:5] == 'wrap=':
+                wrap = sys.argv[i][5:]
+            elif sys.argv[i][:5] == 'year=':
+                year = sys.argv[i][5:]
+        if wrap != '' or year != '':
+            if wrap == '':
+                wrap = False
+            elif wrap[0].lower() == 'y' or wrap[0].lower() == 't' or (len(wrap) > 1 and wrap[:2].lower() == 'on'):
+                wrap = True
+            else:
+                wrap = False
+            if year == '':
+                year = time.strftime('%Y')
+            url = lurl.replace(time.strftime('%Y'), year)
+            files = makeLoadFile(host, url, tgt_fil, year, wrap)
+        else:
+            files = makeFile(host, furl, tgt_fil, excel)
     else:
         ex = getParms()
         app.exec_()

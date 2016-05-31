@@ -186,7 +186,7 @@ class makeWeather():
             cdf_file = NetCDFFile(unzip_file, 'r')
      #   Variable Description                                          Units
      #   -------- ---------------------------------------------------- --------
-     #   ps       Time averaged surface pressure                       PaStart: ' + self
+     #   ps       Time averaged surface pressure                       Pa
      #   u10m     Eastward wind at 10 m above displacement height      m/s
      #   u2m      Eastward wind at 2 m above displacement height       m/s
      #   u50m     Eastward wind at 50 m above surface                  m/s
@@ -312,7 +312,7 @@ class makeWeather():
         cdf_file.close()
         return
 
-    def __init__(self, src_year, src_zone, src_dir_s, src_dir_w, tgt_dir, fmat, src_lat_lon=None, info=False):
+    def __init__(self, src_year, src_zone, src_dir_s, src_dir_w, tgt_dir, fmat, wrap=None, src_lat_lon=None, info=False):
         self.last_time = datetime.datetime.now()
         self.log = ''
         self.return_code = 0
@@ -322,6 +322,11 @@ class makeWeather():
         self.src_dir_w = src_dir_w
         self.tgt_dir = tgt_dir
         self.fmat = fmat
+        self.wrap = False
+        if wrap is None or wrap == '':
+            pass
+        elif wrap[0].lower() == 'y' or wrap[0].lower() == 't' or wrap[:2].lower() == 'on':
+            self.wrap = True
         self.src_lat_lon = src_lat_lon
         self.src_s_pfx = ''
         self.src_s_sfx = ''
@@ -487,17 +492,30 @@ class makeWeather():
                 self.d2m = self.d2m[:self.src_zone]
                 self.d50m = self.d50m[:self.src_zone]
                 self.t_2m = self.t_2m[:self.src_zone]
+        self.the_year = self.src_year # start with their year
+        if self.wrap:
+            yrs = 2
+        else:
+            yrs = 1
         for mt in range(len(dys)):
             self.log += 'Processing month %s wind\n' % str(mt + 1)
             for dy in range(1, dys[mt] + 1):
                 if self.src_zone <= 0:
                     if mt == 0 and dy == 1:
                         continue
-                inp_file = self.src_dir_w + self.src_w_pfx + '{0:04d}'.format(self.src_year) + \
-                           '{0:02d}'.format(mt + 1) + '{0:02d}'.format(dy) + self.src_w_sfx
-                if not os.path.exists(inp_file):
+                for yr in range(yrs):
+                    inp_file = self.src_dir_w + self.src_w_pfx + '{0:04d}'.format(self.the_year) + \
+                               '{0:02d}'.format(mt + 1) + '{0:02d}'.format(dy) + self.src_w_sfx
+                    if os.path.exists(inp_file):
+                        break
                     if inp_file.find('MERRA300') >= 0:
                         inp_file = inp_file.replace('MERRA300', 'MERRA301')
+                    else:
+                        if self.wrap and self.the_year == self.src_year:
+                            self.the_year = self.src_year - 1
+                            self.log += 'Wrapping to prior year - %.4d-%.2d-%.2d\n' % (self.the_year, (mt + 1), dy)
+                            yrs = 1
+# check if need to go back a year
                 self.get_data(inp_file)   # get wind data
                 if self.return_code != 0:
                     return
@@ -517,7 +535,7 @@ class makeWeather():
                     del self.d50m[-1]
                     del self.t_2m[-1]
         elif self.src_zone < 0:
-            inp_strt = '{0:04d}'.format(self.src_year + 1) + '0101'
+            inp_strt = '{0:04d}'.format(self.the_year + 1) + '0101'
             inp_file = self.src_dir_w + self.src_w_pfx + \
                        inp_strt + self.src_w_pfx
             if not os.path.exists(inp_file):
@@ -665,18 +683,32 @@ class makeWeather():
         elif self.src_zone < 0:
          # first self.src_zone hours of self.src_year GMT = last self.src_zone of (self.src_year - 1)
             self.swgnt = self.swgnt[:self.src_zone]
+        self.the_year = self.src_year # start with their year
+        if self.wrap:
+            yrs = 2
+        else:
+            yrs = 1
         for mt in range(len(dys)):
             self.log += 'Processing month %s solar\n' % str(mt + 1)
             for dy in range(1, dys[mt] + 1):
                 if self.src_zone <= 0:
                     if mt == 0 and dy == 1:
                         continue
-                inp_file = self.src_dir_s + self.src_s_pfx + '{0:04d}'.format(self.src_year) + \
-                           '{0:02d}'.format(mt + 1) + '{0:02d}'.format(dy) + self.src_s_sfx
-                if not os.path.exists(inp_file):
+                for yr in range(yrs):
+                    inp_file = self.src_dir_s + self.src_s_pfx + '{0:04d}'.format(self.the_year) + \
+                               '{0:02d}'.format(mt + 1) + '{0:02d}'.format(dy) + self.src_s_sfx
+                    if os.path.exists(inp_file):
+                        break
                     if inp_file.find('MERRA300') >= 0:
                         inp_file = inp_file.replace('MERRA300', 'MERRA301')
+                    else:
+                        if self.wrap and self.the_year == self.src_year:
+                            self.the_year = self.src_year - 1
+                            self.log += 'Wrapping to prior year - %.4d-%.2d-%.2d\n' % (self.the_year, (mt + 1), dy)
+                            yrs = 1
                 self.get_rad_data(inp_file)  # get solar data
+                if self.return_code != 0:
+                    return
         if self.src_zone > 0:
             for i in range(self.src_zone):  # delete last n hours
                 del self.swgnt[-1]
@@ -828,7 +860,7 @@ class makeWeather():
                             dhi = getDHI(ghi, dni, hour=hr + 1, lat=self.lati[lat])
                             tf.write(str(self.t_10m[hr][lat][lon]) +
                                 ',-999,-999,-999,' +
-                                str(self.s10m[hr][laot][lon]) + ',' +
+                                str(self.s10m[hr][lat][lon]) + ',' +
                                 str(self.d10m[hr][lat][lon]) + ',' +
                                 str(self.p_s[hr][lat][lon]) + ',' +
                                 str(int(ghi)) + ',' + str(int(dni)) + ',' + str(int(dhi)) +
@@ -855,67 +887,72 @@ class getParms(QtGui.QWidget):
         self.initUI()
 
     def initUI(self):
+        self.grid = QtGui.QGridLayout()
+        self.grid.addWidget(QtGui.QLabel('Year:'), 0, 0)
         self.yearSpin = QtGui.QSpinBox()
         now = datetime.datetime.now()
         self.yearSpin.setRange(1979, now.year)
         self.yearSpin.setValue(now.year - 1)
+        self.grid.addWidget(self.yearSpin, 0, 1)
+        self.grid.addWidget(QtGui.QLabel('Wrap to prior year:'), 1, 0)
+        self.wrapbox = QtGui.QCheckBox()
+        self.wrapbox.setCheckState(QtCore.Qt.Checked)
+        self.grid.addWidget(self.wrapbox, 1, 1)
+        self.grid.addWidget(QtGui.QLabel('If checked will wrap back to prior year'), 1, 2, 1, 3)
+        self.grid.addWidget(QtGui.QLabel('Time Zone:'), 2, 0)
         self.zoneCombo = QtGui.QComboBox()
         self.zoneCombo.addItem('Auto')
         for i in range(-12, 13):
             self.zoneCombo.addItem(str(i))
         self.zoneCombo.currentIndexChanged[str].connect(self.zoneChanged)
         self.zone_lon = QtGui.QLabel(('Time zone calculated from MERRA data'))
-        self.grid = QtGui.QGridLayout()
-        self.grid.addWidget(QtGui.QLabel('Year:'), 0, 0)
-        self.grid.addWidget(self.yearSpin, 0, 1)
-        self.grid.addWidget(QtGui.QLabel('Time Zone:'), 1, 0)
-        self.grid.addWidget(self.zoneCombo, 1, 1)
-        self.grid.addWidget(self.zone_lon, 1, 2, 1, 3)
-        self.grid.addWidget(QtGui.QLabel('Solar Format:'), 2, 0)
+        self.grid.addWidget(self.zoneCombo, 2, 1)
+        self.grid.addWidget(self.zone_lon, 2, 2, 1, 3)
+        self.grid.addWidget(QtGui.QLabel('Solar Format:'), 3, 0)
         self.fmatcombo = QtGui.QComboBox(self)
         self.fmats = ['csv', 'smw']
         for i in range(len(self.fmats)):
             self.fmatcombo.addItem(self.fmats[i])
         self.fmatcombo.setCurrentIndex(1)
-        self.grid.addWidget(self.fmatcombo, 2, 1)
-        self.grid.addWidget(QtGui.QLabel('Coordinates:'), 3, 0)
+        self.grid.addWidget(self.fmatcombo, 3, 1)
+        self.grid.addWidget(QtGui.QLabel('Coordinates:'), 4, 0)
         self.coords = QtGui.QPlainTextEdit()
-        self.grid.addWidget(self.coords, 3, 1, 1, 4)
-        self.grid.addWidget(QtGui.QLabel('Copy folder down:'), 4, 0)
+        self.grid.addWidget(self.coords, 4, 1, 1, 4)
+        self.grid.addWidget(QtGui.QLabel('Copy folder down:'), 5, 0)
         self.checkbox = QtGui.QCheckBox()
         self.checkbox.setCheckState(QtCore.Qt.Checked)
-        self.grid.addWidget(self.checkbox, 4, 1)
-        self.grid.addWidget(QtGui.QLabel('If checked will copy solar folder changes down to others'), 4, 2, 1, 3)
+        self.grid.addWidget(self.checkbox, 5, 1)
+        self.grid.addWidget(QtGui.QLabel('If checked will copy solar folder changes down to others'), 5, 2, 1, 3)
         cur_dir = os.getcwd()
         self.dir_labels = ['Solar Source', 'Wind Source', 'Target']
         self.dirs = [None, None, None, None]
         for i in range(3):
-            self.grid.addWidget(QtGui.QLabel(self.dir_labels[i] + ' Folder:'), 5 + i, 0)
+            self.grid.addWidget(QtGui.QLabel(self.dir_labels[i] + ' Folder:'), 6 + i, 0)
             self.dirs[i] = ClickableQLabel()
             self.dirs[i].setText(cur_dir)
             self.dirs[i].setFrameStyle(6)
             self.connect(self.dirs[i], QtCore.SIGNAL('clicked()'), self.dirChanged)
-            self.grid.addWidget(self.dirs[i], 5 + i, 1, 1, 4)
+            self.grid.addWidget(self.dirs[i], 6 + i, 1, 1, 4)
         quit = QtGui.QPushButton('Quit', self)
-        self.grid.addWidget(quit, 8, 0)
+        self.grid.addWidget(quit, 9, 0)
         quit.clicked.connect(self.quitClicked)
         QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
         dosolar = QtGui.QPushButton('Produce Solar Files', self)
         wdth = dosolar.fontMetrics().boundingRect(dosolar.text()).width() + 9
-        self.grid.addWidget(dosolar, 8, 1)
+        self.grid.addWidget(dosolar, 9, 1)
         dosolar.clicked.connect(self.dosolarClicked)
         dowind = QtGui.QPushButton('Produce Wind Files', self)
         dowind.setMaximumWidth(wdth)
-        self.grid.addWidget(dowind, 8, 2)
+        self.grid.addWidget(dowind, 9, 2)
         dowind.clicked.connect(self.dowindClicked)
         help = QtGui.QPushButton('Help', self)
         help.setMaximumWidth(wdth)
-        self.grid.addWidget(help, 8, 3)
+        self.grid.addWidget(help, 9, 3)
         help.clicked.connect(self.helpClicked)
         QtGui.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
         info = QtGui.QPushButton('File Info', self)
         info.setMaximumWidth(wdth)
-        self.grid.addWidget(info, 8, 4)
+        self.grid.addWidget(info, 9, 4)
         info.clicked.connect(self.infoClicked)
       #   self.grid.setColumnStretch(4, 2)
         frame = QtGui.QFrame()
@@ -983,15 +1020,20 @@ class getParms(QtGui.QWidget):
                     coords = coords.replace(' ', ',')
                 else:
                     coords = coords.replace(' ', '')
+        if self.wrapbox.isChecked():
+            wrap = 'y'
+        else:
+            wrap = ''
         if self.zoneCombo.currentIndex() == 0:
             zone = 'auto'
         else:
             zone = str(self.zoneCombo.currentIndex() - 13)
-        solar = makeWeather(str(self.yearSpin.value()), zone, str(self.dirs[0].text()),
-                            str(self.dirs[1].text()), str(self.dirs[2].text()), str(self.fmatcombo.currentText()), coords)
-        dialr = RptDialog(str(self.yearSpin.value()), zone, str(self.dirs[0].text()),
-                          str(self.dirs[1].text()), str(self.dirs[2].text()), str(self.fmatcombo.currentText()),
-                          coords, solar.returnCode(), solar.getLog())
+        solar = makeWeather(str(self.yearSpin.value()), zone, str(self.dirs[0].text()), \
+                            str(self.dirs[1].text()), str(self.dirs[2].text()), str(self.fmatcombo.currentText()), \
+                            wrap, coords)
+        dialr = RptDialog(str(self.yearSpin.value()), zone, str(self.dirs[0].text()), \
+                          str(self.dirs[1].text()), str(self.dirs[2].text()), str(self.fmatcombo.currentText()), \
+                          wrap, coords, solar.returnCode(), solar.getLog())
         dialr.exec_()
         del solar
         del dialr
@@ -1004,16 +1046,20 @@ class getParms(QtGui.QWidget):
                     coords = coords.replace(' ', ',')
                 else:
                     coords = coords.replace(' ', '')
+        if self.wrapbox.isChecked():
+            wrap = 'y'
+        else:
+            wrap = ''
         if self.zoneCombo.currentIndex() == 0:
             zone = 'auto'
         else:
             zone = str(self.zoneCombo.currentIndex() - 13)
-        wind = makeWeather(str(self.yearSpin.value()), zone, str(self.dirs[0].text()),
-                            str(self.dirs[1].text()), str(self.dirs[2].text()),
-                            'wind', coords)
-        dialr = RptDialog(str(self.yearSpin.value()), zone, str(self.dirs[0].text()),
-                          str(self.dirs[1].text()), str(self.dirs[2].text()), 'srw',
-                          coords, wind.returnCode(), wind.getLog())
+        wind = makeWeather(str(self.yearSpin.value()), zone, str(self.dirs[0].text()), \
+                            str(self.dirs[1].text()), str(self.dirs[2].text()), \
+                            'wind', wrap, coords)
+        dialr = RptDialog(str(self.yearSpin.value()), zone, str(self.dirs[0].text()), \
+                          str(self.dirs[1].text()), str(self.dirs[2].text()), 'srw', \
+                          wrap, coords, wind.returnCode(), wind.getLog())
         dialr.exec_()
         del wind
         del dialr
@@ -1026,28 +1072,36 @@ class getParms(QtGui.QWidget):
                     coords = coords.replace(' ', ',')
                 else:
                     coords = coords.replace(' ', '')
+        if self.wrapbox.isChecked():
+            wrap = 'y'
+        else:
+            wrap = ''
         if self.zoneCombo.currentIndex() == 0:
             zone = 'auto'
         else:
             zone = str(self.zoneCombo.currentIndex() - 13)
-        wind = makeWeather(str(self.yearSpin.value()), zone, str(self.dirs[0].text()),
-                            str(self.dirs[1].text()), str(self.dirs[2].text()),
-                            'both', coords, info=True)
-        dialr = RptDialog(str(self.yearSpin.value()), zone, str(self.dirs[0].text()),
-                          str(self.dirs[1].text()), str(self.dirs[2].text()), 'srw',
-                          coords, wind.returnCode(), wind.getLog())
+        wind = makeWeather(str(self.yearSpin.value()), zone, str(self.dirs[0].text()), \
+                            str(self.dirs[1].text()), str(self.dirs[2].text()), \
+                            'both', wrap, coords, info=True)
+        dialr = RptDialog(str(self.yearSpin.value()), zone, str(self.dirs[0].text()), \
+                          str(self.dirs[1].text()), str(self.dirs[2].text()), 'srw', \
+                          wrap, coords, wind.returnCode(), wind.getLog())
         dialr.exec_()
         del wind
         del dialr
 
 
 class RptDialog(QtGui.QDialog):
-    def __init__(self, year, zone, solar_dir, wind_dir, tgt_dir, fmat, coords, return_code, output):
+    def __init__(self, year, zone, solar_dir, wind_dir, tgt_dir, fmat, wrap, coords, return_code, output):
         super(RptDialog, self).__init__()
-        self.parms = [str(year), str(zone), fmat, tgt_dir, solar_dir, wind_dir]
+        self.parms = [str(year), str(zone), wrap, fmat, tgt_dir, solar_dir, wind_dir]
+        if wrap == 'y':
+            wrapy = 'Yes'
+        else:
+            wrapy = 'No'
         max_line = 0
-        self.lines = 'Parameters:\n    Year: %s\n    Time Zone: %s\n    Output Format: %s\n' % \
-                     (year, zone, fmat)
+        self.lines = 'Parameters:\n    Year: %s\n    Wrap year: %s\n    Time Zone: %s\n    Output Format: %s\n' \
+                     % (year, wrapy, zone, fmat)
         if fmat != 'srw':
             self.lines += '    Solar Files: %s\n' % solar_dir
         self.lines += '    Wind Files: %s\n' % wind_dir
@@ -1136,6 +1190,7 @@ if "__main__" == __name__:
     if len(sys.argv) > 1:  # arguments
         src_lat_lon = ''
         src_year = 2014
+        wrap = ''
         src_zone = 0
         fmat = 'srw'
         src_dir_s = ''
@@ -1144,6 +1199,8 @@ if "__main__" == __name__:
         for i in range(1, len(sys.argv)):
             if sys.argv[i][:5] == 'year=':
                 src_year = int(sys.argv[i][5:])
+            elif sys.argv[i][:5] == 'wrap=':
+                wrap = int(sys.argv[i][5:])
             elif sys.argv[i][:7] == 'latlon=' or sys.argv[i][:7] == 'coords=':  # lat and lon
                 src_lat_lon = sys.argv[i][7:]
             elif sys.argv[i][:5] == 'zone=':
@@ -1162,7 +1219,7 @@ if "__main__" == __name__:
                 src_dir_w = sys.argv[i][5:]
             elif sys.argv[i][:7] == 'target=' or sys.argv[i][:7] == 'tgtdir=':
                 tgt_dir = sys.argv[i][7:]
-        files = makeWeather(src_year, src_zone, src_dir_s, src_dir_w, tgt_dir, fmat, src_lat_lon)
+        files = makeWeather(src_year, src_zone, src_dir_s, src_dir_w, tgt_dir, fmat, wrap, src_lat_lon)
         dialr = RptDialog(files.returnCode(), files.getLog())
         dialr.exec_()
     else:
