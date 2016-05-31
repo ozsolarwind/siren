@@ -76,7 +76,6 @@ class AnObject(QtGui.QDialog):
             self.setWindowTitle('SIREN - Review ' + getattr(self.anobject, '__module__'))
 
     def initUI(self):
-        fields = []
         label = []
         self.edit = []
         self.field_type = []

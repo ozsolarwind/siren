@@ -332,7 +332,6 @@ class Grid:
         style = {}
         styl = ''
         root = ElementTree(file=kml_file)
-        folder = False
          # Create an iterator
         iterat = root.getiterator()
         placemark_id = ''

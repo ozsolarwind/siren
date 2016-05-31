@@ -126,8 +126,6 @@ class FloatLegend(QtGui.QDialog):
         self.layout = QtGui.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
         self.setWindowTitle('SIREN - Legend')
-        move_right = True
-        frameGm = self.frameGeometry()
         screen = QtGui.QApplication.desktop().primaryScreen()
         scr_right = QtGui.QApplication.desktop().availableGeometry(screen).right()
         scr_bottom = QtGui.QApplication.desktop().availableGeometry(screen).bottom()

@@ -468,7 +468,6 @@ class Stations:
     def Nearest(self, lat, lon, distance=False, fossil=False, ignore=None):
         hdr = ''
         distnce = 999999
-        tech = ''
         for station in self.stations:
             if station.technology[:6] == 'Fossil' and not fossil:
                 continue

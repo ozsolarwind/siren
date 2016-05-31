@@ -131,7 +131,6 @@ def dijkstra(aGraph, start):
         current = uv[1]
         current.set_visited()
 
-        #for next in v.adjacent:
         for next in current.adjacent:
              # if visited, skip
             if next.visited:

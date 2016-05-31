@@ -309,7 +309,6 @@ class WAScene(QtGui.QGraphicsScene):
                 pass
             pass
         try:
-            grid = config.get('Files', 'grid_network2')
             self.existing_grid2 = True
         except:
             self.existing_grid2 = False

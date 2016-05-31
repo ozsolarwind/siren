@@ -75,7 +75,6 @@ class makeFile():
         bits = detail.split(' ')
         self.hourly = False
         self.daily = False
-        details = ['Daily By Month', 'Hourly by Month', 'Hourly by Day']
         if len(bits) < 3:
             if detail[0].lower() == 'h':
                 self.hourly = True
@@ -142,10 +141,6 @@ class makeFile():
                 if fil[-4:] == '.smw':
                     calc_mth = True
                     col = [9, 8, 7, 0, 4, -1, -1]
-                    dhi_col = 9
-                    dni_col = 8
-                    ghi_col = 7
-                    tmp_col = 0
                     wnd_col = 4
                     bits = lines[0].split(',')
                     src_lat = float(bits[4])

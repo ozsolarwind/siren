@@ -184,7 +184,6 @@ class FloatStatus(QtGui.QDialog):
             add = int((self.frameSize().width() - self.size().width()) / 2)   # need to account for border
             lines.append('log_pos=%s,%s' % (str(self.pos().x() + add), str(self.pos().y() + add)))
             lines.append('log_size=%s,%s' % (str(self.width()), str(self.height())))
-            open_menus = ''
             updates['Windows'] = lines
             SaveIni(updates)
         if self.be_open:
