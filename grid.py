@@ -21,7 +21,7 @@
 
 import os
 import sys
-from math import *
+from math import sin, cos, radians, asin, acos, atan2, sqrt, degrees
 
 import ConfigParser   # decode .ini file
 from xml.etree.ElementTree import ElementTree

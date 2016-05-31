@@ -21,7 +21,6 @@
 
 import csv
 import httplib
-from math import *
 import os
 import sys
 import time

@@ -21,7 +21,7 @@
 
 import csv
 import datetime
-from math import *
+from math import sin, cos, pi, sqrt, degrees, radians, asin, atan2
 import os
 import sys
 import xlrd

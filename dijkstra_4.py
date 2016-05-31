@@ -24,7 +24,8 @@
 #  http://www.bogotobogo.com/python/files/Dijkstra/Dijkstra_shortest_path.py
 
 import sys
-from math import *
+import heapq
+from math import sin, cos, asin, sqrt, radians
 
 RADIUS = 6367.   # radius of earth in km
 
@@ -113,8 +114,6 @@ def shortest(v, path):
         path.append(v.previous.get_id())
         shortest(v.previous, path)
     return
-
-import heapq
 
 
 def dijkstra(aGraph, start):
