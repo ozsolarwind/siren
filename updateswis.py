@@ -300,7 +300,7 @@ class makeLoadFile():
         tf = open(tgt_fil, 'w')
         tf.write('Load (MWh)\n')
         for i in range(len(hour[1])):
-            tf.write(str(round(hour[1][i], 6))+'\n')
+            tf.write(str(round(hour[1][i], 6)) + '\n')
         tf.close()
         self.log = '%s created%s' % (tgt_fil[tgt_fil.rfind('/') + 1:], self.log)
         return
@@ -313,6 +313,7 @@ class ClickableQLabel(QtGui.QLabel):
     def mousePressEvent(self, event):
         QtGui.QApplication.widgetAt(event.globalPos()).setFocus()
         self.emit(QtCore.SIGNAL('clicked()'))
+
 
 class getParms(QtGui.QWidget):
 

@@ -26,7 +26,6 @@ import os
 import sys
 
 import displaytable
-import inisyntax
 
 
 class EdtDialog(QtGui.QDialog):

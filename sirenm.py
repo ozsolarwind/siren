@@ -83,8 +83,7 @@ class Description(QtGui.QDialog):
     @staticmethod
     def getDescription(who, desc='', parent=None):
         dialog = Description(who, desc, parent)
-        result = dialog.exec_()
-        return (dialog.description())  #, result == QtGui.QDialog.Accepted)
+        return (dialog.description())
 
 
 class MapView(QtGui.QGraphicsView):
@@ -240,8 +239,6 @@ class MapView(QtGui.QGraphicsView):
         if QtCore.Qt.LeftButton == event.buttons() and self._drag_start:
             delta = event.pos() - self._drag_start
             val = self._sb_start - delta
-            hb = self.horizontalScrollBar().setValue(val.x())
-            vb = self.verticalScrollBar().setValue(val.y())
         else:
             p = self.mapToScene(event.pos())
             x, y = map(int, [p.x(), p.y()])
@@ -263,7 +260,6 @@ class MapView(QtGui.QGraphicsView):
                 self._shown = set()
             except:
                 pass
-        pl = self.mapToLonLat(event.pos())
       #   self.emit(SIGNAL('statusmsg'), p2str(pl) + ' ' + p2str(event.pos()))
 
     def mouseDoubleClickEvent(self, event):
@@ -568,7 +564,6 @@ class MapView(QtGui.QGraphicsView):
             p = self.mapFromLonLat(QtCore.QPointF(frl.x(), frl.y()))
             pe = self.mapFromLonLat(QtCore.QPointF(e.x(), frl.y()))
             ps = self.mapFromLonLat(QtCore.QPointF(frl.x(), s.y()))
-            se = self.mapFromLonLat(QtCore.QPointF(e.x(), s.y()))
             x_d = pe.x() - p.x()
             y_d = ps.y() - p.y()
             self.legend_items.append(QtGui.QGraphicsRectItem(p.x(), p.y(), x_d, y_d))
@@ -619,8 +614,6 @@ class MapView(QtGui.QGraphicsView):
         del self.legend_items
         if pos is None:
             self.legend_pos = None
-        x = self.scene().upper_left[0]
-        y = self.scene().upper_left[1]
         w = self.scene().lower_right[0]
         h = self.scene().lower_right[1]
         self.scene().setSceneRect(-w * 0.05, -h * 0.05, w * 1.1, h * 1.1)
@@ -697,10 +690,6 @@ class MapView(QtGui.QGraphicsView):
             return
         if self.scene().resource_grid == '':
             return
-        if year is None:
-            r_year = self.scene().base_year
-        else:
-            r_year = year
         period, variable, steps, opacity, colours = resource_window.Results()
         i = period.find('_')
         if i > 0:
@@ -796,7 +785,6 @@ class MapView(QtGui.QGraphicsView):
             p = self.mapFromLonLat(QtCore.QPointF(cell[1] - lon_cell, cell[0] + .25))
             pe = self.mapFromLonLat(QtCore.QPointF(cell[1] + lon_cell, cell[0] + .25))
             ps = self.mapFromLonLat(QtCore.QPointF(cell[1] - lon_cell, cell[0] - .25))
-            se = self.mapFromLonLat(QtCore.QPointF(cell[1] + lon_cell, cell[0] - .25))
             x_d = pe.x() - p.x()
             y_d = ps.y() - p.y()
             self.resource_items.append(QtGui.QGraphicsRectItem(p.x(), p.y(), x_d, y_d))
@@ -1366,7 +1354,7 @@ class MainWindow(QtGui.QMainWindow):
             x = self.frameGeometry().left() + 50
             y = self.frameGeometry().y() + 50
         action = menu.exec_(QtCore.QPoint(x, y))
-        if action != None:
+        if action is not None:
             section = str(action.text())
             EditSect(section, self.scenarios)
             comment = section + ' Section edited. Reload may be required.'
@@ -1399,7 +1387,7 @@ class MainWindow(QtGui.QMainWindow):
         return p
 
     def editDescription(self, scenario):
-        if scenario == False:   # called from sub menu
+        if scenario is False:   # called from sub menu
             scenario = self.sender().text()
         if scenario == 'Existing':
             return
@@ -1721,7 +1709,7 @@ class MainWindow(QtGui.QMainWindow):
         x = self.frameGeometry().left() + 50
         y = self.frameGeometry().y() + 50
         action = menu.exec_(QtCore.QPoint(x, y))
-        if action != None:
+        if action is not None:
             station = self.view.scene()._stations.Get_Station(action.text())
             go_to = self.mapFromLonLat(QtCore.QPointF(station.lon, station.lat))
             self.view.centerOn(go_to)
@@ -1765,7 +1753,7 @@ class MainWindow(QtGui.QMainWindow):
         x = self.frameGeometry().left() + 50
         y = self.frameGeometry().y() + 50
         action = menu.exec_(QtCore.QPoint(x, y))
-        if action != None:
+        if action is not None:
             town = self.view.scene()._towns.Get_Town(action.text())
             go_to = self.mapFromLonLat(QtCore.QPointF(town.lon, town.lat))
             self.view.centerOn(go_to)
@@ -1785,7 +1773,7 @@ class MainWindow(QtGui.QMainWindow):
             x = self.frameGeometry().left() + 50
             y = self.frameGeometry().y() + 50
             action = menu.exec_(QtCore.QPoint(x, y))
-            if action != None:
+            if action is not None:
                 for j in range(len(self.view.scene().load_centre)):
                     if action.text() == self.view.scene().load_centre[j][0]:
                         break
@@ -1939,7 +1927,7 @@ class MainWindow(QtGui.QMainWindow):
         legAction = menu.addAction(QtGui.QIcon('list.png'), act11)
         legAction.setIconVisibleInMenu(True)
         action = menu.exec_(self.mapToGlobal(pos))
-        if action == None:
+        if action is None:
             return
         try:
             if action == noAction or action == notAction:
@@ -2006,7 +1994,6 @@ class MainWindow(QtGui.QMainWindow):
             if station.scenario != 'Existing':
                 s_was = station.scenario
                 dialog = newstation.AnObject(QtGui.QDialog(), station, scenarios=self.view.scene()._scenarios)
-                p_was = self.mapFromLonLat(QtCore.QPointF(station.lon, station.lat))
                 dialog.exec_()
                 chg_station = dialog.getValues()
                 if chg_station is not None:
@@ -2343,7 +2330,7 @@ class MainWindow(QtGui.QMainWindow):
         x = self.frameGeometry().left() + 50
         y = self.frameGeometry().y() + 50
         action = menu.exec_(QtCore.QPoint(x, y))
-        if action != None:
+        if action is not None:
             for li in range(len(self.view.scene().lines.lines)):
                 if self.view.scene().lines.lines[li].name == action.text():
                     grid_path_len = self.view.traceGrid(None, coords=self.view.scene().lines.lines[li].coordinates)

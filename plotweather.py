@@ -59,12 +59,12 @@ class whatPlots(QtGui.QDialog):
             if self.plot_order[plot] in self.spacers:
                 label = QtGui.QLabel(self.spacers[self.plot_order[plot]])
                 label.setFont(bold)
-                self.grid.addWidget(label, i, 0) #, 1, 1)
+                self.grid.addWidget(label, i, 0)
                 i += 1
             self.checkbox.append(QtGui.QCheckBox(self.hdrs[self.plot_order[plot]], self))
             if self.plots[self.plot_order[plot]]:
                 self.checkbox[plot].setCheckState(Qt.Checked)
-            self.grid.addWidget(self.checkbox[-1], i, 0) #, 1, 1)
+            self.grid.addWidget(self.checkbox[-1], i, 0)
             i += 1
         self.grid.connect(self.checkbox[0], QtCore.SIGNAL('stateChanged(int)'), self.check_all)
         show = QtGui.QPushButton('Proceed', self)
@@ -329,9 +329,6 @@ class PlotWeather():
             seasons[3] = ['Spring', 8, 9, 10]
             periods[0] = ['Winter', 5, 6, 7, 8, 9, 10]
             periods[1] = ['Summer', 11, 12, 1, 2, 3, 4]
-        y = []
-        t = []
-        l = []
         mth_labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
         ssn_labels = []
         for i in range(len(seasons)):

@@ -492,7 +492,7 @@ class makeWeather():
                 self.d2m = self.d2m[:self.src_zone]
                 self.d50m = self.d50m[:self.src_zone]
                 self.t_2m = self.t_2m[:self.src_zone]
-        self.the_year = self.src_year # start with their year
+        self.the_year = self.src_year  # start with their year
         if self.wrap:
             yrs = 2
         else:
@@ -683,7 +683,7 @@ class makeWeather():
         elif self.src_zone < 0:
          # first self.src_zone hours of self.src_year GMT = last self.src_zone of (self.src_year - 1)
             self.swgnt = self.swgnt[:self.src_zone]
-        self.the_year = self.src_year # start with their year
+        self.the_year = self.src_year  # start with their year
         if self.wrap:
             yrs = 2
         else:

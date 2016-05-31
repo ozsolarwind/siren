@@ -253,7 +253,7 @@ class whatPlots(QtGui.QDialog):
                     i += 1
                 label = QtGui.QLabel(self.spacers[self.plot_order[plot]])
                 label.setFont(bold)
-                self.grid.addWidget(label, i, 0)  #, 1, 1)
+                self.grid.addWidget(label, i, 0)
                 i += 1
             self.checkbox.append(QtGui.QCheckBox(self.hdrs[self.plot_order[plot]], self))
             if self.plots[self.plot_order[plot]]:
@@ -261,7 +261,7 @@ class whatPlots(QtGui.QDialog):
             if not self.initial:
                 if self.plot_order[plot] in self.initials:
                     self.checkbox[plot].setEnabled(False)
-            self.grid.addWidget(self.checkbox[-1], i, 0) #, 1, 1)
+            self.grid.addWidget(self.checkbox[-1], i, 0)
             if self.plot_order[plot] == 'save_balance':
                 self.grid.connect(self.checkbox[-1], QtCore.SIGNAL('stateChanged(int)'), self.check_balance)
             i += 1
@@ -1089,7 +1089,7 @@ class SuperPower():
         except:
             pass
         try:
-            self.hydro_cf  = float(config.get('Hydro', 'cf'))
+            self.hydro_cf = float(config.get('Hydro', 'cf'))
         except:
             self.hydro_cf = 0.33
         try:
@@ -1563,7 +1563,6 @@ class SuperPower():
             self.data.set_string('hybrid_dispatch_schedule', '1' * 24 * 12)
             module = ssc.Module('geothermal')
             if (module.exec_(self.data)):
-                energy = self.data.get_number('annual_energy')
                 pwr = self.data.get_array('monthly_power')
                 for i in range(12):
                     for j in range(730):
@@ -1866,7 +1865,6 @@ class FinancialModel():
             capital_cost, grid_cost = stn_costs()
             ippppa_data.set_number('system_capacity', capacity[stn] * 1000)
             ippppa_data.set_array('gen', net_hourly)
-            #ippppa_data.set_array('degradation', degradation)
             ippppa_data.set_number('construction_financing_cost', capital_cost + grid_cost)
             ippppa_data.set_number('total_installed_cost', capital_cost + grid_cost)
             ippppa_data.set_array('om_capacity', [costs[technology[stn]][1]])
@@ -1948,7 +1946,6 @@ class FinancialModel():
             ippppa_file = variable_files + '/' + ippppa_file
         except:
             annual_file = 'annualoutput_variables.xls'
-            ippppa = 'ippppa_variables.xls'
         annual_data, annual_outputs = self.get_variables(annual_file)
         what_beans = whatFinancials(helpfile=self.helpfile)
         what_beans.exec_()
@@ -2009,8 +2006,6 @@ class FinancialModel():
             if (module.exec_(annual_data)):
              # return the relevant outputs desired
                 net_hourly = annual_data.get_array('hourly_energy')
-                net_annual = annual_data.get_array('annual_energy')
-                degradation = annual_data.get_array('annual_degradation')
                 del module
                 do_ippppa()
             else:
@@ -2250,7 +2245,6 @@ class PowerModel():
             if self.plots['show_pct']:
                 self.gen_pct = ' (%s%% of load)' % '{:0,.1f}'.format(gen_sum * 100. / load_sum)
                 plt.title(self.hdrs['by_' + period].title() + self.suffix + self.gen_pct)
-               #plt.annotate(pct, xy=(1.0, 3.0))
             if self.plots['cumulative']:
                 bbdx.step(xs, cumulative, linewidth=self.other_width, label='Tot. Generation', color=self.colours['cumulative'])
                 maxy = max(maxy, max(cumulative))
@@ -2605,7 +2599,6 @@ class PowerModel():
                         if j < 0:
                             j = len(sum_cols[i])
                         xl_lens[col + i] = j
-                    sums = {}
                     row = 2
                     for key, value in iter(sorted(stns.iteritems())):
                         ws.write(row, col, self.power_summary[value].name)
@@ -2711,9 +2704,6 @@ class PowerModel():
                 periods[i] = values.split(',')
                 for j in range(1, len(periods[i])):
                     periods[i][j] = int(periods[i][j]) - 1
-        y = []
-        t = []
-        l = []
         mth_labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct',
                       'Nov', 'Dec']
         ssn_labels = []
@@ -2972,7 +2962,6 @@ class PowerModel():
             if self.plots['show_pct']:
                 self.gen_pct = ' (%s%% of load)' % '{:0,.1f}'.format(gen_sum * 100. / load_sum)
                 plt.title(self.hdrs['hour'] + self.suffix + self.gen_pct)
-               #plt.annotate(pct, xy=(1.0, 3.0))
             if self.plots['maximise']:
                 mng = plt.get_current_fig_manager()
                 if sys.platform == 'win32' or sys.platform == 'cygwin':
@@ -3050,7 +3039,6 @@ class PowerModel():
             if self.plots['show_pct']:
                 self.gen_pct = ' (%s%% of load)' % '{:0,.1f}'.format(gen_sum * 100. / load_sum)
                 plt.title(self.hdrs['duration'] + self.suffix + self.gen_pct)
-               #plt.annotate(pct, xy=(1.0, 3.0))
             if self.plots['maximise']:
                 mng = plt.get_current_fig_manager()
                 if sys.platform == 'win32' or sys.platform == 'cygwin':
@@ -3134,7 +3122,6 @@ class PowerModel():
                     self.gen_pct = ' (%s%% of load)' % '{:0,.1f}'.format(gen_sum * 100. / load_sum)
                     plt.title(self.hdrs['duration'] + ' with renewable contribution' +
                               self.gen_pct)
-                   #plt.annotate(pct, xy=(1.0, 3.0))
                 if self.plots['maximise']:
                     mng = plt.get_current_fig_manager()
                     if sys.platform == 'win32' or sys.platform == 'cygwin':
@@ -3459,7 +3446,6 @@ class PowerModel():
             if self.plots['show_pct']:
                 self.gen_pct = ' (%s%% of load)' % '{:0,.1f}'.format(gen_sum * 100. / load_sum)
                 plt.title(self.hdrs['total'] + self.suffix + self.gen_pct)
-               #plt.annotate(pct, xy=(1.0, 3.0))
             if self.plots['maximise']:
                 mng = plt.get_current_fig_manager()
                 if sys.platform == 'win32' or sys.platform == 'cygwin':
@@ -3841,7 +3827,6 @@ class PowerModel():
                 self.can_do_load = False
                 self.initials.append('show_load')
                 self.initials.append('show_pct')
-            len_x = 8760
             self.load_key = ''
             self.adjustby = None
             while True:
@@ -4016,7 +4001,6 @@ class PowerModel():
                     xtra = ['Generation', 'Load', 'Gen. - Load', 'Storage Capacity', 'Storage', 'Excess', 'Shortfall']
                     o = 0
                     gen = 0.
-                    lk = ''
                     if self.storage[0] > 0:
                         summs['Storage Capacity'] = [self.storage[0] * 1000., '', 0]
                     for i in range(len(keys)):

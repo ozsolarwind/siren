@@ -743,8 +743,9 @@ class WAScene(QtGui.QGraphicsScene):
                     size = sqrt(st.area / pi) * 2.   # need diameter
                 except:
                     if st.technology == 'Wind':
-                        size = sqrt(self.areas[st.technology] * float(st.no_turbines) * pow((float(st.rotor) * .001), 2)
-                               / pi) * 2.
+                        size = sqrt(self.areas[st.technology] *
+                                    float(st.no_turbines) * pow((float(st.rotor) *
+                                                                 .001), 2) / pi) * 2.
                     else:
                         size = sqrt(self.areas[st.technology] * float(st.capacity) / pi) * 2.
                 east = self.destinationxy(st.lon, st.lat, 90., size)
@@ -976,7 +977,6 @@ class WAScene(QtGui.QGraphicsScene):
                 self.lines.lines[i].peak_load = 0.
                 self.lines.lines[i].peak_loss = 0.
         if self.new_grid:
-            kept_line = []
             for i in range(len(self.lines.lines) - 1, self.grid_lines - 1, -1):
                 if self.lines.lines[i].peak_load is not None:
                     self.lines.lines[i].peak_dispatchable = 0.

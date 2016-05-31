@@ -314,8 +314,6 @@ class getMap(QtGui.QWidget):
         self.scroll.setWidget(frame)
         self.layout = QtGui.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
-        screen = QtGui.QDesktopWidget().availableGeometry()
-        h = int(screen.height() * .9)
         self.resize(self.width() + int(self.world_width * .7), self.height() + int(self.world_height * .7))
         self.setWindowTitle('SIREN getmap (' + fileVersion() + ') - Make Map from MapQuest Open Aerial Tiles')
         self.center()

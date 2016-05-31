@@ -19,7 +19,6 @@
 #  <http://www.gnu.org/licenses/>.
 #
 
-from math import *
 import os
 import sys
 from PyQt4 import QtCore, QtGui
