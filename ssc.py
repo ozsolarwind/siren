@@ -8,7 +8,8 @@
 # #####################################################################
 
 
-import sys, struct
+import sys
+import struct
 from ctypes import *
 
 import os
@@ -60,7 +61,6 @@ class SSCAPI:
 #               return _dll
         else:
                 print "Platform not supported ", sys.platform
-
 
         @staticmethod
         def ssc_version():
@@ -137,7 +137,6 @@ class SSCAPI:
         def ssc_data_set_table(p_data, name, table):
                 SSCAPI._dll.ssc_data_set_table(c_void_p(p_data), c_char_p(name), c_void_p(table))
 
-
         @staticmethod
         def ssc_data_get_string(p_data, name):
                 SSCAPI._dll.ssc_data_get_string.restype = c_char_p
@@ -179,7 +178,6 @@ class SSCAPI:
         def ssc_data_get_table(p_data, name):
                 SSCAPI._dll.ssc_data_get_table.restype = c_void_p
                 return SSCAPI._dll.ssc_data_get_table(c_void_p(p_data), c_char_p(name))
-
 
         @staticmethod
         def ssc_module_entry(index):
@@ -282,11 +280,6 @@ class SSCAPI:
                 return SSCAPI._dll.ssc_module_log(c_void_p(p_mod), c_int(index), byref(type), byref(time))
 
 
-
-
-
-
-
 class API:
         # constants for return value of Info.VarType() (see sscapi.h)
         INPUT = 1
@@ -298,7 +291,6 @@ class API:
         WARNING = 2
         ERROR = 3
 
-
         # constants for return value of Data.Query() and Info.DataType() (see sscapi.h)
         INVALID = 0
         STRING = 1
@@ -306,8 +298,6 @@ class API:
         ARRAY = 3
         MATRIX = 4
         TABLE = 5
-
-
 
         def version(self):
                 return SSCAPI.ssc_version()
@@ -355,7 +345,6 @@ class Entry:
                         return -1
 
 
-
 class Data:
 
         def __init__(self, data=None):
@@ -366,10 +355,8 @@ class Data:
                         self._data = data
                         self._owned = False
 
-
-
         def __del__(self):
-                if (self._owned) and (self._data != None):
+                if (self._owned) and (self._data is not None):
                         SSCAPI.ssc_data_free(self._data)
 
         def clear(self):
@@ -377,14 +364,14 @@ class Data:
 
         def first(self):
                 p = SSCAPI.ssc_data_first(self._data)
-                if (p is not None) and (len(p)>0):
+                if (p is not None) and (len(p) > 0):
                         return p
                 else:
                         return None
 
         def next(self):
                 p = SSCAPI.ssc_data_next(self._data)
-                if (p is not None) and (len(p)>0):
+                if (p is not None) and (len(p) > 0):
                         return p
                 else:
                         return None
@@ -428,13 +415,11 @@ class Data:
                 return self._data
 
 
-
 class Info:
 
         def __init__(self, module):
                 self._mod = module
                 self._idx = 0
-
 
         def reset(self):
                 self._idx = 0
@@ -503,18 +488,14 @@ class Info:
                         return SSCAPI.ssc_info_constraints(self._inf)
 
 
-
 class Module:
 
         def __init__(self, name):
                 self._mod = SSCAPI.ssc_module_create(name)
 
-
-
         def __del__(self):
                 if (self._mod is not None):
                         SSCAPI.ssc_module_free(self._mod)
-
 
         def is_ok(self):
                 return self._mod is not None
@@ -523,9 +504,8 @@ class Module:
                 return self._mod
 
         def exec_(self, data):
-                return (SSCAPI.ssc_module_exec(self._mod, data.get_data_handle()) != 0);
+                return (SSCAPI.ssc_module_exec(self._mod, data.get_data_handle()) != 0)
 
         def log(self, idx):
                 msg = SSCAPI.ssc_module_log(self._mod, idx)
                 return msg
-
