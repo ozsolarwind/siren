@@ -34,6 +34,7 @@ from functools import partial
 import ConfigParser  # decode .ini file
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import SIGNAL
+import ssc
 import subprocess
 
 from colours import Colours
@@ -83,6 +84,7 @@ class Description(QtGui.QDialog):
     @staticmethod
     def getDescription(who, desc='', parent=None):
         dialog = Description(who, desc, parent)
+        result = dialog.exec_()
         return (dialog.description())
 
 
@@ -260,6 +262,7 @@ class MapView(QtGui.QGraphicsView):
                 self._shown = set()
             except:
                 pass
+      #   pl = self.mapToLonLat(event.pos())
       #   self.emit(SIGNAL('statusmsg'), p2str(pl) + ' ' + p2str(event.pos()))
 
     def mouseDoubleClickEvent(self, event):
@@ -614,6 +617,8 @@ class MapView(QtGui.QGraphicsView):
         del self.legend_items
         if pos is None:
             self.legend_pos = None
+        x = self.scene().upper_left[0]
+        y = self.scene().upper_left[1]
         w = self.scene().lower_right[0]
         h = self.scene().lower_right[1]
         self.scene().setSceneRect(-w * 0.05, -h * 0.05, w * 1.1, h * 1.1)
@@ -690,6 +695,10 @@ class MapView(QtGui.QGraphicsView):
             return
         if self.scene().resource_grid == '':
             return
+        if year is None:
+            r_year = self.scene().base_year
+        else:
+            r_year = year
         period, variable, steps, opacity, colours = resource_window.Results()
         i = period.find('_')
         if i > 0:
@@ -1056,6 +1065,10 @@ class MainWindow(QtGui.QMainWindow):
                 subPowerMenu.addAction(subPower)
         powerMenu.addAction(listStations)
         powerMenu.addAction(listGrid)
+        samver = QtGui.QAction(QtGui.QIcon('question.png'), 'SAM Version', self)
+        samver.setStatusTip('Query SAM Version')
+        samver.triggered.connect(self.get_SAMVer)
+        powerMenu.addAction(samver)
         if self.view.scene().show_capacity:
             self.showCapacity = QtGui.QAction(QtGui.QIcon(self.check_icon), 'Capacity Circles', self)
         else:
@@ -1654,9 +1667,7 @@ class MainWindow(QtGui.QMainWindow):
             return
         if self.floatstatus and self.log_status:
             if text[0] != '(':
-                self.floatstatus.emit(SIGNAL('log'), '%s. %s' %
-                            (str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),
-                            'hh:mm:ss')), text))
+                self.floatstatus.emit(SIGNAL('log'), text)
       #   self.statusBar().clearMessage()
         self.statusBar().showMessage(text)
 
@@ -2036,7 +2047,7 @@ class MainWindow(QtGui.QMainWindow):
             except:
                 self.view.emit(SIGNAL('statusmsg'), 'No Grid line for %s' % station.name)
         elif action == run1Action:
-            power = PowerModel([station])
+            power = PowerModel([station], status=self.floatstatus)
             generated = power.getValues()
             station.generation = generated[0].generation
             comment = 'Power plot completed for %s. %s MWh; CF %s' % (station.name,
@@ -2129,9 +2140,9 @@ class MainWindow(QtGui.QMainWindow):
 
     def get_Power(self):
         if self.sender().text()[:4] == 'Powe':
-            power = PowerModel(self.view.scene()._stations.stations)
+            power = PowerModel(self.view.scene()._stations.stations, status=self.floatstatus)
         else:
-            power = PowerModel(self.view.scene()._stations.stations, year=self.sender().text())
+            power = PowerModel(self.view.scene()._stations.stations, year=self.sender().text(), status=self.floatstatus)
         generated = power.getValues()
         for stn in generated:
             station = self.view.scene()._stations.Get_Station(stn.name)
@@ -2141,6 +2152,11 @@ class MainWindow(QtGui.QMainWindow):
         pct = power.getPct()
         if pct is not None:
             comment += ' (generation meets ' + pct[2:]
+        self.view.emit(SIGNAL('statusmsg'), comment)
+
+    def get_SAMVer(self):
+        ssc_api = ssc.API()
+        comment = 'SAM SDK Core: Version = %s. Build info = %s.' % (ssc_api.version(), ssc_api.build_info())
         self.view.emit(SIGNAL('statusmsg'), comment)
 
     def list_Stations(self):
@@ -2544,7 +2560,7 @@ class MainWindow(QtGui.QMainWindow):
      #    event.accept()
 
     def writeStations(self, scenario, description):
-        the_scenario = scenario
+        the_scenario = str(scenario)
         if scenario[-4:] == '.csv' or scenario[-4:] == '.xls' or scenario[-5:] == '.xlsx':
             pass
         else:
@@ -2613,7 +2629,7 @@ class MainWindow(QtGui.QMainWindow):
             lens = []
             for i in range(len(fields)):
                 lens.append(len(fields[i]))
-            ws = wb.add_sheet(scenario[:scenario.find('.')])
+            ws = wb.add_sheet(the_scenario[:the_scenario.find('.')])
             d = 0
             if description != '':
                 ws.write(ctr, 0, 'Description:')
@@ -2680,9 +2696,7 @@ class MainWindow(QtGui.QMainWindow):
             ws.set_remove_splits(True)  # if user does unfreeze, don't leave a split there
             wb.save(self.scenarios + the_scenario)
         if self.floatstatus and self.log_status:
-            self.floatstatus.emit(SIGNAL('log'), '%s. Saved %s station(s) to %s' %
-                            (str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),
-                            'hh:mm:ss')), str(ctr + d), the_scenario))
+            self.floatstatus.emit(SIGNAL('log'), 'Saved %s station(s) to %s' % (str(ctr + d), the_scenario))
 
 
 def main():

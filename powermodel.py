@@ -33,7 +33,7 @@ import xlwt
 
 import ConfigParser  # decode .ini file
 from PyQt4 import QtGui, QtCore
-from PyQt4.QtCore import Qt
+from PyQt4.QtCore import Qt, SIGNAL
 
 from senuser import getUser
 import displayobject
@@ -958,7 +958,8 @@ class SuperPower():
             curr_row = 0
             while curr_row < num_rows:
                 curr_row += 1
-                if worksheet.cell_value(curr_row, var['TYPE']) == 'SSC_INPUT' and \
+                if (worksheet.cell_value(curr_row, var['TYPE']) == 'SSC_INPUT' or \
+                  worksheet.cell_value(curr_row, var['TYPE']) == 'SSC_INOUT') and \
                   worksheet.cell_value(curr_row, var['DEFAULT']) != '' and \
                   str(worksheet.cell_value(curr_row, var['DEFAULT'])).lower() != 'input':
                     if worksheet.cell_value(curr_row, var['DATA']) == 'SSC_STRING':
@@ -980,8 +981,8 @@ class SuperPower():
         else:
             dft_variables = csv.DictReader(self.default_files[technology])
             for var in dft_variables:
-                if var['TYPE'] == 'SSC_INPUT' and var['DEFAULT'] != '' and \
-                  var['DEFAULT'].lower() != 'input':
+                if (var['TYPE'] == 'SSC_INPUT' or var['TYPE'] == 'SSC_INOUT') and \
+                  var['DEFAULT'] != '' and var['DEFAULT'].lower() != 'input':
                     if var['DATA'] == 'SSC_STRING':
                         self.data.set_string(var['NAME'], var['DEFAULT'])
                     elif var['DATA'] == 'SSC_ARRAY':
@@ -996,12 +997,13 @@ class SuperPower():
                         mtrx = split_matrix(var['DEFAULT'])
                         self.data.set_matrix(var['NAME'], mtrx)
 
-    def __init__(self, stations, plots, show_progress=None, parent=None, year=None, selected=None):
+    def __init__(self, stations, plots, show_progress=None, parent=None, year=None, selected=None, status=None):
         self.stations = stations
         self.plots = plots
         self.show_progress = show_progress
         self.power_summary = []
         self.selected = selected
+        self.status = status
         config = ConfigParser.RawConfigParser()
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
@@ -1267,28 +1269,31 @@ class SuperPower():
                 else:
                     self.stn_path.append(0.)
             power = self.getStationPower(stn)
-            if key in self.ly:
-                pass
-            else:
-                self.ly[key] = []
-                for i in range(len(self.x)):
-                    self.ly[key].append(0.)
             total_power = 0.
             total_energy = 0.
-            for i in range(len(power)):
-                if self.plots['grid_losses']:
-                    if stn.grid_path_len is not None:
-                        enrgy = power[i] * (1 - self.line_loss * stn.grid_path_len - self.subs_loss)
-                    else:
-                        enrgy = power[i] * (1 - self.subs_loss)
-                    self.ly[key][i] += enrgy / 1000.
-                    total_energy += enrgy / 1000.
-                    self.ly['Generation'][i] += power[i] / 1000.
+            if power is None:
+                pass
+            else:
+                if key in self.ly:
+                    pass
                 else:
-                    self.ly[key][i] += power[i] / 1000.
-                total_power += power[i] / 1000.
-                if self.plots['save_data'] or self.plots['financials']:
-                    self.stn_pows[-1].append(power[i] / 1000.)
+                    self.ly[key] = []
+                    for i in range(len(self.x)):
+                        self.ly[key].append(0.)
+                for i in range(len(power)):
+                    if self.plots['grid_losses']:
+                        if stn.grid_path_len is not None:
+                            enrgy = power[i] * (1 - self.line_loss * stn.grid_path_len - self.subs_loss)
+                        else:
+                            enrgy = power[i] * (1 - self.subs_loss)
+                        self.ly[key][i] += enrgy / 1000.
+                        total_energy += enrgy / 1000.
+                        self.ly['Generation'][i] += power[i] / 1000.
+                    else:
+                        self.ly[key][i] += power[i] / 1000.
+                    total_power += power[i] / 1000.
+                    if self.plots['save_data'] or self.plots['financials']:
+                        self.stn_pows[-1].append(power[i] / 1000.)
             if total_energy > 0:
                 pt = PowerSummary(stn.name, stn.technology, total_power, stn.capacity, total_energy)
             else:
@@ -1390,10 +1395,11 @@ class SuperPower():
                     return farmpwr
         if station.capacity == 0:
             return None
+        if self.status:
+            self.status.emit(SIGNAL('log'), 'Processing ' + station.name)
         self.data = None
         self.data = ssc.Data()
         if station.technology == 'Wind':
-            self.do_defaults(station)
             closest = self.find_closest(station.lat, station.lon, wind=True)
             self.data.set_string('wind_resource_filename', self.wind_files + '/' + closest)
             turbine = Turbine(station.turbine)
@@ -1419,46 +1425,52 @@ class SuperPower():
             self.data.set_array('wind_farm_yCoordinates', wt_y)
             self.data.set_number('wind_turbine_rotor_diameter', turbine.rotor)
             self.data.set_number('wind_turbine_cutin', turbine.cutin)
+            self.do_defaults(station)
             module = ssc.Module('windpower')
             if (module.exec_(self.data)):
                 farmpwr = self.data.get_array('gen')
                 del module
                 return farmpwr
             else:
+                if self.status:
+                   self.status.emit(SIGNAL('log'), 'Errors encountered processing ' + station.name)
                 idx = 0
                 msg = module.log(idx)
                 while (msg is not None):
-                    print 'windpower error [', idx, ' ]: ', msg
+                    if self.status:
+                       self.status.emit(SIGNAL('log'), 'windpower error [' + str(idx) + ']: ' + msg)
+                    else:
+                        print 'windpower error [', idx, ' ]: ', msg
                     idx += 1
                     msg = module.log(idx)
                 del module
                 return None
         elif station.technology == 'Solar Thermal':
-            self.do_defaults(station)
             closest = self.find_closest(station.lat, station.lon)
             base_capacity = 100
             self.data.set_string('solar_resource_file', self.solar_files + '/' + closest)
             self.data.set_number('system_capacity', base_capacity * 1000)
-            self.data.set_number('Design_power', base_capacity / self.gross_net)
-            self.data.set_number('W_pb_design', base_capacity / self.gross_net)
             self.data.set_number('P_ref', base_capacity / self.gross_net)
             if station.storage_hours is None:
                 tshours = self.tshours
             else:
                 tshours = station.storage_hours
             self.data.set_number('tshours', tshours)
-            vol_tank = base_capacity * tshours * self.volume
-            self.data.set_number('vol_tank', vol_tank)
-            f_tc_cold = self.data.get_number('f_tc_cold')
-            V_tank_hot_ini = vol_tank * (1. - f_tc_cold)
-            self.data.set_number('V_tank_hot_ini', V_tank_hot_ini)
-            sched = []
-            for i in range(12):
-                sched.append([])
-                for j in range(24):
-                    sched[-1].append(1.)
+            sched = [[1.] * 24] * 12
             self.data.set_matrix('weekday_schedule', sched[:])
             self.data.set_matrix('weekend_schedule', sched[:])
+            if ssc.API().version() >= 159:
+                self.data.set_matrix('dispatch_sched_weekday', sched[:])
+                self.data.set_matrix('dispatch_sched_weekend', sched[:])
+            else:
+                self.data.set_number('Design_power', base_capacity / self.gross_net)
+                self.data.set_number('W_pb_design', base_capacity / self.gross_net)
+                vol_tank = base_capacity * tshours * self.volume
+                self.data.set_number('vol_tank', vol_tank)
+                f_tc_cold = self.data.get_number('f_tc_cold')
+                V_tank_hot_ini = vol_tank * (1. - f_tc_cold)
+                self.data.set_number('V_tank_hot_ini', V_tank_hot_ini)
+            self.do_defaults(station)
             module = ssc.Module('tcsmolten_salt')
             if (module.exec_(self.data)):
                 farmpwr = self.data.get_array('gen')
@@ -1473,16 +1485,20 @@ class SuperPower():
                         farmpwr[i] = farmpwr[i] * station.capacity / float(base_capacity)
                 return farmpwr
             else:
+                if self.status:
+                   self.status.emit(SIGNAL('log'), 'Errors encountered processing ' + station.name)
                 idx = 0
                 msg = module.log(idx)
                 while (msg is not None):
-                    print 'tcsmolten_salt error [', idx, ' ]: ', msg
+                    if self.status:
+                       self.status.emit(SIGNAL('log'), 'tcsmolten_salt error [' + str(idx) + ']: ' + msg)
+                    else:
+                        print 'tcsmolten_salt error [', idx, ' ]: ', msg
                     idx += 1
                     msg = module.log(idx)
                 del module
                 return None
         elif 'PV' in station.technology:
-            self.do_defaults(station)
             closest = self.find_closest(station.lat, station.lon)
             self.data.set_string('solar_resource_file', self.solar_files + '/' + closest)
             dc_ac_ratio = self.dc_ac_ratio
@@ -1515,22 +1531,27 @@ class SuperPower():
                     except:
                         pass
             self.data.set_number('azimuth', azi)
+            self.do_defaults(station)
             module = ssc.Module('pvwattsv5')
             if (module.exec_(self.data)):
                 farmpwr = self.data.get_array('gen')
                 del module
                 return farmpwr
             else:
+                if self.status:
+                   self.status.emit(SIGNAL('log'), 'Errors encountered processing ' + station.name)
                 idx = 0
                 msg = module.log(idx)
                 while (msg is not None):
-                    print 'pvwattsv5 error [', idx, ' ]: ', msg
+                    if self.status:
+                       self.status.emit(SIGNAL('log'), 'pvwattsv5 error [' + str(idx) + ']: ' + msg)
+                    else:
+                        print 'pvwattsv5 error [', idx, ' ]: ', msg
                     idx += 1
                     msg = module.log(idx)
                 del module
                 return None
         elif station.technology == 'Biomass':
-            self.do_defaults(station)
             closest = self.find_closest(station.lat, station.lon)
             self.data.set_string('file_name', self.solar_files + '/' + closest)
             self.data.set_number('system_capacity', station.capacity * 1000)
@@ -1540,6 +1561,7 @@ class SuperPower():
             self.data.set_number('biopwr.feedstock.total_biomass', feedstock)
             carbon_pct = self.data.get_number('biopwr.feedstock.total_biomass_c')
             self.data.set_number('biopwr.feedstock.total_c', feedstock * carbon_pct / 100.)
+            self.do_defaults(station)
             module = ssc.Module('biomass')
             if (module.exec_(self.data)):
                 energy = self.data.get_number('annual_energy')
@@ -1547,22 +1569,28 @@ class SuperPower():
                 del module
                 return farmpwr
             else:
+                if self.status:
+                   self.status.emit(SIGNAL('log'), 'Errors encountered processing ' + station.name)
                 idx = 0
                 msg = module.log(idx)
                 while (msg is not None):
-                    print 'biomass error [', idx, ' ]: ', msg
+                    if self.status:
+                       self.status.emit(SIGNAL('log'), 'biomass error [' + str(idx) + ']: ' + msg)
+                    else:
+                        print 'biomass error [', idx, ' ]: ', msg
                     idx += 1
                     msg = module.log(idx)
                 del module
                 return None
         elif station.technology == 'Geothermal':
-            self.do_defaults(station)
             closest = self.find_closest(station.lat, station.lon)
             self.data.set_string('file_name', self.solar_files + '/' + closest)
             self.data.set_number('nameplate', station.capacity * 1000)
             self.data.set_string('hybrid_dispatch_schedule', '1' * 24 * 12)
+            self.do_defaults(station)
             module = ssc.Module('geothermal')
             if (module.exec_(self.data)):
+                energy = self.data.get_number('annual_energy')
                 pwr = self.data.get_array('monthly_power')
                 for i in range(12):
                     for j in range(730):
@@ -1570,10 +1598,15 @@ class SuperPower():
                 del module
                 return farmpwr
             else:
+                if self.status:
+                   self.status.emit(SIGNAL('log'), 'Errors encountered processing ' + station.name)
                 idx = 0
                 msg = module.log(idx)
                 while (msg is not None):
-                    print 'geothermal error [', idx, ' ]: ', msg
+                    if self.status:
+                       self.status.emit(SIGNAL('log'), 'geothermal error [' + str(idx) + ']: ' + msg)
+                    else:
+                        print 'geothermal error [', idx, ' ]: ', msg
                     idx += 1
                     msg = module.log(idx)
                 del module
@@ -1790,7 +1823,7 @@ class FinancialModel():
                                         worksheet.cell_value(curr_row, var['DATA'])])
         return data, output_variables
 
-    def __init__(self, name, technology, capacity, power, grid, path, year=None):
+    def __init__(self, name, technology, capacity, power, grid, path, year=None, status=None):
         def set_grid_variables():
             self.dispatchable = None
             self.line_loss = 0.
@@ -1888,16 +1921,21 @@ class FinancialModel():
                 self.stations.append(FinancialSummary(name[stn], technology[stn], capacity[stn],
                   generation, 0, round(capital_cost), lcoe_real, lcoe_nom, npv, round(grid_cost)))
             else:
+                if self.status:
+                   self.status.emit(SIGNAL('log'), 'Errors encountered processing ' + name[stn])
                 idx = 0
                 msg = module.log(idx)
                 while (msg is not None):
-                    print 'ippppa Error [', idx, ' ]: ', msg
+                    if self.status:
+                       self.status.emit(SIGNAL('log'), 'ippppa error [' + str(idx) + ']: ' + msg)
+                    else:
+                        print 'ippppa error [', idx, ' ]: ', msg
                     idx += 1
                     msg = module.log(idx)
-             #    sys.exit('ippppa example failed')
             del module
 
         self.stations = []
+        self.status = status
         config = ConfigParser.RawConfigParser()
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
@@ -1946,6 +1984,7 @@ class FinancialModel():
             ippppa_file = variable_files + '/' + ippppa_file
         except:
             annual_file = 'annualoutput_variables.xls'
+            ippppa = 'ippppa_variables.xls'
         annual_data, annual_outputs = self.get_variables(annual_file)
         what_beans = whatFinancials(helpfile=self.helpfile)
         what_beans.exec_()
@@ -2006,16 +2045,22 @@ class FinancialModel():
             if (module.exec_(annual_data)):
              # return the relevant outputs desired
                 net_hourly = annual_data.get_array('hourly_energy')
+                net_annual = annual_data.get_array('annual_energy')
+                degradation = annual_data.get_array('annual_degradation')
                 del module
                 do_ippppa()
             else:
+                if self.status:
+                   self.status.emit(SIGNAL('log'), 'Errors encountered processing ' + name[stn])
                 idx = 0
                 msg = module.log(idx)
                 while (msg is not None):
-                    print 'Error [', idx, ' ]: ', msg
+                    if self.status:
+                       self.status.emit(SIGNAL('log'), 'annualoutput error [' + str(idx) + ']: ' + msg)
+                    else:
+                        print 'annualoutput error [', idx, ' ]: ', msg
                     idx += 1
                     msg = module.log(idx)
-                #     sys.exit('annualoutput example failed')
                 del module
 
     def getValues(self):
@@ -2023,10 +2068,10 @@ class FinancialModel():
 
 
 class ProgressModel(QtGui.QDialog):
-    def __init__(self, stations, plots, show_progress, year=None, selected=None):
+    def __init__(self, stations, plots, show_progress, year=None, selected=None, status=None):
         super(ProgressModel, self).__init__()
         self.plots = plots
-        self.model = SuperPower(stations, self.plots, False, year=year, selected=selected)
+        self.model = SuperPower(stations, self.plots, False, year=year, selected=selected, status=status)
         self.model.show_progress = show_progress
         self.progressbar = QtGui.QProgressBar()
         self.progressbar.setMinimum(1)
@@ -2490,7 +2535,6 @@ class PowerModel():
                     if getattr(self.power_summary[0], 'transmitted') != None:
                         line += ',Transmitted'
                     tf.write(line + '\n')
-                    sums = {}
                     for key, value in iter(sorted(stns.iteritems())):
                         if self.power_summary[value].generation > 0:
                             cf = '{:0.2f}'.format(self.power_summary[value].generation /
@@ -3468,7 +3512,8 @@ class PowerModel():
         if not self.plots['block']:
             plt.show(block=True)
 
-    def __init__(self, stations, show_progress=None, year=None):
+    def __init__(self, stations, show_progress=None, year=None, status=None):
+        self.status = status
         self.stations = stations
         config = ConfigParser.RawConfigParser()
         if len(sys.argv) > 1:
@@ -3690,7 +3735,7 @@ class PowerModel():
         self.stn_outs = []
         if self.show_progress:
             power = ProgressModel(stations, self.plots, True, year=self.base_year,
-                                  selected=self.selected)
+                                  selected=self.selected, status=self.status)
             power.open()
             if __name__ == '__main__':
                 app.exec_()
@@ -3704,7 +3749,7 @@ class PowerModel():
                   self.stn_path = power.getStnOuts()
         else:
             self.model = SuperPower(stations, self.plots, False, year=self.base_year,
-                                    selected=self.selected)
+                                    selected=self.selected, status=status)
             self.model.getPower()
             self.power_summary = self.model.power_summary
             self.ly, self.x = self.model.getLy()

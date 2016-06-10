@@ -154,14 +154,14 @@ class FloatStatus(QtGui.QDialog):
     @QtCore.pyqtSlot()
     def exit(self):
         if self.log_status:
-            self.log('%s. %s' % (str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),
-                     'hh:mm:ss')), 'SIREN log stopped'))
+            self.log('SIREN log stopped')
         self.be_open = False
         self.close()
 
     @QtCore.pyqtSlot()
     def log(self, text):
-        self.loglines.appendPlainText(text)
+        self.loglines.appendPlainText(str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),
+                            'hh:mm:ss. ')) + text)
         self.logged = True
 
     @QtCore.pyqtSlot()
