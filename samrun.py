@@ -189,7 +189,7 @@ class RptDialog(QtGui.QDialog):
 
 class SAMRun():
     def __init__(self, program, parameters=None, comment=None):
-    ssc_api = ssc.API()
+        ssc_api = ssc.API()
         parms = ['python']
         parms.append(program)
         bit = None

@@ -448,6 +448,7 @@ class makeNew(QtGui.QDialog):
     def itemClicked(self):
         for i in range(len(self.fields)):
             if self.fields[i][4].hasFocus():
+                upd_field = self.fields[i][4].text()
                 for key, value in iter(self.parents.iteritems()):
                     upd_field = upd_field.replace(key, value)
                 if self.fields[i][1] == 'dir':
