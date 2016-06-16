@@ -241,6 +241,8 @@ class MapView(QtGui.QGraphicsView):
         if QtCore.Qt.LeftButton == event.buttons() and self._drag_start:
             delta = event.pos() - self._drag_start
             val = self._sb_start - delta
+            self.horizontalScrollBar().setValue(val.x())
+            self.verticalScrollBar().setValue(val.y())
         else:
             p = self.mapToScene(event.pos())
             x, y = map(int, [p.x(), p.y()])
@@ -633,6 +635,8 @@ class MapView(QtGui.QGraphicsView):
 
     def traceGrid(self, station, coords=None):
         self.clear_Trace()
+        if self.scene().load_centre is None:
+            return 0
         self.trace_items = []
         color = QtGui.QColor()
         color.setNamedColor((self.scene().colors['grid_trace']))
@@ -875,12 +879,18 @@ class MainWindow(QtGui.QMainWindow):
         except:
             self.helpfile = ''
         try:
+            scenario_prefix = config.get('Files', 'scenario_prefix')
+        except:
+            scenario_prefix = ''
+        try:
             self.scenarios = config.get('Files', 'scenarios')
+            if scenario_prefix != '' :
+                self.scenarios += os.sep + scenario_prefix
             for key, value in parents:
                 self.scenarios = self.scenarios.replace(key, value)
             self.scenarios = self.scenarios.replace('$USER$', getUser())
             self.scenarios = self.scenarios.replace('$YEAR$', self.base_year)
-            i = self.scenarios.rfind('/')
+            i = self.scenarios.rfind(os.sep)
             self.scenarios_filter = self.scenarios[i + 1:]
             if self.scenarios_filter[-1] != '*':
                 self.scenarios_filter += '*'
@@ -1388,7 +1398,7 @@ class MainWindow(QtGui.QMainWindow):
         dialog = displaytable.Table(field, fields=fields, title=self.sender().text(),
                  save_folder=self.scenarios)
         dialog.exec_()
-        comment = self.sender().text() + ' Displayed.'
+        comment = self.sender().text() + ' displayed.'
         self.view.emit(SIGNAL('statusmsg'), comment)
 
     def mapToLonLat(self, p):
@@ -1502,7 +1512,7 @@ class MainWindow(QtGui.QMainWindow):
                 self.scenarios + prefix, 'Scenarios (' + self.scenarios_filter + ')')
         if fname != '':
             fname = str(fname)
-            i = fname.rfind('/')
+            i = fname.rfind(os.sep)
             save_as = fname[i + 1:]
             if not new:
                 if save_as[:len(prefix)] != prefix:
@@ -1582,7 +1592,7 @@ class MainWindow(QtGui.QMainWindow):
                 self.subMenu.clear()
                 self.subMenu2.clear()
             self.view.scene()._setupScenario(fname)
-            i = fname.rfind('/')
+            i = fname.rfind(os.sep)
             scen_filter = fname[i + 1:]
             comment = 'Added scenario %s' % (scen_filter)
             subFile = QtGui.QAction(QtGui.QIcon('minus.png'), scen_filter, self)
@@ -1815,7 +1825,7 @@ class MainWindow(QtGui.QMainWindow):
                 i = fname.rfind('.')
             outputimg.save(fname, fname[i + 1:])
             try:
-                comment = 'View saved to ' + fname[fname.rfind('/') + 1:]
+                comment = 'View saved to ' + fname[fname.rfind(os.sep) + 1:]
             except:
                 comment = 'View saved to ' + fname
             self.view.emit(SIGNAL('statusmsg'), comment)
@@ -1826,9 +1836,9 @@ class MainWindow(QtGui.QMainWindow):
             if os.path.exists(who[0]):
                 if sys.platform == 'win32' or sys.platform == 'cygwin':
                     if who[0][-3:] == '.py':
-                        pid = subprocess.Popen([who], shell=True).pid
+                        pid = subprocess.Popen(who, shell=True).pid
                     else:
-                        pid = subprocess.Popen([who[0], who[1]]).pid
+                        pid = subprocess.Popen(who).pid
                 else:
                     pid = subprocess.Popen(['python', who[0], who[1]]).pid
                 self.view.emit(SIGNAL('statusmsg'), who[0] + ' invoked')
@@ -2161,6 +2171,10 @@ class MainWindow(QtGui.QMainWindow):
 
     def list_Stations(self):
         ctr = [0, 0]
+        if len(self.view.scene()._stations.stations) == 0:
+            comment = 'No Stations to display'
+            self.view.emit(SIGNAL('statusmsg'), comment)
+            return
         for st in self.view.scene()._stations.stations:
             if st.technology[:6] != 'Fossil':
                 ctr[0] += 1
@@ -2179,7 +2193,7 @@ class MainWindow(QtGui.QMainWindow):
                  units=units, sumby='technology', sumfields=sumfields,
                  save_folder=self.scenarios)
         dialog.exec_()
-        comment = 'Stations Displayed'
+        comment = 'Stations displayed'
         self.view.emit(SIGNAL('statusmsg'), comment)
 
     def list_Grid(self):
@@ -2190,15 +2204,18 @@ class MainWindow(QtGui.QMainWindow):
                         self.view.scene().lines.lines[i].peak_dispatchable)
                 self.view.scene().lines.lines[i].line_cost = cost * self.view.scene().lines.lines[i].length
         for i in range(len(self.view.scene().lines.lines)):
-            for j in range(len(self.view.scene().load_centre)):
-                if self.view.scene().lines.lines[i].coordinates[-1] == [self.view.scene().load_centre[j][1],
-                   self.view.scene().load_centre[j][2]]:
-                    if self.view.scene().lines.lines[i].peak_load is not None:
-                        a, self.view.scene().lines.lines[i].substation_cost, b = \
-                           self.view.scene().lines.decode2(str(self.view.scene().lines.lines[i].peak_load) + '=' +
-                           self.view.scene().lines.lines[i].line_table, substation=True)
-                    j = -1
-                    break
+            if self.view.scene().load_centre is None:
+                j = -1
+            else:
+                for j in range(len(self.view.scene().load_centre)):
+                    if self.view.scene().lines.lines[i].coordinates[-1] == [self.view.scene().load_centre[j][1],
+                       self.view.scene().load_centre[j][2]]:
+                        if self.view.scene().lines.lines[i].peak_load is not None:
+                            a, self.view.scene().lines.lines[i].substation_cost, b = \
+                               self.view.scene().lines.decode2(str(self.view.scene().lines.lines[i].peak_load) + '=' +
+                               self.view.scene().lines.lines[i].line_table, substation=True)
+                        j = -1
+                        break
             if j < 0:
                 cost = 0.
                 if self.view.scene().lines.lines[i].peak_load is not None:
@@ -2221,7 +2238,7 @@ class MainWindow(QtGui.QMainWindow):
                  sumfields=['length', 'line_cost', 'substation_cost'],
                  save_folder=self.scenarios)  # '#', 'connector',
         dialog.exec_()
-        comment = 'Grid Displayed'
+        comment = 'Grid displayed'
         self.view.emit(SIGNAL('statusmsg'), comment)
 
     def show_Capacity(self):

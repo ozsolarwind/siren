@@ -138,26 +138,27 @@ class AnObject(QtGui.QDialog):
        #  self.turbine_class = ['']
         grid = QtGui.QGridLayout()
         turbcombo = QtGui.QComboBox(self)
-        sam = open(self.sam_file)
-        sam_turbines = csv.DictReader(sam)
-        for turb in sam_turbines:
-            if turb['Name'] == 'Units' or turb['Name'] == '[0]':
-                pass
-            else:
-                self.turbines.append([turb['Name'], '', turb['Rotor Diameter']])
-                if turb['IEC Wind Speed Class'] in ['', ' ', '0', 'Unknown', 'unknown', 'not listed']:
-                   pass
+        if os.path.exists(self.sam_file):
+            sam = open(self.sam_file)
+            sam_turbines = csv.DictReader(sam)
+            for turb in sam_turbines:
+                if turb['Name'] == 'Units' or turb['Name'] == '[0]':
+                    pass
                 else:
-                   cls = turb['IEC Wind Speed Class'].replace('|', ', ')
-                   cls.replace('Class ', '')
-                   self.turbines[-1][1] = 'Class: ' + cls
-        sam.close()
-        pow_files = os.listdir(self.pow_dir)
-        for pow in pow_files:
-            if pow[-4:] == '.pow':
-                turb = Turbine(pow[:-4])
-                self.turbines.append([pow[:-4], '', str(turb.rotor)])
-              #   self.turbine_class.append('')
+                    self.turbines.append([turb['Name'], '', turb['Rotor Diameter']])
+                    if turb['IEC Wind Speed Class'] in ['', ' ', '0', 'Unknown', 'unknown', 'not listed']:
+                       pass
+                    else:
+                       cls = turb['IEC Wind Speed Class'].replace('|', ', ')
+                       cls.replace('Class ', '')
+                       self.turbines[-1][1] = 'Class: ' + cls
+            sam.close()
+        if os.path.exists(self.pow_dir):
+            pow_files = os.listdir(self.pow_dir)
+            for pow in pow_files:
+                if pow[-4:] == '.pow':
+                    turb = Turbine(pow[:-4])
+                    self.turbines.append([pow[:-4], '', str(turb.rotor)])
         self.turbines.sort()
         j = -1
         for i in range(len(self.turbines)):

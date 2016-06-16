@@ -133,7 +133,7 @@ class makeFile():
                             vald[-1].append([])
                             for k in range(len(the_cols)):
                                 vald[-1][-1].append(0.)
-                tf = open(self.src_dir + '/' + fil, 'r')
+                tf = open(self.src_dir + os.sep + fil, 'r')
                 lines = tf.readlines()
                 tf.close()
                 fst_row = len(lines) - 8760
@@ -248,7 +248,7 @@ class makeFile():
                     vald.append([])
                     for j in range(365):
                         vald[-1].append(0.)
-            tf = open(self.wind_dir + '/' + fil, 'r')
+            tf = open(self.wind_dir + os.sep + fil, 'r')
             lines = tf.readlines()
             tf.close()
             fst_row = len(lines) - 8760
@@ -332,7 +332,7 @@ class makeFile():
                         vald.append([])
                         for j in range(365):
                             vald[-1].append(0.)
-                tf = open(self.rain_dir + '/' + fil, 'r')
+                tf = open(self.rain_dir + os.sep + fil, 'r')
                 lines = tf.readlines()
                 tf.close()
                 fst_row = len(lines) - 8760
@@ -665,7 +665,7 @@ class makeFile():
                     line += ',' + str(val)
                 tf.write(line + '\n')
             tf.close()
-        self.log += '%s created' % tgt_fil[tgt_fil.rfind('/') + 1:]
+        self.log += '%s created' % tgt_fil[tgt_fil.rfind(os.sep) + 1:]
 
 
 class ClickableQLabel(QtGui.QLabel):
@@ -807,7 +807,7 @@ class getParms(QtGui.QWidget):
             row += 1
             self.grid.addWidget(QtGui.QLabel('Rain Folder:'), row, 0)
             self.rsource = ClickableQLabel()
-            self.rsource.setText(self.windfiles)
+            self.rsource.setText(self.rainfiles)
             self.rsource.setFrameStyle(6)
             self.connect(self.rsource, QtCore.SIGNAL('clicked()'), self.rdirChanged)
             self.grid.addWidget(self.rsource, row, 1, 1, 3)

@@ -95,6 +95,10 @@ ul {
 <ul class="none">
 <li><a href="#overview">Overview</a></li>
 <li><a href="#install">Installation</a></li>
+<ul class="none">
+<li><a href="#execute">Execution of SIREN</a></li>
+<li><a href="#sample">Sample SIREN Model</a></li>
+</ul>
 <li><a href="#setup">Setting Up</a></li>
 <li><a href="#objects">Simulation Objects</a></li>
 <ul class="none">
@@ -144,23 +148,38 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 <p><strong>Our Computer Simulation (SIREN)</strong>: To demonstrate how electricity demand on the SWIS may be met by a mix of renewable energy sources. Users are able to explore potential location and scale of renewable energy sources (stations, storage, transmission) to meet electricity demand.</p>
 <p><a href="#help">Back to top</a></p>
 <h2 id="install">Installation</h2>
-<p>At present there is a packaged version of the simulation for Windows (don't know why only Windows because I'm a Linux fan; the package has been created with PyInstaller). To execute the simulation open <em>siren.exe</em> in the upper folder, <em>siren</em>. You can easily set up a Desktop shortcut to point to the model. The package contains a number of folders with default files that can be replaced with your own. The location of these files are defined in a Preferences file as documented in <a href="#prefs">Preferences</a>. The default files are located in the following folders:</p>
-<ul class="none">
-<li><em>sample_files</em> contains a range of files to enable operation of the simulation</li>
-<li><em>sam-sdk</em> contains a Windows version of the SAM SDK, <em>sam-sdk-2015-06-30</em></li>
-<li><em>solar_weather</em> (if present) contains solar (.smw) weather files for the SWIS for 2014 and 2015</li>
-<li><em>source</em> contains the Python source programs for SIREN</li>
-<li><em>wind_weather</em> (if present) contains wind (.srw) weather files for the SWIS for 2014 and 2015</li>
+<p>At present there is a packaged version of the simulation for Windows available as a self-extracting zip file from <a href="https://sourceforge.net/projects/sensiren/" target="_blank">https://sourceforge.net/projects/sensiren/</a> (the package has been created with PyInstaller). There are a number of files available:
+<ul>
+<li><em>siren_toolkit.exe</em> contains the full SIREN toolkit, It contains the contents of three other files in this list</li>
+<li><em>siren_application.exe</em> contains the packaged Windows version of the SIREN application</li>
+<li><em>siren_powerbalance.exe</em> contains the SIREN PowerBalance files. These are a set of spreadsheets used to quantify and cost dispatchable energy generation, storage and CO2 emissions. This enables you to complete a costed renewable energy scenario</li>
+<li><em>siren_sample.exe</em> contains the files and data for the sample SIREN simulation of the SWIS</li>
 </ul>
-<p>When you open SIREN you will be presented with a list of SIREN Models (Preferences files). Choose the SIREN Model you want by clicking on your choice. If want to use a specific Preferences file you can open the simulation passing the alternate file name as a parameter, for example:</p>
+<h3 id="execute">Execution of SIREN</h3>
+<p>To execute the simulation open <em>siren.exe</em> in the upper folder, <em>siren</em>. You can easily set up a Desktop shortcut to point to the model. The package contains a number of folders with default files, some that can be replaced with your own. The location of these files are defined in a Preferences file as documented in <a href="#prefs">Preferences</a>. The default files are located in the following folders:</p>
+<ul class="none">
+<li><em>siren_files</em> contains a range of files to enable operation of the simulation</li>
+<li><em>sam-sdk</em> contains a Windows version of the SAM SDK, <em>sam-sdk-2016-03-14</em></li>
+<li><em>source</em> contains the Python source programs for SIREN</li>
+</ul>
+<p>When you open SIREN you will be presented with a list of SIREN Models (Preferences files). Choose the SIREN Model you want by clicking on your choice. If want to use a specific Preferences file you can open the simulation passing the alternate file name, or a folder, as a parameter, for example:</p>
 <ul class="none">
 <li><em>siren.exe SIREN_NWIS.ini</em></li>
 </ul>
-<p>If you want to create a new Model press the <em>New Model</em> button on the start up menu. You will be presented with a small list of Properties to update to create a new Preferences file. Many of these properties relate to files and file locations as described in <a href="#setup">Setting Up</a>. It's important to ensure they're correct for the new model to open. For the file fields click on the field to navigate to the desired file or folder. At the bottom of the Create Preferences file menu you have options to Save the new file, Save the new file and edit it, or Save it and open (launch) the new model.
+<p>If you specify a folder you will be presented with a list of SIREN Models (Preferences files) in that folder. You can either specify the folder as the full path or relative to the siren folder. Placing your models in a separate folder will make it easier to install updates to SIREN without impacting your data files.</p>
+<p>If you want to create a new Model press the <em>New Model</em> button on the start up menu. You will be presented with a small list of Properties to update to create a new Preferences file. Many of these properties relate to files and file locations as described in <a href="#setup">Setting Up</a>. It's important to ensure they're correct for the new model to open. For the file fields click on the field to navigate to the desired file or folder. At the bottom of the Create Preferences file menu you have options to Save the new file, Save the new file and edit it, or Save it and open (launch) the new model. If you specified a folder when you opened SIREN, the new model will be saved in that folder.
+<h3 id="sample">Sample SIREN Model</h3>
+<p>The sample SIREN model for the SWIS for 2014 and 2015. The default Preferences files, SIREN.ini, is set up for this data and assumes the <em>siren_sample</em> folder is located in the same parent folder as the <em>siren</em> folder. The sample data contains:
+<ul class="none">
+<li><em>sample_files</em> contains a range of files for the SWIS such as maps, existing network and so forth</li>
+<li><em>solar_weather</em> contains solar (.smw) weather files for the SWIS for 2014 and 2015</li>
+<li><em>wind_weather</em> contains wind (.srw) weather files for the SWIS for 2014 and 2015</li>
+</ul>
 <div class="experiment">
-<p><strong>Experimental features</strong></p>
+<h3>Experimental features</h3>
 <p>There are some experimental features in SIREN which may or may not be further developed. These are identified within this help by a red bounding box.</p>
 </div>
+
 <p><a href="#help">Back to top</a></p>
 <h2 id="setup">Setting Up</h2>
 <p>The simulation uses external &ldquo;data files&rdquo; to model the potential for renewable energy generation for a geographic region. The approach is to model the data on an hourly basis for a desired year (ignoring leap days, that is, 8,760 hours). The following data files are required / desirable. Due to the initial source for each data file the format for each is different (see <a href="#files">SIREN File Formats</a> for further details). Please <a href="#feedback">feedback</a> any desired formats as it's relatively easy to accommodate standard file formats.</p>
@@ -592,7 +611,7 @@ The format is similar to a Windows INI file. If you want to create a new Model y
 </table>
 </td></tr>
 <tr class="none" id="p_files"><td><dfn><strong>[Files]</strong></dfn></td>
-<td>Files and directories. Properties are:</p>
+<td>Files and directories. You can either specify the folder as the full path or relative to the siren folder (not the folder the Preferences file resides in). Properties are:</p>
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><dfn>about</dfn></td>
@@ -660,8 +679,12 @@ as embedded solar - Rooftop PV - installed on the grid but not registered with A
 <td class="none">Default initial scenario</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>scenario_prefix</dfn></td>
+<td class="none">File name prefix for scenarios of additional/proposed renewable power stations. If specified, all scenarios must start with this value. You can either use this property to specify the prefix or use the tail of the scenarios property </td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>scenarios</dfn></td>
-<td class="none">Location of and file name prefix for scenarios of additional/proposed renewable power stations. The value should end with an <em>*</em> (e.g. <em>Scenario*</em> and all scenarios must start with this value (less the *)</td>
+<td class="none">Location of scenarios of additional/proposed renewable power stations. You can also use this property to specify the file name prefix for scenarios. In this case, the value should end with an <em>*</em> (e.g. <em>Scenario*</em> and all scenarios must start with this value (less the *)</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>solar_files</dfn></td>
@@ -984,7 +1007,7 @@ This entails all costs associated with connecting a power station to the network
 <tr class="none">
 <td class="none">
 <dfn>load_centre</dfn></td>
-<td class="none">To assist with tracing grid lines for a station you can specify &ldquo;load centres&rdquo; where a grid could connect towards (not yet to). This is a series of latitudes and longitudes separated by commas. You can also precede the coordinates with a name for the centre, for example <em>(Perth, -31.9231, 115.8840)</em>. The geographic location of the load centre also needs to be included in the coordinates for the network lines (as defined in the <dfn>grid_network</dfn> file)</td>
+<td class="none">To assist with tracing grid lines for a station you can specify &ldquo;load centres&rdquo; where a grid could connect towards (not yet to). This is a series of latitudes and longitudes separated by commas, for example <em>-20.381723,118.586250, -20.621698,117.161738</em>. You can also precede the coordinates with a name for the centre, for example <em>(Perth, -31.9231, 115.8840)</em>. It is not possible to mix the two formats. The geographic location of the load centre also needs to be included in the coordinates for the network lines (as defined in the <dfn>grid_network</dfn> file)</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>s_lines</dfn></td>

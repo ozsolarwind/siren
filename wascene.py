@@ -125,12 +125,18 @@ class WAScene(QtGui.QGraphicsScene):
         if scale.lower() in ['true', 'yes', 'on']:
             self.scale = True
         try:
+            scenario_prefix = config.get('Files', 'scenario_prefix')
+        except:
+            scenario_prefix = ''
+        try:
             self.scenarios = config.get('Files', 'scenarios')
+            if scenario_prefix != '' :
+                self.scenarios += os.sep + scenario_prefix
             for key, value in parents:
                 self.scenarios = self.scenarios.replace(key, value)
             self.scenarios = self.scenarios.replace('$USER$', getUser())
             self.scenarios = self.scenarios.replace('$YEAR$', self.base_year)
-            i = self.scenarios.rfind('/')
+            i = self.scenarios.rfind(os.sep)
             self.scenarios = self.scenarios[:i + 1]
         except:
             self.scenarios = ''
@@ -361,10 +367,13 @@ class WAScene(QtGui.QGraphicsScene):
                 for j in range(2, len(load_centre), 2):
                     self.load_centre.append([str(j), float(load_centre[j]), float(load_centre[j + 1])])
             except:
-                self.load_centre = [[load_centre[0], float(load_centre[1]), float(load_centre[2])]]
-                for j in range(3, len(load_centre), 3):
-                    self.load_centre.append([load_centre[j], float(load_centre[j + 1]),
-                        float(load_centre[j + 2])])
+                try:
+                    self.load_centre = [[load_centre[0], float(load_centre[1]), float(load_centre[2])]]
+                    for j in range(3, len(load_centre), 3):
+                        self.load_centre.append([load_centre[j], float(load_centre[j + 1]),
+                            float(load_centre[j + 2])])
+                except:
+                    pass
         except:
             pass
         self.station_square = False
@@ -565,7 +574,7 @@ class WAScene(QtGui.QGraphicsScene):
             self._setupScenario(self.scenario)
 
     def _setupScenario(self, scenario):
-        i = scenario.rfind('/')
+        i = scenario.rfind(os.sep)
         if i > 0:
             scen_file = scenario
             scen_filter = scenario[i + 1:]

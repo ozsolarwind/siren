@@ -145,7 +145,7 @@ class RptDialog(QtGui.QDialog):
         layout.addWidget(self.widget)
         layout.addLayout(buttonLayout)
         self.setLayout(layout)
-        i = self.parms[0].rfind('/')
+        i = self.parms[0].rfind(os.sep)
         parm = ''
         for l in range(1, len(self.parms)):
             parm += ' ' + self.parms[l]
@@ -159,17 +159,17 @@ class RptDialog(QtGui.QDialog):
 
     def accept(self):
         try:
-            i = self.parms[1].rfind('/')   # fudge to see if first parm has a directory to use as an alternative
+            i = self.parms[1].rfind(os.sep)   # fudge to see if first parm has a directory to use as an alternative
         except:
             i = 0
         if i > 0:
             save_filename = self.parms[1][:i + 1]
         else:
-            i = self.parms[0].rfind('/')
+            i = self.parms[0].rfind(os.sep)
             j = self.parms[0].rfind('.')
             save_filename = self.parms[0][:j]
         for k in range(1, len(self.parms)):
-            i = self.parms[k].rfind('/')
+            i = self.parms[k].rfind(os.sep)
             if i > 0:
                 save_filename += '_' + self.parms[k][i + 1:]
             else:

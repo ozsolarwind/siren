@@ -875,7 +875,7 @@ class SuperPower():
                 if os.path.exists(dft_file):
                     pass
                 else:
-                    dft_file = folder + '/' + index_file
+                    dft_file = folder + os.sep + index_file
                 if os.path.exists(dft_file):
                     if do_excel:
                         self.default_files[technology] = xlrd.open_workbook(dft_file)
@@ -932,7 +932,7 @@ class SuperPower():
         else:
             do_excel = False
         if self.default_files[technology] is None:
-            dft_file = self.variable_files + '/' + self.defaults[technology]
+            dft_file = self.variable_files + os.sep + self.defaults[technology]
             if os.path.exists(dft_file):
                 if do_excel:
                     self.default_files[technology] = xlrd.open_workbook(dft_file)
@@ -1160,7 +1160,7 @@ class SuperPower():
                 self.scenarios = self.scenarios.replace(key, value)
             self.scenarios = self.scenarios.replace('$USER$', getUser())
             self.scenarios = self.scenarios.replace('$YEAR$', self.base_year)
-            i = self.scenarios.rfind('/')
+            i = self.scenarios.rfind(os.sep)
             self.scenarios = self.scenarios[:i + 1]
         except:
             self.scenarios = ''
@@ -1401,7 +1401,7 @@ class SuperPower():
         self.data = ssc.Data()
         if station.technology == 'Wind':
             closest = self.find_closest(station.lat, station.lon, wind=True)
-            self.data.set_string('wind_resource_filename', self.wind_files + '/' + closest)
+            self.data.set_string('wind_resource_filename', self.wind_files + os.sep + closest)
             turbine = Turbine(station.turbine)
             no_turbines = int(station.no_turbines)
             self.data.set_number('system_capacity', no_turbines * turbine.capacity * 1000)
@@ -1448,7 +1448,7 @@ class SuperPower():
         elif station.technology == 'Solar Thermal':
             closest = self.find_closest(station.lat, station.lon)
             base_capacity = 100
-            self.data.set_string('solar_resource_file', self.solar_files + '/' + closest)
+            self.data.set_string('solar_resource_file', self.solar_files + os.sep + closest)
             self.data.set_number('system_capacity', base_capacity * 1000)
             self.data.set_number('P_ref', base_capacity / self.gross_net)
             if station.storage_hours is None:
@@ -1500,7 +1500,7 @@ class SuperPower():
                 return None
         elif 'PV' in station.technology:
             closest = self.find_closest(station.lat, station.lon)
-            self.data.set_string('solar_resource_file', self.solar_files + '/' + closest)
+            self.data.set_string('solar_resource_file', self.solar_files + os.sep + closest)
             dc_ac_ratio = self.dc_ac_ratio
             if station.technology[:5] == 'Fixed':
                 dc_ac_ratio = self.dc_ac_ratio_f
@@ -1553,7 +1553,7 @@ class SuperPower():
                 return None
         elif station.technology == 'Biomass':
             closest = self.find_closest(station.lat, station.lon)
-            self.data.set_string('file_name', self.solar_files + '/' + closest)
+            self.data.set_string('file_name', self.solar_files + os.sep + closest)
             self.data.set_number('system_capacity', station.capacity * 1000)
             self.data.set_number('biopwr.plant.nameplate', station.capacity * 1000)
             feedstock = station.capacity * 1000 * self.biomass_multiplier
@@ -1584,7 +1584,7 @@ class SuperPower():
                 return None
         elif station.technology == 'Geothermal':
             closest = self.find_closest(station.lat, station.lon)
-            self.data.set_string('file_name', self.solar_files + '/' + closest)
+            self.data.set_string('file_name', self.solar_files + os.sep + closest)
             self.data.set_number('nameplate', station.capacity * 1000)
             self.data.set_string('hybrid_dispatch_schedule', '1' * 24 * 12)
             self.do_defaults(station)
@@ -1618,7 +1618,7 @@ class SuperPower():
             return farmpwr
         elif station.technology == 'Wave':   # fudge Wave using 10m wind speed
             closest = self.find_closest(station.lat, station.lon)
-            tf = open(self.solar_files + '/' + closest, 'r')
+            tf = open(self.solar_files + os.sep + closest, 'r')
             lines = tf.readlines()
             tf.close()
             fst_row = len(lines) - 8760
@@ -1654,7 +1654,7 @@ class SuperPower():
                 for key, value in props:
                     propty[key] = value
                 closest = self.find_closest(station.lat, station.lon)
-                tf = open(self.solar_files + '/' + closest, 'r')
+                tf = open(self.solar_files + os.sep + closest, 'r')
                 lines = tf.readlines()
                 tf.close()
                 fst_row = len(lines) - 8760
@@ -1690,7 +1690,7 @@ class SuperPower():
                 propty['formula'] = formula
                 if formula.find('wind50') >= 0:
                     closest = self.find_closest(station.lat, station.lon, wind=True)
-                    tf = open(self.wind_files + '/' + closest, 'r')
+                    tf = open(self.wind_files + os.sep + closest, 'r')
                     wlines = tf.readlines()
                     tf.close()
                     if closest[-4:] == '.srw':
@@ -1979,9 +1979,9 @@ class FinancialModel():
                 variable_files = variable_files.replace(key, value)
             variable_files = variable_files.replace('$USER$', getUser())
             annual_file = config.get('SAM Modules', 'annualoutput_variables')
-            annual_file = variable_files + '/' + annual_file
+            annual_file = variable_files + os.sep + annual_file
             ippppa_file = config.get('SAM Modules', 'ippppa_variables')
-            ippppa_file = variable_files + '/' + ippppa_file
+            ippppa_file = variable_files + os.sep + ippppa_file
         except:
             annual_file = 'annualoutput_variables.xls'
             ippppa = 'ippppa_variables.xls'
@@ -3541,12 +3541,18 @@ class PowerModel():
         except:
             pass
         try:
+            scenario_prefix = config.get('Files', 'scenario_prefix')
+        except:
+            scenario_prefix = ''
+        try:
             self.scenarios = config.get('Files', 'scenarios')
+            if scenario_prefix != '' :
+                self.scenarios += os.sep + scenario_prefix
             for key, value in parents:
                 self.scenarios = self.scenarios.replace(key, value)
             self.scenarios = self.scenarios.replace('$USER$', getUser())
             self.scenarios = self.scenarios.replace('$YEAR$', self.base_year)
-            i = self.scenarios.rfind('/')
+            i = self.scenarios.rfind(os.sep)
             self.scenarios = self.scenarios[:i + 1]
         except:
             self.scenarios = ''

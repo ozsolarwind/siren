@@ -173,8 +173,8 @@ class PlotWeather():
                 ndx_file = ''
                 if os.path.exists(index_file):
                     ndx_file = index_file
-                elif os.path.exists(folder + '/' + index_file):
-                    ndx_file = folder + '/' + index_file
+                elif os.path.exists(folder + os.sep + index_file):
+                    ndx_file = folder + os.sep + index_file
                 if ndx_file != '':
                     if ndx_file[-4:] == '.xls' or ndx_file[-5:] == '.xlsx':
                         var = {}
@@ -679,10 +679,10 @@ class PlotWeather():
         self.windy = adjust_wind
        # find closest solar file
         self.solar_file, dist, lat, lon = self.find_closest(latitude, longitude)
-        if os.path.exists(self.solar_files + '/' + self.solar_file):
+        if os.path.exists(self.solar_files + os.sep + self.solar_file):
             comment = 'Solar: %s\n            at %s, %s (%s Km away)' % (self.solar_file, lat, lon, '{:0,.0f}'.format(dist))
         self.wind_file, dist, lat, lon = self.find_closest(latitude, longitude, wind=True)
-        if os.path.exists(self.wind_files + '/' + self.wind_file):
+        if os.path.exists(self.wind_files + os.sep + self.wind_file):
             if comment != '':
                 comment += '\n'
             comment += 'Wind: %s\n            at %s, %s (%s Km away)' % (self.wind_file, lat, lon, '{:0,.0f}'.format(dist))
@@ -729,8 +729,8 @@ class PlotWeather():
         self.text = ''
         rain_col = -1
         if self.plots['dhi'] or self.plots['dni'] or self.plots['ghi'] or self.plots['temp'] or self.plots['rain']:
-            if os.path.exists(self.solar_files + '/' + self.solar_file):
-                tf = open(self.solar_files + '/' + self.solar_file, 'r')
+            if os.path.exists(self.solar_files + os.sep + self.solar_file):
+                tf = open(self.solar_files + os.sep + self.solar_file, 'r')
                 lines = tf.readlines()
                 tf.close()
                 fst_row = len(lines) - 8760
@@ -810,8 +810,8 @@ class PlotWeather():
                 return
         if self.plots['wind']:
             if self.wind_file != '':
-                if os.path.exists(self.wind_files + '/' + self.wind_file):
-                    tf = open(self.wind_files + '/' + self.wind_file, 'r')
+                if os.path.exists(self.wind_files + os.sep + self.wind_file):
+                    tf = open(self.wind_files + os.sep + self.wind_file, 'r')
                     lines = tf.readlines()
                     tf.close()
                     fst_row = len(lines) - 8760
@@ -841,11 +841,11 @@ class PlotWeather():
         if self.plots['rain'] and rain_col < 0:
             if self.rain_files != '':
                 self.rain_file, dist, lat, lon = self.find_closest(latitude, longitude, wind=True)
-                if os.path.exists(self.rain_files + '/' + self.rain_file):
+                if os.path.exists(self.rain_files + os.sep + self.rain_file):
                     if comment != '':
                         comment += '\n'
                     comment += 'Rain: %s\n            at %s, %s (%s Km away)' % (self.rain_file, lat, lon, '{:0,.0f}'.format(dist))
-                    tf = open(self.rain_files + '/' + self.rain_file, 'r')
+                    tf = open(self.rain_files + os.sep + self.rain_file, 'r')
                     lines = tf.readlines()
                     tf.close()
                     fst_row = len(lines) - 8760

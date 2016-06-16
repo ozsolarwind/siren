@@ -34,24 +34,29 @@ from editini import EdtDialog
 from senuser import getUser
 
 
-def commonprefix(args, sep='/'):
+def commonprefix(args):
     arg2 = []
     for arg in args:
         arg2.append(arg)
-        if arg[-1] != sep:
-            arg2[-1] += sep
-    return os.path.commonprefix(arg2).rpartition(sep)[0]
+        if arg[-1] != os.sep:
+            arg2[-1] += os.sep
+    return os.path.commonprefix(arg2).rpartition(os.sep)[0]
 
 
 class TabDialog(QtGui.QDialog):
     def __init__(self, parent=None):
         QtGui.QDialog.__init__(self, parent)
+        self.siren_dir = '.'
         if len(sys.argv) > 1:
             if sys.argv[1][-4:] == '.ini':
                 self.invoke(sys.argv[1])
                 sys.exit()
+            elif os.path.isdir(sys.argv[1]):
+                self.siren_dir = sys.argv[1]
+        if self.siren_dir[-1] != os.sep:
+            self.siren_dir += os.sep
         entries = []
-        fils = sorted(os.listdir('.'))
+        fils = sorted(os.listdir(self.siren_dir))
         self.help = ''
         self.about = ''
         config = ConfigParser.RawConfigParser()
@@ -60,7 +65,7 @@ class TabDialog(QtGui.QDialog):
                 if fil == 'siren_default.ini' or fil == 'siren_windows_default.ini':
                     continue
                 try:
-                    config.read(fil)
+                    config.read(self.siren_dir + fil)
                 except:
                     continue
                 try:
@@ -87,7 +92,7 @@ class TabDialog(QtGui.QDialog):
      #    if len(entries) == 1:
      #        self.invoke(entries[0][0])
      #        sys.exit()
-        self.setWindowTitle('Select SIREN Model')
+        self.setWindowTitle('SIREN - Select SIREN Model')
         buttonLayout = QtGui.QHBoxLayout()
         self.quitButton = QtGui.QPushButton(self.tr('&Quit'))
         buttonLayout.addWidget(self.quitButton)
@@ -178,7 +183,7 @@ class TabDialog(QtGui.QDialog):
     def Clicked(self):
         for i, row in enumerate(self.table.selectionModel().selectedRows()):
             ent = str(self.table.item(row.row(), 0).text())
-            self.invoke(ent)
+            self.invoke(self.siren_dir + ent)
         self.quit()
 
     def invoke(self, ent):
@@ -191,7 +196,7 @@ class TabDialog(QtGui.QDialog):
             pid = subprocess.Popen(['python', 'sirenm.py', ent]).pid
 
     def new(self):
-        do_new = makeNew()
+        do_new = makeNew(self.siren_dir)
         do_new.exec_()
         if do_new.ini_file != '':
             self.invoke(do_new.ini_file)
@@ -240,8 +245,9 @@ class ClickableQLabel(QtGui.QLabel):
 
 class makeNew(QtGui.QDialog):
 
-    def __init__(self, help='help.html'):
+    def __init__(self, siren_dir=None, help='help.html'):
         super(makeNew, self).__init__()
+        self.siren_dir = siren_dir
         self.help = help
         self.ini_file = ''
         self.initUI()
@@ -251,10 +257,14 @@ class makeNew(QtGui.QDialog):
             ini_file = 'siren_windows_default.ini'
         else:
             ini_file = 'siren_default.ini'
-        if not os.path.exists(ini_file):
-            return
+        if os.path.exists(self.siren_dir + ini_file):
+            ini_file = self.siren_dir + ini_file
+        else:
+            if not os.path.exists(ini_file):
+                return
         file_sects = ['[Parents]', '[Files]', '[SAM Modules]']
-        dir_props = ['pow_files', 'sam_sdk', 'solar_files', 'variable_files', 'wind_files']
+        dir_props = ['pow_files', 'sam_sdk', 'scenarios', 'solar_files', 'variable_files', 'wind_files']
+        field_props = ['scenario_prefix']
         inf = open(ini_file, 'r')
         lines = inf.readlines()
         inf.close()
@@ -349,14 +359,19 @@ class makeNew(QtGui.QDialog):
                         self.grid.addWidget(QtGui.QLabel(self.fields[row][0]), row, 0)
                     self.grid.addWidget(QtGui.QLabel(self.fields[row][2]), row, 1)
                     self.fields[row][3] = prop[1]
-                    if prop[0] in dir_props:
-                        self.fields[row][1] = 'dir'
+                    if prop[0] in field_props:
+                        self.fields[row][1] = 'txt'
+                        self.fields[row][4] = QtGui.QLineEdit()
+                        self.fields[row][4].setText(self.fields[row][3])
                     else:
-                        self.fields[row][1] = 'fil'
-                    self.fields[row][4] = ClickableQLabel()
-                    self.fields[row][4].setText(self.fields[row][3])
-                    self.fields[row][4].setFrameStyle(6)
-                    self.connect(self.fields[row][4], QtCore.SIGNAL('clicked()'), self.itemClicked)
+                        if prop[0] in dir_props:
+                            self.fields[row][1] = 'dir'
+                        else:
+                            self.fields[row][1] = 'fil'
+                        self.fields[row][4] = ClickableQLabel()
+                        self.fields[row][4].setText(self.fields[row][3])
+                        self.fields[row][4].setFrameStyle(6)
+                        self.connect(self.fields[row][4], QtCore.SIGNAL('clicked()'), self.itemClicked)
                     self.grid.addWidget(self.fields[row][4], row, 2, 1, 3)
             else:
                 for prop in props:
@@ -436,7 +451,7 @@ class makeNew(QtGui.QDialog):
           str(self.fields[0][4].text()).lower() == 'siren_default' or \
           str(self.fields[0][4].text()).lower() == 'siren_windows_default.ini' or \
           str(self.fields[0][4].text()).lower() == 'siren_windows_default':
-            self.msg.setText('File name not allowed.')
+            self.msg.setText('Proposed file name not allowed.')
         else:
             self.msg.setText('')
 
@@ -457,7 +472,6 @@ class makeNew(QtGui.QDialog):
                              'Choose ' + self.fields[i][2] + ' Folder', curdir,
                              QtGui.QFileDialog.ShowDirsOnly))
                     if newone != '':
-                        newone = newone.replace('\\', '/')
                         if self.fields[i][0] == '[Parents]':
                             self.parents[self.fields[i][2]] = newone
                         else:
@@ -478,7 +492,7 @@ class makeNew(QtGui.QDialog):
                     newone = str(QtGui.QFileDialog.getOpenFileName(self,
                              'Choose ' + self.fields[i][2] + ' File', curfil))
                     if newone != '':
-                        newone = newone.replace('\\', '/')
+                        newone = QtCore.QDir.toNativeSeparators(newone)
                         longest = [0, '']
                         for key, value in iter(self.parents.iteritems()):
                             if len(newone) > len(value) and len(value) > longest[0]:
@@ -497,19 +511,25 @@ class makeNew(QtGui.QDialog):
         self.close()
 
     def saveClicked(self):
-        self.saveIni()
-        self.close()
+        if self.saveIni() >= 0:
+            self.close()
+        else:
+            QtGui.QMessageBox.about(self, 'SIREN - Error', self.msg.text())
 
     def saveEdit(self):
-        self.saveIni()
-        dialr = EdtDialog(self.new_ini)
-        dialr.exec_()
-        self.close()
+        if self.saveIni() >= 0:
+            dialr = EdtDialog(self.new_ini)
+            dialr.exec_()
+            self.close()
+        else:
+            QtGui.QMessageBox.about(self, 'SIREN - Error', self.msg.text())
 
     def saveLaunch(self):
-        self.saveIni()
-        self.ini_file = self.new_ini
-        self.close()
+        if self.saveIni() >= 0:
+            self.ini_file = self.new_ini
+            self.close()
+        else:
+            QtGui.QMessageBox.about(self, 'SIREN - Error', self.msg.text())
 
     def saveIni(self):
         updates = {}
@@ -517,10 +537,11 @@ class makeNew(QtGui.QDialog):
         newfile = str(self.fields[0][4].text())
         if newfile == 'siren_default.ini' or newfile == 'siren_default' or \
           newfile == 'siren_windows_default.ini' or newfile == 'siren_windows_default':
-            self.msg.setText('File name not allowed.')
-            return
+            self.msg.setText('Proposed file name not allowed.')
+            return -1
         if newfile[-4:].lower() != '.ini':
             newfile = newfile + '.ini'
+        newfile = self.siren_dir + newfile
         self.new_ini = newfile
         if os.path.exists(newfile):
             if os.path.exists(newfile + '~'):
@@ -546,29 +567,40 @@ class makeNew(QtGui.QDialog):
                     fld = fld.replace(self.parents['$YEAR$'], '$YEAR$')
             if self.parents['$USER$'] in fld:
                 fld = fld.replace(self.parents['$USER$'], '$USER$')
-#
             if len(fld) > len(adj_dir):
                 if fld[:len(adj_dir)] == adj_dir:
-                    fld = fld[len(adj_dir) + 1:]
+                    if field[1] == 'dir' and fld[len(adj_dir)] == os.sep:
+                        fld = fld[len(adj_dir) + 1:]
+                    elif field[1] == 'fil':
+                        if fld.find(os.sep) >= 0:
+                            that_len = len(commonprefix([adj_dir, fld]))
+                            if that_len > 0:
+                                bits = adj_dir[that_len:].split(os.sep)
+                                pfx = ('..' + os.sep) * (len(bits) - 1)
+                                fld = pfx + fld[that_len + 1:]
             updates[field[0]].append(field[2] + '=' + fld)
         if '[Parents]' in updates.keys():
             my_dir = os.getcwd()
-            my_dir = my_dir.replace('\\', '/')
             my_dir = my_dir.replace(self.parents['$YEAR$'], '$YEAR$')
             my_dir = my_dir.replace(self.parents['$USER$'], '$USER$')
             for p in range(len(updates['[Parents]'])):
                 i = updates['[Parents]'][p].find('=')
                 value = updates['[Parents]'][p][i + 1:]
-                if value.find('/') >= 0:
+                if value.find(os.sep) >= 0:
                     that_len = len(commonprefix([my_dir, value]))
                     if that_len > 0:
-                        bits = my_dir[that_len:].split('/')
-                        pfx = '../' * (len(bits) - 1)
+                        bits = my_dir[that_len:].split(os.sep)
+                        pfx = ('..' + os.sep) * (len(bits) - 1)
                         updates['[Parents]'][p] = updates['[Parents]'][p][:i + 1] + pfx + value[that_len + 1:]
         if sys.platform == 'win32' or sys.platform == 'cygwin':
             ini_file = 'siren_windows_default.ini'
         else:
             ini_file = 'siren_default.ini'
+        if os.path.exists(self.siren_dir + ini_file):
+            ini_file = self.siren_dir + ini_file
+        else:
+            if not os.path.exists(ini_file):
+                return -1
         inf = open(ini_file, 'r')
         lines = inf.readlines()
         inf.close()
@@ -603,6 +635,7 @@ class makeNew(QtGui.QDialog):
         for i in range(len(lines)):
             sou.write(lines[i])
         sou.close()
+        return 0
 
     def spawn(self, who):
         if type(who) is list:

@@ -121,8 +121,8 @@ class retrieveMap():
         st, wt, nt, et = self.tileEdges(top_left[0], top_left[1], zoom)
         sb, wb, nb, eb = self.tileEdges(bottom_right[0], bottom_right[1], zoom)
         if len(sys.argv) > 1:
-            print '(116)', '%d: %d,%d --> %1.3f :: %1.3f, %1.3f :: %1.3f' % (zoom, top_left[0], top_left[1], st, nt, wt, et)
-            print '(117)', '%d: %d,%d --> %1.3f :: %1.3f, %1.3f :: %1.3f' % (zoom, bottom_right[0], bottom_right[1], sb, nb, wb, eb)
+            print '(124)', '%d: %d,%d --> %1.3f :: %1.3f, %1.3f :: %1.3f' % (zoom, top_left[0], top_left[1], st, nt, wt, et)
+            print '(125)', '%d: %d,%d --> %1.3f :: %1.3f, %1.3f :: %1.3f' % (zoom, bottom_right[0], bottom_right[1], sb, nb, wb, eb)
         w = bottom_right[0] - top_left[0] + 1
         h = bottom_right[1] - top_left[1] + 1
         if len(sys.argv) > 1:
@@ -144,7 +144,7 @@ class retrieveMap():
             if output == '?' or output == '':
                 return
         self.sub = ''
-        self.tmp_location = tempfile.gettempdir() + '/'
+        self.tmp_location = tempfile.gettempdir() + os.sep
         i = output.rfind('.')
         if i < 0:
             fname = output + '.png'
@@ -276,7 +276,7 @@ class getMap(QtGui.QWidget):
         self.grid.addWidget(QtGui.QLabel('Image File name:'), 4, 0)
         cur_dir = os.getcwd()
         self.filename = ClickableQLabel()
-        self.filename.setText(cur_dir + '/untitled.png')
+        self.filename.setText(cur_dir + os.sep + 'untitled.png')
         self.filename.setFrameStyle(6)
         self.connect(self.filename, QtCore.SIGNAL('clicked()'), self.fileChanged)
         self.grid.addWidget(self.filename, 4, 1, 1, 5)

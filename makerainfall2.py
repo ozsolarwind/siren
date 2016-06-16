@@ -34,6 +34,7 @@ from credits import fileVersion
 
 
 class makeRainfall():
+
     def unZip(self, inp_file):
         if inp_file[-3] == '.gz':
             if not os.path.exists(inp_file):
@@ -54,8 +55,7 @@ class makeRainfall():
             return out_file
         else:
             if not os.path.exists(inp_file):
-                self.log += time.strftime('%Y-%m-%d %H:%M:%S ', time.localtime()) + \
-                           'Terminating as file not found - %s\n' % inp_file
+                self.log += 'Terminating as file not found - %s\n' % inp_file
                 self.return_code = 12
                 return None
             return inp_file
@@ -92,10 +92,15 @@ class makeRainfall():
         unzip_file = self.unZip(inp_file)
         if self.return_code != 0:
             return
-        if sys.platform == 'win32' or sys.platform == 'cygwin':
-            cdf_file = Dataset(unzip_file, 'r')
-        else:
-            cdf_file = NetCDFFile(unzip_file, 'r')
+        try:
+            if sys.platform == 'win32' or sys.platform == 'cygwin':
+                cdf_file = Dataset(unzip_file, 'r')
+            else:
+                cdf_file = NetCDFFile(unzip_file, 'r')
+        except:
+            self.decodeError(inp_file)
+            return
+
      #   Variable Description                                          Units
      #   -------- ---------------------------------------------------- ----------
      #   prectot  Total surface precipitation flux                     kg (m)-2 (s)-1
@@ -148,14 +153,14 @@ class makeRainfall():
             cdf_file = Dataset(unzip_file, 'r')
         else:
             cdf_file = NetCDFFile(unzip_file, 'r')
-        i = unzip_file.rfind('/')
-        j = unzip_file.rfind('\\')
-        if i < 0:
-            i = j
+        i = unzip_file.rfind(os.sep)
         self.log += '\nFile:\n    '
         self.log += unzip_file[i + 1:] + '\n'
         self.log += ' Format:\n    '
-        self.log += str(cdf_file.Format) + '\n'
+        try:
+            self.log += str(cdf_file.Format) + '\n'
+        except:
+            self.log += '\n'
         self.log += ' Dimensions:\n    '
         vals = ''
         keys = cdf_file.dimensions.keys()
@@ -199,7 +204,7 @@ class makeRainfall():
         self.src_sfx = ''
         self.vars = {'latitude': 'lat', 'longitude': 'lon', 'prectot': 'PRECTOT'}
         if self.src_dir != '':
-            self.src_dir += '/'
+            self.src_dir += os.sep
             fils = os.listdir(self.src_dir)
             for fil in fils:
                 if fil.find('MERRA') >= 0:
@@ -219,7 +224,7 @@ class makeRainfall():
             self.vars['longitude'] = 'longitude'
         self.tgt_dir = tgt_dir
         if self.tgt_dir != '':
-            self.tgt_dir += '/'
+            self.tgt_dir += os.sep
         if info:
             inp_strt = '{0:04d}'.format(self.src_year) + '0101'
              # get variables from "rain" file
@@ -379,7 +384,7 @@ class makeRainfall():
                             day = 1
                             hour = 1
                 tf.close()
-                self.log += '%s created\n' % out_file[out_file.rfind('/') + 1:]
+                self.log += '%s created\n' % out_file[out_file.rfind(os.sep) + 1:]
         else:
             for lat in range(len(self.rain[0])):
                 for lon in range(len(self.rain[0][0])):
@@ -416,7 +421,7 @@ class makeRainfall():
                                 day = 1
                                 hour = 1
                     tf.close()
-                    self.log += '%s created\n' % out_file[out_file.rfind('/') + 1:]
+                    self.log += '%s created\n' % out_file[out_file.rfind(os.sep) + 1:]
                     self.checkZone()
         return  # that's it
 
@@ -653,7 +658,7 @@ class RptDialog(QtGui.QDialog):
         self.widget.show()
 
     def accept(self):
-        i = sys.argv[0].rfind('/')   # fudge to see if program has a directory to use as an alternative
+        i = sys.argv[0].rfind(os.sep)   # fudge to see if program has a directory to use as an alternative
         j = sys.argv[0].rfind('.')
         if i > 0:
             save_filename = sys.argv[0][i + 1:j]
@@ -663,7 +668,7 @@ class RptDialog(QtGui.QDialog):
         for k in range(len(self.parms)):
             if self.parms[k] == '':
                 continue
-            i = self.parms[k].rfind('/')
+            i = self.parms[k].rfind(os.sep)
             if i > 0:
                 if self.parms[k][i + 1:] != last_bit:
                     save_filename += '_' + self.parms[k][i + 1:]

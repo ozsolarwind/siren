@@ -427,11 +427,9 @@ class Grid:
 
     def gridConnect(self, lat, lon, ignore=[]):
         shortest = [99999, -1., -1., -1]
-    #     print '(423)', lat, lon
         for l in range(len(self.lines)):
             if l in ignore:
                 continue
-       #      print '(427)', l, self.lines[l].name, len(self.lines[l].coordinates), self.lines[l].coordinates
             for i in range(len(self.lines[l].coordinates) - 1):
                 if self.dummy_fix:
                     dist = self.dust(lat, lon, self.lines[l].coordinates[i][0], self.lines[l].coordinates[i][1],

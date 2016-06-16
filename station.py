@@ -198,6 +198,8 @@ class Stations:
             self.stations = []
         if not existing:
             return
+        if not os.path.exists(self.sam_file):
+            return
         sam = open(self.sam_file)
         sam_turbines = csv.DictReader(sam)
         for fac_file in self.fac_files:

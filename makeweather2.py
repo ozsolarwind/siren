@@ -342,7 +342,6 @@ class makeWeather():
         return
 
     def __init__(self, src_year, src_zone, src_dir_s, src_dir_w, tgt_dir, fmat, wrap=None, src_lat_lon=None, info=False):
-        self.last_time = datetime.datetime.now()
         self.log = ''
         self.return_code = 0
         self.src_year = int(src_year)
