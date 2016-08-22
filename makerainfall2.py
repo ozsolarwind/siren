@@ -153,7 +153,7 @@ class makeRainfall():
             cdf_file = Dataset(unzip_file, 'r')
         else:
             cdf_file = NetCDFFile(unzip_file, 'r')
-        i = unzip_file.rfind(os.sep)
+        i = unzip_file.rfind('/')
         self.log += '\nFile:\n    '
         self.log += unzip_file[i + 1:] + '\n'
         self.log += ' Format:\n    '
@@ -204,7 +204,7 @@ class makeRainfall():
         self.src_sfx = ''
         self.vars = {'latitude': 'lat', 'longitude': 'lon', 'prectot': 'PRECTOT'}
         if self.src_dir != '':
-            self.src_dir += os.sep
+            self.src_dir += '/'
             fils = os.listdir(self.src_dir)
             for fil in fils:
                 if fil.find('MERRA') >= 0:
@@ -224,7 +224,7 @@ class makeRainfall():
             self.vars['longitude'] = 'longitude'
         self.tgt_dir = tgt_dir
         if self.tgt_dir != '':
-            self.tgt_dir += os.sep
+            self.tgt_dir += '/'
         if info:
             inp_strt = '{0:04d}'.format(self.src_year) + '0101'
              # get variables from "rain" file
@@ -384,7 +384,7 @@ class makeRainfall():
                             day = 1
                             hour = 1
                 tf.close()
-                self.log += '%s created\n' % out_file[out_file.rfind(os.sep) + 1:]
+                self.log += '%s created\n' % out_file[out_file.rfind('/') + 1:]
         else:
             for lat in range(len(self.rain[0])):
                 for lon in range(len(self.rain[0][0])):
@@ -421,7 +421,7 @@ class makeRainfall():
                                 day = 1
                                 hour = 1
                     tf.close()
-                    self.log += '%s created\n' % out_file[out_file.rfind(os.sep) + 1:]
+                    self.log += '%s created\n' % out_file[out_file.rfind('/') + 1:]
                     self.checkZone()
         return  # that's it
 
@@ -658,7 +658,7 @@ class RptDialog(QtGui.QDialog):
         self.widget.show()
 
     def accept(self):
-        i = sys.argv[0].rfind(os.sep)   # fudge to see if program has a directory to use as an alternative
+        i = sys.argv[0].rfind('/')   # fudge to see if program has a directory to use as an alternative
         j = sys.argv[0].rfind('.')
         if i > 0:
             save_filename = sys.argv[0][i + 1:j]
@@ -668,7 +668,7 @@ class RptDialog(QtGui.QDialog):
         for k in range(len(self.parms)):
             if self.parms[k] == '':
                 continue
-            i = self.parms[k].rfind(os.sep)
+            i = self.parms[k].rfind('/')
             if i > 0:
                 if self.parms[k][i + 1:] != last_bit:
                     save_filename += '_' + self.parms[k][i + 1:]

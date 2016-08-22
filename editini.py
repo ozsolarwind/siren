@@ -77,7 +77,7 @@ class EdtDialog(QtGui.QDialog):
         layout.addWidget(self.widget)
         layout.addLayout(buttonLayout)
         self.setLayout(layout)
-        self.setWindowTitle('SIREN - Edit - ' + self.in_file[self.in_file.rfind(os.sep) + 1:])
+        self.setWindowTitle('SIREN - Edit - ' + self.in_file[self.in_file.rfind('/') + 1:])
         size = self.geometry()
         self.setGeometry(1, 1, ln + 10, ln2 + 35)
         size = self.geometry()

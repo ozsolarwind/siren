@@ -635,7 +635,7 @@ class MapView(QtGui.QGraphicsView):
 
     def traceGrid(self, station, coords=None):
         self.clear_Trace()
-        if self.scene().load_centre is None:
+        if self.scene().load_centre is None and coords is None:
             return 0
         self.trace_items = []
         color = QtGui.QColor()
@@ -885,12 +885,12 @@ class MainWindow(QtGui.QMainWindow):
         try:
             self.scenarios = config.get('Files', 'scenarios')
             if scenario_prefix != '' :
-                self.scenarios += os.sep + scenario_prefix
+                self.scenarios += '/' + scenario_prefix
             for key, value in parents:
                 self.scenarios = self.scenarios.replace(key, value)
             self.scenarios = self.scenarios.replace('$USER$', getUser())
             self.scenarios = self.scenarios.replace('$YEAR$', self.base_year)
-            i = self.scenarios.rfind(os.sep)
+            i = self.scenarios.rfind('/')
             self.scenarios_filter = self.scenarios[i + 1:]
             if self.scenarios_filter[-1] != '*':
                 self.scenarios_filter += '*'
@@ -988,15 +988,12 @@ class MainWindow(QtGui.QMainWindow):
         self.setStatusBar(QtGui.QStatusBar())
         self.connect(self.view, SIGNAL('statusmsg'), self.setStatusText)
         self.altered_stations = False
-
         w = QtGui.QWidget()
         lay = QtGui.QVBoxLayout(w)
         lay.addWidget(self.view)
         self.setCentralWidget(w)
-
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.popup)
-
         openFile = QtGui.QAction(QtGui.QIcon('open.png'), 'Open', self)
         openFile.setShortcut('Ctrl+O')
         openFile.setStatusTip('Open new Scenario')
@@ -1512,7 +1509,7 @@ class MainWindow(QtGui.QMainWindow):
                 self.scenarios + prefix, 'Scenarios (' + self.scenarios_filter + ')')
         if fname != '':
             fname = str(fname)
-            i = fname.rfind(os.sep)
+            i = fname.rfind('/')
             save_as = fname[i + 1:]
             if not new:
                 if save_as[:len(prefix)] != prefix:
@@ -1592,7 +1589,7 @@ class MainWindow(QtGui.QMainWindow):
                 self.subMenu.clear()
                 self.subMenu2.clear()
             self.view.scene()._setupScenario(fname)
-            i = fname.rfind(os.sep)
+            i = fname.rfind('/')
             scen_filter = fname[i + 1:]
             comment = 'Added scenario %s' % (scen_filter)
             subFile = QtGui.QAction(QtGui.QIcon('minus.png'), scen_filter, self)
@@ -1608,6 +1605,11 @@ class MainWindow(QtGui.QMainWindow):
             if self.floatstatus:
                 self.floatstatus.emit(SIGNAL('scenarios'), self.view.scene()._scenarios)
             self.altered_stations = True
+            self.view.emit(SIGNAL('statusmsg'), comment)
+        else:
+            i = fname.rfind('/')
+            scen_filter = fname[i + 1:]
+            comment = 'Scenario not found: %s' % (scen_filter)
             self.view.emit(SIGNAL('statusmsg'), comment)
 
     def center(self):
@@ -1825,7 +1827,7 @@ class MainWindow(QtGui.QMainWindow):
                 i = fname.rfind('.')
             outputimg.save(fname, fname[i + 1:])
             try:
-                comment = 'View saved to ' + fname[fname.rfind(os.sep) + 1:]
+                comment = 'View saved to ' + fname[fname.rfind('/') + 1:]
             except:
                 comment = 'View saved to ' + fname
             self.view.emit(SIGNAL('statusmsg'), comment)
@@ -2154,14 +2156,17 @@ class MainWindow(QtGui.QMainWindow):
         else:
             power = PowerModel(self.view.scene()._stations.stations, year=self.sender().text(), status=self.floatstatus)
         generated = power.getValues()
-        for stn in generated:
-            station = self.view.scene()._stations.Get_Station(stn.name)
-            station.generation = stn.generation
-            self.view.scene().addGeneration(station)
-        comment = 'Power plot completed'
-        pct = power.getPct()
-        if pct is not None:
-            comment += ' (generation meets ' + pct[2:]
+        if generated is None:
+            comment = 'Power plot aborted'
+        else:
+            for stn in generated:
+                station = self.view.scene()._stations.Get_Station(stn.name)
+                station.generation = stn.generation
+                self.view.scene().addGeneration(station)
+            comment = 'Power plot completed'
+            pct = power.getPct()
+            if pct is not None:
+                comment += ' (generation meets ' + pct[2:]
         self.view.emit(SIGNAL('statusmsg'), comment)
 
     def get_SAMVer(self):
@@ -2354,12 +2359,13 @@ class MainWindow(QtGui.QMainWindow):
         for li in range(self.view.scene().grid_lines):
             lins.append(menu.addAction(self.view.scene().lines.lines[li].name))
             lins[-1].setIconVisibleInMenu(True)
-        for li in range(self.view.scene().grid_lines, len(self.view.scene().lines.lines)):
-            for j in range(len(self.view.scene().load_centre)):
-                if self.view.scene().lines.lines[li].coordinates[-1] == [self.view.scene().load_centre[j][1],
-                   self.view.scene().load_centre[j][2]]:
-                    lins.append(menu.addAction(self.view.scene().lines.lines[li].name))
-                    lins[-1].setIconVisibleInMenu(True)
+        if self.view.scene().load_centre is not None:
+            for li in range(self.view.scene().grid_lines, len(self.view.scene().lines.lines)):
+                for j in range(len(self.view.scene().load_centre)):
+                    if self.view.scene().lines.lines[li].coordinates[-1] == [self.view.scene().load_centre[j][1],
+                       self.view.scene().load_centre[j][2]]:
+                        lins.append(menu.addAction(self.view.scene().lines.lines[li].name))
+                        lins[-1].setIconVisibleInMenu(True)
         x = self.frameGeometry().left() + 50
         y = self.frameGeometry().y() + 50
         action = menu.exec_(QtCore.QPoint(x, y))

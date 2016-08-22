@@ -133,7 +133,7 @@ class makeFile():
                             vald[-1].append([])
                             for k in range(len(the_cols)):
                                 vald[-1][-1].append(0.)
-                tf = open(self.src_dir + os.sep + fil, 'r')
+                tf = open(self.src_dir + '/' + fil, 'r')
                 lines = tf.readlines()
                 tf.close()
                 fst_row = len(lines) - 8760
@@ -248,7 +248,7 @@ class makeFile():
                     vald.append([])
                     for j in range(365):
                         vald[-1].append(0.)
-            tf = open(self.wind_dir + os.sep + fil, 'r')
+            tf = open(self.wind_dir + '/' + fil, 'r')
             lines = tf.readlines()
             tf.close()
             fst_row = len(lines) - 8760
@@ -290,7 +290,7 @@ class makeFile():
                 hrly_wind_values[key] = valh
             if self.daily:
                 daily_wind_values[key] = vald
-# and possibly rain if we haven't already got it
+# we've got some 50m wind values?
         if len(wind_values) > 0:
             for key in all_values:
                 for mth in range(12):
@@ -332,7 +332,7 @@ class makeFile():
                         vald.append([])
                         for j in range(365):
                             vald[-1].append(0.)
-                tf = open(self.rain_dir + os.sep + fil, 'r')
+                tf = open(self.rain_dir + '/' + fil, 'r')
                 lines = tf.readlines()
                 tf.close()
                 fst_row = len(lines) - 8760
@@ -665,7 +665,7 @@ class makeFile():
                     line += ',' + str(val)
                 tf.write(line + '\n')
             tf.close()
-        self.log += '%s created' % tgt_fil[tgt_fil.rfind(os.sep) + 1:]
+        self.log += '%s created' % tgt_fil[tgt_fil.rfind('/') + 1:]
 
 
 class ClickableQLabel(QtGui.QLabel):
@@ -874,6 +874,12 @@ class getParms(QtGui.QWidget):
                 src_dir = src_dir[:i] + year + src_dir[i + len(self.years[self.yrndx]):]
                 i = src_dir.find(self.years[self.yrndx])
             self.source.setText(src_dir)
+            src_dir = str(self.wsource.text())
+            i = src_dir.find(self.years[self.yrndx])
+            while i >= 0:
+                src_dir = src_dir[:i] + year + src_dir[i + len(self.years[self.yrndx]):]
+                i = src_dir.find(self.years[self.yrndx])
+            self.wsource.setText(src_dir)
             target = str(self.target.text())
             i = target.find(self.years[self.yrndx])
             while i >= 0:

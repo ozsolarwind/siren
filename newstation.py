@@ -225,7 +225,7 @@ class AnObject(QtGui.QDialog):
                 self.edit.append(QtGui.QDoubleSpinBox())  # QtGui.QLineEdit(str(self.capacity)))
                 self.edit[-1].setRange(0, 10000)
                 self.edit[-1].setValue(self.capacity)
-                self.edit[-1].setDecimals(1)
+                self.edit[-1].setDecimals(3)
             elif self.field[i] == 'turbine':
                 if self.techcomb.currentText() != 'Wind' and self.techcomb.currentText() != '':
                     turbcombo.setCurrentIndex(0)

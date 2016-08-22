@@ -61,7 +61,7 @@ class Power_Curve:
         """Initializes the data."""
         self.get_config()
         self.name = name
-        pow_file = self.pow_dir + os.sep + self.name + '.pow'
+        pow_file = self.pow_dir + '/' + self.name + '.pow'
         if os.path.exists(pow_file):
             tf = open(pow_file, 'r')
             lines = tf.readlines()

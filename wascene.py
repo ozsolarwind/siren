@@ -131,12 +131,12 @@ class WAScene(QtGui.QGraphicsScene):
         try:
             self.scenarios = config.get('Files', 'scenarios')
             if scenario_prefix != '' :
-                self.scenarios += os.sep + scenario_prefix
+                self.scenarios += '/' + scenario_prefix
             for key, value in parents:
                 self.scenarios = self.scenarios.replace(key, value)
             self.scenarios = self.scenarios.replace('$USER$', getUser())
             self.scenarios = self.scenarios.replace('$YEAR$', self.base_year)
-            i = self.scenarios.rfind(os.sep)
+            i = self.scenarios.rfind('/')
             self.scenarios = self.scenarios[:i + 1]
         except:
             self.scenarios = ''
@@ -383,6 +383,13 @@ class WAScene(QtGui.QGraphicsScene):
                 self.station_square = True
         except:
             pass
+        self.station_opacity = 1.
+        try:
+            self.station_opacity = float(config.get('View', 'station_opacity'))
+            if self.station_opacity < 0. or self.station_opacity > 1.:
+                self.station_opacity = 1.
+        except:
+            pass
         self.dispatchable = None
         self.line_loss = 0.
        #  self.subs_cost=0.
@@ -574,7 +581,7 @@ class WAScene(QtGui.QGraphicsScene):
             self._setupScenario(self.scenario)
 
     def _setupScenario(self, scenario):
-        i = scenario.rfind(os.sep)
+        i = scenario.rfind('/')
         if i > 0:
             scen_file = scenario
             scen_filter = scenario[i + 1:]
@@ -604,15 +611,15 @@ class WAScene(QtGui.QGraphicsScene):
                     curr_row += 1
                     try:
                         new_st = Station(str(worksheet.cell_value(curr_row, var['Station Name'])),
-                                                 str(worksheet.cell_value(curr_row, var['Technology'])),
-                                                 worksheet.cell_value(curr_row, var['Latitude']),
-                                                 worksheet.cell_value(curr_row, var['Longitude']),
-                                                 worksheet.cell_value(curr_row, var['Maximum Capacity (MW)']),
-                                                 str(worksheet.cell_value(curr_row, var['Turbine'])),
-                                                 worksheet.cell_value(curr_row, var['Rotor Diam']),
-                                                 worksheet.cell_value(curr_row, var['No. turbines']),
-                                                 worksheet.cell_value(curr_row, var['Area']),
-                                                 scen_filter)
+                                         str(worksheet.cell_value(curr_row, var['Technology'])),
+                                         worksheet.cell_value(curr_row, var['Latitude']),
+                                         worksheet.cell_value(curr_row, var['Longitude']),
+                                         worksheet.cell_value(curr_row, var['Maximum Capacity (MW)']),
+                                         str(worksheet.cell_value(curr_row, var['Turbine'])),
+                                         worksheet.cell_value(curr_row, var['Rotor Diam']),
+                                         worksheet.cell_value(curr_row, var['No. turbines']),
+                                         worksheet.cell_value(curr_row, var['Area']),
+                                         scen_filter)
                         name_ok = False
                         new_name = new_st.name
                         ctr = 0
@@ -663,14 +670,17 @@ class WAScene(QtGui.QGraphicsScene):
             else:
                 scene = open(scen_file)
                 line = scene.readline()
-                if len(line) > 13 and line[:13] == 'Description:,':
+                if len(line) > 9 and line[:9] ==  'Comment:,' or len(line) > 13 and line[:13] == 'Description:,':
+                    if line[:9] ==  'Comment:,':
+                        description = line[9:]
+                    else:
                         description = line[13:]
-                        if description[0] == '"':
-                            i = description.rfind('"')
-                            description = description[1:i - 1]
-                        else:
-                            bits = line.split(',')
-                            description = bits[1]
+                    if description[0] == '"':
+                        i = description.rfind('"')
+                        description = description[1:i - 1]
+                    else:
+                        bits = line.split(',')
+                        description = bits[1]
                 else:
                     scene.seek(0)
                 new_stations = csv.DictReader(scene)
@@ -767,6 +777,8 @@ class WAScene(QtGui.QGraphicsScene):
             else:
                 el = QtGui.QGraphicsEllipseItem(p.x() - 1.5, p.y() - 1.5, 3, 3)   # here to adjust station circles when not scaling
         el.setBrush(QtGui.QColor(self.colors[st.technology]))
+        if self.station_opacity < 1.:
+            el.setOpacity(self.station_opacity)
         if self.colors['border'] != '':
             el.setPen(QtGui.QColor(self.colors['border']))
         else:

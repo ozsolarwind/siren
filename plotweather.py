@@ -173,8 +173,8 @@ class PlotWeather():
                 ndx_file = ''
                 if os.path.exists(index_file):
                     ndx_file = index_file
-                elif os.path.exists(folder + os.sep + index_file):
-                    ndx_file = folder + os.sep + index_file
+                elif os.path.exists(folder + '/' + index_file):
+                    ndx_file = folder + '/' + index_file
                 if ndx_file != '':
                     if ndx_file[-4:] == '.xls' or ndx_file[-5:] == '.xlsx':
                         var = {}
@@ -216,21 +216,36 @@ class PlotWeather():
             plt.suptitle(self.hdrs[period] + locn, fontsize=16)
             maxy = 0
             maxw = 0
-            if len(data[0]) > 4:
-                p1 = 3
-                p2 = 4
+            if len(data[0]) > 9:
+                p_y = 3
+                p_x = 4
                 xl = 8
                 yl = [0, 4, 8]
                 yl2 = [3, 7, 11]
+            elif len(data[0]) > 6:
+                p_y = 3
+                p_x = 3
+                xl = 6
+                yl = [0, 3]
+                yl2 = [2, 5]
+            elif len(data[0]) > 4:
+                p_y = 2
+                p_x = 3
+                xl = 3
+                yl = [0, 3]
+                yl2 = [2, 5]
+            elif len(data[0]) > 2:
+                p_y = 2
+                p_x = 2
+                xl = 2
+                yl = [0, 2]
+                yl2 = [1, 3]
             else:
-                p1 = p2 = 2
-                if len(data[0]) == 4:
-                    xl = 2
-                    yl = [0, 2]
-                    yl2 = [1, 3]
-                else:
-                    xl = 0
-                    yl = yl2 = [0, 1]
+                p_y = 1
+                p_x = 2
+                xl = 0
+                yl = [0, 1]
+                yl2 = [0, 1]
             wi = -1
             ra = -1
             te = -1
@@ -249,7 +264,7 @@ class PlotWeather():
                     if i == wi or i == te or i == ra:
                         maxw = max(maxw, max(data[i][p]))
             for p in range(len(data[0])):
-                px = plt.subplot(p1, p2, p + 1)
+                px = plt.subplot(p_y, p_x, p + 1)
                 i = -1
                 if self.two_axes:
                     px2 = px.twinx()
@@ -299,36 +314,40 @@ class PlotWeather():
         else:
             config_file = 'SIREN.ini'
         config.read(config_file)
+        self.maximise = False
         seasons = [[], [], [], []]
         periods = [[], []]
-        self.maximise = False
         try:
             items = config.items('Power')
-            for item, values in items:
-                if item[:6] == 'season':
-                    if item == 'season':
-                        continue
-                    i = int(item[6:]) - 1
-                    seasons[i] = values.split(',')
-                    for j in range(1, len(seasons[i])):
-                        seasons[i][j] = int(seasons[i][j]) - 1
-                if item[:6] == 'period':
-                    if item == 'period':
-                        continue
-                    i = int(item[6:]) - 1
-                    periods[i] = values.split(',')
-                    for j in range(1, len(periods[i])):
-                        periods[i][j] = int(periods[i][j]) - 1
-                if item == 'maximise':
-                    if values.lower() in ['true', 'on', 'yes']:
-                        self.maximise = True
         except:
             seasons[0] = ['Summer', 11, 0, 1]
             seasons[1] = ['Autumn', 2, 3, 4]
             seasons[2] = ['Winter', 5, 6, 7]
             seasons[3] = ['Spring', 8, 9, 10]
-            periods[0] = ['Winter', 5, 6, 7, 8, 9, 10]
-            periods[1] = ['Summer', 11, 12, 1, 2, 3, 4]
+            periods[0] = ['Winter', 4, 5, 6, 7, 8, 9]
+            periods[1] = ['Summer', 10, 11, 0, 1, 2, 3]
+        for item, values in items:
+            if item[:6] == 'season':
+                if item == 'season':
+                    continue
+                i = int(item[6:]) - 1
+                if i >= len(seasons):
+                    seasons.append([])
+                seasons[i] = values.split(',')
+                for j in range(1, len(seasons[i])):
+                    seasons[i][j] = int(seasons[i][j]) - 1
+            if item[:6] == 'period':
+                if item == 'period':
+                    continue
+                i = int(item[6:]) - 1
+                if i >= len(periods):
+                    periods.append([])
+                periods[i] = values.split(',')
+                for j in range(1, len(periods[i])):
+                    periods[i][j] = int(periods[i][j]) - 1
+                if item == 'maximise':
+                    if values.lower() in ['true', 'on', 'yes']:
+                        self.maximise = True
         mth_labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
         ssn_labels = []
         for i in range(len(seasons)):
@@ -374,13 +393,13 @@ class PlotWeather():
                         m24[i][m].append(0.)
             if self.plots['season']:
                 q24.append([])
-                for q in range(4):
+                for q in range(len(seasons)):
                     q24[i].append([])
                     for j in range(24):
                         q24[i][q].append(0.)
             if self.plots['period']:
                 s24.append([])
-                for s in range(2):
+                for s in range(len(periods)):
                     s24[i].append([])
                     for j in range(24):
                         s24[i][s].append(0.)
@@ -388,18 +407,12 @@ class PlotWeather():
                 t12.append([])
                 for m in range(14):
                     t12[i].append(0.)
-        the_qtrs = [the_days[0] + the_days[1] + the_days[11],
-                    the_days[2] + the_days[3] + the_days[4],
-                    the_days[5] + the_days[6] + the_days[7],
-                    the_days[8] + the_days[9] + the_days[10]]
         the_qtrs = []
         for i in range(len(seasons)):
             d = 0
             for j in range(1, len(seasons[i])):
                 d += the_days[seasons[i][j]]
             the_qtrs.append(d)
-        the_ssns = [the_days[4] + the_days[5] + the_days[6] + the_days[7] + the_days[8] + the_days[9],
-                    the_days[10] + the_days[11] + the_days[0] + the_days[1] + the_days[2] + the_days[3]]
         the_ssns = []
         for i in range(len(periods)):
             d = 0
@@ -445,10 +458,10 @@ class PlotWeather():
                     for m in range(12):
                         m24[i][m][k] = m24[i][m][k] / the_days[m]
                 if self.plots['season']:
-                    for q in range(4):
+                    for q in range(len(seasons)):
                         q24[i][q][k] = q24[i][q][k] / the_qtrs[q]
                 if self.plots['period']:
-                    for s in range(2):
+                    for s in range(len(periods)):
                         s24[i][s][k] = s24[i][s][k] / the_ssns[s]
         if self.plots['hour']:
             fig = plt.figure('hour')
@@ -679,10 +692,10 @@ class PlotWeather():
         self.windy = adjust_wind
        # find closest solar file
         self.solar_file, dist, lat, lon = self.find_closest(latitude, longitude)
-        if os.path.exists(self.solar_files + os.sep + self.solar_file):
+        if os.path.exists(self.solar_files + '/' + self.solar_file):
             comment = 'Solar: %s\n            at %s, %s (%s Km away)' % (self.solar_file, lat, lon, '{:0,.0f}'.format(dist))
         self.wind_file, dist, lat, lon = self.find_closest(latitude, longitude, wind=True)
-        if os.path.exists(self.wind_files + os.sep + self.wind_file):
+        if os.path.exists(self.wind_files + '/' + self.wind_file):
             if comment != '':
                 comment += '\n'
             comment += 'Wind: %s\n            at %s, %s (%s Km away)' % (self.wind_file, lat, lon, '{:0,.0f}'.format(dist))
@@ -704,7 +717,7 @@ class PlotWeather():
                 'total': 'Daily average',
                 'month': 'Daily average by month',
                 'season': 'Daily average by season',
-                'period': 'Daily average by Winter-Summer',
+                'period': 'Daily average by period',
                 'block': 'Show plots one at a time',
                 'pdf': 'Probability Density Function'}
         if rain:
@@ -729,8 +742,8 @@ class PlotWeather():
         self.text = ''
         rain_col = -1
         if self.plots['dhi'] or self.plots['dni'] or self.plots['ghi'] or self.plots['temp'] or self.plots['rain']:
-            if os.path.exists(self.solar_files + os.sep + self.solar_file):
-                tf = open(self.solar_files + os.sep + self.solar_file, 'r')
+            if os.path.exists(self.solar_files + '/' + self.solar_file):
+                tf = open(self.solar_files + '/' + self.solar_file, 'r')
                 lines = tf.readlines()
                 tf.close()
                 fst_row = len(lines) - 8760
@@ -810,8 +823,8 @@ class PlotWeather():
                 return
         if self.plots['wind']:
             if self.wind_file != '':
-                if os.path.exists(self.wind_files + os.sep + self.wind_file):
-                    tf = open(self.wind_files + os.sep + self.wind_file, 'r')
+                if os.path.exists(self.wind_files + '/' + self.wind_file):
+                    tf = open(self.wind_files + '/' + self.wind_file, 'r')
                     lines = tf.readlines()
                     tf.close()
                     fst_row = len(lines) - 8760
@@ -841,11 +854,11 @@ class PlotWeather():
         if self.plots['rain'] and rain_col < 0:
             if self.rain_files != '':
                 self.rain_file, dist, lat, lon = self.find_closest(latitude, longitude, wind=True)
-                if os.path.exists(self.rain_files + os.sep + self.rain_file):
+                if os.path.exists(self.rain_files + '/' + self.rain_file):
                     if comment != '':
                         comment += '\n'
                     comment += 'Rain: %s\n            at %s, %s (%s Km away)' % (self.rain_file, lat, lon, '{:0,.0f}'.format(dist))
-                    tf = open(self.rain_files + os.sep + self.rain_file, 'r')
+                    tf = open(self.rain_files + '/' + self.rain_file, 'r')
                     lines = tf.readlines()
                     tf.close()
                     fst_row = len(lines) - 8760

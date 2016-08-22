@@ -145,7 +145,7 @@ class makeFile():
                     os.remove(fac_file + '~')
                 os.rename(fac_file, fac_file + '~')
                 os.rename(fac_file + '.csv', fac_file)
-            self.log = '%s updated' % tgt_fil[tgt_fil.rfind(os.sep) + 1:]
+            self.log = '%s updated' % tgt_fil[tgt_fil.rfind('/') + 1:]
         else:
             self.log = 'No changes to existing file. No update required.'
         if self.excel != '':
@@ -302,7 +302,7 @@ class makeLoadFile():
         for i in range(len(hour[1])):
             tf.write(str(round(hour[1][i], 6)) + '\n')
         tf.close()
-        self.log = '%s created%s' % (tgt_fil[tgt_fil.rfind(os.sep) + 1:], self.log)
+        self.log = '%s created%s' % (tgt_fil[tgt_fil.rfind('/') + 1:], self.log)
         return
 
 

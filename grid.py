@@ -335,6 +335,7 @@ class Grid:
          # Create an iterator
         iterat = root.getiterator()
         placemark_id = ''
+        line_names = []
         for element in iterat:
             elem = element.tag[element.tag.find('}') + 1:]
             if elem == 'Style':
@@ -381,6 +382,12 @@ class Grid:
                                         coords[j][0], coords[j][1])
                     else:
                         grid_len = self.default_length
+                    if line_name in line_names:
+                        i = 2
+                        while line_name + '#' + str(i) in line_names:
+                            i += 1
+                        line_name += '#' + str(i)
+                    line_names.append(line_name)
                     if grid2:
                         self.lines.append(Line(line_name, styl, coords, length=grid_len))
                     else:

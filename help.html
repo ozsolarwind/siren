@@ -1151,11 +1151,11 @@ Specifics on Hydrothermal characteristics (experimental). Properties are:</p>
 </tr>
 <tr class="none">
 <td class="none"><dfn>by_period</dfn></td>
-<td class="none">Display plots of period results. The periods are defined by the <em>period&lt;n&gt;</em> properties. These are typically two six month seasons. As SAM data files cover a calendar year one period may include the first n month(s) and last m month(s) of the year. Each month covers the first to last day of the month</td>
+<td class="none">Display plots of period results. The periods are defined by the <em>period&lt;n&gt;</em> properties. These are typically two six month periods, however, you can define a different number of periods. As SAM data files cover a calendar year one period may include the first n month(s) and last m month(s) of the year. Each month covers the first to last day of the month. </td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>by_season</dfn></td>
-<td class="none">Display plots of seasonal results, that is, a figure for each season. The seasons are defined by the <em>season&lt;n&gt;</em> properties. These are typically the four three month seasons. As SAM data files cover a calendar year the summer or winter figures will include the first n month(s) and last m month(s) of the year</td>
+<td class="none">Display plots of seasonal results, that is, a figure for each season. The seasons are defined by the <em>season&lt;n&gt;</em> properties. These are typically the four three month seasons. You can define a different number of seasons. As SAM data files cover a calendar year the summer or winter figures will include the first n month(s) and last m month(s) of the year</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>by_station</dfn></td>
@@ -1172,7 +1172,8 @@ Specifics on Hydrothermal characteristics (experimental). Properties are:</p>
 <tr class="none">
 <td class="none"><dfn>financials</dfn></td>
 <td class="none">Run SAM financial models on the power results produced</td>
-</tr><tr class="none">
+</tr>
+<tr class="none">
 <td class="none"><dfn>fossil_technologies</dfn></td>
 <td class="none">The list of fossil technologies - <em>fossil_coal fossil_cogen fossil_distillate fossil_gas fossil_mixed</em></td>
 </tr>
@@ -1202,12 +1203,12 @@ Specifics on Hydrothermal characteristics (experimental). Properties are:</p>
 </tr>
 <tr class="none">
 <td class="none"><dfn>other_width</dfn></td>
-<td class="none">Line width for non-technology plot items (Cumulative generation, Load and Shortfall). Default value is 2.0 (twice normal width)
-</td>
+<td class="none">Line width for non-technology plot items (Cumulative generation, Load and Shortfall). Default value is 2.0 (twice normal width)</td>
+</tr>
 <tr class="none">
 <td class="none"><dfn>period</dfn></td>
-<td class="none">Display plots of the average 24 hour period for the periods defined by the <em>period&lt;n&gt;</em> properties.
-</td>
+<td class="none">Display plots of the average 24 hour period for the periods defined by the <em>period&lt;n&gt;</em> properties.</td>
+</tr>
 <tr class="none">
 <td class="none"><dfn>period&lt;n&gt;</dfn></td>
 <td class="none">The months covered by period <em>n</em>. The format is <em>&lt;period_name&gt;,n1,n2,...n6</em> for month n1 through n6. For example, <em>period2=Summer,11,12,1,2,3,4</em> names the second period <em>Summer</em> and covers November to December plus January to April
@@ -1215,16 +1216,26 @@ Specifics on Hydrothermal characteristics (experimental). Properties are:</p>
 </tr>
 <tr class="none">
 <td class="none"><dfn>save_data</dfn></td>
-<td class="none">Save data outputs produced by the model</td>
+<td class="none">Save initial data outputs produced by the model for each stations</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>save_detail</dfn></td>
+<td class="none">Save data outputs produced by the model for each station and other options. The data will be adjusted to reflect load growth as specified by Power Model options and adjusted generation</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>save_tech</dfn></td>
+<td class="none">Save data outputs produced by the model for each technology and other options. The data will be adjusted to reflect load growth as specified by Power Model options and adjusted generation</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>season</dfn></td>
 <td class="none">Display plots of the average 24 hour period for the seasons defined by the <em>season&lt;n&gt;</em> properties
 </td>
+</tr>
 <tr class="none">
 <td class="none"><dfn>season&lt;n&gt;</dfn></td>
 <td class="none">The months covered by season <em>n</em>. The format is <em>&lt;season_name&gt;,n1,n2,...n3</em> for month n1 through n3. For example, <em>season1=Summer,12,1,2</em> names the first season <em>Summer</em> and covers December, January and February
 </td>
+</tr>
 <tr class="none">
 <td class="none"><dfn>shortfall</dfn></td>
 <td class="none">Display shortfall of network load not met by renewable generation</td>
@@ -1258,6 +1269,18 @@ Specifics on Hydrothermal characteristics (experimental). Properties are:</p>
 <td class="none">Display plots of the average 24 hour period for the full year</td>
 </tr>
 </table>
+<div class="experiment">
+<table border="0", class="none">
+<tr class="none">
+<td class="none">&nbsp;</td>
+<td class="none">Optimise (experimental)</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>optimise&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</dfn></td>
+<td class="none">Specifies the optimisation approach. It can be either be based upon the average <em>Daily</em> generation and load for the chosen time period or the <em>Hourly</em> data. The default is Daily</td>
+</tr>
+</table>
+</div>
 </td></tr>
 <tr class="none" id="p_pv"><td><dfn><strong>[PV]</strong></dfn></td>
 <td>Specifics on PV characteristics. Properties are:</p>
@@ -1517,6 +1540,10 @@ Specifics on Hydrothermal characteristics (experimental). Properties are:</p>
 <tr class="none">
 <td class="none"><dfn>station_name</dfn></td>
 <td class="none">Display station names. If False then only the nearest station name will be displayed</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>station_opacity</dfn></td>
+<td class="none">Opacity of Station area. A value between 0 (clear) and 1 (opaque). The default is 1</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>station_shape</dfn></td>
@@ -1862,7 +1889,8 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 </tr>
 </table>
 </td>
-</tr><tr class="none" id="windows">
+</tr>
+<tr class="none" id="windows">
 <td class="none"><dfn><strong>Windows</strong></dfn></td>
 <td class="none">Display additional (floating) windows. These windows can be opened and still allow interaction with the main SIREN window. if <em>restorewindows</em> is set SIREN will remember the placement of windows and restore them as closely as possible to these positions when they are next opened.</p>
 <table border="0", class="none">
@@ -1895,6 +1923,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 </tr>
 </table>
 </td>
+</tr>
 <tr class="none">
 <td class="none"><dfn><strong>Tools</strong></dfn></td>
 <td class="none">Invoke SIREN tools. This will launch the chosen tool as a new task</p>
@@ -2093,8 +2122,12 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <td class="none">Present a brief summary table of Capacity and Output for each selected station (<em>summary</em>) plus other tables dependent on options chosen</td></tr>
 <tr><td class="lr"><dfn>Save Hourly Data Output</dfn></td>
 <td class="none">Save the hourly data for each renewable station. This is the hourly output calculated by the SAM model (<em>save_data</em>)</td></tr>
+<tr><td class="lr"><dfn>Save (adjusted) Hourly Data Output by Station</dfn></td>
+<td class="none">Save adjusted data outputs produced by the model for each station and other options (<em>save_detail</em>)</td></tr>
+<tr><td class="lr"><dfn>Save (adjusted) Hourly Data Output by Technology</dfn></td>
+<td class="none">Save adjusted data outputs produced by the model for each technology and other options (<em>save_tech</em>)</td></tr>
 <tr><td class="lr"><dfn>Save Powerbalance data</dfn></td>
-<td class="none">Save the input data for Powerbalance. Powerbalance uses the hourly shortfalls and overall generation figures in its computations. This option saves this data in a spreadsheet to simplify copying it into a Powerbalance workbook. If you check this option it will check two options that are required for Powerbalance (&lsquo;Generation - show Load&rsquo; and &lsquo;Generation - reduce generation by grid losses&rsquo;). (<em>save_balance</em>)</td></tr>
+<td class="none">Save the input data for Powerbalance. If you check this option it will check two options that are required for Powerbalance (&lsquo;Generation - show Load&rsquo; and &lsquo;Generation - reduce generation by grid losses&rsquo;). (<em>save_balance</em>)</td></tr>
 <tr><td class="lr"><dfn>Run Financial Models</dfn></td>
 <td class="none">Run SAM financial models on the power results for each station and produces a summary table showing additional financial outputs (<em>financials</em>)</td></tr>
 <tr><td class="bottom"><strong>Proceed, Save Options / Do Financials</strong></td>
@@ -2113,7 +2146,9 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 (<a href="http://matplotlib.org/users/navigation_toolbar.html" target="_blank">Interactive navigation</a>) to enable you to navigate and manipulate the plot (but doesn't allow you to change the plot data). It includes options to zoom into an area of the plot and to save the plot image (by default to the <em>scenarios</em> folder).</p>
 <h4>Tables</h4>
 <ul>
-<li><em>Save Hourly Data Output</em> option will save generation in MWh for each chosen station for each hour of the year (8,760 hours). This can be used in detailed analysis or as an option to avoid having to reprocess the station in the future, by updating a Station's </em>Power File</em> field. The default file name can be set using the <em>data_file</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file; otherwise it will in the format of <em>Power_Table_yyyy-mm-dd_hhmm...</em></li>
+<li><em>Save Hourly Data Output</em> option will save generation in MWh for each chosen station for each hour of the year (8,760 hours) as calculated by SAM. This can be used in detailed analysis or as an option to avoid having to reprocess the station in the future, by updating a Station's </em>Power File</em> field. The default file name can be set using the <em>data_file</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file; otherwise it will in the format of <em>Power_Table_yyyy-mm-dd_hhmm...</em></li>
+<li><em>Save (adjusted) Hourly Data Output by Station</em> option will save generation in MWh for each station and other options for each hour of the year (8,760 hours). This is the hourly output calculated by the SAM model mutiplied by any adjustments. If appropriate Power Model options are chosen data for Generation, Excess, Load and Storage will also be saved. The default file name can be set using the <em>data_file</em> property of the [Files] Section of the Preferences file; otherwise it will in the format of <em>Power_Detail_yyyy-mm-dd_hhmm...</em></li>
+<li><em>Save (adjusted) Hourly Data Output by Technology</em> option will save generation in MWh for each technology and other options for each hour of the year (8,760 hours). This is the hourly output calculated by the SAM model mutiplied by any adjustments. If appropriate Power Model options are chosen data for Generation, Excess, Load and Storage will also be saved. The default file name can be set using the <em>data_file</em> property of the [Files] Section of the Preferences file; otherwise it will in the format of <em>Power_Detail_Technology_yyyy-mm-dd_hhmm...</em></li>
 <li><em>Save Powerbalance data</em> option will save save the input data for Powerbalance. Powerbalance uses the hourly shortfalls and overall generation figures in its computations. This option saves this data in a spreadsheet to simplify copying it into a Powerbalance workbook. The cells required for Powerbalance are highlighted in colour. The worksheet contains the generation summary data followed by the shortfall data</li>
 <li><em>Show Summary/Other Tables</em> option will cause various tables to be presented:
 <ul>
@@ -2238,7 +2273,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <strong>Note:</strong> that the multiplied figures are not passed to the Financial model(s).</p>
 <div class="experiment">
 <p><strong>Optimise (experimental)</strong></p>
-<p>SIREN also has an experimental approach to optimise the mix of technologies. If Load data is available the menu presented to adjust generation will have an option to &ldquo;optimise&rdquo; the renewable energy mix. You will be presented with an <em>Optimise for:</em> pulldown list of periods to optimise for. You choose the desired period and then press the <em>Optimise</em> button. This will then do a least squares solution for adjustment multipliers to produce a generation profile that best matches the total load and load profile for that period. The data analysis is performed on the average 24 hour figures for the chosen period. If you don't wish to include a technology (or station(s)) then uncheck the checkbox (to the right of the multiplier) for that technology. The generation produced by that technology (multiplied by it's current multiplier) will be removed from the Load and analysis undertaken on the remaining technologies and load. Any computed negative multiplier will be set to zero, which is likely to result in the computed generation exceeding the load. The analysis is based upon the stations in your scenario and doesn't take into account how well placed they are within the network.
+<p>SIREN also has an experimental approach to optimise the mix of technologies. If Load data is available the menu presented to adjust generation will have an option to &ldquo;optimise&rdquo; the renewable energy mix. You will be presented with an <em>Optimise for:</em> pulldown list of periods to optimise for. You choose the desired period and then press the <em>Optimise</em> button. This will then do a least squares solution for adjustment multipliers to produce a generation profile that best matches the total load and load profile for that period. The data analysis is performed on either the average 24 hour or detailed hourly figures for the chosen period (<em>optimise</em> property of <em>[Power]</em> Section). If you don't wish to include a technology (or station(s)) then uncheck the checkbox (to the right of the multiplier) for that technology. The generation produced by that technology (multiplied by it's current multiplier) will be removed from the Load and analysis undertaken on the remaining technologies and load. Any computed negative multiplier will be set to zero, which is likely to result in the computed generation exceeding the load. The <em>Check / Uncheck all zeroes</em> check box enables you to include or exclude all zeroed stations from any further optimisation. The analysis is based upon the stations in your scenario and doesn't take into account how well placed they are within the network.
 </div>
 <p><a href="#help">Back to top</a></p>
 <h2 id="feedback">Feedback</h2>
@@ -2362,28 +2397,38 @@ Additional rows specify power output at speeds increasing by 1 m/s</td>
 <p><a href="#help">Back to top</a></p>
 <h2 id="notes">Supporting Notes</h2>
 <h3 id="map">Obtaining a Suitable Map Image</h3>
-<p>Among other publicly available resources, MapQuest provides a set of open aerial map tiles which can be stitched together into a single image. Map data &copy; OpenStreetMap contributors CC-BY-SA <a href="http://www.openstreetmap.org/copyright" target="_blank"> http://www.openstreetmap.org/copyright</a>.</p>
+<p>Among other publicly available resources, OpenStreetMap provides a set of open map tiles (&ldquo;Slippy Map&rdquo; tiles. Refer <a href="http://wiki.openstreetmap.org/wiki/Slippy_Map" target="_blank">http://wiki.openstreetmap.org/wiki/Slippy_Map</a>) which can be stitched together into a single image. These produce a traditional map type.  A satellite map can be obtained from MapQuest (<a href="https://www.mapquestapi.com/staticmap/" target="_blank">https://www.mapquestapi.com/staticmap/</a> or you can save an image from another source. Map data copyright (&copy;) OpenStreetMap contributors CC-BY-SA <a href="http://www.openstreetmap.org/copyright" target="_blank"> http://www.openstreetmap.org/copyright</a>.</p>
 <h4>getmap</h4>
-<p><i>getmap.py</i> is a Python program that can be used to create a map image for any area of the globe. Using this program you specify the bounding coordinates for the chosen area, a zoom level and a name for the file to create a suitable map image. You can invoke the program either by choosing <em>getmap</em> from the SIREN Tools menu or in Windows by running <em>getmap.exe</em> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to allow you to define the map/image desired. The window fields are:</p>
+<p><i>getmap.py</i> is a Python program that can be used to create a map image for any area of the globe. Using this program you can obtain a map from one of the two sources above. You specify:
+<ul>
+<li>for both, the bounding coordinates for the chosen area, and a name for the file to create a suitable map image</li>
+<li>for OpenStreetMap, a zoom level and a URL template (Internet address) for the map tiles. The default value ('http://[abc].tile.openstreetmap.org/zoom/x/y.png') represents the normal OpenStreetMap tiles</li>
+<li>for MapQuest, the width and height for the image file you wish to create</li>
+</ul>
+<p>You can invoke the program either by choosing <em>getmap</em> from the SIREN Tools menu or in Windows by running <em>getmap.exe</em> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to allow you to define the map/image desired. The window fields are:</p>
 <ul>
 <li><em>Area of interest</em>. You specify the boundaries for the area of the world you want a map generated for. You can either use the arrows to increase or decrease each coordinate by 5 degrees or type in a value. North and South can range from -85 to +85 degrees and East and West from -180 to +180</li>
-<li><em>Map Scale (Zoom)</em>. The scale of the map can be from 0 - 1:500 million - to 11 - 1:250,000. These are the scale of maps available from MapQuest. You can either use the arrows to increase or decrease the level or type in a value. The program will show an approximate scale for the level chosen</li>
+<li><em>Map Scale (Zoom)</em>. The scale of the map can be from 0 - 1:500 million - to 11 - 1:250,000 (OpenStreetMap has zoom levels to 19, 1:1,000). You can either use the arrows to increase or decrease the level or type in a value. The program will show an approximate scale for the level chosen</li>
+<li><em>URL template</em>. The URL template for the location of the map tiles. The default value, <em>http://[abc].tile.openstreetmap.org/zoom/x/y.png</em>, is for OSM 'standard' style maps. You can override this value to specify a different source (for example, <em>http://tile.stamen.com/terrain-background/zoom/x/y.png</em> for Migurski's Terrain; US-only)</li>
+<li><em>Image Width</em>. The width of the image to be created (for MapQuest)</li>
+<li><em>Image Height</em>. The height of the image to be created (for MapQuest)</li>
 <li><em>Image File name</em>. Use this to specify the name and location for the map file. If you click on the field it will allow you to specify an alternative name and location for the file (you can't type into the field itself). If you specify a filetype it must be a suitable image format. The default format is <em>.png</em></li>
-<li><em>Properties</em>. This is a read only field that is filled in when a map is created. These properties should be copied into the <a href="#p_map">[Map]</a> Section of the Preferences file</li>
+<li><em>Properties</em>. This is a read only field that is filled in when a map is created. These properties should be copied into the <a href="#p_map">[Map]</a> Section of the Preferences file. For OpenStreetMap images the <strong>coordinates</strong> are correct while they <strong>are likely to be incorrect for MapQuest - this is a work-in-progress.</strong></li>
 </ul>
 <p>There are four buttons:</p>
 <ul>
 <li><em>Quit</em> will exit the program</li>
 <li><em>Query Map</em> will calculate the size of the map and indicate the boundaries for the map</li>
-<li><em>Get Map</em> will produce the map. It downloads map tiles from MapQuest and stitches them into a single image file at the location specified. It will update the Properties field with the valuables to be added into the Preferences file. If you are downloading a map with many tile this may take some time so <strong>please be patient</strong></li>
+<li><em>Get Map</em> will produce the map. It downloads map tiles from OpenStreetMap and stitches them into a single image file at the location specified. It will update the Properties field with the valuables to be added into the Preferences file. If you are downloading a map with many tiles this may take some time so <strong>please be patient</strong></li>
+<li><em>MapQuest</em> will produce a map from MapQuest. It issues a request to MapQuest for a static map with the coordinates and image properties you specify. The coordinates for the image (map) should contain your specified area but the exact bounding coordinates are likely to be different - this is a work-in-progress</li>
 <li><em>Help</em> Display this help</li>
 </ul>
 <p>After producing the map you should copy the contents of the <em>Properties</em> field into the <a href="#p_map">[Map]</a> Section of the Preferences file.</p>
 <p>You can also run the program on the command line. In this case the parameters are passed to the program as follows:</p>
 <ul class="none">
-<li><em>getmap.exe</em> &lt;north_latitude west_longitude south_latitude east_longitude zoom output_file_name&gt;</li>
+<li><em>getmap.exe</em> &lt;north_latitude west_longitude south_latitude east_longitude zoom output_file_name zoom=zoom width=width height=height url=map_url&gt;</li>
 </ul>
-<p>The parameters are positional.</p>
+<p>The first six parameters are positional.</p>
 <p>An output_file_name of <em>?</em> will calculate the size of the map and indicate the boundaries for the map</p>
 <h4>Map Preferences</h4>
 <p>Many options can be specified by a preferences file. The following properties in the <strong>[Map]</strong> Section are created by <i>getmap</i>.</p>

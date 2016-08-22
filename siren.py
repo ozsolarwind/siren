@@ -38,9 +38,9 @@ def commonprefix(args):
     arg2 = []
     for arg in args:
         arg2.append(arg)
-        if arg[-1] != os.sep:
-            arg2[-1] += os.sep
-    return os.path.commonprefix(arg2).rpartition(os.sep)[0]
+        if arg[-1] != '/':
+            arg2[-1] += '/'
+    return os.path.commonprefix(arg2).rpartition('/')[0]
 
 
 class TabDialog(QtGui.QDialog):
@@ -53,8 +53,8 @@ class TabDialog(QtGui.QDialog):
                 sys.exit()
             elif os.path.isdir(sys.argv[1]):
                 self.siren_dir = sys.argv[1]
-        if self.siren_dir[-1] != os.sep:
-            self.siren_dir += os.sep
+        if self.siren_dir[-1] != '/':
+            self.siren_dir += '/'
         entries = []
         fils = sorted(os.listdir(self.siren_dir))
         self.help = ''
@@ -569,14 +569,14 @@ class makeNew(QtGui.QDialog):
                 fld = fld.replace(self.parents['$USER$'], '$USER$')
             if len(fld) > len(adj_dir):
                 if fld[:len(adj_dir)] == adj_dir:
-                    if field[1] == 'dir' and fld[len(adj_dir)] == os.sep:
+                    if field[1] == 'dir' and fld[len(adj_dir)] == '/':
                         fld = fld[len(adj_dir) + 1:]
                     elif field[1] == 'fil':
-                        if fld.find(os.sep) >= 0:
+                        if fld.find('/') >= 0:
                             that_len = len(commonprefix([adj_dir, fld]))
                             if that_len > 0:
-                                bits = adj_dir[that_len:].split(os.sep)
-                                pfx = ('..' + os.sep) * (len(bits) - 1)
+                                bits = adj_dir[that_len:].split('/')
+                                pfx = ('..' + '/') * (len(bits) - 1)
                                 fld = pfx + fld[that_len + 1:]
             updates[field[0]].append(field[2] + '=' + fld)
         if '[Parents]' in updates.keys():
@@ -586,11 +586,11 @@ class makeNew(QtGui.QDialog):
             for p in range(len(updates['[Parents]'])):
                 i = updates['[Parents]'][p].find('=')
                 value = updates['[Parents]'][p][i + 1:]
-                if value.find(os.sep) >= 0:
+                if value.find('/') >= 0:
                     that_len = len(commonprefix([my_dir, value]))
                     if that_len > 0:
-                        bits = my_dir[that_len:].split(os.sep)
-                        pfx = ('..' + os.sep) * (len(bits) - 1)
+                        bits = my_dir[that_len:].split('/')
+                        pfx = ('..' + '/') * (len(bits) - 1)
                         updates['[Parents]'][p] = updates['[Parents]'][p][:i + 1] + pfx + value[that_len + 1:]
         if sys.platform == 'win32' or sys.platform == 'cygwin':
             ini_file = 'siren_windows_default.ini'

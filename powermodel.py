@@ -652,6 +652,49 @@ class whatFinancials(QtGui.QDialog):
 class Adjustments(QtGui.QDialog):
     def __init__(self, keys, load_key=None, load=None, data=None, base_year=None):
         super(Adjustments, self).__init__()
+        config = ConfigParser.RawConfigParser()
+        if len(sys.argv) > 1:
+            config_file = sys.argv[1]
+        else:
+            config_file = 'SIREN.ini'
+        config.read(config_file)
+        self.seasons = [[], [], [], []]
+        self.periods = [[], []]
+        try:
+            items = config.items('Power')
+        except:
+            self.seasons[0] = ['Summer', 11, 0, 1]
+            self.seasons[1] = ['Autumn', 2, 3, 4]
+            self.seasons[2] = ['Winter', 5, 6, 7]
+            self.seasons[3] = ['Spring', 8, 9, 10]
+            self.periods[0] = ['Winter', 4, 5, 6, 7, 8, 9]
+            self.periods[1] = ['Summer', 10, 11, 0, 1, 2, 3]
+        self.daily = True
+        try:
+            self.daily = config.get('Power', 'optimise')
+            if self.daily[0].lower() == 'h': # hourly
+                self.daily = False
+        except:
+            pass
+        for item, values in items:
+            if item[:6] == 'season':
+                if item == 'season':
+                    continue
+                i = int(item[6:]) - 1
+                if i >= len(self.seasons):
+                    self.seasons.append([])
+                self.seasons[i] = values.split(',')
+                for j in range(1, len(self.seasons[i])):
+                    self.seasons[i][j] = int(self.seasons[i][j]) - 1
+            if item[:6] == 'period':
+                if item == 'period':
+                    continue
+                i = int(item[6:]) - 1
+                if i >= len(self.periods):
+                    self.periods.append([])
+                self.periods[i] = values.split(',')
+                for j in range(1, len(self.periods[i])):
+                    self.periods[i][j] = int(self.periods[i][j]) - 1
         self.adjusts = {}
         self.checkbox = {}
         self.results = None
@@ -659,6 +702,18 @@ class Adjustments(QtGui.QDialog):
         ctr = 0
         self.skeys = []
         self.lkey = load_key
+        if len(keys) > 10:
+            octr = 0
+            ctr += 2
+        else:
+            octr = -1
+        if load is not None:
+            self.grid.addWidget(QtGui.QLabel('Check / Uncheck all zeroes'), ctr, 0)
+            self.zerobox = QtGui.QCheckBox('', self)
+            self.zerobox.setCheckState(Qt.Unchecked)
+            self.zerobox.stateChanged.connect(self.zeroCheck)
+            self.grid.addWidget(self.zerobox, ctr, 2)
+        ctr += 1
         for key in sorted(keys):
             if key == 'Generation':
                 continue
@@ -681,6 +736,8 @@ class Adjustments(QtGui.QDialog):
                 self.checkbox[key].setCheckState(Qt.Checked)
                 self.grid.addWidget(self.checkbox[key], ctr, 2)
             ctr += 1
+        if octr >= 0:
+            ctr = 0
         if load is not None:
             for key in data.keys():
                 if key[:4] == 'Load':
@@ -695,6 +752,13 @@ class Adjustments(QtGui.QDialog):
             self.periodCombo.addItem(base_year)
             for i in range(1, 13):
                 self.periodCombo.addItem(base_year + '-' + '{0:02d}'.format(i))
+            self.l_m = self.periodCombo.count()
+            for i in range(len(self.seasons)):
+                self.periodCombo.addItem(base_year + '-' + self.seasons[i][0])
+            self.l_s = self.periodCombo.count()
+            for i in range(len(self.periods)):
+                self.periodCombo.addItem(base_year + '-' + self.periods[i][0])
+            self.l_p = self.periodCombo.count()
             self.grid.addWidget(self.periodCombo, ctr, 1)
             self.optmsg = QtGui.QLabel('')
             self.grid.addWidget(self.optmsg, ctr, 2)
@@ -727,69 +791,114 @@ class Adjustments(QtGui.QDialog):
     def quitClicked(self):
         self.close()
 
+    def zeroCheck(self):
+        for key in self.skeys:
+            if self.adjusts[key].value() == 0:
+                self.checkbox[key].setCheckState(self.zerobox.checkState())
+
     def optimiseClicked(self):
         try:
             if self.periodCombo.currentIndex() == 0 or self.lkey is None:
                 return
         except:
             return
-        strt = 0
-        stop = 365
-        daily = True
-        if self.periodCombo.currentIndex() > 1:
-            daily = True
-            for i in range(0, self.periodCombo.currentIndex() - 2):
-                strt += the_days[i]
-            stop = strt + the_days[self.periodCombo.currentIndex() - 2]
-        strt = strt * 24
-        stop = stop * 24
+        strt = [0]
+        stop = [365]
+        l = self.periodCombo.currentIndex()
+        if l == 1:
+            pass
+        elif l < self.l_m:
+            for i in range(l - 2):
+                strt[0] += the_days[i]
+            stop[0] = strt[0] + the_days[l - 2]
+        elif l < self.l_s:
+            i = l - self.l_m
+            for j in range(len(self.seasons[i]) - 2):
+                strt.append(0)
+                stop.append(365)
+            for j in range(1, len(self.seasons[i])):
+                for k in range(self.seasons[i][j]):
+                    strt[j - 1] += the_days[k]
+                stop[j - 1] = strt[j - 1] + the_days[self.seasons[i][j]]
+        else:
+            i = l - self.l_s
+            for j in range(len(self.periods[i]) - 2):
+                strt.append(0)
+                stop.append(365)
+            for j in range(1, len(self.periods[i])):
+                for k in range(self.periods[i][j]):
+                    strt[j - 1] += the_days[k]
+                stop[j - 1] = strt[j - 1] + the_days[self.periods[i][j]]
         load = []
-        if daily:
+        gen = []
+        if self.daily:
             for i in range(24):
                 load.append(0.)
-            h = 0
-            for i in range(strt, stop):
-                load[h] += self.load[i]
-                if h == 23:
-                    h = 0
-                else:
-                    h += 1
-        else:
-            for i in range(strt, stop):
-                load.append(self.load[i])
-        gen = []
-        for i in range(24):
-            gen.append([])
+            for i in range(24):
+                gen.append([])
         okeys = []
         for key in self.skeys:
             if self.checkbox[key].isChecked():
                 okeys.append(key)
-                for i in range(len(gen)):
-                    gen[i].append(0.)
-                if daily:
-                    h = 0
-                    for i in range(strt, stop):
-                        gen[h][-1] += self.data[key][i]
-                        if h == 23:
-                            h = 0
-                        else:
-                            h += 1
+                if self.daily:
+                    for i in range(len(gen)):
+                        gen[i].append(0.)
                 else:
-                    for i in range(strt, stop):
-                        gen[-1].append(self.data[key][i])
+                    gen.append([])
+        for m in range(len(strt)):
+            strt[m] = strt[m] * 24
+            stop[m] = stop[m] * 24
+            if self.daily:
+                h = 0
+                for i in range(strt[m], stop[m]):
+                    load[h] += self.load[i]
+                    if h == 23:
+                        h = 0
+                    else:
+                        h += 1
             else:
-                if daily:
-                    h = 0
-                    for i in range(strt, stop):
-                        load[h] -= self.data[key][i] * self.adjusts[key].value()
-                        if h == 23:
-                            h = 0
-                        else:
-                            h += 1
+                for i in range(strt[m], stop[m]):
+                    load.append(self.load[i])
+            for key in self.skeys:
+                if self.checkbox[key].isChecked():
+                    n = okeys.index(key)
+                    if self.daily:
+                        h = 0
+                        for i in range(strt[m], stop[m]):
+                            gen[h][n] += self.data[key][i]
+                            if h == 23:
+                                h = 0
+                            else:
+                                h += 1
+                    else:
+                        for i in range(strt[m], stop[m]):
+                            gen[n].append(self.data[key][i])
                 else:
-                    for i in range(strt, stop):
-                        load[i] -= self.data[key][i] * self.adjusts[key].value()
+                   # continue # if you want to exclude non-included stations contribution to load uncomment this continue
+                    if self.daily:
+                        h = 0
+                        for i in range(strt[m], stop[m]):
+                            load[h] -= self.data[key][i] * self.adjusts[key].value()
+                            if h == 23:
+                                h = 0
+                            else:
+                                h += 1
+                    else:
+                        for i in range(strt[m], stop[m]):
+                            load[i] -= self.data[key][i] * self.adjusts[key].value()
         B = array(load)
+        if self.daily:
+            pass
+        else:
+            gen2 = []
+            for i in range(len(gen[0])):
+                gen2.append([])
+                for j in range(len(gen)):
+                    gen2[-1].append(0.)
+            for i in range(len(gen[0])):
+                for j in range(len(gen)):
+                    gen2[i][j] = gen[j][i]
+            gen = gen2
         A = array(gen)
         res = linalg.lstsq(A, B)  # least squares solution of the generation vs load
         x = res[0]
@@ -811,6 +920,7 @@ class Adjustments(QtGui.QDialog):
                     cgen[i] += gen[i][j] * x[j]
             corr = corrcoef(load, cgen)
             self.optmsg.setText('Corr: %.2f' % corr[0][1])
+        self.zeroCheck()
 
     def showClicked(self):
         self.results = {}
@@ -875,7 +985,7 @@ class SuperPower():
                 if os.path.exists(dft_file):
                     pass
                 else:
-                    dft_file = folder + os.sep + index_file
+                    dft_file = folder + '/' + index_file
                 if os.path.exists(dft_file):
                     if do_excel:
                         self.default_files[technology] = xlrd.open_workbook(dft_file)
@@ -932,7 +1042,7 @@ class SuperPower():
         else:
             do_excel = False
         if self.default_files[technology] is None:
-            dft_file = self.variable_files + os.sep + self.defaults[technology]
+            dft_file = self.variable_files + '/' + self.defaults[technology]
             if os.path.exists(dft_file):
                 if do_excel:
                     self.default_files[technology] = xlrd.open_workbook(dft_file)
@@ -1160,7 +1270,7 @@ class SuperPower():
                 self.scenarios = self.scenarios.replace(key, value)
             self.scenarios = self.scenarios.replace('$USER$', getUser())
             self.scenarios = self.scenarios.replace('$YEAR$', self.base_year)
-            i = self.scenarios.rfind(os.sep)
+            i = self.scenarios.rfind('/')
             self.scenarios = self.scenarios[:i + 1]
         except:
             self.scenarios = ''
@@ -1198,13 +1308,16 @@ class SuperPower():
         self.x = []
         self.stored = []
         self.ly = {}
-        if self.plots['save_data'] or self.plots['financials']:
+        if self.plots['save_data'] or self.plots['financials'] or self.plots['save_detail']:
             self.stn_outs = []
             self.stn_tech = []
             self.stn_size = []
             self.stn_pows = []
             self.stn_grid = []
             self.stn_path = []
+        elif self.plots['save_tech']:
+            self.stn_outs = []
+            self.stn_tech = []
         len_x = 8760
         for i in range(len_x):
             self.x.append(i)
@@ -1255,7 +1368,7 @@ class SuperPower():
                     key = 'Existing Rooftop PV'
                 else:
                     key = stn.technology
-            if self.plots['save_data'] or self.plots['financials']:
+            if self.plots['save_data'] or self.plots['financials'] or self.plots['save_detail']:
                 self.stn_outs.append(stn.name)
                 self.stn_tech.append(stn.technology)
                 self.stn_size.append(stn.capacity)
@@ -1268,6 +1381,9 @@ class SuperPower():
                     self.stn_path.append(stn.grid_path_len)
                 else:
                     self.stn_path.append(0.)
+            elif self.plots['save_tech']:
+                self.stn_outs.append(stn.name)
+                self.stn_tech.append(stn.technology)
             power = self.getStationPower(stn)
             total_power = 0.
             total_energy = 0.
@@ -1292,7 +1408,7 @@ class SuperPower():
                     else:
                         self.ly[key][i] += power[i] / 1000.
                     total_power += power[i] / 1000.
-                    if self.plots['save_data'] or self.plots['financials']:
+                    if self.plots['save_data'] or self.plots['financials'] or self.plots['save_detail']:
                         self.stn_pows[-1].append(power[i] / 1000.)
             if total_energy > 0:
                 pt = PowerSummary(stn.name, stn.technology, total_power, stn.capacity, total_energy)
@@ -1401,7 +1517,7 @@ class SuperPower():
         self.data = ssc.Data()
         if station.technology == 'Wind':
             closest = self.find_closest(station.lat, station.lon, wind=True)
-            self.data.set_string('wind_resource_filename', self.wind_files + os.sep + closest)
+            self.data.set_string('wind_resource_filename', self.wind_files + '/' + closest)
             turbine = Turbine(station.turbine)
             no_turbines = int(station.no_turbines)
             self.data.set_number('system_capacity', no_turbines * turbine.capacity * 1000)
@@ -1448,7 +1564,7 @@ class SuperPower():
         elif station.technology == 'Solar Thermal':
             closest = self.find_closest(station.lat, station.lon)
             base_capacity = 100
-            self.data.set_string('solar_resource_file', self.solar_files + os.sep + closest)
+            self.data.set_string('solar_resource_file', self.solar_files + '/' + closest)
             self.data.set_number('system_capacity', base_capacity * 1000)
             self.data.set_number('P_ref', base_capacity / self.gross_net)
             if station.storage_hours is None:
@@ -1500,7 +1616,7 @@ class SuperPower():
                 return None
         elif 'PV' in station.technology:
             closest = self.find_closest(station.lat, station.lon)
-            self.data.set_string('solar_resource_file', self.solar_files + os.sep + closest)
+            self.data.set_string('solar_resource_file', self.solar_files + '/' + closest)
             dc_ac_ratio = self.dc_ac_ratio
             if station.technology[:5] == 'Fixed':
                 dc_ac_ratio = self.dc_ac_ratio_f
@@ -1553,7 +1669,7 @@ class SuperPower():
                 return None
         elif station.technology == 'Biomass':
             closest = self.find_closest(station.lat, station.lon)
-            self.data.set_string('file_name', self.solar_files + os.sep + closest)
+            self.data.set_string('file_name', self.solar_files + '/' + closest)
             self.data.set_number('system_capacity', station.capacity * 1000)
             self.data.set_number('biopwr.plant.nameplate', station.capacity * 1000)
             feedstock = station.capacity * 1000 * self.biomass_multiplier
@@ -1584,7 +1700,7 @@ class SuperPower():
                 return None
         elif station.technology == 'Geothermal':
             closest = self.find_closest(station.lat, station.lon)
-            self.data.set_string('file_name', self.solar_files + os.sep + closest)
+            self.data.set_string('file_name', self.solar_files + '/' + closest)
             self.data.set_number('nameplate', station.capacity * 1000)
             self.data.set_string('hybrid_dispatch_schedule', '1' * 24 * 12)
             self.do_defaults(station)
@@ -1618,7 +1734,7 @@ class SuperPower():
             return farmpwr
         elif station.technology == 'Wave':   # fudge Wave using 10m wind speed
             closest = self.find_closest(station.lat, station.lon)
-            tf = open(self.solar_files + os.sep + closest, 'r')
+            tf = open(self.solar_files + '/' + closest, 'r')
             lines = tf.readlines()
             tf.close()
             fst_row = len(lines) - 8760
@@ -1654,7 +1770,7 @@ class SuperPower():
                 for key, value in props:
                     propty[key] = value
                 closest = self.find_closest(station.lat, station.lon)
-                tf = open(self.solar_files + os.sep + closest, 'r')
+                tf = open(self.solar_files + '/' + closest, 'r')
                 lines = tf.readlines()
                 tf.close()
                 fst_row = len(lines) - 8760
@@ -1690,7 +1806,7 @@ class SuperPower():
                 propty['formula'] = formula
                 if formula.find('wind50') >= 0:
                     closest = self.find_closest(station.lat, station.lon, wind=True)
-                    tf = open(self.wind_files + os.sep + closest, 'r')
+                    tf = open(self.wind_files + '/' + closest, 'r')
                     wlines = tf.readlines()
                     tf.close()
                     if closest[-4:] == '.srw':
@@ -1756,6 +1872,9 @@ class SuperPower():
 
     def getStnOuts(self):
         return self.stn_outs, self.stn_tech, self.stn_size, self.stn_pows, self.stn_grid, self.stn_path
+
+    def getStnTech(self):
+        return self.stn_outs, self.stn_tech
 
 
 class FinancialSummary:
@@ -1979,9 +2098,9 @@ class FinancialModel():
                 variable_files = variable_files.replace(key, value)
             variable_files = variable_files.replace('$USER$', getUser())
             annual_file = config.get('SAM Modules', 'annualoutput_variables')
-            annual_file = variable_files + os.sep + annual_file
+            annual_file = variable_files + '/' + annual_file
             ippppa_file = config.get('SAM Modules', 'ippppa_variables')
-            ippppa_file = variable_files + os.sep + ippppa_file
+            ippppa_file = variable_files + '/' + ippppa_file
         except:
             annual_file = 'annualoutput_variables.xls'
             ippppa = 'ippppa_variables.xls'
@@ -2129,7 +2248,7 @@ class ProgressModel(QtGui.QDialog):
             if self.model.plots['by_station']:
                 if stn.name not in self.model.selected:
                     continue
-            if self.model.plots['save_data'] or self.model.plots['financials']:
+            if self.model.plots['save_data'] or self.model.plots['financials'] or self.plots['save_detail']:
                 self.model.stn_outs.append(stn.name)
                 self.model.stn_tech.append(stn.technology)
                 self.model.stn_size.append(stn.capacity)
@@ -2142,6 +2261,9 @@ class ProgressModel(QtGui.QDialog):
                     self.model.stn_path.append(stn.grid_path_len)
                 else:
                     self.model.stn_path.append(0.)
+            elif self.model.plots['save_tech']:
+                self.model.stn_outs.append(stn.name)
+                self.model.stn_tech.append(stn.technology)
             if stn.technology == 'Rooftop PV' and stn.scenario == 'Existing' \
               and not self.model.plots['gross_load']:
                 continue
@@ -2179,7 +2301,7 @@ class ProgressModel(QtGui.QDialog):
                     else:
                         self.model.ly[key][i] += power[i] / 1000.
                     total_power += power[i] / 1000.
-                    if self.model.plots['save_data'] or self.model.plots['financials']:
+                    if self.model.plots['save_data'] or self.model.plots['financials'] or self.plots['save_detail']:
                         self.model.stn_pows[-1].append(power[i] / 1000.)
             if total_energy > 0:
                 pt = PowerSummary(stn.name, stn.technology, total_power, stn.capacity,
@@ -2212,6 +2334,8 @@ class ProgressModel(QtGui.QDialog):
     def getStnOuts(self):
         return self.model.getStnOuts()
 
+    def getStnTech(self):
+        return self.model.getStnTech()
 
 class PowerModel():
     def showGraphs(self, ydata, x):
@@ -2367,19 +2491,31 @@ class PowerModel():
             plt.suptitle(self.hdrs[period] + self.suffix, fontsize=16)
             maxy = 0
             miny = 0
-            if len(data[0]) > 4:
+            if len(data[0]) > 9:
                 p1 = 3
                 p2 = 4
                 xl = 8
                 yl = [0, 4, 8]
+            elif len(data[0]) > 6:
+                p1 = 3
+                p2 = 3
+                xl = 6
+                yl = [0, 3, 6]
+            elif len(data[0]) > 4:
+                p1 = 2
+                p2 = 3
+                xl = 3
+                yl = [0, 3]
+            elif len(data[0]) > 2:
+                p1 = 2
+                p2 = 2
+                xl = 2
+                yl = [0, 2]
             else:
-                p1 = p2 = 2
-                if len(data[0]) == 4:
-                    xl = 2
-                    yl = [0, 2]
-                else:
-                    xl = 0
-                    yl = [0, 1]
+                p1 = 1
+                p2 = 2
+                xl = 0
+                yl = [0, 1]
             for p in range(len(data[0])):
                 for i in range(len(ydata)):
                     maxy = max(maxy, max(data[i][p]))
@@ -2643,24 +2779,15 @@ class PowerModel():
                         if j < 0:
                             j = len(sum_cols[i])
                         xl_lens[col + i] = j
-                    row = 2
-                    for key, value in iter(sorted(stns.iteritems())):
-                        ws.write(row, col, self.power_summary[value].name)
-                        xl_lens[col] = max(xl_lens[col], len(self.power_summary[value].name))
-                        ws.write(row, col + 1, self.power_summary[value].technology)
-                        xl_lens[col + 1] = max(xl_lens[col + 1], len(self.power_summary[value].technology))
-                        ws.write(row, col + 2, self.power_summary[value].capacity, style2d)
+                    for key, value in iter(stns.iteritems()):
                         techs[self.power_summary[value].technology][0] += self.power_summary[value].capacity
-                        if self.power_summary[value].generation > 0:
-                            ws.write(row, col + 3, self.power_summary[value].generation /
-                                     (self.power_summary[value].capacity * 8760), style2d)
-                        ws.write(row, col + 4, self.power_summary[value].generation, style0d)
                         techs[self.power_summary[value].technology][1] += self.power_summary[value].generation
                         if self.power_summary[value].transmitted is not None:
-                            ws.write(row, col + 5, self.power_summary[value].transmitted, style0d)
                             techs[self.power_summary[value].technology][2] += self.power_summary[value].transmitted
-                        row += 1
                     total = [0., 0., 0.]
+                    row = 2
+                    ws.write(row, col, 'Totals', styleb)
+                    row += 1
                     for key, value in iter(sorted(techs.iteritems())):
                         ws.write(row, col + 1, key)
                         ws.write(row, col + 2, value[0], style2db)
@@ -2671,11 +2798,27 @@ class PowerModel():
                             ws.write(row, col + 5, value[2], style0d)
                             total[2] += value[2]
                         row += 1
-                    ws.write(row, col + 1, 'Total')
+                    ws.write(row, col + 1, 'Total', styleb)
                     ws.write(row, col + 2, total[0], style2db)
                     ws.write(row, col + 4, total[1], style0db)
                     if total[2] > 0:
                         ws.write(row, col + 5, total[2], style0d)
+                    row += 1
+                    ws.write(row, col, 'Stations', styleb)
+                    row += 1
+                    for key, value in iter(sorted(stns.iteritems())):
+                        ws.write(row, col, self.power_summary[value].name)
+                        xl_lens[col] = max(xl_lens[col], len(self.power_summary[value].name))
+                        ws.write(row, col + 1, self.power_summary[value].technology)
+                        xl_lens[col + 1] = max(xl_lens[col + 1], len(self.power_summary[value].technology))
+                        ws.write(row, col + 2, self.power_summary[value].capacity, style2d)
+                        if self.power_summary[value].generation > 0:
+                            ws.write(row, col + 3, self.power_summary[value].generation /
+                                     (self.power_summary[value].capacity * 8760), style2d)
+                        ws.write(row, col + 4, self.power_summary[value].generation, style0d)
+                        if self.power_summary[value].transmitted is not None:
+                            ws.write(row, col + 5, self.power_summary[value].transmitted, style0d)
+                        row += 1
                     for key in xl_lens:
                         if xl_lens[key] * 275 > ws.col(key).width:
                             ws.col(key).width = xl_lens[key] * 275
@@ -2738,6 +2881,8 @@ class PowerModel():
                 if item == 'season':
                     continue
                 i = int(item[6:]) - 1
+                if i >= len(seasons):
+                    seasons.append([])
                 seasons[i] = values.split(',')
                 for j in range(1, len(seasons[i])):
                     seasons[i][j] = int(seasons[i][j]) - 1
@@ -2745,6 +2890,8 @@ class PowerModel():
                 if item == 'period':
                     continue
                 i = int(item[6:]) - 1
+                if i >= len(periods):
+                    periods.append([])
                 periods[i] = values.split(',')
                 for j in range(1, len(periods[i])):
                     periods[i][j] = int(periods[i][j]) - 1
@@ -2793,13 +2940,13 @@ class PowerModel():
                         m24[i][m].append(0.)
             if self.plots['season'] or self.plots['by_season']:
                 q24.append([])
-                for q in range(4):
+                for q in range(len(seasons)):
                     q24[i].append([])
                     for j in range(24):
                         q24[i][q].append(0.)
             if self.plots['period'] or self.plots['by_period']:
                 s24.append([])
-                for s in range(2):
+                for s in range(len(periods)):
                     s24[i].append([])
                     for j in range(24):
                         s24[i][s].append(0.)
@@ -2807,19 +2954,12 @@ class PowerModel():
                 d365.append([])
                 for j in range(365):
                     d365[i].append([0.])
-        the_qtrs = [the_days[0] + the_days[1] + the_days[11],
-                    the_days[2] + the_days[3] + the_days[4],
-                    the_days[5] + the_days[6] + the_days[7],
-                    the_days[8] + the_days[9] + the_days[10]]
         the_qtrs = []
         for i in range(len(seasons)):
             d = 0
             for j in range(1, len(seasons[i])):
                 d += the_days[seasons[i][j]]
             the_qtrs.append(d)
-        the_ssns = [the_days[4] + the_days[5] + the_days[6] + the_days[7] + the_days[8] +
-                    the_days[9], the_days[10] + the_days[11] + the_days[0] + the_days[1] +
-                    the_days[2] + the_days[3]]
         the_ssns = []
         for i in range(len(periods)):
             d = 0
@@ -2842,7 +2982,6 @@ class PowerModel():
                 for key, value in iter(sorted(ydata.iteritems())):
                     if key == 'Generation':
                         continue
-
                     j += 1
                     if self.plots['total']:
                         l24[j][k] += value[i + k]
@@ -2909,10 +3048,10 @@ class PowerModel():
                     for m in range(12):
                         m24[i][m][k] = m24[i][m][k] / the_days[m]
                 if self.plots['season']:
-                    for q in range(4):
+                    for q in range(len(seasons)):
                         q24[i][q][k] = q24[i][q][k] / the_qtrs[q]
                 if self.plots['period']:
-                    for s in range(2):
+                    for s in range(len(periods)):
                         s24[i][s][k] = s24[i][s][k] / the_ssns[s]
         if self.plots['hour']:
             hdr = self.hdrs['hour'].replace('Power - ', '')
@@ -3512,6 +3651,87 @@ class PowerModel():
         if not self.plots['block']:
             plt.show(block=True)
 
+    def save_detail(self, data_file, techs, keys=None):
+        if self.suffix != '':
+            i = data_file.rfind('.')
+            if i > 0:
+                data_file = data_file[:i] + '_' + self.suffix + data_file[i:]
+            else:
+                data_file = data_file + '_' + self.suffix
+        if data_file[-4:] == '.csv' or data_file[-4:] == '.xls' \
+          or data_file[-5:] == '.xlsx':
+            pass
+        else:
+            data_file += '.xls'
+        data_file = QtGui.QFileDialog.getSaveFileName(None, 'Save power data file',
+                    self.scenarios + data_file, 'Excel Files (*.xls*);;CSV Files (*.csv)')
+        if data_file == '':
+            return
+        if self.load_multiplier != 0:
+            the_year = self.load_year
+        else:
+            the_year = self.base_year
+        if data_file[-4:] == '.csv' or data_file[-4:] == '.xls' \
+          or data_file[-5:] == '.xlsx':
+            pass
+        else:
+            data_file += '.xls'
+        if os.path.exists(data_file):
+            if os.path.exists(data_file + '~'):
+                os.remove(data_file + '~')
+            os.rename(data_file, data_file + '~')
+        if keys is None:
+            keys = sorted(techs.keys())
+        if data_file[-4:] == '.csv':
+            tf = open(data_file, 'w')
+            line = 'Hour,Period,'
+            if self.load_multiplier != 0:
+                the_year = self.load_year
+            else:
+                the_year = self.base_year
+            max_outs = 0
+            lines = []
+            for i in range(8760):
+                lines.append(str(i+1) + ',' + str(the_date(the_year, i)) + ',')
+            for key in keys:
+                if key[:4] == 'Load' and self.load_multiplier != 0:
+                    line += 'Load ' + self.load_year + ','
+                else:
+                    line += key + ','
+                for i in range(len(techs[key])):
+                    lines[i] += str(round(techs[key][i], 3)) + ','
+            tf.write(line + '\n')
+            for i in range(len(lines)):
+                tf.write(lines[i] + '\n')
+            tf.close()
+            del lines
+        else:
+            wb = xlwt.Workbook()
+            ws = wb.add_sheet('Detail')
+            ws.write(0, 0, 'Hour')
+            ws.write(0, 1, 'Period')
+            for i in range(len(self.x)):
+                ws.write(i + 1, 0, i + 1)
+                ws.write(i + 1, 1, the_date(the_year, i))
+            if 16 * 275 > ws.col(1).width:
+                ws.col(1).width = 16 * 275
+            c = 2
+            for key in keys:
+                if key[:4] == 'Load' and self.load_multiplier != 0:
+                    ws.write(0, c, 'Load ' + self.load_year)
+                else:
+                    ws.write(0, c, key)
+                if len(key) * 275 > ws.col(c).width:
+                    ws.col(c).width = len(key) * 275
+                for r in range(len(techs[key])):
+                    ws.write(r + 1, c, round(techs[key][r], 3))
+                c += 1
+            ws.set_panes_frozen(True)  # frozen headings instead of split panes
+            ws.set_horz_split_pos(1)  # in general, freeze after last heading row
+            ws.set_remove_splits(True)  # if user does unfreeze, dont leave a split there
+            wb.save(data_file)
+            del wb
+
     def __init__(self, stations, show_progress=None, year=None, status=None):
         self.status = status
         self.stations = stations
@@ -3547,12 +3767,12 @@ class PowerModel():
         try:
             self.scenarios = config.get('Files', 'scenarios')
             if scenario_prefix != '' :
-                self.scenarios += os.sep + scenario_prefix
+                self.scenarios += '/' + scenario_prefix
             for key, value in parents:
                 self.scenarios = self.scenarios.replace(key, value)
             self.scenarios = self.scenarios.replace('$USER$', getUser())
             self.scenarios = self.scenarios.replace('$YEAR$', self.base_year)
-            i = self.scenarios.rfind(os.sep)
+            i = self.scenarios.rfind('/')
             self.scenarios = self.scenarios[:i + 1]
         except:
             self.scenarios = ''
@@ -3595,7 +3815,8 @@ class PowerModel():
                            'show_load', 'shortfall', 'grid_losses', 'gross_load', 'maximise',
                            'block', 'show_pct', 'by_day', 'by_month', 'by_season',
                            'by_period', 'hour', 'total', 'month', 'season', 'period',
-                           'duration', 'shortfall_detail', 'summary', 'save_data', 'save_balance', 'financials']
+                           'duration', 'shortfall_detail', 'summary', 'save_data', 'save_detail',
+                           'save_tech', 'save_balance', 'financials']
         self.initials = ['actual', 'by_station', 'grid_losses', 'save_data', 'gross_load',
                          'summary', 'financials', 'show_menu']
         self.hdrs = {'show_menu': 'Check / Uncheck all',
@@ -3613,16 +3834,18 @@ class PowerModel():
                 'by_day': 'Energy by day',
                 'by_month': 'Energy by month',
                 'by_season': 'Energy by season',
-                'by_period': 'Energy by Winter-Summer',
+                'by_period': 'Energy by period',
                 'hour': 'Power by hour',
                 'total': 'Power - diurnal profile',
                 'month': 'Power - diurnal profile by month',
                 'season': 'Power - diurnal profile by season',
-                'period': 'Power - diurnal profile by Winter-Summer',
+                'period': 'Power - diurnal profile by period',
                 'duration': 'Power - Load duration',
                 'shortfall_detail': 'Power - Shortfall analysis',
                 'summary': 'Show Summary/Other Tables',
-                'save_data': 'Save Hourly Data Output',
+                'save_data': 'Save initial Hourly Data Output',
+                'save_detail': 'Save Hourly Data Output by Station',
+                'save_tech': 'Save Hourly Data Output by Technology',
                 'save_balance': 'Save Powerbalance Inputs',
                 'financials': 'Run Financial Models'}
         self.spacers = {'actual': 'Show in Plot',
@@ -3750,18 +3973,22 @@ class PowerModel():
             self.power_summary = power.power_summary
             self.gen_pct = power.getPct()
             self.ly, self.x = power.getLy()
-            if self.plots['save_data'] or self.plots['financials']:
+            if self.plots['save_data'] or self.plots['financials'] or self.plots['save_detail']:
                 self.stn_outs, self.stn_tech, self.stn_size, self.stn_pows, self.stn_grid, \
                   self.stn_path = power.getStnOuts()
+            elif self.plots['save_tech']:
+                self.stn_outs, self.stn_tech = power.getStnTech()
         else:
             self.model = SuperPower(stations, self.plots, False, year=self.base_year,
                                     selected=self.selected, status=status)
             self.model.getPower()
             self.power_summary = self.model.power_summary
             self.ly, self.x = self.model.getLy()
-            if self.plots['save_data'] or self.plots['financials']:
+            if self.plots['save_data'] or self.plots['financials'] or self.plots['save_detail']:
                 self.stn_outs, self.stn_tech, self.stn_size, self.stn_pows, self.stn_grid, \
                   self.stn_path = self.model.getStnOuts()
+            elif self.plots['save_tech']:
+                self.stn_outs, self.stn_tech = self.model.getStnTech()
         self.suffix = ''
         if len(self.stations) == 1:
             self.suffix = ' - ' + self.stations[0].name
@@ -3779,63 +4006,11 @@ class PowerModel():
                                 'yyyy-MM-dd_hhmm'))
             else:
                 data_file = self.data_file
-            if self.suffix != '':
-                i = data_file.rfind('.')
-                if i > 0:
-                    data_file = data_file[:i] + '_' + self.suffix + data_file[i:]
-                else:
-                    data_file = data_file + '_' + self.suffix
-            if data_file[-4:] == '.csv' or data_file[-4:] == '.xls' \
-              or data_file[-5:] == '.xlsx':
-                pass
-            else:
-                data_file += '.xls'
-            data_file = QtGui.QFileDialog.getSaveFileName(None, 'Save power data file',
-                        self.scenarios + data_file, 'Excel Files (*.xls*);;CSV Files (*.csv)')
-            if data_file != '':
-                if data_file[-4:] == '.csv' or data_file[-4:] == '.xls' \
-                  or data_file[-5:] == '.xlsx':
-                    pass
-                else:
-                    data_file += '.xls'
-                if os.path.exists(data_file):
-                    if os.path.exists(data_file + '~'):
-                        os.remove(data_file + '~')
-                    os.rename(data_file, data_file + '~')
-                if data_file[-4:] == '.csv':
-                    tf = open(data_file, 'w')
-                    line = 'Hour,'
-                    max_outs = 0
-                    for i in range(len(self.stn_outs)):
-                        line += self.stn_outs[i] + ','
-                        if len(self.stn_pows[i]) > max_outs:
-                             max_outs = len(self.stn_pows[i])
-                    tf.write(line + '\n')
-                    for i in range(max_outs):
-                        line = str(i + 1) + ','
-                        for j in range(len(self.stn_outs)):
-                            try:
-                                line += str(self.stn_pows[j][i]) + ','
-                            except:
-                                 line += ','
-                        tf.write(line + '\n')
-                    tf.close()
-                else:
-                    wb = xlwt.Workbook()
-                    ws = wb.add_sheet('Power')
-                    ws.write(0, 0, 'Hour')
-                    ws.write(0, 1, 'Period')
-                    for i in range(len(self.x)):
-                        ws.write(i + 1, 0, i + 1)
-                        ws.write(i + 1, 1, the_date(self.base_year, i))
-                    for i in range(len(self.stn_outs)):
-                        ws.write(0, i + 2, self.stn_outs[i])
-                        for j in range(len(self.stn_pows[i])):
-                            ws.write(j + 1, i + 2, round(self.stn_pows[i][j], 4))  # or , 3
-                    ws.set_panes_frozen(True)  # frozen headings instead of split panes
-                    ws.set_horz_split_pos(1)  # in general, freeze after last heading row
-                    ws.set_remove_splits(True)  # if user does unfreeze, dont leave a split there
-                    wb.save(data_file)
+            stnsh = {}
+            for i in range(len(self.stn_outs)):
+                stnsh[self.stn_outs[i]] = self.stn_pows[i][:]
+            self.save_detail(data_file, stnsh)
+            del stnsh
         if self.plots['summary']:
             fields = ['name', 'technology', 'capacity', 'cf', 'generation']
             sumfields = ['capacity', 'generation']
@@ -3878,6 +4053,12 @@ class PowerModel():
                 self.can_do_load = False
                 self.initials.append('show_load')
                 self.initials.append('show_pct')
+            if self.plots['save_detail']:
+                pass
+            else:
+                self.initials.append('save_detail')
+                if not self.plots['save_tech']:
+                    self.initials.append('save_tech')
             self.load_key = ''
             self.adjustby = None
             while True:
@@ -4085,6 +4266,49 @@ class PowerModel():
                                                 units='generation=MWh', sortby='row')
                     dialog.exec_()
                     del dialog
+                if self.plots['save_detail'] or self.plots['save_tech']:
+                    dos = []
+                    if self.plots['save_detail']:
+                        dos.append('')
+                    if self.plots['save_tech']:
+                        dos.append('Technology_')
+                    for l in range(len(dos)):
+                        if self.data_file == '':
+                            data_file = 'Power_Detail_%s%s.xls' % ( dos[l] ,
+                            str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),
+                                'yyyy-MM-dd_hhmm')))
+                        else:
+                             data_file = self.data_file
+                        keys = []
+                        keys2 = []
+                        if dos[l] != '':
+                            techs = {}
+                            for key, value in iter(wrkly.iteritems()):
+                                try:
+                                    i = self.stn_outs.index(key)
+                                    if self.stn_tech[i] in techs.keys():
+                                        for j in range(len(value)):
+                                            techs[self.stn_tech[i]][j] += value[j]
+                                    else:
+                                        techs[self.stn_tech[i]] = value[:]
+                                        keys.append(self.stn_tech[i])
+                                except:
+                                    techs[key] = value[:]
+                                    keys2.append(key)
+                            keys.sort()
+                            keys.extend(keys2)
+                            self.save_detail(data_file, techs, keys=keys)
+                            del techs
+                        else:
+                            for key in wrkly.keys():
+                                try:
+                                    i = self.stn_outs.index(key)
+                                    keys.append(self.stn_outs[i])
+                                except:
+                                    keys2.append(key)
+                            keys.sort()
+                            keys.extend(keys2)
+                            self.save_detail(data_file, wrkly, keys=keys)
                 self.showGraphs(wrkly, self.x)
                 if __name__ == '__main__':
                     self.show_menu = True
@@ -4130,7 +4354,10 @@ class PowerModel():
                 del dialog
 
     def getValues(self):
-        return self.power_summary
+        try:
+            return self.power_summary
+        except:
+            return None
 
     def getPct(self):
         return self.gen_pct

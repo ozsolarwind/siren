@@ -50,7 +50,7 @@ class makeIndex():
         for fil in fils:
             if (what[0].lower() == 's' and (fil[-4:] == '.csv' or fil[-4:] == '.smw')) \
               or (what[0].lower() == 'w' and fil[-4:] == '.srw'):
-                tf = open(src_dir + os.sep + fil, 'r')
+                tf = open(src_dir + '/' + fil, 'r')
                 lines = tf.readlines()
                 tf.close()
                 if fil[-4:] == '.smw':
@@ -109,7 +109,7 @@ class makeIndex():
                 line = '%s,%s,"%s"\n' % (files[i][0], files[i][1], files[i][2])
                 tf.write(line)
             tf.close()
-        self.log += '%s created' % tgt_fil[tgt_fil.rfind(os.sep) + 1:]
+        self.log += '%s created' % tgt_fil[tgt_fil.rfind('/') + 1:]
 
 
 class ClickableQLabel(QtGui.QLabel):

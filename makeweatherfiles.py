@@ -582,7 +582,7 @@ class makeWeather():
             cdf_file = Dataset(unzip_file, 'r')
         else:
             cdf_file = NetCDFFile(unzip_file, 'r')
-        i = unzip_file.rfind(os.sep)
+        i = unzip_file.rfind('/')
         self.log += '\nFile:\n    '
         self.log += unzip_file[i + 1:] + '\n'
         self.log += ' Format:\n    '
@@ -643,7 +643,7 @@ class makeWeather():
                      'time': 'time', 't2m': 'T2M', 't10m': 'T10M', 't50m': 'T50M', 'u2m': 'U2M',
                      'u10m': 'U10M', 'u50m': 'U50M', 'v2m': 'V2M', 'v10m': 'V10M', 'v50m': 'V50M'}
         if self.src_dir_s != '':
-            self.src_dir_s += os.sep
+            self.src_dir_s += '/'
             fils = os.listdir(self.src_dir_s)
             for fil in fils:
                 if fil.find('MERRA') >= 0:
@@ -662,7 +662,7 @@ class makeWeather():
         self.src_w_pfx = ''
         self.src_w_sfx = ''
         if self.src_dir_w != '':
-            self.src_dir_w += os.sep
+            self.src_dir_w += '/'
             fils = os.listdir(self.src_dir_w)
             for fil in fils:
                 if fil.find('MERRA') >= 0:
@@ -679,7 +679,7 @@ class makeWeather():
             self.vars['latitude'] = 'latitude'
             self.vars['longitude'] = 'longitude'
         if self.tgt_dir != '':
-            self.tgt_dir += os.sep
+            self.tgt_dir += '/'
         if info:
             inp_strt = '{0:04d}'.format(self.src_year) + '0101'
              # get variables from "wind" file
@@ -929,7 +929,7 @@ class makeWeather():
                                 str(self.valu(self.d50m[hr], lat1, lon1, lat_rat, lon_rat, rnd=0)) + ',' +
                                 str(self.valu(self.s50m[hr], lat1, lon1, lat_rat, lon_rat)) + '\n')
                     tf.close()
-                    self.log += '%s created\n' % out_file[out_file.rfind(os.sep) + 1:]
+                    self.log += '%s created\n' % out_file[out_file.rfind('/') + 1:]
             else:
                 for lat in range(len(self.s50m[0])):
                     for lon in range(len(self.s50m[0][0])):
@@ -970,7 +970,7 @@ class makeWeather():
                                         str(self.d2m[hr][lat][lon]) + ',' + str(self.s2m[hr][lat][lon]) + ',' +
                                         str(self.d50m[hr][lat][lon]) + ',' + str(self.s50m[hr][lat][lon]) + '\n')
                         tf.close()
-                        self.log += '%s created\n' % out_file[out_file.rfind(os.sep) + 1:]
+                        self.log += '%s created\n' % out_file[out_file.rfind('/') + 1:]
                         self.checkZone()
             return  # that's it for wind
          # get variable from solar files
@@ -1110,7 +1110,7 @@ class makeWeather():
                         str(int(ghi)) + ',' + str(int(dni)) + ',' + str(int(dhi)) +
                         ',-999,-999,\n')
                 tf.close()
-                self.log += '%s created\n' % out_file[out_file.rfind(os.sep) + 1:]
+                self.log += '%s created\n' % out_file[out_file.rfind('/') + 1:]
         else:
             for lat in range(len(self.s10m[0])):
                 for lon in range(len(self.s10m[0][0])):
@@ -1175,7 +1175,7 @@ class makeWeather():
                                 str(int(ghi)) + ',' + str(int(dni)) + ',' + str(int(dhi)) +
                                 ',-999,-999,\n')
                     tf.close()
-                    self.log += '%s created\n' % out_file[out_file.rfind(os.sep) + 1:]
+                    self.log += '%s created\n' % out_file[out_file.rfind('/') + 1:]
                     self.checkZone()
 
 class ClickableQLabel(QtGui.QLabel):
@@ -1462,7 +1462,7 @@ class RptDialog(QtGui.QDialog):
         self.widget.show()
 
     def accept(self):
-        i = sys.argv[0].rfind(os.sep)  # fudge to see if program has a directory to use as an alternative
+        i = sys.argv[0].rfind('/')  # fudge to see if program has a directory to use as an alternative
         j = sys.argv[0].rfind('.')
         if i > 0:
             save_filename = sys.argv[0][i + 1:j]
@@ -1472,7 +1472,7 @@ class RptDialog(QtGui.QDialog):
         for k in range(len(self.parms)):
             if self.parms[k] == '':
                 continue
-            i = self.parms[k].rfind(os.sep)
+            i = self.parms[k].rfind('/')
             if i > 0:
                 if self.parms[k][i + 1:] != last_bit:
                     save_filename += '_' + self.parms[k][i + 1:]

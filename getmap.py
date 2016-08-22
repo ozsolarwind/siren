@@ -81,39 +81,74 @@ class retrieveMap():
         return (xtile, ytile)
 
     def writetile(self, x, y, zoom):
-        if self.sub == '1':
-            self.sub = '2'
-        elif self.sub == '2':
-            self.sub = '3'
-        elif self.sub == '3':
-            self.sub = '4'
-        else:
-            self.sub = '1'
-        file_name = str(x) + '_' + str(y) + '.jpg'
+        url = self.url
+        if len(self.subs) > 0:
+            self.sub_ctr += 1
+            if self.sub_ctr >= len(self.subs):
+                self.sub_ctr = 0
+            url = url.replace('[]', self.subs[self.sub_ctr])
+        file_name = str(x) + '_' + str(y) + '.png'
+        url_tail = self.url_tail.replace('/zoom', '/' + str(zoom))
+        url_tail = url_tail.replace('/x', '/' + str(x))
+        url_tail = url_tail.replace('/y', '/' + str(y))
         if len(sys.argv) > 1:
-            print 'otile' + self.sub + '.mqcdn.com/tiles/1.0.0/sat/' + str(zoom) + '/' + str(x) + '/' + str(y) + '.jpg'
-        conn = httplib.HTTPConnection('otile' + self.sub + '.mqcdn.com')
+            print url + url_tail
+        conn = httplib.HTTPConnection(url)
         if len(sys.argv) > 1:
-            print 'Retrieving /' + str(zoom) + '/' + str(x) + '/' + str(y) + '.jpg'
+            print 'Retrieving ' + url_tail
       #   conn.addheaders = [('User-agent', 'Mozilla/5.0')]
-        conn.request('GET', '/tiles/1.0.0/sat/' + str(zoom) + '/' + str(x) + '/' + str(y) + '.jpg')
+        conn.request('GET', url_tail)
         response = conn.getresponse()
         if response.status == 200 and response.reason == 'OK':
             if len(sys.argv) > 1:
-                print '/' + str(zoom) + '/' + str(x) + '/' + str(y) + '.jpg retrieved'
+                print url_tail + ' retrieved'
             f = open(self.tmp_location + file_name, 'wb')
             f.write(response.read())
             f.close()
         else:
             if len(sys.argv) > 1:
-                print '/' + str(zoom) + '/' + str(x) + '/' + str(y) + '.jpg failed'
+                print url_tail + ' failed'
                 print str(response.status) + ' ' + response.reason
         conn.close()
         return file_name
 
-    def __init__(self, upper_lat, upper_lon, lower_lat, lower_lon, zoom, output):
+    def __init__(self, upper_lat, upper_lon, lower_lat, lower_lon, output, zoom=None, url=None, width=None, height=None):
         self.log = ''
         self.properties = ''
+        if width != None and height != None: # Mapquest map
+            url = 'www.mapquestapi.com'
+            url_tail = '/staticmap/v4/getmap?type=sat&margin=0&' + \
+                       'bestfit=%s,%s,%s,%s&size=%s,%s&imagetype=%s' % (upper_lat, upper_lon, lower_lat, lower_lon,
+                       width, height, output[output.rfind('.') + 1:])
+            url_key = '&key=yWspjYHSK6FHtNLzZVcqP3WBxSWSwEo8'
+            if len(sys.argv) > 1:
+                print url + url_tail
+            conn = httplib.HTTPConnection(url)
+            if len(sys.argv) > 1:
+                print 'Requesting ' + url_tail
+            conn.request('GET', url_tail + url_key)
+            response = conn.getresponse()
+            if response.status == 200 and response.reason == 'OK':
+                if len(sys.argv) > 1:
+                    print url_tail + ' retrieved'
+                f = open(output, 'wb')
+                f.write(response.read())
+                f.close()
+                self.log += '\nSaving map to ' + output
+                self.properties = 'map_choice=?'
+                self.properties += '\nmap=%s' % (output)
+                self.properties += '\nupper_left=%1.3f, %1.3f' % (upper_lat, upper_lon)
+                self.properties += '\nlower_right=%1.3f, %1.3f' % (lower_lat, lower_lon)
+            else:
+                if len(sys.argv) > 1:
+                    print url_tail + ' failed'
+                    print str(response.status) + ' ' + response.reason
+            conn.close()
+            return
+        if url is None:
+            self.url = 'http://[abc].tile.openstreetmap.org/zoom/x/y.png'
+        else:
+            self.url = url
         top_left = self.deg2num(upper_lat, upper_lon, zoom)
         bottom_right = self.deg2num(lower_lat, lower_lon, zoom)
         height = (bottom_right[1] - top_left[1] + 1) * 256
@@ -143,8 +178,25 @@ class retrieveMap():
             self.properties += '\nlower_right%d=%1.3f, %1.3f' % (zoom, sb, eb)
             if output == '?' or output == '':
                 return
-        self.sub = ''
-        self.tmp_location = tempfile.gettempdir() + os.sep
+        i = self.url.find('//')
+        if i >= 0:
+            self.url = self.url[i + 2:]
+        i = self.url.find('/')
+        self.url_tail = self.url[i:]
+        self.url = self.url[:i]
+        self.subs = []
+        i = self.url.find('[')
+        if i >= 0:
+            j = self.url.find(']', i)
+            if j > 0:
+                for k in range(i + 1, j):
+                    self.subs.append(self.url[k])
+                if i > 0:
+                    self.url = self.url[:i + 1] + self.url[j:]
+                else:
+                    self.url = self.url[0] + self.url[j:]
+        self.sub_ctr = -1
+        self.tmp_location = tempfile.gettempdir() + '/'
         i = output.rfind('.')
         if i < 0:
             fname = output + '.png'
@@ -212,22 +264,22 @@ class getMap(QtGui.QWidget):
         east = QtGui.QLabel('East')
         west = QtGui.QLabel('West')
         self.northSpin = QtGui.QDoubleSpinBox()
-        self.northSpin.setDecimals(1)
+        self.northSpin.setDecimals(3)
         self.northSpin.setSingleStep(5)
         self.northSpin.setRange(-85, 85)
         self.northSpin.setValue(-30.)
         self.southSpin = QtGui.QDoubleSpinBox()
-        self.southSpin.setDecimals(1)
+        self.southSpin.setDecimals(3)
         self.southSpin.setSingleStep(5)
         self.southSpin.setRange(-85, 85)
         self.southSpin.setValue(-35.)
         self.westSpin = QtGui.QDoubleSpinBox()
-        self.westSpin.setDecimals(1)
+        self.westSpin.setDecimals(3)
         self.westSpin.setSingleStep(5)
         self.westSpin.setRange(-180, 180)
         self.westSpin.setValue(115)
         self.eastSpin = QtGui.QDoubleSpinBox()
-        self.eastSpin.setDecimals(1)
+        self.eastSpin.setDecimals(3)
         self.eastSpin.setSingleStep(5)
         self.eastSpin.setRange(-180, 180)
         self.eastSpin.setValue(120)
@@ -240,10 +292,15 @@ class getMap(QtGui.QWidget):
         self.grid = QtGui.QGridLayout()
         self.grid.addWidget(QtGui.QLabel('Area of Interest:'), 0, 0)
         self.grid.addWidget(north, 0, 1)
-        if os.path.exists('world.jpg'):
+        self.world = False
+        if os.path.exists('world1.jpg'):
+            self.world = 'world1.jpg'
+        elif os.path.exists('world.jpg'):
+            self.world = 'world1.jpg'
+        if self.world:
             self.do_world = True
             self.wmap = QtGui.QLabel()
-            world = QtGui.QImage('world.jpg')
+            world = QtGui.QImage(self.world)
             self.world_width = world.width()
             self.world_height = world.height()
             self.width_ratio = world.width() / 360.
@@ -273,40 +330,62 @@ class getMap(QtGui.QWidget):
         self.grid.addWidget(zoom, 3, 0)
         self.grid.addWidget(self.zoomSpin, 3, 1)
         self.grid.addWidget(self.zoomScale, 3, 2)
-        self.grid.addWidget(QtGui.QLabel('Image File name:'), 4, 0)
+        self.grid.addWidget(QtGui.QLabel('URL template:'), 4, 0)
+        self.urltemplate = QtGui.QLineEdit()
+        self.urltemplate.setText('http://[abc].tile.openstreetmap.org/zoom/x/y.png')
+        self.grid.addWidget(self.urltemplate, 4, 1, 1, 5)
+        self.grid.addWidget(QtGui.QLabel('Image Width:'), 5, 0)
+        self.widthSpin = QtGui.QSpinBox()
+        self.widthSpin.setSingleStep(50)
+        self.widthSpin.setRange(50, 3840)
+        self.widthSpin.setValue(400)
+        self.grid.addWidget(self.widthSpin, 5, 1)
+        hlabel = QtGui.QLabel('Image Height:   ')
+        hlabel.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.grid.addWidget(hlabel, 5, 2)
+        self.heightSpin = QtGui.QSpinBox()
+        self.heightSpin.setSingleStep(50)
+        self.heightSpin.setRange(50, 3840)
+        self.heightSpin.setValue(200)
+        self.grid.addWidget(self.heightSpin, 5, 3)
+        self.grid.addWidget(QtGui.QLabel('Image File name:'), 6, 0)
         cur_dir = os.getcwd()
         self.filename = ClickableQLabel()
-        self.filename.setText(cur_dir + os.sep + 'untitled.png')
+        self.filename.setText(cur_dir + '/untitled.png')
         self.filename.setFrameStyle(6)
         self.connect(self.filename, QtCore.SIGNAL('clicked()'), self.fileChanged)
-        self.grid.addWidget(self.filename, 4, 1, 1, 5)
-        self.grid.addWidget(QtGui.QLabel('Properties:'), 5, 0)
+        self.grid.addWidget(self.filename, 6, 1, 1, 5)
+        self.grid.addWidget(QtGui.QLabel('Properties:'), 7, 0)
         self.properties = QtGui.QPlainTextEdit()
         self.properties.setMaximumHeight(north.sizeHint().height() * 4.5)
         self.properties.setReadOnly(True)
-        self.grid.addWidget(self.properties, 5, 1, 3, 5)
+        self.grid.addWidget(self.properties, 7, 1, 3, 5)
         self.log = QtGui.QLabel()
-        self.grid.addWidget(self.log, 8, 1, 3, 5)
+        self.grid.addWidget(self.log, 10, 1, 3, 5)
         quit = QtGui.QPushButton('Quit', self)
-        self.grid.addWidget(quit, 12, 0)
+        self.grid.addWidget(quit, 14, 0)
         quit.clicked.connect(self.quitClicked)
         QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
         query = QtGui.QPushButton('Query Map', self)
         wdth = query.fontMetrics().boundingRect(query.text()).width() + 9
-        self.grid.addWidget(query, 12, 1)
+        self.grid.addWidget(query, 14, 1)
         query.clicked.connect(self.queryClicked)
         make = QtGui.QPushButton('Get Map', self)
         make.setMaximumWidth(wdth)
-        self.grid.addWidget(make, 12, 2)
+        self.grid.addWidget(make, 14, 2)
         make.clicked.connect(self.makeClicked)
+        mapquest = QtGui.QPushButton('MapQuest', self)
+        mapquest.setMaximumWidth(wdth)
+        self.grid.addWidget(mapquest, 14, 3)
+        mapquest.clicked.connect(self.mapquestClicked)
         help = QtGui.QPushButton('Help', self)
         help.setMaximumWidth(wdth)
-        self.grid.addWidget(help, 12, 3)
+        self.grid.addWidget(help, 14, 4)
         help.clicked.connect(self.helpClicked)
         QtGui.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
         note = QtCore.QString('Map data ' + unichr(169) + ' OpenStreetMap contributors CC-BY-SA ' +
                '(http://www.openstreetmap.org/copyright)')
-        self.grid.addWidget(QtGui.QLabel(note), 13, 0, 1, 6)
+        self.grid.addWidget(QtGui.QLabel(note), 15, 0, 1, 6)
         frame = QtGui.QFrame()
         frame.setLayout(self.grid)
         self.scroll = QtGui.QScrollArea()
@@ -315,7 +394,7 @@ class getMap(QtGui.QWidget):
         self.layout = QtGui.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
         self.resize(self.width() + int(self.world_width * .7), self.height() + int(self.world_height * .7))
-        self.setWindowTitle('SIREN getmap (' + fileVersion() + ') - Make Map from MapQuest Open Aerial Tiles')
+        self.setWindowTitle('SIREN getmap (' + fileVersion() + ") - Make Map from OSM or MapQuest")
         self.center()
         self.show()
 
@@ -333,7 +412,7 @@ class getMap(QtGui.QWidget):
     def fileChanged(self):
         self.filename.setText(QtGui.QFileDialog.getSaveFileName(self, 'Save Image File',
                               self.filename.text(),
-                              'Images (*.jpeg *.jpg *.mng *.pbm *.pgm *.png *.ppm *.svg *.tiff *.xbm *.xpm)'))
+                              'Images (*.jpeg *.jpg *.png)'))
         if self.filename.text() != '':
             i = str(self.filename.text()).rfind('.')
             if i < 0:
@@ -357,7 +436,7 @@ class getMap(QtGui.QWidget):
             self.eastSpin.setValue(self.westSpin.value())
             self.westSpin.setValue(l)
         mapp = retrieveMap(self.northSpin.value(), self.westSpin.value(), self.southSpin.value(), self.eastSpin.value(),
-               self.zoomSpin.value(), '?')
+               '?', self.zoomSpin.value(), url=str(self.urltemplate.text()))
         self.properties.setPlainText(mapp.getProperties())
         self.log.setText(mapp.getLog())
         if self.do_world:
@@ -366,7 +445,7 @@ class getMap(QtGui.QWidget):
             x2, y2 = self.deg2num(coords[2], coords[3])
             h = y2 - y
             w = x2 - x
-            world = QtGui.QImage('world.jpg')
+            world = QtGui.QImage(self.world)
             painter = QtGui.QPainter()
             painter.begin(world)
             painter.setPen(QtGui.QPen(QtGui.QBrush(QtCore.Qt.red), 0))
@@ -376,7 +455,13 @@ class getMap(QtGui.QWidget):
 
     def makeClicked(self):
         mapp = retrieveMap(self.northSpin.value(), self.westSpin.value(), self.southSpin.value(), self.eastSpin.value(),
-               self.zoomSpin.value(), str(self.filename.text()))
+               str(self.filename.text()), zoom=self.zoomSpin.value(), url=str(self.urltemplate.text()))
+        self.properties.setPlainText(mapp.getProperties())
+        self.log.setText(mapp.getLog())
+
+    def mapquestClicked(self):
+        mapp = retrieveMap(self.northSpin.value(), self.westSpin.value(), self.southSpin.value(), self.eastSpin.value(),
+               str(self.filename.text()), width=self.widthSpin.value(), height=self.heightSpin.value())
         self.properties.setPlainText(mapp.getProperties())
         self.log.setText(mapp.getLog())
 
@@ -385,14 +470,19 @@ if __name__ == '__main__':
     app = QtGui.QApplication(sys.argv)
     if len(sys.argv) > 1:
         if not len(sys.argv) > 6:
-            raise SystemExit('Usage: north_lat west_lon south_lat east_lon zoom output_file')
+            raise SystemExit('Usage: north_lat west_lon south_lat east_lon output_file zoom=zoom' +
+                             'width=width height=height url=map_url')
         upper_lat = float(sys.argv[1])
         upper_lon = float(sys.argv[2])
         lower_lat = float(sys.argv[3])
         lower_lon = float(sys.argv[4])
         zoom = int(sys.argv[5])
         output = sys.argv[6]
-        retrieveMap(upper_lat, upper_lon, lower_lat, lower_lon, zoom, output)
+        if len(sys.argv) > 7:
+            url = sys.argv[7]
+            retrieveMap(upper_lat, upper_lon, lower_lat, lower_lon, output, zoom=zoom, url=url)
+        else:
+            retrieveMap(upper_lat, upper_lon, lower_lat, lower_lon, output, zoom=zoom)
     else:
         ex = getMap()
         app.exec_()
