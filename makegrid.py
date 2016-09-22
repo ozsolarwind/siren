@@ -46,6 +46,7 @@ class makeFile():
             config_file = 'SIREN.ini'
         config.read(config_file)
         seasons = [[], [], [], []]
+        periods = [[], []]
         try:
             items = config.items('Power')
         except:
@@ -53,14 +54,27 @@ class makeFile():
             seasons[1] = ['Autumn', 2, 3, 4]
             seasons[2] = ['Winter', 5, 6, 7]
             seasons[3] = ['Spring', 8, 9, 10]
+            periods[0] = ['Winter', 4, 5, 6, 7, 8, 9]
+            periods[1] = ['Summer', 10, 11, 0, 1, 2, 3]
         for item, values in items:
             if item[:6] == 'season':
                 if item == 'season':
                     continue
                 i = int(item[6:]) - 1
+                if i >= len(seasons):
+                    seasons.append([])
                 seasons[i] = values.split(',')
                 for j in range(1, len(seasons[i])):
                     seasons[i][j] = int(seasons[i][j]) - 1
+            if item[:6] == 'period':
+                if item == 'period':
+                    continue
+                i = int(item[6:]) - 1
+                if i >= len(periods):
+                    periods.append([])
+                periods[i] = values.split(',')
+                for j in range(1, len(periods[i])):
+                    periods[i][j] = int(periods[i][j]) - 1
         self.log = ''
         self.property = ''
         self.src_year = src_year
@@ -474,6 +488,27 @@ class makeFile():
                         val = round(valu[k] / (days * the_hrs[k]), 1)
                         ws.write(row, k + 3, val)
                     row += 1
+                for j in range(len(periods)):
+                    ws.write(row, 0, where[0])
+                    ws.write(row, 1, where[1])
+                    ssn = where[2] + '-' + periods[j][0]
+                    per_len = max(per_len, len(ssn))
+                    ws.write(row, 2, ssn)
+                    valu = []
+                    days = 0
+                    for k in range(len(the_cols)):
+                        valu.append(0)
+                    for k in range(1, len(periods[j])):
+                        for l in range(len(the_cols)):
+                            valu[l] += value[periods[j][k]][l]
+                        days += the_days[periods[j][k]]
+                    for k in range(len(valu)):
+                        if drop_rainfall:
+                            if k == the_cols.index('Rainfall'):
+                                continue
+                        val = round(valu[k] / (days * the_hrs[k]), 1)
+                        ws.write(row, k + 3, val)
+                    row += 1
                 ws.write(row, 0, where[0])
                 ws.write(row, 1, where[1])
                 ws.write(row, 2, where[2])
@@ -649,6 +684,20 @@ class makeFile():
                         for l in range(len(the_cols)):
                             valu[l] += value[seasons[j][k]][l]
                         days += the_days[seasons[j][k]]
+                    for k in range(len(valu)):
+                        val = round(valu[k] / (days * the_hrs[k]), 1)
+                        line += ',' + str(val)
+                    tf.write(line + '\n')
+                for j in range(len(periods)):
+                    line = '%s,%s,%s-%s' % (where[0], where[1], where[2], periods[j][0])
+                    valu = []
+                    days = 0
+                    for k in range(len(the_cols)):
+                        valu.append(0)
+                    for k in range(1, len(periods[j])):
+                        for l in range(len(the_cols)):
+                            valu[l] += value[periods[j][k]][l]
+                        days += the_days[periods[j][k]]
                     for k in range(len(valu)):
                         val = round(valu[k] / (days * the_hrs[k]), 1)
                         line += ',' + str(val)
