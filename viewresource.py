@@ -21,6 +21,7 @@
 
 import os
 import sys
+import time
 from PyQt4 import QtCore, QtGui
 import ConfigParser   # decode .ini file
 
@@ -198,16 +199,22 @@ class Resource(QtGui.QDialog):
         self.skipCombo.currentIndexChanged[str].connect(self.skip)
         self.skipdayCombo.currentIndexChanged[str].connect(self.skipday)
         self.grid.addWidget(self.periodCombo, row, 1, 1, 2)
-        loop = QtGui.QPushButton('Next', self)
-        self.grid.addWidget(loop, row, 3, 1, 4)
-        loop.clicked.connect(self.loopClicked)
-      #   self.grid.addWidget(QtGui.QLabel('Period Loop:'), 1, 0)
-      #   self.loopSpin = QtGui.QSpinBox()
-      #   self.loopSpin.setRange(0, 10)
-      #   self.loopSpin.setValue(0)
-      #   self.loopSpin.valueChanged[str].connect(self.loopChanged)
-      #   self.grid.addWidget(self.loopSpin, 1, 1, 1, 2)
-      #   self.grid.addWidget(QtGui.QLabel('(seconds)'), 1, 3, 1, 3)
+        next = QtGui.QPushButton('Next', self)
+        self.grid.addWidget(next, row, 3, 1, 4)
+        next.clicked.connect(self.nextClicked)
+        row += 1
+        self.do_loop = False
+        self.grid.addWidget(QtGui.QLabel('Period Loop (secs):'), row, 0)
+        self.loopSpin = QtGui.QDoubleSpinBox()
+        self.loopSpin.setRange(0., 10.)
+        self.loopSpin.setDecimals(1)
+        self.loopSpin.setSingleStep(.2)
+        self.loopSpin.setValue(0.)
+        self.loopSpin.valueChanged[str].connect(self.loopChanged)
+        self.grid.addWidget(self.loopSpin, row, 1, 1, 2)
+        self.loop = QtGui.QPushButton('Loop', self)
+        self.grid.addWidget(self.loop, row, 3, 1, 4)
+        self.loop.clicked.connect(self.loopClicked)
         row += 1
         self.grid.addWidget(QtGui.QLabel('Weather Variable:'), row, 0)
         self.whatCombo = QtGui.QComboBox()
@@ -320,8 +327,8 @@ class Resource(QtGui.QDialog):
             frameGm.moveTopRight(trPoint)
             self.move(frameGm.topRight())
         QtGui.QShortcut(QtGui.QKeySequence('pgup'), self, self.prevClicked)
-        QtGui.QShortcut(QtGui.QKeySequence('pgdown'), self, self.loopClicked)
-        QtGui.QShortcut(QtGui.QKeySequence('Ctrl++'), self, self.loopClicked)
+        QtGui.QShortcut(QtGui.QKeySequence('pgdown'), self, self.nextClicked)
+        QtGui.QShortcut(QtGui.QKeySequence('Ctrl++'), self, self.nextClicked)
         QtGui.QShortcut(QtGui.QKeySequence('Ctrl+-'), self, self.prevClicked)
         self.show()
 
@@ -335,7 +342,7 @@ class Resource(QtGui.QDialog):
         dialog = displayobject.AnObject(QtGui.QDialog(), self.helpfile, title='Help', section='resource')
         dialog.exec_()
 
-    def loopClicked(self):
+    def nextClicked(self):
         if self.periodCombo.currentIndex() == (self.periodCombo.count() - 1):
             self.periodCombo.setCurrentIndex(0)
         else:
@@ -348,6 +355,18 @@ class Resource(QtGui.QDialog):
         else:
             self.periodCombo.setCurrentIndex(self.periodCombo.currentIndex() - 1)
         return
+
+    def loopClicked(self):
+        if self.loop.text() == 'Stop':
+            self.do_loop = False
+            self.loop.setText('Loop')
+        else:
+            self.do_loop = True
+            self.loop.setText('Stop')
+        if self.periodCombo.currentIndex() == (self.periodCombo.count() - 1):
+            self.periodCombo.setCurrentIndex(0)
+        else:
+            self.periodCombo.setCurrentIndex(self.periodCombo.currentIndex() + 1)
 
     def skip(self):
         if self.skipCombo.currentText() == '':
@@ -466,7 +485,20 @@ class Resource(QtGui.QDialog):
     def periodChange(self):
         if self.periodCombo.currentText() == '':
             return
-        self.procStart.emit('show')
+        if not self.do_loop:
+            self.procStart.emit('show')
+            return
+        if self.periodCombo.currentIndex() < (self.periodCombo.count() - 1):
+            self.procStart.emit('show')
+            QtCore.QCoreApplication.processEvents()
+            QtCore.QCoreApplication.flush()
+            time.sleep(self.loopSpin.value())
+            self.periodCombo.setCurrentIndex(self.periodCombo.currentIndex() + 1)
+            return
+        self.do_loop = False
+        self.loop.setText('Loop')
+        self.periodCombo.setCurrentIndex(0)
+
 
     def hideClicked(self):
         self.procStart.emit('hide')
