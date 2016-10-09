@@ -43,6 +43,7 @@ from grid import Grid
 from sirenicons import Icons
 # import Station
 from turbine import Turbine
+from visualise import Visualise
 
 the_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
@@ -169,10 +170,10 @@ class whatPlots(QtGui.QDialog):
         self.recharge = recharge
         self.initial = initial
         self.helpfile = helpfile
-        if not self.initial:
-            self.initials = initials
-        else:
+        if self.initial:
             self.initials = None
+        else:
+            self.initials = initials
         super(whatPlots, self).__init__()
         self.initUI()
 
@@ -184,7 +185,7 @@ class whatPlots(QtGui.QDialog):
         bold.setBold(True)
         for plot in range(len(self.plot_order)):
             if self.plot_order[plot] in self.spacers:
-                if self.plot_order[plot] == 'maximise':  # fudge to add in growth stuff
+                if self.plot_order[plot] == 'visualise':  # fudge to add in growth stuff
                     self.percentLabel = QtGui.QLabel('        Growth. Set annual '
                                                      + 'Load growth & target year')
                     self.percentSpin = QtGui.QDoubleSpinBox()
@@ -658,43 +659,44 @@ class Adjustments(QtGui.QDialog):
         else:
             config_file = 'SIREN.ini'
         config.read(config_file)
-        self.seasons = [[], [], [], []]
-        self.periods = [[], []]
-        try:
-            items = config.items('Power')
-        except:
-            self.seasons[0] = ['Summer', 11, 0, 1]
-            self.seasons[1] = ['Autumn', 2, 3, 4]
-            self.seasons[2] = ['Winter', 5, 6, 7]
-            self.seasons[3] = ['Spring', 8, 9, 10]
-            self.periods[0] = ['Winter', 4, 5, 6, 7, 8, 9]
-            self.periods[1] = ['Summer', 10, 11, 0, 1, 2, 3]
+        self.seasons = []
+        self.periods = []
         self.daily = True
         try:
-            self.daily = config.get('Power', 'optimise')
-            if self.daily[0].lower() == 'h': # hourly
-                self.daily = False
+            items = config.items('Power')
+            for item, values in items:
+                if item[:6] == 'season':
+                    if item == 'season':
+                        continue
+                    i = int(item[6:]) - 1
+                    if i >= len(self.seasons):
+                        self.seasons.append([])
+                    self.seasons[i] = values.split(',')
+                    for j in range(1, len(self.seasons[i])):
+                        self.seasons[i][j] = int(self.seasons[i][j]) - 1
+                elif item[:6] == 'period':
+                    if item == 'period':
+                        continue
+                    i = int(item[6:]) - 1
+                    if i >= len(self.periods):
+                        self.periods.append([])
+                    self.periods[i] = values.split(',')
+                    for j in range(1, len(self.periods[i])):
+                        self.periods[i][j] = int(self.periods[i][j]) - 1
+                elif item == 'optimise':
+                    if values[0].lower() == 'h': # hourly
+                        self.daily = False
         except:
             pass
-        for item, values in items:
-            if item[:6] == 'season':
-                if item == 'season':
-                    continue
-                i = int(item[6:]) - 1
-                if i >= len(self.seasons):
-                    self.seasons.append([])
-                self.seasons[i] = values.split(',')
-                for j in range(1, len(self.seasons[i])):
-                    self.seasons[i][j] = int(self.seasons[i][j]) - 1
-            if item[:6] == 'period':
-                if item == 'period':
-                    continue
-                i = int(item[6:]) - 1
-                if i >= len(self.periods):
-                    self.periods.append([])
-                self.periods[i] = values.split(',')
-                for j in range(1, len(self.periods[i])):
-                    self.periods[i][j] = int(self.periods[i][j]) - 1
+        if len(self.seasons) == 0:
+            self.seasons = [['Summer', 11, 0, 1], ['Autumn', 2, 3, 4], ['Winter', 5, 6, 7], ['Spring', 8, 9, 10]]
+        if len(self.periods) == 0:
+            self.periods = [['Winter', 4, 5, 6, 7, 8, 9], ['Summer', 10, 11, 0, 1, 2, 3]]
+        for i in range(len(self.periods)):
+            for j in range(len(self.seasons)):
+                if self.periods[i][0] == self.seasons[j][0]:
+                    self.periods[i][0] += '2'
+                    break
         self.adjusts = {}
         self.checkbox = {}
         self.results = None
@@ -1318,6 +1320,9 @@ class SuperPower():
         elif self.plots['save_tech']:
             self.stn_outs = []
             self.stn_tech = []
+        elif self.plots['visualise']:
+            self.stn_outs = []
+            self.stn_pows = []
         len_x = 8760
         for i in range(len_x):
             self.x.append(i)
@@ -1334,17 +1339,15 @@ class SuperPower():
     def getPowerLoop(self):
         self.all_done = False
         for st in range(len(self.stations)):
-            if st < len(self.stations):
-                for st_1 in range(st + 1, len(self.stations)):
-                    if self.stations[st_1].technology == 'Rooftop PV' and \
-                       self.stations[st_1].scenario == 'Existing':
-                        continue
-                    if self.stations[st_1].technology[:6] != 'Fossil' or self.plots['actual']:
-                        break
-                try:
-                    self.progress_stn.setText('Processing ' + self.stations[st_1].name)
-                except:
-                    pass
+            if self.plots['by_station']:
+                if self.stations[st].name not in self.selected:
+                    continue
+            if self.stations[st].technology == 'Rooftop PV' \
+              and self.stations[st].scenario == 'Existing':
+                continue
+            if self.stations[st].technology[:6] == 'Fossil' \
+              and not self.plots['actual']:
+                continue
             stn = self.stations[st]
             if stn.technology[:6] == 'Fossil' and not self.plots['actual']:
                 try:
@@ -1384,6 +1387,9 @@ class SuperPower():
             elif self.plots['save_tech']:
                 self.stn_outs.append(stn.name)
                 self.stn_tech.append(stn.technology)
+            elif self.plots['visualise']:
+                self.stn_outs.append(stn.name)
+                self.stn_pows.append([])
             power = self.getStationPower(stn)
             total_power = 0.
             total_energy = 0.
@@ -1408,7 +1414,8 @@ class SuperPower():
                     else:
                         self.ly[key][i] += power[i] / 1000.
                     total_power += power[i] / 1000.
-                    if self.plots['save_data'] or self.plots['financials'] or self.plots['save_detail']:
+                    if self.plots['save_data'] or self.plots['financials'] or self.plots['save_detail'] \
+                      or self.plots['visualise']:
                         self.stn_pows[-1].append(power[i] / 1000.)
             if total_energy > 0:
                 pt = PowerSummary(stn.name, stn.technology, total_power, stn.capacity, total_energy)
@@ -1868,7 +1875,10 @@ class SuperPower():
         return self.gen_pct
 
     def getLy(self):
-        return self.ly, self.x
+        try:
+            return self.ly, self.x
+        except:
+            return None, None
 
     def getStnOuts(self):
         return self.stn_outs, self.stn_tech, self.stn_size, self.stn_pows, self.stn_grid, self.stn_path
@@ -1876,6 +1886,11 @@ class SuperPower():
     def getStnTech(self):
         return self.stn_outs, self.stn_tech
 
+    def getStnPows(self):
+        return self.stn_outs, self.stn_pows
+
+    def getVisual(self):
+        return self.model.getVisual()
 
 class FinancialSummary:
     def __init__(self, name, technology, capacity, generation, cf, capital_cost, lcoe_real,
@@ -2191,10 +2206,15 @@ class ProgressModel(QtGui.QDialog):
         super(ProgressModel, self).__init__()
         self.plots = plots
         self.model = SuperPower(stations, self.plots, False, year=year, selected=selected, status=status)
+        self._active = False
+        self.power_summary = []
         self.model.show_progress = show_progress
         self.progressbar = QtGui.QProgressBar()
         self.progressbar.setMinimum(1)
-        self.progressbar.setMaximum(len(self.model.stations))
+        try:
+            self.progressbar.setMaximum(len(self.model.selected))
+        except:
+            self.progressbar.setMaximum(len(self.model.stations))
         self.button = QtGui.QPushButton('Start')
         self.button.clicked.connect(self.handleButton)
         self.progress_stn = QtGui.QLabel('Note: Solar Thermal Stations take a while to process')
@@ -2205,8 +2225,6 @@ class ProgressModel(QtGui.QDialog):
         self.setLayout(main_layout)
         self.setWindowTitle('SIREN - Power Model Progress')
         self.resize(250, 30)
-        self._active = False
-        self.power_summary = []
 
     def handleButton(self):
         if not self._active:
@@ -2229,17 +2247,20 @@ class ProgressModel(QtGui.QDialog):
 
     def getPowerLoop(self):
         self.model.all_done = False
+        to_do = []
         for st in range(len(self.model.stations)):
-            if st < len(self.model.stations):
-                st_1 = 0
-                for st_1 in range(st + 1, len(self.model.stations)):
-                    if self.model.stations[st_1].technology == 'Rooftop PV' \
-                      and self.model.stations[st_1].scenario == 'Existing':
-                        continue
-                    if self.model.stations[st_1].technology[:6] != 'Fossil' \
-                      or self.model.plots['actual']:
-                        break
-                self.progress_stn.setText('Processing ' + self.model.stations[st_1].name)
+            if self.model.plots['by_station']:
+                if self.model.stations[st].name not in self.model.selected:
+                    continue
+            if self.model.stations[st].technology == 'Rooftop PV' \
+              and self.model.stations[st].scenario == 'Existing':
+                continue
+            if self.model.stations[st].technology[:6] == 'Fossil' \
+              and not self.model.plots['actual']:
+                continue
+            to_do.append(st)
+        for st in to_do:
+            self.progress_stn.setText('Processing ' + self.model.stations[st].name)
             stn = self.model.stations[st]
             if stn.technology[:6] == 'Fossil' and not self.model.plots['actual']:
                 value = self.progressbar.value() + 1
@@ -2264,6 +2285,9 @@ class ProgressModel(QtGui.QDialog):
             elif self.model.plots['save_tech']:
                 self.model.stn_outs.append(stn.name)
                 self.model.stn_tech.append(stn.technology)
+            elif self.plots['visualise']:
+                self.model.stn_outs.append(stn.name)
+                self.model.stn_pows.append([])
             if stn.technology == 'Rooftop PV' and stn.scenario == 'Existing' \
               and not self.model.plots['gross_load']:
                 continue
@@ -2301,7 +2325,8 @@ class ProgressModel(QtGui.QDialog):
                     else:
                         self.model.ly[key][i] += power[i] / 1000.
                     total_power += power[i] / 1000.
-                    if self.model.plots['save_data'] or self.model.plots['financials'] or self.plots['save_detail']:
+                    if self.model.plots['save_data'] or self.model.plots['financials'] or \
+                      self.plots['save_detail'] or self.plots['visualise']:
                         self.model.stn_pows[-1].append(power[i] / 1000.)
             if total_energy > 0:
                 pt = PowerSummary(stn.name, stn.technology, total_power, stn.capacity,
@@ -2337,7 +2362,12 @@ class ProgressModel(QtGui.QDialog):
     def getStnTech(self):
         return self.model.getStnTech()
 
+    def getStnPows(self):
+        return self.model.getStnPows()
+
 class PowerModel():
+    powerExit = QtCore.pyqtSignal(str)
+
     def showGraphs(self, ydata, x):
         def shrinkKey(key):
             remove = ['Biomass', 'Community', 'Farm', 'Fixed', 'Geothermal', 'Hydro', 'Pumped',
@@ -2606,12 +2636,17 @@ class PowerModel():
          #    px.legend(bbox_to_anchor=[1., -0.15], loc='best', ncol=min((len(ly) + pc), 9),
          # prop=lbl_font)
             if (len(ydata) + pc) > 9:
-                if len(data[0]) == 2:
-                    do_in = [1, 2]
-                elif len(data[0]) == 4:
+                if len(data[0]) > 9:
+                    do_in = [1, 5, 9, 2, 6, 10, 3, 7, 11, 4, 8, 12]
+                elif len(data[0]) > 6:
+                    do_in = [1, 4, 7, 2, 5, 8, 3, 6, 9]
+                elif len(data[0]) > 4:
+                    do_in = [1, 4, 2, 5, 3, 6]
+                elif len(data[0]) > 2:
                     do_in = [1, 3, 2, 4]
                 else:
-                    do_in = [1, 5, 9, 2, 6, 10, 3, 7, 11, 4, 12, 8]
+                    do_in = [1, 2]
+                do_in = do_in[:len(data[0])]
                 for i in range(len(do_in)):
                     px = plt.subplot(p1, p2, do_in[i])
                  # Shrink current axis by 5%
@@ -3732,7 +3767,9 @@ class PowerModel():
             wb.save(data_file)
             del wb
 
-    def __init__(self, stations, show_progress=None, year=None, status=None):
+    def __init__(self, stations, show_progress=None, year=None, status=None, visualise=None):
+        self.something = visualise
+        self.something.power_signal = self
         self.status = status
         self.stations = stations
         config = ConfigParser.RawConfigParser()
@@ -3812,8 +3849,8 @@ class PowerModel():
 #       choose what power data to collect (once only)
 #
         self.plot_order = ['show_menu', 'actual', 'cumulative', 'by_station', 'adjust',
-                           'show_load', 'shortfall', 'grid_losses', 'gross_load', 'maximise',
-                           'block', 'show_pct', 'by_day', 'by_month', 'by_season',
+                           'show_load', 'shortfall', 'grid_losses', 'gross_load', 'visualise',
+                           'maximise', 'block', 'show_pct', 'by_day', 'by_month', 'by_season',
                            'by_period', 'hour', 'total', 'month', 'season', 'period',
                            'duration', 'shortfall_detail', 'summary', 'save_data', 'save_detail',
                            'save_tech', 'save_balance', 'financials']
@@ -3828,6 +3865,7 @@ class PowerModel():
                 'shortfall': 'Generation - show shortfall from Load',
                 'grid_losses': 'Generation - reduce generation by grid losses',
                 'gross_load': 'Add Existing Rooftop PV to Load (Gross Load)',
+                'visualise': 'Visualise generation',
                 'maximise': 'Maximise Plot windows',
                 'block': 'Show plots one at a time',
                 'show_pct': 'Show generation as a percentage of load',
@@ -3849,7 +3887,7 @@ class PowerModel():
                 'save_balance': 'Save Powerbalance Inputs',
                 'financials': 'Run Financial Models'}
         self.spacers = {'actual': 'Show in Plot',
-                   'maximise': 'Choose plots (all use a full year of data)',
+                   'visualise': 'Choose plots (all use a full year of data)',
                    'summary': 'Choose tables'}
         self.plots = {}
         for i in range(len(self.plot_order)):
@@ -3928,6 +3966,7 @@ class PowerModel():
             self.plots, self.load_growth, self.load_year, self.load_multiplier, self.iterations, \
               self.storage, self.discharge, self.recharge = what_plots.getValues()
             if self.plots is None:
+                self.something.power_signal = None
                 return
         self.selected = None
         if self.plots['by_station']:
@@ -3973,11 +4012,15 @@ class PowerModel():
             self.power_summary = power.power_summary
             self.gen_pct = power.getPct()
             self.ly, self.x = power.getLy()
+            if self.ly is None:
+                return
             if self.plots['save_data'] or self.plots['financials'] or self.plots['save_detail']:
                 self.stn_outs, self.stn_tech, self.stn_size, self.stn_pows, self.stn_grid, \
                   self.stn_path = power.getStnOuts()
             elif self.plots['save_tech']:
                 self.stn_outs, self.stn_tech = power.getStnTech()
+            elif self.plots['visualise']:
+                self.stn_outs, self.stn_pows = power.getStnPows()
         else:
             self.model = SuperPower(stations, self.plots, False, year=self.base_year,
                                     selected=self.selected, status=status)
@@ -3989,6 +4032,8 @@ class PowerModel():
                   self.stn_path = self.model.getStnOuts()
             elif self.plots['save_tech']:
                 self.stn_outs, self.stn_tech = self.model.getStnTech()
+            elif self.plots['visualise']:
+                self.stn_outs, self.stn_pows = self.model.getStnPows()
         self.suffix = ''
         if len(self.stations) == 1:
             self.suffix = ' - ' + self.stations[0].name
@@ -4030,13 +4075,7 @@ class PowerModel():
             show_summ = True
         else:
             show_summ = False
-      #   plot_opts = ['by_day', 'by_month', 'by_season', 'by_period', 'hour', 'total', 'month',
-       #               'season', 'period', 'duration', 'shortfall_detail']
         do_plots = True
-       #  for pl in plot_opts:
-        #     if self.plots[pl]:
-         #        do_plots = True
-          #       break
 #
 #       loop around processing plots
 #
@@ -4059,9 +4098,18 @@ class PowerModel():
                 self.initials.append('save_detail')
                 if not self.plots['save_tech']:
                     self.initials.append('save_tech')
+                if not self.plots['visualise']:
+                    self.initials.append('visualise')
             self.load_key = ''
             self.adjustby = None
             while True:
+                if self.plots['visualise'] and self.something is not None:
+                    vis2 = Visualise(self.stn_outs, self.stn_pows, self.something, year=self.base_year)
+                    vis2.setWindowModality(QtCore.Qt.WindowModal)
+                    vis2.setWindowFlags(vis2.windowFlags() |
+                                 QtCore.Qt.WindowSystemMenuHint |
+                                 QtCore.Qt.WindowMinMaxButtonsHint)
+                    vis2.exec_()
                 wrkly = {}
                 summs = {}
                 if self.load_key != '':
@@ -4120,8 +4168,6 @@ class PowerModel():
                 if self.plots['shortfall'] or self.plots['shortfall_detail'] or self.plots['save_balance']:
                     self.plots['show_load'] = True
                     self.plots['cumulative'] = True
-              #   if self.plots['save_balance']:
-               #      self.plots['show_load'] = True
                 try:
                     del wrkly['Storage']
                 except:
@@ -4319,8 +4365,7 @@ class PowerModel():
                                  self.storage, self.discharge, self.recharge, self.initials, helpfile=helpfile)
                     what_plots.exec_()
                     self.plots, self.load_growth, self.load_year, self.load_multiplier, \
-                        self.iterations, self.storage, self.discharge, self.recharge \
-                        = what_plots.getValues()
+                        self.iterations, self.storage, self.discharge, self.recharge = what_plots.getValues()
                     if self.plots is None:
                         break
                 else:
@@ -4352,6 +4397,7 @@ class PowerModel():
                          save_folder=self.scenarios, title='Financials')
                 dialog.exec_()
                 del dialog
+        self.something.power_signal = None
 
     def getValues(self):
         try:
@@ -4361,3 +4407,8 @@ class PowerModel():
 
     def getPct(self):
         return self.gen_pct
+
+    @QtCore.pyqtSlot()
+    def exit(self):
+        self.something.power_signal = None
+        return #exit()

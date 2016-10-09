@@ -315,39 +315,43 @@ class PlotWeather():
             config_file = 'SIREN.ini'
         config.read(config_file)
         self.maximise = False
-        seasons = [[], [], [], []]
-        periods = [[], []]
+        seasons = []
+        periods = []
         try:
             items = config.items('Power')
-        except:
-            seasons[0] = ['Summer', 11, 0, 1]
-            seasons[1] = ['Autumn', 2, 3, 4]
-            seasons[2] = ['Winter', 5, 6, 7]
-            seasons[3] = ['Spring', 8, 9, 10]
-            periods[0] = ['Winter', 4, 5, 6, 7, 8, 9]
-            periods[1] = ['Summer', 10, 11, 0, 1, 2, 3]
-        for item, values in items:
-            if item[:6] == 'season':
-                if item == 'season':
-                    continue
-                i = int(item[6:]) - 1
-                if i >= len(seasons):
-                    seasons.append([])
-                seasons[i] = values.split(',')
-                for j in range(1, len(seasons[i])):
-                    seasons[i][j] = int(seasons[i][j]) - 1
-            if item[:6] == 'period':
-                if item == 'period':
-                    continue
-                i = int(item[6:]) - 1
-                if i >= len(periods):
-                    periods.append([])
-                periods[i] = values.split(',')
-                for j in range(1, len(periods[i])):
-                    periods[i][j] = int(periods[i][j]) - 1
-                if item == 'maximise':
+            for item, values in items:
+                if item[:6] == 'season':
+                    if item == 'season':
+                        continue
+                    i = int(item[6:]) - 1
+                    if i >= len(seasons):
+                        seasons.append([])
+                    seasons[i] = values.split(',')
+                    for j in range(1, len(seasons[i])):
+                        seasons[i][j] = int(seasons[i][j]) - 1
+                elif item[:6] == 'period':
+                    if item == 'period':
+                        continue
+                    i = int(item[6:]) - 1
+                    if i >= len(periods):
+                        periods.append([])
+                    periods[i] = values.split(',')
+                    for j in range(1, len(periods[i])):
+                        periods[i][j] = int(periods[i][j]) - 1
+                elif item == 'maximise':
                     if values.lower() in ['true', 'on', 'yes']:
                         self.maximise = True
+        except:
+            pass
+        if len(seasons) == 0:
+            seasons = [['Summer', 11, 0, 1], ['Autumn', 2, 3, 4], ['Winter', 5, 6, 7], ['Spring', 8, 9, 10]]
+        if len(periods) == 0:
+            periods = [['Winter', 4, 5, 6, 7, 8, 9], ['Summer', 10, 11, 0, 1, 2, 3]]
+        for i in range(len(periods)):
+            for j in range(len(seasons)):
+                if periods[i][0] == seasons[j][0]:
+                    periods[i][0] += '2'
+                    break
         mth_labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
         ssn_labels = []
         for i in range(len(seasons)):

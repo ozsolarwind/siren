@@ -23,6 +23,7 @@ import csv
 import math
 import os
 import sys
+import time
 # import types
 import matplotlib
 matplotlib.use('TkAgg')
@@ -88,7 +89,27 @@ class Description(QtGui.QDialog):
         return (dialog.description())
 
 
+class Slider(QtGui.QWidget):
+    def __init__(self, loopmax=0):
+        super(Slider, self).__init__()
+        lcd = QtGui.QLCDNumber(self)
+        self.sld = QtGui.QSlider(QtCore.Qt.Horizontal, self)
+        self.sld.setMaximum(loopmax)
+        vbox = QtGui.QVBoxLayout()
+        vbox.addWidget(lcd)
+        vbox.addWidget(self.sld)
+        self.setLayout(vbox)
+        self.sld.valueChanged.connect(lcd.display)
+        self.setGeometry(300, 300, 250, 150)
+        self.setWindowTitle('Signal & slot')
+        self.show()
+
+    def setPosn(self, value):
+        self.sld.setValue(value)
+
+
 class MapView(QtGui.QGraphicsView):
+
     def __init__(self, scene, zoom=.8):
         QtGui.QGraphicsView.__init__(self, scene)
         self.zoom = zoom
@@ -115,8 +136,6 @@ class MapView(QtGui.QGraphicsView):
         self.legend_items = []
         self.legend_pos = None
         self.trace_items = []
-        self.resource_items = []
-        self.resource_range = None
 
 #        QtGui.QShortcut(QtGui.QKeySequence('t'), self, self.toggleTotal)
     def destinationxy(self, lon1, lat1, bearing, distance):
@@ -683,149 +702,8 @@ class MapView(QtGui.QGraphicsView):
             st_scn = en_scn
         return grid_path_len
 
-    def clear_Resource(self):
-        try:
-            for i in range(len(self.resource_items)):
-                self.scene().removeItem(self.resource_items[i])
-            del self.resource_items
-        except:
-            pass
-
-    def resourceGrid(self, option, resource_window=None, year=None):
-        def in_map(a_min, a_max, b_min, b_max):
-            return (a_min <= b_max) and (b_min <= a_max)
-        if option == 'hide':
-            self.clear_Resource()
-            return
-        if self.scene().resource_grid == '':
-            return
-        if year is None:
-            r_year = self.scene().base_year
-        else:
-            r_year = year
-        period, variable, steps, opacity, colours = resource_window.Results()
-        i = period.find('_')
-        if i > 0:
-            resource_file = self.scene().resource_grid.replace('$YEAR$', period[:i])
-        else:
-            resource_file = self.scene().resource_grid.replace('$YEAR$', period[:4])
-        if os.path.exists(resource_file):
-            self.clear_Resource()
-            self.resource_items = []
-            lo_valu = 99999.
-            hi_valu = 0.
-            calc_minmax = True
-            cells = []
-            if resource_file[-4:] == '.xls' or resource_file[-5:] == '.xlsx':
-                var = {}
-                workbook = xlrd.open_workbook(resource_file)
-                worksheet = workbook.sheet_by_index(0)
-                num_rows = worksheet.nrows - 1
-                num_cols = worksheet.ncols - 1
-#               get column names
-                curr_col = -1
-                while curr_col < num_cols:
-                    curr_col += 1
-                    var[worksheet.cell_value(0, curr_col)] = curr_col
-                curr_row = 1
-                if worksheet.cell_value(curr_row, var['Period']) == 'Min.' and \
-                  worksheet.cell_value(curr_row + 1, var['Period']) == 'Max.':
-                    calc_minmax = False
-                    lo_valu = worksheet.cell_value(curr_row, var[variable])
-                    hi_valu = worksheet.cell_value(curr_row + 1, var[variable])
-                    curr_row += 1
-                while curr_row < num_rows:
-                    curr_row += 1
-                    a_lat = float(worksheet.cell_value(curr_row, var['Latitude']))
-                    a_lon = float(worksheet.cell_value(curr_row, var['Longitude']))
-                    if in_map(a_lat - 0.25, a_lat + 0.25, self.scene().map_lower_right[0],
-                              self.scene().map_upper_left[0]) \
-                      and in_map(a_lon - 0.3333, a_lon + 0.3333,
-                              self.scene().map_upper_left[1], self.scene().map_lower_right[1]):
-                        try:
-                            if worksheet.cell_value(curr_row, var['Period']) == period:
-                                cells.append([float(worksheet.cell_value(curr_row, var['Latitude'])),
-                                             float(worksheet.cell_value(curr_row, var['Longitude'])),
-                                             worksheet.cell_value(curr_row, var[variable])])
-                            if calc_minmax:
-                                if worksheet.cell_value(curr_row, var[variable]) < lo_valu:
-                                    lo_valu = worksheet.cell_value(curr_row, var[variable])
-                                if worksheet.cell_value(curr_row, var[variable]) > hi_valu:
-                                    hi_valu = worksheet.cell_value(curr_row, var[variable])
-                        except:
-                            pass
-            else:
-                resource = open(resource_file)
-                things = csv.DictReader(resource)
-                for cell in things:
-                    a_lat = float(cell['Latitude'])
-                    a_lon = float(cell['Longitude'])
-                    if in_map(a_lat - 0.25, a_lat + 0.25, self.scene().map_lower_right[0],
-                              self.scene().map_upper_left[0]) \
-                      and in_map(a_lon - 0.3333, a_lon + 0.3333,
-                              self.scene().map_upper_left[1], self.scene().map_lower_right[1]):
-                        if cell['Period'] == period:
-                            cells.append(cell['Latitude'], cell['Longitude'], cell[variable])
-                        if cell[variable] < lo_valu:
-                            lo_valu = cell[variable]
-                        if cell[variable] > hi_valu:
-                            hi_valu = cell[variable]
-                resource.close()
-        else:
-            return
-        if steps > 0:
-            incr = (hi_valu - lo_valu) / steps
-        else:
-            lo_colour = []
-            hi_colour = []
-            for i in range(3):
-                lo_1 = int(colours[0][i * 2 + 1:i * 2 + 3], base=16)
-                lo_colour.append(lo_1)
-                hi_1 = int(colours[-1][i * 2 + 1:i * 2 + 3], base=16)
-                hi_colour.append(hi_1)
-        lo_per = 99999.
-        hi_per = 0.
-        lons = []
-        lon_cell = .3125
-        for cell in cells:
-            if cell[1] not in lons:
-                lons.append(cell[1])
-        if len(lons) > 1:
-            lons = sorted(lons)
-            lon_cell = (lons[1] - lons[0]) / 2.
-            del lons
-        for cell in cells:
-            p = self.mapFromLonLat(QtCore.QPointF(cell[1] - lon_cell, cell[0] + .25))
-            pe = self.mapFromLonLat(QtCore.QPointF(cell[1] + lon_cell, cell[0] + .25))
-            ps = self.mapFromLonLat(QtCore.QPointF(cell[1] - lon_cell, cell[0] - .25))
-            x_d = pe.x() - p.x()
-            y_d = ps.y() - p.y()
-            self.resource_items.append(QtGui.QGraphicsRectItem(p.x(), p.y(), x_d, y_d))
-            if steps > 0:
-                step = int(round((cell[2] - lo_valu) / incr))
-                a_colour = QtGui.QColor(colours[step])
-            else:
-                colr = []
-                pct = (cell[2] - lo_valu) / (hi_valu - lo_valu)
-                for i in range(3):
-                    colr.append(((hi_colour[i] - lo_colour[i]) * pct + lo_colour[i]) / 255.)
-                a_colour = QtGui.QColor()
-                a_colour.setRgbF(colr[0], colr[1], colr[2])
-            self.resource_items[-1].setBrush(a_colour)
-            self.resource_items[-1].setPen(a_colour)
-            self.resource_items[-1].setOpacity(opacity)
-            self.resource_items[-1].setZValue(1)
-            self.scene().addItem(self.resource_items[-1])
-            if cell[2] < lo_per:
-                lo_per = cell[2]
-            if cell[2] > hi_per:
-                hi_per = cell[2]
-        self.resource_range = [variable, period, lo_valu, hi_valu, lo_per, hi_per]
-
 
 class MainWindow(QtGui.QMainWindow):
-    mySignal = QtCore.pyqtSignal()
-
     def get_config(self):
         config = ConfigParser.RawConfigParser()
         if len(sys.argv) > 1:
@@ -1076,6 +954,11 @@ class MainWindow(QtGui.QMainWindow):
         samver.setStatusTip('Query SAM Version')
         samver.triggered.connect(self.get_SAMVer)
         powerMenu.addAction(samver)
+        self.escape = QtGui.QAction(QtGui.QIcon('cancel.png'), 'Exit Visualise', self)
+        self.escape.setStatusTip('Exit Visualise loop')
+        self.escape.triggered.connect(self.escapeLoop)
+        powerMenu.addAction(self.escape)
+        self.escape.setVisible(False)
         if self.view.scene().show_capacity:
             self.showCapacity = QtGui.QAction(QtGui.QIcon(self.check_icon), 'Capacity Circles', self)
         else:
@@ -1233,14 +1116,21 @@ class MainWindow(QtGui.QMainWindow):
                 subResource = QtGui.QAction(QtGui.QIcon('grid.png'), year, self)
                 subResource.triggered.connect(self.show_Resource)
                 subWindowMenu.addAction(subResource)
+        self.escaper = QtGui.QAction(QtGui.QIcon('cancel.png'), 'Exit Resource Loop', self)
+        self.escaper.setStatusTip('Exit Resource loop')
+        self.escaper.triggered.connect(self.escapeLoop)
+        windowMenu.addAction(self.escaper)
+        self.escaper.setVisible(False)
         windowMenu.addAction(self.showFloatLegend)
         windowMenu.addAction(self.showFloatMenu)
         windowMenu.addAction(self.showFloatStatus)
+        self.connect(QtGui.QShortcut(QtGui.QKeySequence('Ctrl+Z'), self), QtCore.SIGNAL('activated()'), self.escapeLoop)
         self.credits = None
         self.resource = None
         self.floatmenu = None
         self.floatlegend = None
         self.floatstatus = None
+        self.power_signal = None
         utilities = ['getmap', 'indexweather', 'makegrid', 'makerainfall2', 'makeweather2', 'updateswis']
         utilini = [False, True, True, False, False, True]
         utilicon = ['map.png', 'list.png', 'grid.png', 'rain.png', 'weather.png', 'list.png']
@@ -2059,9 +1949,10 @@ class MainWindow(QtGui.QMainWindow):
             except:
                 self.view.emit(SIGNAL('statusmsg'), 'No Grid line for %s' % station.name)
         elif action == run1Action:
-            power = PowerModel([station], status=self.floatstatus)
+            power = PowerModel([station], status=self.floatstatus, visualise=self)
             generated = power.getValues()
             station.generation = generated[0].generation
+            del power
             comment = 'Power plot completed for %s. %s MWh; CF %s' % (station.name,
                       '{:0,.1f}'.format(generated[0].generation),
                       '{:0.2f}'.format(generated[0].cf))
@@ -2151,10 +2042,13 @@ class MainWindow(QtGui.QMainWindow):
             self.view.emit(SIGNAL('statusmsg'), 'Edit Grid Line for ' + station.name + '. Double-click to finish')
 
     def get_Power(self):
+        self.view.scene().exitLoop = False
+        self.escape.setVisible(True)
         if self.sender().text()[:4] == 'Powe':
-            power = PowerModel(self.view.scene()._stations.stations, status=self.floatstatus)
+            power = PowerModel(self.view.scene()._stations.stations, status=self.floatstatus, visualise=self)
         else:
-            power = PowerModel(self.view.scene()._stations.stations, year=self.sender().text(), status=self.floatstatus)
+            power = PowerModel(self.view.scene()._stations.stations, year=self.sender().text(), status=self.floatstatus, visualise=self)
+        self.escape.setVisible(False)
         generated = power.getValues()
         if generated is None:
             comment = 'Power plot aborted'
@@ -2167,6 +2061,7 @@ class MainWindow(QtGui.QMainWindow):
             pct = power.getPct()
             if pct is not None:
                 comment += ' (generation meets ' + pct[2:]
+        del power
         self.view.emit(SIGNAL('statusmsg'), comment)
 
     def get_SAMVer(self):
@@ -2200,6 +2095,9 @@ class MainWindow(QtGui.QMainWindow):
         dialog.exec_()
         comment = 'Stations displayed'
         self.view.emit(SIGNAL('statusmsg'), comment)
+
+    def escapeLoop(self):
+        self.view.scene().exitLoop = True
 
     def list_Grid(self):
         if self.view.scene().cost_existing:
@@ -2394,39 +2292,27 @@ class MainWindow(QtGui.QMainWindow):
         self.view.emit(SIGNAL('statusmsg'), comment)
 
     def show_Resource(self):
-   #      if self.resource_grid == '':
-       #      return
         if self.resource is None:
             if self.sender().text()[:4] == 'Show':
                 self.resource_year = self.base_year
             else:
                 self.resource_year = str(self.sender().text())
-            self.resource = Resource(self.resource_year, self.view.scene().resource_grid)
+            self.escaper.setVisible(True)
+            self.resource = Resource(self.resource_year, self.view.scene())
             self.resource.setWindowModality(QtCore.Qt.WindowModal)
             self.resource.setWindowFlags(self.resource.windowFlags() |
                               QtCore.Qt.WindowSystemMenuHint |
                               QtCore.Qt.WindowMinMaxButtonsHint)
             self.resource.procStart.connect(self.getResource)
             self.view.emit(SIGNAL('statusmsg'), 'Resource Window opened')
-            self.resource.show()
-       #      self.resource.exec_()
+            self.resource.exec_()
 
     @QtCore.pyqtSlot(str)
     def getResource(self, text):
         if text == 'goodbye':
-          #   self.view.resourceGrid('hide')
+            self.escaper.setVisible(False)
             self.resource = None
             comment = 'Resource Window closed'
-        elif text == 'hide':
-            self.view.resourceGrid('hide')
-            comment = 'Resource variable removed'
-        elif text == 'show':
-            self.view.resourceGrid('show', self.resource, year=self.resource_year)
-            comment = 'Resource variable displayed. %s. Full Range: %s to %s; %s: %s to %s' % \
-                      (self.view.resource_range[0], '{:0.1f}'.format(self.view.resource_range[2]),
-                      '{:0.1f}'.format(self.view.resource_range[3]), self.view.resource_range[1],
-                      '{:0.1f}'.format(self.view.resource_range[4]),
-                      '{:0.1f}'.format(self.view.resource_range[5]))
         self.view.emit(SIGNAL('statusmsg'), comment)
 
     def show_FloatMenu(self):
@@ -2580,7 +2466,9 @@ class MainWindow(QtGui.QMainWindow):
             self.floatlegend.exit()
         if self.floatstatus is not None:
             self.floatstatus.exit()
-     #    event.accept()
+        if self.power_signal is not None:
+            self.power_signal.exit()
+        exit()
 
     def writeStations(self, scenario, description):
         the_scenario = str(scenario)
@@ -2772,7 +2660,8 @@ def main():
                 cur_width = mw.view.mapToScene(mw.view.width(), mw.view.height()).x() - mw.view.mapToScene(0, 0).x()
                 cur_height = mw.view.mapToScene(mw.view.width(), mw.view.height()).y() - mw.view.mapToScene(0, 0).y()
                 ctr += 1
-            mw.view.width(), mw.view.height()
+            if ctr > 0:
+                mw.view.zoomOut()
         except:
             pass
         try:

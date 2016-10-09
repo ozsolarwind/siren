@@ -204,6 +204,8 @@ You can also use TMY files such as those provided with SAM. If you have a number
 <li>SIREN allows you to visualise renewable resource attributes. This utilises a summary file to avoid having to process all the weather files covered by the map (identified by <em>resource_grid</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file). This is described in <a href="#resource">Visualising Renewable Resource Attributes</a></li>
 </ul>
 <p>You can successfully use the simulation with just the map and weather data while existing load and network data enhance it's usefulness.
+<h3>A note about hours</h3>
+<p>Due to inconsistency between power (SAM) and weather data / files, hours of the day are portrayed differently. For example, looking at the hour between midnight and 1:00AM:- in power data the hour is shown as the start of the hour, <em>00:00</em>, while for weather data it is the end of the hour, <em>01:00</em>.</p>
 <p><a href="#help">Back to top</a></p>
 <h2 id="objects">Simulation Objects</h2>
 <p>The simulation has two main objects, stations and grid lines. Stations can be saved as scenarios in either an Excel or CSV file format while grid lines are constructed during the simulation rather than being saved to a file (unless you have manually created the grid line).</p>
@@ -1268,6 +1270,10 @@ Specifics on Hydrothermal characteristics (experimental). Properties are:</p>
 <td class="none"><dfn>total</dfn></td>
 <td class="none">Display plots of the average 24 hour period for the full year</td>
 </tr>
+<tr class="none">
+<td class="none"><dfn>visualise</dfn></td>
+<td class="none">Visualise generation over the hours of the year or average monthly or annual diurnal periods</td>
+</tr>
 </table>
 <div class="experiment">
 <table border="0", class="none">
@@ -1777,6 +1783,10 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <td class="none"><img src="question.png" alt="SAM Version">&nbsp;&nbsp;SAM Version</td>
 <td class="none">Display the version of the SAM SDK used by this model (<em>[Files] sam_sdk</em> property). Details will be shown in the status line at the bottom of the main window</td>
 </tr>
+<tr class="none">
+<td class="none"><img src="cancel.png" alt="Exit Visualise loop">&nbsp;&nbsp;Exit Visualise</td>
+<td class="none">This will allow you to exit visualisation of generation</td>
+</tr>
 </table>
 </td>
 </tr>
@@ -1980,7 +1990,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 </tr>
 </table>
 <!--
-<p>Ctrl Keys: A, B, C, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, 2
+<p>Ctrl Keys: A, B, C, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Z, 2
 -->
 <p><a href="#help">Back to top</a></p>
 <h3 id="mouse">Right Mouse Click</h3>
@@ -2088,6 +2098,8 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <td class="none">Options to specify the maximum amount of excess generation in MW(h) that can be added to storage and the losses incurred in adding this to storage</td></tr>
 <tr><td class="lr"><strong>Choose plots</strong></td>
 <td class="none">Choose what plots to show. All plots are based upon the full year of data. Energy by options produce a step chart of generation for the chosen time frame; Power - daily average options produce a line graph of the average 24 hour period for the chosen time frame.</td></tr>
+<tr><td class="lr"><dfn>Visualise generation - period &amp; delay (secs)</dfn></td>
+<td class="none">This option will visualise generation by displaying variable generation circles for each station over the chosen periods (<em>visualise</em>)</td></tr>
 <tr><td class="lr"><dfn>Maximise Plot windows</dfn></td>
 <td class="none">Plots will display at maximum window size (<em>show_load</em>)</td></tr>
 <tr><td class="lr"><dfn>Show plots one at a time</dfn></td>
@@ -2136,6 +2148,24 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <p>The plots and tables are intended to assist with analysing the chosen scenario.</p>
 <h4>Plots</h4>
 <ul>
+<li><em>Visualise generation - period &amp; delay (secs)</em> will visualise generation by displaying variable generation circles for each station over the chosen periods. This option displays an additional window to control the visualisation:
+<table border="0" class="none">
+<tr><td class="top" style="width: 12%;"><dfn>Detail</dfn></td>
+<td class="none">The choices are:
+<ul>
+<li>Diurnal. Visualise average generation for each hour over the year (24 periods)</li>
+<li>Monthly. Visualise average generation for each hour for each month (12 x 24 periods)</li>
+<li>Hourly. Visualise generation for each hour of the year (8,760 hours)</li>
+</ul></td></tr>
+<tr><td class="lr"><dfn>Period</dfn></td>
+<td class="none">This row provides pulldown menus to allow you to choose a period, day and hour to visualise</td></tr>
+<tr><td class="lr"><strong>&lt;</strong></td>
+<td class="none">You can also navigate to a particular time period by dragging the slider bar. Clicking <strong>&lt;</strong> will step back one period while <strong>&gt;</strong> steps forward one period. You can also use <em>Page Down</em> and <em>Page Up</em> to step forward and back</td></tr>
+<tr><td class="lr"><dfn>Period Loop (secs)</dfn></td>
+<td class="none">You can also cause the visualisation to automatically loop through all time periods. The number field allows you to specify the delay in seconds between each period - between 0 and 10 in .2 second increments. You press the <strong>Loop</strong> button to start the loop. Press <strong>Stop</strong> (or the <em>Power -> Exit Visualise</em>, Ctrl+Z, menu option) to stop the loop.</td></tr>
+<tr><td class="bottom"><strong>Quit</strong></td>
+<td class="none">Exit the visualisation</tr>
+</table></li>
 <li><em>Energy by ...</em> options produce step plots that aggregate data into the chosen period</li>
 <li><em>Power by hour</em> option produce line plots for each hour of the year</li>
 <li><em>Power - diurnal ...</em> options produce line plots that summarise data to produce an average diurnal (daily) plot for each of the chosen periods</li>
@@ -2226,19 +2256,24 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <h3 id="resourcegrid">Resource Grids</h3>
 <p>To assist with placement of renewable energy stations SIREN can display a grid of renewable resource attributes derived from the SAM weather files. The grid can be displayed by invoking the <em>Show Resource Grid</em> (Ctrl+B) menu option. The Resource Overlay menu presented has the following fields:</p>
 <ul>
-<li><em>Weather Detail</em>. If appropriate resource files are found you'll be presented this menu option. Possible choices are:- Daily By Month (default), Hourly By Month, or Hourly By Day. With the Hourly options you'll also have additional options to navigate to a particular month and, for By Day, day</li>
-<li><em>Weather Period</em>. This pulldown menu allows you to select the desired period to display. Options are for the full year, a month of the year, a season and, in the case of Hourly Weather Detail, for an hour of the day. Beside this field is a <em>Next</em> button which allows you to &ldquo;step&rdquo; through the weather periods. You can also use <em>Page Down</em> and <em>Page Up</em> to step forward and back through the weather periods.</li>
+<li><em>Weather Detail</em>. If appropriate resource files are found you'll be presented with this menu option. Possible choices are:- <em>Daily By Month</em> (default), <em>Hourly By Month</em>, or <em>Hourly By Day</em></li>
+<li><em>Weather Period</em>. This row provides pulldown menus to allow you to choose a period, day and hour to display</li>
+<li><em>&lt;</em>. You can also navigate to a particular time period by dragging the slider bar. Clicking <strong>&lt;</strong> will step back one period while <strong>&gt;</strong> steps forward one period. You can also use <em>Page Down</em> and <em>Page Up</em> to step forward and back through the weather periods</li>
+<li><em>Period Loop (secs)</em>. You can also cause the visualisation to automatically loop through all time periods. The number field allows you to specify the delay in seconds between each period - between 0 and 10 in .2 second increments. You press the <em>Loop</em> button to start the loop. Press <em>Stop</em> (or the <em>Window -> Exit Visualise</em>, Ctrl+Z, menu option) to stop the loop</li>
 <li><em>Weather Variable</em>. This pulldown menu allows you to select the desired variable to display</li>
 <li><em>Colour Steps</em>. The grid displayed can have values grouped in to up to 10 steps. A value of 0 will give a smooth graduation rather than stepped colours</li>
 <li><em>Opacity</em>. Gives the degree of opacity of grid colours. A value of 1 is completely opaque while a value of 0 is completely transparent</li>
 <li><em>Low Colour</em> and <em>High Colour</em>. These options present a set of buttons for each weather variable. Pressing the appropriate button will allow you to alter the upper or lower colour value for each variable. The range of colours steps will be displayed beside the buttons</li>
 </ul>
-<p>Altering any field will cause the revised grid to be overlaid on the SIREN map. There are four buttons:</p>
+<p>Altering any field will cause the revised grid to be overlaid on the SIREN map. There are several buttons:</p>
 <ul>
 <li><em>Quit</em> will close the Resource Overlay menu. Any grid will continue to be displayed</li>
 <li><em>Show</em> will cause the grid to be displayed. This allows you to display the grid without changing any of the fields</li>
 <li><em>Hide</em> will hide the resource grid</li>
 <li><em>Save</em> will save modified fields. This updates the Preferences file for future executions of SIREN</li>
+<li><em>Help</em> will display the help for how to create the Resource grids</li>
+<li><em>&lt;</em> and <em>&gt;</em> (see above)</li>
+<li><em>Loop</em> (see <em>Period Loop (secs)</em> above)</li>
 </ul>
 <p>This feature utilises summary data stored in a file rather than having to process hourly data from the weather files (see <a href="#resource">Visualising Renewable Resource Attributes</a>).</p>
 <p><a href="#help">Back to top</a></p>
@@ -2415,7 +2450,7 @@ Additional rows specify power output at speeds increasing by 1 m/s</td>
 <li><em>Image File name</em>. Use this to specify the name and location for the map file. If you click on the field it will allow you to specify an alternative name and location for the file (you can't type into the field itself). If you specify a filetype it must be a suitable image format. The default format is <em>.png</em></li>
 <li><em>Properties</em>. This is a read only field that is filled in when a map is created. These properties should be copied into the <a href="#p_map">[Map]</a> Section of the Preferences file. For OpenStreetMap images the <strong>coordinates</strong> are correct while they <strong>are likely to be incorrect for MapQuest - this is a work-in-progress.</strong></li>
 </ul>
-<p>There are four buttons:</p>
+<p>There are five buttons:</p>
 <ul>
 <li><em>Quit</em> will exit the program</li>
 <li><em>Query Map</em> will calculate the size of the map and indicate the boundaries for the map</li>

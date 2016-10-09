@@ -24,6 +24,7 @@ import sys
 import time
 from PyQt4 import QtCore, QtGui
 import ConfigParser   # decode .ini file
+import xlrd
 
 import displayobject
 from editini import SaveIni
@@ -55,13 +56,12 @@ def gradient(lo, hi, steps=10):
 class Resource(QtGui.QDialog):
     procStart = QtCore.pyqtSignal(str)
 
-    def __init__(self, year=None, resource_grid=None):
+
+    def __init__(self, year=None, scene=None):
         super(Resource, self).__init__()
         self.year = year
-        self.resource_grid = resource_grid
-        self.initUI()
-
-    def initUI(self):
+        self.scene = scene
+        self.resource_items = []
         self.be_open = True
         self.colours = {'dhi': ['DHI (Diffuse)', '#717100', '#ffff00', None],
                         'dni': ['DNI (Normal)', '#734c00', '#ff5500', None],
@@ -71,6 +71,7 @@ class Resource(QtGui.QDialog):
                         'wind50': ['Wind @ 50m', '#82b2ff', '#0000b6', None]}
         self.hourly = False
         self.daily = False
+        self.ignore = False
         self.detail = ['Daily By Month']
         config = ConfigParser.RawConfigParser()
         if len(sys.argv) > 1:
@@ -109,8 +110,9 @@ class Resource(QtGui.QDialog):
                     self.map = tmap
                 except:
                     pass
+        self.seasons = []
+        self.periods = []
         try:
-            self.seasons = []
             items = config.items('Power')
             for item, values in items:
                 if item[:6] == 'season':
@@ -118,8 +120,22 @@ class Resource(QtGui.QDialog):
                         continue
                     bits = values.split(',')
                     self.seasons.append(bits[0])
+                elif item[:6] == 'period':
+                    if item == 'period':
+                        continue
+                    bits = values.split(',')
+                    self.periods.append(bits[0])
         except:
+            pass
+        if len(self.seasons) == 0:
             self.seasons = ['Summer', 'Autumn', 'Winter', 'Spring']
+        if len(self.periods) == 0:
+            self.periods = ['Winter', 'Summer']
+        for i in range(len(self.periods)):
+            for j in range(len(self.seasons)):
+                if self.periods[i] == self.seasons[j]:
+                    self.periods[i] += '2'
+                    break
         try:
             self.helpfile = config.get('Files', 'help')
         except:
@@ -157,50 +173,58 @@ class Resource(QtGui.QDialog):
                 self.restorewindows = True
         except:
             pass
-        if self.resource_grid is None:
-             # get path variables to create resource grid
-            try:
-                rf = config.get('Files', 'resource_grid')
-                self.resource_grid = rf
-            except:
-                pass
-        else:
-            yrf = self.resource_grid.replace('$YEAR$', self.year)
-            if not os.path.exists(yrf):
-                return
-            mrf = self.resource_grid.replace('$YEAR$', self.year + '-01')
-            if os.path.exists(mrf):
-                self.hourly = True
-                self.detail.append('Hourly by Month')
-            drf = self.resource_grid.replace('$YEAR$', self.year + '-01-01')
-            if os.path.exists(drf):
-                self.daily = True
-                self.detail.append('Hourly by Day')
+        yrf = self.scene.resource_grid.replace('$YEAR$', self.year)
+        if not os.path.exists(yrf):
+            return
+        mrf = self.scene.resource_grid.replace('$YEAR$', self.year + '-01')
+        if os.path.exists(mrf):
+            self.hourly = True
+            self.detail.append('Hourly by Month')
+        drf = self.scene.resource_grid.replace('$YEAR$', self.year + '-01-01')
+        if os.path.exists(drf):
+            self.daily = True
+            self.detail.append('Hourly by Day')
+        self.resource_file = ""
+        self.the_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+        self.mth_index = [0]
+        for i in range(len(self.the_days) - 1):
+            self.mth_index.append(self.mth_index[-1] + self.the_days[i] * 24)
         self.btn = []
         self.grid = QtGui.QGridLayout()
         row = 0
         self.detailCombo = QtGui.QComboBox()
-        self.skipCombo = QtGui.QComboBox()
-        self.skipdayCombo = QtGui.QComboBox()
+        self.periodCombo = QtGui.QComboBox()
+        self.dayCombo = QtGui.QComboBox()
+        self.hourCombo = QtGui.QComboBox()
         for det in self.detail:
             self.detailCombo.addItem(det)
         if len(self.detail) > 1:
             self.grid.addWidget(QtGui.QLabel('Weather Detail:'), row, 0)
             self.grid.addWidget(self.detailCombo, row, 1, 1, 2)
-            self.grid.addWidget(self.skipCombo, row, 3, 1, 2)
-            self.skipCombo.hide()
-            self.grid.addWidget(self.skipdayCombo, row, 5)
-            self.skipdayCombo.hide()
+            self.detailCombo.currentIndexChanged[str].connect(self.changeDetail)
             row += 1
         self.grid.addWidget(QtGui.QLabel('Weather Period:'), row, 0)
-        self.periodCombo = QtGui.QComboBox()
-        self.setPeriod(period)
         self.periodCombo.currentIndexChanged[str].connect(self.periodChange)
-        self.skipCombo.currentIndexChanged[str].connect(self.skip)
-        self.skipdayCombo.currentIndexChanged[str].connect(self.skipday)
         self.grid.addWidget(self.periodCombo, row, 1, 1, 2)
-        next = QtGui.QPushButton('Next', self)
-        self.grid.addWidget(next, row, 3, 1, 4)
+        self.dayCombo.currentIndexChanged[str].connect(self.periodChange)
+        self.dayCombo.hide()
+        self.grid.addWidget(self.dayCombo, row, 3, 1, 2)
+        self.hourCombo.currentIndexChanged[str].connect(self.periodChange)
+        self.hourCombo.hide()
+        self.grid.addWidget(self.hourCombo, row, 5, 1, 3)
+        row += 1
+        prev = QtGui.QPushButton('<', self)
+        width = prev.fontMetrics().boundingRect('<').width() + 10
+        prev.setMaximumWidth(width)
+        self.grid.addWidget(prev, row, 0)
+        prev.clicked.connect(self.prevClicked)
+        self.slider = QtGui.QSlider(QtCore.Qt.Horizontal)
+        self.slider.valueChanged.connect(self.slideChanged)
+        self.grid.addWidget(self.slider, row, 1, 1, 5)
+        next = QtGui.QPushButton('>', self)
+        width = next.fontMetrics().boundingRect('>').width() + 10
+        next.setMaximumWidth(width)
+        self.grid.addWidget(next, row, 7)
         next.clicked.connect(self.nextClicked)
         row += 1
         self.do_loop = False
@@ -287,7 +311,7 @@ class Resource(QtGui.QDialog):
         QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
         doit = QtGui.QPushButton('Show', self)
         self.grid.addWidget(doit, row, 1)
-        doit.clicked.connect(self.periodChange)
+        doit.clicked.connect(self.showClicked)
         hide = QtGui.QPushButton('Hide', self)
         self.grid.addWidget(hide, row, 2)
         hide.clicked.connect(self.hideClicked)
@@ -330,110 +354,160 @@ class Resource(QtGui.QDialog):
         QtGui.QShortcut(QtGui.QKeySequence('pgdown'), self, self.nextClicked)
         QtGui.QShortcut(QtGui.QKeySequence('Ctrl++'), self, self.nextClicked)
         QtGui.QShortcut(QtGui.QKeySequence('Ctrl+-'), self, self.prevClicked)
+        self.setPeriod()
+        self.resourceGrid()
         self.show()
 
     def loopChanged(self, val):
         return
 
-    def changeDetail(self, val):
+    def changeDetail(self):
         self.setPeriod()
+        self.resourceGrid()
 
     def helpClicked(self):
         dialog = displayobject.AnObject(QtGui.QDialog(), self.helpfile, title='Help', section='resource')
         dialog.exec_()
 
     def nextClicked(self):
-        if self.periodCombo.currentIndex() == (self.periodCombo.count() - 1):
-            self.periodCombo.setCurrentIndex(0)
+        if self.slider.value() == self.slider.maximum():
+            self.slider.setValue(0)
         else:
-            self.periodCombo.setCurrentIndex(self.periodCombo.currentIndex() + 1)
-        return
+            self.slider.setValue(self.slider.value() + 1)
 
     def prevClicked(self):
-        if self.periodCombo.currentIndex() == 0:
-            self.periodCombo.setCurrentIndex(self.periodCombo.count() - 1)
+        if self.slider.value() == self.slider.minimum():
+            self.slider.setValue(self.slider.maximum())
         else:
-            self.periodCombo.setCurrentIndex(self.periodCombo.currentIndex() - 1)
-        return
+            self.slider.setValue(self.slider.value() - 1)
+
+    def slideChanged(self, val):
+        self.ignore = True
+        if self.detailCombo.currentText() == 'Daily By Month':
+            self.periodCombo.setCurrentIndex(val)
+        else:
+            period = divmod(val, 24)
+            if self.detailCombo.currentText() == 'Hourly by Month':
+                self.periodCombo.setCurrentIndex(period[0])
+            elif self.detailCombo.currentText() == 'Hourly by Day':
+                for m in range(len(self.mth_index) -1, -1, -1):
+                    if val >= self.mth_index[m]:
+                        break
+                self.periodCombo.setCurrentIndex(m)
+                period = divmod(val - self.mth_index[m], 24)
+                if m != self.dayCombo.currentIndex:
+                    self.setDayItems(m)
+                self.dayCombo.setCurrentIndex(period[0])
+            self.hourCombo.setCurrentIndex(period[1])
+        self.ignore = False
+        self.resourceGrid()
 
     def loopClicked(self):
         if self.loop.text() == 'Stop':
             self.do_loop = False
+            self.scene.exitLoop = False
+            self.detailCombo.setEnabled(True)
+            self.periodCombo.setEnabled(True)
+            self.dayCombo.setEnabled(True)
+            self.hourCombo.setEnabled(True)
             self.loop.setText('Loop')
         else:
             self.do_loop = True
+            self.detailCombo.setEnabled(False)
+            self.periodCombo.setEnabled(False)
+            self.dayCombo.setEnabled(False)
+            self.hourCombo.setEnabled(False)
             self.loop.setText('Stop')
-        if self.periodCombo.currentIndex() == (self.periodCombo.count() - 1):
-            self.periodCombo.setCurrentIndex(0)
-        else:
-            self.periodCombo.setCurrentIndex(self.periodCombo.currentIndex() + 1)
+            self.periodChange()
 
-    def skip(self):
-        if self.skipCombo.currentText() == '':
+    def periodChange(self, value=None):
+        if self.ignore:
             return
-        mth = int(str(self.skipCombo.currentText())[-2:])
-        if mth == 2:
-            max_day = 28
-        elif mth in [4, 6, 9, 11]:
-            max_day = 30
+        if self.periodCombo.currentIndex() < 0:
+            per_ndx = 0
         else:
-            max_day = 31
-        self.skipdayCombo.clear()
-        for d in range(max_day):
-            self.skipdayCombo.addItem('{0:02d}'.format(d + 1))
-        if self.detailCombo.currentText() == 'Hourly by Month':
-            self.periodCombo.setCurrentIndex(self.periodCombo.findText(self.skipCombo.currentText() + '_01:00'))
+            per_ndx = self.periodCombo.currentIndex()
+        if self.detailCombo.currentText() != 'Hourly by Day' or self.dayCombo.currentIndex() < 0:
+            day_ndx = 0
+        else:
+            day_ndx = self.dayCombo.currentIndex()
+            if day_ndx > self.the_days[per_ndx] - 1:
+                day_ndx = self.the_days[per_ndx] - 1
+        if self.hourCombo.currentIndex() < 0:
+            hr_ndx = 0
+        else:
+            hr_ndx = self.hourCombo.currentIndex()
+        if self.detailCombo.currentText() == 'Daily By Month':
+            val = per_ndx
+        elif self.detailCombo.currentText() == 'Hourly by Month':
+            val = per_ndx * 24 + hr_ndx
         elif self.detailCombo.currentText() == 'Hourly by Day':
-            self.periodCombo.setCurrentIndex(self.periodCombo.findText(self.skipCombo.currentText() +
-                '-' + self.skipdayCombo.currentText() + '_01:00'))
+            val = day_ndx * 24 + self.mth_index[per_ndx] + hr_ndx
+        while val <= self.slider.maximum():
+            self.slider.setValue(val)
+            QtCore.QCoreApplication.processEvents()
+            QtCore.QCoreApplication.flush()
+            if not self.do_loop or self.scene.exitLoop:
+                break
+            val += 1
+            if val < self.slider.maximum():
+                self.slider.setValue(val)
+        if self.do_loop:
+            self.do_loop = False
+            self.detailCombo.setEnabled(True)
+            self.periodCombo.setEnabled(True)
+            self.dayCombo.setEnabled(True)
+            self.hourCombo.setEnabled(True)
+            self.loop.setText('Loop')
+            if not self.scene.exitLoop:
+                self.slider.setValue(0)
+        self.scene.exitLoop = False
 
-    def skipday(self):
-        if self.skipdayCombo.currentText() == '':
-            return
-        self.periodCombo.setCurrentIndex(self.periodCombo.findText(self.skipCombo.currentText() +
-            '-' + self.skipdayCombo.currentText() + '_01:00'))
+    def setDayItems(self, mth):
+        if self.dayCombo.count() > 0:
+            self.dayCombo.clear()
+        if mth < 0 or mth >= len(self.the_days):
+            rnge = 31
+        else:
+            rnge = self.the_days[mth]
+        for d in range(rnge):
+            self.dayCombo.addItem('{0:02d}'.format(d + 1))
 
-    def setPeriod(self, period=None):
+    def setPeriod(self):
         if self.periodCombo.count() > 0:
             self.periodCombo.clear()
-        if self.skipCombo.count() > 0:
-            self.skipCombo.clear()
-        if self.skipdayCombo.count() > 0:
-            self.skipdayCombo.clear()
+        if self.dayCombo.count() > 0:
+            self.dayCombo.clear()
+        if self.hourCombo.count() > 0:
+            self.hourCombo.clear()
         if self.detailCombo.currentText() == 'Daily By Month':
             self.periodCombo.addItem(self.year)
-            for i in range(12):
-                self.periodCombo.addItem(self.year + '-' + '{0:02d}'.format(i + 1))
+        for i in range(12):
+            self.periodCombo.addItem(self.year + '-' + '{0:02d}'.format(i + 1))
+        if self.detailCombo.currentText() == 'Daily By Month':
             for i in range(len(self.seasons)):
                 self.periodCombo.addItem(self.year + '-' + self.seasons[i])
-            if period == self.year + '-' + self.seasons[i]:
-                self.periodCombo.setCurrentIndex(self.periodCombo.count() - 1)
-            self.skipCombo.hide()
-            self.skipdayCombo.hide()
-        elif self.detailCombo.currentText() == 'Hourly by Month':
-            for i in range(12):
-                self.skipCombo.addItem(self.year + '-{0:02d}'.format(i + 1))
-                for j in range(24):
-                    self.periodCombo.addItem(self.year + '-{0:02d}'.format(i + 1) +
-                                             '_{0:02d}'.format(j + 1) + ':00')
-                if period == self.year + '-' + '{0:02d}'.format(i):
-                    self.periodCombo.setCurrentIndex(i)
-            self.skipCombo.show()
-            self.skipdayCombo.hide()
-        elif self.detailCombo.currentText() == 'Hourly by Day':
-            the_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-            for i in range(12):
-                self.skipCombo.addItem(self.year + '-{0:02d}'.format(i + 1))
-                for d in range(the_days[i]):
-                    for j in range(24):
-                        self.periodCombo.addItem(self.year + '-{0:02d}'.format(i + 1) +
-                                             '-{0:02d}'.format(d + 1) +
-                                             '_{0:02d}'.format(j + 1) + ':00')
-            self.skipCombo.show()
-           #  for d in range(31):
-            #     self.skipdayCombo.addItem('{0:02d}'.format(d + 1))
-            self.skipdayCombo.show()
+            for i in range(len(self.periods)):
+                self.periodCombo.addItem(self.year + '-' + self.periods[i])
+            self.dayCombo.hide()
+            self.hourCombo.hide()
+            self.slider.setMaximum(self.periodCombo.count() - 1)
+        else:
+            for j in range(24):
+                self.hourCombo.addItem('{0:02d}'.format(j + 1) + ':00')
+                self.hourCombo.show()
+            if self.detailCombo.currentText() == 'Hourly by Month':
+                self.slider.setMaximum(self.periodCombo.count() * 24 - 1)
+                self.dayCombo.hide()
+            elif self.detailCombo.currentText() == 'Hourly by Day':
+                self.setDayItems(0)
+                self.slider.setMaximum(365 * 24 - 1)
+                self.dayCombo.show()
+                self.dayCombo.setCurrentIndex(0)
+            self.hourCombo.show()
+            self.hourCombo.setCurrentIndex(0)
         self.periodCombo.setCurrentIndex(0)
+        self.slider.setValue(0)
 
     def stepChanged(self, val):
         value = self.palette().color(QtGui.QPalette.Window)
@@ -459,7 +533,7 @@ class Resource(QtGui.QDialog):
                          (val[0], val[1], val[2], val[3], val[0], val[1], val[2], val[3])
                     self.gradients[row - self.first_row][i].setStyleSheet(it)
                 row += 1
-        self.procStart.emit('show')
+        self.resourceGrid()
 
     @QtCore.pyqtSlot()
     def exit(self):
@@ -467,6 +541,7 @@ class Resource(QtGui.QDialog):
         self.close()
 
     def closeEvent(self, event):
+        self.clear_Resource()
         if self.restorewindows:
             updates = {}
             lines = []
@@ -482,26 +557,11 @@ class Resource(QtGui.QDialog):
     def quitClicked(self):
         self.close()
 
-    def periodChange(self):
-        if self.periodCombo.currentText() == '':
-            return
-        if not self.do_loop:
-            self.procStart.emit('show')
-            return
-        if self.periodCombo.currentIndex() < (self.periodCombo.count() - 1):
-            self.procStart.emit('show')
-            QtCore.QCoreApplication.processEvents()
-            QtCore.QCoreApplication.flush()
-            time.sleep(self.loopSpin.value())
-            self.periodCombo.setCurrentIndex(self.periodCombo.currentIndex() + 1)
-            return
-        self.do_loop = False
-        self.loop.setText('Loop')
-        self.periodCombo.setCurrentIndex(0)
-
+    def showClicked(self):
+        self.resourceGrid()
 
     def hideClicked(self):
-        self.procStart.emit('hide')
+        self.clear_Resource()
 
     def saveClicked(self):
         updates = {}
@@ -518,16 +578,8 @@ class Resource(QtGui.QDialog):
         updates['View'] = view_lines
         SaveIni(updates)
 
-    def Results(self):
-        for key in self.colours:
-            if self.colours[key][0] == self.whatCombo.currentText():
-                colours = self.colours[key][3]
-                break
-        return str(self.periodCombo.currentText()), str(self.whatCombo.currentText()), \
-               self.stepSpin.value(), self.opacitySpin.value(), colours
-
     def colourChanged(self):
-        sender = str(self.sender().text()).split('_')
+        sender = str(sys._getframe().f_back.f_code.co_name).split('_')
         key = sender[0]
         ndx = int(sender[1])
         if self.colours[key][ndx] != '':
@@ -542,3 +594,160 @@ class Resource(QtGui.QDialog):
                     self.btn[i].setStyleSheet('QPushButton {background-color: %s; color: %s;}' % (col.name(), col.name()))
                     break
             self.stepChanged('a')
+
+    def clear_Resource(self):
+        try:
+            for i in range(len(self.resource_items)):
+                self.scene.removeItem(self.resource_items[i])
+            del self.resource_items
+        except:
+            pass
+
+    def resourceGrid(self):
+        def in_map(a_min, a_max, b_min, b_max):
+            return (a_min <= b_max) and (b_min <= a_max)
+        self.clear_Resource()
+        for key in self.colours:
+            if self.colours[key][0] == self.whatCombo.currentText():
+                colours = self.colours[key][3]
+                break
+        period = str(self.periodCombo.currentText())
+        if self.detailCombo.currentText() == 'Daily By Month':
+            pass
+        else:
+            if self.detailCombo.currentText() == 'Hourly by Day':
+                period += '-' + str(self.dayCombo.currentText())
+            period += '_' + str(self.hourCombo.currentText())
+        variable = str(self.whatCombo.currentText())
+        steps = self.stepSpin.value()
+        opacity = self.opacitySpin.value()
+        i = period.find('_')
+        if i > 0:
+            new_file = self.scene.resource_grid.replace('$YEAR$', period[:i])
+        else:
+            new_file = self.scene.resource_grid.replace('$YEAR$', period[:4])
+        self.resource_items = []
+        if new_file[-4:] == '.xls' or new_file[-5:] == '.xlsx':
+            if new_file != self.resource_file:
+                if os.path.exists(new_file):
+                    self.resource_var = {}
+                    workbook = xlrd.open_workbook(new_file)
+                    self.resource_worksheet = workbook.sheet_by_index(0)
+                    num_cols = self.resource_worksheet.ncols - 1
+#                   get column names
+                    curr_col = -1
+                    while curr_col < num_cols:
+                        curr_col += 1
+                        self.resource_var[self.resource_worksheet.cell_value(0, curr_col)] = curr_col
+                    self.resource_file = new_file
+                else:
+                    return
+            num_rows = self.resource_worksheet.nrows - 1
+            num_cols = self.resource_worksheet.ncols - 1
+            lo_valu = 99999.
+            hi_valu = 0.
+            calc_minmax = True
+            cells = []
+            curr_row = 1
+            if self.resource_worksheet.cell_value(curr_row, self.resource_var['Period']) == 'Min.' and \
+              self.resource_worksheet.cell_value(curr_row + 1, self.resource_var['Period']) == 'Max.':
+                calc_minmax = False
+                lo_valu = self.resource_worksheet.cell_value(curr_row, self.resource_var[variable])
+                hi_valu = self.resource_worksheet.cell_value(curr_row + 1, self.resource_var[variable])
+                curr_row += 1
+            while curr_row < num_rows:
+                curr_row += 1
+                a_lat = float(self.resource_worksheet.cell_value(curr_row, self.resource_var['Latitude']))
+                a_lon = float(self.resource_worksheet.cell_value(curr_row, self.resource_var['Longitude']))
+                if in_map(a_lat - 0.25, a_lat + 0.25, self.scene.map_lower_right[0],
+                          self.scene.map_upper_left[0]) \
+                  and in_map(a_lon - 0.3333, a_lon + 0.3333,
+                          self.scene.map_upper_left[1], self.scene.map_lower_right[1]):
+                    try:
+                        if self.resource_worksheet.cell_value(curr_row, self.resource_var['Period']) == period:
+                            cells.append([float(self.resource_worksheet.cell_value(curr_row, self.resource_var['Latitude'])),
+                                         float(self.resource_worksheet.cell_value(curr_row, self.resource_var['Longitude'])),
+                                         self.resource_worksheet.cell_value(curr_row, self.resource_var[variable])])
+                        if calc_minmax:
+                            if self.resource_worksheet.cell_value(curr_row, self.resource_var[variable]) < lo_valu:
+                                lo_valu = self.resource_worksheet.cell_value(curr_row, self.resource_var[variable])
+                            if self.resource_worksheet.cell_value(curr_row, self.resource_var[variable]) > hi_valu:
+                                hi_valu = self.resource_worksheet.cell_value(curr_row, self.resource_var[variable])
+                    except:
+                        pass
+        else:
+            if os.path.exists(new_file):
+                resource = open(new_file)
+                things = csv.DictReader(resource)
+                for cell in things:
+                    a_lat = float(cell['Latitude'])
+                    a_lon = float(cell['Longitude'])
+                    if in_map(a_lat - 0.25, a_lat + 0.25, self.scene().map_lower_right[0],
+                              self.scene().map_upper_left[0]) \
+                      and in_map(a_lon - 0.3333, a_lon + 0.3333,
+                              self.scene().map_upper_left[1], self.scene().map_lower_right[1]):
+                        if cell['Period'] == period:
+                            cells.append(cell['Latitude'], cell['Longitude'], cell[variable])
+                        if cell[variable] < lo_valu:
+                            lo_valu = cell[variable]
+                        if cell[variable] > hi_valu:
+                            hi_valu = cell[variable]
+                resource.close()
+            else:
+                return
+        if steps > 0:
+            incr = (hi_valu - lo_valu) / steps
+        else:
+            lo_colour = []
+            hi_colour = []
+            for i in range(3):
+                lo_1 = int(colours[0][i * 2 + 1:i * 2 + 3], base=16)
+                lo_colour.append(lo_1)
+                hi_1 = int(colours[-1][i * 2 + 1:i * 2 + 3], base=16)
+                hi_colour.append(hi_1)
+        lo_per = 99999.
+        hi_per = 0.
+        lons = []
+        lon_cell = .3125
+        for cell in cells:
+            if cell[1] not in lons:
+                lons.append(cell[1])
+        if len(lons) > 1:
+            lons = sorted(lons)
+            lon_cell = (lons[1] - lons[0]) / 2.
+            del lons
+        for cell in cells:
+            p = self.scene.mapFromLonLat(QtCore.QPointF(cell[1] - lon_cell, cell[0] + .25))
+            pe = self.scene.mapFromLonLat(QtCore.QPointF(cell[1] + lon_cell, cell[0] + .25))
+            ps = self.scene.mapFromLonLat(QtCore.QPointF(cell[1] - lon_cell, cell[0] - .25))
+            x_d = pe.x() - p.x()
+            y_d = ps.y() - p.y()
+            self.resource_items.append(QtGui.QGraphicsRectItem(p.x(), p.y(), x_d, y_d))
+            if steps > 0:
+                step = int(round((cell[2] - lo_valu) / incr))
+                a_colour = QtGui.QColor(colours[step])
+            else:
+                colr = []
+                pct = (cell[2] - lo_valu) / (hi_valu - lo_valu)
+                for i in range(3):
+                    colr.append(((hi_colour[i] - lo_colour[i]) * pct + lo_colour[i]) / 255.)
+                a_colour = QtGui.QColor()
+                a_colour.setRgbF(colr[0], colr[1], colr[2])
+            if cell[2] >= lo_valu:
+                if cell[2] > 0 or variable == 'temp':
+                    self.resource_items[-1].setBrush(a_colour)
+            self.resource_items[-1].setPen(a_colour)
+            self.resource_items[-1].setOpacity(opacity)
+            self.resource_items[-1].setZValue(1)
+            self.scene.addItem(self.resource_items[-1])
+            if cell[2] < lo_per:
+                lo_per = cell[2]
+            if cell[2] > hi_per:
+                hi_per = cell[2]
+        QtCore.QCoreApplication.processEvents()
+        QtCore.QCoreApplication.flush()
+        if self.do_loop and not self.scene.exitLoop:
+            if self.loopSpin.value() > 0:
+                time.sleep(self.loopSpin.value())
+    QtCore.QCoreApplication.processEvents()
+    QtCore.QCoreApplication.flush()

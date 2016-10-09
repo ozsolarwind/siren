@@ -38,43 +38,47 @@ class makeFile():
     def getLog(self):
         return self.log, self.property
 
-    def __init__(self, src_year, src_dir, wnd_dir, tgt_fil, detail='Daily By Month', rain=''):
+    def __init__(self, src_year, src_dir, wnd_dir, tgt_fil, detail='Daily By Month', rain='', nonzero='False'):
         config = ConfigParser.RawConfigParser()
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
         else:
             config_file = 'SIREN.ini'
         config.read(config_file)
-        seasons = [[], [], [], []]
-        periods = [[], []]
+        seasons = []
+        periods = []
         try:
             items = config.items('Power')
+            for item, values in items:
+                if item[:6] == 'season':
+                    if item == 'season':
+                        continue
+                    i = int(item[6:]) - 1
+                    if i >= len(seasons):
+                        seasons.append([])
+                    seasons[i] = values.split(',')
+                    for j in range(1, len(seasons[i])):
+                        seasons[i][j] = int(seasons[i][j]) - 1
+                elif item[:6] == 'period':
+                    if item == 'period':
+                        continue
+                    i = int(item[6:]) - 1
+                    if i >= len(periods):
+                        periods.append([])
+                    periods[i] = values.split(',')
+                    for j in range(1, len(periods[i])):
+                        periods[i][j] = int(periods[i][j]) - 1
         except:
-            seasons[0] = ['Summer', 11, 0, 1]
-            seasons[1] = ['Autumn', 2, 3, 4]
-            seasons[2] = ['Winter', 5, 6, 7]
-            seasons[3] = ['Spring', 8, 9, 10]
-            periods[0] = ['Winter', 4, 5, 6, 7, 8, 9]
-            periods[1] = ['Summer', 10, 11, 0, 1, 2, 3]
-        for item, values in items:
-            if item[:6] == 'season':
-                if item == 'season':
-                    continue
-                i = int(item[6:]) - 1
-                if i >= len(seasons):
-                    seasons.append([])
-                seasons[i] = values.split(',')
-                for j in range(1, len(seasons[i])):
-                    seasons[i][j] = int(seasons[i][j]) - 1
-            if item[:6] == 'period':
-                if item == 'period':
-                    continue
-                i = int(item[6:]) - 1
-                if i >= len(periods):
-                    periods.append([])
-                periods[i] = values.split(',')
-                for j in range(1, len(periods[i])):
-                    periods[i][j] = int(periods[i][j]) - 1
+            pass
+        if len(seasons) == 0:
+            seasons = [['Summer', 11, 0, 1], ['Autumn', 2, 3, 4], ['Winter', 5, 6, 7], ['Spring', 8, 9, 10]]
+        if len(periods) == 0:
+            periods = [['Winter', 4, 5, 6, 7, 8, 9], ['Summer', 10, 11, 0, 1, 2, 3]]
+        for i in range(len(periods)):
+            for j in range(len(seasons)):
+                if periods[i][0] == seasons[j][0]:
+                    periods[i][0] += '2'
+                    break
         self.log = ''
         self.property = ''
         self.src_year = src_year
@@ -85,6 +89,10 @@ class makeFile():
             self.do_rain = True
         else:
             self.do_rain = False
+        self.nonzero = True
+        if nonzero != '':
+            if nonzero[0].upper() in ('F', 'N'):
+                self.nonzero = False
         self.tgt_fil = tgt_fil
         bits = detail.split(' ')
         self.hourly = False
@@ -107,10 +115,10 @@ class makeFile():
         col_min = [[], []]
         col_max = [[], []]
         for i in range(len(the_cols)):
-            col_min[0].append(-1)
-            col_max[0].append(0)
-            col_min[1].append(-1)
-            col_max[1].append(0)
+            col_min[0].append(None)
+            col_max[0].append(0.)
+            col_min[1].append(None)
+            col_max[1].append(0.)
         the_hrs = [1, 1, 1, 24, 24, 24, 1]
         the_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
         the_hour = [0]
@@ -220,8 +228,9 @@ class makeFile():
                         mth = int(bits[mth_col]) - 1
                     for j in range(len(col)):
                         if col[j] >= 0:
-                            if col_min[1][j] < 0 or float(bits[col[j]]) < col_min[1][j]:
-                                col_min[1][j] = float(bits[col[j]])
+                            if col_min[1][j] == None or float(bits[col[j]]) < col_min[1][j]:
+                                if not self.nonzero or j == the_cols.index('Temperature') or float(bits[col[j]]) > 0:
+                                    col_min[1][j] = float(bits[col[j]])
                             if float(bits[col[j]]) > col_max[1][j]:
                                 col_max[1][j] = float(bits[col[j]])
                             valu[mth][j] += float(bits[col[j]])
@@ -286,8 +295,9 @@ class makeFile():
                     if hr < the_hour[j]:
                         mth = j - 1
                         break
-                if col_min[1][val_col] < 0 or float(bits[wnd_col]) < col_min[1][val_col]:
-                    col_min[1][val_col] = float(bits[wnd_col])
+                if col_min[1][val_col] == None or float(bits[wnd_col]) < col_min[1][val_col]:
+                    if not self.nonzero or float(bits[wnd_col]) > 0:
+                        col_min[1][val_col] = float(bits[wnd_col])
                 if float(bits[wnd_col]) > col_max[1][val_col]:
                     col_max[1][val_col] = float(bits[wnd_col])
                 valu[mth] += float(bits[wnd_col])
@@ -384,8 +394,9 @@ class makeFile():
                         if hr < the_hour[j]:
                             mth = j - 1
                             break
-                    if col_min[1][val_col] < 0 or float(bits[rain_col]) < col_min[1][val_col]:
-                        col_min[1][val_col] = float(bits[rain_col])
+                    if col_min[1][val_col] == None or float(bits[rain_col]) < col_min[1][val_col]:
+                        if not self.nonzero or float(bits[rain_col]) > 0:
+                            col_min[1][val_col] = float(bits[rain_col])
                     if float(bits[rain_col]) > col_max[1][val_col]:
                         col_max[1][val_col] = float(bits[rain_col])
                     valu[mth] += float(bits[rain_col])
@@ -462,8 +473,9 @@ class makeFile():
                                 continue
                         valu = round(value[i][j] / (the_days[i] * the_hrs[j]), 1)
                         ws.write(row, j + 3, valu)
-                        if col_min[0][j] < 0 or valu < col_min[0][j]:
-                            col_min[0][j] = valu
+                        if col_min[0][j] == None or valu < col_min[0][j]:
+                            if not self.nonzero or j == the_cols.index('Temperature') or valu > 0:
+                                col_min[0][j] = valu
                         if valu > col_max[0][j]:
                             col_max[0][j] = valu
                     row += 1
@@ -569,7 +581,10 @@ class makeFile():
                         if drop_rainfall:
                             if j == the_cols.index('Rainfall'):
                                 continue
-                        ws.write(row, j + 3, round(col_min[1][j], 1))
+                        if col_min[1][j] == None:
+                            ws.write(row, j + 3, 0.)
+                        else:
+                            ws.write(row, j + 3, round(col_min[1][j], 1))
                         ws.write(row + 1, j + 3, round(col_max[1][j], 1))
                     row += 2
                     for key in hrly_values:
@@ -629,7 +644,10 @@ class makeFile():
                         if drop_rainfall:
                             if j == the_cols.index('Rainfall'):
                                 continue
-                        ws.write(row, j + 3, round(col_min[1][j], 1))
+                        if col_min[1][j] == None:
+                            ws.write(row, j + 3, 0.)
+                        else:
+                            ws.write(row, j + 3, round(col_min[1][j], 1))
                         ws.write(row + 1, j + 3, round(col_max[1][j], 1))
                     row += 2
                     for key in daily_values:
@@ -839,6 +857,12 @@ class getParms(QtGui.QWidget):
         self.msg = QtGui.QLabel('')
         self.grid.addWidget(self.msg, row, 2, 1, 2)
         row += 1
+        self.grid.addWidget(QtGui.QLabel('Non-zero minimum:'), row, 0)
+        self.nonzero = QtGui.QCheckBox()
+        self.nonzero.setCheckState(QtCore.Qt.Unchecked)
+        self.grid.addWidget(self.nonzero, row, 1)
+        self.grid.addWidget(QtGui.QLabel('Set non-zero minimum for all but temperature'), row, 2, 1, 2)
+        row += 1
         self.grid.addWidget(QtGui.QLabel('Solar Folder:'), row, 0)
         self.source = ClickableQLabel()
         self.source.setText(self.solarfiles)
@@ -983,7 +1007,7 @@ class getParms(QtGui.QWidget):
         else:
             rain_dir = ''
         resource = makeFile(year, str(self.source.text()), str(self.wsource.text()), str(self.target.text()),
-                   str(self.detailCombo.currentText()), rain=rain_dir)
+                   str(self.detailCombo.currentText()), rain=rain_dir, nonzero=str(self.nonzero.isChecked()))
         log, prop = resource.getLog()
         self.log.setText(log)
         l = 0
@@ -1020,6 +1044,7 @@ if "__main__" == __name__:
         src_dir_r = ''
         tgt_fil = ''
         detail = ''
+        nonzero = ''
         for i in range(1, len(sys.argv)):
             if sys.argv[i][:5] == 'year=':
                 src_year = int(sys.argv[i][5:])
@@ -1035,7 +1060,9 @@ if "__main__" == __name__:
                 tgt_fil = sys.argv[i][7:]
             elif sys.argv[i][:7] == 'detail=':
                 detail = sys.argv[i][:7]
-        files = makeFile(src_year, src_dir_s, src_dir_w, tgt_fil, detail, rain=src_dir_r)
+            elif sys.argv[i][:8] == 'nonzero=':
+                nonzero = sys.argv[i][:8]
+        files = makeFile(src_year, src_dir_s, src_dir_w, tgt_fil, detail, rain=src_dir_r, nonzero=nonzero)
     else:
         ex = getParms()
         app.exec_()

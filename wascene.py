@@ -439,10 +439,8 @@ class WAScene(QtGui.QGraphicsScene):
         (shortest distance) great circle arc
         """
         radius = 6367.   # km is the radius of the Earth
-
      # convert decimal degrees to radians
         ln1, lt1, baring = map(radians, [lon1, lat1, bearing])
-
      # "reverse" haversine formula
         lat2 = asin(sin(lt1) * cos(distance / radius) +
                                 cos(lt1) * sin(distance / radius) * cos(baring))
@@ -452,6 +450,8 @@ class WAScene(QtGui.QGraphicsScene):
 
     def __init__(self):
         QtGui.QGraphicsScene.__init__(self)
+        self.exitLoop = False
+        self.loopMax = 0
         self.get_config()
         self.setBackgroundBrush(QtGui.QColor(self.colors['background']))
         if os.path.exists(self.map_file):
