@@ -33,6 +33,17 @@ from credits import fileVersion
 from senuser import getUser
 from station import Stations
 
+the_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+
+
+def the_date(year, h):
+    mm = 0
+    dy, hr = divmod(h, 24)
+    dy += 1
+    while dy > the_days[mm]:
+        dy -= the_days[mm]
+        mm += 1
+    return '%s-%s-%s %s:00' % (year, str(mm + 1).zfill(2), str(dy).zfill(2), str(hr).zfill(2))
 
 class makeFile():
 
@@ -69,7 +80,7 @@ class makeFile():
                     break
             else:
                 if new_field != 'Extracted At':
-                    self.log += 'New field:', new_field + '\n'
+                    self.log += 'New field: ' + new_field + '\n'
         changes = 0
         for new_facility in new_facilities:
             if new_facility['Extracted At'] != '':
@@ -100,7 +111,7 @@ class makeFile():
                             changes += 1
                     break
             else:
-                self.log += 'New facility', new_facility['Facility Code'] + '\n'
+                self.log += 'New facility' + new_facility['Facility Code'] + '\n'
         facile.seek(0)
         for facility in facilities:
             new_facilities = csv.DictReader(datas)
@@ -284,6 +295,7 @@ class makeLoadFile():
             else:
                 hour[ndx][-1] += load[key]
         if len(hour[1]) < 8760:
+            bit = ' (from ' + the_date(the_year, len(hour[1])) + ')'
             if wrap:
                 self.log = '. Wrapped to prior year'
                 pad = len(hour[1]) - (8760 - len(hour[0]))
@@ -293,6 +305,7 @@ class makeLoadFile():
                 self.log = '. Padded with zeroes'
                 for i in range(len(hour[1]), 8760):
                     hour[1].append(0.0)
+            self.log += bit
         if os.path.exists(tgt_fil):
             if os.path.exists(tgt_fil + '~'):
                 os.remove(tgt_fil + '~')
