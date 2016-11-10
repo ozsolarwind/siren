@@ -113,8 +113,8 @@ class MapView(QtGui.QGraphicsView):
     def __init__(self, scene, zoom=.8):
         QtGui.QGraphicsView.__init__(self, scene)
         self.zoom = zoom
-        QtGui.QShortcut(QtGui.QKeySequence('pgup'), self, self.zoomIn)
-        QtGui.QShortcut(QtGui.QKeySequence('pgdown'), self, self.zoomOut)
+        QtGui.QShortcut(QtGui.QKeySequence('pgdown'), self, self.zoomIn)
+        QtGui.QShortcut(QtGui.QKeySequence('pgup'), self, self.zoomOut)
         QtGui.QShortcut(QtGui.QKeySequence('Ctrl++'), self, self.zoomIn)
         QtGui.QShortcut(QtGui.QKeySequence('Ctrl+-'), self, self.zoomOut)
     #     self.scene = scene
