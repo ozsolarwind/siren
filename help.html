@@ -163,9 +163,9 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 <li><em>source</em> contains the Python source programs for SIREN</li>
 </ul>
 <p>When you open SIREN you will be presented with a list of SIREN Models (Preferences files). Choose the SIREN Model you want by clicking on your choice. If want to use a specific Preferences file you can open the simulation passing the alternate file name, or a folder, as a parameter, for example:</p>
-<ul class="none">
-<li><em>siren.exe SIREN_NWIS.ini</em></li>
-</ul>
+<pre>
+      siren.exe SIREN_NWIS.ini
+</pre>
 <p>If you specify a folder you will be presented with a list of SIREN Models (Preferences files) in that folder. You can either specify the folder as the full path or relative to the siren folder. Placing your models in a separate folder will make it easier to install updates to SIREN without impacting your data files.</p>
 <p>If you want to create a new Model press the <em>New Model</em> button on the start up menu. You will be presented with a small list of Properties to update to create a new Preferences file. Many of these properties relate to files and file locations as described in <a href="#setup">Setting Up</a>. It's important to ensure they're correct for the new model to open. For the file fields click on the field to navigate to the desired file or folder. At the bottom of the Create Preferences file menu you have options to Save the new file, Save the new file and edit it, or Save it and open (launch) the new model. If you specified a folder when you opened SIREN, the new model will be saved in that folder.
 <h3 id="sample">Sample SIREN Model</h3>
@@ -2460,9 +2460,9 @@ Additional rows specify power output at speeds increasing by 1 m/s</td>
 </ul>
 <p>After producing the map you should copy the contents of the <em>Properties</em> field into the <a href="#p_map">[Map]</a> Section of the Preferences file.</p>
 <p>You can also run the program on the command line. In this case the parameters are passed to the program as follows:</p>
-<ul class="none">
-<li><em>getmap.exe</em> &lt;north_latitude west_longitude south_latitude east_longitude zoom output_file_name zoom=zoom width=width height=height url=map_url&gt;</li>
-</ul>
+<pre>
+      getmap.exe &lt;north_latitude west_longitude south_latitude east_longitude zoom output_file_name zoom=zoom width=width height=height url=map_url&gt;
+</pre>
 <p>The first six parameters are positional.</p>
 <p>An output_file_name of <em>?</em> will calculate the size of the map and indicate the boundaries for the map</p>
 <h4>Map Preferences</h4>
@@ -2543,9 +2543,9 @@ Load data can also be downloaded for prior years to a filename defined by the <e
 <li><em>Help</em> Display this help</li>
 </ul>
 <p>You can also run the program on the command line. In this case the parameters are passed to the program as follows:</p>
-<ul class="none">
-<li><em>updateswis.exe</em> &lt;SIREN.ini parm1=value parm2=value&gt;</li>
-</ul>
+<pre>
+      updateswis.exe &lt;SIREN.ini parm1=value parm2=value&gt;
+</pre>
 <p>Parameters are as described above and can be passed to the program as follows. If either wrap or year is passed as a parameter load data will be obtained, otherwise facility data will be obtained.</p>
 <ul>
 <li><em>SIREN.ini</em> is the SIREN Preferences file. It is required and must be the first parameter</li>
@@ -2576,6 +2576,29 @@ NASA MERRA-2 data is a suitable source to generate data files containing all wea
 </ul>
 <h4 id="merra2">Obtaining MERRA-2 Data</h4>
 <p>MERRA-2 Data is publicly available and the following steps can be used to obtain the required data.</p>
+<p><strong></strong></p>
+<p>To access MERRA-2 data you need URS Authentication as follows:
+<ol>
+<li>
+Read <a href="https://wiki.earthdata.nasa.gov/display/HDD/Accessing+Data+With+URS+Authentication" target="_blank">Accessing Data With URS Authentication</a>
+</li>
+<li>
+Go to <a href="https://urs.earthdata.nasa.gov/" target="_blank">https://urs.earthdata.nasa.gov/</a> and register a username
+</li>
+<li>
+After registering login into your account and choose the <em>My Applications</em> menu option
+</li>
+<li>
+Click the <em>APPROVE MORE APPLICATIONS</em> button
+</li>
+<li>
+Search for <em>NASA GESDICS DATA ARCHIVE</em> and <em>APPROVE</em> that application
+</li>
+<li>
+Read <a href="https://wiki.earthdata.nasa.gov/display/HDD/Wget+with+URS+Authentication#WgetwithURSAuthentication-Step-by-stepguide" target="_blank">Wget with URS Authentication</a> to create a <em>.netrc</em> file for authentication to download the MERRA-2 files
+</li>
+</ol>
+<p><strong>Obtaining data</strong></p>
 <ol>
 <li>Enter the MERRA-2 data subset URL, <a href="http://disc.sci.gsfc.nasa.gov/daac-bin/FTPSubset2.pl" target="_blank">http://disc.sci.gsfc.nasa.gov/daac-bin/FTPSubset2.pl</a> in your browser
 <li>Within the MDISC Data Subset page choose appropriate options as follows:
@@ -2591,7 +2614,7 @@ Select Data Product from the pulldown list:
 </ol>
 </li>
 <li>Spatial Search<br/>
-Select area of interest. For the SWIS choose:<br/>
+Select area of interest. As a minimum the spatial bounding box must be at least 1.25 x 1.0. For the SWIS choose:<br/>
 <em>W: 113 N:-26 S: -37 E: 123</em><br/>
 Press <em>Update Map</em> to check geographic spread
 </li>
@@ -2622,7 +2645,7 @@ Press <em>Start Search</em>
 </ol>
 </li>
 <li>
-Follow the instruction on the resulting FTP Subset Results page
+Follow the instructions on the resulting FTP Subset Results page (Subsetted Data Download Instructions)
 <ol>
 <li>
 Save the list of URLs
@@ -2635,8 +2658,11 @@ Copy the file to the sub-folder you want the files downloaded to
 <li>Open a terminal window and navigate to the sub-folder you want the files downloaded to
 <ol>
 <li>
-Run the wget command as displayed in the FTP Subset Results page. This uses the downloaded list. You can copy and paste the command into the terminal window. The command will be something like<br/>
-<em>wget --content-disposition -i wget_...</em>
+Run the wget command as displayed in the FTP Subset Results page. This uses the downloaded list. You can copy and paste the command into the terminal window. The command will be something like
+<pre>
+wget --load-cookies ~/.urs_cookies --save-cookies ~/.urs_cookies --auth-no-challenge=on --keep-session-cookies -i ...
+</pre>
+You should use the <em>--content-disposition </em> option in your wget command to avoid <em>Filename too long</em> errors
 </li>
 </ol>
 </li>
@@ -2673,9 +2699,9 @@ Run the wget command as displayed in the FTP Subset Results page. This uses the 
 <li value="12">MERRA-2 data file not found. The program requires file name(s) to be in a specific format so either the file name doesn't match that format or the source folder is incorrect</li>
 </ol>
 <p>You can also run the program on the command line. In this case the parameters are passed to the program as follows:</p>
-<ul class="none">
-<li><em>makeweather2.exe</em> &lt;parm1=value parm2=value&gt;</li>
-</ul>
+<pre>
+      makeweather2.exe &lt;parm1=value parm2=value&gt;
+</pre>
 <p>Parameters are as described above and can be passed to the program as follows:</p>
 <ul>
 <li><em>year=</em> Year of interest</li>
@@ -2908,9 +2934,9 @@ MERRA-2 Variables
 <li value="12">MERRA-2 data file not found. The program requires file name(s) to be in a specific format so either the file name doesn't match that format or the source folder is incorrect</li>
 </ol>
 <p>You can also run the program on the command line. In this case the parameters are passed to the program as follows:</p>
-<ul class="none">
-<li><em>makerainfall2.exe</em> &lt;parm1=value parm2=value&gt;</li>
-</ul>
+<pre>
+      makerainfall2.exe &lt;parm1=value parm2=value&gt;
+</pre>
 <p>Parameters are as described above and can be passed to the program as follows:</p>
 <ul>
 <li><em>year=</em> Year of interest</li>
@@ -2980,9 +3006,9 @@ MERRA-2 Variable
 <li><em>Help</em> Display this help</li>
 </ul>
 <p>You can also run the program on the command line. In this case the parameters are passed to the program as follows:</p>
-<ul class="none">
-<li><em>indexweather.exe</em> &lt;parm1=value parm2=value&gt;</li>
-</ul>
+<pre>
+      indexweather.exe &lt;parm1=value parm2=value&gt;
+</pre>
 <p>Parameters are as described above and can be passed to the program as follows:</p>
 <ul>
 <li><em>solar=</em> Location of the solar weather files</li>
@@ -3032,9 +3058,9 @@ MERRA-2 Variable
 </ul>
 <p>After producing the file you may want to copy contents of the <em>Properties</em> field into the <a href="#p_files">[Files]</a> Section of the Preferences file.</p>
 <p>You can also run the program on the command line. In this case the parameters are passed to the program as follows:</p>
-<ul class="none">
-<li><em>makegrid.exe</em> &lt;parm1=value parm2=value&gt;</li>
-</ul>
+<pre>
+      makegrid.exe &lt;parm1=value parm2=value&gt;
+</pre>
 <p>Parameters are as described above and can be passed to the program as follows:</p>
 <ul>
 <li><em>year=</em> Year of interest</li>
@@ -3304,12 +3330,11 @@ MERRA-2 Variable
 <p>The Hydro model used in SIREN is a very simplistic model computed by multiplying station capacity by the defined capacity factor for Hydro.</p>
 <h4>Wave</h4>
 <p>The Wave model used in SIREN is (currently) a very simplistic model computed using wind speed (after Bretschneider and Sverdrup and Munk):
-<p><code>
-Wave_Height = 0.023 * 0.3048 * (Wind_Speed * 1.94384)<sup>2</sup></code>&nbsp;&nbsp;(0.3048 converts feet to metres, 1.94384 converts knots to m/s)
-<br /><code>Wave_Period = 0.45 * Wind_Speed * 1.94384
-<br />Wave_Power = Wave_Height<sup>2</sup> * Wave_Period * Efficiency of technology
-</code>
-
+<p><pre>
+     Wave_Height = 0.023 * 0.3048 * (Wind_Speed * 1.94384)<sup>2</sup></code>&nbsp;&nbsp;(0.3048 converts feet to metres, 1.94384 converts knots to m/s)
+     Wave_Period = 0.45 * Wind_Speed * 1.94384
+     Wave_Power = Wave_Height<sup>2</sup> * Wave_Period * Efficiency of technology
+</pre>
 <p>There is no constraint (such as being in water) on where Stations may be placed. The CFs are probably too high but can be reduced by capping wave height (<em>[Wave] cutout</em>) to, say, around 2.?m</p>
 <h4>Other</h4>
 <p>SIREN will also support creation of you own model to support other technologies. The approach is to execute a model formula that you create for each of the 8,760 hours of appropriate weather data to calculate the power produced for that hour. The formula can be created by referencing each of the weather data variables, any other variables you define for that technology plus normal mathematical operators (refer to <a href="https://en.wikibooks.org/wiki/Python_Programming/Basic_Math#Mathematical_Operators" target="_blank">en.wikibooks.org/wiki/Python_Programming/Basic_Math#Mathematical_Operators</a>). The weather variables recognised are: <em>dhi</em>, <em>dni</em>, <em>ghi</em>, <em>temp</em>, <em>wind</em>, and <em>wind50</em>. To achieve this you need to:
@@ -3323,14 +3348,14 @@ Wave_Height = 0.023 * 0.3048 * (Wind_Speed * 1.94384)<sup>2</sup></code>&nbsp;&n
 <li>If the technology can be regarded as dispatchable you can also add it to the <em>dispatchable</em> Property in the <a href="#p_grid">[Grid]</a> Section of the Preferences file</li>
 </ol>
 </p>The following sample defines a technology, Other1, similar to the Wave model (above but with no cutout).
-<p><code>
+<pre>
 [Other1]
-<br />area=&lt;area per MW&gt;
-<br />capital_cost&lt;Capital cost per peak MW&gt;
-<br />efficiency=&lt;technology efficiency&gt;
-<br />o_m_cost=&lt;Operations and Maintenance cost per peak MW&gt;
-<br />formula=pow(0.0070104 * ( wind * 1.94384)**2,2) * 0.45 * wind * 1.94384 * efficiency * .125
-</code></p>
+area=&lt;area per MW&gt;
+capital_cost&lt;Capital cost per peak MW&gt;
+efficiency=&lt;technology efficiency&gt;
+o_m_cost=&lt;Operations and Maintenance cost per peak MW&gt;
+formula=pow(0.0070104 * ( wind * 1.94384)**2,2) * 0.45 * wind * 1.94384 * efficiency * .125
+</pre>
 </div>
 <p><a href="#help">Back to top</a></p>
 <h2 id="acronyms">Acronyms</h2>
