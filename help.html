@@ -85,6 +85,7 @@ ul {
     padding-left: 40px;
 }
 </style>
+<title>SIREN Help</title>
 </head>
 <body>
 <h1 id="help"><img src="sen_icon32.png" alt="SIM">SIREN Help</h1>
@@ -124,7 +125,7 @@ ul {
 <ul class="none">
 <li><a href="#map">Obtaining a Suitable Map Image</a></li>
 <li><a href="#swisupd">Obtaining Current SWIS Facilities</a></li>
-<li><a href="#merra">Obtaining and Using NASA MERRA-2 Data for SAM</a></li>
+<li><a href="#merra">Obtaining and Using NASA MERRA-2 Data for SAM weather files</a></li>
 <li><a href="#index">Using other Weather Files</a></li>
 <li><a href="#resource">Visualising Renewable Resource Attributes</a></li>
 <li><a href="#sam">SAM Models used by SIREN</a></li>
@@ -150,13 +151,13 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 <h2 id="install">Installation</h2>
 <p>At present there is a packaged version of the simulation for Windows available as a self-extracting zip file from <a href="https://sourceforge.net/projects/sensiren/" target="_blank">https://sourceforge.net/projects/sensiren/</a> (the package has been created with PyInstaller). There are a number of files available:
 <ul>
-<li><em>siren_toolkit.exe</em> contains the full SIREN toolkit, It contains the contents of three other files in this list</li>
-<li><em>siren_application.exe</em> contains the packaged Windows version of the SIREN application</li>
-<li><em>siren_powerbalance.exe</em> contains the SIREN PowerBalance files. These are a set of spreadsheets used to quantify and cost dispatchable energy generation, storage and CO2 emissions. This enables you to complete a costed renewable energy scenario</li>
-<li><em>siren_sample.exe</em> contains the files and data for the sample SIREN simulation of the SWIS</li>
+<li><code>siren_toolkit.exe</code> contains the full SIREN toolkit, It contains the contents of three other files in this list</li>
+<li><code>siren_application.exe</code> contains the packaged Windows version of the SIREN application</li>
+<li><code>siren_powerbalance.exe</code> contains the SIREN PowerBalance files. These are a set of spreadsheets used to quantify and cost dispatchable energy generation, storage and CO2 emissions. This enables you to complete a costed renewable energy scenario</li>
+<li><code>siren_sample.exe</code> contains the files and data for the sample SIREN simulation of the SWIS</li>
 </ul>
 <h3 id="execute">Execution of SIREN</h3>
-<p>To execute the simulation open <em>siren.exe</em> in the upper folder, <em>siren</em>. You can easily set up a Desktop shortcut to point to the model. The package contains a number of folders with default files, some that can be replaced with your own. The location of these files are defined in a Preferences file as documented in <a href="#prefs">Preferences</a>. The default files are located in the following folders:</p>
+<p>To execute the simulation open <code>siren.exe</code> in the upper folder, <em>siren</em>. You can easily set up a Desktop shortcut to point to the model. The package contains a number of folders with default files, some that can be replaced with your own. The location of these files are defined in a Preferences file as documented in <a href="#prefs">Preferences</a>. The default files are located in the following folders:</p>
 <ul class="none">
 <li><em>siren_files</em> contains a range of files to enable operation of the simulation</li>
 <li><em>sam-sdk</em> contains a Windows version of the SAM SDK, <em>sam-sdk-2016-03-14</em></li>
@@ -198,7 +199,7 @@ You can also create additional stations, such as Rooftop PV, to be included in t
 <br>
 <strong>Note:</strong> The intention of these two files is to describe the existing fossil and renewable Stations on the electricity network</li>
 <li>Hourly load details for the electricity grid. A simple CSV file with a single column of electrical load data for the 8,760 hours in the year of interest (identified by <em>load</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file)</li>
-<li>Hourly solar and weather details for the area of interest (identified by <em>solar_files</em> and <em>wind_files</em> properties of the <a href="#p_files">[Files]</a> Section of the Preferences file). This data is in formats required for input to SAM and contains entries for the 8,760 hours in the year of interest. A SAM weather file is a text file that contains one (calendar) year's worth of data describing the solar resource, wind speed, temperature, and other weather characteristics at a particular location. The approach we have adopted is to use NASA MERRA-2 data for the desired geographic area and year to create appropriately formatted weather files. This is described in <a href="#merra">Obtaining and Using NASA MERRA-2 Data for SAM</a>. To enable more recent (part-year) data to be used it is possible to &ldquo;wrap&rdquo; the data by using the weather data for the prior year for the remaining part of the year.
+<li>Hourly solar and weather details for the area of interest (identified by <em>solar_files</em> and <em>wind_files</em> properties of the <a href="#p_files">[Files]</a> Section of the Preferences file). This data is in formats required for input to SAM and contains entries for the 8,760 hours in the year of interest. A SAM weather file is a text file that contains one (calendar) year's worth of data describing the solar resource, wind speed, temperature, and other weather characteristics at a particular location. The approach we have adopted is to use NASA MERRA-2 data for the desired geographic area and year to create appropriately formatted weather files. This is described in <a href="#merra">Obtaining and Using NASA MERRA-2 Data for SAM weather files</a>. To enable more recent (part-year) data to be used it is possible to &ldquo;wrap&rdquo; the data by using the weather data for the prior year for the remaining part of the year.
 <br>
 You can also use TMY files such as those provided with SAM. If you have a number of weather files you can create an index of these files for SIREN. This is described in <a href="#index">Using other Weather Files</a></li>
 <li>SIREN allows you to visualise renewable resource attributes. This utilises a summary file to avoid having to process all the weather files covered by the map (identified by <em>resource_grid</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file). This is described in <a href="#resource">Visualising Renewable Resource Attributes</a></li>
@@ -1952,7 +1953,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 </tr>
 <tr class="none">
 <td class="none"><img src="weather.png" alt="makeweather2">&nbsp;&nbsp;makeweather2</td>
-<td class="none">Invoke makeweather2 to create weather files for SAM (see <a href="#merra3">Produce wind and solar files</a>)</td>
+<td class="none">Invoke makeweather2 to create weather files for SAM (see <a href="#merra3">Produce wind and solar weather files</a>)</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="list.png" alt="updateswis">&nbsp;&nbsp;updateswis</td>
@@ -2434,17 +2435,17 @@ Additional rows specify power output at speeds increasing by 1 m/s</td>
 <h3 id="map">Obtaining a Suitable Map Image</h3>
 <p>Among other publicly available resources, OpenStreetMap provides a set of open map tiles (&ldquo;Slippy Map&rdquo; tiles. Refer <a href="http://wiki.openstreetmap.org/wiki/Slippy_Map" target="_blank">http://wiki.openstreetmap.org/wiki/Slippy_Map</a>) which can be stitched together into a single image. These produce a traditional map type.  A satellite map can be obtained from MapQuest (<a href="https://www.mapquestapi.com/staticmap/" target="_blank">https://www.mapquestapi.com/staticmap/</a> or you can save an image from another source. Map data copyright (&copy;) OpenStreetMap contributors CC-BY-SA <a href="http://www.openstreetmap.org/copyright" target="_blank"> http://www.openstreetmap.org/copyright</a>.</p>
 <h4>getmap</h4>
-<p><i>getmap.py</i> is a Python program that can be used to create a map image for any area of the globe. Using this program you can obtain a map from one of the two sources above. You specify:
+<p><code>getmap.py</code> is a Python program that can be used to create a map image for any area of the globe. Using this program you can obtain a map from one of the two sources above. You specify:
 <ul>
 <li>for both, the bounding coordinates for the chosen area, and a name for the file to create a suitable map image</li>
-<li>for OpenStreetMap, a zoom level and a URL template (Internet address) for the map tiles. The default value ('http://[abc].tile.openstreetmap.org/zoom/x/y.png') represents the normal OpenStreetMap tiles</li>
+<li>for OpenStreetMap, a zoom level and a URL template (Internet address) for the map tiles. The default value (<code>http://[abc].tile.openstreetmap.org/zoom/x/y.png</code>) represents the normal OpenStreetMap tiles</li>
 <li>for MapQuest, the width and height for the image file you wish to create</li>
 </ul>
-<p>You can invoke the program either by choosing <em>getmap</em> from the SIREN Tools menu or in Windows by running <em>getmap.exe</em> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to allow you to define the map/image desired. The window fields are:</p>
+<p>You can invoke the program either by choosing <em>getmap</em> from the SIREN Tools menu or in Windows by running <code>getmap.exe</code> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to allow you to define the map/image desired. The window fields are:</p>
 <ul>
 <li><em>Area of interest</em>. You specify the boundaries for the area of the world you want a map generated for. You can either use the arrows to increase or decrease each coordinate by 5 degrees or type in a value. North and South can range from -85 to +85 degrees and East and West from -180 to +180</li>
 <li><em>Map Scale (Zoom)</em>. The scale of the map can be from 0 - 1:500 million - to 11 - 1:250,000 (OpenStreetMap has zoom levels to 19, 1:1,000). You can either use the arrows to increase or decrease the level or type in a value. The program will show an approximate scale for the level chosen</li>
-<li><em>URL template</em>. The URL template for the location of the map tiles. The default value, <em>http://[abc].tile.openstreetmap.org/zoom/x/y.png</em>, is for OSM 'standard' style maps. You can override this value to specify a different source (for example, <em>http://tile.stamen.com/terrain-background/zoom/x/y.png</em> for Migurski's Terrain; US-only)</li>
+<li><em>URL template</em>. The URL template for the location of the map tiles. The default value, <code>http://[abc].tile.openstreetmap.org/zoom/x/y.png</code>, is for OSM 'standard' style maps. You can override this value to specify a different source (for example, <code>http://tile.stamen.com/terrain-background/zoom/x/y.png</code> for Migurski's Terrain; US-only)</li>
 <li><em>Image Width</em>. The width of the image to be created (for MapQuest)</li>
 <li><em>Image Height</em>. The height of the image to be created (for MapQuest)</li>
 <li><em>Image File name</em>. Use this to specify the name and location for the map file. If you click on the field it will allow you to specify an alternative name and location for the file (you can't type into the field itself). If you specify a filetype it must be a suitable image format. The default format is <em>.png</em></li>
@@ -2466,7 +2467,7 @@ Additional rows specify power output at speeds increasing by 1 m/s</td>
 <p>The first six parameters are positional.</p>
 <p>An output_file_name of <em>?</em> will calculate the size of the map and indicate the boundaries for the map</p>
 <h4>Map Preferences</h4>
-<p>Many options can be specified by a preferences file. The following properties in the <strong>[Map]</strong> Section are created by <i>getmap</i>.</p>
+<p>Many options can be specified by a preferences file. The following properties in the <strong>[Map]</strong> Section are created by <code>getmap</code>.</p>
 <table border="0", class="none">
 <tr>
 <th>Section</th>
@@ -2487,7 +2488,7 @@ Additional rows specify power output at speeds increasing by 1 m/s</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>projection</dfn></td>
-<td class="none">Map projection such as <em>EPSG:3857</em>. EPSG:3857 (WGS 84 / Popular Visualisation Pseudo-Mercator) is a Spherical Mercator projection coordinate system popularised by web services such as Google and later OpenStreetMap. It allows an area of the earth to be projected as a rectangle. This is the format created by <i>getmap</i></td>
+<td class="none">Map projection such as <em>EPSG:3857</em>. EPSG:3857 (WGS 84 / Popular Visualisation Pseudo-Mercator) is a Spherical Mercator projection coordinate system popularised by web services such as Google and later OpenStreetMap. It allows an area of the earth to be projected as a rectangle. This is the format created by <code>getmap</code></td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>lower_right</dfn></td>
@@ -2513,10 +2514,10 @@ Additional rows specify power output at speeds increasing by 1 m/s</td>
 <p>The load data for the SWIS has been obtained from <a href="http://data.wa.aemo.com.au/#load-summary" target="_blank">Load Summary</a> data available from AEMO. SIREN uses hourly load data rather than half hourly. The figures used are derived by summing the &lsquo;Operational Load (MWh)&rsquo; data for the two half hourly intervals. You can use <em>updateswis</em> to obtain the latest load data (see below). The SWIS load data is generally available mid-month for two months prior.</p>
 <p>The AEMO also publish <a href="http://data.wa.aemo.com.au/#facility-scada" target="_blank">facility SCADA data</a>.</p>
 <h4>updateswis</h4>
-<p><em>updateswis.py</em> is a Python program that can be used to access the current list of facilities (power stations) for the SWIS and to obtain recent load data.
+<p><code>updateswis.py</code> is a Python program that can be used to access the current list of facilities (power stations) for the SWIS and to obtain recent load data.
 The program will download the list of existing stations and optionally update the file SIREN uses for existing stations (<em>grid_stations</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file). To aid readability you can optionally produce an additional file, Excel or CSV, that will save the list in the same format as a SIREN scenario file.
 Load data can also be downloaded for prior years to a filename defined by the <em>load</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file.</p>
-<p>You can run <em>updateswis</em> from the SIREN Tools menu or in Windows by running <em>updateswis.exe</em> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
+<p>You can run <em>updateswis</em> from the SIREN Tools menu or in Windows by running <code>updateswis.exe</code> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
 <ul>
 <li><em>Host site</em>. The URL of the AEMO Market Data website</li>
 <li>Existing Stations (Facilities)
@@ -2558,7 +2559,7 @@ Load data can also be downloaded for prior years to a filename defined by the <e
 </ul>
 </li>
 <p><a href="#help">Back to top</a></p>
-<h3 id="merra">Obtaining and Using NASA MERRA-2 Data for SAM</h3>
+<h3 id="merra">Obtaining and Using NASA MERRA-2 Data for SAM weather files</h3>
 <h4 id="merra1">Using NASA MERRA-2 Data for input to SAM</h4>
 <p>SAM uses meteorological and solar data to model output of various renewable energy technologies.
 NASA MERRA-2 data is a suitable source to generate data files containing all weather variables required for input to SAM. It allows weather files to be created on a grid of 0.625 degree of longitude by 0.5 degree of latitude. This is approximately an area of 55 Km x 55 Km for the SWIS latitudes.</p>
@@ -2576,7 +2577,7 @@ NASA MERRA-2 data is a suitable source to generate data files containing all wea
 </ul>
 <h4 id="merra2">Obtaining MERRA-2 Data</h4>
 <p>MERRA-2 Data is publicly available and the following steps can be used to obtain the required data.</p>
-<p><strong></strong></p>
+<p><strong>Register for access</strong></p>
 <p>To access MERRA-2 data you need URS Authentication as follows:
 <ol>
 <li>
@@ -2662,15 +2663,15 @@ Run the wget command as displayed in the FTP Subset Results page. This uses the 
 <pre>
 wget --load-cookies ~/.urs_cookies --save-cookies ~/.urs_cookies --auth-no-challenge=on --keep-session-cookies -i ...
 </pre>
-You should use the <em>--content-disposition </em> option in your wget command to avoid <em>Filename too long</em> errors
+You should use the <code>--content-disposition </code> option in your wget command to avoid <em>Filename too long</em> errors
 </li>
 </ol>
 </li>
 </ol>
-<p>This process uses <em>wget</em> to download the MERRA-2 data files. Typically there is a single file for each day of interest so using wget simplifies the process of downloading them. Wget is a free network utility to retrieve files from the World Wide Web using HTTP and FTP, the two most widely used Internet protocols. There are versions available for most platforms.</p>
-<h4 id="merra3">Produce wind and solar files</h4>
+<p>This process uses <code>wget</code> to download the MERRA-2 data files. Typically there is a single file for each day of interest so using wget simplifies the process of downloading them. Wget is a free network utility to retrieve files from the World Wide Web using HTTP and FTP, the two most widely used Internet protocols. There are versions available for most platforms.</p>
+<h4 id="merra3">Produce wind and solar weather files</h4>
 <h5>makeweather2</h5>
-<p><em>makeweather2.py</em> is a Python program that can be used to produce solar and/or wind weather files for input to SAM. The program generates SMW (preferred for SAM) or CSV format solar resource files and SRW format wind resource files. These file formats have been chosen as they're easier to generate than other formats. Using the program you specify the source folder for the MERRA-2 data files, the time zone for the area of interest, a file format and target folder for the weather files. The program will generate files for each of the MERRA-2 grid squares within the chosen MERRA-2 data files or optionally for a number of latitude and longitude positions. You can invoke the program either by choosing <em>makeweather2</em> from the SIREN Tools menu or in Windows by running <em>makeweather2.exe</em> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
+<p><code>makeweather2.py</code> is a Python program that can be used to produce solar and/or wind weather files for input to SAM. The program generates SMW (preferred for SAM) or CSV format solar resource files and SRW format wind resource files. These file formats have been chosen as they're easier to generate than other formats. Using the program you specify the source folder for the MERRA-2 data files, the time zone for the area of interest, a file format and target folder for the weather files. The program will generate files for each of the MERRA-2 grid squares within the chosen MERRA-2 data files or optionally for a number of latitude and longitude positions. You can invoke the program either by choosing <em>makeweather2</em> from the SIREN Tools menu or in Windows by running <code>makeweather2.exe</code> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
 <ul>
 <li><em>Year</em>. Year of interest. The naming conventions for MERRA-2 files include the date so this defines the date range. The tool processes dates from the last day of the prior year through to the first day of the next year (ignoring 29 February)</li>
 <li><em>Wrap to prior year</em>. To enable you to use (more) recent weather data this option will indicate that weather data should wrap to the prior year. As an example, if you have downloaded MERRA-2 data up until April for the current year makeweather2 will use weather data from the prior year for May onwards to give a full year of data. The MERRA data for both years must reside in the same folder</li>
@@ -2714,7 +2715,11 @@ You should use the <em>--content-disposition </em> option in your wget command t
 <li><em>target=</em> or <em>tgtdir=</em> Location for the weather files produced</li>
 </ul>
 </p>
-<p><strong>Note:</strong> The program should also handle MERRA (version 1) data files downloaded (probably) prior to February 2016.</p>
+<p><strong>Notes:</strong>
+<ol class="none">
+<li>The program should also handle MERRA (version 1) data files downloaded (probably) prior to February 2016.</li>
+<li><code>makeweatherfiles.py</code> is a standalone version of <code>makeweather2.py</code>. It allows you to create SAM weather files  without requiring any other parts of SIREN. See <a href="makeweatherfiles.html" target="_blank">makeweatherfiles.html</a></li>
+</ol>
 <p>
 <h5 id="merra4">Wind Files</h5>
 <p>SRW format wind files are one of the formats acceptable to SAM. This format has been chosen as it's easier to generate than other formats. MERRA-2 variables from tavg1_2d_slv_Nx data files are used to create the SRW variables.</p>
@@ -2908,7 +2913,7 @@ MERRA-2 Variables
 <div class="experiment">
 <h4 id="merrar">Produce rainfall files (experimental)</h4>
 <h5>makerainfall2</h5>
-<p><em>makerainfall2.py</em> is a Python program that can be used to produce rainfall weather files. The program generates CSV format files that resembles solar resource files with a single Rainfall variable. Using the program you specify the source folder for the MERRA-2 data files, the time zone for the area of interest, a file format and target folder for the weather files. The program will generate files for each of the MERRA-2 grid squares within the chosen MERRA-2 data files or optionally for a number of latitude and longitude positions. You can invoke the program either by choosing <em>makerainfall2</em> from the SIREN Tools menu or in Windows by running <em>makerainfall2.exe</em> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
+<p><code>makerainfall2.py</code> is a Python program that can be used to produce rainfall weather files. The program generates CSV format files that resembles solar resource files with a single Rainfall variable. Using the program you specify the source folder for the MERRA-2 data files, the time zone for the area of interest, a file format and target folder for the weather files. The program will generate files for each of the MERRA-2 grid squares within the chosen MERRA-2 data files or optionally for a number of latitude and longitude positions. You can invoke the program either by choosing <em>makerainfall2</em> from the SIREN Tools menu or in Windows by running <code>makerainfall2.exe</code> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
 <ul>
 <li><em>Year</em>. Year of interest. The naming conventions for MERRA-2 files include the date so this defines the date range. The tool processes dates from the last day of the prior year through to the first day of the next year (ignoring 29 February)</li>
 <li><em>Wrap to prior year</em>. To enable you to use (more) recent weather data this option will indicate that weather data should wrap to the prior year. As an example, if you have downloaded MERRA-2 data up until April for the current year makeweather2 will use weather data from the prior year for May onwards to give a full year of data. The MERRA data for both years must reside in the same folder</li>
@@ -2987,11 +2992,11 @@ MERRA-2 Variable
 <p>The use of MERRA data for the weather files is not necessary but provides a way of obtaining (gridded) weather data for any geographic area. Any weather files suitable for SAM can be used by SIREN. <a href="https://sam.nrel.gov/weather" target="_blank">Weather Data</a> describes these file formats and <a href="https://sam.nrel.gov/content/weather-data-non-us-locations" target="_blank">Weather Data for non-U.S. Locations</a> gives some details on where non-U.S. weather data may be obtained.</p>
 <p>SIREN has two approaches for obtaining weather files:</p>
 <ol>
-<li>Having the geographic location of the file as part of the file name. This option uses file name formats of &lt;location_latitude_longitude_year&gt; and includes files created from MERRA-2 data by <em>makeweather2</em>. The location for weather files for solar and wind are defined by the <em>solar_files</em> and <em>wind_files</em> properties in the <a href="#p_files">[Files]</a> Section of the Preferences file</li>
+<li>Having the geographic location of the file as part of the file name. This option uses file name formats of &lt;location_latitude_longitude_year&gt; and includes files created from MERRA-2 data by <code>makeweather2</code>. The location for weather files for solar and wind are defined by the <em>solar_files</em> and <em>wind_files</em> properties in the <a href="#p_files">[Files]</a> Section of the Preferences file</li>
 <li>By using an index file. To use other files you need to create index files that contain the latitude, longitude and file name for each weather file, where the filename is relative to the location for the weather files. Index files for solar and wind are defined by the <em>solar_index</em> and <em>wind_index</em> properties. You can either create these files manually or use <em>indexweather</em> to create an index</li>
 </ol>
 <h5>indexweather</h5>
-<p><em>indexweather.py</em> is a Python program that can be used to create an index of solar and/or wind weather files for input to SAM. The program generates an index file that contains latitude, longitude and file name for each weather file. You can invoke the program either by choosing <em>indexweather</em> from the SIREN Tools menu or in Windows by running <em>indexweather.exe</em> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
+<p><code>indexweather.py</code> is a Python program that can be used to create an index of solar and/or wind weather files for input to SAM. The program generates an index file that contains latitude, longitude and file name for each weather file. You can invoke the program either by choosing <em>indexweather</em> from the SIREN Tools menu or in Windows by running <code>indexweather.exe</code> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
 <ul>
 <li><em>Solar files</em>. Location of solar weather files</li>
 <li><em>Solar index</em>. Name and location for solar index file</li>
@@ -3037,7 +3042,7 @@ MERRA-2 Variable
 <li>Hourly By Day. These files have hourly figures for each day. It provides hourly variances at the daily level. This is a spreadsheet for each day with a very approximate disk requirement of about 5.8Mb per cell (15Kb per day). It allows you to visualise the actual movement of weather events (sun, wind fronts) at the expense of significantly larger disk storage requirements</li>
 </ul>
 <h4>makegrid</h4>
-<p><i>makegrid.py</i> is a Python program that can be used to create the resource grid file used by SIREN. You can invoke the program in Windows by running <em>makegrid.exe</em> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to allow you to define what file to create. The window fields are:</p>
+<p><code>makegrid.py</code> is a Python program that can be used to create the resource grid file used by SIREN. You can invoke the program either by choosing <em>makegrid</em> from the SIREN Tools menu or in Windows by running <code>makegrid.exe</code> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to allow you to define what file to create. The window fields are:</p>
 <ul>
 <li><em>Year</em>. Year of interest</li>
 <li><em>Update year</em>. If this is checked changes to the year selected will be propagated to the two Folder and Resource File fields</li>
@@ -3349,12 +3354,12 @@ MERRA-2 Variable
 </ol>
 </p>The following sample defines a technology, Other1, similar to the Wave model (above but with no cutout).
 <pre>
-[Other1]
-area=&lt;area per MW&gt;
-capital_cost&lt;Capital cost per peak MW&gt;
-efficiency=&lt;technology efficiency&gt;
-o_m_cost=&lt;Operations and Maintenance cost per peak MW&gt;
-formula=pow(0.0070104 * ( wind * 1.94384)**2,2) * 0.45 * wind * 1.94384 * efficiency * .125
+     [Other1]
+     area=&lt;area per MW&gt;
+     capital_cost&lt;Capital cost per peak MW&gt;
+     efficiency=&lt;technology efficiency&gt;
+     o_m_cost=&lt;Operations and Maintenance cost per peak MW&gt;
+     formula=pow(0.0070104 * ( wind * 1.94384)**2,2) * 0.45 * wind * 1.94384 * efficiency * .125
 </pre>
 </div>
 <p><a href="#help">Back to top</a></p>

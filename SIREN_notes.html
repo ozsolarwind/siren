@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html>
-<head></head>
+<head>
+<title>SIREN Notes</title>
+</head>
 </body>
 <h2>Building SIREN from github and SourceForge</h2>
 <p>This is a brief set of clues on how to get SIREN working using the source from github and packages from SourceForge. More may be forthcoming. The SIREN help file (<a href="help.html" target="_blank">help.html</a>) is worth a read. In terms of setup refer to :-
@@ -62,15 +64,15 @@
 <tr><td>xml.etree.ElementTree</td><td>Standard</td></tr>
 </table>
 <h2 id="source">SIREN Programs</h2>
-<p>This is a list of the Python source programs for SIREN. Where there is a dependency on the os environment they programs test sys.platform. These programs are highlighted in the list with an asterisk</p>
+<p>This is a list of the Python source programs for SIREN. Where there is a dependency on the os environment the programs test <code>sys.platform</code>. These programs are highlighted in the list with an asterisk (*).</p>
 <table><tr><td><strong>Program</strong></td><td><strong>Purpose</strong></td></tr>
 <tr><td>colours.py</td><td>Display update colours for objects</td></tr>
 <tr><td>credits.py (*)</td><td>Display SIREN Credits window</td></tr>
 <tr><td>dijkstra_4.py</td><td>Find shortest path to grid and to load centre</td></tr>
-<tr><td>displayobject.py (*)</td><td>Display and object</td></tr>
+<tr><td>displayobject.py (*)</td><td>Display an object</td></tr>
 <tr><td>displaytable.py</td><td>Display a table</td></tr>
 <tr><td>editini.py (*)</td><td>Edit window for Preferences (model) file</td></tr>
-<tr><td>floatlegend.py</td><td>Display legeng window</td></tr>
+<tr><td>floatlegend.py</td><td>Display legend window</td></tr>
 <tr><td>floatmenu.py</td><td>Display menu window</td></tr>
 <tr><td>floatstatus.py</td><td>Display status window</td></tr>
 <tr><td>getmap.py</td><td>Download map tiles to create a map image</td></tr>
@@ -89,7 +91,7 @@
 <tr><td>senuser.py (*)</td><td>Obtain current userid details</td></tr>
 <tr><td>sirenicons.py</td><td>Get a technology icon</td></tr>
 <tr><td>sirenm.py (*)</td><td>Main SIREN program</td></tr>
-<tr><td>siren.py (*)</td><td>Display a menu of SIREN Models</td></tr>
+<tr><td>siren.py (*)</td><td>Display a menu of SIREN Models (invokes sirenm.py for the chosen Model)</td></tr>
 <tr><td>ssc.py (*)</td><td>Access SAM models</td></tr>
 <tr><td>station.py</td><td>Station class. Populate stations from files and scenarios</td></tr>
 <tr><td>towns.py</td><td>Town class. Populate towns from files</td></tr>

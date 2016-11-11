@@ -85,12 +85,20 @@ ul {
     padding-left: 40px;
 }
 </style>
+<title>makeweatherfiles.py</title>
 </head>
 <body>
 <h1 id="help">Help for makeweatherfiles.py</h1>
-<h2 id="merra3">Produce wind and solar files</h2>
+<h2>Preliminaries</h2>
+<p>A packaged version of <code>makeweatherfiles</code> for Windows is available as a self-extracting zip file from <a href="https://sourceforge.net/projects/sensiren/" target="_blank">https://sourceforge.net/projects/sensiren/</a> (the package has been created with PyInstaller). The file is <a href="https://sourceforge.net/projects/sensiren/files/sen_makeweatherfiles.exe/download" target="_blank">sen_makeweatherfiles.exe</a>. To use the program download and execute <code>sen_makeweatherfiles.exe</code> to copy the contents to your hard drive. It requires approximately 65Mb of space. There are three files of interest:
+<ul>
+<li><code>makeweatherfiles.exe</code> is the Windows executable
+<li><code>makeweatherfiles.html</code> is this help file
+<li><code>makeweatherfiles.py</code> is the Python source
+</ul>
+<h2 id="merra3">Produce wind and solar weather files</h2>
 <h3>makeweatherfiles</h3>
-<p><em>makeweatherfiles.py</em> is a Python program that can be used to produce solar and/or wind weather files for input to SAM. The program generates SMW (preferred for SAM) or CSV format solar resource files and SRW format wind resource files. These file formats have been chosen as they're easier to generate than other formats. Using the program you specify the source folder for the MERRA-2 data files, the time zone for the area of interest, a file format and target folder for the weather files. The program will generate files for each of the MERRA-2 grid squares within the chosen MERRA-2 data files or optionally for a number of latitude and longitude positions. You invoke the program in Windows by running <em>makeweatherfiles.exe</em> or <em>makeweatherfiles.py</em> if you have Python installed (and appropriate libraries). Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
+<p><code>makeweatherfiles.py</code> is a Python program that can be used to produce solar and/or wind weather files for input to SAM. The program generates SMW (preferred for SAM) or CSV format solar resource files and SRW format wind resource files. These file formats have been chosen as they're easier to generate than other formats. Using the program you specify the source folder for the MERRA-2 data files, the time zone for the area of interest, a file format and target folder for the weather files. The program will generate files for each of the MERRA-2 grid squares within the chosen MERRA-2 data files or optionally for a number of latitude and longitude positions. You invoke the program in Windows by running <code>makeweatherfiles.exe</code> or <code>makeweatherfiles.py</code> if you have Python installed (and appropriate libraries). Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
 <ul>
 <li><em>Year</em>. Year of interest. The naming conventions for MERRA-2 files include the date so this defines the date range. The tool processes dates from the last day of the prior year through to the first day of the next year (ignoring 29 February)</li>
 <li><em>Wrap to prior year</em>. To enable you to use (more) recent weather data this option will indicate that weather data should wrap to the prior year. As an example, if you have downloaded MERRA-2 data up until April for the current year makeweather2 will use weather data from the prior year for May onwards to give a full year of data. The MERRA data for both years must reside in the same folder</li>
@@ -120,9 +128,9 @@ ul {
 <li value="5">Error with MERRA-2 data file. If you encounter an error &ldquo;Regridder Error. File generation error: Failed to create working directory.&rdquo; you might attempt to obtain a valid copy of the file in error by entering it's URL entry from the MERRA-2 search results into your browser</li>
 </ol>
 <p>You can also run the program on the command line. In this case the parameters are passed to the program as follows:</p>
-<ul class="none">
-<li><em>makeweatherfiles.exe</em> &lt;parm1=value parm2=value&gt;</li>
-</ul>
+<pre>
+      makeweatherfiles.exe &lt;parm1=value parm2=value&gt;
+</pre>
 <p>Parameters are as described above and can be passed to the program as follows:</p>
 <ul>
 <li><em>year=</em> Year of interest</li>
@@ -320,7 +328,7 @@ MERRA-2 Variables
 <li>DHI is computed using formulae derived from the NREL DNI-GHI to DHI Calculator</li>
 </ul>
 <p><a href="#help">Back to top</a></p>
-<h2 id="merra">Obtaining and Using NASA MERRA-2 Data for SAM</h2>
+<h2 id="merra">Obtaining and Using NASA MERRA-2 Data for SAM weather files</h2>
 <h3 id="merra1">Using NASA MERRA-2 Data for input to SAM</h3>
 <p>SAM uses meteorological and solar data to model output of various renewable energy technologies.
 NASA MERRA-2 data is a suitable source to generate data files containing all weather variables required for input to SAM. It allows weather files to be created on a grid of 0.625 degree of longitude by 0.5 degree of latitude.</p>
@@ -332,6 +340,29 @@ NASA MERRA-2 data is a suitable source to generate data files containing all wea
 </ul>
 <h3 id="merra2">Obtaining MERRA-2 Data</h3>
 <p>MERRA-2 Data is publicly available and the following steps can be used to obtain the required data.</p>
+<p><strong>Register for access</strong></p>
+<p>To access MERRA-2 data you need URS Authentication as follows:
+<ol>
+<li>
+Read <a href="https://wiki.earthdata.nasa.gov/display/HDD/Accessing+Data+With+URS+Authentication" target="_blank">Accessing Data With URS Authentication</a>
+</li>
+<li>
+Go to <a href="https://urs.earthdata.nasa.gov/" target="_blank">https://urs.earthdata.nasa.gov/</a> and register a username
+</li>
+<li>
+After registering login into your account and choose the <em>My Applications</em> menu option
+</li>
+<li>
+Click the <em>APPROVE MORE APPLICATIONS</em> button
+</li>
+<li>
+Search for <em>NASA GESDICS DATA ARCHIVE</em> and <em>APPROVE</em> that application
+</li>
+<li>
+Read <a href="https://wiki.earthdata.nasa.gov/display/HDD/Wget+with+URS+Authentication#WgetwithURSAuthentication-Step-by-stepguide" target="_blank">Wget with URS Authentication</a> to create a <em>.netrc</em> file for authentication to download the MERRA-2 files
+</li>
+</ol>
+<p><strong>Obtaining data</strong></p>
 <ol>
 <li>Enter the MERRA-2 data subset URL, <a href="http://disc.sci.gsfc.nasa.gov/daac-bin/FTPSubset2.pl" target="_blank">http://disc.sci.gsfc.nasa.gov/daac-bin/FTPSubset2.pl</a> in your browser
 <li>Within the MDISC Data Subset page choose appropriate options as follows:
@@ -344,7 +375,7 @@ Select Data Product from the pulldown list:
 </ol>
 </li>
 <li>Spatial Search<br/>
-Select area of interest. For the SWIS choose:<br/>
+Select area of interest. As a minimum the spatial bounding box must be at least 1.25 x 1.0. For the SWIS choose:<br/>
 <em>W: 113 N:-26 S: -37 E: 123</em><br/>
 Press <em>Update Map</em> to check geographic spread
 </li>
@@ -371,7 +402,7 @@ Press <em>Start Search</em>
 </ol>
 </li>
 <li>
-Follow the instruction on the resulting FTP Subset Results page
+Follow the instructions on the resulting FTP Subset Results page (Subsetted Data Download Instructions)
 <ol>
 <li>
 Save the list of URLs
@@ -384,8 +415,11 @@ Copy the file to the sub-folder you want the files downloaded to
 <li>Open a terminal window and navigate to the sub-folder you want the files downloaded to
 <ol>
 <li>
-Run the wget command as displayed in the FTP Subset Results page. This uses the downloaded list. You can copy and paste the command into the terminal window. The command will be something like<br/>
-<em>wget --content-disposition -i wget_...</em>
+Run the wget command as displayed in the FTP Subset Results page. This uses the downloaded list. You can copy and paste the command into the terminal window. The command will be something like
+<pre>
+wget --load-cookies ~/.urs_cookies --save-cookies ~/.urs_cookies --auth-no-challenge=on --keep-session-cookies -i ...
+</pre>
+You should use the <em>--content-disposition </em> option in your wget command to avoid <em>Filename too long</em> errors
 </li>
 </ol>
 </li>
