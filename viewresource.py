@@ -52,6 +52,10 @@ def gradient(lo, hi, steps=10):
         colours.append(colr)
     return colours
 
+def rreplace(s, old, new, occurrence):
+    li = s.rsplit(old, occurrence)
+    return new.join(li)
+
 
 class Resource(QtGui.QDialog):
     procStart = QtCore.pyqtSignal(str)
@@ -173,14 +177,17 @@ class Resource(QtGui.QDialog):
                 self.restorewindows = True
         except:
             pass
-        yrf = self.scene.resource_grid.replace('$YEAR$', self.year)
+        yrf = rreplace(self.scene.resource_grid, '$YEAR$', self.year, 1)
+        yrf = yrf.replace('$YEAR$', self.year)
         if not os.path.exists(yrf):
             return
-        mrf = self.scene.resource_grid.replace('$YEAR$', self.year + '-01')
+        mrf = rreplace(self.scene.resource_grid, '$YEAR$', self.year + '-01', 1)
+        mrf = mrf.replace('$YEAR$', self.year)
         if os.path.exists(mrf):
             self.hourly = True
             self.detail.append('Hourly by Month')
-        drf = self.scene.resource_grid.replace('$YEAR$', self.year + '-01-01')
+        drf = rreplace(self.scene.resource_grid, '$YEAR$', self.year + '-01-01', 1)
+        drf = drf.replace('$YEAR$', self.year)
         if os.path.exists(drf):
             self.daily = True
             self.detail.append('Hourly by Day')
@@ -623,7 +630,8 @@ class Resource(QtGui.QDialog):
         opacity = self.opacitySpin.value()
         i = period.find('_')
         if i > 0:
-            new_file = self.scene.resource_grid.replace('$YEAR$', period[:i])
+            new_file = rreplace(self.scene.resource_grid, '$YEAR$', period[:i], 1)
+            new_file = new_file.replace('$YEAR$', period[:4])
         else:
             new_file = self.scene.resource_grid.replace('$YEAR$', period[:4])
         self.resource_items = []
