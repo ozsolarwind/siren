@@ -93,24 +93,26 @@ class Resource(QtGui.QDialog):
             tmap = config.get('Map', 'map_choice')
         except:
             tmap = ''
+      # get default colours
         for key in self.colours:
             try:
-                self.colours[key][1] = config.get('Map', key + '_low')
+                self.colours[key][1] = config.get('Colors', key + '_low')
             except:
                 pass
             try:
-                self.colours[key][2] = config.get('Map', key + '_high')
+                self.colours[key][2] = config.get('Colors', key + '_high')
             except:
                 pass
         if tmap != '':
+          # get this maps colours
             for key in self.colours:
                 try:
-                    self.colours[key][1] = config.get('Map' + tmap, key + '_low')
+                    self.colours[key][1] = config.get('Colors' + tmap, key + '_low')
                     self.map = tmap
                 except:
                     pass
                 try:
-                    self.colours[key][2] = config.get('Map' + tmap, key + '_high')
+                    self.colours[key][2] = config.get('Colors' + tmap, key + '_high')
                     self.map = tmap
                 except:
                     pass
@@ -586,7 +588,7 @@ class Resource(QtGui.QDialog):
         SaveIni(updates)
 
     def colourChanged(self):
-        sender = str(sys._getframe().f_back.f_code.co_name).split('_')
+        sender = str(self.sender().text()).split('_')
         key = sender[0]
         ndx = int(sender[1])
         if self.colours[key][ndx] != '':
