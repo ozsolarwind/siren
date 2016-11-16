@@ -228,7 +228,7 @@ class Grid:
                     elif item[:5] == 'grid_':
                         self.colors[item[5:]] = colour
                     elif item[:6] == 'grid2_':
-                        self.grid2_colors[item] = colour
+                        self.grid2_colors[item[6:]] = colour
             except:
                 pass
         upper_left = [0., 0.]
