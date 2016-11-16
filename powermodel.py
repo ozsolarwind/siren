@@ -662,6 +662,7 @@ class Adjustments(QtGui.QDialog):
         self.seasons = []
         self.periods = []
         self.daily = True
+        self.adjust_cap = 25
         try:
             items = config.items('Power')
             for item, values in items:
@@ -686,6 +687,8 @@ class Adjustments(QtGui.QDialog):
                 elif item == 'optimise':
                     if values[0].lower() == 'h': # hourly
                         self.daily = False
+                elif item == 'adjust_cap':
+                    self.adjust_cap = float(values)
         except:
             pass
         if len(self.seasons) == 0:
@@ -729,7 +732,7 @@ class Adjustments(QtGui.QDialog):
                 self.adjusts[key].setValue(1.)
             self.adjusts[key].setDecimals(2)
             self.adjusts[key].setSingleStep(.1)
-            self.adjusts[key].setRange(0, max(25., self.adjusts[key].value()))
+            self.adjusts[key].setRange(0, max(self.adjust_cap, self.adjusts[key].value()))
             self.skeys.append(key)
             self.grid.addWidget(QtGui.QLabel(key), ctr, 0)
             self.grid.addWidget(self.adjusts[key], ctr, 1)

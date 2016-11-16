@@ -1137,6 +1137,10 @@ Specifics on Hydrothermal characteristics (experimental). Properties are:</p>
 <td>What processing, output and plots to produce for power model processing. Properties are True or False. Power options can be changed and saved when the Power Models menu option is selected. Properties are:</p>
 <table border="0", class="none">
 <tr class="none">
+<td class="none"><dfn>adjust_cap</dfn></td>
+<td class="none">Specify the maximum multiplier to adjust generation by. The default is 25</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>actual</dfn></td>
 <td class="none">If True, generation data will be derived from actual power data rather than calculated using a SAM model</td>
 </tr>
@@ -2078,7 +2082,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <tr><td class="lr"><dfn>Generation - from chosen stations</dfn></td>
 <td class="none">Display plots for individual stations. An option to to select any number of individual stations to process. This will cause an additional menu to be presented after you press the <em>Proceed</em> button (<em>by_station</em>)</td></tr>
 <tr><td class="lr"><dfn>Generation - adjust generation</dfn></td>
-<td class="none">This option allows you to adjust the generation figures for either technologies or specific stations by a defined multiplier of between 0 and 25 times. The option multiplies the figures calculated by SAM to enable analysis of changes to the technology mix to the overall simulation result without having to modify individual station(s). See <a href="#optimise">Adjust Generation</a> (below) for further details (<em>adjust</em>)</td></tr>
+<td class="none">This option allows you to adjust the generation figures for either technologies or specific stations by a defined multiplier of between 0 and the defined adjustment cap. The cap is set by the <em>adjust_cap</em> property in the <a href="#power">[Power]</a> Section of the Preferences file; the default is 25 times. The option multiplies the figures calculated by SAM to enable analysis of changes to the technology mix to the overall simulation result without having to modify individual station(s). See <a href="#optimise">Adjust Generation</a> (below) for further details (<em>adjust</em>)</td></tr>
 <tr><td class="lr"><dfn>Generation - show Load</dfn></td>
 <td class="none">Display network load on plots (<em>show_load</em>)</td></tr>
 <tr><td class="lr"><dfn>Generation - show shortfall from Load</dfn></td>
