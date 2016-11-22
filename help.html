@@ -2721,7 +2721,13 @@ You should use the <code>--content-disposition </code> option in your wget comma
 </p>
 <p><strong>Notes:</strong>
 <ol class="none">
-<li>The program should also handle MERRA (version 1) data files downloaded (probably) prior to February 2016.</li>
+<li>The program should also handle MERRA (version 1) data files downloaded (probably) prior to February 2016</li>
+<li>The program assumes each day of data is a separate file and uses the filename to as a &ldquo;key&rdquo; to the data. It relies on:
+<ul>
+<li>The string <em>MERRA</em> being part of the filename</li>
+<li>Filenames contain <em>tavg1_2d_slv_Nx.YYYYMMDD</em> for wind and <em>tavg1_2d_rad_Nx.YYYYMMDD</em> for solar, where <em>YYYYMMDD</em> indicates the data file for that day</li>
+<li>All files of the same type (solar or wind) being in the same folder</em>
+</ul>
 <li><code>makeweatherfiles.py</code> is a standalone version of <code>makeweather2.py</code>. It allows you to create SAM weather files  without requiring any other parts of SIREN. See <a href="makeweatherfiles.html" target="_blank">makeweatherfiles.html</a></li>
 </ol>
 <p>
@@ -3051,6 +3057,7 @@ MERRA-2 Variable
 <li><em>Year</em>. Year of interest</li>
 <li><em>Update year</em>. If this is checked changes to the year selected will be propagated to the two Folder and Resource File fields</li>
 <li><em>Level of Detail</em>. Specify the resource files to be created. Values are:- Daily By Month, Hourly By Month, or Hourly By Day</li>
+<li><em>Non-zero minimum</em>. If this is checked the minimum value for all variables other than temperature will be the lowest non-zero value. For example, if this is checked solar variables will show as empty for hours outside of daylight</li>
 <li><em>Solar Folder</em>. Source folder for the solar weather files</li>
 <li><em>Wind Folder</em>. Source folder for the wind weather files</li>
 <div class="experiment">
@@ -3076,6 +3083,7 @@ MERRA-2 Variable
 <div class="experiment">
 <li><em>rain=</em> Location of the rain weather files (experimental)</li>
 </div>
+<li><em>nonzero=</em> Passing a parameter of T(rue) will create non-zero minimums; otehrwise the minimum value may be zero</li>
 <li><em>solar=</em> Location of the solar weather files</li>
 <li><em>wind=</em> Location of the wind weather files</li>
 <li><em>target=</em> or <em>tgtfil=</em> Resource grid file to be produced</li>

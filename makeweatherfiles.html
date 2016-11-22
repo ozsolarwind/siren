@@ -144,6 +144,16 @@ ul {
 </ul>
 </p>
 <p><strong>Note:</strong> The program should also handle MERRA (version 1) data files downloaded (probably) prior to February 2016.</p>
+<p><strong>Notes:</strong>
+<ol class="none">
+<li>The program should also handle MERRA (version 1) data files downloaded (probably) prior to February 2016</li>
+<li>The program assumes each day of data is a separate file and uses the filename to as a &ldquo;key&rdquo; to the data. It relies on:
+<ul>
+<li>The string <em>MERRA</em> being part of the filename</li>
+<li>Filenames contain <em>tavg1_2d_slv_Nx.YYYYMMDD</em> for wind and <em>tavg1_2d_rad_Nx.YYYYMMDD</em> for solar, where <em>YYYYMMDD</em> indicates the data file for that day</li>
+<li>All files of the same type (solar or wind) being in the same folder</em>
+</ul>
+</ol>
 <p>
 <h3 id="merra4">Wind Files</h3>
 <p>SRW format wind files are one of the formats acceptable to SAM. This format has been chosen as it's easier to generate than other formats. MERRA-2 variables from tavg1_2d_slv_Nx data files are used to create the SRW variables.</p>

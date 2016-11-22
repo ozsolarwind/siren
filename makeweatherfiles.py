@@ -317,6 +317,10 @@ def getDHI(ghi=0, dni=0, hour=0, lat=0, azimuth=0., tilt=0., reflectance=0.2):
 class makeWeather():
 
     def unZip(self, inp_file):
+        if inp_file is None:
+            self.log += 'Terminating as file not found - %s\n' % inp_file
+            self.return_code = 12
+            return None
         if inp_file[-3] == '.gz':
             if not os.path.exists(inp_file):
                 self.log += 'Terminating as file not found - %s\n' % inp_file
@@ -567,6 +571,33 @@ class makeWeather():
     def returnCode(self):
         return str(self.return_code)
 
+    def findFile(self, inp_strt, wind=True):
+        if wind:
+            for p in range(len(self.src_w_pfx)):
+                inp_file = self.src_dir_w + self.src_w_pfx[p] + inp_strt + self.src_w_sfx[p]
+                if os.path.exists(inp_file):
+                    break
+                else:
+                    if inp_file.find('MERRA300') >= 0:
+                        inp_file = inp_file.replace('MERRA300', 'MERRA301')
+                        if os.path.exists(inp_file):
+                            break
+            else:
+                return None
+        else:
+            for p in range(len(self.src_s_pfx)):
+                inp_file = self.src_dir_s + self.src_s_pfx[p] + inp_strt + self.src_s_sfx[p]
+                if os.path.exists(inp_file):
+                    break
+                else:
+                    if inp_file.find('MERRA300') >= 0:
+                        inp_file = inp_file.replace('MERRA300', 'MERRA301')
+                        if os.path.exists(inp_file):
+                            break
+            else:
+                return None
+        return inp_file
+
     def getInfo(self, inp_file):
         if not os.path.exists(inp_file):
             if inp_file.find('MERRA300') >= 0:
@@ -637,8 +668,9 @@ class makeWeather():
         elif wrap[0].lower() == 'y' or wrap[0].lower() == 't' or wrap[:2].lower() == 'on':
             self.wrap = True
         self.src_lat_lon = src_lat_lon
-        self.src_s_pfx = ''
-        self.src_s_sfx = ''
+        self.src_s_pfx = []
+        self.src_s_sfx = []
+        merra300 = False
         self.vars = {'latitude': 'lat', 'longitude': 'lon', 'ps': 'PS', 'swgnt': 'SWGNT',
                      'time': 'time', 't2m': 'T2M', 't10m': 'T10M', 't50m': 'T50M', 'u2m': 'U2M',
                      'u10m': 'U10M', 'u50m': 'U50M', 'v2m': 'V2M', 'v10m': 'V10M', 'v50m': 'V50M'}
@@ -649,18 +681,22 @@ class makeWeather():
                 if fil.find('MERRA') >= 0:
                     j = fil.find('.tavg1_2d_rad_Nx.')
                     if j > 0:
-                        self.src_s_pfx = fil[:j + 17]
-                        self.src_s_pfx = self.src_s_pfx.replace('MERRA301', 'MERRA300')
-                        self.src_s_sfx = fil[j + 17 + 8:]
-                        break
+                        if fil[:j + 17] not in self.src_s_pfx:
+                            self.src_s_pfx.append(fil[:j + 17])
+                            if self.src_s_pfx[-1].find('MERRA3') > 0:
+                                merra300 = True
+                                self.src_s_pfx[-1] = self.src_s_pfx[-1].replace('MERRA301', 'MERRA300')
+                            self.src_s_sfx.append(fil[j + 17 + 8:])
+                     #   break
             del fils
-        if self.src_s_pfx.find('MERRA300') >= 0:
+        if merra300:
             for key in self.vars.keys():
                 self.vars[key] = self.vars[key].lower()
             self.vars['latitude'] = 'latitude'
             self.vars['longitude'] = 'longitude'
-        self.src_w_pfx = ''
-        self.src_w_sfx = ''
+        self.src_w_pfx = []
+        self.src_w_sfx = []
+        merra300 = False
         if self.src_dir_w != '':
             self.src_dir_w += '/'
             fils = os.listdir(self.src_dir_w)
@@ -668,12 +704,15 @@ class makeWeather():
                 if fil.find('MERRA') >= 0:
                     j = fil.find('.tavg1_2d_slv_Nx.')
                     if j > 0:
-                        self.src_w_pfx = fil[:j + 17]
-                        self.src_w_pfx = self.src_w_pfx.replace('MERRA301', 'MERRA300')
-                        self.src_w_sfx = fil[j + 17 + 8:]
-                        break
+                        if fil[:j + 17] not in self.src_w_pfx:
+                            self.src_w_pfx.append(fil[:j + 17])
+                            if self.src_w_pfx[-1].find('MERRA3') > 0:
+                                merra300 = True
+                                self.src_w_pfx[-1] = self.src_w_pfx[-1].replace('MERRA301', 'MERRA300')
+                            self.src_w_sfx.append(fil[j + 17 + 8:])
+                     #   break
             del fils
-        if self.src_w_pfx.find('MERRA300') >= 0:
+        if merra300:
             for key in self.vars.keys():
                 self.vars[key] = self.vars[key].lower()
             self.vars['latitude'] = 'latitude'
@@ -683,21 +722,15 @@ class makeWeather():
         if info:
             inp_strt = '{0:04d}'.format(self.src_year) + '0101'
              # get variables from "wind" file
-            inp_file = self.src_dir_w + self.src_w_pfx + inp_strt + self.src_w_sfx
-            self.getInfo(inp_file)
+            self.getInfo(self.findFile(inp_strt, True))
              # get variables from "solar" file
-            inp_file = self.src_dir_s + self.src_s_pfx + inp_strt + self.src_s_sfx
-            self.getInfo(inp_file)
+            self.getInfo(self.findFile(inp_strt, False))
             return
         if self.src_zone.lower() == 'auto':
             self.auto_zone = True
             inp_strt = '{0:04d}'.format(self.src_year) + '0101'
              # get longitude from "wind" file
-            inp_file = self.src_dir_w + self.src_w_pfx + inp_strt + self.src_w_sfx
-            if not os.path.exists(inp_file):
-                if inp_file.find('MERRA300') >= 0:
-                    inp_file = inp_file.replace('MERRA300', 'MERRA301')
-            unzip_file = self.unZip(inp_file)
+            unzip_file = self.unZip(self.findFile(inp_strt, True))
             if self.return_code != 0:
                 return
             if sys.platform == 'win32' or sys.platform == 'cygwin':
@@ -766,12 +799,8 @@ class makeWeather():
             inp_strt = '{0:04d}'.format(self.src_year - 1) + '1231'
         elif self.src_zone <= 0:
             inp_strt = '{0:04d}'.format(self.src_year) + '0101'
-         # get variables from "wind" files
-        inp_file = self.src_dir_w + self.src_w_pfx + inp_strt + self.src_w_sfx
-        if not os.path.exists(inp_file):
-            if inp_file.find('MERRA300') >= 0:
-                inp_file = inp_file.replace('MERRA300', 'MERRA301')
-        self.get_data(inp_file)   # get wind data
+        # get variables from "wind" files
+        self.get_data(self.findFile(inp_strt, True))   # get wind data
         if self.return_code != 0:
             return
         if self.src_zone != 0:
@@ -813,18 +842,14 @@ class makeWeather():
                     if mt == 0 and dy == 1:
                         continue
                 for yr in range(yrs):
-                    inp_file = self.src_dir_w + self.src_w_pfx + '{0:04d}'.format(self.the_year) + \
-                               '{0:02d}'.format(mt + 1) + '{0:02d}'.format(dy) + self.src_w_sfx
-                    if os.path.exists(inp_file):
-                        break
-                    if inp_file.find('MERRA300') >= 0:
-                        inp_file = inp_file.replace('MERRA300', 'MERRA301')
-                    else:
-                        if self.wrap and self.the_year == self.src_year:
+                    inp_strt = '{0:04d}'.format(self.the_year) + '{0:02d}'.format(mt + 1) + \
+                               '{0:02d}'.format(dy)
+                    inp_file = self.findFile(inp_strt, True)
+                    if inp_file is None:
+                        if self.wrap and self.the_year == self.src_year: # check if need to go back a year
                             self.the_year = self.src_year - 1
                             self.log += 'Wrapping to prior year - %.4d-%.2d-%.2d\n' % (self.the_year, (mt + 1), dy)
                             yrs = 1
-# check if need to go back a year
                 self.get_data(inp_file)   # get wind data
                 if self.return_code != 0:
                     return
@@ -845,12 +870,7 @@ class makeWeather():
                     del self.t_2m[-1]
         elif self.src_zone < 0:
             inp_strt = '{0:04d}'.format(self.the_year + 1) + '0101'
-            inp_file = self.src_dir_w + self.src_w_pfx + \
-                       inp_strt + self.src_w_pfx
-            if not os.path.exists(inp_file):
-                if inp_file.find('MERRA300') >= 0:
-                    inp_file = inp_file.replace('MERRA300', 'MERRA301')
-            self.get_data(inp_file)
+            self.get_data(self.findFile(inp_strt, True))
             if self.return_code != 0:
                 return
             for i in range(24 + self.src_zone):   # delete last n hours
@@ -978,11 +998,7 @@ class makeWeather():
             inp_strt = '{0:04d}'.format(self.src_year - 1) + '1231'
         elif self.src_zone <= 0:
             inp_strt = '{0:04d}'.format(self.src_year) + '0101'
-        inp_file = self.src_dir_s + self.src_s_pfx + inp_strt + self.src_s_sfx
-        if not os.path.exists(inp_file):
-            if inp_file.find('MERRA300') >= 0:
-                inp_file = inp_file.replace('MERRA300', 'MERRA301')
-        self.get_rad_data(inp_file)  # get solar data
+        self.get_rad_data(self.findFile(inp_strt, False))  # get solar data
         if self.return_code != 0:
             return
         if self.src_zone != 0:
@@ -1003,18 +1019,18 @@ class makeWeather():
                 if self.src_zone <= 0:
                     if mt == 0 and dy == 1:
                         continue
+                found = False
                 for yr in range(yrs):
-                    inp_file = self.src_dir_s + self.src_s_pfx + '{0:04d}'.format(self.the_year) + \
-                               '{0:02d}'.format(mt + 1) + '{0:02d}'.format(dy) + self.src_s_sfx
-                    if os.path.exists(inp_file):
-                        break
-                    if inp_file.find('MERRA300') >= 0:
-                        inp_file = inp_file.replace('MERRA300', 'MERRA301')
-                    else:
+                    inp_strt = '{0:04d}'.format(self.the_year) + '{0:02d}'.format(mt + 1) + \
+                               '{0:02d}'.format(dy)
+                    inp_file = self.findFile(inp_strt, False)
+                    if inp_file is None:
                         if self.wrap and self.the_year == self.src_year:
                             self.the_year = self.src_year - 1
                             self.log += 'Wrapping to prior year - %.4d-%.2d-%.2d\n' % (self.the_year, (mt + 1), dy)
                             yrs = 1
+                    if found:
+                        break
                 self.get_rad_data(inp_file)  # get solar data
                 if self.return_code != 0:
                     return
@@ -1023,11 +1039,7 @@ class makeWeather():
                 del self.swgnt[-1]
         elif self.src_zone < 0:
             inp_strt = '{0:04d}'.format(self.src_year + 1) + '0101'
-            inp_file = self.src_dir_s + self.src_s_pfx + inp_strt + self.src_s_sfx
-            if not os.path.exists(inp_file):
-                if inp_file.find('MERRA300') >= 0:
-                    inp_file = inp_file.replace('MERRA300', 'MERRA301')
-            self.get_rad_data(inp_file)
+            self.get_rad_data(self.findFile(inp_strt, False))
             for i in range(24 + self.src_zone):  # delete last n hours
                 del self.swgnt[-1]
         target_dir = self.tgt_dir
