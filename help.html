@@ -2455,13 +2455,15 @@ Additional rows specify power output at speeds increasing by 1 m/s</td>
 <li><em>Image File name</em>. Use this to specify the name and location for the map file. If you click on the field it will allow you to specify an alternative name and location for the file (you can't type into the field itself). If you specify a filetype it must be a suitable image format. The default format is <em>.png</em></li>
 <li><em>Properties</em>. This is a read only field that is filled in when a map is created. These properties should be copied into the <a href="#p_map">[Map]</a> Section of the Preferences file. For OpenStreetMap images the <strong>coordinates</strong> are correct while they <strong>are likely to be incorrect for MapQuest - this is a work-in-progress.</strong></li>
 </ul>
-<p>There are five buttons:</p>
+<p>There are seven buttons:</p>
 <ul>
 <li><em>Quit</em> will exit the program</li>
-<li><em>Query Map</em> will calculate the size of the map and indicate the boundaries for the map</li>
+<li><em>Query Map</em> will calculate the size of the map and indicate the boundaries for the map on the world view. The size of the boundary area is dependent on the map scale (zoom)</li>
 <li><em>Get Map</em> will produce the map. It downloads map tiles from OpenStreetMap and stitches them into a single image file at the location specified. It will update the Properties field with the valuables to be added into the Preferences file. If you are downloading a map with many tiles this may take some time so <strong>please be patient</strong></li>
 <li><em>MapQuest</em> will produce a map from MapQuest. It issues a request to MapQuest for a static map with the coordinates and image properties you specify. The coordinates for the image (map) should contain your specified area but the exact bounding coordinates are likely to be different - this is a work-in-progress</li>
 <li><em>Help</em> Display this help</li>
+<li><em>Save View</em> Save the view of the world with the chosen boundaries highlighted</li>
+<li><em>Many</em> This will allow input of coordinates for a number of areas. You enter name (optional), upper latitude, west (left) longitude, lower latutude and east longitude separated by commas for each area of interest. This will then update the world view highlighting all areas on the map. Note: At present you cannot download maps for each area (this could be changed if their is demand for this minor feature)</li>
 </ul>
 <p>After producing the map you should copy the contents of the <em>Properties</em> field into the <a href="#p_map">[Map]</a> Section of the Preferences file.</p>
 <p>You can also run the program on the command line. In this case the parameters are passed to the program as follows:</p>

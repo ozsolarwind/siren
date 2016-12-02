@@ -35,6 +35,57 @@ scale = {0: '1:500 million', 1: '1:250 million', 2: '1:150 million', 3: '1:70 mi
          17: '1:4,000', 18: '1:2,000', 19: '1:1,000'}
 
 
+class GetMany(QtGui.QDialog):
+    def __init__(self, parent=None):
+        super(GetMany, self).__init__(parent)
+        layout = QtGui.QVBoxLayout(self)
+        layout.addWidget(QtGui.QLabel('Enter Coordinates'))
+        self.text = QtGui.QPlainTextEdit()
+        self.text.setPlainText('Enter list of coordinates separated by spaces or commas. west lat.,' \
+                               + ' north lon., east lat., south lon. ...')
+        layout.addWidget(self.text)
+         # OK and Cancel buttons
+        buttons = QtGui.QDialogButtonBox(
+            QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel,
+            QtCore.Qt.Horizontal, self)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+        self.setWindowTitle('SIREN getmap (' + fileVersion() + ") - List of Coordinates")
+
+    def list(self):
+        coords = str(self.text.toPlainText())
+        if coords != '':
+            if coords.find(' ') >= 0:
+                if coords.find(',') < 0:
+                    coords = coords.replace(' ', ',')
+                else:
+                    coords = coords.replace(' ', '')
+            coords = coords.replace('\n', '')
+            bits = coords.split(',')
+            grids = []
+            c = 4
+            for i in range(len(bits)):
+                if bits[i].lstrip('-').replace('.','',1).isdigit():
+                    if c >= 3:
+                        grids.append([])
+                        c = -1
+                    c += 1
+                    try:
+                        grids[-1].append(float(bits[i]))
+                    except:
+                        grids[-1].append(0.)
+            return grids
+        return None
+
+     # static method to create the dialog and return
+    @staticmethod
+    def getList(parent=None):
+        dialog = GetMany(parent)
+        result = dialog.exec_()
+        return (dialog.list())
+
+
 class retrieveMap():
 
     def numTiles(self, z):
@@ -295,8 +346,10 @@ class getMap(QtGui.QWidget):
         self.world = False
         if os.path.exists('world1.jpg'):
             self.world = 'world1.jpg'
+            a_nl = ''
         elif os.path.exists('world.jpg'):
-            self.world = 'world1.jpg'
+            self.world = 'world.jpg'
+            a_nl = '\n'
         if self.world:
             self.do_world = True
             self.wmap = QtGui.QLabel()
@@ -384,8 +437,16 @@ class getMap(QtGui.QWidget):
         help.clicked.connect(self.helpClicked)
         QtGui.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
         note = QtCore.QString('Map data ' + unichr(169) + ' OpenStreetMap contributors CC-BY-SA ' +
-               '(http://www.openstreetmap.org/copyright)')
-        self.grid.addWidget(QtGui.QLabel(note), 15, 0, 1, 6)
+               a_nl + '(http://www.openstreetmap.org/copyright)')
+        self.grid.addWidget(QtGui.QLabel(note), 15, 0, 1, 3)
+        many = QtGui.QPushButton('Many', self)
+        many.setMaximumWidth(wdth)
+        self.grid.addWidget(many, 15, 4)
+        many.clicked.connect(self.manyClicked)
+        saveView = QtGui.QPushButton('Save View', self)
+        saveView.setMaximumWidth(wdth)
+        self.grid.addWidget(saveView, 15, 3)
+        saveView.clicked.connect(self.saveViewClicked)
         frame = QtGui.QFrame()
         frame.setLayout(self.grid)
         self.scroll = QtGui.QScrollArea()
@@ -452,6 +513,40 @@ class getMap(QtGui.QWidget):
             painter.drawRect(x, y, w, h)
             painter.end()
             self.wmap.setPixmap(QtGui.QPixmap.fromImage(world))
+
+    def manyClicked(self):
+        if self.do_world:
+            grids = GetMany.getList()
+            if grids is None:
+                return
+            world = QtGui.QImage(self.world)
+            painter = QtGui.QPainter()
+            painter.begin(world)
+            for g in range(len(grids)):
+                mapp = retrieveMap(grids[g][0], grids[g][1], grids[g][2], grids[g][3], '?',
+                       self.zoomSpin.value(), url=str(self.urltemplate.text()))
+                coords = mapp.getCoords()
+                x, y = self.deg2num(coords[0], coords[1])
+                x2, y2 = self.deg2num(coords[2], coords[3])
+                h = y2 - y
+                w = x2 - x
+                painter.setPen(QtGui.QPen(QtGui.QBrush(QtCore.Qt.red), 0))
+                painter.drawRect(x, y, w, h)
+            painter.end()
+            self.wmap.setPixmap(QtGui.QPixmap.fromImage(world))
+
+    def saveViewClicked(self):
+        outputimg = self.wmap.pixmap()
+        fname = 'getmap_view.png'
+        fname = QtGui.QFileDialog.getSaveFileName(self, 'Save image file',
+                fname, 'Image Files (*.png *.jpg *.bmp)')
+        if fname != '':
+            fname = str(fname)
+            i = fname.rfind('.')
+            if i < 0:
+                fname = fname + '.png'
+                i = fname.rfind('.')
+            outputimg.save(fname, fname[i + 1:])
 
     def makeClicked(self):
         mapp = retrieveMap(self.northSpin.value(), self.westSpin.value(), self.southSpin.value(), self.eastSpin.value(),
