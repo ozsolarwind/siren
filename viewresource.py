@@ -273,7 +273,7 @@ class Resource(QtGui.QDialog):
         self.opacitySpin.setDecimals(2)
         self.opacitySpin.setSingleStep(.05)
         self.opacitySpin.setValue(opacity)
-        self.opacitySpin.valueChanged[str].connect(self.stepChanged)
+        self.opacitySpin.valueChanged[str].connect(self.opacityChanged)
         self.grid.addWidget(self.opacitySpin, row, 1, 1, 2)
         row += 1
         self.grid.addWidget(QtGui.QLabel('Low Colour'), row, 1)
@@ -517,6 +517,11 @@ class Resource(QtGui.QDialog):
             self.hourCombo.setCurrentIndex(0)
         self.periodCombo.setCurrentIndex(0)
         self.slider.setValue(0)
+
+    def opacityChanged(self, val):
+        return
+      #  print '(522)', self.opacitySpin.value(), val
+      #  self.resourceGrid()
 
     def stepChanged(self, val):
         value = self.palette().color(QtGui.QPalette.Window)

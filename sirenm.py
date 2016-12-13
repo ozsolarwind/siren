@@ -1189,6 +1189,66 @@ class MainWindow(QtGui.QMainWindow):
         helpMenu = menubar.addMenu('&Help')
         helpMenu.addAction(help)
         helpMenu.addAction(about)
+        config = ConfigParser.RawConfigParser()
+        if len(sys.argv) > 1:
+            config_file = sys.argv[1]
+        else:
+            config_file = 'SIREN.ini'
+        config.read(config_file)
+        try:
+            check = config.get('Files', 'check')
+            if check.lower() in ['false', 'no', 'off']:
+                return
+        except:
+            pass
+        parents = []
+        try:
+            parents = config.items('Parents')
+        except:
+            pass
+        check_sections = ['Files', 'SAM Modules']
+        variable_files = ''
+        for section in check_sections:
+            try:
+                sect_opts = config.items(section)
+                for key, value in sect_opts:
+                    if key == 'scenarios':
+                        value = value[: value.rfind('/')]
+                    for pkey, pvalue in parents:
+                        value = value.replace(pkey, pvalue)
+                    value = value.replace('$USER$', getUser())
+                    value = value.replace('$YEAR$', self.base_year)
+                    if section == 'Files':
+                        if key == 'variable_files':
+                            variable_files = value
+                        elif key == 'check':
+                            continue
+                    elif section == 'SAM Modules':
+                        value = variable_files + '/' + value
+                    if not os.path.exists(value):
+                        if self.floatstatus is None:
+                            self.show_FloatStatus()
+                        self.floatstatus.emit(SIGNAL('log'),
+                            'Need to check [%s].%s property. Resolves to %s' % (section, key, value))
+            except:
+                pass
+        try:
+            mapc = config.get('Map', 'map_choice')
+        except:
+            mapc = ''
+        try:
+            mapp = config.get('Map', 'map' + mapc)
+            for pkey, pvalue in parents:
+                mapp = mapp.replace(pkey, pvalue)
+            mapp = mapp.replace('$USER$', getUser())
+            mapp = mapp.replace('$YEAR$', self.base_year)
+            if not os.path.exists(mapp):
+                if self.floatstatus is None:
+                    self.show_FloatStatus()
+                self.floatstatus.emit(SIGNAL('log'),
+                    'Need to check [Map].map%s property. Resolves to %s' % (mapc, mapp))
+        except:
+            pass
 
     def editIniFile(self):
         dialr = EdtDialog(self.config_file)

@@ -1346,7 +1346,8 @@ class SuperPower():
                 if self.stations[st].name not in self.selected:
                     continue
             if self.stations[st].technology == 'Rooftop PV' \
-              and self.stations[st].scenario == 'Existing':
+              and self.stations[st].scenario == 'Existing' \
+              and not self.plots['gross_load']:
                 continue
             if self.stations[st].technology[:6] == 'Fossil' \
               and not self.plots['actual']:
@@ -2256,7 +2257,8 @@ class ProgressModel(QtGui.QDialog):
                 if self.model.stations[st].name not in self.model.selected:
                     continue
             if self.model.stations[st].technology == 'Rooftop PV' \
-              and self.model.stations[st].scenario == 'Existing':
+              and self.model.stations[st].scenario == 'Existing' \
+              and not self.plots['gross_load']:
                 continue
             if self.model.stations[st].technology[:6] == 'Fossil' \
               and not self.model.plots['actual']:

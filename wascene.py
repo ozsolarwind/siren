@@ -352,6 +352,13 @@ class WAScene(QtGui.QGraphicsScene):
                    self.trace_existing = True
             except:
                 pass
+        self.hide_map = False
+        try:
+            hide_map = config.get('View', 'hide_map')
+            if cost_existing.lower() in ['true', 'yes', 'on']:
+                self.hide_map = True
+        except:
+            pass
         self.load_centre = None
         try:
             load_centre = config.get('Grid', 'load_centre')
@@ -458,6 +465,8 @@ class WAScene(QtGui.QGraphicsScene):
             war = QtGui.QImageReader(self.map_file)
             wa = war.read()
             pixMap = QtGui.QPixmap.fromImage(wa)
+            if self.hide_map:
+                pixMap.fill()
         else:
             ratio = abs(self.map_upper_left[1] - self.map_lower_right[1]) / \
                      abs(self.map_upper_left[0] - self.map_lower_right[0])

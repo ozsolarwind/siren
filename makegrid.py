@@ -1001,6 +1001,7 @@ class getParms(QtGui.QWidget):
         self.close()
 
     def dofileClicked(self):
+        self.log.setText('')
         year = str(self.yearCombo.currentText())
         if self.do_rain:
             rain_dir = str(self.rsource.text())

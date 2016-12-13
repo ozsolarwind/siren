@@ -433,8 +433,10 @@ class makeWeather():
             self.tgt_dir += '/'
         if info:
             inp_strt = '{0:04d}'.format(self.src_year) + '0101'
+            self.log += '\nWind file for: ' + inp_strt + '\n'
              # get variables from "wind" file
             self.getInfo(self.findFile(inp_strt, True))
+            self.log += '\nSolar file for: ' + inp_strt + '\n'
              # get variables from "solar" file
             self.getInfo(self.findFile(inp_strt, False))
             return

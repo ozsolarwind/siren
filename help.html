@@ -629,6 +629,10 @@ The format is similar to a Windows INI file. If you want to create a new Model y
 <td class="none">List of BOM weather stations in WA</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>check</dfn></td>
+<td class="none">Problems are often encountered executing SIREN because file properties resolve to invalid values. By default SIREN will check files on initialisation and output any unresolved values in the status window. To turn off this checking set this property to False</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>data_file</dfn></td>
 <td class="none">File to save power output if the save_data property in <em>[Power]</em> is True</td>
 </tr>
@@ -1499,6 +1503,10 @@ Specifics on Hydrothermal characteristics (experimental). Properties are:</p>
 <tr class="none">
 <td class="none"><dfn>group_colours</dfn></td>
 <td class="none">If set to True when you invoke the Edit Colours menu item colours will be grouped into a number of sections:- Fossil Technologies, Grid, Map, Plot, Resource, Technologies, and any others. The default is False</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>hide_map</dfn></td>
+<td class="none">If set to True this will open SIREN in the normal manner but will display a blank map this allows the current View to be save without the underlying map. Default value is False</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>leave_help_open</dfn></td>
@@ -2634,7 +2642,7 @@ Parameters<br/>
 To reduce the size of the data files select just those variables we need:
 <ol>
 <li>tavg1_2d_slv_Nx<br>
-<em>ps u10m u2m u50m v10m v2m v50m t10m t2m</em></li>
+<em>ps t10m t2m  u10m u2m u50m v10m v2m v50m </em></li>
 <li>tavg1_2d_rad_Nx<br>
 <em>swgnt</em></li>
 <div class="experiment">
@@ -2669,12 +2677,23 @@ Run the wget command as displayed in the FTP Subset Results page. This uses the 
 <pre>
 wget --load-cookies ~/.urs_cookies --save-cookies ~/.urs_cookies --auth-no-challenge=on --keep-session-cookies -i ...
 </pre>
-You should use the <code>--content-disposition </code> option in your wget command to avoid <em>Filename too long</em> errors
+You should use the <code>--content-disposition</code> option in your wget command to avoid <em>Filename too long</em> errors (that is...
+<pre>
+wget --load-cookies ~/.urs_cookies --save-cookies ~/.urs_cookies --auth-no-challenge=on --keep-session-cookies --content-disposition -i <list of urls>
+</pre>
 </li>
 </ol>
 </li>
 </ol>
 <p>This process uses <code>wget</code> to download the MERRA-2 data files. Typically there is a single file for each day of interest so using wget simplifies the process of downloading them. Wget is a free network utility to retrieve files from the World Wide Web using HTTP and FTP, the two most widely used Internet protocols. There are versions available for most platforms.</p>
+<p><strong>wget for Windows</strong></p>
+<p>Earlier versions of wget for windows will not work with the requirements for URS authentication. Version 1.18 has been successfully tested. The following steps highlight an approach:
+<ol>
+<li>Obtain a suitable version of wget, such as <a href="https://eternallybored.org/misc/wget/releases/wget-1.18-win32.zip">wget-1.18-win32.zip</a> for the full package or <a href="https://eternallybored.org/misc/wget/current/wget.exe">wget.exe</a> for just wget itself. Only the .exe file is required</li>
+<li>Create a <code>.netrc</code> file as described in the Wget with URS Authentication link above</li>
+<li>Create a <code>HOME</code> environment variable which points to the folder containing the <code>.netrc</code> file (typically this is set to <code>Users/username</code>)</li>
+<li>Open a terminal window, navigate to where you have the list of urls and invoke wget</li>
+</ol>
 <h4 id="merra3">Produce wind and solar weather files</h4>
 <h5>makeweather2</h5>
 <p><code>makeweather2.py</code> is a Python program that can be used to produce solar and/or wind weather files for input to SAM. The program generates SMW (preferred for SAM) or CSV format solar resource files and SRW format wind resource files. These file formats have been chosen as they're easier to generate than other formats. Using the program you specify the source folder for the MERRA-2 data files, the time zone for the area of interest, a file format and target folder for the weather files. The program will generate files for each of the MERRA-2 grid squares within the chosen MERRA-2 data files or optionally for a number of latitude and longitude positions. You can invoke the program either by choosing <em>makeweather2</em> from the SIREN Tools menu or in Windows by running <code>makeweather2.exe</code> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
