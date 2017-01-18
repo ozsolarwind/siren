@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2017 Sustainable Energy Now Inc., Angus King
 #
 #  makegrid.py - This file is part of SIREN.
 #
@@ -921,7 +921,7 @@ class getParms(QtGui.QWidget):
         self.scroll.setWidget(frame)
         self.layout = QtGui.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
-        self.setWindowTitle('SIREN makegrid (' + fileVersion() + ') - Make resource grid file')
+        self.setWindowTitle('SIREN - makegrid (' + fileVersion() + ') - Make resource grid file')
         self.center()
         self.show()
 
@@ -994,7 +994,7 @@ class getParms(QtGui.QWidget):
 
     def helpClicked(self):
         dialog = displayobject.AnObject(QtGui.QDialog(), self.help,
-                 title='Help for SIREN makegrid (' + fileVersion() + ')', section='resource')
+                 title='Help for makegrid (' + fileVersion() + ')', section='resource')
         dialog.exec_()
 
     def quitClicked(self):

@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html>
 <head>
+<style>
+code {
+    font-size: 125%;
+}
+pre {
+    font-size: 125%;
+}
+</style>
 <title>SIREN Notes</title>
 </head>
 </body>
@@ -30,6 +38,7 @@
 <ul>
 <li><em>siren_application.exe</em> and <em>siren_toolkit.exe</em> contain the SIREN Python source (<em>siren/source</em> folder) and SAM SDK (<em>siren/sam-sdk</em> folder)</li>
 <li><em>siren_toolkit.exe</em> and <em>siren_sample.exe</em> contain the sample SIREN simulation of the SWIS (<em>siren_sample</em> folder)</li>
+<li><em>siren_makeweatherfiles.exe</em> provides the files required to create SAM weather files without requiring any other parts of SIREN</li>
 </ul>
 <h2 id="libraries">Python Libraries</h2>
 <table><tr><td><strong>Library</strong></td><td><strong>Where</strong></td></tr>
@@ -76,6 +85,7 @@
 <tr><td>floatmenu.py</td><td>Display menu window</td></tr>
 <tr><td>floatstatus.py</td><td>Display status window</td></tr>
 <tr><td>getmap.py</td><td>Download map tiles to create a map image</td></tr>
+<tr><td>getmerra2.py</td><td>Invoke wget to download MERRA-2 files</td></tr>
 <tr><td>grid.py</td><td>Grid class. Process grid items</td></tr>
 <tr><td>indexweather.py</td><td>Create index file for weather files</td></tr>
 <tr><td>inisyntax.py</td><td>Syntax highlighting for Preferences Edit window</td></tr>
@@ -100,6 +110,8 @@
 <tr><td>viewresource.py (*)</td><td>Overlay energy resource grid over map</td></tr>
 <tr><td>visualise.py (*)</td><td>Visualise hourly generation on map</td></tr>
 <tr><td>wascene.py</td><td>Create and manage displayed map</td></tr>
+<tr><td>worldwindow.py</td><td>Display a world map for getmap and getmerra2</td></tr>
 </table>
-
+<h2>Packaging for Windows</h2>
+<p>I use <em>pyinstaller</em> (currently Version 3.2.1) to package SIREN for Windows. I use the multi-package facility to create executables for <code>siren.py, sirenm.py</code> and the tools (<code>getmap.py, getmerra2.py, indexweather.py, makerainfall2.py, makegrid.py, makeweather2.py</code> and <code>updateswis.py</code>). <code>siren_application.spec</code> is the spec file. This enables all programs to be included in a single library for distribution. <em>pyinstaller</em> places them in individual directories - I use <code>package_siren.py</code> to copy all the executables into the <em>siren</em> directory and remove some unwanted files that are included as part of the packaging process. All these have a version file where the version is <em>&lt;version&gt;,&lt;modification&gt;.&lt;yyyy&gt;.&lt;mmdd&gt;</em> The date part is the date the program was last changed.</p>
 </body>

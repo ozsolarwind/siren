@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2017 Sustainable Energy Now Inc., Angus King
 #
 #  updateswis.py - This file is part of SIREN.
 #
@@ -122,7 +122,7 @@ class makeFile():
                 self.log += "Facility '%s' no longer on file\n" % facility['Facility Code']
         if changes > 0:
             msgbox = QtGui.QMessageBox()
-            msgbox.setWindowTitle('updateswis Status')
+            msgbox.setWindowTitle('SIREN - updateswis Status')
             msgbox.setText(str(changes) + ' changes. Do you want to replace existing file (Y)?')
             msgbox.setInformativeText(info)
             msgbox.setDetailedText(self.log)
@@ -399,15 +399,31 @@ class getParms(QtGui.QWidget):
             self.load_file = fac_file
         except:
             pass
+        my_config = ConfigParser.RawConfigParser()
+        my_config_file = 'getfiles.ini'
+        my_config.read(my_config_file)
+        try:
+            aemo_facilities = my_config.get('updateswis', 'aemo_facilities')
+        except:
+            aemo_facilities = '/datafiles/facilities/facilities.csv'
+        try:
+            aemo_load = my_config.get('updateswis', 'aemo_load')
+        except:
+            aemo_load = '/datafiles/load-summary/load-summary-$YEAR$.csv'
+        aemo_load = aemo_load.replace('$YEAR$', self.base_year)
+        try:
+            aemo_url = my_config.get('updateswis', 'aemo_url')
+        except:
+            aemo_url = 'data.wa.aemo.com.au'
         self.grid = QtGui.QGridLayout()
         self.grid.addWidget(QtGui.QLabel('Host site:'), 0, 0)
         self.host = QtGui.QLineEdit()
-        self.host.setText('data.wa.aemo.com.au')
+        self.host.setText(aemo_url)
         self.grid.addWidget(self.host, 0, 1, 1, 2)
         self.grid.addWidget(QtGui.QLabel('Existing Stations (Facilities)'), 1, 0, 1, 2)
         self.grid.addWidget(QtGui.QLabel('File location:'), 2, 0)
         self.url = QtGui.QLineEdit()
-        self.url.setText('/datafiles/facilities/facilities.csv')
+        self.url.setText(aemo_facilities)
         self.grid.addWidget(self.url, 2, 1, 1, 2)
         self.grid.addWidget(QtGui.QLabel('Target file:'), 3, 0)
         self.target = ClickableQLabel()
@@ -436,7 +452,7 @@ class getParms(QtGui.QWidget):
         self.grid.addWidget(QtGui.QLabel('If checked will wrap back to prior year'), 7, 2, 1, 3)
         self.grid.addWidget(QtGui.QLabel('Load file location:'), 8, 0)
         self.lurl = QtGui.QLineEdit()
-        self.lurl.setText('/datafiles/load-summary/load-summary-' + self.base_year + '.csv')
+        self.lurl.setText(aemo_load)
         self.grid.addWidget(self.lurl, 8, 1, 1, 3)
         self.grid.addWidget(QtGui.QLabel('Target load file:'), 9, 0)
         self.targetl = ClickableQLabel()
@@ -470,7 +486,7 @@ class getParms(QtGui.QWidget):
         self.scroll.setWidget(frame)
         self.layout = QtGui.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
-        self.setWindowTitle('SIREN updateswis (' + fileVersion() + ') - Update SWIS Data')
+        self.setWindowTitle('SIREN - updateswis (' + fileVersion() + ') - Update SWIS Data')
         self.center()
         self.show()
 
@@ -521,7 +537,7 @@ class getParms(QtGui.QWidget):
 
     def helpClicked(self):
         dialog = displayobject.AnObject(QtGui.QDialog(), self.help,
-                 title='Help for SIREN updateswis (' + fileVersion() + ')', section='updateswis')
+                 title='Help for updateswis (' + fileVersion() + ')', section='updateswis')
         dialog.exec_()
 
     def quitClicked(self):
@@ -547,9 +563,22 @@ class getParms(QtGui.QWidget):
 if "__main__" == __name__:
     app = QtGui.QApplication(sys.argv)
     if len(sys.argv) > 2:   # arguments
-        host = 'data.wa.aemo.com.au'
-        furl = '/datafiles/facilities/facilities.csv'
-        lurl = '/datafiles/load-summary/load-summary-' + time.strftime('%Y') + '.csv'
+        my_config = ConfigParser.RawConfigParser()
+        my_config_file = 'getfiles.ini'
+        my_config.read(my_config_file)
+        try:
+            furl = my_config.get('updateswis', 'aemo_facilities')
+        except:
+            furl = '/datafiles/facilities/facilities.csv'
+        try:
+            lurl = my_config.get('updateswis', 'aemo_load')
+        except:
+            lurl = '/datafiles/load-summary/load-summary-$YEAR$.csv'
+        lurl = lurl.replace('$YEAR$', time.strftime('%Y'))
+        try:
+            host = my_config.get('updateswis', 'aemo_url')
+        except:
+            host = 'data.wa.aemo.com.au'
         tgt_fil = ''
         excel = ''
         wrap = ''

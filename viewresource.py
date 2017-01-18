@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2017 Sustainable Energy Now Inc., Angus King
 #
 #  viewresource.py - This file is part of SIREN.
 #
@@ -375,7 +375,7 @@ class Resource(QtGui.QDialog):
         self.resourceGrid()
 
     def helpClicked(self):
-        dialog = displayobject.AnObject(QtGui.QDialog(), self.helpfile, title='Help', section='resource')
+        dialog = displayobject.AnObject(QtGui.QDialog(), self.helpfile, title='Resource Help', section='resource')
         dialog.exec_()
 
     def nextClicked(self):

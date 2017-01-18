@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2017 Sustainable Energy Now Inc., Angus King
 #
 #  powermodel.py - This file is part of SIREN.
 #
@@ -33,7 +33,6 @@ import xlwt
 
 import ConfigParser  # decode .ini file
 from PyQt4 import QtGui, QtCore
-from PyQt4.QtCore import Qt, SIGNAL
 
 from senuser import getUser
 import displayobject
@@ -190,7 +189,7 @@ class whatPlots(QtGui.QDialog):
                                                      + 'Load growth & target year')
                     self.percentSpin = QtGui.QDoubleSpinBox()
                     self.percentSpin.setValue(self.load_growth)
-                    self.percentSpin.setDecimals(1)
+                    self.percentSpin.setDecimals(2)
                     self.percentSpin.setSingleStep(.1)
                     self.counterSpin = QtGui.QSpinBox()
                     self.counterSpin.setRange(min(self.base_year, 2015), 2100)
@@ -258,7 +257,7 @@ class whatPlots(QtGui.QDialog):
                 i += 1
             self.checkbox.append(QtGui.QCheckBox(self.hdrs[self.plot_order[plot]], self))
             if self.plots[self.plot_order[plot]]:
-                self.checkbox[plot].setCheckState(Qt.Checked)
+                self.checkbox[plot].setCheckState(QtCore.Qt.Checked)
             if not self.initial:
                 if self.plot_order[plot] in self.initials:
                     self.checkbox[plot].setEnabled(False)
@@ -308,7 +307,7 @@ class whatPlots(QtGui.QDialog):
         self.show()
 
     def showHelp(self):
-        dialog = displayobject.AnObject(QtGui.QDialog(), self.helpfile, title='Help', section='popts')
+        dialog = displayobject.AnObject(QtGui.QDialog(), self.helpfile, title='Powermodel Help', section='popts')
         dialog.exec_()
 
     def growthChanged(self, val):
@@ -325,7 +324,7 @@ class whatPlots(QtGui.QDialog):
                 if not self.initial:
                     if self.plot_order[i] in self.initials:
                         continue
-                self.checkbox[i].setCheckState(Qt.Checked)
+                self.checkbox[i].setCheckState(QtCore.Qt.Checked)
         else:
             for i in range(len(self.checkbox)):
                 if self.plot_order[i] == 'show_menu':
@@ -333,13 +332,13 @@ class whatPlots(QtGui.QDialog):
                 if not self.initial:
                     if self.plot_order[i] in self.initials:
                         continue
-                self.checkbox[i].setCheckState(Qt.Unchecked)
+                self.checkbox[i].setCheckState(QtCore.Qt.Unchecked)
 
     def check_balance(self, event):
         if event:
             for i in range(len(self.checkbox)):
                 if self.plot_order[i] == 'show_load' or self.plot_order[i] == 'grid_losses':
-                    self.checkbox[i].setCheckState(Qt.Checked)
+                    self.checkbox[i].setCheckState(QtCore.Qt.Checked)
 
     def closeEvent(self, event):
         if not self.show_them:
@@ -352,7 +351,7 @@ class whatPlots(QtGui.QDialog):
 
     def showClicked(self):
         for plot in range(len(self.checkbox)):
-            if self.checkbox[plot].checkState() == Qt.Checked:
+            if self.checkbox[plot].checkState() == QtCore.Qt.Checked:
                 self.plots[self.plot_order[plot]] = True
             else:
                 self.plots[self.plot_order[plot]] = False
@@ -365,7 +364,7 @@ class whatPlots(QtGui.QDialog):
 
     def saveClicked(self):
         for plot in range(len(self.checkbox)):
-            if self.checkbox[plot].checkState() == Qt.Checked:
+            if self.checkbox[plot].checkState() == QtCore.Qt.Checked:
                 self.plots[self.plot_order[plot]] = True
             else:
                 self.plots[self.plot_order[plot]] = False
@@ -445,10 +444,10 @@ class whatStations(QtGui.QDialog):
     def check_all(self):
         if self.checkbox[0].isChecked():
             for i in range(len(self.checkbox)):
-                self.checkbox[i].setCheckState(Qt.Checked)
+                self.checkbox[i].setCheckState(QtCore.Qt.Checked)
         else:
             for i in range(len(self.checkbox)):
-                self.checkbox[i].setCheckState(Qt.Unchecked)
+                self.checkbox[i].setCheckState(QtCore.Qt.Unchecked)
 
     def closeEvent(self, event):
         if not self.show_them:
@@ -460,7 +459,7 @@ class whatStations(QtGui.QDialog):
 
     def showClicked(self):
         for stn in range(1, len(self.checkbox)):
-            if self.checkbox[stn].checkState() == Qt.Checked:
+            if self.checkbox[stn].checkState() == QtCore.Qt.Checked:
                 self.chosen.append(str(self.checkbox[stn].text()))
         self.show_them = True
         self.close()
@@ -553,14 +552,14 @@ class whatFinancials(QtGui.QDialog):
                 self.checkbox.append(QtGui.QCheckBox(item[1], self))
                 self.grid.addWidget(self.checkbox[-1], i, 0)
                 if item[4]:
-                    self.checkbox[-1].setCheckState(Qt.Checked)
+                    self.checkbox[-1].setCheckState(QtCore.Qt.Checked)
                 i += 1
             elif isinstance(item[2], int) and isinstance(item[3], int):
                 if item[2] == 0 and item[3] == 1:
                     self.checkbox.append(QtGui.QCheckBox(item[1], self))
                     self.grid.addWidget(self.checkbox[-1], i, 0)
                     if item[4] == 1:
-                        self.checkbox[-1].setCheckState(Qt.Checked)
+                        self.checkbox[-1].setCheckState(QtCore.Qt.Checked)
                     i += 1
         show = QtGui.QPushButton('Proceed', self)
         show.clicked.connect(self.showClicked)
@@ -596,7 +595,7 @@ class whatFinancials(QtGui.QDialog):
         self.show()
 
     def showHelp(self):
-        dialog = displayobject.AnObject(QtGui.QDialog(), self.helpfile, title='Help', section='fopts')
+        dialog = displayobject.AnObject(QtGui.QDialog(), self.helpfile, title='Powermodel Help', section='fopts')
         dialog.exec_()
 
     def closeEvent(self, event):
@@ -637,12 +636,12 @@ class whatFinancials(QtGui.QDialog):
             for item in self.financials:
                 if item[1] == self.checkbox[i].text():
                     if isinstance(item[2], bool) and isinstance(item[3], bool):
-                        if self.checkbox[i].checkState() == Qt.Checked:
+                        if self.checkbox[i].checkState() == QtCore.Qt.Checked:
                             values[item[0]] = True
                         else:
                             values[item[0]] = False
                     else:
-                        if self.checkbox[i].checkState() == Qt.Checked:
+                        if self.checkbox[i].checkState() == QtCore.Qt.Checked:
                             values[item[0]] = 1
                         else:
                             values[item[0]] = 0
@@ -715,7 +714,7 @@ class Adjustments(QtGui.QDialog):
         if load is not None:
             self.grid.addWidget(QtGui.QLabel('Check / Uncheck all zeroes'), ctr, 0)
             self.zerobox = QtGui.QCheckBox('', self)
-            self.zerobox.setCheckState(Qt.Unchecked)
+            self.zerobox.setCheckState(QtCore.Qt.Unchecked)
             self.zerobox.stateChanged.connect(self.zeroCheck)
             self.grid.addWidget(self.zerobox, ctr, 2)
         ctr += 1
@@ -738,7 +737,7 @@ class Adjustments(QtGui.QDialog):
             self.grid.addWidget(self.adjusts[key], ctr, 1)
             if load is not None:
                 self.checkbox[key] = QtGui.QCheckBox('', self)
-                self.checkbox[key].setCheckState(Qt.Checked)
+                self.checkbox[key].setCheckState(QtCore.Qt.Checked)
                 self.grid.addWidget(self.checkbox[key], ctr, 2)
             ctr += 1
         if octr >= 0:
@@ -1523,7 +1522,7 @@ class SuperPower():
         if station.capacity == 0:
             return None
         if self.status:
-            self.status.emit(SIGNAL('log'), 'Processing ' + station.name)
+            self.status.emit(QtCore.SIGNAL('log'), 'Processing ' + station.name)
         self.data = None
         self.data = ssc.Data()
         if station.technology == 'Wind':
@@ -1560,12 +1559,12 @@ class SuperPower():
                 return farmpwr
             else:
                 if self.status:
-                   self.status.emit(SIGNAL('log'), 'Errors encountered processing ' + station.name)
+                   self.status.emit(QtCore.SIGNAL('log'), 'Errors encountered processing ' + station.name)
                 idx = 0
                 msg = module.log(idx)
                 while (msg is not None):
                     if self.status:
-                       self.status.emit(SIGNAL('log'), 'windpower error [' + str(idx) + ']: ' + msg)
+                       self.status.emit(QtCore.SIGNAL('log'), 'windpower error [' + str(idx) + ']: ' + msg)
                     else:
                         print 'windpower error [', idx, ' ]: ', msg
                     idx += 1
@@ -1613,12 +1612,12 @@ class SuperPower():
                 return farmpwr
             else:
                 if self.status:
-                   self.status.emit(SIGNAL('log'), 'Errors encountered processing ' + station.name)
+                   self.status.emit(QtCore.SIGNAL('log'), 'Errors encountered processing ' + station.name)
                 idx = 0
                 msg = module.log(idx)
                 while (msg is not None):
                     if self.status:
-                       self.status.emit(SIGNAL('log'), 'tcsmolten_salt error [' + str(idx) + ']: ' + msg)
+                       self.status.emit(QtCore.SIGNAL('log'), 'tcsmolten_salt error [' + str(idx) + ']: ' + msg)
                     else:
                         print 'tcsmolten_salt error [', idx, ' ]: ', msg
                     idx += 1
@@ -1666,12 +1665,12 @@ class SuperPower():
                 return farmpwr
             else:
                 if self.status:
-                   self.status.emit(SIGNAL('log'), 'Errors encountered processing ' + station.name)
+                   self.status.emit(QtCore.SIGNAL('log'), 'Errors encountered processing ' + station.name)
                 idx = 0
                 msg = module.log(idx)
                 while (msg is not None):
                     if self.status:
-                       self.status.emit(SIGNAL('log'), 'pvwattsv5 error [' + str(idx) + ']: ' + msg)
+                       self.status.emit(QtCore.SIGNAL('log'), 'pvwattsv5 error [' + str(idx) + ']: ' + msg)
                     else:
                         print 'pvwattsv5 error [', idx, ' ]: ', msg
                     idx += 1
@@ -1697,12 +1696,12 @@ class SuperPower():
                 return farmpwr
             else:
                 if self.status:
-                   self.status.emit(SIGNAL('log'), 'Errors encountered processing ' + station.name)
+                   self.status.emit(QtCore.SIGNAL('log'), 'Errors encountered processing ' + station.name)
                 idx = 0
                 msg = module.log(idx)
                 while (msg is not None):
                     if self.status:
-                       self.status.emit(SIGNAL('log'), 'biomass error [' + str(idx) + ']: ' + msg)
+                       self.status.emit(QtCore.SIGNAL('log'), 'biomass error [' + str(idx) + ']: ' + msg)
                     else:
                         print 'biomass error [', idx, ' ]: ', msg
                     idx += 1
@@ -1726,12 +1725,12 @@ class SuperPower():
                 return farmpwr
             else:
                 if self.status:
-                   self.status.emit(SIGNAL('log'), 'Errors encountered processing ' + station.name)
+                   self.status.emit(QtCore.SIGNAL('log'), 'Errors encountered processing ' + station.name)
                 idx = 0
                 msg = module.log(idx)
                 while (msg is not None):
                     if self.status:
-                       self.status.emit(SIGNAL('log'), 'geothermal error [' + str(idx) + ']: ' + msg)
+                       self.status.emit(QtCore.SIGNAL('log'), 'geothermal error [' + str(idx) + ']: ' + msg)
                     else:
                         print 'geothermal error [', idx, ' ]: ', msg
                     idx += 1
@@ -2060,12 +2059,12 @@ class FinancialModel():
                   generation, 0, round(capital_cost), lcoe_real, lcoe_nom, npv, round(grid_cost)))
             else:
                 if self.status:
-                   self.status.emit(SIGNAL('log'), 'Errors encountered processing ' + name[stn])
+                   self.status.emit(QtCore.SIGNAL('log'), 'Errors encountered processing ' + name[stn])
                 idx = 0
                 msg = module.log(idx)
                 while (msg is not None):
                     if self.status:
-                       self.status.emit(SIGNAL('log'), 'ippppa error [' + str(idx) + ']: ' + msg)
+                       self.status.emit(QtCore.SIGNAL('log'), 'ippppa error [' + str(idx) + ']: ' + msg)
                     else:
                         print 'ippppa error [', idx, ' ]: ', msg
                     idx += 1
@@ -2189,12 +2188,12 @@ class FinancialModel():
                 do_ippppa()
             else:
                 if self.status:
-                   self.status.emit(SIGNAL('log'), 'Errors encountered processing ' + name[stn])
+                   self.status.emit(QtCore.SIGNAL('log'), 'Errors encountered processing ' + name[stn])
                 idx = 0
                 msg = module.log(idx)
                 while (msg is not None):
                     if self.status:
-                       self.status.emit(SIGNAL('log'), 'annualoutput error [' + str(idx) + ']: ' + msg)
+                       self.status.emit(QtCore.SIGNAL('log'), 'annualoutput error [' + str(idx) + ']: ' + msg)
                     else:
                         print 'annualoutput error [', idx, ' ]: ', msg
                     idx += 1
@@ -4110,10 +4109,10 @@ class PowerModel():
             while True:
                 if self.plots['visualise'] and self.something is not None:
                     vis2 = Visualise(self.stn_outs, self.stn_pows, self.something, year=self.base_year)
-                    vis2.setWindowModality(QtCore.Qt.WindowModal)
+                    vis2.setWindowModality(QtCore.Qt.Core.QtWindowModal)
                     vis2.setWindowFlags(vis2.windowFlags() |
-                                 QtCore.Qt.WindowSystemMenuHint |
-                                 QtCore.Qt.WindowMinMaxButtonsHint)
+                                 QtCore.Qt.Core.QtWindowSystemMenuHint |
+                                 QtCore.Qt.Core.QtWindowMinMaxButtonsHint)
                     vis2.exec_()
                 wrkly = {}
                 summs = {}

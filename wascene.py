@@ -28,7 +28,6 @@ import xlrd
 
 import ConfigParser   # decode .ini file
 from PyQt4 import QtCore, QtGui
-from PyQt4.QtCore import Qt
 import mpl_toolkits.basemap.pyproj as pyproj   # Import the pyproj module
 
 from towns import Towns
@@ -260,7 +259,7 @@ class WAScene(QtGui.QGraphicsScene):
         self.show_ruler = False
         try:
             show_ruler = config.get('View', 'show_ruler')
-            if show_ruler in ['true', 'yes', 'on']:
+            if show_ruler.lower() in ['true', 'yes', 'on']:
                 self.show_ruler = True
         except:
             pass
@@ -284,7 +283,7 @@ class WAScene(QtGui.QGraphicsScene):
         self.center_on_click = False
         try:
             center_on_click = config.get('View', 'center_on_click')
-            if center_on_click in ['true', 'yes', 'on']:
+            if center_on_click.lower() in ['true', 'yes', 'on']:
                 self.center_on_click = True
         except:
             pass
@@ -856,8 +855,8 @@ class WAScene(QtGui.QGraphicsScene):
             if self.show_capacity_fill:
                 brush = QtGui.QBrush()
                 brush.setColor(QtGui.QColor(self.colors[st.technology]))
-            #     brush.setStyle(Qt.Dense1Pattern)
-                brush.setStyle(Qt.SolidPattern)
+            #     brush.setStyle(QtCore.Qt.Dense1Pattern)
+                brush.setStyle(QtCore.Qt.SolidPattern)
                 el.setBrush(brush)
                 el.setOpacity(self.capacity_opacity)
             if self.colors['border'] != '':

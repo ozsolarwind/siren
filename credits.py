@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2017 Sustainable Energy Now Inc., Angus King
 #
 #  credits.py - This file is part of SIREN.
 #
@@ -30,10 +30,10 @@ from editini import SaveIni
 
 
 def fileVersion():
-    ver = '0.0.?.?'
+    ver = '1.0.?.?'
     if sys.argv[0][-3:] == '.py':
         modtime = datetime.fromtimestamp(os.path.getmtime(sys.argv[0]))
-        ver = '0.0.%04d.%02d.%02d' % (modtime.year, modtime.month, modtime.day)
+        ver = '1.0.%04d.%02d.%02d' % (modtime.year, modtime.month, modtime.day)
     else:
         if sys.platform == 'win32' or sys.platform == 'cygwin':
             try:
@@ -98,7 +98,7 @@ class Credits(QtGui.QDialog):
             bold.setBold(True)
             labels = []
             labels.append("SIREN - SEN's Interactive Renewable Energy Network tool")
-            labels.append('Copyright (C) 2015 Sustainable Energy Now Inc., Angus King')
+            labels.append('Copyright (C) 2015-2017 Sustainable Energy Now Inc., Angus King')
             labels.append('Release:' + fileVersion())
             labels.append('SIREN is free software: you can redistribute it and/or modify it under the terms of the' +
                           ' GNU Affero General Public License. The program is distributed WITHOUT ANY WARRANTY')

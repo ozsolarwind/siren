@@ -2,8 +2,14 @@
 <html>
 <head>
 <style>
+code {
+    font-size: 125%;
+}
 div.experiment {
-  border: 1px solid red;
+    border: 1px solid red;
+}
+pre {
+    font-size: 125%;
 }
 table {
     border: 1px solid black;
@@ -130,6 +136,7 @@ ul {
 <li><a href="#resource">Visualising Renewable Resource Attributes</a></li>
 <li><a href="#sam">SAM Models used by SIREN</a></li>
 <li><a href="#nonsam">Other Models used by SIREN (experimental)</a></li>
+<li><a href="#worldwindow">Select area on world map</a></li>
 </ul>
 <li><a href="#acronyms">Acronyms</a></li>
 </ul>
@@ -139,9 +146,7 @@ ul {
 <p>By placing virtual renewable energy plants around the area of interest, you will be able to determine the optimal locations to access renewable energy sources, minimise grid connection costs and meet the varying demand on the grid, while achieving the best in terms of efficiency, cost effectiveness and energy security.</p>
 <p>This version of the Simulation uses the SAM SDK API for energy calculations. SAM is provided by the NREL.</p>
 <h3>Southern Western Australia (WA)</h3>
-<p>WA's renewable energy resources could provide many times the amount of fossil-fuelled energy currently used in the state. SEN's computer simulation models the SWIS and allows you to create, cost and evaluate scenarios for supplying our electricity using a mixture of renewable energy sources.</p>
-<p>By placing virtual renewable energy plants around WA, you will be able to determine the optimal locations to access renewable energy sources, minimise grid connection costs and meet the varying demand on the SWIS, while achieving the best efficiency, cost effectiveness, energy security, job creation and carbon reduction for Southern WA.</p>
-<p><strong>Note:</strong> The default data provided with the simulation focuses on the SWIS but the program(s) have been constructed to cover any geographic area with the appropriate input files. The techniques to create the required data files is documented in <a href="#notes">Supporting Notes</a>.</p>
+<p>The default data provided with SIREN is for the SWIS in southern WA but the program(s) have been constructed to cover any geographic area with the appropriate input files. The techniques to create the required data files is documented in <a href="#notes">Supporting Notes</a>.</p>
 <h3>About SEN</h3>
 Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn.au</a>), is a not-for-profit association incorporated in Western Australia (WA) with a focus on renewable energy.
 <p><strong>Our Definition of Sustainable Energy</strong>: &ldquo;Energy that is renewable within a human lifetime and can be produced safely and equitably for all time with minimal impact on the environment and future inhabitants&rdquo;. We believe this does not include nuclear power with its many unresolved issues.</p>
@@ -155,6 +160,7 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 <li><code>siren_application.exe</code> contains the packaged Windows version of the SIREN application</li>
 <li><code>siren_powerbalance.exe</code> contains the SIREN PowerBalance files. These are a set of spreadsheets used to quantify and cost dispatchable energy generation, storage and CO2 emissions. This enables you to complete a costed renewable energy scenario</li>
 <li><code>siren_sample.exe</code> contains the files and data for the sample SIREN simulation of the SWIS</li>
+<li>(<code>siren_makeweatherfiles.exe</code> contains a standalone version of <code>makeweather2.py</code>. It allows you to create SAM weather files  without requiring any other parts of SIREN. See <a href="makeweatherfiles.html" target="_blank">makeweatherfiles.html</a>)</li>
 </ul>
 <h3 id="execute">Execution of SIREN</h3>
 <p>To execute the simulation open <code>siren.exe</code> in the upper folder, <em>siren</em>. You can easily set up a Desktop shortcut to point to the model. The package contains a number of folders with default files, some that can be replaced with your own. The location of these files are defined in a Preferences file as documented in <a href="#prefs">Preferences</a>. The default files are located in the following folders:</p>
@@ -170,7 +176,7 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 <p>If you specify a folder you will be presented with a list of SIREN Models (Preferences files) in that folder. You can either specify the folder as the full path or relative to the siren folder. Placing your models in a separate folder will make it easier to install updates to SIREN without impacting your data files.</p>
 <p>If you want to create a new Model press the <em>New Model</em> button on the start up menu. You will be presented with a small list of Properties to update to create a new Preferences file. Many of these properties relate to files and file locations as described in <a href="#setup">Setting Up</a>. It's important to ensure they're correct for the new model to open. For the file fields click on the field to navigate to the desired file or folder. At the bottom of the Create Preferences file menu you have options to Save the new file, Save the new file and edit it, or Save it and open (launch) the new model. If you specified a folder when you opened SIREN, the new model will be saved in that folder.
 <h3 id="sample">Sample SIREN Model</h3>
-<p>The sample SIREN model for the SWIS for 2014 and 2015. The default Preferences files, SIREN.ini, is set up for this data and assumes the <em>siren_sample</em> folder is located in the same parent folder as the <em>siren</em> folder. The sample data contains:
+<p>The sample SIREN model for the SWIS for 2014 and 2015. The default Preferences files, <em>SIREN.ini</em>, is set up for this data and assumes the <em>siren_sample</em> folder is located in the same parent folder as the <em>siren</em> folder. The sample data contains:
 <ul class="none">
 <li><em>sample_files</em> contains a range of files for the SWIS such as maps, existing network and so forth</li>
 <li><em>solar_weather</em> contains solar (.smw) weather files for the SWIS for 2014 and 2015</li>
@@ -183,7 +189,7 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 
 <p><a href="#help">Back to top</a></p>
 <h2 id="setup">Setting Up</h2>
-<p>The simulation uses external &ldquo;data files&rdquo; to model the potential for renewable energy generation for a geographic region. The approach is to model the data on an hourly basis for a desired year (ignoring leap days, that is, 8,760 hours). The following data files are required / desirable. Due to the initial source for each data file the format for each is different (see <a href="#files">SIREN File Formats</a> for further details). Please <a href="#feedback">feedback</a> any desired formats as it's relatively easy to accommodate standard file formats.</p>
+<p>The simulation uses external data files to model the potential for renewable energy generation for a geographic region. The approach is to model the data on an hourly basis for a desired year (ignoring leap days, that is, 8,760 hours). The following data files are required / desirable. Due to the initial source for each data file the format for each is different (see <a href="#files">SIREN File Formats</a> for further details). Please <a href="#feedback">feedback</a> any desired formats as it's relatively easy to accommodate standard file formats.</p>
 <ul>
 <li>A map of the area of interest (identified in the <a href="#p_map">[Map]</a> Section of the Preferences file). A simple JPEG or PNG image is fine although most conventional image formats should be acceptable. The map covers a geographically rectangular area of the earth. Obtaining a suitable map image is described in <a href="#map">Obtaining a Suitable Map Image</a></li>
 <li>Names and locations of towns. Two files are used as input (either or both can be specified):
@@ -370,7 +376,7 @@ You can also use TMY files such as those provided with SAM. If you have a number
 <p>Above 500MW it's a case of alternately adding 330_s and 330_d costs.</p>
 <p><a href="#help">Back to top</a></p>
 <h2 id="prefs">Preferences</h2>
-<p>Many options can be specified by a Preferences file. When you open SIREN you will be presented with a list of available Preferences files (SIREN Models) to choose from. These files (must) reside in the same directory as the SIREN itself.
+<p>Many options can be specified by a Preferences file. When you open SIREN you will be presented with a list of available Preferences files (SIREN Models) to choose from. These files (must) reside in the same directory as SIREN itself.
 The format is similar to a Windows INI file. If you want to create a new Model you can press the <em>New Model</em> button on the start up menu. You will be presented with a small list of Properties to update to create a new Preferences file.
 <p>The Preferences file has the following Sections and properties. The file is a simple text file which must be saved in the <em>siren</em> folder and have a file type of <em>.ini</em> (INI File). The sample <em>siren_default.ini</em> or <em>siren_windows_default.ini</em> file will provide a useful guide as to the content.</p>
 <p>There are three special strings which will be replaced in the Files properties variables:</p>
@@ -1805,7 +1811,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 </tr>
 <tr class="none">
 <td class="none"><dfn><strong>View</strong></dfn></td>
-<td class="none">Modify the view of certain elements of the simulation. Those identifies with a tick icon can be toggled on or off</p>
+<td class="none">Modify the view of certain elements of the simulation. Those identified with a tick icon can be toggled on or off</p>
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><img src="check-mark_b.png" alt="Toggle Capacity">&nbsp;&nbsp;Capacity Circles (Ctrl+C)</td>
@@ -1956,6 +1962,10 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <td class="none">Invoke getmap to create a map image for SIREN (see <a href="#map">Obtaining a Suitable Map Image</a>)</td>
 </tr>
 <tr class="none">
+<td class="none"><img src="download.png" alt="getmerra2">&nbsp;&nbsp;getmap</td>
+<td class="none">Invoke getmerra2 to download MERRA-2 data files (see <a href="#getmerra2">Get MERRA-2 Files</a>)</td>
+</tr>
+<tr class="none">
 <td class="none"><img src="list.png" alt="indexweather">&nbsp;&nbsp;indexweather</td>
 <td class="none">Invoke indexweather to create an index for weather files (see <a href="#index">Using other Weather Files</a>)</td>
 </tr>
@@ -1965,7 +1975,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 </tr>
 <tr class="none">
 <td class="none"><img src="weather.png" alt="makeweather2">&nbsp;&nbsp;makeweather2</td>
-<td class="none">Invoke makeweather2 to create weather files for SAM (see <a href="#merra3">Produce wind and solar weather files</a>)</td>
+<td class="none">Invoke makeweather2 to create weather files for SAM (see <a href="#merra5">Produce wind and solar weather files</a>)</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="list.png" alt="updateswis">&nbsp;&nbsp;updateswis</td>
@@ -2445,17 +2455,24 @@ Additional rows specify power output at speeds increasing by 1 m/s</td>
 <p><a href="#help">Back to top</a></p>
 <h2 id="notes">Supporting Notes</h2>
 <h3 id="map">Obtaining a Suitable Map Image</h3>
-<p>Among other publicly available resources, OpenStreetMap provides a set of open map tiles (&ldquo;Slippy Map&rdquo; tiles. Refer <a href="http://wiki.openstreetmap.org/wiki/Slippy_Map" target="_blank">http://wiki.openstreetmap.org/wiki/Slippy_Map</a>) which can be stitched together into a single image. These produce a traditional map type.  A satellite map can be obtained from MapQuest (<a href="https://www.mapquestapi.com/staticmap/" target="_blank">https://www.mapquestapi.com/staticmap/</a> or you can save an image from another source. Map data copyright (&copy;) OpenStreetMap contributors CC-BY-SA <a href="http://www.openstreetmap.org/copyright" target="_blank"> http://www.openstreetmap.org/copyright</a>.</p>
+<p>Among other publicly available resources, OpenStreetMap provides a set of open map tiles (&ldquo;Slippy Map&rdquo; tiles. Refer <a href="http://wiki.openstreetmap.org/wiki/Slippy_Map" target="_blank">http://wiki.openstreetmap.org/wiki/Slippy_Map</a>) which can be stitched together into a single image. These produce a traditional map type.  A satellite map can be obtained from MapQuest (<a href="https://www.mapquestapi.com/staticmap/" target="_blank">https://www.mapquestapi.com/staticmap/</a> or you can save an image from another source. Map data copyright (&copy;) OpenStreetMap contributors CC-BY-SA <a href="http://www.openstreetmap.org/copyright" target="_blank"> http://www.openstreetmap.org/copyright</a>. You can obtain a suitable image using <em>getmap</em>.</p>
 <h4>getmap</h4>
 <p><code>getmap.py</code> is a Python program that can be used to create a map image for any area of the globe. Using this program you can obtain a map from one of the two sources above. You specify:
 <ul>
 <li>for both, the bounding coordinates for the chosen area, and a name for the file to create a suitable map image</li>
 <li>for OpenStreetMap, a zoom level and a URL template (Internet address) for the map tiles. The default value (<code>http://[abc].tile.openstreetmap.org/zoom/x/y.png</code>) represents the normal OpenStreetMap tiles</li>
-<li>for MapQuest, the width and height for the image file you wish to create</li>
+<li>for MapQuest, the width and height for the image file you wish to create. The ratio of these values will affect the area the map represents</li>
 </ul>
-<p>You can invoke the program either by choosing <em>getmap</em> from the SIREN Tools menu or in Windows by running <code>getmap.exe</code> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to allow you to define the map/image desired. The window fields are:</p>
+<p>You can invoke the program either by choosing <em>getmap</em> from the SIREN Tools menu or in Windows by running <code>getmap.exe</code> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to allow you to define the map/image desired. <em>getmap</em> displays a map of the world to visualise the chosen are of interest at a global scale. The window fields are:</p>
 <ul>
-<li><em>Area of interest</em>. You specify the boundaries for the area of the world you want a map generated for. You can either use the arrows to increase or decrease each coordinate by 5 degrees or type in a value. North and South can range from -85 to +85 degrees and East and West from -180 to +180</li>
+<li><em>Area of interest</em>. You specify the boundaries for the area of the world you want a map generated for. This can be chosen either by pressing <em>Choose area via Map</em> to invoke <em>worldwindow</em> (see <a href="#worldwindow">Select area on world map</a>) to choose the area on a world map or by specifying the bounding coordinates for the area:
+<ul>
+<li><em>North</em>. Upper latitude</li>
+<li><em>West</em>. Left (west) longitude</li>
+<li><em>South</em>. Lower latitude</li>
+<li><em>East</em>. Right (east) longitude</li>
+</ul>
+You can alternate between both approaches to choose the desired area. If you have passed a SIREN Preferences file or invoked <em>getmap</em> from within SIREN the bounding coordinates will be set to those of the current map. North and South can range from +85.06 to -85.06 degrees and East and West from -180 to +180</li>
 <li><em>Map Scale (Zoom)</em>. The scale of the map can be from 0 - 1:500 million - to 11 - 1:250,000 (OpenStreetMap has zoom levels to 19, 1:1,000). You can either use the arrows to increase or decrease the level or type in a value. The program will show an approximate scale for the level chosen</li>
 <li><em>URL template</em>. The URL template for the location of the map tiles. The default value, <code>http://[abc].tile.openstreetmap.org/zoom/x/y.png</code>, is for OSM 'standard' style maps. You can override this value to specify a different source (for example, <code>http://tile.stamen.com/terrain-background/zoom/x/y.png</code> for Migurski's Terrain; US-only)</li>
 <li><em>Image Width</em>. The width of the image to be created (for MapQuest)</li>
@@ -2463,15 +2480,14 @@ Additional rows specify power output at speeds increasing by 1 m/s</td>
 <li><em>Image File name</em>. Use this to specify the name and location for the map file. If you click on the field it will allow you to specify an alternative name and location for the file (you can't type into the field itself). If you specify a filetype it must be a suitable image format. The default format is <em>.png</em></li>
 <li><em>Properties</em>. This is a read only field that is filled in when a map is created. These properties should be copied into the <a href="#p_map">[Map]</a> Section of the Preferences file. For OpenStreetMap images the <strong>coordinates</strong> are correct while they <strong>are likely to be incorrect for MapQuest - this is a work-in-progress.</strong></li>
 </ul>
-<p>There are seven buttons:</p>
+<p>There are six buttons:</p>
 <ul>
+<li><em>Choose area via Map</em> (as above) will open the world map
 <li><em>Quit</em> will exit the program</li>
 <li><em>Query Map</em> will calculate the size of the map and indicate the boundaries for the map on the world view. The size of the boundary area is dependent on the map scale (zoom)</li>
 <li><em>Get Map</em> will produce the map. It downloads map tiles from OpenStreetMap and stitches them into a single image file at the location specified. It will update the Properties field with the valuables to be added into the Preferences file. If you are downloading a map with many tiles this may take some time so <strong>please be patient</strong></li>
 <li><em>MapQuest</em> will produce a map from MapQuest. It issues a request to MapQuest for a static map with the coordinates and image properties you specify. The coordinates for the image (map) should contain your specified area but the exact bounding coordinates are likely to be different - this is a work-in-progress</li>
 <li><em>Help</em> Display this help</li>
-<li><em>Save View</em> Save the view of the world with the chosen boundaries highlighted</li>
-<li><em>Many</em> This will allow input of coordinates for a number of areas. You enter name (optional), upper latitude, west (left) longitude, lower latutude and east longitude separated by commas for each area of interest. This will then update the world view highlighting all areas on the map. Note: At present you cannot download maps for each area (this could be changed if their is demand for this minor feature)</li>
 </ul>
 <p>After producing the map you should copy the contents of the <em>Properties</em> field into the <a href="#p_map">[Map]</a> Section of the Preferences file.</p>
 <p>You can also run the program on the command line. In this case the parameters are passed to the program as follows:</p>
@@ -2591,7 +2607,7 @@ NASA MERRA-2 data is a suitable source to generate data files containing all wea
 </ul>
 <h4 id="merra2">Obtaining MERRA-2 Data</h4>
 <p>MERRA-2 Data is publicly available and the following steps can be used to obtain the required data.</p>
-<p><strong>Register for access</strong></p>
+<p id="merra2a"><strong>Register for access</strong></p>
 <p>To access MERRA-2 data you need URS Authentication as follows:
 <ol>
 <li>
@@ -2613,7 +2629,8 @@ Search for <em>NASA GESDICS DATA ARCHIVE</em> and <em>APPROVE</em> that applicat
 Read <a href="https://wiki.earthdata.nasa.gov/display/HDD/Wget+with+URS+Authentication#WgetwithURSAuthentication-Step-by-stepguide" target="_blank">Wget with URS Authentication</a> to create a <em>.netrc</em> file for authentication to download the MERRA-2 files
 </li>
 </ol>
-<p><strong>Obtaining data</strong></p>
+<p id="merra3"><strong>Obtaining data</strong></p>
+<p>As an alternative to following these steps you might want to use <em>getmerra2</em> - see <a href="#getmerra2">Get MERRA-2 Files</a>.</p>
 <ol>
 <li>Enter the MERRA-2 data subset URL, <a href="http://disc.sci.gsfc.nasa.gov/daac-bin/FTPSubset2.pl" target="_blank">http://disc.sci.gsfc.nasa.gov/daac-bin/FTPSubset2.pl</a> in your browser
 <li>Within the MDISC Data Subset page choose appropriate options as follows:
@@ -2622,7 +2639,9 @@ Read <a href="https://wiki.earthdata.nasa.gov/display/HDD/Wget+with+URS+Authenti
 Select Data Product from the pulldown list:
 <ol>
 <li>MERRA-2 <em>tavg1_2d_slv_Nx</em> for wind</li>
+<!--http://disc.sci.gsfc.nasa.gov/uui/datasets/M2T1NXSLV_V5.12.4/summary-->
 <li>MERRA-2 <em>tavg1_2d_rad_Nx</em> for solar</li>
+<!--http://disc.sci.gsfc.nasa.gov/uui/datasets/M2T1NXRAD_V5.12.4/summary-->
 <div class="experiment">
 <li>MERRA-2 <em>tavg1_2d_flx_Nx</em>, <em>tavg1_2d_lnd_Nx</em> or <em>tavg1_2d_mld_Nx</em> for rainfall (experimental)</li>
 </div>
@@ -2692,9 +2711,39 @@ wget --load-cookies ~/.urs_cookies --save-cookies ~/.urs_cookies --auth-no-chall
 <li>Obtain a suitable version of wget, such as <a href="https://eternallybored.org/misc/wget/releases/wget-1.18-win32.zip">wget-1.18-win32.zip</a> for the full package or <a href="https://eternallybored.org/misc/wget/current/wget.exe">wget.exe</a> for just wget itself. Only the .exe file is required</li>
 <li>Create a <code>.netrc</code> file as described in the Wget with URS Authentication link above</li>
 <li>Create a <code>HOME</code> environment variable which points to the folder containing the <code>.netrc</code> file (typically this is set to <code>Users/username</code>)</li>
-<li>Open a terminal window, navigate to where you have the list of urls and invoke wget</li>
+<li>Open a terminal window, navigate to where you have the list of urls and invoke <code>wget</code></li>
 </ol>
-<h4 id="merra3">Produce wind and solar weather files</h4>
+<h4 id="getmerra2">Get MERRA-2 Files</h4>
+<em>getmerra2</em> provides an alternate way of downloading MERRA-2 files than that described in <a href="#merra3">Obtaining data</a>. This approach uses <code>wget</code> but removes the need to manually follow those steps above. You still need to <a href="#merra2a">Register for access</a> and for Windows create a <code>HOME</code> environment variable as described above.</p>
+<h5>getmerra2</h5>
+<p><code>getmerra2.py</code> is a Python program that can be used to download MERRA-2 files required to create weather files for SAM. You can invoke the program either by choosing <em>getmerra2</em> from the SIREN Tools menu or in Windows by running <code>getmerra2.exe</code> in the <em>siren</em> folder. The program accepts a SIREN Preferences file as an optional parameter. The window fields are:</p>
+<ul>
+<li><em>Area of Interest</em>. Area of interest for files to be downloaded. This can be chosen either by pressing <em>Choose area via Map</em> to invoke <em>worldwindow</em> (see <a href="#worldwindow">Select area on world map</a>) to choose the area on a world map or by specifying the bounding coordinates for the area:
+<ul>
+<li><em>North</em>. Upper latitude</li>
+<li><em>West</em>. Left (west) longitude</li>
+<li><em>South</em>. Lower latitude</li>
+<li><em>East</em>. Right (east) longitude</li>
+</ul>
+You can alternate between both approaches to choose the desired area. If you have passed a SIREN Preferences file or invoked <em>getmerra2</em> from within SIREN the bounding coordinates will be set to those of the current map. North and South can range from +85.06 to -85.06 degrees and East and West from -180 to +180
+</li>
+<li><em>Start date</em>. The first date to be downloaded</li>
+<li><em>End date</em>. The first date to be downloaded</li>
+<li><em>Copy folder down</em>. This is an ease of use field. If this is checked any changes to the Solar target Folder field will be propagated to the Wind Folder field</li>
+<li><em>Solar Target Folder</em>. Use this to specify the location for the MERRA-2 solar (<em>tavg1_2d_rad_Nx</em>) files. To change the location you need to click on the field and navigate to the correct folder (you can't type into the field)</li>
+<li><em>Wind Target Folder</em>. Use this to specify the location for the MERRA-2 wind (<em>tavg1_2d_slv_Nx</em>) files. To change the location you need to click on the field and navigate to the correct folder (you can't type into the field)</li>
+</ul>
+<p>There are five buttons:</p>
+<ul>
+<li><em>Choose area via Map</em> (as above) will open the world map
+<li><em>Quit</em> will exit the program</li>
+<li><em>Get Solar</em> will invoke <em>wget</em> as a new task to download the solar files for the selected area and date range. As part of the execution a log file will be saved to the Solar Target Folder</li>
+<li><em>Get Wind</em> will invoke <em>wget</em> as a new task to download the wind files for the selected area and date range. As part of the execution a log file will be saved to the Wind Target Folder</li>
+<li><em>Help</em> Display this help</li>
+</ul>
+<p>Downloading the MERRA-2 files are performed by new tasks allowing you to close the <em>getmerra2</em> window once you have requested the files. Depending on the area and date range the process of downloading is likely to take significant time. A log file named <em>wget_type_yyyy-mm-dd_hhmm.log</em> will be produced, where <em>type</em> is either wind or solar and <em>yyyy-mm-dd_hhmm.log</em> is the date and time <code>wget</code> was invoked. A file named <em>wget_type_yyyy-mm-dd_hhmm.txt</em> will contain the list of files to be downloaded and <em>wget_type_yyyy-mm-dd_hhmm.bat</em> will contain the <code>wget</code> command (in case you encounter problems).</p>
+<!-- Back to top< -->
+<h4 id="makeweather">Produce wind and solar weather files</h4>
 <h5>makeweather2</h5>
 <p><code>makeweather2.py</code> is a Python program that can be used to produce solar and/or wind weather files for input to SAM. The program generates SMW (preferred for SAM) or CSV format solar resource files and SRW format wind resource files. These file formats have been chosen as they're easier to generate than other formats. Using the program you specify the source folder for the MERRA-2 data files, the time zone for the area of interest, a file format and target folder for the weather files. The program will generate files for each of the MERRA-2 grid squares within the chosen MERRA-2 data files or optionally for a number of latitude and longitude positions. You can invoke the program either by choosing <em>makeweather2</em> from the SIREN Tools menu or in Windows by running <code>makeweather2.exe</code> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
 <ul>
@@ -2752,7 +2801,7 @@ wget --load-cookies ~/.urs_cookies --save-cookies ~/.urs_cookies --auth-no-chall
 <li><code>makeweatherfiles.py</code> is a standalone version of <code>makeweather2.py</code>. It allows you to create SAM weather files  without requiring any other parts of SIREN. See <a href="makeweatherfiles.html" target="_blank">makeweatherfiles.html</a></li>
 </ol>
 <p>
-<h5 id="merra4">Wind Files</h5>
+<h5 id="merra6">Wind Files</h5>
 <p>SRW format wind files are one of the formats acceptable to SAM. This format has been chosen as it's easier to generate than other formats. MERRA-2 variables from tavg1_2d_slv_Nx data files are used to create the SRW variables.</p>
 <table border="1">
 <thead>
@@ -2934,7 +2983,7 @@ MERRA-2 Variables
 <li>DNI is computed using formulae derived from the NREL Centre for Renewable Energy Resources DISC DNI Model</li>
 <li>DHI is computed using formulae derived from the NREL DNI-GHI to DHI Calculator</li>
 </ul>
-<h4 id="merra34">Background on MERRA-2</h4>
+<h4 id="merra7">Background on MERRA-2</h4>
 <p>&ldquo;The Modern Era Retrospective-analysis for Research and Applications, Version 2 (MERRA-2) is a NASA atmospheric data reanalysis for the satellite era using a major new version of the Goddard Earth Observing System Data Assimilation System Version 5 (GEOS-5). MERRA-2 focuses on historical analyses of the hydrological cycle on a broad range of weather and climate time scales, and places the NASA EOS suite of observations in a climate context.&rdquo;</p>
 <ul>
 <li>Each time-averaged collection consists of a continuous sequence of data averaged over the indicated interval and time stamped with the central time of the interval. For hourly data, for example, these times are 00:30 GMT, 01:30 GMT, 02:30 GMT, etc..</li>
@@ -3395,6 +3444,284 @@ MERRA-2 Variable
      formula=pow(0.0070104 * ( wind * 1.94384)**2,2) * 0.45 * wind * 1.94384 * efficiency * .125
 </pre>
 </div>
+<p><a href="#help">Back to top</a></p>
+<h3 id="worldwindow">Select area on world map</h3>
+<p><em>worldwindow</em> can be used with <em>getmap</em> (see <a href="#map">Obtaining a Suitable Map Image</a>) and <em>getmerra2</em> (see <a href="#getmerra2">Get MERRA-2 Files</a>) to choose the Area of Interest for a map or for downloading MERRA-2 data. It presents a world map and allows you to choose the area of interest by clicking within the map and updating the area values in the two calling programs</p>
+<h4>Using worldwindow</h4>
+<p>To use <em>worldwindow</em> you simply left click in the map the top left corner of the desired Area of Interest and then left click the bottom right corner. <em>worldwindow</em> will display a rectangle on the world map highlighting the desired area and update the Area of Interest in the calling program. To choose a different area just repeat the process.
+<h4>worldwindow Menu Structure</h4>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn><strong>View</strong></dfn></td>
+<td class="none">Overlay items on the world map. Those identified with a tick icon can be toggled on or off</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><img src="check-mark_b.png" alt="Scale Ruler">&nbsp;&nbsp;Scale Ruler (Ctrl+R)</td>
+<td class="none">If True Display a Scale Ruler. If you want to move the ruler you need to toggle it off and then back on again</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="check-mark_b.png" alt="Show Coordinates Grid">&nbsp;&nbsp;Coordinates Grid (Ctrl+G)</td>
+<td class="none">Display a grid for every 10 degrees of latitude and longitude</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="check-mark_b.png" alt="Show MERRA-2 Grid">&nbsp;&nbsp;MERRA-2 Grid (Ctrl+M)</td>
+<td class="none">Display a grid for every MERRA-2 cell. Due to the number of cells (720 latitude x 576 longitude) this is not very useful unless you zoom in</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="blank.png" alt="many Areas">&nbsp;&nbsp;Show many Areas</td>
+<td class="none">This will allow input of coordinates for a number of areas. You enter name (optional), upper latitude, west (left) longitude, lower latutude and east (right) longitude separated by commas for each area of interest. This will then update the map highlighting all areas on the map. This option is useful if you want to show a view of several areas of interest. Note: At present you cannot download maps for each area</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="camera.png" alt="Save View">&nbsp;&nbsp;Save View (Ctrl+V)</td>
+<td class="none">Save the current view to an image file</td>
+</tr>
+</table>
+</td>
+<tr class="none">
+<td class="none"><dfn><strong>Preferences</strong></dfn></td></p>
+<td class="none">Edit or display aspects of the <em>getfiles</em> Preferences file. Changes for some variables will take effect immediately on exit from the edit program while others (such as the map) will require you to restart the simulation</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><img src="edit.png" alt="Edit Preferences">&nbsp;&nbsp;Edit Preferences File(Ctrl+E)</td>
+<td class="none">Edit the <em>getfiles</em> Preferences file. This option invokes a simple text editor to allow the whole file to be edited</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="rainbow-icon.png" alt="Edit Colours">&nbsp;&nbsp;Edit Colours (Ctrl+U)</td>
+<td class="none">Edit colours for the current map. This will allow to change both the default colours and the colours for the current <em>map_choice</em></td>
+</tr>
+<tr class="none">
+<td class="none"><img src="arrow.png" alt="Edit Section">&nbsp;&nbsp;Edit Section</td>
+<td class="none">Edit a specific Section of the Preferences file. You will be presented with a list of Sections to choose the desired one. The edit program will then present a table of current Properties and their values</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn><strong>Help</strong></dfn></td>
+<td class="none">Display some help about the program</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><img src="help.png" alt="Help">&nbsp;&nbsp;Help (F1)</td>
+<td class="none">Display the help for <em>worldwindow</em>. The default help file, <em>help.html</em>, is a standard HTML file which can be displayed with your browser</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+<h4>getfiles Preferences</h4>
+<p>The <em>getfiles</em> Preferences file contains preferences specifically for <em>worldwindow</em> and the programs using it. The file resides in the same directory as <em>worldwindow</em> itself.
+<table border="0", class="none">
+<tr>
+<th>Section</th>
+<th>Properties</th>
+</tr>
+<tr class="none"><td><dfn><strong>[Colors]</strong></dfn></td>
+<td>Colours for things. It is possible to edit colours and save the changes via a menu option. Standard colours are:
+<p>white, black, red, darkRed, green, darkGreen, blue, darkBlue, cyan, darkCyan, magenta, darkMagenta, yellow, darkYellow, gray, darkGray, lightGray and transparent; or you can use #rrggbb to specify red-green-blue HTML colour shades.</p>
+<p>Colour properties are:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>background</dfn></td>
+<td class="none">Colour for the background surrounding the map</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>border</dfn></td>
+<td class="none">Provide a border colour for areas of interest</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>grid</dfn></td>
+<td class="none">The colour for the latitude / longitude grid</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>mgrid</dfn></td>
+<td class="none">The colour for the MERRA-2 grid</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>ruler</dfn></td>
+<td class="none">Colour for the ruler. If you specify a value of <em>guess</em> the ruler should display white on dark and black on light (but it's not perfect)</td>
+</tr>
+</table>
+</td></tr>
+<tr class="none"><td><dfn><strong>[Files]</strong></dfn></td>
+<td>Files and directories. You can either specify the folder as the full path or relative to the siren folder (not the folder the Preferences file resides in). Properties are:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>help&nbsp;&nbsp;&nbsp;</dfn></td>
+<td class="none">Help file</td>
+</tr>
+</table>
+</td></tr><tr class="none"><td><dfn><strong>[getmerra2]</strong></dfn></td>
+<td>These properties are used by <em>getmerra2</em> to create requests to download MERRA-2 data files. Normally they should not be changed. They're here just to document their content and purpose. Values enclosed in dollars signs ($) are substituted at execution time. Properties are:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>filename</dfn></td>
+<td class="none">The name of the MERRA-2 file on the NASA MERRA-2 server</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>label</dfn></td>
+<td class="none">Label parameter</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>server</dfn></td>
+<td class="none">The MERRA-2 server</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>solar_collection</dfn></td>
+<td class="none">The name of the MERRA-2 dataset used to obtain solar variables</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>solar_esdt</dfn></td>
+<td class="none">The short description of the MERRA-2 solar dataset</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>solar_variables</dfn></td>
+<td class="none">The variables obtained from the MERRA-2 solar dataset</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>url_prefix</dfn></td>
+<td class="none">URL prefix
+</tr>
+<tr class="none">
+<td class="none"><dfn>url_parms</dfn></td>
+<td class="none">Parameters passed to the URL server</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>wget</dfn></td>
+<td class="none">used to create the filename strings used by wget</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>wget_cmd</dfn></td>
+<td class="none">The command used to invoke wget to download the MERRA-2 data files</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>wind_collection</dfn></td>
+<td class="none">The name of the MERRA-2 dataset used to obtain wind variables</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>wind_esdt</dfn></td>
+<td class="none">The short description of the MERRA-2 wind dataset</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>wind_variables</dfn></td>
+<td class="none">The variables obtained from the MERRA-2 solar dataset</td>
+</tr>
+</table>
+</td></tr>
+<tr class="none"><td><dfn><strong>[getmap]</strong></dfn></td>
+<td>These properties are used by <em>getmap</em> to create requests to download map images. Normally they should not be changed. They're here just to document their content and purpose. Properties are:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>mapquest_url</dfn></td>
+<td class="none">MapQuest server
+</tr>
+<tr class="none">
+<td class="none"><dfn>mapquest_tail</dfn></td>
+<td class="none">Command passed to the MapQuest server</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>mapquest_key</dfn></td>
+<td class="none">Key for MapQuest requests</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>url_template</dfn></td>
+<td class="none">URL template for openstreetmap requests</td>
+</tr>
+</tr>
+</table>
+</td></tr>
+<tr class="none"><td><dfn><strong>[Map]</strong></dfn></td>
+<td>Details on the world map. Properties are:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>map</dfn></td>
+<td class="none">Map file showing the world. The map can be any graphic image, even a blank image such as provided in the sample files as <em>blank.jpg</em>. Default is world1.jpg</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>map_choice</dfn></td>
+<td class="none">It is possible to choose one of a number of maps using the map_choice parameter. Properties suffixed with the map_choice value will override the default values
+</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>projection</dfn></td>
+<td class="none">Map projection such as <em>EPSG:3857</em>. EPSG:3857 (WGS 84 / Popular Visualisation Pseudo-Mercator) is a Spherical Mercator projection coordinate system popularised by web services such as Google and later OpenStreetMap. It allows an area of the earth to be projected as a rectangle</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>lower_right</dfn></td>
+<td class="none">lower right corner of the map in format <em>latitude, longitude</em>. <em>-85.06, 180.</em> is the desired value</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>upper_left</dfn></td>
+<td class="none">Upper left corner of the map in format <em>latitude, longitude</em>. <em>85.06, 180.</em> is the desired value</td>
+</tr>
+</table>
+</td></tr>
+<tr class="none"><td><dfn><strong>[Parents]</strong></dfn></td>
+<td>As per <a href="#p_parents">Parents</a></td>
+</tr>
+<tr class="none"><td><dfn><strong>[updateswis]</strong></dfn></td>
+<td>These properties are used by <em>updateswis</em> to create requests to download AEMO data files. Normally they should not be changed. They're here just to document their content and purpose. Values enclosed in dollars signs ($) are substituted at execution time. Properties are:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>aemo_facilities</dfn></td>
+<td class="none">AEMO facilities file location</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>aemo_load</dfn></td>
+<td class="none">AEMO load file location</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>aemo_url</dfn></td>
+<td class="none">AEMO server</td>
+</tr>
+</table>
+</td></tr>
+<tr class="none"><td><dfn><strong>[View]</strong></dfn></td>
+<td>Default world view options. Often these are True or False values that can be &ldquo;toggled&rdquo; in the world map. Properties are:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>centre_on_grid</dfn></td>
+<td class="none">If True then centre on the chosen area of interest</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>line_width</dfn></td>
+<td class="none">Width of grid lines on the map in pixels. A line width of zero indicates a cosmetic pen. This means that the pen width is always drawn one pixel wide, independent of the level of zoom. This is the default. A value &gt; 0 will show lines at this width irrespective of the size of the map. A value &lt; 1 and &gt; 0 will be used to calculate the number of pixels by multiplying the width of the map image by this value. A useful value is 0.0016. For example a map image 12,000 pixels wide will have grid lines 19.2 pixels wide</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>ruler</dfn></td>
+<td class="none">Length of ruler in kilometres in format <em<length></em> or <em>length, ticks</em> where <em>length</em> specifies the total length of the ruler and <em>ticks</em> ticks indicates the length of tick marks along the ruler</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>zoom_rate</dfn></td>
+<td class="none">The zoom rate for the map view. Each zoom in or zoom out action will alter the displayed map by this amount. Values can be between .75 (75% or 133%) and 0.95 (95% or 105%). The default value is 0.8</td>
+</tr>
+</table>
+</td></tr>
+<tr class="none"><td><dfn><strong>[Windows]</strong></dfn></td>
+<td>Provides options to remember the world map window layout between sessions. Properties are:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>main_pos</dfn></td>
+<td class="none">Position of world map window</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>main_size</dfn></td>
+<td class="none">Size of world map window</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>main_view</dfn></td>
+<td class="none">Dimensions of map in main window view</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>restorewindows</dfn></td>
+<td class="none">If True <em>worldwindow</em> will remember the window layout between sessions. Default is False</td>
+</tr>
+</table>
+</tr>
+</table>
+</td></tr>
+<!--
+<p>Ctrl Keys: A, E, G, M, R, U, V
+-->
 <p><a href="#help">Back to top</a></p>
 <h2 id="acronyms">Acronyms</h2>
 <table border="0" class="none">

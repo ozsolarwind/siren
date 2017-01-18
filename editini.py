@@ -101,10 +101,12 @@ class EdtDialog(QtGui.QDialog):
 
 
 class EditSect():
-    def __init__(self, section, save_folder):
+    def __init__(self, section, save_folder, ini_file=None):
         self.section = section
         config = ConfigParser.RawConfigParser()
-        if len(sys.argv) > 1:
+        if ini_file is not None:
+            config_file = ini_file
+        elif len(sys.argv) > 1:
             config_file = sys.argv[1]
         else:
             config_file = 'SIREN.ini'
@@ -124,13 +126,15 @@ class EditSect():
         for key in values:
             section_items.append(key + '=' + values[key][0][6:])
         section_dict[self.section] = section_items
-        SaveIni(section_dict)
+        SaveIni(section_dict, config=config_file)
 
 
 class EditTech():
-    def __init__(self, save_folder):
+    def __init__(self, save_folder, ini_file=None):
         config = ConfigParser.RawConfigParser()
-        if len(sys.argv) > 1:
+        if ini_file is not None:
+            config_file = ini_file
+        elif len(sys.argv) > 1:
             config_file = sys.argv[1]
         else:
             config_file = 'SIREN.ini'
@@ -182,8 +186,10 @@ class EditTech():
 
 
 class SaveIni():
-    def __init__(self, values):
-        if len(sys.argv) > 1:
+    def __init__(self, values, ini_file=None):
+        if ini_file is not None:
+            config_file = ini_file
+        elif len(sys.argv) > 1:
             ini_file = sys.argv[1]
         else:
             ini_file = 'SIREN.ini'

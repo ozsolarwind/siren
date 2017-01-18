@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2016 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2016-2017 Sustainable Energy Now Inc., Angus King
 #
 #  indexweather.py - This file is part of SIREN.
 #
@@ -237,7 +237,7 @@ class getParms(QtGui.QWidget):
         self.scroll.setWidget(frame)
         self.layout = QtGui.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
-        self.setWindowTitle('SIREN indexweather (' + fileVersion() + ') - Make resource grid file')
+        self.setWindowTitle('SIREN - indexweather (' + fileVersion() + ') - Make resource grid file')
         self.center()
         self.show()
 
@@ -278,7 +278,7 @@ class getParms(QtGui.QWidget):
 
     def helpClicked(self):
         dialog = displayobject.AnObject(QtGui.QDialog(), self.help,
-                 title='Help for SIREN indexweather (' + fileVersion() + ')', section='index')
+                 title='Help for indexweather (' + fileVersion() + ')', section='index')
         dialog.exec_()
 
     def quitClicked(self):

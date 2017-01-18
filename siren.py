@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2016 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2016-2017 Sustainable Energy Now Inc., Angus King
 #
 #  sirens.py - This file is part of SIREN.
 #
@@ -134,8 +134,8 @@ class TabDialog(QtGui.QDialog):
         layout.addWidget(self.table, 1, 0)
         layout.addWidget(buttons, 2, 0)
         menubar = QtGui.QMenuBar()
-        utilities = ['getmap', 'makeweather2']
-        utilicon = ['map.png', 'weather.png']
+        utilities = ['getmap', 'getmerra2', 'makeweather2']
+        utilicon = ['map.png', 'download.png', 'weather.png']
         spawns = []
         icons = []
         if sys.platform == 'win32' or sys.platform == 'cygwin':
@@ -412,8 +412,8 @@ class makeNew(QtGui.QDialog):
         self.scroll.setWidget(frame)
         self.layout = QtGui.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
-        utilities = ['getmap', 'makeweather2']
-        utilicon = ['map.png', 'weather.png']
+        utilities = ['getmap', 'getmerra2', 'makeweather2']
+        utilicon = ['map.png', 'download.png', 'weather.png']
         spawns = []
         icons = []
         if sys.platform == 'win32' or sys.platform == 'cygwin':
@@ -450,14 +450,16 @@ class makeNew(QtGui.QDialog):
         if str(self.fields[0][4].text()).lower() == 'siren_default.ini' or \
           str(self.fields[0][4].text()).lower() == 'siren_default' or \
           str(self.fields[0][4].text()).lower() == 'siren_windows_default.ini' or \
-          str(self.fields[0][4].text()).lower() == 'siren_windows_default':
+          str(self.fields[0][4].text()).lower() == 'siren_windows_default' or \
+          str(self.fields[0][4].text()).lower() == 'getfiles' or \
+          str(self.fields[0][4].text()).lower() == 'getfiles.ini':
             self.msg.setText('Proposed file name not allowed.')
         else:
             self.msg.setText('')
 
     def helpClicked(self):
         dialog = displayobject.AnObject(QtGui.QDialog(), self.help,
-                 title='Help for SIREN Preferences file (' + fileVersion() + ')', section='prefs')
+                 title='Help for SIREN Preferences file', section='prefs')
         dialog.exec_()
 
     def itemClicked(self):

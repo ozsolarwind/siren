@@ -21,17 +21,16 @@
 import os
 import sys
 from PyQt4 import QtGui
-from PyQt4.QtCore import Qt
 import ConfigParser  # decode .ini file
 
 
 class Colours(QtGui.QDialog):
 
-    def __init__(self):
+    def __init__(self, ini_file=None):
         super(Colours, self).__init__()
-        self.initUI()
+        self.initUI(ini_file)
 
-    def initUI(self):
+    def initUI(self, ini_file):
         def add_item(key, value, i):
             wht = key.replace('_', ' ').title()
             wht = wht.replace('Pv', 'PV')
@@ -62,7 +61,9 @@ class Colours(QtGui.QDialog):
                 self.width = metrics.boundingRect(self.btn[-1].text()).width()
 
         config = ConfigParser.RawConfigParser()
-        if len(sys.argv) > 1:
+        if ini_file is not None:
+            config_file = ini_file
+        elif len(sys.argv) > 1:
             config_file = sys.argv[1]
         else:
             config_file = 'SIREN.ini'
@@ -188,12 +189,13 @@ class Colours(QtGui.QDialog):
         self.layout = QtGui.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
         screen = QtGui.QDesktopWidget().availableGeometry()
-        self.resize(self.width * 3 + 80, int(screen.height() * .9))
+        if config_file != 'getfiles.ini':
+            self.resize(self.width * 3 + 80, int(screen.height() * .9))
         self.setWindowTitle('SIREN - Color dialog')
         QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
 
     def mousePressEvent(self, event):
-        if Qt.RightButton == event.button():
+        if QtCore.Qt.RightButton == event.button():
             for btn in self.btn:
                 if btn.hasFocus():
                     if btn.text()[-5:] != '_base':

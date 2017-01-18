@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2017 Sustainable Energy Now Inc., Angus King
 #
 #  makeweatherfiles.py - Make weather files for SAM
 #
@@ -653,7 +653,7 @@ class makeWeather():
         return
 
     def __init__(self, src_year, src_zone, src_dir_s, src_dir_w, tgt_dir, fmat, wrap=None, src_lat_lon=None, info=False):
-        self.last_time = datetime.datetime.now()
+      #  self.last_time = datetime.datetime.now()
         self.log = ''
         self.return_code = 0
         self.src_year = int(src_year)
@@ -721,8 +721,10 @@ class makeWeather():
             self.tgt_dir += '/'
         if info:
             inp_strt = '{0:04d}'.format(self.src_year) + '0101'
+            self.log += '\nWind file for: ' + inp_strt + '\n'
              # get variables from "wind" file
             self.getInfo(self.findFile(inp_strt, True))
+            self.log += '\nSolar file for: ' + inp_strt + '\n'
              # get variables from "solar" file
             self.getInfo(self.findFile(inp_strt, False))
             return
@@ -1282,7 +1284,7 @@ class getParms(QtGui.QWidget):
         self.scroll.setWidget(frame)
         self.layout = QtGui.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
-        self.setWindowTitle('makeweatherfiles.py - Make weather files from MERRA data')
+        self.setWindowTitle('makeweatherfiles - Make weather files from MERRA data')
         self.center()
         self.show()
 
@@ -1312,6 +1314,7 @@ class getParms(QtGui.QWidget):
 
     def dirChanged(self):
         for i in range(3):
+            print '(1317)', i, self.dirs[i].hasFocus()
             if self.dirs[i].hasFocus():
                 break
         curdir = self.dirs[i].text()
@@ -1326,7 +1329,7 @@ class getParms(QtGui.QWidget):
 
     def helpClicked(self):
         dialog = AnObject(QtGui.QDialog(), self.help, \
-                 title='Help for makeweatherfiles.py', section='merra3')
+                 title='makeweatherfiles - Help', section='makeweather')
         dialog.exec_()
 
     def quitClicked(self):
@@ -1465,7 +1468,7 @@ class RptDialog(QtGui.QDialog):
         layout.addWidget(self.widget)
         layout.addLayout(buttonLayout)
         self.setLayout(layout)
-        self.setWindowTitle('Output from makeweathfiles')
+        self.setWindowTitle('makeweatherfiles - Output')
         size = self.geometry()
         self.setGeometry(1, 1, ln + 10, ln2 + 35)
         size = self.geometry()

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2016 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2016-2017 Sustainable Energy Now Inc., Angus King
 #
 #  makerainfall2.py - This file is possibly part of SIREN.
 #
@@ -509,7 +509,7 @@ class getParms(QtGui.QWidget):
         self.scroll.setWidget(frame)
         self.layout = QtGui.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
-        self.setWindowTitle('SIREN makerainfall2 (' + fileVersion() + ') - Make rainfall files from MERRA data')
+        self.setWindowTitle('SIREN - makerainfall2 (' + fileVersion() + ') - Make rainfall files from MERRA data')
         self.center()
         self.show()
 
@@ -552,7 +552,7 @@ class getParms(QtGui.QWidget):
 
     def helpClicked(self):
         dialog = displayobject.AnObject(QtGui.QDialog(), self.help,
-                 title='Help for SIREN makerainfall2 (' + fileVersion() + ')', section='merrar')
+                 title='Help for makerainfall2 (' + fileVersion() + ')', section='merrar')
         dialog.exec_()
 
     def quitClicked(self):
@@ -649,7 +649,7 @@ class RptDialog(QtGui.QDialog):
         layout.addWidget(self.widget)
         layout.addLayout(buttonLayout)
         self.setLayout(layout)
-        self.setWindowTitle('Output from makerainfall2')
+        self.setWindowTitle('SIREN - Output from makerainfall2')
         size = self.geometry()
         self.setGeometry(1, 1, ln + 10, ln2 + 35)
         size = self.geometry()
