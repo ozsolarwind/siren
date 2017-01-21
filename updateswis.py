@@ -69,6 +69,9 @@ class makeFile():
         common_fields = ['Facility Code', 'Participant Name', 'Participant Code',
                          'Facility Type', 'Balancing Status', 'Capacity Credits (MW)',
                          'Maximum Capacity (MW)', 'Registered From']
+        if not os.path.exists(self.tgt_fil):
+            self.log = 'No target file (' + self.tgt_fil + ')'
+            return
         fac_file = self.tgt_fil
         facile = open(fac_file)
         facilities = csv.DictReader(facile)
@@ -114,6 +117,8 @@ class makeFile():
                 self.log += 'New facility' + new_facility['Facility Code'] + '\n'
         facile.seek(0)
         for facility in facilities:
+            if facility['Facility Code'] == 'Facility Code': # ignore headers - after seek(0)
+                continue
             new_facilities = csv.DictReader(datas)
             for new_facility in new_facilities:
                 if new_facility['Facility Code'] == facility['Facility Code']:
@@ -136,7 +141,7 @@ class makeFile():
                 upd_writer.writerow(common_fields + extra_fields)
                 new_facilities = csv.DictReader(datas)
                 for new_facility in new_facilities:
-                    if new_facility['Facility Code'] == 'Facility Code':   # for some reason headers are duplicated
+                    if new_facility['Facility Code'] == 'Facility Code':   # ignore headers - after seek(0)
                         continue
                     new_line = []
                     for field in common_fields:
@@ -152,6 +157,7 @@ class makeFile():
                             new_line.append('')
                     upd_writer.writerow(new_line)
                 upd_file.close()
+                facile.close()
                 if os.path.exists(fac_file + '~'):
                     os.remove(fac_file + '~')
                 os.rename(fac_file, fac_file + '~')
