@@ -541,11 +541,14 @@ class Table(QtGui.QDialog):
             for cl in range(self.table.columnCount()):
                 if cl > 0:
                     line += ','
-                txt = str(self.table.horizontalHeaderItem(cl).text())
-                if ',' in txt:
-                    line += '"' + txt + '"'
-                else:
-                    line += txt
+                hdr = str(self.table.horizontalHeaderItem(cl).text())
+                if hdr[0] != '%':
+                    txt = hdr
+                    if ',' in txt:
+                        line += '"' + txt + '"'
+                    else:
+                        line += txt
+                txt = self.hdrs[hdr]
                 hdr_types.append(self.labels[txt.lower()])
             tf.write(line + '\n')
             for rw in range(self.table.rowCount()):
