@@ -146,12 +146,18 @@ class Visualise(QtGui.QDialog):
         self.grid.addWidget(next, row, 7)
         next.clicked.connect(self.nextClicked)
         row += 1
+        self.grid.addWidget(QtGui.QLabel('Repeat Loop:'), row, 0)
+        self.repeat = QtGui.QCheckBox()
+        self.repeat.setCheckState(QtCore.Qt.Unchecked)
+        self.grid.addWidget(self.repeat, row, 1)
+        self.loopSpin = QtGui.QDoubleSpinBox()
+        row += 1
         self.do_loop = False
         self.grid.addWidget(QtGui.QLabel('Period Loop (secs):'), row, 0)
         self.loopSpin = QtGui.QDoubleSpinBox()
         self.loopSpin.setRange(0., 10.)
         self.loopSpin.setDecimals(1)
-        self.loopSpin.setSingleStep(.2)
+        self.loopSpin.setSingleStep(.1)
         self.loopSpin.setValue(0.)
         self.loopSpin.valueChanged[str].connect(self.loopChanged)
         self.grid.addWidget(self.loopSpin, row, 1, 1, 2)
@@ -263,6 +269,9 @@ class Visualise(QtGui.QDialog):
             val += 1
             if val < self.slider.maximum():
                 self.slider.setValue(val)
+            else:
+                if self.repeat.isChecked():
+                    val = 0
         if self.do_loop:
             self.do_loop = False
             self.loop.setText('Loop')
