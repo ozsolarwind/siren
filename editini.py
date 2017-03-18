@@ -126,7 +126,7 @@ class EditSect():
         for key in values:
             section_items.append(key + '=' + values[key][0][6:])
         section_dict[self.section] = section_items
-        SaveIni(section_dict, config=config_file)
+        SaveIni(section_dict, ini_file=config_file)
 
 
 class EditTech():

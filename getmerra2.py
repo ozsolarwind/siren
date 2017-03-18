@@ -19,13 +19,16 @@
 #  <http://www.gnu.org/licenses/>.
 #
 
+import datetime
 import os
 import subprocess
 import sys
-
+if sys.platform == 'win32' or sys.platform == 'cygwin':
+    from netCDF4 import Dataset
+else:
+    from Scientific.IO.NetCDF import *
 import ConfigParser   # decode .ini file
 from PyQt4 import QtCore, QtGui
-import mpl_toolkits.basemap.pyproj as pyproj   # Import the pyproj module
 
 from credits import fileVersion
 import displayobject
@@ -45,6 +48,72 @@ def spawn(who, cwd, log):
     except:
         pass
     return
+
+
+class fileInfo:
+    def __init__(self, inp_file):
+        self.ok = False
+        self.log = ''
+        if inp_file[-3:] == '.gz':
+            out_file = inp_file + '.nc'
+            if os.path.exists(out_file):
+                pass
+            else:
+                fin = gzip.open(inp_file, 'rb')
+                file_content = fin.read()
+                fin.close()
+                fou = open(out_file, 'wb')
+                fou.write(file_content)
+                fou.close()
+            inp_file = out_file
+        if not os.path.exists(inp_file):
+            self.log = 'File not found: ' + inp_file
+            return
+        try:
+            if sys.platform == 'win32' or sys.platform == 'cygwin':
+                cdf_file = Dataset(inp_file, 'r')
+            else:
+                cdf_file = NetCDFFile(inp_file, 'r')
+        except:
+            self.log = 'Error reading: ' + inp_file
+            return
+        i = inp_file.rfind('/')
+        self.file = inp_file[i + 1:]
+        try:
+            self.format = str(cdf_file.Format)
+        except:
+            self.format = '?'
+        self.dimensions = ''
+        keys = cdf_file.dimensions.keys()
+        values = cdf_file.dimensions.values()
+        if type(cdf_file.dimensions) is dict:
+            for i in range(len(keys)):
+                self.dimensions += keys[i] + ': ' + str(values[i]) + ', '
+        else:
+            for i in range(len(keys)):
+                bits = str(values[i]).strip().split(' ')
+                self.dimensions += keys[i] + ': ' + bits[-1] + ', '
+        self.variables = ''
+        for key in iter(sorted(cdf_file.variables.iterkeys())):
+            self.variables += key + ', '
+        self.latitudes = []
+        try:
+            latitude = cdf_file.variables['lat'][:]
+        except:
+            latitude = cdf_file.variables['latitude'][:]
+        lati = latitude[:]
+        for val in lati:
+            self.latitudes.append(val)
+        self.longitudes = []
+        try:
+            longitude = cdf_file.variables['lon'][:]
+        except:
+            longitude = cdf_file.variables['longitude'][:]
+        longi = longitude[:]
+        for val in longi:
+            self.longitudes.append(val)
+        cdf_file.close()
+        self.ok = True
 
 
 class ClickableQLabel(QtGui.QLabel):
@@ -92,6 +161,7 @@ class getMERRA2(QtGui.QDialog):
         self.help = help
         self.ignore = False
         self.worldwindow = None
+        self.once = True
         self.northSpin = QtGui.QDoubleSpinBox()
         self.northSpin.setDecimals(3)
         self.northSpin.setSingleStep(.5)
@@ -160,18 +230,18 @@ class getMERRA2(QtGui.QDialog):
         self.grid.addWidget(self.merra_cells, 4, 3)
         self.grid.addWidget(QtGui.QLabel('Start date:'), 5, 0)
         self.strt_date = QtGui.QDateEdit(self)
-        self.strt_date.setDate(QtCore.QDate.currentDate().addMonths(-2))
+        self.strt_date.setDate(QtCore.QDate.currentDate().addMonths(-1))
         self.strt_date.setCalendarPopup(True)
         self.strt_date.setMinimumDate(QtCore.QDate(1980, 1, 1))
-        self.strt_date.setMaximumDate(QtCore.QDate.currentDate().addMonths(-2))
-        self.grid.addWidget(self.strt_date, 5, 1, 1, 2)
+        self.strt_date.setMaximumDate(QtCore.QDate.currentDate().addMonths(-1))
+        self.grid.addWidget(self.strt_date, 5, 1)
         self.grid.addWidget(QtGui.QLabel('End date:'), 6, 0)
         self.end_date = QtGui.QDateEdit(self)
-        self.end_date.setDate(QtCore.QDate.currentDate().addMonths(-2))
+        self.end_date.setDate(QtCore.QDate.currentDate().addMonths(-1))
         self.end_date.setCalendarPopup(True)
         self.end_date.setMinimumDate(QtCore.QDate(1980,1,1))
-        self.end_date.setMaximumDate(QtCore.QDate.currentDate().addMonths(-2))
-        self.grid.addWidget(self.end_date, 6, 1, 1, 2)
+        self.end_date.setMaximumDate(QtCore.QDate.currentDate().addMonths(-1))
+        self.grid.addWidget(self.end_date, 6, 1)
         self.grid.addWidget(QtGui.QLabel('Copy folder down:'), 7, 0)
         self.checkbox = QtGui.QCheckBox()
         self.checkbox.setCheckState(QtCore.Qt.Checked)
@@ -180,9 +250,11 @@ class getMERRA2(QtGui.QDialog):
         cur_dir = os.getcwd()
         self.dir_labels = ['Solar', 'Wind']
         datasets = []
+        self.collections = []
         for typ in self.dir_labels:
             datasets.append(self.config.get('getmerra2', typ.lower() + '_collection') + ' (Parameters: ' + \
                             self.config.get('getmerra2', typ.lower() + '_variables') + ')')
+            self.collections.append(self.config.get('getmerra2', typ.lower() + '_collection'))
         self.dirs = [None, None, None]
         for i in range(2):
             self.grid.addWidget(QtGui.QLabel(self.dir_labels[i] + ' files:'), 8 + i * 2, 0)
@@ -194,26 +266,31 @@ class getMERRA2(QtGui.QDialog):
             self.connect(self.dirs[i], QtCore.SIGNAL('clicked()'), self.dirChanged)
             self.grid.addWidget(self.dirs[i], 9 + i * 2, 1, 1, 4)
         self.log = QtGui.QLabel('')
-        self.grid.addWidget(self.log, 12, 1, 1, 2)
+        msg_palette = QtGui.QPalette()
+        msg_palette.setColor(QtGui.QPalette.Foreground, QtCore.Qt.red)
+        self.log.setPalette(msg_palette)
+        self.grid.addWidget(self.log, 12, 1, 2, 4)
+        buttongrid = QtGui.QGridLayout()
         quit = QtGui.QPushButton('Quit', self)
-        self.grid.addWidget(quit, 13, 0)
+        buttongrid.addWidget(quit, 0, 0)
         quit.clicked.connect(self.quitClicked)
         QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
         QtGui.QShortcut(QtGui.QKeySequence('x'), self, self.quitClicked)
         solar = QtGui.QPushButton('Get Solar', self)
-        wdth = solar.fontMetrics().boundingRect(solar.text()).width() + 9
-        self.grid.addWidget(solar, 13, 1)
-        solar.clicked.connect(self.solarClicked)
+        buttongrid.addWidget(solar, 0, 1)
+        solar.clicked.connect(self.getClicked)
         wind = QtGui.QPushButton('Get Wind', self)
-        wind.setMaximumWidth(wdth)
-        self.grid.addWidget(wind, 13, 2)
-        wind.clicked.connect(self.solarClicked)
+        buttongrid.addWidget(wind, 0, 2)
+        wind.clicked.connect(self.getClicked)
+        check = QtGui.QPushButton('Check Solar', self)
+        buttongrid.addWidget(check, 0, 3)
+        check.clicked.connect(self.checkClicked)
+        check = QtGui.QPushButton('Check Wind', self)
+        buttongrid.addWidget(check, 0, 4)
+        check.clicked.connect(self.checkClicked)
         help = QtGui.QPushButton('Help', self)
-        help.setMaximumWidth(wdth)
-        self.grid.addWidget(help, 13, 3)
+        buttongrid.addWidget(help, 0, 5)
         help.clicked.connect(self.helpClicked)
-        self.strt_date.setMaximumWidth(wdth * 2)
-        self.end_date.setMaximumWidth(wdth * 2)
         QtGui.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
         frame = QtGui.QFrame()
         frame.setLayout(self.grid)
@@ -222,6 +299,9 @@ class getMERRA2(QtGui.QDialog):
         self.scroll.setWidget(frame)
         self.layout = QtGui.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
+        frame2 = QtGui.QFrame()
+        frame2.setLayout(buttongrid)
+        self.layout.addWidget(frame2)
         self.setWindowTitle('SIREN - getmerra2 - Get MERRA-2 data')
         self.show()
 
@@ -313,7 +393,120 @@ class getMERRA2(QtGui.QDialog):
     def quitClicked(self):
         self.close()
 
-    def solarClicked(self):
+    def checkClicked(self):
+        def get_range(top):
+            self.chk_folders.append(top)
+            ndx = len(self.chk_folders) - 1
+            self.chk_src_key.append([])
+            self.chk_src_dte.append([])
+            fils = sorted(os.listdir(top))
+            for fil in fils:
+                if os.path.isdir(top + '/' + fil):
+                    if fil.isdigit() and len(fil) == 4:
+                        get_range(top + '/' + fil)
+                elif fil.find('MERRA') >= 0:
+                    if fil[-6:] == '.gz.nc': # ignore unzipped
+                        continue
+                    ndy = 0 #value[1]
+                    j = fil.find(self.chk_collection)
+                    l = len(self.chk_collection)
+                    if j > 0:
+                        fil_key = fil[:j + l + 1] + fil[j + l + 9:]
+                        if fil_key not in self.chk_src_key[-1]:
+                            self.chk_src_key[-1].append(fil_key)
+                            self.chk_src_dte[-1].append([])
+                            self.chk_src_dte[-1][-1].append(fil[j + l + 1: j + l + 9])
+                        else:
+                            k = self.chk_src_key[-1].index(fil_key)
+                            self.chk_src_dte[-1][k].append(fil[j + l + 1: j + l + 9])
+            del fils
+
+        if self.sender().text() == 'Check Solar':
+            chk_key = 'solar'
+            ndx = 0
+        elif self.sender().text() == 'Check Wind':
+            chk_key = 'wind'
+            ndx = 1
+        self.log.setText('')
+        self.chk_collection = self.collections[ndx]
+        self.chk_folders = []
+        self.chk_src_key = []
+        self.chk_src_dte = []
+        top = str(self.dirs[ndx].text())
+        get_range(str(self.dirs[ndx].text()))
+        first_dte = 0
+        not_contiguous = False
+        log1 = None
+        log2 = None
+        for i in range(len(self.chk_folders)):
+            for j in range(len(self.chk_src_key[i])):
+                if len(self.chk_src_key[i][j]) > 0:
+                    break
+            else:
+                continue
+            for j in range(len(self.chk_src_key[i])):
+                dtes = sorted(self.chk_src_dte[i][j])
+                try:
+                    dte1 = datetime.datetime.strptime(dtes[0], '%Y%m%d')
+                    if first_dte == 0:
+                        first_dte = dtes[0]
+                except:
+                    continue
+                try:
+                    dte2 = datetime.datetime.strptime(dtes[-1], '%Y%m%d')
+                except:
+                    continue
+                l = self.chk_src_key[i][j].index(self.chk_collection)
+                file1 = self.chk_src_key[i][j][: l + len(self.chk_collection) + 1] + dtes[0] + \
+                        self.chk_src_key[i][j][l + len(self.chk_collection) + 1:]
+                log1 = fileInfo(self.chk_folders[i] + '/' + file1)
+                if not log1.ok:
+                    self.log.setText(log1.log)
+                    return
+                file2 = self.chk_src_key[i][j][: l + len(self.chk_collection) + 1] + dtes[-1] + \
+                        self.chk_src_key[i][j][l + len(self.chk_collection) + 1:]
+                log2 = fileInfo(self.chk_folders[i] + '/' + file2)
+                if not log2.ok:
+                    self.log.setText(log2.log)
+                    return
+                dte_msg = '.\nCurrent day range %s to %s' % (str(first_dte), str(dtes[-1]))
+                if len(dtes) != (dte2-dte1).days + 1:
+                    not_contiguous = True
+                    print 'getmerra2: File template ' + self.chk_src_key[i][j]
+                    years = {}
+                    for dte in dtes:
+                        y = dte[:4]
+                        m = int(dte[4:6])
+                        try:
+                            years[y][m] = years[y][m] + 1
+                        except:
+                            years[y] = []
+                            for l in range(13):
+                                years[y].append(0)
+                            years[y][m] = years[y][m] + 1
+                    for key, value in iter(sorted(years.iteritems())):
+                        print 'getmerra2: Days per month', key, value[1:]
+        if log1 is None or log2 is None:
+            self.log.setText('Check ' + chk_key.title() + ' incomplete.')
+            return
+        if log1.latitudes == log2.latitudes:
+            self.ignore = True
+            self.southSpin.setValue(log1.latitudes[0])
+            self.ignore = False
+            self.northSpin.setValue(log1.latitudes[-1])
+        if log1.longitudes == log2.longitudes:
+            self.ignore = True
+            self.westSpin.setValue(log1.longitudes[0])
+            self.ignore = False
+            self.eastSpin.setValue(log1.longitudes[-1])
+            dte = dte2 + datetime.timedelta(days=1)
+            self.strt_date.setDate(dte)
+        if not_contiguous:
+            dte_msg += ' but days not contiguous'
+        self.log.setText('Boundaries and start date set for ' + chk_key.title() + dte_msg)
+        del self.chk_collection, self.chk_folders, self.chk_src_key, self.chk_src_dte
+
+    def getClicked(self):
         if self.southSpin.value() == self.northSpin.value() or self.eastSpin.value() == self.westSpin.value():
             self.log.setText('Area too small')
             return
@@ -330,6 +523,23 @@ class getMERRA2(QtGui.QDialog):
         except:
             self.log.setText('Error accessing getfiles.ini variables')
             return
+        if self.once: # check .netrc exists
+            self.once = False
+            ok = False
+            if sys.platform == 'win32' or sys.platform == 'cygwin':
+                netrc = '~\\.netrc'.replace('~', os.environ['HOME'])
+            else:
+                netrc = '~/.netrc'.replace('~', os.path.expanduser('~'))
+            if os.path.exists(netrc):
+                ok = True
+            if not ok:
+                reply = QtGui.QMessageBox.question(self, 'SIREN - getmerra2 - No .netrc file',
+                        '.netrc file missing.\n(' + netrc + ')\nOK to continue?',
+                        QtGui.QMessageBox.Yes | QtGui.QMessageBox.No, QtGui.QMessageBox.No)
+                if reply == QtGui.QMessageBox.Yes:
+                    pass
+                else:
+                    return
         working_vars = []
         for prop, value in variables:
             valu = value
