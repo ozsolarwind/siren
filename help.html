@@ -1649,6 +1649,10 @@ Specifics on Hydrothermal characteristics (experimental). Properties are:</p>
 <td class="none"><dfn>turbine_spacing</dfn></td>
 <td class="none">Distance between turbines in multiples of rotor diameter</td>
 </tr>
+<tr class="none">
+<td class="none"><dfn>wind_farm_losses_percent</dfn></td>
+<td class="none">SAM parameter. Expected losses in the wind farms electrical output as a percentage of the wind farm's total output. Use this factor to account for wiring, transformer, or other losses. Default is 2%. For Existing stations this factor is used to reduce the generation for de-rated turbines (station capacity divided by number of turbines).</td>
+</tr>
 </table>
 </td></tr>
 <tr class="none" id="p_windows"><td><dfn><strong>[Windows]</strong></dfn></td>
@@ -2733,12 +2737,14 @@ You can alternate between both approaches to choose the desired area. If you hav
 <li><em>Solar Target Folder</em>. Use this to specify the location for the MERRA-2 solar (<em>tavg1_2d_rad_Nx</em>) files. To change the location you need to click on the field and navigate to the correct folder (you can't type into the field)</li>
 <li><em>Wind Target Folder</em>. Use this to specify the location for the MERRA-2 wind (<em>tavg1_2d_slv_Nx</em>) files. To change the location you need to click on the field and navigate to the correct folder (you can't type into the field)</li>
 </ul>
-<p>There are five buttons:</p>
+<p>There are seven buttons:</p>
 <ul>
-<li><em>Choose area via Map</em> (as above) will open the world map
+<li><em>Choose area via Map</em> (at top of window; as above) will open the world map
 <li><em>Quit</em> will exit the program</li>
 <li><em>Get Solar</em> will invoke <em>wget</em> as a new task to download the solar files for the selected area and date range. As part of the execution a log file will be saved to the Solar Target Folder</li>
 <li><em>Get Wind</em> will invoke <em>wget</em> as a new task to download the wind files for the selected area and date range. As part of the execution a log file will be saved to the Wind Target Folder</li>
+<li><em>Check Solar</em> will interrogate MERRA-2 solar files in the Solar Target Folder to provide the boundaries for the Area of Interest and set the starting date to download the next day in sequence. The interrogation will cater for files in yearly subfolders</li>
+<li><em>Check Wind</em> will interrogate MERRA-2 wind files in the Wind Target Folder to provide the boundaries for the Area of Interest and set the starting date to download the next day in sequence. The interrogation will cater for files in yearly subfolders</li>
 <li><em>Help</em> Display this help</li>
 </ul>
 <p>Downloading the MERRA-2 files are performed by new tasks allowing you to close the <em>getmerra2</em> window once you have requested the files. Depending on the area and date range the process of downloading is likely to take significant time. A log file named <em>wget_type_yyyy-mm-dd_hhmm.log</em> will be produced, where <em>type</em> is either wind or solar and <em>yyyy-mm-dd_hhmm.log</em> is the date and time <code>wget</code> was invoked. A file named <em>wget_type_yyyy-mm-dd_hhmm.txt</em> will contain the list of files to be downloaded and <em>wget_type_yyyy-mm-dd_hhmm.bat</em> will contain the <code>wget</code> command (in case you encounter problems).</p>

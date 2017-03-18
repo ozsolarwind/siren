@@ -25,7 +25,9 @@ import sys
 
 import ConfigParser   # decode getfiles.ini file
 from PyQt4 import QtCore, QtGui
-import mpl_toolkits.basemap.pyproj as pyproj   # Import the pyproj module
+
+from mpl_toolkits.basemap.pyproj import Proj  # Import the pyproj.Proj module
+#import mpl_toolkits.basemap.pyproj as pyproj   # Import the pyproj module
 
 from colours import Colours
 from credits import fileVersion
@@ -46,7 +48,6 @@ def p2str(p):
 
 def reproject(latitude, longitude):
     """Returns the x & y coordinates in meters using a sinusoidal projection"""
-    from math import pi, cos, radians
     earth_radius = RADIUS # in meters
     lat_dist = pi * earth_radius / 180.0
 
@@ -302,7 +303,7 @@ class WorldScene(QtGui.QGraphicsScene):
         self._setupCoordTransform()
 
     def _setupCoordTransform(self):
-        self._proj = pyproj.Proj('+init=' + self.projection)   # LatLon with WGS84 datum used by GPS units and Google Earth
+        self._proj = Proj('+init=' + self.projection)   # LatLon with WGS84 datum used by GPS units and Google Earth
         x1, y1, lon1, lat1 = self.upper_left
         x2, y2, lon2, lat2 = self.lower_right
         ul = self._proj(lon1, lat1)
