@@ -32,7 +32,7 @@ import xlrd
 import xlwt
 
 import ConfigParser  # decode .ini file
-from PyQt4 import QtGui, QtCore
+from PyQt4 import Qt, QtGui, QtCore
 
 from senuser import getUser
 import displayobject
@@ -188,9 +188,10 @@ class whatPlots(QtGui.QDialog):
                     self.percentLabel = QtGui.QLabel('        Growth. Set annual '
                                                      + 'Load growth & target year')
                     self.percentSpin = QtGui.QDoubleSpinBox()
-                    self.percentSpin.setValue(self.load_growth)
                     self.percentSpin.setDecimals(2)
                     self.percentSpin.setSingleStep(.1)
+                    self.percentSpin.setRange(-100, 100)
+                    self.percentSpin.setValue(self.load_growth)
                     self.counterSpin = QtGui.QSpinBox()
                     self.counterSpin.setRange(min(self.base_year, 2015), 2100)
                     self.totalOutput = QtGui.QLabel('')
@@ -208,13 +209,13 @@ class whatPlots(QtGui.QDialog):
                     i += 1
                     label = QtGui.QLabel('        Storage capacity (GWh) & initial value')
                     self.storageSpin = QtGui.QSpinBox()
+                    self.storageSpin.setRange(0, 500)
                     self.storageSpin.setValue(self.storage[0])
                     self.storageSpin.setSingleStep(5)
-                    self.storageSpin.setRange(0, 500)
                     self.storpctSpin = QtGui.QSpinBox()
+                    self.storpctSpin.setRange(0, 500)
                     self.storpctSpin.setValue(self.storage[1])
                     self.storpctSpin.setSingleStep(5)
-                    self.storpctSpin.setRange(0, 500)
                     self.grid.addWidget(label, i, 0)
                     self.grid.addWidget(self.storageSpin, i, 1)
                     self.grid.addWidget(self.storpctSpin, i, 2)
@@ -225,8 +226,8 @@ class whatPlots(QtGui.QDialog):
                     self.dischargeSpin.setValue(self.discharge[0])
                     self.dischargeSpin.setSingleStep(5)
                     self.dischargepctSpin = QtGui.QSpinBox()
-                    self.dischargepctSpin.setValue(int(100 - self.discharge[1] * 100))
                     self.dischargepctSpin.setRange(0, 50)
+                    self.dischargepctSpin.setValue(int(100 - self.discharge[1] * 100))
                     self.grid.addWidget(label, i, 0)
                     self.grid.addWidget(self.dischargeSpin, i, 1)
                     self.grid.addWidget(self.dischargepctSpin, i, 2)
@@ -237,8 +238,8 @@ class whatPlots(QtGui.QDialog):
                     self.rechargeSpin.setValue(self.recharge[0])
                     self.rechargeSpin.setSingleStep(5)
                     self.rechargepctSpin = QtGui.QSpinBox()
-                    self.rechargepctSpin.setValue(int(100 - self.recharge[1] * 100))
                     self.rechargepctSpin.setRange(0, 50)
+                    self.rechargepctSpin.setValue(int(100 - self.recharge[1] * 100))
                     self.grid.addWidget(label, i, 0)
                     self.grid.addWidget(self.rechargeSpin, i, 1)
                     self.grid.addWidget(self.rechargepctSpin, i, 2)
@@ -541,8 +542,8 @@ class whatFinancials(QtGui.QDialog):
                 self.spin[-1].setSingleStep(.1)
             else:
                 self.spin.append(QtGui.QSpinBox())
-            self.spin[-1].setValue(item[4])
             self.spin[-1].setRange(item[2], item[3])
+            self.spin[-1].setValue(item[4])
             self.grid.addWidget(self.labels[-1], i, 0)
             self.grid.addWidget(self.spin[-1], i, 1)
             i += 1
@@ -725,13 +726,13 @@ class Adjustments(QtGui.QDialog):
                 self.lkey = key
                 continue
             self.adjusts[key] = QtGui.QDoubleSpinBox()
+            self.adjusts[key].setRange(0, max(self.adjust_cap, self.adjusts[key].value()))
             if type(keys) is dict:
                 self.adjusts[key].setValue(keys[key])
             else:
                 self.adjusts[key].setValue(1.)
             self.adjusts[key].setDecimals(2)
             self.adjusts[key].setSingleStep(.1)
-            self.adjusts[key].setRange(0, max(self.adjust_cap, self.adjusts[key].value()))
             self.skeys.append(key)
             self.grid.addWidget(QtGui.QLabel(key), ctr, 0)
             self.grid.addWidget(self.adjusts[key], ctr, 1)
@@ -1189,6 +1190,10 @@ class SuperPower():
             self.offset_spacing = int(config.get('Wind', 'offset_spacing'))
         except:
             self.offset_spacing = 4
+        try:
+            self.wind_farm_losses_percent = int(config.get('Wind', 'wind_farm_losses_percent').strip('%'))
+        except:
+            self.wind_farm_losses_percent = 2
         self.gross_net = 0.87
         try:
             self.gross_net = float(config.get('Solar Thermal', 'gross_net'))
@@ -1530,7 +1535,16 @@ class SuperPower():
             self.data.set_string('wind_resource_filename', self.wind_files + '/' + closest)
             turbine = Turbine(station.turbine)
             no_turbines = int(station.no_turbines)
-            self.data.set_number('system_capacity', no_turbines * turbine.capacity * 1000)
+            if station.scenario == 'Existing' and (no_turbines * turbine.capacity) != (station.capacity * 1000):
+                loss = round(1. - (station.capacity * 1000) / (no_turbines * turbine.capacity), 2)
+                loss = loss * 100
+                if loss < 0.:
+                    loss = self.wind_farm_losses_percent
+                self.data.set_number('system_capacity', station.capacity * 1000000)
+                self.data.set_number('wind_farm_losses_percent', loss)
+            else:
+                self.data.set_number('system_capacity', no_turbines * turbine.capacity * 1000)
+                self.data.set_number('wind_farm_losses_percent', self.wind_farm_losses_percent)
             pc_wind = turbine.speeds
             pc_power = turbine.powers
             self.data.set_array('wind_turbine_powercurve_windspeeds', pc_wind)
@@ -1547,6 +1561,8 @@ class SuperPower():
                     ctr -= 1
                     if ctr < 1:
                         break
+                if ctr < 1:
+                    break
             self.data.set_array('wind_farm_xCoordinates', wt_x)
             self.data.set_array('wind_farm_yCoordinates', wt_y)
             self.data.set_number('wind_turbine_rotor_diameter', turbine.rotor)
@@ -4109,10 +4125,10 @@ class PowerModel():
             while True:
                 if self.plots['visualise'] and self.something is not None:
                     vis2 = Visualise(self.stn_outs, self.stn_pows, self.something, year=self.base_year)
-                    vis2.setWindowModality(QtCore.Qt.Core.QtWindowModal)
+                    vis2.setWindowModality(Qt.Qt.WindowModal)
                     vis2.setWindowFlags(vis2.windowFlags() |
-                                 QtCore.Qt.Core.QtWindowSystemMenuHint |
-                                 QtCore.Qt.Core.QtWindowMinMaxButtonsHint)
+                                 Qt.Qt.WindowSystemMenuHint |
+                                 Qt.Qt.WindowMinMaxButtonsHint)
                     vis2.exec_()
                 wrkly = {}
                 summs = {}
