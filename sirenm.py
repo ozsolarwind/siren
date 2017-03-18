@@ -930,6 +930,9 @@ class MainWindow(QtGui.QMainWindow):
         listGrid.setStatusTip(tip)
         listGrid.setShortcut('Ctrl+W')
         listGrid.triggered.connect(self.list_Grid)
+        saveGrid = QtGui.QAction(QtGui.QIcon('save_as.png'), 'Save Grid', self)
+        saveGrid.setStatusTip('Save Grid')
+        saveGrid.triggered.connect(self.save_Grid)
         powerMenu = menubar.addMenu('&Power')
         powerMenu.addAction(getPower)
         if self.years is not None:
@@ -940,6 +943,7 @@ class MainWindow(QtGui.QMainWindow):
                 subPowerMenu.addAction(subPower)
         powerMenu.addAction(listStations)
         powerMenu.addAction(listGrid)
+        powerMenu.addAction(saveGrid)
         samver = QtGui.QAction(QtGui.QIcon('question.png'), 'SAM Version', self)
         samver.setStatusTip('Query SAM Version')
         samver.triggered.connect(self.get_SAMVer)
@@ -2195,6 +2199,60 @@ class MainWindow(QtGui.QMainWindow):
                  save_folder=self.scenarios)  # '#', 'connector',
         dialog.exec_()
         comment = 'Grid displayed'
+        self.view.emit(QtCore.SIGNAL('statusmsg'), comment)
+
+    def save_Grid(self):
+        kfile = self.view.scene().model_name + ' Grid.kml'
+        pline = ['<?xml version="1.0" encoding="UTF-8"?>',
+                 '<kml xmlns="http://www.opengis.net/kml/2.2">',
+                 '<Document>']
+        pline.append('<name>' + kfile + '</name>')
+	pline.append('<description><![CDATA[This KML file is the grid for ' + \
+                     self.view.scene().model_name + ' at ' + \
+                     str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'yyyy-MM-dd hh:mm')) + \
+                     ']]></description>')
+        pline.append('<Folder>')
+        pline.append('<name>Grid Lines</name>')
+        gline = []
+        styles = []
+        for line in self.view.scene().lines.lines:
+            if line.line_table is None:
+                style = 'grid_boundary'
+            else:
+                style = line.line_table
+            if style in styles:
+                pass
+            else:
+                styles.append(style)
+	    gline.append('\t<Placemark>\n\t\t<name>' + line.name + '</name>\n\t\t<styleUrl>#' + style + \
+                         '</styleUrl>\n\t\t\t<LineString>\n\t\t\t<tessellate>1</tessellate>\n\t\t\t<coordinates>')
+            coords = '\t\t\t\t'
+            for coord in line.coordinates:
+                coords += '%s,%s,0 ' % (str(coord[1]), str(coord[0]))
+            gline.append(coords)
+            gline.append('\t\t\t</coordinates>\n\t\t</LineString>\n\t</Placemark>')
+        gline.append('</Folder>\n</Document>\n</kml>')
+        sline = []
+        for style in styles:
+            try:
+                colr = self.view.scene().colors[style]
+            except:
+                colr = self.view.scene().colors['grid_boundary']
+            sline.append('<Style id="' + style + '">\n\t<LineStyle>\n\t\t<color>ff' + colr[-2:] + colr[-4:-2] + \
+                         colr[1:3] + '</color>\n\t\t<width>4</width>\n\t</LineStyle>\n</Style>')
+        if os.path.exists(self.scenarios + kfile):
+            if os.path.exists(self.scenarios + kfile + '~'):
+                os.remove(self.scenarios + kfile + '~')
+            os.rename(self.scenarios + kfile, self.scenarios + kfile + '~')
+        k_file = open(self.scenarios + kfile, 'wb')
+        for line in pline:
+            k_file.write(line + '\n')
+        for line in sline:
+            k_file.write(line + '\n')
+        for line in gline:
+            k_file.write(line + '\n')
+        k_file.close()
+        comment = 'Grid saved to ' + kfile
         self.view.emit(QtCore.SIGNAL('statusmsg'), comment)
 
     def show_Capacity(self):
