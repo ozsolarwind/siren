@@ -36,7 +36,7 @@ from credits import fileVersion
 class makeRainfall():
 
     def unZip(self, inp_file):
-        if inp_file[-3] == '.gz':
+        if inp_file[-3:] == '.gz':
             if not os.path.exists(inp_file):
                 self.log += time.strftime('%Y-%m-%d %H:%M:%S ', time.localtime()) + \
                            'Terminating as file not found - %s\n' % inp_file
@@ -261,7 +261,7 @@ class makeRainfall():
         if src_lat_lon != '':
             self.src_lat = []
             self.src_lon = []
-            latlon = src_lat_lon.split(',')
+            latlon = self.src_lat_lon.replace(' ','').split(',')
             try:
                 for j in range(0, len(latlon), 2):
                     self.src_lat.append(float(latlon[j]))

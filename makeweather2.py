@@ -29,7 +29,7 @@ if sys.platform == 'win32' or sys.platform == 'cygwin':
 else:
     from Scientific.IO.NetCDF import *
 from PyQt4 import QtCore, QtGui
-import displayobject
+from displayobject import AnObject
 from sammodels import getDNI, getDHI
 from credits import fileVersion
 
@@ -41,7 +41,7 @@ class makeWeather():
             self.log += 'Terminating as file not found - %s\n' % inp_file
             self.return_code = 12
             return None
-        if inp_file[-3] == '.gz':
+        if inp_file[-3:] == '.gz':
             if not os.path.exists(inp_file):
                 self.log += 'Terminating as file not found - %s\n' % inp_file
                 self.return_code = 12
@@ -293,30 +293,39 @@ class makeWeather():
 
     def findFile(self, inp_strt, wind=True):
         if wind:
-            for p in range(len(self.src_w_pfx)):
-                inp_file = self.src_dir_w + self.src_w_pfx[p] + inp_strt + self.src_w_sfx[p]
-                if os.path.exists(inp_file):
-                    break
-                else:
-                    if inp_file.find('MERRA300') >= 0:
-                        inp_file = inp_file.replace('MERRA300', 'MERRA301')
-                        if os.path.exists(inp_file):
-                            break
-            else:
-                return None
+            src_dir = [self.src_dir_w]
+            src_pfx = self.src_w_pfx
+            src_sfx = self.src_w_sfx
         else:
-            for p in range(len(self.src_s_pfx)):
-                inp_file = self.src_dir_s + self.src_s_pfx[p] + inp_strt + self.src_s_sfx[p]
+            src_dir = [self.src_dir_s]
+            src_pfx = self.src_s_pfx
+            src_sfx = self.src_s_sfx
+        if self.wrap and self.the_year != self.src_year:
+            the_year = str(int(inp_strt[:4]) + 1)
+            if src_dir[0][-5:-1] == the_year:
+                src_dir.append(src_dir[0][:-5] + inp_strt[:4] + '/')
+        elif inp_strt[-4:] == '1231': # perhaps last day of prior year
+            the_year = str(int(inp_strt[:4]) + 1)
+            if src_dir[0][-5:-1] == the_year:
+                src_dir.append(src_dir[0][:-5] + inp_strt[:4] + '/')
+        elif inp_strt[-4:] == '0101': # or first day of next year
+            the_year = str(int(inp_strt[:4]) - 1)
+            if src_dir[0][-5:-1] == the_year:
+                src_dir.append(src_dir[0][:-5] + inp_strt[:4] + '/')
+        for a_dir in src_dir:
+            for p in range(len(src_pfx)):
+                inp_file = a_dir + src_pfx[p] + inp_strt + src_sfx[p]
                 if os.path.exists(inp_file):
-                    break
+                    return inp_file
                 else:
                     if inp_file.find('MERRA300') >= 0:
                         inp_file = inp_file.replace('MERRA300', 'MERRA301')
                         if os.path.exists(inp_file):
-                            break
-            else:
-                return None
-        return inp_file
+                            return inp_file
+        else:
+            self.log += 'File not found - %s.?.%s.?\n' % (src_dir[0], inp_strt)
+        #    self.return_code = 12
+            return None
 
     def getInfo(self, inp_file):
         unzip_file = self.unZip(inp_file)
@@ -366,9 +375,11 @@ class makeWeather():
         return
 
     def __init__(self, src_year, src_zone, src_dir_s, src_dir_w, tgt_dir, fmat, wrap=None, src_lat_lon=None, info=False):
+      #  self.last_time = datetime.datetime.now()
         self.log = ''
         self.return_code = 0
         self.src_year = int(src_year)
+        self.the_year = self.src_year  # start with their year
         self.src_zone = src_zone
         self.src_dir_s = src_dir_s
         self.src_dir_w = src_dir_w
@@ -462,7 +473,7 @@ class makeWeather():
         if self.src_lat_lon != '':
             self.src_lat = []
             self.src_lon = []
-            latlon = self.src_lat_lon.split(',')
+            latlon = self.src_lat_lon.replace(' ','').split(',')
             try:
                 for j in range(0, len(latlon), 2):
                     self.src_lat.append(float(latlon[j]))
@@ -544,7 +555,6 @@ class makeWeather():
                 self.d2m = self.d2m[:self.src_zone]
                 self.d50m = self.d50m[:self.src_zone]
                 self.t_2m = self.t_2m[:self.src_zone]
-        self.the_year = self.src_year  # start with their year
         if self.wrap:
             yrs = 2
         else:
@@ -1039,7 +1049,7 @@ class getParms(QtGui.QWidget):
                     self.dirs[2].setText(newdir)
 
     def helpClicked(self):
-        dialog = displayobject.AnObject(QtGui.QDialog(), self.help,
+        dialog = AnObject(QtGui.QDialog(), self.help,
                  title='Help for makeweather2 (' + fileVersion() + ')', section='makeweather')
         dialog.exec_()
 
