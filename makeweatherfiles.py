@@ -321,7 +321,7 @@ class makeWeather():
             self.log += 'Terminating as file not found - %s\n' % inp_file
             self.return_code = 12
             return None
-        if inp_file[-3] == '.gz':
+        if inp_file[-3:] == '.gz':
             if not os.path.exists(inp_file):
                 self.log += 'Terminating as file not found - %s\n' % inp_file
                 self.return_code = 4
@@ -583,6 +583,7 @@ class makeWeather():
                         if os.path.exists(inp_file):
                             break
             else:
+                self.log += 'No Wind file found for ' + inp_strt + '\n'
                 return None
         else:
             for p in range(len(self.src_s_pfx)):
@@ -595,6 +596,7 @@ class makeWeather():
                         if os.path.exists(inp_file):
                             break
             else:
+                self.log += 'No Solar file found for ' + inp_strt + '\n'
                 return None
         return inp_file
 
@@ -750,7 +752,7 @@ class makeWeather():
         if self.src_lat_lon != '':
             self.src_lat = []
             self.src_lon = []
-            latlon = self.src_lat_lon.split(',')
+            latlon = self.src_lat_lon.replace(' ','').split(',')
             try:
                 for j in range(0, len(latlon), 2):
                     self.src_lat.append(float(latlon[j]))
@@ -1040,7 +1042,7 @@ class makeWeather():
             for i in range(self.src_zone):  # delete last n hours
                 del self.swgnt[-1]
         elif self.src_zone < 0:
-            inp_strt = '{0:04d}'.format(self.src_year + 1) + '0101'
+            inp_strt = '{0:04d}'.format(self.the_year + 1) + '0101'
             self.get_rad_data(self.findFile(inp_strt, False))
             for i in range(24 + self.src_zone):  # delete last n hours
                 del self.swgnt[-1]
@@ -1314,7 +1316,6 @@ class getParms(QtGui.QWidget):
 
     def dirChanged(self):
         for i in range(3):
-            print '(1317)', i, self.dirs[i].hasFocus()
             if self.dirs[i].hasFocus():
                 break
         curdir = self.dirs[i].text()
@@ -1328,7 +1329,7 @@ class getParms(QtGui.QWidget):
                     self.dirs[2].setText(newdir)
 
     def helpClicked(self):
-        dialog = AnObject(QtGui.QDialog(), self.help, \
+        dialog = AnObject(QtGui.QDialog(), self.help,
                  title='makeweatherfiles - Help', section='makeweather')
         dialog.exec_()
 

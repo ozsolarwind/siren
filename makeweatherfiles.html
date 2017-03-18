@@ -91,23 +91,24 @@ ul {
     padding-left: 40px;
 }
 </style>
-<title>makeweatherfiles.py</title>
+<title>makeweatherfiles</title>
 </head>
 <body>
-<h1 id="help">Help for makeweatherfiles.py</h1>
+<h1 id="help">Help for makeweatherfiles</h1>
 <h2>Preliminaries</h2>
-<p>A packaged version of <code>makeweatherfiles</code> for Windows is available as a self-extracting zip file from <a href="https://sourceforge.net/projects/sensiren/" target="_blank">https://sourceforge.net/projects/sensiren/</a> (the package has been created with PyInstaller). The file is <a href="https://sourceforge.net/projects/sensiren/files/sen_makeweatherfiles.exe/download" target="_blank">sen_makeweatherfiles.exe</a>. To use the program download and execute <code>sen_makeweatherfiles.exe</code> to copy the contents to your hard drive. It requires approximately 65Mb of space. There are three files of interest:
+<p>A packaged version of <code>makeweatherfiles</code> for Windows is available as a self-extracting zip file from <a href="https://sourceforge.net/projects/sensiren/" target="_blank">https://sourceforge.net/projects/sensiren/</a> (the package has been created with PyInstaller). The file is <a href="https://sourceforge.net/projects/sensiren/files/sen_makeweatherfiles.exe/download" target="_blank">sen_makeweatherfiles.exe</a>. To use the program download and execute <code>sen_makeweatherfiles.exe</code> to copy the contents to your hard drive. It requires approximately 69Mb of space. There are three files of interest:
 <ul>
 <li><code>makeweatherfiles.exe</code> is the Windows executable
 <li><code>makeweatherfiles.html</code> is this help file
 <li><code>makeweatherfiles.py</code> is the Python source
 </ul>
+<p>There is an additional package, <a href="https://sourceforge.net/projects/sensiren/files/sen_makeweather_getmerra2.exe/download" target="_blank">sen_makeweather_getmerra2.exe</a>, which contains both <code>makeweatherfiles</code> and <code>getmerra2</code>, a program to assist with downloading MERRA-2 files. If you plan to use both programs this package is recommended to avoid duplicating some of the library files used by both of them. To use the program download and execute <code>sen_makeweather_getmerra2.exe</code> to copy the contents to your hard drive. It requires approximately 126Mb of space. See <a href="#getmerra2">Get MERRA-2 Files</a> for details on <code>getmerra2</code> and <a href="#usage">Using getmerra2 and makeweather files</a> for a brief description on usage of these two programs.</p>
 <h2 id="makeweather">Produce wind and solar weather files</h2>
 <h3>makeweatherfiles</h3>
 <p><code>makeweatherfiles.py</code> is a Python program that can be used to produce solar and/or wind weather files for input to SAM. The program generates SMW (preferred for SAM) or CSV format solar resource files and SRW format wind resource files. These file formats have been chosen as they're easier to generate than other formats. Using the program you specify the source folder for the MERRA-2 data files, the time zone for the area of interest, a file format and target folder for the weather files. The program will generate files for each of the MERRA-2 grid squares within the chosen MERRA-2 data files or optionally for a number of latitude and longitude positions. You invoke the program in Windows by running <code>makeweatherfiles.exe</code> or <code>makeweatherfiles.py</code> if you have Python installed (and appropriate libraries). Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
 <ul>
 <li><em>Year</em>. Year of interest. The naming conventions for MERRA-2 files include the date so this defines the date range. The tool processes dates from the last day of the prior year through to the first day of the next year (ignoring 29 February)</li>
-<li><em>Wrap to prior year</em>. To enable you to use (more) recent weather data this option will indicate that weather data should wrap to the prior year. As an example, if you have downloaded MERRA-2 data up until April for the current year makeweather2 will use weather data from the prior year for May onwards to give a full year of data. The MERRA data for both years must reside in the same folder</li>
+<li><em>Wrap to prior year</em>. To enable you to use (more) recent weather data this option will indicate that weather data should wrap to the prior year. As an example, if you have downloaded MERRA-2 data up until April for the current year <code>makeweatherfiles</code> will use weather data from the prior year for May onwards to give a full year of data. The MERRA data for both years must reside in the same folder (or teh next subfolder if yearly folders are used)</li>
 <li><em>Time Zone</em>. The (solar) time zone for the area of interest. This is used to create suitable weather files where the first hour in the file is the first hour of the year in the local time zone. A value of <em>auto</em> will cause the program to use the (first) longitude in the MERRA-2 data files to calculate the time zone</li>
 <li><em>Solar Format</em>. The solar option can produce weather files in either of two formats - SMW or CSV format. This option allows you to choose your preferred one. SMW format is suitable for SAM while it may have trouble with the CSV format</li>
 <li><em>Coordinates</em>. Rather than producing weather files for each grid cell in the chosen area you can restrict it by passing a string of comma-separated latitude and longitude values. The tool will then generate files for just these coordinates</li>
@@ -379,7 +380,7 @@ Read <a href="https://wiki.earthdata.nasa.gov/display/HDD/Wget+with+URS+Authenti
 </li>
 </ol>
 <p id="merra3"><strong>Obtaining data</strong></p>
-<p>As an alternative to following these steps you might want to use <em>getmerra2</em> - see <a href="#getmerra2">Get MERRA-2 Files</a>.</p>
+<p>As an alternative to following these steps you might want to use <code>getmerra2</code> - see <a href="#getmerra2">Get MERRA-2 Files</a>.</p>
 <ol>
 <li>Enter the MERRA-2 data subset URL, <a href="http://disc.sci.gsfc.nasa.gov/daac-bin/FTPSubset2.pl" target="_blank">http://disc.sci.gsfc.nasa.gov/daac-bin/FTPSubset2.pl</a> in your browser
 <li>Within the MDISC Data Subset page choose appropriate options as follows:
@@ -456,9 +457,9 @@ wget --load-cookies ~/.urs_cookies --save-cookies ~/.urs_cookies --auth-no-chall
 <li>Open a terminal window, navigate to where you have the list of urls and invoke <code>wget</code></li>
 </ol>
 <h4 id="getmerra2">Get MERRA-2 Files</h4>
-<em>getmerra2</em> provides an alternate way of downloading MERRA-2 files than that described in <a href="#merra3">Obtaining data</a>. This approach uses <code>wget</code> but removes the need to manually follow those steps above. You still need to <a href="#merra2a">Register for access</a> and for Windows create a <code>HOME</code> environment variable as described above.</p>
+<code>getmerra2</code> provides an alternate way of downloading MERRA-2 files than that described in <a href="#merra3">Obtaining data</a>. This approach uses <code>wget</code> but removes the need to manually follow those steps above. You still need to <a href="#merra2a">Register for access</a> and for Windows create a <code>HOME</code> environment variable as described above.</p>
 <h5>getmerra2</h5>
-<p><code>getmerra2.py</code> is a Python program that can be used to download MERRA-2 files required to create weather files for SAM. You can invoke the program either by choosing <em>getmerra2</em> from the SIREN Tools menu or in Windows by running <code>getmerra2.exe</code> in the <em>siren</em> folder. The program accepts a SIREN Preferences file as an optional parameter. The window fields are:</p>
+<p><code>getmerra2.py</code> is a Python program that can be used to download MERRA-2 files required to create weather files for SAM. You can invoke the program in Windows by running <code>getmerra2.exe</code> in the <em>makeweatehrfiles</em> folder. The window fields are:</p>
 <ul>
 <li><em>Area of Interest</em>. Area of interest for files to be downloaded. This can be chosen
 <ol>
@@ -470,9 +471,8 @@ wget --load-cookies ~/.urs_cookies --save-cookies ~/.urs_cookies --auth-no-chall
 <li><em>South</em>. Lower latitude</li>
 <li><em>East</em>. Right (east) longitude</li>
 </ul>
-<li>
 </ol>
-You can alternate between both approaches to choose the desired area. If you have passed a SIREN Preferences file or invoked <em>getmerra2</em> from within SIREN the bounding coordinates will be set to those of the current map. North and South can range from +85.06 to -85.06 degrees and East and West from -180 to +180
+You can alternate between both approaches to choose the desired area. North and South can range from +85.06 to -85.06 degrees and East and West from -180 to +180
 </li>
 <li><em>Start date</em>. The first date to be downloaded</li>
 <li><em>End date</em>. The first date to be downloaded</li>
@@ -480,21 +480,47 @@ You can alternate between both approaches to choose the desired area. If you hav
 <li><em>Solar Target Folder</em>. Use this to specify the location for the MERRA-2 solar (<em>tavg1_2d_rad_Nx</em>) files. To change the location you need to click on the field and navigate to the correct folder (you can't type into the field)</li>
 <li><em>Wind Target Folder</em>. Use this to specify the location for the MERRA-2 wind (<em>tavg1_2d_slv_Nx</em>) files. To change the location you need to click on the field and navigate to the correct folder (you can't type into the field)</li>
 </ul>
-<p>There are five buttons:</p>
+<p>There are seven buttons:</p>
 <ul>
-<li><em>Choose area via Map</em> (as above) will open the world map
+<li><em>Choose area via Map</em> (at top of window; as above) will open the world map
 <li><em>Quit</em> will exit the program</li>
 <li><em>Get Solar</em> will invoke <em>wget</em> as a new task to download the solar files for the selected area and date range. As part of the execution a log file will be saved to the Solar Target Folder</li>
 <li><em>Get Wind</em> will invoke <em>wget</em> as a new task to download the wind files for the selected area and date range. As part of the execution a log file will be saved to the Wind Target Folder</li>
+<li><em>Check Solar</em> will interrogate MERRA-2 solar files in the Solar Target Folder to provide the boundaries for the Area of Interest and set the starting date to download the next day in sequence. The interrogation will cater for files in yearly subfolders</li>
+<li><em>Check Wind</em> will interrogate MERRA-2 wind files in the Wind Target Folder to provide the boundaries for the Area of Interest and set the starting date to download the next day in sequence. The interrogation will cater for files in yearly subfolders</li>
 <li><em>Help</em> Display this help</li>
 </ul>
-<p>Downloading the MERRA-2 files are performed by new tasks allowing you to close the <em>getmerra2</em> window once you have requested the files. Depending on the area and date range the process of downloading is likely to take significant time. A log file named <em>wget_type_yyyy-mm-dd_hhmm.log</em> will be produced, where <em>type</em> is either wind or solar and <em>yyyy-mm-dd_hhmm.log</em> is the date and time <code>wget</code> was invoked.</p>
+<p>Downloading the MERRA-2 files are performed by new tasks allowing you to close the <code>getmerra2</code> window once you have requested the files. Depending on the area and date range the process of downloading is likely to take significant time. A log file named <em>wget_type_yyyy-mm-dd_hhmm.log</em> will be produced, where <em>type</em> is either wind or solar and <em>yyyy-mm-dd_hhmm.log</em> is the date and time <code>wget</code> was invoked.</p>
 <h4 id="merra34">Background on MERRA-2</h4>
 <p>&ldquo;The Modern Era Retrospective-analysis for Research and Applications, Version 2 (MERRA-2) is a NASA atmospheric data reanalysis for the satellite era using a major new version of the Goddard Earth Observing System Data Assimilation System Version 5 (GEOS-5). MERRA-2 focuses on historical analyses of the hydrological cycle on a broad range of weather and climate time scales, and places the NASA EOS suite of observations in a climate context.&rdquo;</p>
 <ul>
 <li>Each time-averaged collection consists of a continuous sequence of data averaged over the indicated interval and time stamped with the central time of the interval. For hourly data, for example, these times are 00:30 GMT, 01:30 GMT, 02:30 GMT, etc..</li>
 <li>I interpret each grid is centred on the latitude / longitude for that set of variables, that is, the value extends outwards in all directions from that point</li>
 </ul>
+<p><a href="#help">Back to top</a></p>
+<h2 id="usage">Using getmerra2 and makeweather files</h2>
+<p>To make use of <code>makeweatherfiles</code> the following steps should help</p>
+<ol>
+<li>Ensure you <a href="#merra2a">Register for access</a> and for Windows create a <code>HOME</code> environment variable as described above to gain access to the MERRA-2 data</p></li>
+<li>Run <code>getmerra2.exe</code> to get the MERRA-2 data for your area of interest</p>
+<ol>
+<li>You specify the bounding coordinates for your area of interest. For example, for the SWIS in Western Australia you could input North -26.0, South -36.0, West 113.125 and East 122.5. The area has to be at least 1 degree of latitude high by 1.25 degree longitude wide</li>
+<li>Specify the date range. To create a SAM weather file you need at least one year of data plus the last day of the prior year and/or the first day of the next year. As an example Start date: 31/12/15 (or 2015-12-31) and End date: 01/01/17 (or 2017-01-01) will download data for 2016. MERRA-2 data is based upon UTC while SAM files are local time. In the case of the SWIS, UTC+8, the first 8 hours of the year will be in the last day of the previous year; for UTC-n, the last n hours of the year will be in the first day of the next year</li>
+<li>Click on the target folder field to specify a location for the MERRA-2 data. It's OK to store both wind and solar files in the same folder</li>
+<li>Click <em>Get Solar</em> for solar files and <em>Get Wind</em> for wind files. If you're creating solar weather files you'll need both. When you click the buttons <code>getmerra2</code> will launch separate tasks to download the files into the target folder. You can Quit out of <code>getmerra2</code> as this stage. The two tasks will probably take a while to run as they have to download individual files for each day in the range. The output and success will be in a log file in the target folder</li>
+<li>If you click <em>Check Solar</em> or <em>Check Wind</em> <code>getmerra2</code> will interrogate MERRA-2 solar files in the appropriate Target Folder to provide the boundaries for the Area of Interest and set the starting date to download the next day in sequence. The interrogation will cater for files in yearly subfolders</li>
+</ol></p></li>
+<li>Once the MERRA-2 files are downloaded run <code>makeweatherfiles.exe</code> to create the SAM weather files</p>
+<ol>
+<li>Specify the year, 2016 in the case above</li>
+<li>Click on the source folder(s) to locate the MERRA-2 files. This will be the same as point 1.3 above</li>
+<li>Click on Target folder to specify a location for the weather files. It's convenient to use a different folder to the MERRA-2 files</li>
+<li>You can click <em>File Info</em> to test if the MERRA-2 files are OK. This reads the first file of the year (e.g. 20160101) and displays the dimensions of the MERRA-2 file. The output shows the latitude and longitude cells covered</li>
+<li>Click <em>Produce Solar Files</em> to create solar weather files. Clicking the button will cause <code>makeweatherfiles</code> to create the weather files. It will take a while to run so please be patient. It will eventually return with an output listing of the files produced</li>
+<li>Click <em>Produce Wind Files</em> to create wind weather files. Same deal as solar</li>
+</ol></p></li>
+<li>If you encounter any problems or have any suggestions send an email to <a href="mailto:siren@sen.asn.au?Subject=Makeweatherfiles%20Feedback">siren@sen.asn.au</a></li>
+</ol>
 <p><a href="#help">Back to top</a></p>
 <h2 id="acronyms">Acronyms</h2>
 <table border="0" class="none">
