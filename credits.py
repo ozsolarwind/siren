@@ -28,25 +28,41 @@ if sys.platform == 'win32' or sys.platform == 'cygwin':
 
 from editini import SaveIni
 
-
-def fileVersion():
-    ver = '1.0.?.?'
-    if sys.argv[0][-3:] == '.py':
-        modtime = datetime.fromtimestamp(os.path.getmtime(sys.argv[0]))
-        ver = '1.0.%04d.%02d.%02d' % (modtime.year, modtime.month, modtime.day)
+def fileVersion(program=None):
+    ver = '?'
+    if program == None:
+        check = sys.argv[0]
+    else:
+        s = program.rfind('.')
+        if s < len(program) - 4:
+            check = program + sys.argv[0][sys.argv[0].rfind('.'):]
+        else:
+            check = program
+    if check[-3:] == '.py':
+        try:
+            modtime = datetime.fromtimestamp(os.path.getmtime(check))
+            ver = '1.0.%04d.%d%02d' % (modtime.year, modtime.month, modtime.day)
+        except:
+            pass
     else:
         if sys.platform == 'win32' or sys.platform == 'cygwin':
             try:
-                if sys.argv[0].find('\\') >= 0:  # if full path
-                    info = GetFileVersionInfo(sys.argv[0], '\\')
+                if check.find('\\') >= 0:  # if full path
+                    info = GetFileVersionInfo(check, '\\')
                 else:
-                    info = GetFileVersionInfo(os.getcwd() + '\\' + sys.argv[0], '\\')
+                    info = GetFileVersionInfo(os.getcwd() + '\\' + check, '\\')
                 ms = info['ProductVersionMS']
               #  ls = info['FileVersionLS']
                 ls = info['ProductVersionLS']
                 ver = str(HIWORD(ms)) + '.' + str(LOWORD(ms)) + '.' + str(HIWORD(ls)) + '.' + str(LOWORD(ls))
             except:
-                pass
+                try:
+                    info = os.path.getmtime(os.getcwd() + '\\' + check)
+                    ver = '1.0.' + datetime.datetime.fromtimestamp(info).strftime('%Y.%m%d')
+                    if ver[9] == '0':
+                        ver = ver[:9] + ver[10:]
+                except:
+                    pass
     return ver
 
 

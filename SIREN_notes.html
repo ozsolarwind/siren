@@ -102,6 +102,7 @@ pre {
 <tr><td>sirenicons.py</td><td>Get a technology icon</td></tr>
 <tr><td>sirenm.py (*)</td><td>Main SIREN program</td></tr>
 <tr><td>siren.py (*)</td><td>Display a menu of SIREN Models (invokes sirenm.py for the chosen Model)</td></tr>
+<tr><td>sirenupd.py (*)</td><td>Update to newer SIREN programs without having to download the full toolkit</td></tr>
 <tr><td>ssc.py (*)</td><td>Access SAM models</td></tr>
 <tr><td>station.py</td><td>Station class. Populate stations from files and scenarios</td></tr>
 <tr><td>towns.py</td><td>Town class. Populate towns from files</td></tr>
@@ -113,5 +114,6 @@ pre {
 <tr><td>worldwindow.py</td><td>Display a world map for getmap and getmerra2</td></tr>
 </table>
 <h2>Packaging for Windows</h2>
-<p>I use <em>pyinstaller</em> (currently Version 3.2.1) to package SIREN for Windows. I use the multi-package facility to create executables for <code>siren.py, sirenm.py</code> and the tools (<code>getmap.py, getmerra2.py, indexweather.py, makerainfall2.py, makegrid.py, makeweather2.py</code> and <code>updateswis.py</code>). <code>siren_application.spec</code> is the spec file. This enables all programs to be included in a single library for distribution. <em>pyinstaller</em> places them in individual directories - I use <code>package_siren.py</code> to copy all the executables into the <em>siren</em> directory and remove some unwanted files that are included as part of the packaging process. All these have a version file where the version is <em>&lt;version&gt;,&lt;modification&gt;.&lt;yyyy&gt;.&lt;mmdd&gt;</em> The date part is the date the program was last changed.</p>
+<p>I use <em>pyinstaller</em> (currently Version 3.2.1) to package SIREN for Windows. I use the multi-package facility to create executables for <code>siren.py, sirenm.py</code> and the tools (<code>getmap.py, getmerra2.py, indexweather.py, makerainfall2.py, makegrid.py, makeweather2.py, sirenupd.py</code> and <code>updateswis.py</code>). <code>siren_application.spec</code> is the spec file. This enables all programs to be included in a single library for distribution. <em>pyinstaller</em> places them in individual directories - I use <code>package_siren.py</code> to copy all the executables into the <em>siren</em> directory and remove some unwanted files that are included as part of the packaging process. All these have a version file where the version is <em>&lt;version&gt;,&lt;modification&gt;.&lt;yyyy&gt;.&lt;mmdd&gt;</em> The date part is the date the program was last changed.</p>
+<p><code>makeweather_getmerra2.spec</code> and <code>package_makeweather_getmerra2.py</code> package <code>makeweatherfiles.py</code> and <code>getmerra2.py</code> to provide a standalone tool to create SAM weather files from MERRA-2 datasets.</p>
 </body>

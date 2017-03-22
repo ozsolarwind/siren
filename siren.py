@@ -134,8 +134,8 @@ class TabDialog(QtGui.QDialog):
         layout.addWidget(self.table, 1, 0)
         layout.addWidget(buttons, 2, 0)
         menubar = QtGui.QMenuBar()
-        utilities = ['getmap', 'getmerra2', 'makeweather2']
-        utilicon = ['map.png', 'download.png', 'weather.png']
+        utilities = ['getmap', 'getmerra2', 'makeweather2', 'sirenupd']
+        utilicon = ['map.png', 'download.png', 'weather.png', 'download.png']
         spawns = []
         icons = []
         if sys.platform == 'win32' or sys.platform == 'cygwin':
@@ -412,8 +412,8 @@ class makeNew(QtGui.QDialog):
         self.scroll.setWidget(frame)
         self.layout = QtGui.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
-        utilities = ['getmap', 'getmerra2', 'makeweather2']
-        utilicon = ['map.png', 'download.png', 'weather.png']
+        utilities = ['getmap', 'getmerra2', 'makeweather2', 'sirenupd']
+        utilicon = ['map.png', 'download.png', 'weather.png', 'download.png']
         spawns = []
         icons = []
         if sys.platform == 'win32' or sys.platform == 'cygwin':
