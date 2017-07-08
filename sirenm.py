@@ -1691,9 +1691,15 @@ class MainWindow(QtGui.QMainWindow):
                     self.view.scene()._current_name.setBrush(QtGui.QColor(self.view.scene().colors['fossil_name']))
                 else:
                     self.view.scene()._current_name.setBrush(QtGui.QColor(self.view.scene().colors['station_name']))
+            try:
+                town, to_dist = self.view.scene()._towns.Nearest(station.lat, station.lon, distance=True)
+                town_name = town.name
+            except:
+                town_name = 'No towns found'
+                to_dist = 0
 # highlight grid line
-            comment = '(%s,%s) Centred on station %s' % ('{:0.4f}'.format(station.lat), '{:0.4f}'.format(station.lon),
-                          station.name)
+            comment = '(%s,%s) Centred on station %s (Nearest town: %s %s Km away)' % ('{:0.4f}'.format(station.lat),
+                      '{:0.4f}'.format(station.lon), station.name, town_name, '{:0.0f}'.format(to_dist))
             self.view.emit(QtCore.SIGNAL('statusmsg'), comment)
 
     def go_ToTown(self):

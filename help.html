@@ -1233,7 +1233,7 @@ Specifics on Hydrothermal characteristics (experimental). Properties are:</p>
 </tr>
 <tr class="none">
 <td class="none"><dfn>save_data</dfn></td>
-<td class="none">Save initial data outputs produced by the model for each stations</td>
+<td class="none">Save initial data outputs produced by the model for each station</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>save_detail</dfn></td>
@@ -1299,6 +1299,10 @@ Specifics on Hydrothermal characteristics (experimental). Properties are:</p>
 <tr class="none">
 <td class="none"><dfn>optimise&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</dfn></td>
 <td class="none">Specifies the optimisation approach. It can be either be based upon the average <em>Daily</em> generation and load for the chosen time period or the <em>Hourly</em> data. The default is Daily</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>optimise_load&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</dfn></td>
+<td class="none">Remove the contribution to Load (i.e. generation) by a station or technology (multiplied by it's current multiplier) from the analysis. The default is False</td>
 </tr>
 </table>
 </div>
@@ -2335,7 +2339,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <strong>Note:</strong> that the multiplied figures are not passed to the Financial model(s).</p>
 <div class="experiment">
 <p><strong>Optimise (experimental)</strong></p>
-<p>SIREN also has an experimental approach to optimise the mix of technologies. If Load data is available the menu presented to adjust generation will have an option to &ldquo;optimise&rdquo; the renewable energy mix. You will be presented with an <em>Optimise for:</em> pulldown list of periods to optimise for. You choose the desired period and then press the <em>Optimise</em> button. This will then do a least squares solution for adjustment multipliers to produce a generation profile that best matches the total load and load profile for that period. The data analysis is performed on either the average 24 hour or detailed hourly figures for the chosen period (<em>optimise</em> property of <em>[Power]</em> Section). If you don't wish to include a technology (or station(s)) then uncheck the checkbox (to the right of the multiplier) for that technology. The generation produced by that technology (multiplied by it's current multiplier) will be removed from the Load and analysis undertaken on the remaining technologies and load. Any computed negative multiplier will be set to zero, which is likely to result in the computed generation exceeding the load. The <em>Check / Uncheck all zeroes</em> check box enables you to include or exclude all zeroed stations from any further optimisation. The analysis is based upon the stations in your scenario and doesn't take into account how well placed they are within the network.
+<p>SIREN also has an experimental approach to optimise the mix of technologies. If Load data is available the menu presented to adjust generation will have an option to &ldquo;optimise&rdquo; the renewable energy mix to best meet the Load. You will be presented with an <em>Optimise for:</em> pulldown list of periods to optimise for. You choose the desired period and then press the <em>Optimise</em> button. This will then do a least squares solution for adjustment multipliers to produce a generation profile that best matches the total load and load profile for that period. The data analysis is performed on either the average 24 hour period or detailed hourly figures for the chosen period (<em>optimise</em> property of <em>[Power]</em> Section). If you don't wish to include a technology or station then uncheck the checkbox (to the right of the multiplier) for that technology or station. The generation produced by that technology or station will be removed from the optimisation. Depending on the <em>optimise_load</em> property of <em>[Power]</em> Section you can also remove the Load (multiplied by it's current multiplier) from the analysis. Any computed negative multiplier will be set to zero, which is likely to result in the computed generation exceeding the load. The <em>Check / Uncheck all zeroes</em> check box enables you to include or exclude all zeroed stations from any further optimisation. The analysis is based upon the stations in your scenario and doesn't take into account how well placed they are within the network. If you want to reset all multipliers just Optimise for <em>None</em>.
 </div>
 <p><a href="#help">Back to top</a></p>
 <h2 id="feedback">Feedback</h2>

@@ -663,6 +663,7 @@ class Adjustments(QtGui.QDialog):
         self.periods = []
         self.daily = True
         self.adjust_cap = 25
+        self.opt_load = False
         try:
             items = config.items('Power')
             for item, values in items:
@@ -687,6 +688,9 @@ class Adjustments(QtGui.QDialog):
                 elif item == 'optimise':
                     if values[0].lower() == 'h': # hourly
                         self.daily = False
+                elif item == 'optimise_load':
+                    if values.lower() in ['true', 'yes', 'on']:
+                        self.opt_load = True
                 elif item == 'adjust_cap':
                     self.adjust_cap = float(values)
         except:
@@ -802,8 +806,15 @@ class Adjustments(QtGui.QDialog):
                 self.checkbox[key].setCheckState(self.zerobox.checkState())
 
     def optimiseClicked(self):
+        self.optmsg.setText('')
         try:
-            if self.periodCombo.currentIndex() == 0 or self.lkey is None:
+            if self.periodCombo.currentIndex() == 0:
+                self.zerobox.setCheckState(QtCore.Qt.Unchecked)
+                for key in self.skeys:
+                    self.adjusts[key].setValue(1.)
+                    self.checkbox[key].setCheckState(QtCore.Qt.Checked)
+                return
+            elif self.lkey is None:
                 return
         except:
             return
@@ -850,6 +861,8 @@ class Adjustments(QtGui.QDialog):
                         gen[i].append(0.)
                 else:
                     gen.append([])
+            elif not self.opt_load:
+                self.adjusts[key].setValue(0.)
         for m in range(len(strt)):
             strt[m] = strt[m] * 24
             stop[m] = stop[m] * 24
@@ -878,8 +891,7 @@ class Adjustments(QtGui.QDialog):
                     else:
                         for i in range(strt[m], stop[m]):
                             gen[n].append(self.data[key][i])
-                else:
-                   # continue # if you want to exclude non-included stations contribution to load uncomment this continue
+                elif self.opt_load:
                     if self.daily:
                         h = 0
                         for i in range(strt[m], stop[m]):
@@ -890,7 +902,10 @@ class Adjustments(QtGui.QDialog):
                                 h += 1
                     else:
                         for i in range(strt[m], stop[m]):
-                            load[i] -= self.data[key][i] * self.adjusts[key].value()
+                            load[i - strt[m]] -= self.data[key][i] * self.adjusts[key].value()
+        if len(gen) == 0:
+            self.optmsg.setText('None chosen')
+            return
         B = array(load)
         if self.daily:
             pass
@@ -907,7 +922,6 @@ class Adjustments(QtGui.QDialog):
         A = array(gen)
         res = linalg.lstsq(A, B)  # least squares solution of the generation vs load
         x = res[0]
-        self.optmsg.setText('')
         do_corr = True
         for i in range(len(okeys)):
             if x[i] < 0:
@@ -4362,8 +4376,8 @@ class PowerModel():
                                     techs[key] = value[:]
                                     keys2.append(key)
                             keys.sort()
-                            keys.extend(keys2)
-                            self.save_detail(data_file, techs, keys=keys)
+                            keys2.extend(keys) # put Load first
+                            self.save_detail(data_file, techs, keys=keys2)
                             del techs
                         else:
                             for key in wrkly.keys():
@@ -4373,8 +4387,8 @@ class PowerModel():
                                 except:
                                     keys2.append(key)
                             keys.sort()
-                            keys.extend(keys2)
-                            self.save_detail(data_file, wrkly, keys=keys)
+                            keys2.extend(keys) # put Load first
+                            self.save_detail(data_file, wrkly, keys=keys2)
                 self.showGraphs(wrkly, self.x)
                 if __name__ == '__main__':
                     self.show_menu = True
