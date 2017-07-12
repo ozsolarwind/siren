@@ -376,7 +376,11 @@ Click the <em>APPROVE MORE APPLICATIONS</em> button
 Search for <em>NASA GESDICS DATA ARCHIVE</em> and <em>APPROVE</em> that application
 </li>
 <li>
-Read <a href="https://wiki.earthdata.nasa.gov/display/HDD/Wget+with+URS+Authentication#WgetwithURSAuthentication-Step-by-stepguide" target="_blank">Wget with URS Authentication</a> to create a <em>.netrc</em> file for authentication to download the MERRA-2 files
+Create a <em>.netrc</em> file for authentication to download the MERRA-2 files.
+<ul>
+<li>If you're using <em>getmerra2</em> to download MERRA-2 files it will ask for details to create a <em>.netrc</em> file for you</li>
+<li>Alternatively, read <a href="https://wiki.earthdata.nasa.gov/display/HDD/Wget+with+URS+Authentication#WgetwithURSAuthentication-Step-by-stepguide" target="_blank">Wget with URS Authentication</a> to create the file for authentication to download the MERRA-2 files</li>
+</ul>
 </li>
 </ol>
 <p id="merra3"><strong>Obtaining data</strong></p>
@@ -457,7 +461,8 @@ wget --load-cookies ~/.urs_cookies --save-cookies ~/.urs_cookies --auth-no-chall
 <li>Open a terminal window, navigate to where you have the list of urls and invoke <code>wget</code></li>
 </ol>
 <h4 id="getmerra2">Get MERRA-2 Files</h4>
-<code>getmerra2</code> provides an alternate way of downloading MERRA-2 files than that described in <a href="#merra3">Obtaining data</a>. This approach uses <code>wget</code> but removes the need to manually follow those steps above. You still need to <a href="#merra2a">Register for access</a> and for Windows create a <code>HOME</code> environment variable as described above.</p>
+<p><code>getmerra2</code> provides an alternate way of downloading MERRA-2 files than that described in <a href="#merra3">Obtaining data</a>. This approach uses <code>wget</code> but removes the need to manually follow those steps above. You still need to <a href="#merra2a">Register for access</a>.</p>
+<p>When you first execute <code>getmerra2</code> it will check for a <code>.netrc</code> file and if it can't find one it will prompt for the details required. If you've invoked <code>getmerra2</code> in a Windows terminal window and a <code>HOME</code> environment variable does not exist you will need to close and reopen a new terminal window to make the environment variable available to <code>getmerra2</code>.</p>
 <h5>getmerra2</h5>
 <p><code>getmerra2.py</code> is a Python program that can be used to download MERRA-2 files required to create weather files for SAM. You can invoke the program in Windows by running <code>getmerra2.exe</code> in the <em>makeweatehrfiles</em> folder. The window fields are:</p>
 <ul>
@@ -498,10 +503,11 @@ You can alternate between both approaches to choose the desired area. North and 
 <li>I interpret each grid is centred on the latitude / longitude for that set of variables, that is, the value extends outwards in all directions from that point</li>
 </ul>
 <p><a href="#help">Back to top</a></p>
-<h2 id="usage">Using getmerra2 and makeweather files</h2>
-<p>To make use of <code>makeweatherfiles</code> the following steps should help</p>
+<h2 id="usage">Using getmerra2 and makeweatherfiles</h2>
+<p>To make use of <code>makeweatherfiles</code> the following steps should help:</p>
 <ol>
-<li>Ensure you <a href="#merra2a">Register for access</a> and for Windows create a <code>HOME</code> environment variable as described above to gain access to the MERRA-2 data</p></li>
+<li>Ensure you <a href="#merra2a">Register for access</a> as described above to gain access to the MERRA-2 data</p></li>
+<li>Set up a <code>.netrc</code> file and for Windows a <code>HOME</code> environment variable. The first time you invoke <code>getmerra2.exe</code> it will allow you to set these up</p></li>
 <li>Run <code>getmerra2.exe</code> to get the MERRA-2 data for your area of interest</p>
 <ol>
 <li>You specify the bounding coordinates for your area of interest. For example, for the SWIS in Western Australia you could input North -26.0, South -36.0, West 113.125 and East 122.5. The area has to be at least 1 degree of latitude high by 1.25 degree longitude wide</li>

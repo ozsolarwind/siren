@@ -162,6 +162,7 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 <li><code>siren_sample.exe</code> contains the files and data for the sample SIREN simulation of the SWIS</li>
 <li>(<code>siren_makeweatherfiles.exe</code> contains a standalone version of <code>makeweather2.py</code>. It allows you to create SAM weather files  without requiring any other parts of SIREN. See <a href="makeweatherfiles.html" target="_blank">makeweatherfiles.html</a>)</li>
 </ul>
+<p>Occasionally new versions of some of the SIREN programs will be uploaded to SourceForge. You can check for new versions and download them by selecting the <code>sirenupd</code> option in SIREN.
 <h3 id="execute">Execution of SIREN</h3>
 <p>To execute the simulation open <code>siren.exe</code> in the upper folder, <em>siren</em>. You can easily set up a Desktop shortcut to point to the model. The package contains a number of folders with default files, some that can be replaced with your own. The location of these files are defined in a Preferences file as documented in <a href="#prefs">Preferences</a>. The default files are located in the following folders:</p>
 <ul class="none">
@@ -175,6 +176,48 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 </pre>
 <p>If you specify a folder you will be presented with a list of SIREN Models (Preferences files) in that folder. You can either specify the folder as the full path or relative to the siren folder. Placing your models in a separate folder will make it easier to install updates to SIREN without impacting your data files.</p>
 <p>If you want to create a new Model press the <em>New Model</em> button on the start up menu. You will be presented with a small list of Properties to update to create a new Preferences file. Many of these properties relate to files and file locations as described in <a href="#setup">Setting Up</a>. It's important to ensure they're correct for the new model to open. For the file fields click on the field to navigate to the desired file or folder. At the bottom of the Create Preferences file menu you have options to Save the new file, Save the new file and edit it, or Save it and open (launch) the new model. If you specified a folder when you opened SIREN, the new model will be saved in that folder.
+<h4>SIREN Menu Options</h4>
+<p>SIREN has a small number of menu options.</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn><strong>Tools</strong></dfn></td>
+<td class="none">Invoke SIREN tools. This will launch the chosen tool as a new task</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><img src="map.png" alt="getmap">&nbsp;&nbsp;getmap</td>
+<td class="none">Invoke getmap to create a map image for SIREN (see <a href="#map">Obtaining a Suitable Map Image</a>)</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="download.png" alt="getmerra2">&nbsp;&nbsp;getmerra2</td>
+<td class="none">Invoke getmerra2 to download MERRA-2 data files (see <a href="#getmerra2">Get MERRA-2 Files</a>)</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="weather_b.png" alt="makeweather2">&nbsp;&nbsp;makeweather2</td>
+<td class="none">Invoke makeweather2 to create weather files for SAM (see <a href="#merra5">Produce wind and solar weather files</a>)</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="download.png" alt="sirenupd">&nbsp;&nbsp;sirenupd</td>
+<td class="none">Occasionally new versions of some of the SIREN programs will be uploaded to SourceForge. You can check for new versions and download them by selecting this option</td>
+</tr>
+</table>
+<tr class="none">
+<td class="none"><dfn><strong>Help</strong></dfn></td>
+<td class="none">Display some help about the program</p>
+<table border="0", class="none">
+<tr>
+<tr class="none">
+<td class="none"><img src="help.png" alt="Help">&nbsp;&nbsp;Help (F1)</td>
+<td class="none">Display the help file. The default help file, <em>help.html</em>, is a standard HTML file which can be displayed with your browser</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="about.png" alt="About">&nbsp;&nbsp;About (Ctrl+I)</td>
+<td class="none">Display details about the simulation including any licensing conditions</td>
+</tr></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
 <h3 id="sample">Sample SIREN Model</h3>
 <p>The sample SIREN model for the SWIS for 2014 and 2015. The default Preferences files, <em>SIREN.ini</em>, is set up for this data and assumes the <em>siren_sample</em> folder is located in the same parent folder as the <em>siren</em> folder. The sample data contains:
 <ul class="none">
@@ -1970,7 +2013,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <td class="none">Invoke getmap to create a map image for SIREN (see <a href="#map">Obtaining a Suitable Map Image</a>)</td>
 </tr>
 <tr class="none">
-<td class="none"><img src="download.png" alt="getmerra2">&nbsp;&nbsp;getmap</td>
+<td class="none"><img src="download.png" alt="getmerra2">&nbsp;&nbsp;getmerra2</td>
 <td class="none">Invoke getmerra2 to download MERRA-2 data files (see <a href="#getmerra2">Get MERRA-2 Files</a>)</td>
 </tr>
 <tr class="none">
@@ -1982,7 +2025,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <td class="none">Invoke makegrid to create resource grid file (see <a href="#resource">Visualising Renewable Resource Attributes</a>)</td>
 </tr>
 <tr class="none">
-<td class="none"><img src="weather.png" alt="makeweather2">&nbsp;&nbsp;makeweather2</td>
+<td class="none"><img src="weather_b.png" alt="makeweather2">&nbsp;&nbsp;makeweather2</td>
 <td class="none">Invoke makeweather2 to create weather files for SAM (see <a href="#merra5">Produce wind and solar weather files</a>)</td>
 </tr>
 <tr class="none">
@@ -2634,7 +2677,11 @@ Click the <em>APPROVE MORE APPLICATIONS</em> button
 Search for <em>NASA GESDICS DATA ARCHIVE</em> and <em>APPROVE</em> that application
 </li>
 <li>
-Read <a href="https://wiki.earthdata.nasa.gov/display/HDD/Wget+with+URS+Authentication#WgetwithURSAuthentication-Step-by-stepguide" target="_blank">Wget with URS Authentication</a> to create a <em>.netrc</em> file for authentication to download the MERRA-2 files
+Create a <em>.netrc</em> file for authentication to download the MERRA-2 files.
+<ul>
+<li>If you're using <em>getmerra2</em> to download MERRA-2 files it will ask for details to create a <em>.netrc</em> file for you</li>
+<li>Alternatively, read <a href="https://wiki.earthdata.nasa.gov/display/HDD/Wget+with+URS+Authentication#WgetwithURSAuthentication-Step-by-stepguide" target="_blank">Wget with URS Authentication</a> to create the file for authentication to download the MERRA-2 files</li>
+</ul>
 </li>
 </ol>
 <p id="merra3"><strong>Obtaining data</strong></p>
@@ -2722,7 +2769,8 @@ wget --load-cookies ~/.urs_cookies --save-cookies ~/.urs_cookies --auth-no-chall
 <li>Open a terminal window, navigate to where you have the list of urls and invoke <code>wget</code></li>
 </ol>
 <h4 id="getmerra2">Get MERRA-2 Files</h4>
-<em>getmerra2</em> provides an alternate way of downloading MERRA-2 files than that described in <a href="#merra3">Obtaining data</a>. This approach uses <code>wget</code> but removes the need to manually follow those steps above. You still need to <a href="#merra2a">Register for access</a> and for Windows create a <code>HOME</code> environment variable as described above.</p>
+<p><code>getmerra2</code> provides an alternate way of downloading MERRA-2 files than that described in <a href="#merra3">Obtaining data</a>. This approach uses <code>wget</code> but removes the need to manually follow those steps above. You still need to <a href="#merra2a">Register for access</a>.</p>
+<p>When you first execute <code>getmerra2</code> it will check for a <code>.netrc</code> file and if it can't find one it will prompt for the details required. If you've invoked <code>getmerra2</code> in a Windows terminal window and a <code>HOME</code> environment variable does not exist you will need to close and reopen a new terminal window to make the environment variable available to <code>getmerra2</code>.</p>
 <h5>getmerra2</h5>
 <p><code>getmerra2.py</code> is a Python program that can be used to download MERRA-2 files required to create weather files for SAM. You can invoke the program either by choosing <em>getmerra2</em> from the SIREN Tools menu or in Windows by running <code>getmerra2.exe</code> in the <em>siren</em> folder. The program accepts a SIREN Preferences file as an optional parameter. The window fields are:</p>
 <ul>
@@ -2811,6 +2859,29 @@ You can alternate between both approaches to choose the desired area. If you hav
 <li><code>makeweatherfiles.py</code> is a standalone version of <code>makeweather2.py</code>. It allows you to create SAM weather files  without requiring any other parts of SIREN. See <a href="makeweatherfiles.html" target="_blank">makeweatherfiles.html</a></li>
 </ol>
 <p>
+<h4 id="usage">Using getmerra2 and makeweather2</h4>
+<p>To make use of <code>getmerra2</code> and <code>makeweather2</code> the following steps should help:</p>
+<ol>
+<li>Ensure you <a href="#merra2a">Register for access</a> as described above to gain access to the MERRA-2 data</p></li>
+<li>Set up a <code>.netrc</code> file and for Windows a <code>HOME</code> environment variable. The first time you invoke <code>getmerra2</code> it will allow you to set these up</p></li>
+<li>Run <code>getmerra2</code> to get the MERRA-2 data for your area of interest</p>
+<ol>
+<li>You specify the bounding coordinates for your area of interest. For example, for the SWIS in Western Australia you could input North -26.0, South -36.0, West 113.125 and East 122.5. The area has to be at least 1 degree of latitude high by 1.25 degree longitude wide</li>
+<li>Specify the date range. To create a SAM weather file you need at least one year of data plus the last day of the prior year and/or the first day of the next year. As an example Start date: 31/12/15 (or 2015-12-31) and End date: 01/01/17 (or 2017-01-01) will download data for 2016. MERRA-2 data is based upon UTC while SAM files are local time. In the case of the SWIS, UTC+8, the first 8 hours of the year will be in the last day of the previous year; for UTC-n, the last n hours of the year will be in the first day of the next year</li>
+<li>Click on the target folder field to specify a location for the MERRA-2 data. It's OK to store both wind and solar files in the same folder</li>
+<li>Click <em>Get Solar</em> for solar files and <em>Get Wind</em> for wind files. If you're creating solar weather files you'll need both. When you click the buttons <code>getmerra2</code> will launch separate tasks to download the files into the target folder. You can Quit out of <code>getmerra2</code> as this stage. The two tasks will probably take a while to run as they have to download individual files for each day in the range. The output and success will be in a log file in the target folder</li>
+<li>If you click <em>Check Solar</em> or <em>Check Wind</em> <code>getmerra2</code> will interrogate MERRA-2 solar files in the appropriate Target Folder to provide the boundaries for the Area of Interest and set the starting date to download the next day in sequence. The interrogation will cater for files in yearly subfolders</li>
+</ol></p></li>
+<li>Once the MERRA-2 files are downloaded run <code>makeweather2</code> to create the SAM weather files</p>
+<ol>
+<li>Specify the year, 2016 in the case above</li>
+<li>Click on the source folder(s) to locate the MERRA-2 files. This will be the same as point 1.3 above</li>
+<li>Click on Target folder to specify a location for the weather files. It's convenient to use a different folder to the MERRA-2 files</li>
+<li>You can click <em>File Info</em> to test if the MERRA-2 files are OK. This reads the first file of the year (e.g. 20160101) and displays the dimensions of the MERRA-2 file. The output shows the latitude and longitude cells covered</li>
+<li>Click <em>Produce Solar Files</em> to create solar weather files. Clicking the button will cause <code>makeweather2</code> to create the weather files. It will take a while to run so please be patient. It will eventually return with an output listing of the files produced</li>
+<li>Click <em>Produce Wind Files</em> to create wind weather files. Same deal as solar</li>
+</ol></p></li></ol>
+<h4>SAM Weather Files</h4>
 <h5 id="merra6">Wind Files</h5>
 <p>SRW format wind files are one of the formats acceptable to SAM. This format has been chosen as it's easier to generate than other formats. MERRA-2 variables from tavg1_2d_slv_Nx data files are used to create the SRW variables.</p>
 <table border="1">

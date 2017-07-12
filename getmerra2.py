@@ -125,6 +125,17 @@ class ClickableQLabel(QtGui.QLabel):
         self.emit(QtCore.SIGNAL('clicked()'))
 
 
+class subwindow(QtGui.QDialog):
+    def __init__(self, parent = None):
+        super(subwindow, self).__init__(parent)
+
+    def closeEvent(self, event):
+        event.accept()
+
+    def exit(self):
+        self.close()
+
+
 class getMERRA2(QtGui.QDialog):
     procStart = QtCore.pyqtSignal(str)
 
@@ -161,7 +172,25 @@ class getMERRA2(QtGui.QDialog):
         self.help = help
         self.ignore = False
         self.worldwindow = None
-        self.once = True
+        ok = False
+        if sys.platform == 'win32' or sys.platform == 'cygwin':
+            try:
+                netrc = '~\\.netrc'.replace('~', os.environ['HOME'])
+            except:
+                netrc = ''
+        else:
+            netrc = '~/.netrc'.replace('~', os.path.expanduser('~'))
+        if netrc != '' and os.path.exists(netrc):
+            ok = True
+        if not ok:
+            netrcmsg = '.netrc file missing.\n(' + netrc + ')\nDo you want create one?'
+            if sys.platform == 'win32' or sys.platform == 'cygwin':
+                netrcmsg += '\nYou will need to reinvoke getMERRA2.'
+            reply = QtGui.QMessageBox.question(self, 'SIREN - getmerra2 - No .netrc file',
+                    netrcmsg,
+                    QtGui.QMessageBox.Yes | QtGui.QMessageBox.No, QtGui.QMessageBox.No)
+            if reply == QtGui.QMessageBox.Yes:
+                self.create_netrc()
         self.northSpin = QtGui.QDoubleSpinBox()
         self.northSpin.setDecimals(3)
         self.northSpin.setSingleStep(.5)
@@ -340,6 +369,10 @@ class getMERRA2(QtGui.QDialog):
         self.close()
 
     def closeEvent(self, event):
+        try:
+            self.mySubwindow.close()
+        except:
+            pass
         event.accept()
 
     @QtCore.pyqtSlot()
@@ -523,23 +556,6 @@ class getMERRA2(QtGui.QDialog):
         except:
             self.log.setText('Error accessing getfiles.ini variables')
             return
-        if self.once: # check .netrc exists
-            self.once = False
-            ok = False
-            if sys.platform == 'win32' or sys.platform == 'cygwin':
-                netrc = '~\\.netrc'.replace('~', os.environ['HOME'])
-            else:
-                netrc = '~/.netrc'.replace('~', os.path.expanduser('~'))
-            if os.path.exists(netrc):
-                ok = True
-            if not ok:
-                reply = QtGui.QMessageBox.question(self, 'SIREN - getmerra2 - No .netrc file',
-                        '.netrc file missing.\n(' + netrc + ')\nOK to continue?',
-                        QtGui.QMessageBox.Yes | QtGui.QMessageBox.No, QtGui.QMessageBox.No)
-                if reply == QtGui.QMessageBox.Yes:
-                    pass
-                else:
-                    return
         working_vars = []
         for prop, value in variables:
             valu = value
@@ -600,6 +616,59 @@ class getMERRA2(QtGui.QDialog):
         bat_cmd = ' '.join(who)
         bf.write(bat_cmd)
         bf.close()
+
+    def create_netrc(self):
+        self.mySubwindow = subwindow()
+        grid = QtGui.QGridLayout()
+        grid.addWidget(QtGui.QLabel('Enter details for URS Registration'), 0, 0, 1, 2)
+        r = 1
+        if sys.platform == 'win32' or sys.platform == 'cygwin':
+            try:
+                self.home_dir = os.environ['HOME']
+            except:
+                self.home_dir = os.getcwd()
+                grid.addWidget(QtGui.QLabel('HOME directory:'), 1, 0)
+                self.home = ClickableQLabel()
+                self.home.setText(self.home_dir)
+                self.home.setFrameStyle(6)
+                self.connect(self.home, QtCore.SIGNAL('clicked()'), self.ursdirChanged)
+                grid.addWidget(self.home, 1, 1, 1, 3)
+                r = 2
+        grid.addWidget(QtGui.QLabel('URS Userid:'), r, 0)
+        self.urs_id = QtGui.QLineEdit('')
+        grid.addWidget(self.urs_id, r, 1)
+        grid.addWidget(QtGui.QLabel('URS Password:'), r + 1, 0)
+        self.urs_pwd = QtGui.QLineEdit('')
+        grid.addWidget(self.urs_pwd, r + 1, 1)
+        netrc_button = QtGui.QPushButton('Create .netrc file', self.mySubwindow)
+        self.connect(netrc_button, QtCore.SIGNAL('clicked()'), self.createnetrc)
+        grid.addWidget(netrc_button, r + 2, 0)
+        self.mySubwindow.setLayout(grid)
+        self.mySubwindow.exec_()
+
+    def ursdirChanged(self):
+        curdir = str(self.home.text())
+        newdir = str(QtGui.QFileDialog.getExistingDirectory(self, 'Choose .netrc Folder',
+                 curdir, QtGui.QFileDialog.ShowDirsOnly))
+        if newdir != '':
+            self.home.setText(newdir)
+            self.home_dir = newdir
+
+    def createnetrc(self):
+        if sys.platform == 'win32' or sys.platform == 'cygwin':
+            env_var = 'HOME'
+            os.system('SETX {0} "{1}"'.format(env_var, self.home_dir))
+            netrc = self.home_dir + '\\.netrc'
+        else:
+            netrc = '~/.netrc'.replace('~', os.path.expanduser('~'))
+        netrc_string = 'machine urs.earthdata.nasa.gov login %s password %s' % (str(self.urs_id.text()),
+                       str(self.urs_pwd.text()))
+        fou = open(netrc, 'wb')
+        fou.write(netrc_string)
+        fou.close()
+        self.mySubwindow.close()
+        if sys.platform == 'win32' or sys.platform == 'cygwin':
+            self.close()
 
 
 if '__main__' == __name__:
