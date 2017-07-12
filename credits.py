@@ -34,11 +34,19 @@ def fileVersion(program=None):
         check = sys.argv[0]
     else:
         s = program.rfind('.')
-        if s < len(program) - 4:
+        if s > 0 and program[s:] == '.html':
+            check = program
+        elif s < len(program) - 4:
             check = program + sys.argv[0][sys.argv[0].rfind('.'):]
         else:
             check = program
     if check[-3:] == '.py':
+        try:
+            modtime = datetime.fromtimestamp(os.path.getmtime(check))
+            ver = '1.0.%04d.%d%02d' % (modtime.year, modtime.month, modtime.day)
+        except:
+            pass
+    elif check[-5:] == '.html':
         try:
             modtime = datetime.fromtimestamp(os.path.getmtime(check))
             ver = '1.0.%04d.%d%02d' % (modtime.year, modtime.month, modtime.day)
