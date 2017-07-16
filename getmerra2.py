@@ -332,6 +332,7 @@ class getMERRA2(QtGui.QDialog):
         frame2.setLayout(buttongrid)
         self.layout.addWidget(frame2)
         self.setWindowTitle('SIREN - getmerra2 - Get MERRA-2 data')
+        self.resize(int(self.sizeHint().width()* 1.07), int(self.sizeHint().height() * 1.07))
         self.show()
 
     def dirChanged(self):
@@ -527,21 +528,29 @@ class getMERRA2(QtGui.QDialog):
             self.southSpin.setValue(log1.latitudes[0])
             self.ignore = False
             self.northSpin.setValue(log1.latitudes[-1])
+            lat_rnge = self.northSpin.value() - self.southSpin.value()
+            if lat_rnge < 1:
+                self.northSpin.setValue(self.southSpin.value() + 1)
         if log1.longitudes == log2.longitudes:
             self.ignore = True
             self.westSpin.setValue(log1.longitudes[0])
             self.ignore = False
             self.eastSpin.setValue(log1.longitudes[-1])
-            dte = dte2 + datetime.timedelta(days=1)
-            self.strt_date.setDate(dte)
+            lon_rnge = self.eastSpin.value() - self.westSpin.value()
+            if lon_rnge < 1.25:
+                self.eastSpin.setValue(self.westSpin.value() + 1.25)
+        dte = dte2 + datetime.timedelta(days=1)
+        self.strt_date.setDate(dte)
         if not_contiguous:
             dte_msg += ' but days not contiguous'
         self.log.setText('Boundaries and start date set for ' + chk_key.title() + dte_msg)
         del self.chk_collection, self.chk_folders, self.chk_src_key, self.chk_src_dte
 
     def getClicked(self):
-        if self.southSpin.value() == self.northSpin.value() or self.eastSpin.value() == self.westSpin.value():
-            self.log.setText('Area too small')
+        lat_rnge = self.northSpin.value() - self.southSpin.value()
+        lon_rnge = self.eastSpin.value() - self.westSpin.value()
+        if lat_rnge < 1 or lon_rnge < 1.25:
+            self.log.setText('Area too small. Range must be at least 1 degree Lat x 1.25 Lon')
             return
         if self.sender().text() == 'Get Solar':
             me = 'solar'
