@@ -784,7 +784,11 @@ class WAScene(QtGui.QGraphicsScene):
                 el = QtGui.QGraphicsEllipseItem(p.x() - x_d / 2, p.y() - y_d / 2, x_d, y_d)
             else:
                 el = QtGui.QGraphicsEllipseItem(p.x() - 1.5, p.y() - 1.5, 3, 3)   # here to adjust station circles when not scaling
-        el.setBrush(QtGui.QColor(self.colors[st.technology]))
+        try:
+            el.setBrush(QtGui.QColor(self.colors[st.technology]))
+        except:
+            self.colors[st.technology] = 'gray'
+            el.setBrush(QtGui.QColor('gray'))
         if self.station_opacity < 1.:
             el.setOpacity(self.station_opacity)
         if self.colors['border'] != '':
@@ -794,7 +798,10 @@ class WAScene(QtGui.QGraphicsScene):
         el.setZValue(1)
         self.addItem(el)
         self._stationGroups[st.name].append(el)
-        self._stationCircles[st.technology].append(el)
+        try:
+            self._stationCircles[st.technology].append(el)
+        except:
+            self._stationCircles[st.technology] = [(el)]
         if st.technology[:6] == 'Fossil':
             self._fossilGroup.addToGroup(el)
         size = sqrt(float(st.capacity) * self.capacity_area / pi)
