@@ -2416,6 +2416,11 @@ class MainWindow(QtGui.QMainWindow):
                 self.resource_year = str(self.sender().text())
             self.escaper.setVisible(True)
             self.resource = Resource(self.resource_year, self.view.scene())
+            if not self.resource.be_open:
+                self.escaper.setVisible(False)
+                self.resource = None
+                self.view.emit(QtCore.SIGNAL('statusmsg'), 'Resource grid not available')
+                return
             self.resource.setWindowModality(QtCore.Qt.WindowModal)
             self.resource.setWindowFlags(self.resource.windowFlags() |
                               QtCore.Qt.WindowSystemMenuHint |

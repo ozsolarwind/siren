@@ -182,6 +182,7 @@ class Resource(QtGui.QDialog):
         yrf = rreplace(self.scene.resource_grid, '$YEAR$', self.year, 1)
         yrf = yrf.replace('$YEAR$', self.year)
         if not os.path.exists(yrf):
+            self.be_open = False
             return
         mrf = rreplace(self.scene.resource_grid, '$YEAR$', self.year + '-01', 1)
         mrf = mrf.replace('$YEAR$', self.year)
