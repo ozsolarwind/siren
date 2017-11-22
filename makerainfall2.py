@@ -511,6 +511,7 @@ class getParms(QtGui.QWidget):
         self.layout.addWidget(self.scroll)
         self.setWindowTitle('SIREN - makerainfall2 (' + fileVersion() + ') - Make rainfall files from MERRA data')
         self.center()
+        self.resize(int(self.sizeHint().width()* 1.07), int(self.sizeHint().height() * 1.07))
         self.show()
 
     def center(self):
