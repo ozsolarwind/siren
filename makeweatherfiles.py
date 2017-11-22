@@ -41,6 +41,7 @@ else:
     from Scientific.IO.NetCDF import *
 import time
 from PyQt4 import QtCore, QtGui
+from credits import fileVersion
 
 
 class AnObject(QtGui.QDialog):
@@ -1286,7 +1287,7 @@ class getParms(QtGui.QWidget):
         self.scroll.setWidget(frame)
         self.layout = QtGui.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
-        self.setWindowTitle('makeweatherfiles - Make weather files from MERRA data')
+        self.setWindowTitle('makeweatherfiles (' + fileVersion() + ') - Make weather files from MERRA data')
         self.center()
         self.resize(int(self.sizeHint().width()* 1.07), int(self.sizeHint().height() * 1.07))
         self.show()
@@ -1331,7 +1332,7 @@ class getParms(QtGui.QWidget):
 
     def helpClicked(self):
         dialog = AnObject(QtGui.QDialog(), self.help,
-                 title='makeweatherfiles - Help', section='makeweather')
+                 title='makeweatherfiles (' + fileVersion() + ') - Help', section='makeweather')
         dialog.exec_()
 
     def quitClicked(self):

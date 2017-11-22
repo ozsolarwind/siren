@@ -44,7 +44,7 @@ class UpdDialog(QtGui.QDialog):
     def __init__(self, parent=None):
         self.debug = False
         QtGui.QDialog.__init__(self, parent)
-        self.setWindowTitle('SIREN Update. Check for new versions')
+        self.setWindowTitle('SIREN Update (' + fileVersion() + ') - Check for new versions')
         row = 0
         newgrid = QtGui.QGridLayout()
         host = 'https://sourceforge.net/projects/sensiren/files/'
