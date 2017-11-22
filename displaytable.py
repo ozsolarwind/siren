@@ -45,7 +45,17 @@ class Table(QtGui.QDialog):
     def __init__(self, objects, parent=None, fields=None, fossil=True, sumby=None, sumfields=None, units='', title=None,
                  save_folder='', edit=False, sortby=None):
         super(Table, self).__init__(parent)
-        if isinstance(objects, list) and isinstance(objects[0], list):
+        if len(objects) == 0:
+            buttonLayout = QtGui.QVBoxLayout()
+            buttonLayout.addWidget(QtGui.QLabel('Nothing to display.'))
+            self.quitButton = QtGui.QPushButton(self.tr('&Quit'))
+            buttonLayout.addWidget(self.quitButton)
+            self.connect(self.quitButton, QtCore.SIGNAL('clicked()'),
+                        self.quit)
+            QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quit)
+            self.setLayout(buttonLayout)
+            return
+        elif isinstance(objects, list) and isinstance(objects[0], list):
             fakes = []
             for row in objects:
                 fakes.append(FakeObject(row, fields))
