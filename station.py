@@ -431,14 +431,17 @@ class Stations:
                                     self.stations[-1].rotor = float(rotor)
                                 except:
                                     pass
-                        if self.stations[-1].area == 0 or self.stations[-1].area == '':
-                            if self.stations[-1].technology == 'Wind':
-                                self.stations[-1].area = self.areas[self.stations[-1].technology] * \
-                                                         float(self.stations[-1].no_turbines) * \
-                                                         pow((self.stations[-1].rotor * .001), 2)
-                            else:
-                                self.stations[-1].area = self.areas[self.stations[-1].technology] * \
-                                                         float(self.stations[-1].capacity)
+                        try:
+                            if self.stations[-1].area == 0 or self.stations[-1].area == '':
+                                if self.stations[-1].technology == 'Wind':
+                                    self.stations[-1].area = self.areas[self.stations[-1].technology] * \
+                                                             float(self.stations[-1].no_turbines) * \
+                                                             pow((self.stations[-1].rotor * .001), 2)
+                                else:
+                                    self.stations[-1].area = self.areas[self.stations[-1].technology] * \
+                                                             float(self.stations[-1].capacity)
+                        except:
+                            self.stations[-1].area = 0.
                         try:
                             power_file = worksheet.cell_value(curr_row, var['Power File'])
                             if power_file != '':
