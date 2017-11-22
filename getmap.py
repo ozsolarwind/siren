@@ -421,7 +421,7 @@ class getMap(QtGui.QWidget):
   #      self.resize(self.width() + int(self.world_width * .7), self.height() + int(self.world_height * .7))
         self.setWindowTitle('SIREN - getmap (' + fileVersion() + ") - Make Map from OSM or MapQuest")
         self.center()
-        self.resize(int(self.sizeHint().width()* 1.07), int(self.sizeHint().height() * 1.07))
+        self.resize(int(self.sizeHint().width()* 1.07), int(self.sizeHint().height() * 1.1))
         self.show()
 
     def center(self):
