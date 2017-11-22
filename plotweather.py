@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2017 Sustainable Energy Now Inc., Angus King
 #
 #  plotweather.py - This file is part of SIREN.
 #
@@ -30,7 +30,6 @@ import xlrd
 
 import ConfigParser  # decode .ini file
 from PyQt4 import QtGui, QtCore
-from PyQt4.QtCore import Qt
 
 from senuser import getUser
 from sammodels import getZenith
@@ -63,7 +62,7 @@ class whatPlots(QtGui.QDialog):
                 i += 1
             self.checkbox.append(QtGui.QCheckBox(self.hdrs[self.plot_order[plot]], self))
             if self.plots[self.plot_order[plot]]:
-                self.checkbox[plot].setCheckState(Qt.Checked)
+                self.checkbox[plot].setCheckState(QtCore.Qt.Checked)
             self.grid.addWidget(self.checkbox[-1], i, 0)
             i += 1
         self.grid.connect(self.checkbox[0], QtCore.SIGNAL('stateChanged(int)'), self.check_all)
@@ -88,11 +87,11 @@ class whatPlots(QtGui.QDialog):
         if self.checkbox[0].isChecked():
             for i in range(len(self.checkbox)):
                 self.plots[self.plot_order[i]] = True
-                self.checkbox[i].setCheckState(Qt.Checked)
+                self.checkbox[i].setCheckState(QtCore.Qt.Checked)
         else:
             for i in range(len(self.checkbox)):
                 self.plots[self.plot_order[i]] = True
-                self.checkbox[i].setCheckState(Qt.Unchecked)
+                self.checkbox[i].setCheckState(QtCore.Qt.Unchecked)
 
     def closeEvent(self, event):
         if not self.show_them:
@@ -105,7 +104,7 @@ class whatPlots(QtGui.QDialog):
 
     def showClicked(self):
         for plot in range(len(self.checkbox)):
-            if self.checkbox[plot].checkState() == Qt.Checked:
+            if self.checkbox[plot].checkState() == QtCore.Qt.Checked:
                 self.plots[self.plot_order[plot]] = True
             else:
                 self.plots[self.plot_order[plot]] = False
@@ -437,6 +436,8 @@ class PlotWeather():
             for k in range(24):
                 j = -1
                 for key, value in iter(sorted(self.ly.iteritems())):
+                    if len(value) == 0:
+                        continue
                     j += 1
                     if self.plots['total']:
                         l24[j][k] += value[i + k]
@@ -729,6 +730,7 @@ class PlotWeather():
              self.hdrs['monthly'] = 'Monthly Totals'
         spacers = {'dhi': 'Weather values',
                    'hour': 'Choose plots (all use a full year of data)'}
+        weathers = ['dhi', 'dni', 'ghi', 'rain', 'temp', 'wind']
         self.plots = {}
         for i in range(len(plot_order)):
             self.plots[plot_order[i]] = False
@@ -823,6 +825,14 @@ class PlotWeather():
                         self.ly['wind'].append(float(bits[wind_col]))
                     if self.plots['rain'] and rain_col >= 0:
                         self.ly['rain'].append(float(bits[rain_col]))
+                for key in weathers:
+                    try:
+                        if len(self.ly[key]) == 0:
+                            self.ly.pop(key)
+                    except:
+                        pass
+                if len(self.ly) == 0:
+                    return
             else:
                 return
         if self.plots['wind']:
