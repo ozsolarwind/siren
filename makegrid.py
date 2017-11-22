@@ -315,22 +315,41 @@ class makeFile():
             if self.daily:
                 daily_wind_values[key] = vald
 # we've got some 50m wind values?
+        wind_error = False
         if len(wind_values) > 0:
             for key in all_values:
                 for mth in range(12):
-                    all_values[key][mth][val_col] = wind_values[key][mth]
+                    try:
+                        all_values[key][mth][val_col] = wind_values[key][mth]
+                    except:
+                        if not wind_error:
+                            wind_error = True
+                            self.log += 'Wind value missing: ' + key + '-' + str(mth)
+                        all_values[key][mth][val_col] = 0.
         if self.hourly:
             if len(hrly_wind_values) > 0:
                 for key in hrly_values:
                     for hr in range(24):
                         for mth in range(12):
-                            hrly_values[key][hr][mth][val_col] = hrly_wind_values[key][hr][mth]
+                            try:
+                                hrly_values[key][hr][mth][val_col] = hrly_wind_values[key][hr][mth]
+                            except:
+                                if not wind_error:
+                                    wind_error = True
+                                    self.log += 'Wind value missing: ' + key + '-' + str(mth) + ' ' + str(hr)
+                                hrly_values[key][hr][mth][val_col] = 0.
         if self.daily:
             if len(daily_wind_values) > 0:
                 for key in daily_values:
                     for hr in range(24):
                         for dy in range(365):
-                            daily_values[key][hr][dy][val_col] = daily_wind_values[key][hr][dy]
+                            try:
+                                daily_values[key][hr][dy][val_col] = daily_wind_values[key][hr][dy]
+                            except:
+                                if not wind_error:
+                                    wind_error = True
+                                    self.log += 'Wind value missing: ' + key + '-' + str(mth) + '-' + str(dy) + ' ' + str(hr)
+                                daily_values[key][hr][dy][val_col] = 0.
 # and possibly rain if we haven't already got it
         if self.do_rain and col[the_cols.index('Rainfall')] < 0:
             fils = os.listdir(self.rain_dir)
