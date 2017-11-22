@@ -20,6 +20,7 @@
 #
 
 import datetime
+import gzip
 import os
 import subprocess
 import sys
@@ -331,7 +332,7 @@ class getMERRA2(QtGui.QDialog):
         frame2 = QtGui.QFrame()
         frame2.setLayout(buttongrid)
         self.layout.addWidget(frame2)
-        self.setWindowTitle('SIREN - getmerra2 - Get MERRA-2 data')
+        self.setWindowTitle('SIREN - getmerra2 (' + fileVersion() + ') - Get MERRA-2 data')
         self.resize(int(self.sizeHint().width()* 1.07), int(self.sizeHint().height() * 1.07))
         self.show()
 
@@ -526,19 +527,23 @@ class getMERRA2(QtGui.QDialog):
         if log1.latitudes == log2.latitudes:
             self.ignore = True
             self.southSpin.setValue(log1.latitudes[0])
-            self.ignore = False
             self.northSpin.setValue(log1.latitudes[-1])
             lat_rnge = self.northSpin.value() - self.southSpin.value()
             if lat_rnge < 1:
+                if len(log1.latitudes) == 2:
+                    self.southSpin.setValue(self.southSpin.value() - .005)
                 self.northSpin.setValue(self.southSpin.value() + 1)
+            self.ignore = False
         if log1.longitudes == log2.longitudes:
             self.ignore = True
             self.westSpin.setValue(log1.longitudes[0])
-            self.ignore = False
             self.eastSpin.setValue(log1.longitudes[-1])
             lon_rnge = self.eastSpin.value() - self.westSpin.value()
             if lon_rnge < 1.25:
+                if len(log1.longitudes) == 2:
+                    self.westSpin.setValue(self.westSpin.value() - .005)
                 self.eastSpin.setValue(self.westSpin.value() + 1.25)
+            self.ignore = False
         dte = dte2 + datetime.timedelta(days=1)
         self.strt_date.setDate(dte)
         if not_contiguous:

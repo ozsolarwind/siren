@@ -20,11 +20,13 @@
 #
 
 import os
+import StringIO
 import sys
 from math import sin, cos, radians, asin, acos, atan2, sqrt, degrees
+import zipfile
 
 import ConfigParser   # decode .ini file
-from xml.etree.ElementTree import ElementTree
+from xml.etree.ElementTree import ElementTree, fromstring
 
 from senuser import getUser
 
@@ -331,7 +333,23 @@ class Grid:
             return
         style = {}
         styl = ''
-        root = ElementTree(file=kml_file)
+        zipped = False
+        if kml_file[-4:] == '.kmz': # zipped file?
+            zipped = True
+            zf = zipfile.ZipFile(kml_file, 'r')
+            inner_file = ''
+            for name in zf.namelist():
+                if name[-4:] == '.kml':
+                    inner_file = name
+                    break
+            if inner_file == '':
+                return
+            memory_file = StringIO.StringIO()
+            memory_file.write(zf.open(inner_file).read())
+            root = ElementTree(fromstring(memory_file.getvalue()))
+        else:
+            kml_data = open(kml_file, 'rb')
+            root = ElementTree(fromstring(kml_data.read()))
          # Create an iterator
         iterat = root.getiterator()
         placemark_id = ''
@@ -361,7 +379,7 @@ class Grid:
                             placemark_id = value
             elif elem == 'SimpleData' and grid2:
                 for key, value in element.items():
-                    if key == 'name' and value == 'CAPACITY_kV':
+                    if key == 'name' and (value == 'CAPACITY_kV' or value == 'CAPACITYKV'):
                         try:
                             styl = self.grid2_colors[element.text]
                         except:
@@ -392,6 +410,11 @@ class Grid:
                         self.lines.append(Line(line_name, styl, coords, length=grid_len))
                     else:
                         self.lines.append(Line(line_name, style[styl], coords, length=grid_len))
+        if zipped:
+            memory_file.close()
+            zf.close()
+        else:
+            kml_data.close()
      # connect together
      # if load_centres connect closest end to closest load centre
      #    for i in range(len(self.lines)):
@@ -612,7 +635,23 @@ class Grid_Boundary:
             return
         style = {}
         styl = ''
-        root = ElementTree(file=self.kml_file)
+        zipped = False
+        if self.kml_file[-4:] == '.kmz': # zipped file?
+            zipped = True
+            zf = zipfile.ZipFile(kml_file, 'r')
+            inner_file = ''
+            for name in zf.namelist():
+                if name[-4:] == '.kml':
+                    inner_file = name
+                    break
+            if inner_file == '':
+                return
+            memory_file = StringIO.StringIO()
+            memory_file.write(zf.open(inner_file).read())
+            root = ElementTree(fromstring(memory_file.getvalue()))
+        else:
+            kml_data = open(self.kml_file, 'rb')
+            root = ElementTree(fromstring(kml_data.read()))
          # Create an iterator
         iterat = root.getiterator()
         for element in iterat:
@@ -636,4 +675,12 @@ class Grid_Boundary:
                 i = int(len(coords) / 2)
                 if within_map(coords[0][0], coords[0][1], self.map_polygon) and \
                    within_map(coords[i][0], coords[i][1], self.map_polygon):
-                    self.lines.append(Line(line_name, style[styl], coords))
+                    try:
+                        self.lines.append(Line(line_name, style[styl], coords))
+                    except:
+                        self.lines.append(Line(line_name, self.colour, coords))
+        if zipped:
+            memory_file.close()
+            zf.close()
+        else:
+            kml_data.close()
