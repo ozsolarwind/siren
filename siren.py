@@ -59,6 +59,7 @@ class TabDialog(QtGui.QDialog):
         fils = sorted(os.listdir(self.siren_dir))
         self.help = ''
         self.about = ''
+        self.weather_icon = 'weather.png'
         config = ConfigParser.RawConfigParser()
         for fil in fils:
             if fil[-4:] == '.ini':
@@ -87,12 +88,18 @@ class TabDialog(QtGui.QDialog):
                             self.help = ''
                     except:
                         pass
+                try:
+                    mb = config.get('View', 'menu_background')
+                    if mb.lower() != 'b':
+                        self.weather_icon = 'weather_b.png'
+                except:
+                    pass
         if len(entries) == 0:
             self.new()
      #    if len(entries) == 1:
      #        self.invoke(entries[0][0])
      #        sys.exit()
-        self.setWindowTitle('SIREN - Select SIREN Model')
+        self.setWindowTitle('SIREN (' + fileVersion() + ') - Select SIREN Model')
         buttonLayout = QtGui.QHBoxLayout()
         self.quitButton = QtGui.QPushButton(self.tr('&Quit'))
         buttonLayout.addWidget(self.quitButton)
@@ -135,7 +142,7 @@ class TabDialog(QtGui.QDialog):
         layout.addWidget(buttons, 2, 0)
         menubar = QtGui.QMenuBar()
         utilities = ['getmap', 'getmerra2', 'makeweather2', 'sirenupd']
-        utilicon = ['map.png', 'download.png', 'weather.png', 'download.png']
+        utilicon = ['map.png', 'download.png', self.weather_icon, 'download.png']
         spawns = []
         icons = []
         if sys.platform == 'win32' or sys.platform == 'cygwin':
