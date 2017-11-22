@@ -578,6 +578,7 @@ The format is similar to a Windows INI file. If you want to create a new Model y
 </tr>
 <tr class="none">
 <td class="none"><dfn>wind</dfn></td>
+<td class="none">&nbsp;Also used as the storage colour for the Augmented power plot</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>fossil</dfn></td>
@@ -650,15 +651,18 @@ The format is similar to a Windows INI file. If you want to create a new Model y
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><dfn>cumulative</dfn></td>
+<td class="none">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Also used as the used renewable generation colour for the Augmented power plot</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>gross_load</dfn></td>
+<td class="none">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Also used as the total renewable generation for the Augmented power plot</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>load</dfn></td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>shortfall</dfn></td>
+<td class="none">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Also used as the augmented generation colour for the Augmented power plot</td>
 </tr>
 </table>
 </td></tr>
@@ -687,15 +691,15 @@ The format is similar to a Windows INI file. If you want to create a new Model y
 </tr>
 <tr class="none">
 <td class="none"><dfn>grid_boundary</dfn></td>
-<td class="none">Electricity network (SWIS) boundary file (KML file)</td>
+<td class="none">Electricity network (SWIS) boundary file (KML or KMZ file)</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>grid_network</dfn></td>
-<td class="none">Schematic of Electricity network (KML file). This version of the network is used by SIREN to connect new stations into the network. This should be a very simple version of the grid with all network lines accurately connected</td>
+<td class="none">Schematic of Electricity network (KML or KMZ file). This version of the network is used by SIREN to connect new stations into the network. This should be a very simple version of the grid with all network lines accurately connected</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>grid_network2</dfn></td>
-<td class="none">Schematic of Electricity network (KML file). This version of the network can be used to provide a more detailed view of the actual network. It isn't used by SIREN</td>
+<td class="none">Schematic of Electricity network (KML or KMZ file). This version of the network can be used to provide a more detailed view of the actual network. It isn't used by SIREN</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>grid_stations</dfn></td>
@@ -1196,6 +1200,10 @@ Specifics on Hydrothermal characteristics (experimental). Properties are:</p>
 <tr class="none">
 <td class="none"><dfn>actual</dfn></td>
 <td class="none">If True, generation data will be derived from actual power data rather than calculated using a SAM model</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>augment</dfn></td>
+<td class="none">Display plots of hourly results showing renewable generation with shortfalls filled by storage and augmented generation (Ben's graph)</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>block</dfn></td>
@@ -2200,6 +2208,8 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <td class="none">Display plots of average 24 hour period for the two 6 month periods (<em>period</em>)</td></tr>
 <tr><td class="lr"><dfn>Power - Load duration</dfn></td>
 <td class="none">Display load duration curves (<em>duration</em>)</td></tr>
+<tr><td class="lr"><dfn>Power by hour - augmented</dfn></td>
+<td class="none">Display plots of hourly results showing renewable generation with shortfalls filled by storage and augmented generation (Ben's graph; <em>augment</em>)</td></tr>
 <tr><td class="lr"><dfn>Power - Shortfall analysis</dfn></td>
 <td class="none">Display additional shortfall graphs and data to assist detailed analysis of generation shortfall (<em>shortfall_detail</em>)</td></tr>
 <tr><td class="lr"><strong>Choose tables</strong></td>
@@ -2401,15 +2411,15 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 </tr>
 <tr class="none">
 <td class="none"><dfn>grid_boundary</dfn></td>
-<td class="none">A KML file defining the boundary for the grid. Any string of &lt;coordinates&gt; in a &lt;LinearRing&gt; is used to draw the grid boundary or boundaries. Colour for the grid boundary can be set by either the <em>grid_boundary</em> Colour option or by a &lt;styleUrl&gt; colour element in the KML file</td>
+<td class="none">A KML (or KMZ) file defining the boundary for the grid. Any string of &lt;coordinates&gt; in a &lt;LinearRing&gt; is used to draw the grid boundary or boundaries. Colour for the grid boundary can be set by either the <em>grid_boundary</em> Colour option or by a &lt;styleUrl&gt; colour element in the KML file</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>grid_network</dfn></td>
-<td class="none">A KML file defining the grid network. Any string of &lt;coordinates&gt; in a &lt;LineString&gt; is used to draw a grid line. The &lt;name&gt; will be used as the Line name. This file defines the grid network SIREN uses to add in additional stations and trace their paths to load centres. As such, this should be a very simplified grid and relies on all lines connecting to one another in a true grid network. Making this grid too complex slows down the process of connecting lines and tracing paths. Colours for the lines can be set by either &lt;styleUrl&gt; colour elements in the KML file or <em>grid_colour</em> Colour options, where <em>colour</em> equals the lines' &lt;styleUrl&gt;, e.g.<em>grid_s_66kv=#774110</em>.</td>
+<td class="none">A KML (or KMZ) file defining the grid network. Any string of &lt;coordinates&gt; in a &lt;LineString&gt; is used to draw a grid line. The &lt;name&gt; will be used as the Line name. This file defines the grid network SIREN uses to add in additional stations and trace their paths to load centres. As such, this should be a very simplified grid and relies on all lines connecting to one another in a true grid network. Making this grid too complex slows down the process of connecting lines and tracing paths. Colours for the lines can be set by either &lt;styleUrl&gt; colour elements in the KML file or <em>grid_colour</em> Colour options, where <em>colour</em> equals the lines' &lt;styleUrl&gt;, e.g.<em>grid_s_66kv=#774110</em>.</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>grid_network2</dfn></td>
-<td class="none">A KML file defining the actual grid network. Any string of &lt;coordinates&gt; in a &lt;LineString&gt; is used to draw a grid line. &lt;styleUrl&gt; colour elements may be used for the line colour. Alternatively, a standard set of colours based upon line capacity, as defined by &lt;SimpleData name="CAPACITY_kV"&gt; elements, can be used. These values can be set by <em>grid2_line_capacity</em> Colour properties where <em>line_capacity</em> is the line capacity, e.g. <em>grid2_66=#774110</em> for a 66kV line. It can be a detailed as you like and doesn't require accurate connections (SIREN makes no use of it)</td>
+<td class="none">A KML (or KMZ) file defining the actual grid network. Any string of &lt;coordinates&gt; in a &lt;LineString&gt; is used to draw a grid line. &lt;styleUrl&gt; colour elements may be used for the line colour. Alternatively, a standard set of colours based upon line capacity, as defined by &lt;SimpleData name="CAPACITY_kV"&gt; or &lt;SimpleData name="CAPACITYKV&gt; elements, can be used. These values can be set by <em>grid2_line_capacity</em> Colour properties where <em>line_capacity</em> is the line capacity, e.g. <em>grid2_66=#774110</em> for a 66kV line. It can be a detailed as you like and doesn't require accurate connections (SIREN makes no use of it)</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>grid_stations</dfn></td>
@@ -2506,7 +2516,7 @@ Additional rows specify power output at speeds increasing by 1 m/s</td>
 <p><a href="#help">Back to top</a></p>
 <h2 id="notes">Supporting Notes</h2>
 <h3 id="map">Obtaining a Suitable Map Image</h3>
-<p>Among other publicly available resources, OpenStreetMap provides a set of open map tiles (&ldquo;Slippy Map&rdquo; tiles. Refer <a href="http://wiki.openstreetmap.org/wiki/Slippy_Map" target="_blank">http://wiki.openstreetmap.org/wiki/Slippy_Map</a>) which can be stitched together into a single image. These produce a traditional map type.  A satellite map can be obtained from MapQuest (<a href="https://www.mapquestapi.com/staticmap/" target="_blank">https://www.mapquestapi.com/staticmap/</a> or you can save an image from another source. Map data copyright (&copy;) OpenStreetMap contributors CC-BY-SA <a href="http://www.openstreetmap.org/copyright" target="_blank"> http://www.openstreetmap.org/copyright</a>. You can obtain a suitable image using <em>getmap</em>.</p>
+<p>Among other publicly available resources, OpenStreetMap provides a set of open map tiles (&ldquo;Slippy Map&rdquo; tiles. Refer <a href="http://wiki.openstreetmap.org/wiki/Slippy_Map" target="_blank">http://wiki.openstreetmap.org/wiki/Slippy_Map</a>) which can be stitched together into a single image. These produce a traditional map type.  A satellite map can be obtained from MapQuest (<a href="https://www.mapquestapi.com/staticmap/" target="_blank">https://www.mapquestapi.com/staticmap/</a> or you can save an image from another source such as Google Maps. Map data copyright (&copy;) OpenStreetMap contributors CC-BY-SA <a href="http://www.openstreetmap.org/copyright" target="_blank"> http://www.openstreetmap.org/copyright</a>. You can obtain a suitable image using <em>getmap</em>.</p>
 <h4>getmap</h4>
 <p><code>getmap.py</code> is a Python program that can be used to create a map image for any area of the globe. Using this program you can obtain a map from one of the two sources above. You specify:
 <ul>
@@ -2525,7 +2535,7 @@ Additional rows specify power output at speeds increasing by 1 m/s</td>
 </ul>
 You can alternate between both approaches to choose the desired area. If you have passed a SIREN Preferences file or invoked <em>getmap</em> from within SIREN the bounding coordinates will be set to those of the current map. North and South can range from +85.06 to -85.06 degrees and East and West from -180 to +180</li>
 <li><em>Map Scale (Zoom)</em>. The scale of the map can be from 0 - 1:500 million - to 11 - 1:250,000 (OpenStreetMap has zoom levels to 19, 1:1,000). You can either use the arrows to increase or decrease the level or type in a value. The program will show an approximate scale for the level chosen</li>
-<li><em>URL template</em>. The URL template for the location of the map tiles. The default value, <code>http://[abc].tile.openstreetmap.org/zoom/x/y.png</code>, is for OSM 'standard' style maps. You can override this value to specify a different source (for example, <code>http://tile.stamen.com/terrain-background/zoom/x/y.png</code> for Migurski's Terrain; US-only)</li>
+<li><em>URL template</em>. The URL template for the location of the map tiles. The default value, <code>http://[abc].tile.openstreetmap.org/zoom/x/y.png</code>, is for OSM &lsquo;standard&rsquo; style maps. You can override this value to specify a different source (for example, <code>http://tile.stamen.com/terrain-background/zoom/x/y.png</code> for Migurski's Terrain; US-only)</li>
 <li><em>Image Width</em>. The width of the image to be created (for MapQuest)</li>
 <li><em>Image Height</em>. The height of the image to be created (for MapQuest)</li>
 <li><em>Image File name</em>. Use this to specify the name and location for the map file. If you click on the field it will allow you to specify an alternative name and location for the file (you can't type into the field itself). If you specify a filetype it must be a suitable image format. The default format is <em>.png</em></li>
@@ -2587,8 +2597,8 @@ You can alternate between both approaches to choose the desired area. If you hav
 <h3 id="swisupd">Obtaining Current SWIS Facilities</h3>
 <p>The initial SWIS data provided with SIREN is for 2014 and 2015 with existing renewable stations at that time. Updates to this data are available on the <a href="http://data.wa.aemo.com.au/" target="_blank">AEMO Market Data website</a>. The SWIS data used by SIREN is as follows.</p>
 <h4>SWIS Network</h4>
-<p>SIREN uses a simplified network to reduce the overhead in adding stations into the network and to trace their links to the Perth Load Centre. This simple network was derived from a national network diagram for Australia available as a KML file from Geoscience Australia (<a href="http://www.ga.gov.au/corporate_data/83105/NationalElectricityTransmissionLines.kml" target="_blank">National Electricity Transmission Lines</a>; accessed Nov 2015)</p>
-<p>There is also a list of Australian power stations available as a KML file (<a href="http://www.ga.gov.au/corporate_data/82326/NationalMajorPowerStations.kml" target="_blank">NationalMajorPowerStations</a>; accessed Nov 2015)</p>
+<p>SIREN uses a simplified network to reduce the overhead in adding stations into the network and to trace their links to the Perth Load Centre. This simple network was derived from a national network diagram for Australia available in a number of formats, including as a KMZ file, from Geoscience Australia (<a href="https://data.gov.au/dataset/electricity-transmission-lines" target="_blank">Electricity Transmission Lines</a>; accessed Oct 2017)</p>
+<p>There is also a list of Australian power stations available (<a href="https://data.gov.au/dataset/power-stations" target="_blank">Power Stations</a>; accessed Oct 2017)</p>
 <h4 id="updateswis">Existing Stations (Facilities)</h4>
 <p>SIREN uses the list of <a href="http://data.wa.aemo.com.au/#facilities" target="_blank">registered facilities</a> available from AEMO (specifically <a href="http://data.wa.aemo.com.au/datafiles/facilities/facilities.csv" target="_blank">facilities.csv</a>) for it's existing stations. If you want an updated version you can use <em>updateswis</em> to obtain the current list (see below).</p>
 <h4>Load Data</h4>
@@ -3507,17 +3517,17 @@ MERRA-2 Variable
 <h4>Other</h4>
 <p>SIREN will also support creation of you own model to support other technologies. The approach is to execute a model formula that you create for each of the 8,760 hours of appropriate weather data to calculate the power produced for that hour. The formula can be created by referencing each of the weather data variables, any other variables you define for that technology plus normal mathematical operators (refer to <a href="https://en.wikibooks.org/wiki/Python_Programming/Basic_Math#Mathematical_Operators" target="_blank">en.wikibooks.org/wiki/Python_Programming/Basic_Math#Mathematical_Operators</a>). The weather variables recognised are: <em>dhi</em>, <em>dni</em>, <em>ghi</em>, <em>temp</em>, <em>wind</em>, and <em>wind50</em>. To achieve this you need to:
 <ol>
-<li>Identify the technology by giving it a name of <em>Other</em> plus a suffix, say <em>Other1</em> and create a Section with that name in the Preferences file</li>
+<li>Identify the technology by giving it a name of <em>Other</em> plus a suffix, say <em>Other Tech</em>, and create a Section with that name in the Preferences file</li>
 <li>Create appropriate Properties for that technology and any other variables you want for it (see the <a href="#p_other">[Other]</a> Section in the Preferences file)</li>
 <li>There are standard Properties of <em>area</em>, <em>capital_cost</em>, <em>icon</em>, and <em>o_m_cost</em>.</li>
 <li>The formula is identified by the <em>formula</em> Property. Any calculated value will be capped at 1 to prevent a CF greater than 1</li>
-<li>Add the technology (lower case) as a colour Property in the <a href="#p_color">[Color]</a> Section of the Preferences file</li>
-<li>Add the technology (lower case) to the <em>technologies</em> Property in the <a href="#power">[Power]</a> Section of the Preferences file</li>
-<li>If the technology can be regarded as dispatchable you can also add it to the <em>dispatchable</em> Property in the <a href="#p_grid">[Grid]</a> Section of the Preferences file</li>
+<li>Add the technology (lower case with spaces replaced by underscores, e.g. <em>other_tech</em>) as a colour Property in the <a href="#p_color">[Color]</a> Section of the Preferences file</li>
+<li>Add the technology (lower case with spaces replaced by underscores, e.g. <em>other_tech</em>) to the <em>technologies</em> Property in the <a href="#power">[Power]</a> Section of the Preferences file</li>
+<li>If the technology can be regarded as dispatchable you can also add it to the <em>dispatchable</em> Property in the <a href="#p_grid">[Grid]</a> Section of the Preferences file (lower case with spaces replaced by underscores, e.g. <em>other_tech</em>)</li>
 </ol>
-</p>The following sample defines a technology, Other1, similar to the Wave model (above but with no cutout).
+</p>The following sample defines a technology, <em>Other Wave</em>, similar to the Wave model (above but with no cutout). It contains an additional property, <em>efficiency</em>.
 <pre>
-     [Other1]
+     [Other Wave]
      area=&lt;area per MW&gt;
      capital_cost&lt;Capital cost per peak MW&gt;
      efficiency=&lt;technology efficiency&gt;
@@ -3856,6 +3866,9 @@ MERRA-2 Variable
 <td class="none">Kilometre (or kilometer)</td></tr>
 <tr><td class="none"><dfn>KML</dfn></td>
 <td class="none">Keyhole Markup Language. An XML based file format used to display geographic data in an Earth browser such as Google Earth, Google Maps
+</td></tr>
+<tr><td class="none"><dfn>KMZ</dfn></td>
+<td class="none">A zipped KML file
 </td></tr>
 <tr><td class="none"><dfn>kW</dfn></td>
 <td class="none">Kilowatts</td></tr>

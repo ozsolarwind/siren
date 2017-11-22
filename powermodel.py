@@ -2909,11 +2909,11 @@ class PowerModel():
         except:
             map = ''
         self.colours = {'cumulative': '#006400', 'gross_load': '#a9a9a9', 'load': '#000000',
-                        'shortfall': '#8b0000'}
+                        'shortfall': '#8b0000', 'wind': '#6688bb'}
         try:
             colors = config.items('Colors')
             for item, colour in colors:
-                if item in self.technologies:
+                if item in self.technologies or self.colours.has_key(item):
                     itm = item.replace('_', ' ').title()
                     itm = itm.replace('Pv', 'PV')
                     self.colours[itm] = colour
@@ -2923,7 +2923,7 @@ class PowerModel():
             try:
                 colors = config.items('Colors' + map)
                 for item, colour in colors:
-                    if item in self.technologies:
+                    if item in self.technologies or self.colours.has_key(item):
                         itm = item.replace('_', ' ').title()
                         itm = itm.replace('Pv', 'PV')
                         self.colours[itm] = colour
@@ -3227,6 +3227,110 @@ class PowerModel():
                 plt.show(block=True)
             else:
                 plt.draw()
+        if self.plots['augment'] and self.do_load:
+            hdr = self.hdrs['augment'].replace('Power - ', '')
+            fig = plt.figure(hdr + self.suffix)
+            plt.grid(True)
+            hx = fig.add_subplot(111)
+            plt.title(self.hdrs['augment'] + self.suffix)
+            maxy = 0
+            miny = 0
+            storage = None
+            cumulative = []
+            for i in range(len(x)):
+                cumulative.append(0.)
+            if self.plots['gross_load']:
+                gross_load = []
+                for i in range(len(x)):
+                    gross_load.append(0.)
+            if self.plots['show_pct']:
+                load_sum = 0.
+                gen_sum = 0.
+            for key, value in iter(sorted(ydata.iteritems())):
+                if key == 'Generation' or key == 'Excess': # might need to keep excess
+                    continue
+                if self.plots['show_pct']:
+                    for i in range(len(x)):
+                        if key[:4] == 'Load':
+                            load_sum += value[i]
+                        elif key == 'Storage':
+                            pass
+                        else:
+                            gen_sum += value[i]
+                            if self.plots['gross_load'] and key == 'Existing Rooftop PV':
+                                load_sum += value[i]
+                maxy = max(maxy, max(value))
+                lw = self.other_width
+                if key[:4] != 'Load' and key != 'Storage':
+                    for i in range(len(x)):
+                        cumulative[i] += value[i]
+                if self.plots['gross_load'] and (key[:4] == 'Load' or
+                      key == 'Existing Rooftop PV'):
+                    for i in range(len(x)):
+                        gross_load[i] += value[i]
+                if key[:4] == 'Load':
+                    load = value
+                if key == 'Storage':
+                    storage = value
+            maxy = max(maxy, max(cumulative))
+            try:
+                rndup = pow(10, round(log10(maxy * 1.5) - 1)) / 2
+                maxy = ceil(maxy / rndup) * rndup
+            except:
+                rndup = 0
+            regen = cumulative[:]
+            for r in range(len(regen)):
+                if regen[r] > load[r]:
+                    regen[r] = load[r]
+            hx.fill_between(x, 0, regen, color=self.colours['cumulative']) #'#004949')
+            if storage is not None:
+                for r in range(len(storage)):
+                    storage[r] += cumulative[r]
+                for r in range(len(storage)):
+                    if storage[r] > load[r]:
+                        storage[r] = load[r]
+                hx.fill_between(x, regen, storage, color=self.colours['wind']) #'#006DDB')
+                hx.fill_between(x, storage, load, color=self.colours['shortfall']) #'#920000')
+            else:
+                hx.fill_between(x, load, regen, color=self.colours['shortfall']) #'#920000')
+            hx.plot(x, cumulative, linewidth=self.other_width, label='RE', linestyle='--', color=self.colours['gross_load'])
+            plt.ylim([miny, maxy])
+            plt.xlim([0, len(x)])
+            plt.xticks(range(12, len(x), 168))
+            hx.set_xticklabels(day_labels, rotation='vertical')
+            hx.set_xlabel('Month of the year')
+            hx.set_ylabel('Power (MW)')
+            if self.plots['show_pct']:
+                self.gen_pct = ' (%s%% of load)' % '{:0,.1f}'.format(gen_sum * 100. / load_sum)
+                plt.title(self.hdrs['hour'] + self.suffix + self.gen_pct)
+            if self.plots['maximise']:
+                mng = plt.get_current_fig_manager()
+                if sys.platform == 'win32' or sys.platform == 'cygwin':
+                    if plt.get_backend() == 'TkAgg':
+                        mng.window.state('zoomed')
+                    elif plt.get_backend() == 'Qt4Agg':
+                        mng.window.showMaximized()
+                else:
+                    mng.resize(*mng.window.maxsize())
+            if self.plots['block']:
+                plt.show(block=True)
+            else:
+                plt.draw()
+    #        shortstuff = []
+    #        vals = ['load', 'renewable', 'storage', 'cumulative']
+    #        for i in range(0, len(load)):
+    #            if storage is None:
+    #                shortstuff.append(ColumnData(i + 1, the_date(self.load_year, i), [load[i],
+    #                                  regen[i], 0., cumulative[i]], values=vals))
+    #            else:
+    #                shortstuff.append(ColumnData(i + 1, the_date(self.load_year, i), [load[i],
+    #                                  regen[i], storage[i], cumulative[i]], values=vals))
+    #        vals.insert(0, 'period')
+    #        vals.insert(0, 'hour')
+    #        dialog = displaytable.Table(shortstuff, title='Augmented',
+    #                                        save_folder=self.scenarios, fields=vals)
+    #        dialog.exec_()
+    #        del dialog
         if self.plots['duration']:
             hdr = self.hdrs['duration'].replace('Power - ', '')
             fig = plt.figure(hdr + self.suffix)
@@ -3886,7 +3990,7 @@ class PowerModel():
                            'show_load', 'shortfall', 'grid_losses', 'gross_load', 'visualise',
                            'maximise', 'block', 'show_pct', 'by_day', 'by_month', 'by_season',
                            'by_period', 'hour', 'total', 'month', 'season', 'period',
-                           'duration', 'shortfall_detail', 'summary', 'save_data', 'save_detail',
+                           'duration', 'augment', 'shortfall_detail', 'summary', 'save_data', 'save_detail',
                            'save_tech', 'save_balance', 'financials']
         self.initials = ['actual', 'by_station', 'grid_losses', 'save_data', 'gross_load',
                          'summary', 'financials', 'show_menu']
@@ -3913,6 +4017,7 @@ class PowerModel():
                 'season': 'Power - diurnal profile by season',
                 'period': 'Power - diurnal profile by period',
                 'duration': 'Power - Load duration',
+                'augment': 'Power - augmented by hour',
                 'shortfall_detail': 'Power - Shortfall analysis',
                 'summary': 'Show Summary/Other Tables',
                 'save_data': 'Save initial Hourly Data Output',
@@ -4124,6 +4229,7 @@ class PowerModel():
                 self.plots['show_load'] = False
                 self.plots['show_pct'] = False
                 self.can_do_load = False
+                self.initials.append('augment')
                 self.initials.append('show_load')
                 self.initials.append('show_pct')
             if self.plots['save_detail']:
