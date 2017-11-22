@@ -250,7 +250,7 @@ class Colours(QtGui.QDialog):
 
                     if bits[0] in self.colours:
                         lines[i] = bits[0] + '=' + self.colours[bits[0]][1].name() + '\n'
-        if self.map != '':
+        if self.map != '' or self.map == '':
             got_him = False
             del_lines = []
             for i in range(len(lines)):
