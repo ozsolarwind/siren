@@ -61,9 +61,10 @@ class TabDialog(QtGui.QDialog):
         self.about = ''
         self.weather_icon = 'weather.png'
         config = ConfigParser.RawConfigParser()
+        ignore = ['getfiles.ini', 'siren_default.ini', 'siren_windows_default.ini']
         for fil in fils:
             if fil[-4:] == '.ini':
-                if fil == 'siren_default.ini' or fil == 'siren_windows_default.ini':
+                if fil in ignore:
                     continue
                 try:
                     config.read(self.siren_dir + fil)
