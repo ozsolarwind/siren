@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2017 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2017-2018 Sustainable Energy Now Inc., Angus King
 #
 #  getmerra2.py - This file is part of SIREN.
 #
@@ -24,10 +24,7 @@ import gzip
 import os
 import subprocess
 import sys
-if sys.platform == 'win32' or sys.platform == 'cygwin':
-    from netCDF4 import Dataset
-else:
-    from Scientific.IO.NetCDF import *
+from netCDF4 import Dataset
 import ConfigParser   # decode .ini file
 from PyQt4 import QtCore, QtGui
 
@@ -71,10 +68,7 @@ class fileInfo:
             self.log = 'File not found: ' + inp_file
             return
         try:
-            if sys.platform == 'win32' or sys.platform == 'cygwin':
-                cdf_file = Dataset(inp_file, 'r')
-            else:
-                cdf_file = NetCDFFile(inp_file, 'r')
+            cdf_file = Dataset(inp_file, 'r')
         except:
             self.log = 'Error reading: ' + inp_file
             return
@@ -196,18 +190,42 @@ class getMERRA2(QtGui.QDialog):
         self.northSpin.setDecimals(3)
         self.northSpin.setSingleStep(.5)
         self.northSpin.setRange(-85.06, 85.06)
+        self.northSpin.setObjectName('north')
         self.westSpin = QtGui.QDoubleSpinBox()
         self.westSpin.setDecimals(3)
         self.westSpin.setSingleStep(.5)
         self.westSpin.setRange(-180, 180)
+        self.westSpin.setObjectName('west')
         self.southSpin = QtGui.QDoubleSpinBox()
         self.southSpin.setDecimals(3)
         self.southSpin.setSingleStep(.5)
         self.southSpin.setRange(-85.06, 85.06)
+        self.southSpin.setObjectName('south')
         self.eastSpin = QtGui.QDoubleSpinBox()
         self.eastSpin.setDecimals(3)
         self.eastSpin.setSingleStep(.5)
         self.eastSpin.setRange(-180, 180)
+        self.eastSpin.setObjectName('east')
+        self.latSpin = QtGui.QDoubleSpinBox()
+        self.latSpin.setDecimals(3)
+        self.latSpin.setSingleStep(.5)
+        self.latSpin.setRange(-84.56, 84.56)
+        self.latSpin.setObjectName('lat')
+        self.lonSpin = QtGui.QDoubleSpinBox()
+        self.lonSpin.setDecimals(3)
+        self.lonSpin.setSingleStep(.5)
+        self.lonSpin.setRange(-179.687, 179.687)
+        self.lonSpin.setObjectName('lon')
+        self.latwSpin = QtGui.QDoubleSpinBox()
+        self.latwSpin.setDecimals(3)
+        self.latwSpin.setSingleStep(.5)
+        self.latwSpin.setRange(0, 170.12)
+        self.latwSpin.setObjectName('latw')
+        self.lonwSpin = QtGui.QDoubleSpinBox()
+        self.lonwSpin.setDecimals(3)
+        self.lonwSpin.setSingleStep(.5)
+        self.lonwSpin.setRange(0, 360)
+        self.lonwSpin.setObjectName('lonw')
         if len(sys.argv) > 1:
             his_config_file = sys.argv[1]
             his_config = ConfigParser.RawConfigParser()
@@ -237,21 +255,46 @@ class getMERRA2(QtGui.QDialog):
         self.westSpin.valueChanged.connect(self.showArea)
         self.southSpin.valueChanged.connect(self.showArea)
         self.eastSpin.valueChanged.connect(self.showArea)
+        self.latSpin.valueChanged.connect(self.showArea)
+        self.lonSpin.valueChanged.connect(self.showArea)
+        self.latwSpin.valueChanged.connect(self.showArea)
+        self.lonwSpin.valueChanged.connect(self.showArea)
         self.grid = QtGui.QGridLayout()
         self.grid.addWidget(QtGui.QLabel('Area of Interest:'), 0, 0)
         area = QtGui.QPushButton('Choose area via Map', self)
         self.grid.addWidget(area, 0, 1, 1, 2)
         area.clicked.connect(self.areaClicked)
-        self.grid.addWidget(QtGui.QLabel('Upper left:'), 1, 0)
-        self.grid.addWidget(QtGui.QLabel('  North'), 2, 0)
+        self.grid.addWidget(QtGui.QLabel('Upper left:'), 1, 0, 1, 2)
+   #     self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignCenter) 
+        self.grid.addWidget(QtGui.QLabel('North'), 2, 0)
+        self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignRight) 
         self.grid.addWidget(self.northSpin, 2, 1)
-        self.grid.addWidget(QtGui.QLabel('  West'), 3, 0)
+        self.grid.addWidget(QtGui.QLabel('West'), 3, 0)
+        self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignRight) 
         self.grid.addWidget(self.westSpin, 3, 1)
         self.grid.addWidget(QtGui.QLabel('Lower right:'), 1, 2)
-        self.grid.addWidget(QtGui.QLabel('  South'), 2, 2)
+    #    self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignCenter)  
+        self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignRight) 
+        self.grid.addWidget(QtGui.QLabel('South'), 2, 2)
+        self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignRight) 
         self.grid.addWidget(self.southSpin, 2, 3)
-        self.grid.addWidget(QtGui.QLabel('  East'), 3, 2)
+        self.grid.addWidget(QtGui.QLabel('East'), 3, 2)
+        self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignRight)  
         self.grid.addWidget(self.eastSpin, 3, 3)
+        self.grid.addWidget(QtGui.QLabel('Centre:'), 1, 4)
+   #     self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignCenter)  
+        self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignRight) 
+        self.grid.addWidget(QtGui.QLabel('Lat.'), 2, 4)
+        self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignRight) 
+        self.grid.addWidget(self.latSpin, 2, 5)
+        self.grid.addWidget(QtGui.QLabel('Lon.'), 3, 4)
+        self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignRight) 
+        self.grid.addWidget(self.lonSpin, 3, 5)
+        self.grid.addWidget(QtGui.QLabel('Degrees'), 1, 6)
+   #     self.grid.addWidget(QtGui.QLabel('  South'), 2, 2)
+        self.grid.addWidget(self.latwSpin, 2, 6)
+  #      self.grid.addWidget(QtGui.QLabel('  East'), 3, 2)
+        self.grid.addWidget(self.lonwSpin, 3, 6)
         self.grid.addWidget(QtGui.QLabel('Approx. area:'), 4, 0)
         self.approx_area = QtGui.QLabel('')
         self.grid.addWidget(self.approx_area, 4, 1)
@@ -333,7 +376,7 @@ class getMERRA2(QtGui.QDialog):
         frame2.setLayout(buttongrid)
         self.layout.addWidget(frame2)
         self.setWindowTitle('SIREN - getmerra2 (' + fileVersion() + ') - Get MERRA-2 data')
-        self.resize(int(self.sizeHint().width()* 1.07), int(self.sizeHint().height() * 1.07))
+        self.resize(int(self.sizeHint().width()* 1.4), int(self.sizeHint().height() * 1.07))
         self.show()
 
     def dirChanged(self):
@@ -405,23 +448,56 @@ class getMERRA2(QtGui.QDialog):
     def showArea(self, event):
         if self.ignore:
             return
-        if self.sender() == self.southSpin or self.sender() == self.eastSpin:
+        if self.sender().objectName() == 'north' or self.sender().objectName() == 'south':
+            self.ignore = True
             if self.southSpin.value() > self.northSpin.value():
                 y = self.northSpin.value()
                 self.northSpin.setValue(self.southSpin.value())
                 self.southSpin.setValue(y)
+            self.latwSpin.setValue(self.northSpin.value() - self.southSpin.value())
+            self.latSpin.setValue(self.northSpin.value() - (self.northSpin.value() - self.southSpin.value()) / 2.)
+            self.ignore = False
+        elif self.sender().objectName() == 'east' or self.sender().objectName() == 'west':
+            self.ignore = True
             if self.eastSpin.value() < self.westSpin.value():
                 x = self.westSpin.value()
                 self.westSpin.setValue(self.eastSpin.value())
                 self.eastSpin.setValue(x)
+            self.lonwSpin.setValue(self.eastSpin.value() - self.westSpin.value())
+            self.lonwSpin.setValue(self.eastSpin.value() - (self.eastSpin.value() - self.westSpin.value()) / 2.)
+            self.ignore = False
+        elif self.sender().objectName() == 'lat':
+            self.ignore = True
+            if self.latwSpin.value() == 0:
+                self.latwSpin.setValue(1.)
+            self.northSpin.setValue(self.latSpin.value() + self.latwSpin.value() / 2)
+            self.southSpin.setValue(self.latSpin.value() - self.latwSpin.value() / 2)
+            self.ignore = False
+        elif self.sender().objectName() == 'lon':
+            self.ignore = True
+            if self.lonwSpin.value() == 0:
+                self.lonwSpin.setValue(1.5)
+            self.eastSpin.setValue(self.lonSpin.value() + self.lonwSpin.value() / 2)
+            self.westSpin.setValue(self.lonSpin.value() - self.lonwSpin.value() / 2)
+            self.ignore = False
+        elif self.sender().objectName() == 'latw':
+            self.ignore = True
+            self.northSpin.setValue(self.latSpin.value() + self.latwSpin.value() / 2)
+            self.southSpin.setValue(self.latSpin.value() - self.latwSpin.value() / 2)
+            self.ignore = False
+        elif self.sender().objectName() == 'lonw':
+            self.ignore = True
+            self.eastSpin.setValue(self.lonSpin.value() + self.lonwSpin.value() / 2)
+            self.westSpin.setValue(self.lonSpin.value() - self.lonwSpin.value() / 2)
+            self.ignore = False
+        merra_dims = worldwindow.merra_cells(self.northSpin.value(), self.westSpin.value(),
+                     self.southSpin.value(), self.eastSpin.value())
+        self.merra_cells.setText(merra_dims)
         if self.worldwindow is None:
             return
         approx_area = self.worldwindow.view.drawRect([QtCore.QPointF(self.westSpin.value(), self.northSpin.value()),
                                    QtCore.QPointF(self.eastSpin.value(), self.southSpin.value())])
         self.approx_area.setText(approx_area)
-        merra_dims = worldwindow.merra_cells(self.northSpin.value(), self.westSpin.value(),
-                     self.southSpin.value(), self.eastSpin.value())
-        self.merra_cells.setText(merra_dims)
         if event != 'init':
             self.worldwindow.view.emit(QtCore.SIGNAL('statusmsg'), approx_area + ' ' + merra_dims)
 
@@ -533,6 +609,8 @@ class getMERRA2(QtGui.QDialog):
                 if len(log1.latitudes) == 2:
                     self.southSpin.setValue(self.southSpin.value() - .005)
                 self.northSpin.setValue(self.southSpin.value() + 1)
+            self.latwSpin.setValue(self.northSpin.value() - self.southSpin.value())
+            self.latSpin.setValue(self.northSpin.value() - (self.northSpin.value() - self.southSpin.value()) / 2.)
             self.ignore = False
         if log1.longitudes == log2.longitudes:
             self.ignore = True
@@ -543,7 +621,12 @@ class getMERRA2(QtGui.QDialog):
                 if len(log1.longitudes) == 2:
                     self.westSpin.setValue(self.westSpin.value() - .005)
                 self.eastSpin.setValue(self.westSpin.value() + 1.25)
+            self.lonwSpin.setValue(self.eastSpin.value() - self.westSpin.value())
+            self.lonSpin.setValue(self.eastSpin.value() - (self.eastSpin.value() - self.westSpin.value()) / 2.)
             self.ignore = False
+        merra_dims = worldwindow.merra_cells(self.northSpin.value(), self.westSpin.value(),
+                     self.southSpin.value(), self.eastSpin.value())
+        self.merra_cells.setText(merra_dims)
         dte = dte2 + datetime.timedelta(days=1)
         self.strt_date.setDate(dte)
         if not_contiguous:
