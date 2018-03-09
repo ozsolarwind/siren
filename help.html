@@ -719,6 +719,10 @@ as embedded solar - Rooftop PV - installed on the grid but not registered with A
 <td class="none">Hourly load data for the grid. For the SWIS Grid these are obtained from AEMO Operational Load data (<a href="http://data.wa.aemo.com.au/#load-summary" target="_blank">http://data.wa.aemo.com.au/#load-summary</a>)</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>pb_template</dfn></td>
+<td class="none">Template file for PowerBalance inputs. If no value is specified inputs will be saved in the original PowerBalance format</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>pow_files</dfn></td>
 <td class="none">Location of turbine power curve files for those not in SAM's file</td>
 </tr>
@@ -1156,7 +1160,7 @@ Specifics on Hydrothermal characteristics (experimental). Properties are:</p>
 </table>
 </td></tr>
 <tr class="none" id="p_parents"><td><dfn><strong>[Parents]</strong></dfn></td>
-<td>Enables parent directories to be specified and substituted in the <dfn>[Files]</dfn> properties. The variables must be in lower case. It is suggested they have an unusual character, such as $, to avoid valid values being substituted</p>
+<td>Enables parent directories to be specified and substituted in the <dfn>[Files]</dfn> properties. The variables must be in lower case. They will also allow a single level of substitution of other parent variables, for example, <em>$dir2=$dir1/...</em>. It is suggested they have an unusual character, such as $, to avoid valid values being substituted</p>
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><dfn>$samsdk</dfn></td>
@@ -1283,6 +1287,11 @@ Specifics on Hydrothermal characteristics (experimental). Properties are:</p>
 </td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>save_balance</dfn></td>
+<td class="none">Save inputs for PowerBalance</td>
+</tr>
+</tr>
+<tr class="none">
 <td class="none"><dfn>save_data</dfn></td>
 <td class="none">Save initial data outputs produced by the model for each station</td>
 </tr>
@@ -1318,11 +1327,15 @@ Specifics on Hydrothermal characteristics (experimental). Properties are:</p>
 </tr>
 <tr class="none">
 <td class="none"><dfn>show_load</dfn></td>
-<td class="none">Display network load on plots</td>
+<td class="none">Show generation as a percentage of load on plots where possible</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>show_menu</dfn></td>
 <td class="none">Present a menu to specify what processing and plots to produce. This option should also be set to True to enable choices on plots, tables and financial options</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>show_pct</dfn></td>
+<td class="none">Display network load on plots</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>summary</dfn></td>
@@ -1368,6 +1381,10 @@ Specifics on Hydrothermal characteristics (experimental). Properties are:</p>
 <tr class="none">
 <td class="none"><dfn>icon</dfn></td>
 <td class="none">Icon to display for this technology. Default is solar_pv_g.png</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>losses</dfn></td>
+<td class="none">Percentage losses for SAM PV model (pvwattsv5). Default is 5. 5  is appropriate for solar weather files derived from the MERRA-2 swgnt variable while 14 or 15 is more appropriate for the swgdn variable</td>
 </tr>
 </table>
 </td></tr>
@@ -1718,6 +1735,10 @@ Specifics on Hydrothermal characteristics (experimental). Properties are:</p>
 <td class="none">Position of Credits window</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>credits_show</dfn></td>
+<td class="none">If set to False the Credits window is not shown on startup</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>credits_size</dfn></td>
 <td class="none">Size of Credits window</td>
 </tr>
@@ -1785,7 +1806,7 @@ Specifics on Hydrothermal characteristics (experimental). Properties are:</p>
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><dfn><strong>Scenario</strong></dfn></td>
-<td class="none">Work with scenarios. It is possible to edit the scenarios outside of the simulation as they are simple Excel or CSV files. The type of file is indicated by the file type - <em>.csv</em> for a CSV file, <em>.xls</em> or <em>.xlsx</em> for an Excel file. If the file type isn't specified any scenario will be saved in Excel format.</p>
+<td class="none">Work with scenarios. It is possible to edit the scenarios outside of the simulation as they are simple Excel or CSV files. The type of file is indicated by the file type - <em>.csv</em> for a CSV file, <em>.xls</em> or for an Excel file. If the file type isn't specified any scenario will be saved in Excel format.</p>
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><img src="open.png" alt="Open">&nbsp;&nbsp;Open (Ctrl+O)</td>
@@ -2089,6 +2110,12 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <td class="none">Run SAM Power Model for nearest station</td>
 </tr>
 <tr class="none">
+<td class="none"><img src="blank.png" alt="Power for year">&nbsp;&nbsp;Power for year
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...years(s)</td>
+<td class="none">Run the SAM Power Model for nearest station for one of the years available</td>
+</tr>
+<tr class="none">
 <td class="none"><img src="copy.png" alt="Copy Station">&nbsp;&nbsp;Copy station</td>
 <td class="none">Copy nearest station. After selecting this option and updating any changed details move the mouse to the new location and press the left mouse button to locate the new station</td>
 </tr>
@@ -2123,6 +2150,12 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <tr class="none">
 <td class="none"><img src="weather_b.png" alt="Weather">&nbsp;&nbsp;Show weather for here</td>
 <td class="none">Present a menu to allow you to plot weather values (DHI, DNI, GHI, temperature, wind speed) for this location. You select the weather values you want to display and one of a series of plots to display either by hour or the average for a period. There is also an option to display chosen plots one at a time or all together, that is, display them all and allow you to navigate between them</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="blank.png" alt="Weather for year">&nbsp;&nbsp;Weather for year
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...years(s)</td>
+<td class="none">Show weather here for one of the years available</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="info.png" alt="Town Info">&nbsp;&nbsp;Show details</td>
@@ -2194,8 +2227,8 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <td class="none">Display plots of monthly results, that is, a figure for each month (<em>by_month</em>)</td></tr>
 <tr><td class="lr"><dfn>Energy by season</dfn></td>
 <td class="none">Display plots of seasonal results, that is, a figure for each season (<em>by_season</em>)</td></tr>
-<tr><td class="lr"><dfn>Energy by Winter-Summer</dfn></td>
-<td class="none">Display plots of 6 month seasonal results (<em>by_period</em>)</td></tr>
+<tr><td class="lr"><dfn>Energy by period</dfn></td>
+<td class="none">Display plots of 6 month seasonal results. It is possible to specify any number of months (<em>by_period</em>)</td></tr>
 <tr><td class="lr"><dfn>Power by hour</dfn></td>
 <td class="none">Display plots of hourly results (<em>hour</em>)</td></tr>
 <tr><td class="lr"><dfn>Power - diurnal profile</dfn></td>
@@ -2204,8 +2237,8 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <td class="none">Display plots of average 24 hour period for each month (<em>month</em>)</td></tr>
 <tr><td class="lr"><dfn>Power - diurnal profile by season</dfn></td>
 <td class="none">Display plots of average 24 hour period for each season (<em>season</em>)</td></tr>
-<tr><td class="lr"><dfn>Power - diurnal profile by Winter-Summer</dfn></td>
-<td class="none">Display plots of average 24 hour period for the two 6 month periods (<em>period</em>)</td></tr>
+<tr><td class="lr"><dfn>Power - diurnal profile by period</dfn></td>
+<td class="none">Display plots of average 24 hour period for the two periods (<em>period</em>)</td></tr>
 <tr><td class="lr"><dfn>Power - Load duration</dfn></td>
 <td class="none">Display load duration curves (<em>duration</em>)</td></tr>
 <tr><td class="lr"><dfn>Power by hour - augmented</dfn></td>
@@ -2263,7 +2296,11 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <li><em>Save Hourly Data Output</em> option will save generation in MWh for each chosen station for each hour of the year (8,760 hours) as calculated by SAM. This can be used in detailed analysis or as an option to avoid having to reprocess the station in the future, by updating a Station's </em>Power File</em> field. The default file name can be set using the <em>data_file</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file; otherwise it will in the format of <em>Power_Table_yyyy-mm-dd_hhmm...</em></li>
 <li><em>Save (adjusted) Hourly Data Output by Station</em> option will save generation in MWh for each station and other options for each hour of the year (8,760 hours). This is the hourly output calculated by the SAM model mutiplied by any adjustments. If appropriate Power Model options are chosen data for Generation, Excess, Load and Storage will also be saved. The default file name can be set using the <em>data_file</em> property of the [Files] Section of the Preferences file; otherwise it will in the format of <em>Power_Detail_yyyy-mm-dd_hhmm...</em></li>
 <li><em>Save (adjusted) Hourly Data Output by Technology</em> option will save generation in MWh for each technology and other options for each hour of the year (8,760 hours). This is the hourly output calculated by the SAM model mutiplied by any adjustments. If appropriate Power Model options are chosen data for Generation, Excess, Load and Storage will also be saved. The default file name can be set using the <em>data_file</em> property of the [Files] Section of the Preferences file; otherwise it will in the format of <em>Power_Detail_Technology_yyyy-mm-dd_hhmm...</em></li>
-<li><em>Save Powerbalance data</em> option will save save the input data for Powerbalance. Powerbalance uses the hourly shortfalls and overall generation figures in its computations. This option saves this data in a spreadsheet to simplify copying it into a Powerbalance workbook. The cells required for Powerbalance are highlighted in colour. The worksheet contains the generation summary data followed by the shortfall data</li>
+<li><em>Save Powerbalance data</em> option will save save the input data for Powerbalance. There are two possible output formats:
+<ol>
+<li>The original Powerbalance uses the hourly shortfalls and overall generation figures in its computations. This option saves this data in a spreadsheet to simplify copying it into a Powerbalance workbook. The cells required for Powerbalance are highlighted in colour. The worksheet contains the generation summary data followed by the shortfall data. The file can be saved as <em>.csv</em> for a CSV file or <em>.xls</em> for an Excel file</li>
+<li>The new version of PowerBalance use scenario worksheets. If the <em>pb_template</em> property of <em>[Files]</em> Section is set, SIREN will save the inputs in this format. The file can (only) be saved as an <em>.xlsx</em> format file</li>
+</ol>
 <li><em>Show Summary/Other Tables</em> option will cause various tables to be presented:
 <ul>
 <li>A brief summary table of Capacity and Output for each selected station. The default file name will in the format of <em>powermodel_Table_yyyy-mm-dd_hhmm</em></li>
@@ -2399,15 +2436,17 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <p>This model is very much a work in progress. To improve it's usefulness to a wider community we encourage any feedback on how it might be improved. Feedback to <a href="mailto:siren@sen.asn.au?Subject=SIREN%20Feedback">siren@sen.asn.au</a>.
 <p><a href="#help">Back to top</a></p>
 <h2 id="files">SIREN File Formats</h2>
-<p>SIREN accepts a number of file formats for each of the data files it uses. Due to the initial source for each data file the format for each is different. For Excel and CSV files the first cell for each column is usually taken as the column name. The files and formats are:</p>
+<p>SIREN accepts a number of file formats for each of the data files it uses. Due to the initial source for each data file the format for each is different. For Excel and CSV files the first cell for each column is usually taken as the column name.</p>
+<p><strong>Note:</strong> Other than the new format PowerBalance file, all Excel files output by SIREN are in XLS format (XLSX files require a different Python library to create them).</p>
+<p>The files and formats are:</p>
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><dfn>actual_power</dfn></td>
-<td class="none">An Excel or CSV file containing a column of hourly generation in MWh for each (existing) station for each hour of the year (8,760 hours)</td>
+<td class="none">An Excel (XLS or XLSX) or CSV file containing a column of hourly generation in MWh for each (existing) station for each hour of the year (8,760 hours)</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>bom</dfn></td>
-<td class="none">An Excel or CSV file containing details on those BOM sites you want displayed on the map. This file format is the same as <em>towns</em> (see below) with some additional column name options</td>
+<td class="none">An Excel (XLS or XLSX) or CSV file containing details on those BOM sites you want displayed on the map. This file format is the same as <em>towns</em> (see below) with some additional column name options</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>grid_boundary</dfn></td>
@@ -2423,16 +2462,21 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 </tr>
 <tr class="none">
 <td class="none"><dfn>grid_stations</dfn></td>
-<td class="none">A file defining actual stations on the grid. This can be either a CSV file or Excel file in the same format as <em>scenario</em> files (there is also a special CSV format for SWIS stations based upon the AEMO facilities file)</td>
+<td class="none">A file defining actual stations on the grid. This can be either a CSV file or Excel (XLS or XLSX) file in the same format as <em>scenario</em> files (there is also a special CSV format for SWIS stations based upon the AEMO facilities file)</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>grid_stations2
-<td class="none">A file defining additional stations on the grid. This can be either a CSV file or Excel file in the same format as <em>scenario</em> files. This additional file allows you to specify stations that you want to include that are not part of the existing grid, such as Rooftop PV stations</td>
+<td class="none">A file defining additional stations on the grid. This can be either a CSV file or Excel (XLS or XLSX) file in the same format as <em>scenario</em> files. This additional file allows you to specify stations that you want to include that are not part of the existing grid, such as Rooftop PV stations</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>load</em></dfn></td>
-<td class="none">An Excel or CSV file containing a single column of hourly load demand for each hour of the year (8,760 hours)</td>
-</tr><tr class="none">
+<td class="none">An Excel (XLS or XLSX) or CSV file containing a single column of hourly load demand for each hour of the year (8,760 hours)</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>pb_template</dfn></td>
+<td class="none">A template file defining the layout for a PowerBalance scenario file. This can only be an Excel (XLSX) file</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>pow_files</dfn></td>
 <td class="none">To augment the list of turbines provided by SAM you can create individual files in WAsP Power Curve format. SIREN uses the data in these files to produce a power curve in the same format as SAM by running a 13th order polynomial on the POW file. The file is a simple text file with rows defined as set out here. All values are enclosed in double quotes. Row contents are:
 <ol>
@@ -2448,14 +2492,14 @@ Additional rows specify power output at speeds increasing by 1 m/s</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>resource_grid</dfn></td>
-<td class="none">An Excel or CSV file File used by SIREN to assist with showing the resource grid. This file is created to summarise weather variables for certain periods to enable a grid of resource variables to be overlaid on the map</td>
+<td class="none">An Excel (XLS) or CSV file File used by SIREN to assist with showing the resource grid. This file is created to summarise weather variables for certain periods to enable a grid of resource variables to be overlaid on the map</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>sam_turbines</dfn></td>
 <td class="none">This file format is defined by SAM. It is possible to produce a subset of wind turbines by creating a copy of the file provided by SAM (remember to always retain the (three) header rows)</td>
 </tr><tr class="none">
 <td class="none"><dfn>scenario</dfn></td>
-<td class="none">An Excel or CSV file containing stations for a scenario. The columns for the file are as defined in the Stations <a href="#objects">Simulation Objects</a>. The file names must start with the file name prefix specified in the <em>scenarios</em> Property in the <a href="#p_files">[Files]</a> Section of the Preferences file. It is possible to provide a brief description for the scenario in the first row of the file. This is indicated by a value of <em>Description:</em> in the top left cell followed by the description in the next cell</td>
+<td class="none">An Excel (XLS) or CSV file containing stations for a scenario. The columns for the file are as defined in the Stations <a href="#objects">Simulation Objects</a>. The file names must start with the file name prefix specified in the <em>scenarios</em> Property in the <a href="#p_files">[Files]</a> Section of the Preferences file. It is possible to provide a brief description for the scenario in the first row of the file. This is indicated by a value of <em>Description:</em> in the top left cell followed by the description in the next cell</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>solar_files</dfn></td>
@@ -2463,7 +2507,7 @@ Additional rows specify power output at speeds increasing by 1 m/s</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>solar_index</dfn></td>
-<td class="none">Using this file you can specify a list of solar weather files to be used by SIREN. This option allows you to use filenames that don't conform to SIREN's convention, such as the TMY files provided by SAM. The file can be either CSV or Excel and contains three columns:
+<td class="none">Using this file you can specify a list of solar weather files to be used by SIREN. This option allows you to use filenames that don't conform to SIREN's convention, such as the TMY files provided by SAM. The file can be either CSV or Excel (XLS) and contains three columns:
 <ul>
 <li><em>Latitude</em>. Weather file latitude</li>
 <li><em>Longitude</em>. Weather file longitude</li>
@@ -2472,7 +2516,7 @@ Additional rows specify power output at speeds increasing by 1 m/s</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>towns</dfn></td>
-<td class="none">An Excel or CSV file containing details on towns/locations you want displayed on the map. As a minimum the file should have columns for town, latitude and longitude. The columns recognised by SIREN are:
+<td class="none">An Excel (XLS or XLSX) or CSV file containing details on towns/locations you want displayed on the map. As a minimum the file should have columns for town, latitude and longitude. The columns recognised by SIREN are:
 <ul>
 <li><em>Country</em>. The location's country. The default is currently AUS</li>
 <li><em>Elev</em>. The location's elevation</li>
@@ -2492,7 +2536,7 @@ Additional rows specify power output at speeds increasing by 1 m/s</td>
 <td class="none">These are wind weather files in one of the formats defined by SAM. SIREN uses the file name to define the location and year for the file by separating the file name by an underscore as follows:- <em>anything_anything_latitude_longitude_year.filetype</em></td>
 </tr><tr class="none">
 <td class="none"><dfn>wind_index</dfn></td>
-<td class="none">Using this file you can specify a list of wind weather files to be used by SIREN. This option allows you to use filenames that don't conform to SIREN's convention, such as the TMY files provided by SAM. The file can be either CSV or Excel and contains three columns:
+<td class="none">Using this file you can specify a list of wind weather files to be used by SIREN. This option allows you to use filenames that don't conform to SIREN's convention, such as the TMY files provided by SAM. The file can be either CSV or Excel (XLS) and contains three columns:
 <ul>
 <li><em>Latitude</em>. Weather file latitude</li>
 <li><em>Longitude</em>. Weather file longitude</li>
@@ -2658,6 +2702,7 @@ NASA MERRA-2 data is a suitable source to generate data files containing all wea
 <p>
 <img src="scada_vs_sam_2014_detailed.png" alt="Correlation">
 </p>
+<p><strong>Note:</strong> Initially, the <em>swgnt</em> (surface net downward shortwave flux) MERRA variable was used to generate the solar weather variables. This produced outputs that were slightly lower than observed data. To compensate for this a losses percentage of 5 (percent) was used for the SAM pvwattsv5 model. Subsequent work has identified the <em>swgdn</em> (surface incoming shortwave flux) MERRA-2 variable as a more appropriate resource. Using this variable, a losses percentage of 14 - the SAM default - can be used. Validation using either variable (swgnt and 5%, or swgdn and 14%) produces essentially identical results and correlations.
 <p>Two MERRA-2 data files are appropriate for our needs:</p>
 <ul>
 <li><em>tavg1_2d_slv_Nx</em> for wind</li>
@@ -2695,7 +2740,7 @@ Create a <em>.netrc</em> file for authentication to download the MERRA-2 files.
 </li>
 </ol>
 <p id="merra3"><strong>Obtaining data</strong></p>
-<p>As an alternative to following these steps you might want to use <em>getmerra2</em> - see <a href="#getmerra2">Get MERRA-2 Files</a>.</p>
+<p>As an easier alternative to following these steps you might want to use <em>getmerra2</em> - see <a href="#getmerra2">Get MERRA-2 Files</a>.</p>
 <ol>
 <li>Enter the MERRA-2 data subset URL, <a href="http://disc.sci.gsfc.nasa.gov/daac-bin/FTPSubset2.pl" target="_blank">http://disc.sci.gsfc.nasa.gov/daac-bin/FTPSubset2.pl</a> in your browser
 <li>Within the MDISC Data Subset page choose appropriate options as follows:
@@ -2728,7 +2773,7 @@ To reduce the size of the data files select just those variables we need:
 <li>tavg1_2d_slv_Nx<br>
 <em>ps t10m t2m  u10m u2m u50m v10m v2m v50m </em></li>
 <li>tavg1_2d_rad_Nx<br>
-<em>swgnt</em></li>
+<em>swgdn</em> and/or <em>swgnt</em></li>
 <div class="experiment">
 <li>tavg1_2d_flx_Nx, tavg1_2d_lnd_Nx or tavg1_2d_mld_Nx (experimental)<br>
 <em>prectot</em></li>
@@ -2779,19 +2824,34 @@ wget --load-cookies ~/.urs_cookies --save-cookies ~/.urs_cookies --auth-no-chall
 <li>Open a terminal window, navigate to where you have the list of urls and invoke <code>wget</code></li>
 </ol>
 <h4 id="getmerra2">Get MERRA-2 Files</h4>
-<p><code>getmerra2</code> provides an alternate way of downloading MERRA-2 files than that described in <a href="#merra3">Obtaining data</a>. This approach uses <code>wget</code> but removes the need to manually follow those steps above. You still need to <a href="#merra2a">Register for access</a>.</p>
+<p><code>getmerra2</code> provides an easier alternate way of downloading MERRA-2 files than that described in <a href="#merra3">Obtaining data</a>. This approach uses <code>wget</code> but removes the need to manually follow those steps above. You still need to <a href="#merra2a">Register for access</a>.</p>
 <p>When you first execute <code>getmerra2</code> it will check for a <code>.netrc</code> file and if it can't find one it will prompt for the details required. If you've invoked <code>getmerra2</code> in a Windows terminal window and a <code>HOME</code> environment variable does not exist you will need to close and reopen a new terminal window to make the environment variable available to <code>getmerra2</code>.</p>
 <h5>getmerra2</h5>
 <p><code>getmerra2.py</code> is a Python program that can be used to download MERRA-2 files required to create weather files for SAM. You can invoke the program either by choosing <em>getmerra2</em> from the SIREN Tools menu or in Windows by running <code>getmerra2.exe</code> in the <em>siren</em> folder. The program accepts a SIREN Preferences file as an optional parameter. The window fields are:</p>
 <ul>
-<li><em>Area of Interest</em>. Area of interest for files to be downloaded. This can be chosen either by pressing <em>Choose area via Map</em> to invoke <em>worldwindow</em> (see <a href="#worldwindow">Select area on world map</a>) to choose the area on a world map or by specifying the bounding coordinates for the area:
+<li><em>Area of Interest</em>. Area of interest for files to be downloaded. There are three ways the area can be chosen:
+<ol>
+<li>Pressing <em>Choose area via Map</em> to invoke <em>worldwindow</em> (see <a href="#worldwindow">Select area on world map</a>) to choose the area on a world map</li>
+<li>Specifying the bounding coordinates for the area:
 <ul>
 <li><em>North</em>. Upper latitude</li>
 <li><em>West</em>. Left (west) longitude</li>
 <li><em>South</em>. Lower latitude</li>
 <li><em>East</em>. Right (east) longitude</li>
 </ul>
-You can alternate between both approaches to choose the desired area. If you have passed a SIREN Preferences file or invoked <em>getmerra2</em> from within SIREN the bounding coordinates will be set to those of the current map. North and South can range from +85.06 to -85.06 degrees and East and West from -180 to +180
+</li>
+<li>Choosing the centre point and dimensions for the area of interest:
+<ul>
+<li><em>(Centre) Lat</em>. Centre latitude</li>
+<li><em>(Centre) Lon</em>. Centre lonitude</li>
+<li><em>Degrees (Lat)</em>. The dimension in degrees north south. Minimum value is 1 (degree)</li>
+<li><em>Degrees (Lon)</em>. The dimension in degrees east west. Minimum value is 1.5 (degrees)</li>
+</ul>
+</li>
+</ol>
+You can alternate between these approaches to choose the desired area. If you have passed a SIREN Preferences file or invoked <em>getmerra2</em> from within SIREN the bounding coordinates will be set to those of the current map. The chosen area must be at least 1 degree of latitude by 1.25 degrees of longitude. North and South can range from +85.06 to -85.06 degrees and East and West from -180 to +180
+<br />
+<strong>Note:</strong> The behaviour of the bounding coordinates fields are a little quirky in that they will adjust themselves so the west (left) value is always west of the east value and the north (upper) value is always higher than the south value
 </li>
 <li><em>Start date</em>. The first date to be downloaded</li>
 <li><em>End date</em>. The first date to be downloaded</li>
@@ -2816,9 +2876,10 @@ You can alternate between both approaches to choose the desired area. If you hav
 <p><code>makeweather2.py</code> is a Python program that can be used to produce solar and/or wind weather files for input to SAM. The program generates SMW (preferred for SAM) or CSV format solar resource files and SRW format wind resource files. These file formats have been chosen as they're easier to generate than other formats. Using the program you specify the source folder for the MERRA-2 data files, the time zone for the area of interest, a file format and target folder for the weather files. The program will generate files for each of the MERRA-2 grid squares within the chosen MERRA-2 data files or optionally for a number of latitude and longitude positions. You can invoke the program either by choosing <em>makeweather2</em> from the SIREN Tools menu or in Windows by running <code>makeweather2.exe</code> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
 <ul>
 <li><em>Year</em>. Year of interest. The naming conventions for MERRA-2 files include the date so this defines the date range. The tool processes dates from the last day of the prior year through to the first day of the next year (ignoring 29 February)</li>
-<li><em>Wrap to prior year</em>. To enable you to use (more) recent weather data this option will indicate that weather data should wrap to the prior year. As an example, if you have downloaded MERRA-2 data up until April for the current year makeweather2 will use weather data from the prior year for May onwards to give a full year of data. The MERRA data for both years must reside in the same folder</li>
+<li><em>Wrap to prior year</em>. To enable you to use (more) recent weather data this option will indicate that weather data should wrap to the prior year. As an example, if you have downloaded MERRA-2 data up until April for the current year makeweather2 will use weather data from the prior year for May onwards to give a full year of data. The MERRA data for both years must reside in the same folder (or the next subfolder if yearly folders are used)</li>
 <li><em>Time Zone</em>. The (solar) time zone for the area of interest. This is used to create suitable weather files where the first hour in the file is the first hour of the year in the local time zone. A value of <em>auto</em> will cause the program to use the (first) longitude in the MERRA-2 data files to calculate the time zone</li>
 <li><em>Solar Format</em>. The solar option can produce weather files in either of two formats - SMW or CSV format. This option allows you to choose your preferred one. SMW format is suitable for SAM while it may have trouble with the CSV format</li>
+<li><em>Solar Variable</em>. There are two MERRA-2 solar variables to use to create weather files - swgdn or swgnt. </li>
 <li><em>Coordinates</em>. Rather than producing weather files for each grid cell in the chosen area you can restrict it by passing a string of comma-separated latitude and longitude values. The tool will then generate files for just these coordinates</li>
 <li><em>Copy folder down</em>. This is an ease of use field. If this is checked any changes to the Solar Source Folder field will be propagated to the other two Folder fields</li>
 <li><em>Solar Source Folder</em>. Use this to specify the location for the MERRA-2 solar (<em>tavg1_2d_rad_Nx</em>) files. To change the location you need to click on the field and navigate to the correct folder (you can't type into the field). This location is only used for solar files</li>
@@ -2853,6 +2914,7 @@ You can alternate between both approaches to choose the desired area. If you hav
 <li><em>fmat=</em> Weather file format</li>
 <li><em>coords=</em> or <em>latlon=</em> A string of comma-separated latitude and longitude values</li>
 <li><em>solar=</em> Location of the MERRA-2 solar (<em>tavg1_2d_rad_Nx</em>) files</li>
+<li><em>swg=</em> Solar variable - swgdn or swgnt. Default is swgnt</li>
 <li><em>wind=</em> Location of the MERRA-2 wind (<em>tavg1_2d_slv_Nx</em>) files</li>
 <li><em>target=</em> or <em>tgtdir=</em> Location for the weather files produced</li>
 </ul>
@@ -3046,8 +3108,10 @@ MERRA-2 Variables
 <td>8</td>
 <td>GHI</td>
 <td>W/m<sup>2</sup></td>
-<td>swgnt</td>
-<td>Surface net downward shortwave flux
+<td>swgdn /
+<br />swgnt</td>
+<td>Surface incoming shortwave flux flux
+<br/>Surface net downward shortwave flux
 <br/>(from tavg1_2d_rad_Nx data files)</td>
 <td>W/m<sup>2</sup></td>
 </tr>
@@ -3055,7 +3119,8 @@ MERRA-2 Variables
 <td>9</td>
 <td>DNI</td>
 <td>W/m<sup>2</sup></td>
-<td>swgnt</td>
+<td>swgdn /
+<br />swgnt</td>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
 </tr>
@@ -3063,7 +3128,8 @@ MERRA-2 Variables
 <td>10</td>
 <td>DHI</td>
 <td>W/m<sup>2</sup></td>
-<td>swgnt</td>
+<td>swgdn /
+<br />swgnt</td>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
 </tr>
@@ -3390,6 +3456,11 @@ MERRA-2 Variable
 <td>[PV] dc_ac_ratio</td>
 <td>May also specify for [Fixed PV],
 <br>[Rooftop PV], [Tracking PV]</td>
+</tr>
+<tr class="none">
+<td>losses</td>
+<td>[PV] losses</td>
+<td>&nbsp;</td>
 </tr>
 <tr class="none">
 <td>solar_resource_file</td>
@@ -3932,6 +4003,10 @@ MERRA-2 Variable
 <td class="none">Wind Atlas Analysis and Application Program</td></tr>
 <tr><td class="none"><dfn>WEM</dfn></td>
 <td class="none">Wholesale Electricity Market for the SWIS</td></tr>
+<tr><td class="none"><dfn>XLS</dfn></td>
+<td class="none">Original file format for Excel spreadsheets. XLS files are stored internally in binary format</td></tr>
+<tr><td class="none"><dfn>XLSX</dfn></td>
+<td class="none">Default file format for Excel spreadsheets since 2003. XLSX files are stored internally in an XML format</td></tr>
 <tr><td class="none"><dfn>XML</dfn></td>
 <td class="none">Extensible Markup Language. A markup language that defines a set of rules for encoding documents in a format which is both human-readable and machine-readable.</td></tr>
 </table>
