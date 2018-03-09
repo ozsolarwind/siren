@@ -725,7 +725,14 @@ class MainWindow(QtGui.QMainWindow):
             pass
         parents = []
         try:
-            parents = config.items('Parents')
+            aparents = config.items('Parents')
+            for key, value in aparents:
+                for key2, value2 in aparents:
+                    if key2 == key:
+                        continue
+                    value = value.replace(key2, value2)
+                parents.append((key, value))
+            del aparents
         except:
             pass
         try:
@@ -1197,7 +1204,14 @@ class MainWindow(QtGui.QMainWindow):
             pass
         parents = []
         try:
-            parents = config.items('Parents')
+            aparents = config.items('Parents')
+            for key, value in aparents:
+                for key2, value2 in aparents:
+                    if key2 == key:
+                        continue
+                    value = value.replace(key2, value2)
+                parents.append((key, value))
+            del aparents
         except:
             pass
         check_sections = ['Files', 'SAM Modules']
@@ -1867,11 +1881,17 @@ class MainWindow(QtGui.QMainWindow):
         act10 = 'Position ruler here'
         act11 = 'Position legend here'
         act14 = 'Show weather for here'
+        subPwr = []
         if station is not None:  # a stations
             noAction = menu.addAction(titl)
             if station.technology[:6] != 'Fossil':
                 run1Action = menu.addAction(QtGui.QIcon('power.png'), act2)
                 run1Action.setIconVisibleInMenu(True)
+                if self.years is not None:
+                    subPwrMenu = menu.addMenu(QtGui.QIcon('power.png'), 'Model %s Power for year' % station.name)
+                    for year in self.years:
+                        subPwr.append(QtGui.QAction(QtGui.QIcon('power.png'), year, self))
+                        subPwrMenu.addAction(subPwr[-1])
                 cpyAction = menu.addAction(QtGui.QIcon('copy.png'), act8)
                 cpyAction.setIconVisibleInMenu(True)
             ctrAction = menu.addAction(QtGui.QIcon('zoom.png'), act3)
@@ -1894,6 +1914,12 @@ class MainWindow(QtGui.QMainWindow):
         addsAction.setIconVisibleInMenu(True)
         sunAction = menu.addAction(QtGui.QIcon(self.weather_icon), act14)
         sunAction.setIconVisibleInMenu(True)
+        subWthr = []
+        if self.years is not None:
+            subWthrMenu = menu.addMenu(QtGui.QIcon(self.weather_icon), 'Show weather here for year')
+            for year in self.years:
+                subWthr.append(QtGui.QAction(QtGui.QIcon(self.weather_icon), year, self))
+                subWthrMenu.addAction(subWthr[-1])
         notAction = menu.addAction(ttitl)
         if ttitl[:2] != 'No':
             twnAction = menu.addAction(QtGui.QIcon('info.png'), act9)
@@ -1960,6 +1986,9 @@ class MainWindow(QtGui.QMainWindow):
         elif action == sunAction:
             PlotWeather(where.y(), where.x(), self.base_year)
             self.view.emit(QtCore.SIGNAL('statusmsg'), 'Weather displayed')
+        elif action in subWthr:
+            PlotWeather(where.y(), where.x(), action.text())
+            self.view.emit(QtCore.SIGNAL('statusmsg'), 'Weather displayed for ' + action.text())
         elif action == ctrAction:
             go_to = self.mapFromLonLat(QtCore.QPointF(station.lon, station.lat))
             self.view.centerOn(go_to)
@@ -2011,20 +2040,36 @@ class MainWindow(QtGui.QMainWindow):
                               '{:0.1f}'.format(grid_path_len)))
             except:
                 self.view.emit(QtCore.SIGNAL('statusmsg'), 'No Grid line for %s' % station.name)
-        elif action == run1Action:
-            power = PowerModel([station], status=self.floatstatus, visualise=self)
+        elif action == run1Action or action in subPwr:
+            if action == run1Action:
+                year = self.base_year
+            else:
+                year = action.text()
+            power = PowerModel([station], status=self.floatstatus, visualise=self, year=year)
             generated = power.getValues()
-            station.generation = generated[0].generation
-            del power
-            comment = 'Power plot completed for %s. %s MWh; CF %s' % (station.name,
-                      '{:0,.1f}'.format(generated[0].generation),
-                      '{:0.2f}'.format(generated[0].cf))
+            if generated is None:
+                comment = 'Power plot not completed for %s' % station.name
+            else:
+                station.generation = generated[0].generation
+                del power
+                comment = 'Power plot completed for %s. %s MWh; CF %s' % (station.name,
+                          '{:0,.1f}'.format(generated[0].generation),
+                          '{:0.2f}'.format(generated[0].cf))
             self.view.emit(QtCore.SIGNAL('statusmsg'), comment)
         elif action == cpyAction:
             self.view.clear_Trace()
             new_station = Station(station.name + ' 2', station.technology, station.lat,
                           station.lon, station.capacity, station.turbine, station.rotor,
                           station.no_turbines, station.area, self.new_scenario)
+            if 'PV' in station.technology:
+                try:
+                    new_station.direction = station.direction
+                except:
+                    pass
+                try:
+                    new_station.tilt = station.tilt
+                except:
+                    pass
             dialog = newstation.AnObject(QtGui.QDialog(), new_station, scenarios=self.view.scene()._scenarios)
             dialog.exec_()
             new_station = dialog.getValues()
@@ -2222,6 +2267,7 @@ class MainWindow(QtGui.QMainWindow):
         gline = []
         styles = []
         for line in self.view.scene().lines.lines:
+            print '(2239)', line.name, line.line_table
             if line.line_table is None:
                 style = 'grid_boundary'
             else:
@@ -2230,16 +2276,20 @@ class MainWindow(QtGui.QMainWindow):
                 pass
             else:
                 styles.append(style)
-	    gline.append('\t<Placemark>\n\t\t<name>' + line.name + '</name>\n\t\t<styleUrl>#' + style + \
+	    gline.append('\t<Placemark>\n\t\t<name>' + line.name.replace('&', '&amp;') + \
+                         '</name>\n\t\t<styleUrl>#' + style + \
                          '</styleUrl>\n\t\t\t<LineString>\n\t\t\t<tessellate>1</tessellate>\n\t\t\t<coordinates>')
             coords = '\t\t\t\t'
             for coord in line.coordinates:
                 coords += '%s,%s,0 ' % (str(coord[1]), str(coord[0]))
             gline.append(coords)
             gline.append('\t\t\t</coordinates>\n\t\t</LineString>\n\t</Placemark>')
+        print '(2256)', styles
         gline.append('</Folder>\n</Document>\n</kml>')
         sline = []
+        print '(2259)', self.view.scene().colors
         for style in styles:
+            print '(2261)', style
             try:
                 colr = self.view.scene().colors[style]
             except:
@@ -2598,7 +2648,9 @@ class MainWindow(QtGui.QMainWindow):
             pass
         else:
             the_scenario += '.xls'
-        if os.path.exists(self.scenarios + the_scenario):
+        if not os.path.exists(self.scenarios): # create scenarios folder if missing
+            os.mkdir(self.scenarios)
+        elif os.path.exists(self.scenarios + the_scenario):
             if os.path.exists(self.scenarios + the_scenario + '~'):
                 os.remove(self.scenarios + the_scenario + '~')
             os.rename(self.scenarios + the_scenario, self.scenarios + the_scenario + '~')
@@ -2616,9 +2668,18 @@ class MainWindow(QtGui.QMainWindow):
             if stn.grid_line is not None:
                 if 'Grid Line' not in fields:
                     fields.append('Grid Line')
-            if stn.direction is not None:
-                if 'Direction' not in fields:
-                    fields.append('Direction')
+            try:
+                if stn.direction is not None:
+                    if 'Direction' not in fields:
+                        fields.append('Direction')
+            except:
+                pass
+            try:
+                if stn.tilt is not None:
+                    if 'Tilt' not in fields:
+                        fields.append('Tilt')
+            except:
+                pass
         if the_scenario[-4:] == '.csv':
             upd_file = open(self.scenarios + the_scenario, 'wb')
             if description != '':
@@ -2648,8 +2709,16 @@ class MainWindow(QtGui.QMainWindow):
                         if stn.grid_line is not None:
                             new_line.append('"' + str(stn.grid_line) + '"')
                # need to add fields for storage hours + fix
-                        if stn.direction is not None:
-                            new_line.append(str(stn.direction))
+                        try:
+                            if stn.direction is not None:
+                                new_line.append(str(stn.direction))
+                        except:
+                            pass
+                        try:
+                            if stn.tilt is not None:
+                                new_line.append(str(stn.tilt))
+                        except:
+                            pass
                         upd_writer.writerow(new_line)
                         ctr += 1
             upd_file.close()
@@ -2717,10 +2786,20 @@ class MainWindow(QtGui.QMainWindow):
                                 ws.write(ctr, fields.index('Storage Hours'), stn.storage_hours)
                                 lens[fields.index('Storage Hours')] = max(lens[fields.index('Storage Hours')],
                                                                       len(str(stn.storage_hours)))
-                        if stn.direction is not None:
-                            ws.write(ctr, fields.index('Direction'), str(stn.direction))
-                            lens[fields.index('Direction')] = max(lens[fields.index('Direction')],
-                                                               len(str(stn.direction)))
+                        try:
+                            if stn.direction is not None:
+                                ws.write(ctr, fields.index('Direction'), str(stn.direction))
+                                lens[fields.index('Direction')] = max(lens[fields.index('Direction')],
+                                                                   len(str(stn.direction)))
+                        except:
+                            pass
+                        try:
+                            if stn.tilt is not None:
+                                ws.write(ctr, fields.index('Tilt'), str(stn.tilt))
+                                lens[fields.index('Tilt')] = max(lens[fields.index('Tilt')],
+                                                               len(str(stn.tilt)))
+                        except:
+                            pass
             for c in range(9):
                 if lens[c] * 275 > ws.col(c).width:
                     ws.col(c).width = lens[c] * 275
