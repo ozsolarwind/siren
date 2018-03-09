@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2017 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2018 Sustainable Energy Now Inc., Angus King
 #
 #  plotweather.py - This file is part of SIREN.
 #
@@ -275,8 +275,11 @@ class PlotWeather():
                     else:
                         px.plot(x24, data[i][p], linewidth=lw, label=key, color=self.colours[key])
                     plt.title(per_labels[p])
-                plt.xticks(range(0, 25, 4))
-                px.set_xticklabels(x_labels)
+                plt.xlim([1, 24])
+                plt.xticks(range(4, 25, 4))
+       #         px.set_xticklabels(labels])
+  #              plt.xticks(range(0, 25, 4))
+                px.set_xticklabels(x_labels[1:])
                 px.set_ylim([0, maxy])
                 if self.two_axes:
                     px2.set_ylim(0, maxw)
@@ -406,7 +409,7 @@ class PlotWeather():
                     s24[i].append([])
                     for j in range(24):
                         s24[i][s].append(0.)
-            if self.plots['monthly']:
+            if self.plots['monthly'] or self.plots['mthavg']:
                 t12.append([])
                 for m in range(14):
                     t12[i].append(0.)
@@ -453,7 +456,7 @@ class PlotWeather():
                             if m in periods[s]:
                                 break
                         s24[j][s][k] = s24[j][s][k] + value[i + k]
-                    if self.plots['monthly']:
+                    if self.plots['monthly'] or self.plots['mthavg']:
                         t12[j][m + 1] = t12[j][m + 1] + value[i + k]
         for i in range(len(ly)):
             for k in range(24):
@@ -518,20 +521,20 @@ class PlotWeather():
             plt.title(self.hdrs['total'] + ' - ' + locn)
             maxy = 0
             i = -1
+            lw = 2.0
             if self.two_axes:
                 tx2 = tx.twinx()
             for key, value in iter(sorted(self.ly.iteritems())):
                 i += 1
-                lw = 2.0
                 if self.two_axes and key in self.ylabel2[0]:
                     tx2.plot(x24, l24[i], linewidth=lw, label=key, color=self.colours[key])
                 else:
                     tx.plot(x24, l24[i], linewidth=lw, label=key, color=self.colours[key])
                     maxy = max(maxy, max(l24[i]))
             tx.set_ylim([0, maxy])
-            plt.xlim([1, 25])
-            plt.xticks(range(0, 25, 4))
-            tx.set_xticklabels(labels)
+            plt.xlim([1, 24])
+            plt.xticks(range(4, 25, 4))
+            tx.set_xticklabels(labels[1:])
             tx.set_xlabel('Hour of the Day')
             tx.set_ylabel(self.ylabel[0])
             tx.legend(loc='best')
@@ -599,6 +602,57 @@ class PlotWeather():
                 tick_spot.append(i + 1.5)
             tx.set_xticks(tick_spot)
             tx.set_xticklabels(mth_labels)
+            plt.xlim([1, 13.0])
+            tx.set_xlabel('Month')
+            tx.set_ylabel(self.ylabel[0])
+            tx.legend(loc='best')
+            if self.two_axes:
+                ylim = tx2.get_ylim()
+                tx2.set_ylim(0, ylim[1])
+                lines = []
+                for key in self.ly:
+                    lines.append(mlines.Line2D([], [], color=self.colours[key], label=key))
+                tx.legend(handles=lines, loc='best')
+                tx2.set_ylabel(self.ylabel2[1])
+            if self.maximise:
+                mng = plt.get_current_fig_manager()
+                if sys.platform == 'win32' or sys.platform == 'cygwin':
+                    if plt.get_backend() == 'TkAgg':
+                        mng.window.state('zoomed')
+                    elif plt.get_backend() == 'Qt4Agg':
+                        mng.window.showMaximized()
+                else:
+                    mng.resize(*mng.window.maxsize())
+            if self.plots['block']:
+                plt.show(block=True)
+            else:
+                plt.draw()
+        if self.plots['mthavg']:
+            figt = plt.figure('monthly_average')
+            plt.grid(True)
+            tx = figt.add_subplot(111)
+            plt.title(self.hdrs['mthavg'] + ' - ' + locn)
+            maxy = 0
+            if self.two_axes:
+                tx2 = tx.twinx()
+            m12 = []
+            for i in range(len(t12)):
+                m12.append([])
+                for m in range(1, 13):
+                    m12[-1].append(t12[i][m] / the_days[m - 1] / 24.)
+            i = -1
+            lw = 2.0
+            for key, value in iter(sorted(self.ly.iteritems())):
+                i += 1
+                if self.two_axes and key in self.ylabel2[0]:
+                    tx2.plot(x24[:12], m12[i], linewidth=lw, label=key, color=self.colours[key])
+                else:
+                    tx.plot(x24[:12], m12[i], linewidth=lw, label=key, color=self.colours[key])
+                    maxy = max(maxy, max(m12[i]) + 1)
+            tx.set_ylim([0, maxy])
+            plt.xlim([1, 12])
+            plt.xticks(range(1, 13, 1))
+            tx.set_xticklabels(mth_labels)
             tx.set_xlabel('Month')
             tx.set_ylabel(self.ylabel[0])
             tx.legend(loc='best')
@@ -643,7 +697,14 @@ class PlotWeather():
             self.base_year = year
         parents = []
         try:
-            parents = config.items('Parents')
+            aparents = config.items('Parents')
+            for key, value in aparents:
+                for key2, value2 in aparents:
+                    if key2 == key:
+                        continue
+                    value = value.replace(key2, value2)
+                parents.append((key, value))
+            del aparents
         except:
             pass
         try:
@@ -707,7 +768,7 @@ class PlotWeather():
         plot_order = ['show_menu', 'dhi', 'dni', 'ghi', 'temp', 'wind']
         if rain:
             plot_order.append('rain')
-        plot_order2 = ['hour', 'total', 'month', 'season', 'period', 'block']  # , 'pdf']
+        plot_order2 = ['hour', 'total', 'month', 'season', 'period', 'mthavg', 'block']  # , 'pdf']
         for plt in plot_order2:
             plot_order.append(plt)
         if rain:
@@ -723,11 +784,12 @@ class PlotWeather():
                 'month': 'Daily average by month',
                 'season': 'Daily average by season',
                 'period': 'Daily average by period',
+                'mthavg': 'Monthly average',
                 'block': 'Show plots one at a time',
                 'pdf': 'Probability Density Function'}
         if rain:
              self.hdrs['rain'] = 'Rainfall - mm'
-             self.hdrs['monthly'] = 'Monthly Totals'
+             self.hdrs['monthly'] = 'Monthly totals'
         spacers = {'dhi': 'Weather values',
                    'hour': 'Choose plots (all use a full year of data)'}
         weathers = ['dhi', 'dni', 'ghi', 'rain', 'temp', 'wind']
