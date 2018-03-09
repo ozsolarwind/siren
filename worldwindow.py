@@ -133,7 +133,14 @@ class WorldScene(QtGui.QGraphicsScene):
         config.read(config_file)
         parents = []
         try:
-            parents = config.items('Parents')
+            aparents = config.items('Parents')
+            for key, value in aparents:
+                for key2, value2 in aparents:
+                    if key2 == key:
+                        continue
+                    value = value.replace(key2, value2)
+                parents.append((key, value))
+            del aparents
         except:
             pass
         try:
@@ -689,7 +696,14 @@ class WorldWindow(QtGui.QMainWindow):
         self.config.read(self.config_file)
         parents = []
         try:
-            parents = self.config.items('Parents')
+            aparents = config.items('Parents')
+            for key, value in aparents:
+                for key2, value2 in aparents:
+                    if key2 == key:
+                        continue
+                    value = value.replace(key2, value2)
+                parents.append((key, value))
+            del aparents
         except:
             pass
         try:

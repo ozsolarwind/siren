@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2017 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2018 Sustainable Energy Now Inc., Angus King
 #
 #  makegrid.py - This file is part of SIREN.
 #
@@ -159,6 +159,8 @@ class makeFile():
                 lines = tf.readlines()
                 tf.close()
                 fst_row = len(lines) - 8760
+                if fst_row < 0: # probably not for us
+                    continue 
                 calc_mth = False
                 if fil[-4:] == '.smw':
                     calc_mth = True
@@ -805,7 +807,14 @@ class getParms(QtGui.QWidget):
             self.years.append(self.base_year)
         self.parents = []
         try:
-            self.parents = config.items('Parents')
+            aparents = config.items('Parents')
+            for key, value in aparents:
+                for key2, value2 in aparents:
+                    if key2 == key:
+                        continue
+                    value = value.replace(key2, value2)
+                self.parents.append((key, value))
+            del aparents
         except:
             pass
         self.do_rain = False
