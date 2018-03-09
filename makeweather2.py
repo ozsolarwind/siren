@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2017 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2018 Sustainable Energy Now Inc., Angus King
 #
 #  makeweather2.py - This file is part of SIREN.
 #
@@ -24,10 +24,7 @@ import gzip
 import math
 import os
 import sys
-if sys.platform == 'win32' or sys.platform == 'cygwin':
-    from netCDF4 import Dataset
-else:
-    from Scientific.IO.NetCDF import *
+from netCDF4 import Dataset
 from PyQt4 import QtCore, QtGui
 from displayobject import AnObject
 from sammodels import getDNI, getDHI
@@ -208,10 +205,7 @@ class makeWeather():
         if self.return_code != 0:
             return
         try:
-            if sys.platform == 'win32' or sys.platform == 'cygwin':
-                cdf_file = Dataset(unzip_file, 'r')
-            else:
-                cdf_file = NetCDFFile(unzip_file, 'r')
+            cdf_file = Dataset(unzip_file, 'r')
         except:
             self.decodeError(inp_file)
             return
@@ -252,20 +246,22 @@ class makeWeather():
         if self.return_code != 0:
             return
         try:
-            if sys.platform == 'win32' or sys.platform == 'cygwin':
-                cdf_file = Dataset(unzip_file, 'r')
-            else:
-                cdf_file = NetCDFFile(unzip_file, 'r')
+            cdf_file = Dataset(unzip_file, 'r')
         except:
             self.decodeError(inp_file)
             return
-     #   Variable Description                         Units
-     #   -------- ----------------------------------- --------
-     #   swgnt    Surface net downward shortwave flux W m-2
+     #   Variable Description                          Units
+     #   -------- ------------------------------------ --------
+     #   swgdn    Surface incoming shortwave flux flux W m-2
+     #   swgnt    Surface net downward shortwave flux  W m-2
         self.lati = cdf_file.variables[self.vars['latitude']][:]
         self.longi = cdf_file.variables[self.vars['longitude']][:]
         self.tims = cdf_file.variables['time'][:]
-        self.swgnt += self.getGHI(cdf_file.variables[self.vars['swgnt']])
+        if self.vars[self.swg] in cdf_file.variables:
+            self.swgnt += self.getGHI(cdf_file.variables[self.vars[self.swg]])
+        else:
+            self.swg = 'swgnt'
+            self.swgnt += self.getGHI(cdf_file.variables[self.vars['swgnt']])
         cdf_file.close()
 
     def checkZone(self):
@@ -293,53 +289,64 @@ class makeWeather():
 
     def findFile(self, inp_strt, wind=True):
         if wind:
-            src_dir = [self.src_dir_w]
-            src_pfx = self.src_w_pfx
-            src_sfx = self.src_w_sfx
-        else:
-            src_dir = [self.src_dir_s]
-            src_pfx = self.src_s_pfx
-            src_sfx = self.src_s_sfx
-        if self.wrap and self.the_year != self.src_year:
-            the_year = str(int(inp_strt[:4]) + 1)
-            if src_dir[0][-5:-1] == the_year:
-                src_dir.append(src_dir[0][:-5] + inp_strt[:4] + '/')
-        elif inp_strt[-4:] == '1231': # perhaps last day of prior year
-            the_year = str(int(inp_strt[:4]) + 1)
-            if src_dir[0][-5:-1] == the_year:
-                src_dir.append(src_dir[0][:-5] + inp_strt[:4] + '/')
-        elif inp_strt[-4:] == '0101': # or first day of next year
-            the_year = str(int(inp_strt[:4]) - 1)
-            if src_dir[0][-5:-1] == the_year:
-                src_dir.append(src_dir[0][:-5] + inp_strt[:4] + '/')
-        for a_dir in src_dir:
-            for p in range(len(src_pfx)):
-                inp_file = a_dir + src_pfx[p] + inp_strt + src_sfx[p]
+            for p in range(len(self.src_w_pfx)):
+                inp_file = self.src_dir_w + self.src_w_pfx[p] + inp_strt + self.src_w_sfx[p]
                 if os.path.exists(inp_file):
-                    return inp_file
+                    break
                 else:
+                    if self.yearly[1]:
+                        inp_file = self.src_dir_w[:-5] + str(int(inp_strt[:4])) + '/' + self.src_w_pfx[p] + inp_strt + self.src_w_sfx[p]
+                        if os.path.exists(inp_file):
+                            break
                     if inp_file.find('MERRA300') >= 0:
                         inp_file = inp_file.replace('MERRA300', 'MERRA301')
                         if os.path.exists(inp_file):
-                            return inp_file
+                            break
+            else:
+                self.log += 'No Wind file found for ' + inp_strt + '\n'
+                return None
         else:
-            self.log += 'File not found - %s.?.%s.?\n' % (src_dir[0], inp_strt)
-        #    self.return_code = 12
-            return None
+            for p in range(len(self.src_s_pfx)):
+                inp_file = self.src_dir_s + self.src_s_pfx[p] + inp_strt + self.src_s_sfx[p]
+                if os.path.exists(inp_file):
+                    break
+                else:
+                    if self.yearly[0]:
+                        inp_file = self.src_dir_s[:-5] + str(int(inp_strt[:4])) + '/' + self.src_s_pfx[p] + inp_strt + self.src_s_sfx[p]
+                        if os.path.exists(inp_file):
+                            break
+                    if inp_file.find('MERRA300') >= 0:
+                        inp_file = inp_file.replace('MERRA300', 'MERRA301')
+                        if os.path.exists(inp_file):
+                            break
+            else:
+                self.log += 'No Solar file found for ' + inp_strt + '\n'
+                return None
+        return inp_file
 
     def getInfo(self, inp_file):
+        if inp_file is None:
+            self.log += '\nInput file missing!\n    '
+            return
+        if not os.path.exists(inp_file):
+            if inp_file.find('MERRA300') >= 0:
+                inp_file = inp_file.replace('MERRA300', 'MERRA301')
+            else:
+                return
+        if not os.path.exists(inp_file):
+            return
         unzip_file = self.unZip(inp_file)
         if self.return_code != 0:
             return
-        if sys.platform == 'win32' or sys.platform == 'cygwin':
-            cdf_file = Dataset(unzip_file, 'r')
-        else:
-            cdf_file = NetCDFFile(unzip_file, 'r')
+        cdf_file = Dataset(unzip_file, 'r')
         i = unzip_file.rfind('/')
         self.log += '\nFile:\n    '
         self.log += unzip_file[i + 1:] + '\n'
         self.log += ' Format:\n    '
-        self.log += str(cdf_file.Format) + '\n'
+        try:
+            self.log += str(cdf_file.Format) + '\n'
+        except:
+            self.log += '?\n'
         self.log += ' Dimensions:\n    '
         vals = ''
         keys = cdf_file.dimensions.keys()
@@ -374,7 +381,7 @@ class makeWeather():
         cdf_file.close()
         return
 
-    def __init__(self, src_year, src_zone, src_dir_s, src_dir_w, tgt_dir, fmat, wrap=None, src_lat_lon=None, info=False):
+    def __init__(self, src_year, src_zone, src_dir_s, src_dir_w, tgt_dir, fmat, swg='swgnt', wrap=None, src_lat_lon=None, info=False):
       #  self.last_time = datetime.datetime.now()
         self.log = ''
         self.return_code = 0
@@ -383,8 +390,14 @@ class makeWeather():
         self.src_zone = src_zone
         self.src_dir_s = src_dir_s
         self.src_dir_w = src_dir_w
+        self.yearly = [False, False]
+        if self.src_dir_s[-5:] == '/' + src_year:
+            self.yearly[0] = True
+        if self.src_dir_w[-5:] == '/' + src_year:
+            self.yearly[1] = True
         self.tgt_dir = tgt_dir
         self.fmat = fmat
+        self.swg = swg
         self.wrap = False
         if wrap is None or wrap == '':
             pass
@@ -394,7 +407,7 @@ class makeWeather():
         self.src_s_pfx = []
         self.src_s_sfx = []
         merra300 = False
-        self.vars = {'latitude': 'lat', 'longitude': 'lon', 'ps': 'PS', 'swgnt': 'SWGNT',
+        self.vars = {'latitude': 'lat', 'longitude': 'lon', 'ps': 'PS', 'swgdn': 'SWGDN', 'swgnt': 'SWGNT',
                      'time': 'time', 't2m': 'T2M', 't10m': 'T10M', 't50m': 'T50M', 'u2m': 'U2M',
                      'u10m': 'U10M', 'u50m': 'U50M', 'v2m': 'V2M', 'v10m': 'V10M', 'v50m': 'V50M'}
         if self.src_dir_s != '':
@@ -458,10 +471,7 @@ class makeWeather():
             unzip_file = self.unZip(self.findFile(inp_strt, True))
             if self.return_code != 0:
                 return
-            if sys.platform == 'win32' or sys.platform == 'cygwin':
-                cdf_file = Dataset(unzip_file, 'r')
-            else:
-                cdf_file = NetCDFFile(unzip_file, 'r')
+            cdf_file = Dataset(unzip_file, 'r')
             longitude = cdf_file.variables[self.vars['longitude']][:]
             self.src_zone = int(round(longitude[0] / 15))
             self.log += 'Time zone: %s based on MERRA (west) longitude (%s to %s)\n' % (str(self.src_zone),
@@ -594,7 +604,12 @@ class makeWeather():
                     del self.t_2m[-1]
         elif self.src_zone < 0:
             inp_strt = '{0:04d}'.format(self.the_year + 1) + '0101'
-            self.get_data(self.findFile(inp_strt, True))
+            inp_file = self.findFile(inp_strt, True)
+            if inp_file is None:
+                self.log += 'Wrapping to prior year - %.4d-%.2d-%.2d\n' % (self.the_year, 1, 1)
+                inp_strt = '{0:04d}'.format(self.the_year) + '0101'
+                inp_file = self.findFile(inp_strt, True)
+            self.get_data(inp_file)
             if self.return_code != 0:
                 return
             for i in range(24 + self.src_zone):   # delete last n hours
@@ -762,8 +777,15 @@ class makeWeather():
             for i in range(self.src_zone):  # delete last n hours
                 del self.swgnt[-1]
         elif self.src_zone < 0:
-            inp_strt = '{0:04d}'.format(self.src_year + 1) + '0101'
-            self.get_rad_data(self.findFile(inp_strt, False))
+            inp_strt = '{0:04d}'.format(self.the_year + 1) + '0101'
+            inp_file = self.findFile(inp_strt, False)
+            if inp_file is None:
+                self.log += 'Wrapping to prior year - %.4d-%.2d-%.2d\n' % (self.the_year, 1, 1)
+                inp_strt = '{0:04d}'.format(self.the_year) + '0101'
+                inp_file = self.findFile(inp_strt, False)
+            self.get_rad_data(inp_file)
+            if self.return_code != 0:
+                return
             for i in range(24 + self.src_zone):  # delete last n hours
                 del self.swgnt[-1]
         target_dir = self.tgt_dir
@@ -815,7 +837,6 @@ class makeWeather():
                         str(day) + ',' + str(hour) + ',' +
                         str(int(ghi)) + ',' + str(int(dni)) + ',' + str(int(dhi)) + ',' +
                         str(self.valu(self.t_10m[hr], lat1, lon1, lat_rat, lon_rat, rnd=1)) + ',' +
-
                         str(self.valu(self.p_s[hr], lat1, lon1, lat_rat, lon_rat, rnd=0)) + ',' +
                         str(self.valu(self.s10m[hr], lat1, lon1, lat_rat, lon_rat)) + ',' +
                         str(self.valu(self.d10m[hr], lat1, lon1, lat_rat, lon_rat, rnd=0)) + '\n')
@@ -959,45 +980,52 @@ class getParms(QtGui.QWidget):
             self.fmatcombo.addItem(self.fmats[i])
         self.fmatcombo.setCurrentIndex(1)
         self.grid.addWidget(self.fmatcombo, 3, 1)
-        self.grid.addWidget(QtGui.QLabel('Coordinates:'), 4, 0)
+        self.grid.addWidget(QtGui.QLabel('Solar Variable:'), 4, 0)
+        self.swgcombo = QtGui.QComboBox(self)
+        self.swgs = ['swgdn', 'swgnt']
+        for i in range(len(self.fmats)):
+            self.swgcombo.addItem(self.swgs[i])
+        self.swgcombo.setCurrentIndex(0) # default is swgdn
+        self.grid.addWidget(self.swgcombo, 4, 1)
+        self.grid.addWidget(QtGui.QLabel('Coordinates:'), 5, 0)
         self.coords = QtGui.QPlainTextEdit()
-        self.grid.addWidget(self.coords, 4, 1, 1, 4)
-        self.grid.addWidget(QtGui.QLabel('Copy folder down:'), 5, 0)
+        self.grid.addWidget(self.coords, 5, 1, 1, 4)
+        self.grid.addWidget(QtGui.QLabel('Copy folder down:'), 6, 0)
         self.checkbox = QtGui.QCheckBox()
         self.checkbox.setCheckState(QtCore.Qt.Checked)
-        self.grid.addWidget(self.checkbox, 5, 1)
-        self.grid.addWidget(QtGui.QLabel('If checked will copy solar folder changes down to others'), 5, 2, 1, 3)
+        self.grid.addWidget(self.checkbox, 6, 1)
+        self.grid.addWidget(QtGui.QLabel('If checked will copy solar folder changes down to others'), 6, 2, 1, 3)
         cur_dir = os.getcwd()
         self.dir_labels = ['Solar Source', 'Wind Source', 'Target']
         self.dirs = [None, None, None, None]
         for i in range(3):
-            self.grid.addWidget(QtGui.QLabel(self.dir_labels[i] + ' Folder:'), 6 + i, 0)
+            self.grid.addWidget(QtGui.QLabel(self.dir_labels[i] + ' Folder:'), 7 + i, 0)
             self.dirs[i] = ClickableQLabel()
             self.dirs[i].setText(cur_dir)
             self.dirs[i].setFrameStyle(6)
             self.connect(self.dirs[i], QtCore.SIGNAL('clicked()'), self.dirChanged)
-            self.grid.addWidget(self.dirs[i], 6 + i, 1, 1, 4)
+            self.grid.addWidget(self.dirs[i], 7 + i, 1, 1, 4)
         quit = QtGui.QPushButton('Quit', self)
-        self.grid.addWidget(quit, 9, 0)
+        self.grid.addWidget(quit, 10, 0)
         quit.clicked.connect(self.quitClicked)
         QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
         dosolar = QtGui.QPushButton('Produce Solar Files', self)
         wdth = dosolar.fontMetrics().boundingRect(dosolar.text()).width() + 9
-        self.grid.addWidget(dosolar, 9, 1)
+        self.grid.addWidget(dosolar, 10, 1)
         dosolar.clicked.connect(self.dosolarClicked)
         dowind = QtGui.QPushButton('Produce Wind Files', self)
         dowind.setMaximumWidth(wdth)
-        self.grid.addWidget(dowind, 9, 2)
+        self.grid.addWidget(dowind, 10, 2)
         dowind.clicked.connect(self.dowindClicked)
-        help = QtGui.QPushButton('Help', self)
-        help.setMaximumWidth(wdth)
-        self.grid.addWidget(help, 9, 3)
-        help.clicked.connect(self.helpClicked)
-        QtGui.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
         info = QtGui.QPushButton('File Info', self)
         info.setMaximumWidth(wdth)
-        self.grid.addWidget(info, 9, 4)
+        self.grid.addWidget(info, 10, 3)
         info.clicked.connect(self.infoClicked)
+        help = QtGui.QPushButton('Help', self)
+        help.setMaximumWidth(wdth)
+        self.grid.addWidget(help, 10, 4)
+        help.clicked.connect(self.helpClicked)
+        QtGui.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
       #   self.grid.setColumnStretch(4, 2)
         frame = QtGui.QFrame()
         frame.setLayout(self.grid)
@@ -1008,7 +1036,7 @@ class getParms(QtGui.QWidget):
         self.layout.addWidget(self.scroll)
         self.setWindowTitle('SIREN - makeweather2 (' + fileVersion() + ') - Make weather files from MERRA data')
         self.center()
-        self.resize(int(self.sizeHint().width()* 1.07), int(self.sizeHint().height() * 1.07))
+        self.resize(int(self.sizeHint().width()* 1.27), int(self.sizeHint().height() * 1.07))
         self.show()
 
     def center(self):
@@ -1075,10 +1103,10 @@ class getParms(QtGui.QWidget):
             zone = str(self.zoneCombo.currentIndex() - 13)
         solar = makeWeather(str(self.yearSpin.value()), zone, str(self.dirs[0].text()), \
                             str(self.dirs[1].text()), str(self.dirs[2].text()), str(self.fmatcombo.currentText()), \
-                            wrap, coords)
+                            str(self.swgcombo.currentText()), wrap, coords)
         dialr = RptDialog(str(self.yearSpin.value()), zone, str(self.dirs[0].text()), \
                           str(self.dirs[1].text()), str(self.dirs[2].text()), str(self.fmatcombo.currentText()), \
-                          wrap, coords, solar.returnCode(), solar.getLog())
+                          str(self.swgcombo.currentText()), wrap, coords, solar.returnCode(), solar.getLog())
         dialr.exec_()
         del solar
         del dialr
@@ -1101,10 +1129,10 @@ class getParms(QtGui.QWidget):
             zone = str(self.zoneCombo.currentIndex() - 13)
         wind = makeWeather(str(self.yearSpin.value()), zone, str(self.dirs[0].text()), \
                             str(self.dirs[1].text()), str(self.dirs[2].text()), \
-                            'wind', wrap, coords)
+                            'wind', '', wrap, coords)
         dialr = RptDialog(str(self.yearSpin.value()), zone, str(self.dirs[0].text()), \
                           str(self.dirs[1].text()), str(self.dirs[2].text()), 'srw', \
-                          wrap, coords, wind.returnCode(), wind.getLog())
+                          '', wrap, coords, wind.returnCode(), wind.getLog())
         dialr.exec_()
         del wind
         del dialr
@@ -1127,19 +1155,20 @@ class getParms(QtGui.QWidget):
             zone = str(self.zoneCombo.currentIndex() - 13)
         wind = makeWeather(str(self.yearSpin.value()), zone, str(self.dirs[0].text()), \
                             str(self.dirs[1].text()), str(self.dirs[2].text()), \
-                            'both', wrap, coords, info=True)
+                            'both', str(self.swgcombo.currentText()), wrap, coords, info=True)
         dialr = RptDialog(str(self.yearSpin.value()), zone, str(self.dirs[0].text()), \
                           str(self.dirs[1].text()), str(self.dirs[2].text()), 'srw', \
-                          wrap, coords, wind.returnCode(), wind.getLog())
+                          str(self.swgcombo.currentText()), wrap, coords, wind.returnCode(), wind.getLog())
         dialr.exec_()
         del wind
         del dialr
 
 
 class RptDialog(QtGui.QDialog):
-    def __init__(self, year, zone, solar_dir, wind_dir, tgt_dir, fmat, wrap, coords, return_code, output):
+    def __init__(self, year, zone, solar_dir, wind_dir, tgt_dir, fmat, swg, wrap, coords, return_code, output):
         super(RptDialog, self).__init__()
-        self.parms = [str(year), str(zone), wrap, fmat, tgt_dir, solar_dir, wind_dir]
+        self.parms = [str(year), str(zone), swg, wrap, fmat, tgt_dir, solar_dir, wind_dir]
+        self.tgt_dir = tgt_dir
         if wrap == 'y':
             wrapy = 'Yes'
         else:
@@ -1149,6 +1178,7 @@ class RptDialog(QtGui.QDialog):
                      % (year, wrapy, zone, fmat)
         if fmat != 'srw':
             self.lines += '    Solar Files: %s\n' % solar_dir
+        self.lines += '    Solar Variable: %s\n' % swg
         self.lines += '    Wind Files: %s\n' % wind_dir
         self.lines += '    Target Folder: %s\n' % tgt_dir
         if coords != '':
@@ -1201,10 +1231,11 @@ class RptDialog(QtGui.QDialog):
     def accept(self):
         i = sys.argv[0].rfind('/')  # fudge to see if program has a directory to use as an alternative
         j = sys.argv[0].rfind('.')
+        save_filename = self.tgt_dir + '/'
         if i > 0:
-            save_filename = sys.argv[0][i + 1:j]
+            save_filename += sys.argv[0][i + 1:j]
         else:
-            save_filename = sys.argv[0][:j]
+            save_filename += sys.argv[0][:j]
         last_bit = ''
         for k in range(len(self.parms)):
             if self.parms[k] == '':
@@ -1235,6 +1266,7 @@ if "__main__" == __name__:
     if len(sys.argv) > 1:  # arguments
         src_lat_lon = ''
         src_year = 2014
+        swg = 'swgdn'
         wrap = ''
         src_zone = 0
         fmat = 'srw'
@@ -1256,6 +1288,8 @@ if "__main__" == __name__:
                 fmat = sys.argv[i][5:]
             elif sys.argv[i][:7] == 'format=':
                 fmat = sys.argv[i][7:]
+            elif sys.argv[i][:4] == 'swg=':
+                swg = sys.argv[i][4:]
             elif sys.argv[i][:6] == 'solar=':
                 src_dir_s = sys.argv[i][6:]
             elif sys.argv[i][:7] == 'source=' or sys.argv[i][:7] == 'srcdir=':
@@ -1264,7 +1298,7 @@ if "__main__" == __name__:
                 src_dir_w = sys.argv[i][5:]
             elif sys.argv[i][:7] == 'target=' or sys.argv[i][:7] == 'tgtdir=':
                 tgt_dir = sys.argv[i][7:]
-        files = makeWeather(src_year, src_zone, src_dir_s, src_dir_w, tgt_dir, fmat, wrap, src_lat_lon)
+        files = makeWeather(src_year, src_zone, src_dir_s, src_dir_w, tgt_dir, fmat, swg, wrap, src_lat_lon)
         dialr = RptDialog(files.returnCode(), files.getLog())
         dialr.exec_()
     else:
