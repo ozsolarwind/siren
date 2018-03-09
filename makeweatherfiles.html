@@ -108,9 +108,10 @@ ul {
 <p><code>makeweatherfiles.py</code> is a Python program that can be used to produce solar and/or wind weather files for input to SAM. The program generates SMW (preferred for SAM) or CSV format solar resource files and SRW format wind resource files. These file formats have been chosen as they're easier to generate than other formats. Using the program you specify the source folder for the MERRA-2 data files, the time zone for the area of interest, a file format and target folder for the weather files. The program will generate files for each of the MERRA-2 grid squares within the chosen MERRA-2 data files or optionally for a number of latitude and longitude positions. You invoke the program in Windows by running <code>makeweatherfiles.exe</code> or <code>makeweatherfiles.py</code> if you have Python installed (and appropriate libraries). Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
 <ul>
 <li><em>Year</em>. Year of interest. The naming conventions for MERRA-2 files include the date so this defines the date range. The tool processes dates from the last day of the prior year through to the first day of the next year (ignoring 29 February)</li>
-<li><em>Wrap to prior year</em>. To enable you to use (more) recent weather data this option will indicate that weather data should wrap to the prior year. As an example, if you have downloaded MERRA-2 data up until April for the current year <code>makeweatherfiles</code> will use weather data from the prior year for May onwards to give a full year of data. The MERRA data for both years must reside in the same folder (or teh next subfolder if yearly folders are used)</li>
+<li><em>Wrap to prior year</em>. To enable you to use (more) recent weather data this option will indicate that weather data should wrap to the prior year. As an example, if you have downloaded MERRA-2 data up until April for the current year <code>makeweatherfiles</code> will use weather data from the prior year for May onwards to give a full year of data. The MERRA data for both years must reside in the same folder (or the next subfolder if yearly folders are used)</li>
 <li><em>Time Zone</em>. The (solar) time zone for the area of interest. This is used to create suitable weather files where the first hour in the file is the first hour of the year in the local time zone. A value of <em>auto</em> will cause the program to use the (first) longitude in the MERRA-2 data files to calculate the time zone</li>
 <li><em>Solar Format</em>. The solar option can produce weather files in either of two formats - SMW or CSV format. This option allows you to choose your preferred one. SMW format is suitable for SAM while it may have trouble with the CSV format</li>
+<li><em>Solar Variable</em>. There are two MERRA-2 solar variables to use to create weather files - swgdn or swgnt. </li>
 <li><em>Coordinates</em>. Rather than producing weather files for each grid cell in the chosen area you can restrict it by passing a string of comma-separated latitude and longitude values. The tool will then generate files for just these coordinates</li>
 <li><em>Copy folder down</em>. This is an ease of use field. If this is checked any changes to the Solar Source Folder field will be propagated to the other two Folder fields</li>
 <li><em>Solar Source Folder</em>. Use this to specify the location for the MERRA-2 solar (<em>tavg1_2d_rad_Nx</em>) files. To change the location you need to click on the field and navigate to the correct folder (you can't type into the field). This location is only used for solar files</li>
@@ -146,6 +147,7 @@ ul {
 <li><em>fmat=</em> Weather file format</li>
 <li><em>coords=</em> or <em>latlon=</em> A string of comma-separated latitude and longitude values</li>
 <li><em>solar=</em> Location of the MERRA-2 solar (<em>tavg1_2d_rad_Nx</em>) files</li>
+<li><em>swg=</em> Solar variable - swgdn or swgnt. Default is swgnt</li>
 <li><em>wind=</em> Location of the MERRA-2 wind (<em>tavg1_2d_slv_Nx</em>) files</li>
 <li><em>target=</em> or <em>tgtdir=</em> Location for the weather files produced</li>
 </ul>
@@ -316,8 +318,10 @@ MERRA-2 Variables
 <td>8</td>
 <td>GHI</td>
 <td>W/m<sup>2</sup></td>
-<td>swgnt</td>
-<td>Surface net downward shortwave flux
+<td>swgdn /
+<br />swgnt</td>
+<td>Surface incoming shortwave flux flux
+<br/>Surface net downward shortwave flux
 <br/>(from tavg1_2d_rad_Nx data files)</td>
 <td>W/m<sup>2</sup></td>
 </tr>
@@ -325,7 +329,8 @@ MERRA-2 Variables
 <td>9</td>
 <td>DNI</td>
 <td>W/m<sup>2</sup></td>
-<td>swgnt</td>
+<td>swgdn /
+<br />swgnt</td>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
 </tr>
@@ -333,7 +338,8 @@ MERRA-2 Variables
 <td>10</td>
 <td>DHI</td>
 <td>W/m<sup>2</sup></td>
-<td>swgnt</td>
+<td>swgdn /
+<br />swgnt</td>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
 </tr>
@@ -414,7 +420,7 @@ To reduce the size of the data files select just those variables we need:
 <li>tavg1_2d_slv_Nx<br>
 <em>ps u10m u2m u50m v10m v2m v50m t10m t2m</em></li>
 <li>tavg1_2d_rad_Nx<br>
-<em>swgnt</em></li>
+<em>swgdn</em> and/or <em>swgnt</em></li>
 </ol>
 </li>
 <li>Output File Format<br/>
@@ -464,20 +470,31 @@ wget --load-cookies ~/.urs_cookies --save-cookies ~/.urs_cookies --auth-no-chall
 <p><code>getmerra2</code> provides an alternate way of downloading MERRA-2 files than that described in <a href="#merra3">Obtaining data</a>. This approach uses <code>wget</code> but removes the need to manually follow those steps above. You still need to <a href="#merra2a">Register for access</a>.</p>
 <p>When you first execute <code>getmerra2</code> it will check for a <code>.netrc</code> file and if it can't find one it will prompt for the details required. If you've invoked <code>getmerra2</code> in a Windows terminal window and a <code>HOME</code> environment variable does not exist you will need to close and reopen a new terminal window to make the environment variable available to <code>getmerra2</code>.</p>
 <h5>getmerra2</h5>
-<p><code>getmerra2.py</code> is a Python program that can be used to download MERRA-2 files required to create weather files for SAM. You can invoke the program in Windows by running <code>getmerra2.exe</code> in the <em>makeweatehrfiles</em> folder. The window fields are:</p>
+<p><code>getmerra2.py</code> is a Python program that can be used to download MERRA-2 files required to create weather files for SAM. You can invoke the program in Windows by running <code>getmerra2.exe</code> in the <em>makeweatherfiles</em> folder. The window fields are:</p>
 <ul>
-<li><em>Area of Interest</em>. Area of interest for files to be downloaded. This can be chosen
+<li><em>Area of Interest</em>. Area of interest for files to be downloaded. There are three ways the area can be chosen:
 <ol>
-<li>either by pressing <em>Choose area via Map</em> to invoke <em>worldwindow</em>. To use <em>worldwindow</em> you simply left click in the map the top left corner of the desired Area of Interest and then left click the bottom right corner. <em>worldwindow</em> will display a rectangle on the world map highlighting the desired area and update the Area of Interest in. To choose a different area just repeat the process</li>
-<li>or by specifying the bounding coordinates for the area:
+<li>Pressing <em>Choose area via Map</em> to invoke <em>worldwindow</em> (see <a href="#worldwindow">Select area on world map</a>) to choose the area on a world map</li>
+<li>Specifying the bounding coordinates for the area:
 <ul>
 <li><em>North</em>. Upper latitude</li>
 <li><em>West</em>. Left (west) longitude</li>
 <li><em>South</em>. Lower latitude</li>
 <li><em>East</em>. Right (east) longitude</li>
 </ul>
+</li>
+<li>Choosing the centre point and dimensions for the area of interest:
+<ul>
+<li><em>(Centre) Lat</em>. Centre latitude</li>
+<li><em>(Centre) Lon</em>. Centre lonitude</li>
+<li><em>Degrees (Lat)</em>. The dimension in degrees north south. Minimum value is 1 (degree)</li>
+<li><em>Degrees (Lon)</em>. The dimension in degrees east west. Minimum value is 1.5 (degrees)</li>
+</ul>
+</li>
 </ol>
-You can alternate between both approaches to choose the desired area. North and South can range from +85.06 to -85.06 degrees and East and West from -180 to +180
+You can alternate between these approaches to choose the desired area. If you have passed a SIREN Preferences file or invoked <em>getmerra2</em> from within SIREN the bounding coordinates will be set to those of the current map. The chosen area must be at least 1 degree of latitude by 1.25 degrees of longitude. North and South can range from +85.06 to -85.06 degrees and East and West from -180 to +180
+<br />
+<strong>Note:</strong> The behaviour of the bounding coordinates fields are a little quirky in that they will adjust themselves so the west (left) value is always west of the east value and the north (upper) value is always higher than the south value
 </li>
 <li><em>Start date</em>. The first date to be downloaded</li>
 <li><em>End date</em>. The first date to be downloaded</li>
