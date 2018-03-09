@@ -135,7 +135,7 @@ class makeFile():
             msgbox.setStandardButtons(QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
             reply = msgbox.exec_()
             if reply == QtGui.QMessageBox.Yes:
-                extra_fields = ['Latitude', 'Longitude', 'Facility Name', 'Turbine', 'No. turbines']
+                extra_fields = ['Latitude', 'Longitude', 'Facility Name', 'Turbine', 'No. turbines', 'Tilt']
                 upd_file = open(fac_file + '.csv', 'wb')
                 upd_writer = csv.writer(upd_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 upd_writer.writerow(common_fields + extra_fields)
@@ -382,7 +382,14 @@ class getParms(QtGui.QWidget):
             self.years.append(self.base_year)
         parents = []
         try:
-            parents = config.items('Parents')
+            aparents = config.items('Parents')
+            for key, value in aparents:
+                for key2, value2 in aparents:
+                    if key2 == key:
+                        continue
+                    value = value.replace(key2, value2)
+                parents.append((key, value))
+            del aparents
         except:
             pass
         self.grid_stations = ''

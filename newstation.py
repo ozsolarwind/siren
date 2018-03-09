@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2018 Sustainable Energy Now Inc., Angus King
 #
 #  newstation.py - This file is part of SIREN.
 #
@@ -46,7 +46,14 @@ class AnObject(QtGui.QDialog):
             self.base_year = '2012'
         parents = []
         try:
-            parents = config.items('Parents')
+            aparents = config.items('Parents')
+            for key, value in aparents:
+                for key2, value2 in aparents:
+                    if key2 == key:
+                        continue
+                    value = value.replace(key2, value2)
+                parents.append((key, value))
+            del aparents
         except:
             pass
         try:
@@ -127,7 +134,8 @@ class AnObject(QtGui.QDialog):
     def initUI(self):
         self.save = False
         self.field = ['name', 'technology', 'lat', 'lon', 'capacity', 'turbine', 'rotor',
-                  'no_turbines', 'area', 'scenario', 'power_file', 'grid_line', 'storage_hours', 'direction']
+                      'no_turbines', 'area', 'scenario', 'power_file', 'grid_line', 'storage_hours',
+                      'direction', 'tilt']
         self.label = []
         self.edit = []
         self.field_type = []
@@ -198,7 +206,10 @@ class AnObject(QtGui.QDialog):
         self.show_hide = {}
         units = {'area': 'sq. Km', 'capacity': 'MW'}
         for i in range(len(self.field)):
-            attr = getattr(self.anobject, self.field[i])
+            try:
+                attr = getattr(self.anobject, self.field[i])
+            except:
+                attr = ''
             if isinstance(attr, int):
                 self.field_type.append('int')
             elif isinstance(attr, float):
@@ -290,6 +301,13 @@ class AnObject(QtGui.QDialog):
                     self.edit.append(QtGui.QLineEdit(str(self.direction)))
                 else:
                     self.edit.append(QtGui.QLineEdit(''))
+            elif self.field[i] == 'tilt':
+                self.tilt = attr
+                self.show_hide['tilt'] = len(self.edit)
+                if attr is not None:
+                    self.edit.append(QtGui.QLineEdit(str(self.tilt)))
+                else:
+                    self.edit.append(QtGui.QLineEdit(''))
             try:
                 if metrics[1].boundingRect(self.edit[-1].text()).width() > widths[1]:
                     widths[1] = metrics[1].boundingRect(self.edit[-1].text()).width()
@@ -328,7 +346,7 @@ class AnObject(QtGui.QDialog):
     def technologyChanged(self, val):
         wind_fields = ['turbine', 'rotor', 'no_turbines']
         cst_fields = ['storage_hours']
-        pv_fields = ['direction']
+        pv_fields = ['direction', 'tilt']
         show_fields = []
         hide_fields = []
         if str(self.techcomb.currentText()) == 'Wind':
@@ -413,6 +431,14 @@ class AnObject(QtGui.QDialog):
                         else:
                             self.message.setText('Error with ' + self.field[i].title() + ' field')
                             return
+                if self.field[i] == 'tilt' and 'PV' in self.technology:
+                    try:
+                        setattr(self, self.field[i], float(self.edit[i].text()))
+                        if self.tilt < -180. or self.tilt >  180.:
+                            self.message.setText('Error with ' + self.field[i].title() + ' field')
+                            return
+                    except:
+                        pass
                 elif self.field_type[i] == 'int':
                     try:
                         setattr(self, self.field[i], int(self.edit[i].text()))
@@ -497,8 +523,11 @@ class AnObject(QtGui.QDialog):
                       self.no_turbines, self.area, self.scenario, power_file=self.power_file)
             if self.grid_line is not None:
                 station.grid_line = self.grid_line
-            if self.direction is not None and 'PV' in self.technology:
-                station.direction = self.direction
+            if 'PV' in self.technology:
+                if self.direction is not None:
+                    station.direction = self.direction
+                if self.tilt is not None:
+                    station.tilt = self.tilt
             if self.storage_hours is not None and self.technology == 'Solar Thermal':
                 try:
                     if self.storage_hours != self.tshours:

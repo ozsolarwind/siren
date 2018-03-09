@@ -49,7 +49,7 @@ def within_map(x, y, poly):
 
 class Station:
     def __init__(self, name, technology, lat, lon, capacity, turbine, rotor, no_turbines, area, scenario, generation=None,
-                 power_file=None, grid_line=None, grid_len=None, grid_path_len=None, direction=None, storage_hours=None):
+                 power_file=None, grid_line=None, grid_len=None, grid_path_len=None, direction=None, tilt=None, storage_hours=None):
         self.name = name
         self.technology = technology
         self.lat = lat
@@ -67,6 +67,8 @@ class Station:
         self.grid_path_len = grid_path_len
         self.direction = direction
         self.storage_hours = storage_hours
+        if tilt is not None:
+            self.tilt = tilt
 
 
 class Stations:
@@ -88,7 +90,14 @@ class Stations:
             self.base_year = '2012'
         parents = []
         try:
-            parents = config.items('Parents')
+            aparents = config.items('Parents')
+            for key, value in aparents:
+                for key2, value2 in aparents:
+                    if key2 == key:
+                        continue
+                    value = value.replace(key2, value2)
+                parents.append((key, value))
+            del aparents
         except:
             pass
         try:
@@ -290,6 +299,12 @@ class Stations:
                                     self.stations.append(Station(nice_name, tech,
                                         float(facility['Latitude']), float(facility['Longitude']),
                                         float(facility['Maximum Capacity (MW)']), turbine, rotor, no_turbines, area, 'Existing'))
+                                    if tech == 'Fixed PV':
+                                        try:
+                                            if facility['Tilt'] != '':
+                                                self.stations[-1].tilt = float(facility['Tilt'])
+                                        except:
+                                            pass
                                 else:   # additional generator in existing station
                                     if stn.technology != tech:
                                         if stn.technology[:6] == 'Fossil' and tech[:6] == 'Fossil':
@@ -362,6 +377,11 @@ class Stations:
                                     try:
                                         if facility['Direction'] != '':
                                             self.stations[-1].direction = facility['Direction']
+                                    except:
+                                        pass
+                                    try:
+                                        if facility['Tilt'] != '':
+                                            self.stations[-1].tilt = float(facility['Tilt'])
                                     except:
                                         pass
                                 if self.stations[-1].technology == 'Solar Thermal':
@@ -459,6 +479,12 @@ class Stations:
                                 direction = worksheet.cell_value(curr_row, var['Direction'])
                                 if direction != '':
                                     self.stations[-1].direction = direction
+                            except:
+                                pass
+                            try:
+                                tilt = worksheet.cell_value(curr_row, var['Tilt'])
+                                if tilt != '':
+                                    self.stations[-1].tilt = tilt
                             except:
                                 pass
                         if self.stations[-1].technology == 'Solar Thermal':
