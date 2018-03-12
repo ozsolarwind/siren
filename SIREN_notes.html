@@ -45,38 +45,39 @@ pre {
 <li><em>siren_makeweatherfiles.exe</em> provides the files required to create SAM weather files without requiring any other parts of SIREN</li>
 </ul>
 <h2 id="libraries">Python Libraries</h2>
-<table><tr><td><strong>Library</strong></td><td><strong>Where</strong></td><td><strong>Notes</strong></td</tr>
-<tr><td>ConfigParser</td><td>Standard</td></tr>
-<tr><td>csv</td><td>Standard</td></tr>
-<tr><td>ctypes</td><td>Standard</td></tr>
-<tr><td>datetime</td><td>Standard</td></tr>
-<tr><td>et_xmlfile</td><td>Windows</td><td>Required by openpyxl</td></tr>
-<tr><td>functools</td><td>Standard</td></tr>
-<tr><td>gzip</td><td>Standard</td></tr>
-<tr><td>heapq</td><td>Standard</td></tr>
-<tr><td>httplib</td><td>Standard</td></tr>
-<tr><td>jdcal</td><td>Windows</td><td>Required by openpyxl</td</tr>
-<tr><td>math</td><td>Standard</td></tr>
-<tr><td>matplotlib</td><td></td></tr>
-<tr><td>mpl_toolkits</td><td></td></tr>
-<tr><td>netCDF4</td><td></td></tr>
-<tr><td>numpy</td><td></td></tr>
-<tr><td>openpyxl</td><td></td></tr>
-<tr><td>os</td><td>Standard</td></tr>
+<table><tr><td><strong>Library</strong></td><td><strong>Notes</strong></td</tr>
+<tr><td>ConfigParser</td></tr>
+<tr><td>csv</td></tr>
+<tr><td>ctypes</td></tr>
+<tr><td>datetime</td></tr>
+<tr><td>et_xmlfile</td><td>Windows. Required by openpyxl</td></tr>
+<tr><td>functools</td></tr>
+<tr><td>gzip</td></tr>
+<tr><td>heapq</td></tr>
+<tr><td>httplib</td></tr>
+<tr><td>jdcal</td><td>Windows. Required by openpyxl</td</tr>
+<tr><td>math</td></tr>
+<tr><td>matplotlib</td></tr>
+<tr><td>mpl_toolkits</td></tr>
+<tr><td>netCDF4</td></tr>
+<tr><td>numpy</td></tr>
+<tr><td>openpyxl</td></tr>
+<tr><td>os</td></tr>
 <tr><td>pwd</td><td>Linux</td></tr>
-<tr><td>pylab</td><td></td></tr>
-<tr><td>PyQt4</td><td></td></tr>
+<tr><td>pylab</td></tr>
+<tr><td>PyQt4</td></tr>
+<tr><td>scipy</td></tr>
 <tr><td>ssc</td><td>SAM</td></tr>
-<tr><td>struct</td><td>Standard</td></tr>
-<tr><td>subprocess</td><td>Standard</td></tr>
-<tr><td>sys</td><td>Standard</td></tr>
-<tr><td>tempfile</td><td>Standard</td></tr>
-<tr><td>time</td><td>Standard</td></tr>
-<tr><td>webbrowser</td><td>Standard</td></tr>
+<tr><td>struct</td></tr>
+<tr><td>subprocess</td></tr>
+<tr><td>sys</td></tr>
+<tr><td>tempfile</td></tr>
+<tr><td>time</td></tr>
+<tr><td>webbrowser</td></tr>
 <tr><td>win32api</td><td>Windows</td></tr>
-<tr><td>xlrd</td><td></td></tr>
-<tr><td>xlwt</td><td></td></tr>
-<tr><td>xml.etree.ElementTree</td><td>Standard</td></tr>
+<tr><td>xlrd</td></tr>
+<tr><td>xlwt</td></tr>
+<tr><td>xml.etree.ElementTree</td></tr>
 </table>
 <h2 id="source">SIREN Programs</h2>
 <p>This is a list of the Python source programs for SIREN. Where there is a dependency on the os environment the programs test <code>sys.platform</code>. These programs are highlighted in the list with an asterisk (*).</p>
@@ -121,5 +122,5 @@ pre {
 </table>
 <h2>Packaging for Windows</h2>
 <p>I use <em>pyinstaller</em> (currently Version 3.2.1) to package SIREN for Windows. I use the multi-package facility to create executables for <code>siren.py, sirenm.py</code> and the tools (<code>getmap.py, getmerra2.py, indexweather.py, makerainfall2.py, makegrid.py, makeweather2.py, sirenupd.py</code> and <code>updateswis.py</code>). <code>siren_application.spec</code> is the spec file (<code>c:\Python27\scripts\pyinstaller.exe siren-application.spec</code>). This enables all programs to be included in a single library for distribution. <em>pyinstaller</em> places them in individual directories - I use <code>package_siren.py</code> to copy all the executables into the <em>siren</em> directory and remove some unwanted files that are included as part of the packaging process. All these have a version file where the version is <em>&lt;version&gt;,&lt;modification&gt;.&lt;yyyy&gt;.&lt;mmdd&gt;</em> The date part is the date the program was last changed.</p>
-<p><code>makeweather_getmerra2.spec</code> and <code>package_makeweather_getmerra2.py</code> package <code>makeweatherfiles.py</code> and <code>getmerra2.py</code> to provide a standalone tool to create SAM weather files from MERRA-2 datasets.</p>
+<p><code>makeweather_getmerra2.spec</code> and <code>package_makeweatherfiles.py</code> package <code>makeweatherfiles.py</code> and <code>getmerra2.py</code> to provide a standalone tool to create SAM weather files from MERRA-2 datasets.</p>
 </body>
