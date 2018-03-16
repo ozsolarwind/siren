@@ -1106,7 +1106,7 @@ class makeWeather():
                     tf.write('Year,Month,Day,Hour,GHI,DNI,DHI,Tdry,Pres,Wspd,Wdir' + '\n')
                     mth = 0
                     day = 1
-                    hour = 1
+                    hour = 0
                     for hr in range(len(self.s10m)):
                         ghi = self.valu(self.swgnt[hr], lat1, lon1, lat_rat, lon_rat)
                         dni = getDNI(ghi, hour=hr + 1, lat=self.src_lat[i], lon=self.src_lon[i],
@@ -1121,13 +1121,13 @@ class makeWeather():
                         str(self.valu(self.s10m[hr], lat1, lon1, lat_rat, lon_rat)) + ',' +
                         str(self.valu(self.d10m[hr], lat1, lon1, lat_rat, lon_rat, rnd=0)) + '\n')
                         hour += 1
-                        if hour > 24:
-                            hour = 1
+                        if hour > 23:
+                            hour = 0
                             day += 1
                             if day > dys[mth]:
                                 mth += 1
                                 day = 1
-                                hour = 1
+                                hour = 0
                 else:
                     hdr = 'id,<city>,<state>,%s,%s,%s,0,3600.0,%s,0:30:00\n' % (str(self.src_zone),
                           round(self.src_lat[i], 4),
@@ -1172,7 +1172,7 @@ class makeWeather():
                         tf.write('Year,Month,Day,Hour,GHI,DNI,DHI,Tdry,Pres,Wspd,Wdir' + '\n')
                         mth = 0
                         day = 1
-                        hour = 1
+                        hour = 0
                         for hr in range(len(self.s10m)):
                             ghi = self.swgnt[hr][lat][lon]
                             dni = getDNI(ghi, hour=hr + 1, lat=self.lati[lat], lon=self.longi[lon],
@@ -1187,13 +1187,13 @@ class makeWeather():
                                 str(self.s10m[hr][lat][lon]) + ',' +
                                 str(self.d10m[hr][lat][lon]) + '\n')
                             hour += 1
-                            if hour > 24:
-                                hour = 1
+                            if hour > 23:
+                                hour = 0
                                 day += 1
                                 if day > dys[mth]:
                                     mth += 1
                                     day = 1
-                                    hour = 1
+                                    hour = 0
                     else:
                         hdr = 'id,<city>,<state>,%s,%s,%s,0,3600.0,%s,0:30:00\n' % (str(self.src_zone),
                               round(self.lati[lat], 4),
@@ -1531,7 +1531,7 @@ class RptDialog(QtGui.QDialog):
                     last_bit = self.parms[k]
         save_filename += '.txt'
         fileName = QtGui.QFileDialog.getSaveFileName(self,
-                                         self.tr("QFileDialog.getSaveFileName()"),
+                                         self.tr('Save makeweatherfiles Report'),
                                          save_filename,
                                          self.tr("All Files (*);;Text Files (*.txt)"))
         if not fileName.isEmpty():
