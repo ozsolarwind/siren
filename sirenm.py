@@ -2188,6 +2188,10 @@ class MainWindow(QtGui.QMainWindow):
                 ctr[0] += 1
                 if st.generation > 0:
                     ctr[1] += 1
+            if ctr[0] == 0 and not self.view.scene().show_fossil:
+                comment = 'No Stations to display'
+                self.view.emit(QtCore.SIGNAL('statusmsg'), comment)
+                return
         fields = ['name', 'technology', 'capacity']
         units = 'capacity=MW'
         sumfields = ['capacity']
