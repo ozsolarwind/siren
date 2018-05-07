@@ -4400,6 +4400,8 @@ class PowerModel():
                 app.exec_()
             else:
                 power.exec_()
+            if len(power.power_summary) == 0:
+                return
             self.power_summary = power.power_summary
             self.gen_pct = power.getPct()
             self.ly, self.x = power.getLy()
@@ -4416,6 +4418,8 @@ class PowerModel():
             self.model = SuperPower(stations, self.plots, False, year=self.base_year,
                                     selected=self.selected, status=status)
             self.model.getPower()
+            if len(self.model.power_summary) == 0:
+                return
             self.power_summary = self.model.power_summary
             self.ly, self.x = self.model.getLy()
             if self.plots['save_data'] or self.plots['financials'] or self.plots['save_detail']:
