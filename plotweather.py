@@ -309,7 +309,17 @@ class PlotWeather():
                 plt.show(block=True)
             else:
                 plt.draw()
-
+        papersizes = {'a0': '33.1,46.8', 'a1': '23.4,33.1', 'a2': '16.5,23.4',
+                    'a3': '11.7,16.5', 'a4': '8.3,11.7', 'a5': '5.8,8.3',
+                    'a6': '4.1,5.8', 'a7': '2.9,4.1', 'a8': '2,2.9',
+                    'a9': '1.5,2', 'a10': '1,1.5', 'b0': '39.4,55.7',
+                    'b1': '27.8,39.4', 'b2': '19.7,27.8', 'b3': '13.9,19.7',
+                    'b4': '9.8,13.9', 'b5': '6.9,9.8', 'b6': '4.9,6.9',
+                    'b7': '3.5,4.9', 'b8': '2.4,3.5', 'b9': '1.7,2.4',
+                    'b10': '1.2,1.7', 'foolscap': '8.0,13.0', 'ledger': '8.5,14.0',
+                    'legal': '8.5,14.09', 'letter': '8.5,11.0'}
+        landscape = False
+        papersize = ''
         config = ConfigParser.RawConfigParser()
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
@@ -343,8 +353,24 @@ class PlotWeather():
                 elif item == 'maximise':
                     if values.lower() in ['true', 'on', 'yes']:
                         self.maximise = True
+                elif item == 'save_format':
+                    plt.rcParams['savefig.format'] = values
+                elif item == 'figsize':
+                    try:
+                        papersize = papersizes[values]
+                    except:
+                        papersize = values
+                elif item == 'orientation':
+                    if values.lower()[0] == 'l':
+                        landscape = True
         except:
             pass
+        if papersize != '':
+            if landscape:
+                bit = papersize.split(',')
+                plt.rcParams['figure.figsize'] = bit[1] + ',' + bit[0]
+            else:
+                plt.rcParams['figure.figsize'] = papersize
         if len(seasons) == 0:
             seasons = [['Summer', 11, 0, 1], ['Autumn', 2, 3, 4], ['Winter', 5, 6, 7], ['Spring', 8, 9, 10]]
         if len(periods) == 0:
