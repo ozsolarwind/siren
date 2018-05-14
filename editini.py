@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2018 Sustainable Energy Now Inc., Angus King
 #
 #  Editini.py - This file is part of SIREN.
 #
@@ -124,7 +124,10 @@ class EditSect():
         section_dict = {}
         section_items = []
         for key in values:
-            section_items.append(key + '=' + values[key][0][6:])
+            try:
+                section_items.append(key + '=' + values[key][0][6:])
+            except:
+                section_items.append(key + '=')
         section_dict[self.section] = section_items
         SaveIni(section_dict, ini_file=config_file)
 
@@ -196,6 +199,7 @@ class SaveIni():
         inf = open(ini_file, 'r')
         lines = inf.readlines()
         inf.close()
+        del_lines = []
         for section in values:
             in_section = False
             properties = values[section]
@@ -213,7 +217,10 @@ class SaveIni():
                         bits = lines[i].split('=')
                         for j in range(len(properties) - 1, -1, -1):
                             if bits[0] == props[j]:
-                                lines[i] = properties[j] + '\n'
+                                if properties[j] == props[j] + '=': # delete empty values
+                                    del_lines.append(i)
+                                else:
+                                    lines[i] = properties[j] + '\n'
                                 del properties[j]
                                 del props[j]
             if len(properties) > 0:
@@ -228,5 +235,8 @@ class SaveIni():
         os.rename(ini_file, ini_file + '~')
         sou = open(ini_file, 'w')
         for i in range(len(lines)):
-            sou.write(lines[i])
+            if i in del_lines:
+                pass
+            else:    
+                sou.write(lines[i])
         sou.close()
