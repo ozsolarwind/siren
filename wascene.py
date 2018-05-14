@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2018 Sustainable Energy Now Inc., Angus King
 #
 #  wascene.py - This file is part of SIREN.
 #
@@ -28,8 +28,10 @@ import xlrd
 
 import ConfigParser   # decode .ini file
 from PyQt4 import QtCore, QtGui
-import mpl_toolkits.basemap.pyproj as pyproj   # Import the pyproj module
-
+try:
+    import mpl_toolkits.basemap.pyproj as pyproj   # Import the pyproj module
+except:
+    from mpl_toolkits.basemap import pyproj as pyproj
 from towns import Towns
 from grid import Grid, Grid_Boundary, Line
 from senuser import getUser
