@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2018 Sustainable Energy Now Inc., Angus King
 #
 #  displaytable.py - This file is part of SIREN.
 #
@@ -113,6 +113,12 @@ class Table(QtGui.QDialog):
         self.connect(self.quitButton, QtCore.SIGNAL('clicked()'),
                     self.quit)
         if self.edit_table:
+            if isinstance(objects, dict):
+                if fields[0] == 'property':
+                    self.addButton = QtGui.QPushButton(self.tr('Add'))
+                    buttonLayout.addWidget(self.addButton)
+                    self.connect(self.addButton, QtCore.SIGNAL('clicked()'),
+                                self.addtotbl)
             self.replaceButton = QtGui.QPushButton(self.tr('Save'))
             buttonLayout.addWidget(self.replaceButton)
             self.connect(self.replaceButton, QtCore.SIGNAL('clicked()'),
@@ -465,6 +471,21 @@ class Table(QtGui.QDialog):
     def header_click(self, position):
         column = self.headers.logicalIndexAt(position)
         self.order(column)
+
+    def addtotbl(self):
+        addproperty = {}
+        for field in self.fields:
+            addproperty[field] = ''
+        dialog = displayobject.AnObject(QtGui.QDialog(), addproperty, readonly=False, title='Add ' + self.fields[0].title())
+        dialog.exec_()
+        if dialog.getValues()[self.fields[0]] != '':
+            self.entry.append(addproperty)
+            self.objects.append(FakeObject([dialog.getValues()[self.fields[0]], dialog.getValues()[self.fields[1]]], self.fields))
+            self.populate()
+            self.table.setRowCount(self.table.rowCount() + 1)
+            self.sort_col = 1
+            self.order(0)
+        del dialog
 
     def item_selected(self, row, col):
         for thing in self.objects:
