@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2018 Sustainable Energy Now Inc., Angus King
 #
 #  displayobject.py - This file is part of SIREN.
 #
@@ -151,9 +151,11 @@ class AnObject(QtGui.QDialog):
             grid.addWidget(self.web, 0, 0)
             self.set_stuff(grid, widths, heights, i)
         elif isinstance(self.anobject, dict):
+            self.keys = []
             for key, value in self.anobject.iteritems():
                 self.field_type.append('str')
                 label.append(QtGui.QLabel(key + ':'))
+                self.keys.append(key)
                 self.edit.append(QtGui.QTextEdit())
                 self.edit[-1].setPlainText(value)
                 if i < 0:
@@ -186,7 +188,7 @@ class AnObject(QtGui.QDialog):
                 i += 1
                 grid.addWidget(label[-1], i + 1, 0)
                 grid.addWidget(self.edit[-1], i + 1, 1)
-                self.set_stuff(grid, widths, heights, i)
+            self.set_stuff(grid, widths, heights, i)
         else:
             units = {'area': 'sq. Km', 'capacity': 'MW', 'rotor': 'm', 'generation': 'MWh', 'grid_len': 'Km',
                      'grid_path_len': 'Km'}
@@ -238,6 +240,9 @@ class AnObject(QtGui.QDialog):
         self.close()
 
     def saveClicked(self):
+        if isinstance(self.anobject, dict):
+            for i in range(len(self.keys)):
+                self.anobject[self.keys[i]] = str(self.edit[i].toPlainText())
         self.close()
 
     def getValues(self):
