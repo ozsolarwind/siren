@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2017 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2018 Sustainable Energy Now Inc., Angus King
 #
 #  updateswis.py - This file is part of SIREN.
 #
@@ -53,7 +53,7 @@ class makeFile():
     def getLog(self):
         return self.log
 
-    def __init__(self, host, url, tgt_fil, excel=''):
+    def __init__(self, host, url, tgt_fil, excel='', keep=False):
         self.host = host
         self.url = url
         self.tgt_fil = tgt_fil
@@ -116,6 +116,7 @@ class makeFile():
             else:
                 self.log += 'New facility' + new_facility['Facility Code'] + '\n'
         facile.seek(0)
+        keeps = []
         for facility in facilities:
             if facility['Facility Code'] == 'Facility Code': # ignore headers - after seek(0)
                 continue
@@ -124,7 +125,11 @@ class makeFile():
                 if new_facility['Facility Code'] == facility['Facility Code']:
                     break
             else:
-                self.log += "Facility '%s' no longer on file\n" % facility['Facility Code']
+                nl = '\n'
+                if keep:
+                    nl = ' will be retained\n'
+                    keeps.append(facility['Facility Code'])
+                self.log += "Facility '%s' no longer on file%s" % (facility['Facility Code'], nl) 
         if changes > 0:
             msgbox = QtGui.QMessageBox()
             msgbox.setWindowTitle('SIREN - updateswis Status')
@@ -150,12 +155,34 @@ class makeFile():
                     for facility in facilities:
                         if new_facility['Facility Code'] == facility['Facility Code']:
                             for field in extra_fields:
-                                new_line.append(facility[field])
+                                try:
+                                    new_line.append(facility[field])
+                                except:
+                                    new_line.append('')
                             break
                     else:
                         for field in extra_fields:
                             new_line.append('')
                     upd_writer.writerow(new_line)
+                if keep:
+                    facile.seek(0)
+                    for facility in facilities:
+                        for keepit in keeps:
+                            if keepit == facility['Facility Code']:
+                                new_line = []
+                                for field in common_fields:
+                                    if field == 'Balancing Status':
+                                        new_line.append('Deleted')
+                                    elif field == 'Capacity Credits (MW)':
+                                        new_line.append('')
+                                    else:    
+                                        new_line.append(facility[field])
+                                for field in extra_fields:
+                                    try:
+                                        new_line.append(facility[field])
+                                    except:
+                                        new_line.append('')
+                                upd_writer.writerow(new_line)
                 upd_file.close()
                 facile.close()
                 if os.path.exists(fac_file + '~'):
@@ -450,45 +477,50 @@ class getParms(QtGui.QWidget):
         self.excel.setFrameStyle(6)
         self.connect(self.excel, QtCore.SIGNAL('clicked()'), self.excelChanged)
         self.grid.addWidget(self.excel, 4, 1, 1, 3)
-        self.grid.addWidget(QtGui.QLabel('System Load'), 5, 0)
-        self.grid.addWidget(QtGui.QLabel('Year:'), 6, 0)
+        self.grid.addWidget(QtGui.QLabel('Keep deleted:'), 5, 0)
+        self.keepbox = QtGui.QCheckBox()
+        self.keepbox.setCheckState(QtCore.Qt.Checked)
+        self.grid.addWidget(self.keepbox, 5, 1)
+        self.grid.addWidget(QtGui.QLabel('If checked will retain deleted facilities'), 5, 2, 1, 3)
+        self.grid.addWidget(QtGui.QLabel('System Load'), 6, 0)
+        self.grid.addWidget(QtGui.QLabel('Year:'), 7, 0)
         self.yearCombo = QtGui.QComboBox()
         for i in range(len(self.years)):
             self.yearCombo.addItem(self.years[i])
         self.yearCombo.setCurrentIndex(self.yrndx)
         self.yearCombo.currentIndexChanged[str].connect(self.yearChanged)
-        self.grid.addWidget(self.yearCombo, 6, 1)
-        self.grid.addWidget(QtGui.QLabel('Wrap to prior year:'), 7, 0)
+        self.grid.addWidget(self.yearCombo, 7, 1)
+        self.grid.addWidget(QtGui.QLabel('Wrap to prior year:'), 8, 0)
         self.wrapbox = QtGui.QCheckBox()
         self.wrapbox.setCheckState(QtCore.Qt.Checked)
-        self.grid.addWidget(self.wrapbox, 7, 1)
-        self.grid.addWidget(QtGui.QLabel('If checked will wrap back to prior year'), 7, 2, 1, 3)
-        self.grid.addWidget(QtGui.QLabel('Load file location:'), 8, 0)
+        self.grid.addWidget(self.wrapbox, 8, 1)
+        self.grid.addWidget(QtGui.QLabel('If checked will wrap back to prior year'), 8, 2, 1, 3)
+        self.grid.addWidget(QtGui.QLabel('Load file location:'), 9, 0)
         self.lurl = QtGui.QLineEdit()
         self.lurl.setText(aemo_load)
-        self.grid.addWidget(self.lurl, 8, 1, 1, 3)
-        self.grid.addWidget(QtGui.QLabel('Target load file:'), 9, 0)
+        self.grid.addWidget(self.lurl, 9, 1, 1, 3)
+        self.grid.addWidget(QtGui.QLabel('Target load file:'), 10, 0)
         self.targetl = ClickableQLabel()
         self.targetl.setText(self.load_file)
         self.targetl.setFrameStyle(6)
         self.connect(self.targetl, QtCore.SIGNAL('clicked()'), self.tgtlChanged)
-        self.grid.addWidget(self.targetl, 9, 1, 1, 4)
+        self.grid.addWidget(self.targetl, 10, 1, 1, 4)
         self.log = QtGui.QLabel(' ')
-        self.grid.addWidget(self.log, 10, 1, 1, 3)
+        self.grid.addWidget(self.log, 11, 1, 1, 3)
         quit = QtGui.QPushButton('Quit', self)
         wdth = quit.fontMetrics().boundingRect(quit.text()).width() + 29
-        self.grid.addWidget(quit, 11, 0)
+        self.grid.addWidget(quit, 12, 0)
         quit.clicked.connect(self.quitClicked)
         QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
         dofile = QtGui.QPushButton('Update Existing Stations', self)
-        self.grid.addWidget(dofile, 11, 1)
+        self.grid.addWidget(dofile, 12, 1)
         dofile.clicked.connect(self.dofileClicked)
         dofilel = QtGui.QPushButton('Update Load file', self)
-        self.grid.addWidget(dofilel, 11, 2)
+        self.grid.addWidget(dofilel, 12, 2)
         dofilel.clicked.connect(self.dofilelClicked)
         help = QtGui.QPushButton('Help', self)
         help.setMaximumWidth(wdth)
-        self.grid.addWidget(help, 11, 3)
+        self.grid.addWidget(help, 12, 3)
         help.clicked.connect(self.helpClicked)
         QtGui.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
         self.grid.setColumnStretch(3, 5)
@@ -559,7 +591,7 @@ class getParms(QtGui.QWidget):
 
     def dofileClicked(self):
         resource = makeFile(str(self.host.text()), str(self.url.text()), str(self.target.text()),
-                            str(self.excel.text()))
+                            str(self.excel.text()), self.keepbox.isChecked())
         log = resource.getLog()
         self.log.setText(log)
 
@@ -596,6 +628,7 @@ if "__main__" == __name__:
         tgt_fil = ''
         excel = ''
         wrap = ''
+        keep = ''
         year = ''
         for i in range(1, len(sys.argv)):
             if sys.argv[i][:5] == 'host=':
@@ -608,6 +641,8 @@ if "__main__" == __name__:
                 excel = sys.argv[i][6:]
             elif sys.argv[i][:5] == 'wrap=':
                 wrap = sys.argv[i][5:]
+            elif sys.argv[i][:5] == 'keep=':
+                keep = sys.argv[i][5:]
             elif sys.argv[i][:5] == 'year=':
                 year = sys.argv[i][5:]
         if wrap != '' or year != '':
@@ -620,9 +655,15 @@ if "__main__" == __name__:
             if year == '':
                 year = time.strftime('%Y')
             url = lurl.replace(time.strftime('%Y'), year)
-            files = makeLoadFile(host, url, tgt_fil, year, wrap)
+            files = makeLoadFile(host, url, tgt_fil, year, wrap, keep)
         else:
-            files = makeFile(host, furl, tgt_fil, excel)
+            if keep == '':
+                keep = False
+            elif keep[0].lower() == 'y' or keep[0].lower() == 't' or (len(keep) > 1 and keep[:2].lower() == 'on'):
+                keep = True
+            else:
+                keep = False
+            files = makeFile(host, furl, tgt_fil, excel, keep)
     else:
         ex = getParms()
         app.exec_()
