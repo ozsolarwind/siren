@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2017 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2018 Sustainable Energy Now Inc., Angus King
 #
 #  siren.py - This file is part of SIREN.
 #
@@ -1852,25 +1852,28 @@ class MainWindow(QtGui.QMainWindow):
         menu = QtGui.QMenu()
         station = None
         if len(self.view.scene()._stations.stations) > 0:  # some stations
-            station, st_dist = self.view.scene()._stations.Nearest(where.y(), where.x(),
-            distance=True, fossil=self.view.scene().show_fossil)
-            titl = 'Nearest station: %s (%s MW; %s Km away)' % (station.name, '{:0.0f}'.format(station.capacity),
-                   '{:0.0f}'.format(st_dist))
-         #    act1 = 'Run SAM API (%s)' % model
-            if station.technology == 'Hydro' or station.technology == 'Wave' or station.technology[:5] == 'Other':
-                act2 = 'Run Power Model for %s' % station.name
-            else:
-                act2 = 'Run SAM Power Model for %s' % station.name
-            act3 = 'Center view on %s' % station.name
-            if station.scenario != 'Existing' and station.technology[:6] != 'Fossil':
-                act4 = 'Show/Edit details for %s' % station.name
-            else:
-                act4 = 'Show details for %s' % station.name
-            act5 = 'Move %s' % station.name
-            act6 = 'Delete %s' % station.name
-            act8 = 'Copy %s' % station.name
-            act12 = 'Edit grid line for %s' % station.name
-            act13 = 'Trace grid for %s' % station.name
+            try:
+                station, st_dist = self.view.scene()._stations.Nearest(where.y(), where.x(),
+                                   distance=True, fossil=self.view.scene().show_fossil)
+                titl = 'Nearest station: %s (%s MW; %s Km away)' % (station.name, '{:0.0f}'.format(station.capacity),
+                       '{:0.0f}'.format(st_dist))
+            #    act1 = 'Run SAM API (%s)' % model
+                if station.technology == 'Hydro' or station.technology == 'Wave' or station.technology[:5] == 'Other':
+                    act2 = 'Run Power Model for %s' % station.name
+                else:
+                    act2 = 'Run SAM Power Model for %s' % station.name
+                act3 = 'Center view on %s' % station.name
+                if station.scenario != 'Existing' and station.technology[:6] != 'Fossil':
+                    act4 = 'Show/Edit details for %s' % station.name
+                else:
+                    act4 = 'Show details for %s' % station.name
+                act5 = 'Move %s' % station.name
+                act6 = 'Delete %s' % station.name
+                act8 = 'Copy %s' % station.name
+                act12 = 'Edit grid line for %s' % station.name
+                act13 = 'Trace grid for %s' % station.name
+            except:
+                pass
         try:
             town, town_dist = self.view.scene()._towns.Nearest(where.y(), where.x(), distance=True)
             ttitl = 'Nearest town: %s (%s Km away)' % (town.name, '{:0.0f}'.format(town_dist))
@@ -2188,10 +2191,10 @@ class MainWindow(QtGui.QMainWindow):
                 ctr[0] += 1
                 if st.generation > 0:
                     ctr[1] += 1
-            if ctr[0] == 0 and not self.view.scene().show_fossil:
-                comment = 'No Stations to display'
-                self.view.emit(QtCore.SIGNAL('statusmsg'), comment)
-                return
+        if ctr[0] == 0 and not self.view.scene().show_fossil:
+            comment = 'No Stations to display'
+            self.view.emit(QtCore.SIGNAL('statusmsg'), comment)
+            return
         fields = ['name', 'technology', 'capacity']
         units = 'capacity=MW'
         sumfields = ['capacity']
@@ -2765,7 +2768,7 @@ class MainWindow(QtGui.QMainWindow):
                         lens[3] = max(lens[3], len(str(stn.lon)))
                         ws.write(ctr, 4, stn.capacity)
                         lens[4] = max(lens[4], len(str(stn.capacity)))
-                        if stn.technology == 'Wind':
+                        if stn.technology.find('Wind') >= 0:
                             ws.write(ctr, 5, stn.turbine)
                             lens[5] = max(lens[5], len(stn.turbine))
                             ws.write(ctr, 6, stn.rotor)
