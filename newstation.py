@@ -238,7 +238,7 @@ class AnObject(QtGui.QDialog):
                 self.edit[-1].setValue(self.capacity)
                 self.edit[-1].setDecimals(3)
             elif self.field[i] == 'turbine':
-                if self.techcomb.currentText() != 'Wind' and self.techcomb.currentText() != '':
+                if str(self.techcomb.currentText()).find('Wind') < 0 and self.techcomb.currentText() != '':
                     turbcombo.setCurrentIndex(0)
                 self.turbine = turbcombo
                 self.turbines_was = turbcombo
@@ -349,7 +349,7 @@ class AnObject(QtGui.QDialog):
         pv_fields = ['direction', 'tilt']
         show_fields = []
         hide_fields = []
-        if str(self.techcomb.currentText()) == 'Wind':
+        if str(self.techcomb.currentText()).find('Wind') >= 0:
             hide_fields.append(cst_fields)
             hide_fields.append(pv_fields)
             show_fields.append(wind_fields)
@@ -481,14 +481,14 @@ class AnObject(QtGui.QDialog):
                 setattr(self, self.field[i], self.edit[i].value())
             elif isinstance(self.edit[i], QtGui.QSpinBox):
                 setattr(self, self.field[i], self.edit[i].value())
-        if self.technology != 'Wind':
+        if self.technology.find('Wind') < 0:
             self.rotor = 0.0
             self.turbine == ''
         if self.technology == 'Biomass':
             self.area = self.areas[self.technology] * float(self.capacity)
         elif 'PV' in self.technology:
             self.area = self.areas[self.technology] * float(self.capacity)
-        elif self.technology == 'Wind':
+        elif self.technology.find('Wind') >= 0:
             if self.turbine == '':
                 self.edit[5].setFocus()
                 self.message.setText('Error with ' + self.field[5].title() + '. Choose turbine')

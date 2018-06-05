@@ -1,4 +1,23 @@
 <!DOCTYPE html>
+<!--
+#  Copyright (C) 2015-2018 Sustainable Energy Now Inc., Angus King
+#
+#  help.html - This file is part of SIREN.
+#
+#  SIREN is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, either version 3 of
+#  the License, or (at your option) any later version.
+#
+#  SIREN is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General
+#  Public License along with SIREN.  If not, see
+#  <http://www.gnu.org/licenses/>.
+-->
 <html>
 <head>
 <style>
@@ -426,16 +445,17 @@ The format is similar to a Windows INI file. If you want to create a new Model y
 <ul class="none">
 <li><em>$USER$</em>&nbsp;will be replaced with the current userid</li>
 <li><em>$YEAR$</em>&nbsp;will be replaced with the base year value</li>
-<li><em>$dirn</em>&nbsp;will be replaced with the corresponding variable from the <dfn>[Parents]</dfn> Section</li>
+<li><em>$dirn</em>&nbsp;will be replaced with the corresponding variable from the <em>[Parents]</em> Section</li>
 </ul>
+<p><strong>Note:</strong> There is a quirk with the references to technologies in the <em>[Colors]</em> Section and <em>[Grid] dispatchable</em>, <em>[Power] fossil_technologies</em>, and  <em>[Power] technologies</em> variables. The technology names are changed to all lower case and spaces are replaced by underscores. Thus <em>Fixed PV</em> will appear as <em>fixed_pv</em>.</p 
 <p>(Skip to <a href="#menus">Menus</a>)</p>
-<p>Shortcut to Sections:- <a href="#p_base">Base</a>, <a href="#p_biomass">Biomass</a>, <a href="#p_colors">Colors</a>,
+<p>Shortcut to Sections:- <a href="#p_backtrack_pv">Backtrack PV</a>, <a href="#p_base">Base</a>, <a href="#p_biomass">Biomass</a>, <a href="#p_colors">Colors</a>,
 <a href="#p_files">Files</a>, <a href="#financial">Financial</a>, <a href="#p_fixed_pv">Fixed PV</a>,
 <a href="#p_fossil_coal">Fossil Coal</a>, <a href="#p_fossil_cogen">Fossil Cogen</a>, <a href="#p_fossil_gas">Fossil Gas</a>,
 <a href="#p_fossil_mixed">Fossil Mixed</a>, <a href="#p_geothermal">Geothermal</a>, <a href="#p_grid">Grid</a>,
-<a href="#p_hydro">Hydro</a>, <a href="#p_map">Map</a>, <a href="#p_other">Other</a>, <a href="#p_parents">Parents</a>,
+<a href="#p_hydro">Hydro</a>, <a href="#p_map">Map</a>, <a href="#p_offw">Offshore Wind</a>, <a href="#p_other">Other</a>, <a href="#p_parents">Parents</a>,
 <a href="#power">Power</a>, <a href="#p_pv">PV</a>, <a href="#p_rooftop_pv">Rooftop PV</a>,
-<a href="#p_sam_modules">SAM Modules</a>, <a href="#p_solar_thermal">Solar Thermal</a>, <a href="#p_storage">Storage</a>,
+<a href="#p_sam_modules">SAM Modules</a>, <a href="#p_single_pv">Single Axis PV</a>, <a href="#p_solar_thermal">Solar Thermal</a>, <a href="#p_storage">Storage</a>,
 <a href="#p_tracking_pv">Tracking PV</a>, <a href="#p_view">View</a>, <a href="#p_wave">Wave</a>, <a href="#p_wind">Wind</a>,
 <a href="#p_windows">Windows</a>.</p>
 <table border="0", class="none">
@@ -443,6 +463,31 @@ The format is similar to a Windows INI file. If you want to create a new Model y
 <th>Section</th>
 <th>Properties</th>
 </tr>
+<tr class="none" id="p_backtrack_pv"><td><dfn><strong>[Backtrack PV]</strong></dfn></td>
+<td>Specifics on Backtrack PV characteristics. Properties are:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>area</dfn></td>
+<td class="none">Estimated area in km<sup>2</sup> per MW</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>capital_cost</dfn></td>
+<td class="none">Capital cost per peak MW. A suffix of K indicates thousands and M millions</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>dc_ac_ratio</dfn></td>
+<td class="none">DC to AC ratio. Default value is as specified in the <dfn>[PV]</dfn> Section</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>icon</dfn></td>
+<td class="none">Icon to display for this technology. Default is solar_pv_g.png</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>o_m_cost</dfn></td>
+<td class="none">Operations and Maintenance cost per peak MW. A suffix of K indicates thousands and M millions</td>
+</tr>
+</table>
+</td></tr>
 <tr class="none" id="p_base"><td><dfn><strong>[Base]</strong></dfn></td>
 <td>Base properties are:</p>
 <table border="0", class="none">
@@ -546,6 +591,9 @@ The format is similar to a Windows INI file. If you want to create a new Model y
 <p>There are colours for each of the energy technologies:</p>
 <table border="0", class="none">
 <tr class="none">
+<td class="none"><dfn>backtrack_pv</dfn></td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>biomass</dfn></td>
 </tr>
 <tr class="none">
@@ -560,7 +608,13 @@ The format is similar to a Windows INI file. If you want to create a new Model y
 </tr>
 -->
 <tr class="none">
+<td class="none"><dfn>offshore_wind</dfn></td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>rooftop_pv</dfn></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>single_axis_pv</dfn></td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>solar_thermal</dfn></td>
@@ -568,11 +622,6 @@ The format is similar to a Windows INI file. If you want to create a new Model y
 <tr class="none">
 <td class="none"><dfn>tracking_pv</dfn></td>
 </tr>
-<!--
-<tr class="none">
-<td class="none"><dfn>wave</dfn></td>
-</tr>
--->
 <tr class="none">
 <td class="none"><dfn>wave</dfn></td>
 </tr>
@@ -1014,6 +1063,10 @@ as embedded solar - Rooftop PV - installed on the grid but not registered with A
 <td class="none"><dfn>o_m_cost</dfn></td>
 <td class="none">Operations and Maintenance cost per peak MW. A suffix of K indicates thousands and M millions</td>
 </tr>
+<tr class="none">
+<td class="none"><dfn>resource</dfn></td>
+<td class="none">Type of geothermal resource. Values can be 'Hydrothermal' or 'EGS' (or 'HDR'). The default is 'Hydrothermal'</td>
+</tr>
 </table>
 </td></tr>
 <tr class="none" id="p_grid"><td><dfn><strong>[Grid]</strong></dfn></td>
@@ -1097,7 +1150,7 @@ This entails all costs associated with connecting a power station to the network
 </td></tr>
 <tr class="none" id="p_hydro"><td><div class="experiment"><dfn><strong>[Hydro]</strong></dfn><br />(experimental)</div></td>
 <td><div class="experiment">
-Specifics on Hydrothermal characteristics (experimental). Properties are:</p>
+Specifics on Hydroelectric power characteristics (experimental). Properties are:</p>
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><dfn>area</dfn></td>
@@ -1159,12 +1212,40 @@ Specifics on Hydrothermal characteristics (experimental). Properties are:</p>
 </tr>
 </table>
 </td></tr>
-<tr class="none" id="p_parents"><td><dfn><strong>[Parents]</strong></dfn></td>
-<td>Enables parent directories to be specified and substituted in the <dfn>[Files]</dfn> properties. The variables must be in lower case. They will also allow a single level of substitution of other parent variables, for example, <em>$dir2=$dir1/...</em>. It is suggested they have an unusual character, such as $, to avoid valid values being substituted</p>
+<tr class="none" id="p_offw"><td><dfn><strong>[Offshore Wind]</strong></dfn></td>
+<td>Specifics on offshore wind and turbine spacings. Properties are:</p>
 <table border="0", class="none">
 <tr class="none">
-<td class="none"><dfn>$samsdk</dfn></td>
-<td class="none">Example: pointer to location of SAM SDK folders</td>
+<td class="none"><dfn>area</dfn></td>
+<td class="none">Multiplier to compute an area of <em>area x number of turbines x rotor diameter<sup>2</sup></em></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>capital_cost</dfn></td>
+<td class="none">Capital cost per peak MW. A suffix of K indicates thousands and M millions</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>icon</dfn></td>
+<td class="none">Icon to display for this technology. Default is wind_g.png</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>o_m_cost</dfn></td>
+<td class="none">Operations and Maintenance cost per peak MW. A suffix of K indicates thousands and M millions</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>offset_spacing</dfn></td>
+<td class="none">Offset between adjacent rows in multiples of rotor diameter</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>row_spacing</dfn></td>
+<td class="none">Distance between rows in multiples of rotor diameter</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>turbine_spacing</dfn></td>
+<td class="none">Distance between turbines in multiples of rotor diameter</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>wind_farm_losses_percent</dfn></td>
+<td class="none">SAM parameter. Expected losses in the wind farms electrical output as a percentage of the wind farm's total output. Use this factor to account for wiring, transformer, or other losses. Default is 2%. For Existing stations this factor is used to reduce the generation for de-rated turbines (station capacity divided by number of turbines).</td>
 </tr>
 </table>
 </td></tr>
@@ -1193,6 +1274,15 @@ Specifics on Hydrothermal characteristics (experimental). Properties are:</p>
 </tr>
 </table>
 </div>
+</td></tr>
+<tr class="none" id="p_parents"><td><dfn><strong>[Parents]</strong></dfn></td>
+<td>Enables parent directories to be specified and substituted in the <dfn>[Files]</dfn> properties. The variables must be in lower case. They will also allow a single level of substitution of other parent variables, for example, <em>$dir2=$dir1/...</em>. It is suggested they have an unusual character, such as $, to avoid valid values being substituted</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>$samsdk</dfn></td>
+<td class="none">Example: pointer to location of SAM SDK folders</td>
+</tr>
+</table>
 </td></tr>
 <tr class="none" id="power"><td><dfn><strong>[Power]</strong></dfn></td>
 <td>What processing, output and plots to produce for power model processing. Properties are True or False. Power options can be changed and saved when the Power Models menu option is selected. Properties are:</p>
@@ -1274,8 +1364,16 @@ Specifics on Hydrothermal characteristics (experimental). Properties are:</p>
 <td class="none">Display plots of the average 24 hour period for each month</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>orientation</dfn></td>
+<td class="none">Orientation for plots. Set to <em>landscape</em> to produce landscape figures. Default is either portrait or automatic as determined by the plot routine. This is only utilised if the <em>papersize</em> options is specified</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>other_width</dfn></td>
 <td class="none">Line width for non-technology plot items (Cumulative generation, Load and Shortfall). Default value is 2.0 (twice normal width)</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>papersize</dfn></td>
+<td class="none">Specify the papersize for plots. This can be either a specific size, such as A4 or letter, or two numbers <em>width,length</em> where both figures are in inches. This option along with <em>save_format</em> allows plots to be saved in a specific size and format</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>period</dfn></td>
@@ -1290,6 +1388,9 @@ Specifics on Hydrothermal characteristics (experimental). Properties are:</p>
 <td class="none"><dfn>save_balance</dfn></td>
 <td class="none">Save inputs for PowerBalance</td>
 </tr>
+<tr class="none">
+<td class="none"><dfn>save_format</dfn></td>
+<td class="none">Specify the file format to save plots as. This can be one of the values supported by the Python plot routine - <em>eps, jpeg, jpeg, pdf, pgf </em>(requires LaTex)<em>, png, ps, raw, rgba, svg, svgz, tif,</em> or <em>tiff</em>. The default format is <em>png</em></td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>save_data</dfn></td>
@@ -1298,6 +1399,10 @@ Specifics on Hydrothermal characteristics (experimental). Properties are:</p>
 <tr class="none">
 <td class="none"><dfn>save_detail</dfn></td>
 <td class="none">Save data outputs produced by the model for each station and other options. The data will be adjusted to reflect load growth as specified by Power Model options and adjusted generation</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>save_format</dfn></td>
+<td class="none">Specify the file format to save plots as. This can be one of the values supported by the Python plot routine - <em>eps, jpeg, jpeg, pdf, pgf </em>(requires LaTex)<em>, png, ps, raw, rgba, svg, svgz, tif,</em> or <em>tiff</em>. The default format is <em>png</em></td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>save_tech</dfn></td>
@@ -1466,6 +1571,31 @@ Specifics on Hydrothermal characteristics (experimental). Properties are:</p>
 </tr>
 </table>
 </td></tr>
+<tr class="none" id="p_single_pv"><td><dfn><strong>[Single Axis PV]</strong></dfn></td>
+<td>Specifics on Single Axis PV characteristics. Properties are:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>area</dfn></td>
+<td class="none">Estimated area in km<sup>2</sup> per MW</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>capital_cost</dfn></td>
+<td class="none">Capital cost per peak MW. A suffix of K indicates thousands and M millions</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>dc_ac_ratio</dfn></td>
+<td class="none">DC to AC ratio. Default value is as specified in the <dfn>[PV]</dfn> Section</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>icon</dfn></td>
+<td class="none">Icon to display for this technology. Default is solar_pv_g.png</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>o_m_cost</dfn></td>
+<td class="none">Operations and Maintenance cost per peak MW. A suffix of K indicates thousands and M millions</td>
+</tr>
+</table>
+</td></tr>
 <tr class="none" id="p_solar_thermal"><td><dfn><strong>[Solar Thermal]</strong></dfn></td>
 <td>Specifics on Solar Thermal characteristics. Properties are:</p>
 <table border="0", class="none">
@@ -1526,7 +1656,7 @@ Specifics on Hydrothermal characteristics (experimental). Properties are:</p>
 </table>
 </td></tr>
 <tr class="none" id="p_tracking_pv"><td><dfn><strong>[Tracking PV]</strong></dfn></td>
-<td>Specifics on Tracking PV characteristics. Properties are:</p>
+<td>Specifics on (dual axis) Tracking PV characteristics. Properties are:</p>
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><dfn>area</dfn></td>
@@ -1974,7 +2104,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 </tr>
 <tr class="none">
 <td class="none"><img src="arrow.png" alt="Edit Section">&nbsp;&nbsp;Edit Section</td>
-<td class="none">Edit a specific Section of the Preferences file. You will be presented with a list of Sections to choose the desired one. The edit program will then present a table of current Properties and their values</td>
+<td class="none">Edit a specific Section of the Preferences file. You will be presented with a list of Sections to choose the desired one. The edit program will then present a table of current Properties and their values. It is also possible to add values for Properties not currently present in that Section</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="blank.png" alt="Edit Technologies">&nbsp;&nbsp;Edit Technologies</td>
@@ -2216,7 +2346,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <tr><td class="lr"><dfn>Visualise generation - period &amp; delay (secs)</dfn></td>
 <td class="none">This option will visualise generation by displaying variable generation circles for each station over the chosen periods (<em>visualise</em>)</td></tr>
 <tr><td class="lr"><dfn>Maximise Plot windows</dfn></td>
-<td class="none">Plots will display at maximum window size (<em>show_load</em>)</td></tr>
+<td class="none">Plots will display at maximum window size (<em>maximise</em>)</td></tr>
 <tr><td class="lr"><dfn>Show plots one at a time</dfn></td>
 <td class="none">If checked chosen plots will be displayed one at a time, otherwise where possible they will be displayed all together, that is, display them all and allow you to navigate between them (<em>block</em>)</td></tr>
 <tr><td class="lr"><dfn>Show generation as a percentage of load</dfn></td>
@@ -2290,7 +2420,8 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <li><em>Power - Shortfall analysis</em> option produces a table and line plots that attempt to assist with analysing shortfalls on a daily basis. The analysis iterations option will produce average shortfalls for that number of days, for example, 3 iterations will produce average shortfall figures for one, two and three days. The figures are calculated by &ldquo;averaging&rdquo; the generation shortfall over the chosen number of days. This option will also produce cumulative shortfall graphs that add the average hourly shortfall to generation to attempt to flatten out the shortfall over the year</li>
 </ul>
 <p>The tool used to produce the plots, matplotlib, has a navigation toolbar
-(<a href="http://matplotlib.org/users/navigation_toolbar.html" target="_blank">Interactive navigation</a>) to enable you to navigate and manipulate the plot (but doesn't allow you to change the plot data). It includes options to zoom into an area of the plot and to save the plot image (by default to the <em>scenarios</em> folder).</p>
+(<a href="http://matplotlib.org/users/navigation_toolbar.html" target="_blank">Interactive navigation</a>) to enable you to navigate and manipulate the plot (but doesn't allow you to change the plot data). It includes options to zoom into an area of the plot and to save the plot image (by default to the <em>scenarios</em> folder).
+By default the size of plots produced is determined by matplotlib, or by the <em>Maximise Plot windows</em> option (above). By using the <em>orientation</em>, <em>papersize</em>, and <em>save_format</em> Properties of the <em>[Power]</em> section it is possible to produce the plots in a number of formats, such as PDF format, and in a specific page size and layout. If you use these options you can save plots in a standardised format (these Properties can be added and removed by using the <em>Preferences -> Edit Section</em> menu option).</p>
 <h4>Tables</h4>
 <ul>
 <li><em>Save Hourly Data Output</em> option will save generation in MWh for each chosen station for each hour of the year (8,760 hours) as calculated by SAM. This can be used in detailed analysis or as an option to avoid having to reprocess the station in the future, by updating a Station's </em>Power File</em> field. The default file name can be set using the <em>data_file</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file; otherwise it will in the format of <em>Power_Table_yyyy-mm-dd_hhmm...</em></li>
@@ -2843,7 +2974,7 @@ wget --load-cookies ~/.urs_cookies --save-cookies ~/.urs_cookies --auth-no-chall
 <li>Choosing the centre point and dimensions for the area of interest:
 <ul>
 <li><em>(Centre) Lat</em>. Centre latitude</li>
-<li><em>(Centre) Lon</em>. Centre lonitude</li>
+<li><em>(Centre) Lon</em>. Centre longitude</li>
 <li><em>Degrees (Lat)</em>. The dimension in degrees north south. Minimum value is 1 (degree)</li>
 <li><em>Degrees (Lon)</em>. The dimension in degrees east west. Minimum value is 1.5 (degrees)</li>
 </ul>
@@ -3347,7 +3478,7 @@ MERRA-2 Variable
 <td>geothermal_variables</td>
 </tr>
 <tr class="none">
-<td>PV<br>Fixed PV<br>Rooftop PV<br>Tracking PV</td>
+<td>PV<br \>Fixed PV<br \>Rooftop PV<br \>Single Axis PV<br \>Backtrack PV<br \>Tracking (Dual Axis) PV</td>
 <td>pvwattsv5</td>
 <td>pv_variables</td>
 </tr>
@@ -3454,8 +3585,8 @@ MERRA-2 Variable
 <tr class="none">
 <td>dc_ac_ratio</td>
 <td>[PV] dc_ac_ratio</td>
-<td>May also specify for [Fixed PV],
-<br>[Rooftop PV], [Tracking PV]</td>
+<td>May also specify for [Backtrack PV], [Fixed PV],
+<br>[Rooftop PV], [Single Axis PV], [Tracking PV]</td>
 </tr>
 <tr class="none">
 <td>losses</td>
@@ -3911,12 +4042,16 @@ MERRA-2 Variable
 <td class="none">Greenwich Mean Time. It is the mean solar time at the Royal Observatory in Greenwich, London. GMT was formerly used as the international civil time standard, now superseded in that function by Coordinated Universal Time (UTC).</td></tr>
 <tr><td class="none"><dfn>GEOS-5</dfn></td>
 <td class="none">Goddard Earth Observing System Data Assimilation System Version 5</td></tr>
+<tr><td class="none"><dfn>EGS</dfn></td>
+<td class="none">Enhanced Geothermal Systems geothermal energy</td></tr>
 <tr><td class="none"><dfn>GHI</dfn></td>
 <td class="none">Global Horizontal Irradiance</td></tr>
 <tr><td class="none"><dfn>GMAO</dfn></td>
 <td class="none">US Global Modeling and Assimilation Office</td></tr>
 <tr><td class="none"><dfn>GWh</dfn></td>
 <td class="none">Gigawatt hour</td></tr>
+<tr><td class="none"><dfn>HDR</dfn></td>
+<td class="none">Hot Dry Rock geothermal energy. In the context of SIREN's use of the SAM geothermal model this is the same as EGS</td></tr>
 <tr><td class="none"><dfn>HTML</dfn></td>
 <td class="none">Hyper Text Markup Language; used for describing web documents (web pages)</td></tr>
 <tr><td class="none"><dfn>HTTP</dfn></td>

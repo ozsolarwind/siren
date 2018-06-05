@@ -1054,6 +1054,8 @@ class SuperPower():
     def do_defaults(self, station):
         if 'PV' in station.technology:
             technology = 'PV'
+        elif 'Wind' in station.technology:
+            technology = 'Wind'
         else:
             technology = station.technology
         if self.defaults[technology][-4:] == '.xls' or \
@@ -1170,6 +1172,14 @@ class SuperPower():
             self.biomass_multiplier = float(config.get('Biomass', 'multiplier'))
         except:
             self.biomass_multiplier = 8.25
+        try:
+            resource = config.get('Geothermal', 'resource')
+            if resource.lower()[0:1] == 'hy':
+                self.geores = 0
+            else:
+                self.geores = 1
+        except:
+            self.geores = 0
         self.dc_ac_ratio = [1.1] * 5
         try:
             self.dc_ac_ratio = [float(config.get('PV', 'dc_ac_ratio'))] * 5
@@ -1217,22 +1227,54 @@ class SuperPower():
                 self.wave_efficiency = self.wave_efficiency / 100.
         except:
             self.wave_efficiency = 0
+        self.turbine_spacing = [8, 8] # onshore and offshore winds
+        self.row_spacing = [8, 8]
+        self.offset_spacing = [4, 4]
+        self.wind_farm_losses_percent = [2, 2]
         try:
-            self.turbine_spacing = int(config.get('Wind', 'turbine_spacing'))
+            self.turbine_spacing[0] = int(config.get('Wind', 'turbine_spacing'))
         except:
-            self.turbine_spacing = 8
+            try:
+                self.turbine_spacing[0] = int(config.get('Onshore Wind', 'turbine_spacing'))
+            except:
+                pass
         try:
-            self.row_spacing = int(config.get('Wind', 'row_spacing'))
+            self.row_spacing[0] = int(config.get('Wind', 'row_spacing'))
         except:
-            self.row_spacing = 8
+            try:
+                self.row_spacing[0] = int(config.get('Onshore Wind', 'row_spacing'))
+            except:
+                pass
         try:
-            self.offset_spacing = int(config.get('Wind', 'offset_spacing'))
+            self.offset_spacing[0] = int(config.get('Wind', 'offset_spacing'))
         except:
-            self.offset_spacing = 4
+            try:
+                self.offset_spacing[0] = int(config.get('Onshore Wind', 'offset_spacing'))
+            except:
+                pass
         try:
-            self.wind_farm_losses_percent = int(config.get('Wind', 'wind_farm_losses_percent').strip('%'))
+            self.wind_farm_losses_percent[0] = int(config.get('Wind', 'wind_farm_losses_percent').strip('%'))
         except:
-            self.wind_farm_losses_percent = 2
+            try:
+                self.wind_farm_losses_percent[0] = int(config.get('Onshore Wind', 'wind_farm_losses_percent').strip('%'))
+            except:
+                pass
+        try:
+            self.turbine_spacing[1] = int(config.get('Offshore Wind', 'turbine_spacing'))
+        except:
+            pass
+        try:
+            self.row_spacing[1] = int(config.get('Offshore Wind', 'row_spacing'))
+        except:
+            pass
+        try:
+            self.offset_spacing[1] = int(config.get('Offshore Wind', 'offset_spacing'))
+        except:
+            pass
+        try:
+            self.wind_farm_losses_percent[1] = int(config.get('Offshore Wind', 'wind_farm_losses_percent').strip('%'))
+        except:
+            pass
         self.gross_net = 0.87
         try:
             self.gross_net = float(config.get('Solar Thermal', 'gross_net'))
@@ -1570,6 +1612,10 @@ class SuperPower():
         self.data = None
         self.data = ssc.Data()
         if station.technology[-4:] == 'Wind':
+            if station.technology[:3] == 'Off': # offshore?
+                wtyp = 1
+            else:
+                wtyp = 0
             closest = self.find_closest(station.lat, station.lon, wind=True)
             self.data.set_string('wind_resource_filename', self.wind_files + '/' + closest)
             turbine = Turbine(station.turbine)
@@ -1578,12 +1624,12 @@ class SuperPower():
                 loss = round(1. - (station.capacity * 1000) / (no_turbines * turbine.capacity), 2)
                 loss = loss * 100
                 if loss < 0.:
-                    loss = self.wind_farm_losses_percent
+                    loss = self.wind_farm_losses_percent[wtyp]
                 self.data.set_number('system_capacity', station.capacity * 1000000)
                 self.data.set_number('wind_farm_losses_percent', loss)
             else:
                 self.data.set_number('system_capacity', no_turbines * turbine.capacity * 1000)
-                self.data.set_number('wind_farm_losses_percent', self.wind_farm_losses_percent)
+                self.data.set_number('wind_farm_losses_percent', self.wind_farm_losses_percent[wtyp])
             pc_wind = turbine.speeds
             pc_power = turbine.powers
             self.data.set_array('wind_turbine_powercurve_windspeeds', pc_wind)
@@ -1594,9 +1640,9 @@ class SuperPower():
             wt_y = []
             for r in range(t_rows):
                 for c in range(t_rows):
-                    wt_x.append(r * self.row_spacing * turbine.rotor)
-                    wt_y.append(c * self.turbine_spacing * turbine.rotor +
-                                (r % 2) * self.offset_spacing * turbine.rotor)
+                    wt_x.append(r * self.row_spacing[wtyp] * turbine.rotor)
+                    wt_y.append(c * self.turbine_spacing[wtyp] * turbine.rotor +
+                                (r % 2) * self.offset_spacing[wtyp] * turbine.rotor)
                     ctr -= 1
                     if ctr < 1:
                         break
@@ -1777,15 +1823,17 @@ class SuperPower():
             closest = self.find_closest(station.lat, station.lon)
             self.data.set_string('file_name', self.solar_files + '/' + closest)
             self.data.set_number('nameplate', station.capacity * 1000)
+            self.data.set_number('resource_potential', station.capacity * 10)
+            self.data.set_number('resource_type', self.geores)
             self.data.set_string('hybrid_dispatch_schedule', '1' * 24 * 12)
             self.do_defaults(station)
             module = ssc.Module('geothermal')
             if (module.exec_(self.data)):
                 energy = self.data.get_number('annual_energy')
-                pwr = self.data.get_array('monthly_power')
+                pwr = self.data.get_array('monthly_energy')
                 for i in range(12):
-                    for j in range(730):
-                        farmpwr.append(pwr[i] / 730)
+                    for j in range(the_days[i] * 24):
+                        farmpwr.append(pwr[i] / (the_days[i] * 24))
                 del module
                 return farmpwr
             else:
@@ -2940,9 +2988,11 @@ class PowerModel():
             ws = ts.active
             type_tags = ['name', 'tech', 'cap', 'cf', 'gen', 'tmit', 'hrly']
             tech_tags = ['load', 'wind', 'offw', 'roof', 'fixed', 'single', 'dual', 'biomass', 'geotherm', 'other1', 'cst']
-            tech_names = ['Load', 'Wind', 'Offshore Wind', 'Rooftop PV', 'Fixed PV', 'Single Axis PV', 'Dual Axis PV', 'Biomass',
+            tech_names = ['Load', 'Wind', 'Offshore Wind', 'Rooftop PV', 'Fixed PV', 'Single Axis PV', 'Tracking PV', 'Biomass',
                        'Geothermal', 'Other1', 'CST']
             tech_names2 = [''] * len(tech_names)
+            tech_names2[tech_names.index('Wind')] = 'Onshore Wind'
+            tech_names2[tech_names.index('Tracking PV')] = 'Dual Axis PV'
             tech_names2[tech_names.index('CST')] = 'Solar Thermal'
             st_row = []
             st_col = []
