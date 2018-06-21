@@ -60,6 +60,51 @@ def p2str(p):
     return '(%.4f,%.4f)' % (p.y(), p.x())
 
 
+class Location(QtGui.QDialog):
+    def __init__(self, upper_left, lower_right, parent=None):
+        super(Location, self).__init__(parent)
+        self.lat = QtGui.QDoubleSpinBox()
+        self.lat.setDecimals(4)
+        self.lat.setSingleStep(.1)
+        self.lat.setRange(lower_right[3], upper_left[3])
+        self.lat.setValue(lower_right[3] + (upper_left[3] - lower_right[3]) / 2.)
+        self.lon = QtGui.QDoubleSpinBox()
+        self.lon.setDecimals(4)
+        self.lon.setSingleStep(.1)
+        self.lon.setRange(upper_left[2], lower_right[2])
+        self.lon.setValue(upper_left[2] + (lower_right[2] - upper_left[2]) / 2.)
+        grid = QtGui.QGridLayout(self)
+        grid.addWidget(QtGui.QLabel('Lat:'), 1, 0)
+        grid.addWidget(self.lat, 1, 1)
+        lats =  QtGui.QLabel('(%s to %s)     ' % ('{:0.4f}'.format(lower_right[3]), \
+                '{:0.4f}'.format(upper_left[3])))
+        lats.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        grid.addWidget(lats, 2, 0, 1, 2)
+        grid.addWidget(QtGui.QLabel('Lon:'), 3, 0)
+        grid.addWidget(self.lon, 3, 1)
+        lons =  QtGui.QLabel('(%s to %s)     ' % ('{:0.4f}'.format(upper_left[2]), \
+                '{:0.4f}'.format(lower_right[2])))
+        lons.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        grid.addWidget(lons, 4, 0, 1, 2)
+         # OK and Cancel buttons
+        buttons = QtGui.QDialogButtonBox(
+            QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel,
+            QtCore.Qt.Horizontal, self)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        grid.addWidget(buttons, 5, 0, 1, 2)
+        self.setWindowTitle('SIREN - Go to Location')
+
+    def location(self):
+        return self.lat.value(), self.lon.value()
+
+     # static method to create the dialog and return
+    @staticmethod
+    def getLocation(upper_left, lower_right, parent=None):
+        dialog = Location(upper_left, lower_right, parent)
+        result = dialog.exec_()
+        return (dialog.location())
+
 class Description(QtGui.QDialog):
     def __init__(self, who, desc='', parent=None):
         super(Description, self).__init__(parent)
@@ -100,7 +145,6 @@ class MapView(QtGui.QGraphicsView):
     #     self.scene = scene
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-
         self._drag_start = None
         self.setMouseTracking(True)
 
@@ -170,6 +214,7 @@ class MapView(QtGui.QGraphicsView):
                 del self.scene().lines.lines[i]
 
     def mousePressEvent(self, event):
+        self.scene().last_locn = event.pos() # save last mouse position (right click doesn't behave as expected
         if QtCore.Qt.LeftButton == event.button():
             where = self.mapToLonLat(event.pos())
             if self._move_station:
@@ -867,6 +912,8 @@ class MainWindow(QtGui.QMainWindow):
         lay = QtGui.QVBoxLayout(w)
         lay.addWidget(self.view)
         self.setCentralWidget(w)
+    #    self.view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+    #    self.view.customContextMenuRequested.connect(self.popup)
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.popup)
         openFile = QtGui.QAction(QtGui.QIcon('open.png'), 'Open', self)
@@ -1035,6 +1082,9 @@ class MainWindow(QtGui.QMainWindow):
         self.goToTown = QtGui.QAction(QtGui.QIcon('arrowt.png'), 'Go to Town', self)
         self.goToTown.setShortcut('Ctrl+T')
         self.goToTown.triggered.connect(self.go_ToTown)
+        self.goToLocn = QtGui.QAction(QtGui.QIcon('arrow.png'), 'Go to Location', self)
+        self.goToLocn.setShortcut('Ctrl+D')
+        self.goToLocn.triggered.connect(self.go_ToLocn)
         self.saveView = QtGui.QAction(QtGui.QIcon('camera.png'), 'Save View', self)
         self.saveView.setShortcut('Ctrl+V')
         self.saveView.triggered.connect(self.save_View)
@@ -1054,6 +1104,7 @@ class MainWindow(QtGui.QMainWindow):
         viewMenu.addAction(self.refreshGrid)
         viewMenu.addAction(self.goTo)
         viewMenu.addAction(self.goToTown)
+        viewMenu.addAction(self.goToLocn)
         if self.view.scene().load_centre is not None:
             self.goToLoad = QtGui.QAction(QtGui.QIcon('arrow.png'), 'Go to Load Centre', self)
             self.goToLoad.setShortcut('Ctrl+M')
@@ -1777,6 +1828,14 @@ class MainWindow(QtGui.QMainWindow):
                       self.view.scene().load_centre[j][0])
             self.view.emit(QtCore.SIGNAL('statusmsg'), comment)
 
+    def go_ToLocn(self):
+        lat, lon = Location.getLocation(self.view.scene().upper_left, self.view.scene().lower_right)
+        go_to = self.mapFromLonLat(QtCore.QPointF(lon,lat))
+        self.view.centerOn(go_to)
+        comment = '(%s,%s) Centred on %s,%s' % ('{:0.4f}'.format(lat), '{:0.4f}'.format(lon),
+                  '{:0.4f}'.format(lat), '{:0.4f}'.format(lon))
+        self.view.emit(QtCore.SIGNAL('statusmsg'), comment)
+
     def save_View(self):
         outputimg = QtGui.QPixmap(self.view.width(), self.view.height())
         painter = QtGui.QPainter(outputimg)
@@ -1848,7 +1907,8 @@ class MainWindow(QtGui.QMainWindow):
                 self.view.scene()._scenarios[-1][1] = True
             self.reshow_FloatLegend()
 
-        where = self.view.mapToLonLat(pos)
+        pos = self.view.scene().last_locn
+        where = self.view.mapToLonLat(self.view.scene().last_locn)
         menu = QtGui.QMenu()
         station = None
         if len(self.view.scene()._stations.stations) > 0:  # some stations
@@ -2265,7 +2325,7 @@ class MainWindow(QtGui.QMainWindow):
                  '<kml xmlns="http://www.opengis.net/kml/2.2">',
                  '<Document>']
         pline.append('<name>' + kfile + '</name>')
-	pline.append('<description><![CDATA[This KML file is the grid for ' + \
+        pline.append('<description><![CDATA[This KML file is the grid for ' + \
                      self.view.scene().model_name + ' at ' + \
                      str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'yyyy-MM-dd hh:mm')) + \
                      ']]></description>')

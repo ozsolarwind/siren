@@ -468,6 +468,7 @@ class WAScene(QtGui.QGraphicsScene):
         self.exitLoop = False
         self.loopMax = 0
         self.get_config()
+        self.last_locn = None
         self.setBackgroundBrush(QtGui.QColor(self.colors['background']))
         if os.path.exists(self.map_file):
             war = QtGui.QImageReader(self.map_file)
