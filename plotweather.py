@@ -32,6 +32,8 @@ import ConfigParser  # decode .ini file
 from PyQt4 import QtGui, QtCore
 
 from senuser import getUser
+import displaytable
+from senuser import getUser
 from sammodels import getZenith
 
 the_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
@@ -158,7 +160,7 @@ class PlotWeather():
             if index_file == '':
                 fils = os.listdir(folder)
                 for fil in fils:
-                    if fil[-4:] == filetype or fil[-4:] == '.csv':
+                    if fil[-4:] == filetype or filetype != '.srw' and fil[-4:] == '.csv':
                         bit = fil.split('_')
                         if bit[-1][:4] == str(self.base_year):
                             dist1 = self.haversine(float(bit[-3]), float(bit[-2]), latitude, longitude)
@@ -329,6 +331,28 @@ class PlotWeather():
         self.maximise = False
         seasons = []
         periods = []
+        parents = []
+        try:
+            aparents = config.items('Parents')
+            for key, value in aparents:
+                for key2, value2 in aparents:
+                    if key2 == key:
+                        continue
+                    value = value.replace(key2, value2)
+                parents.append((key, value))
+            del aparents
+        except:
+            pass
+        try:
+            self.scenarios = config.get('Files', 'scenarios')
+            for key, value in parents:
+                self.scenarios = self.scenarios.replace(key, value)
+            self.scenarios = self.scenarios.replace('$USER$', getUser())
+            self.scenarios = self.scenarios.replace('$YEAR$', str(self.base_year))
+            i = self.scenarios.rfind('/')
+            self.scenarios = self.scenarios[:i + 1]
+        except:
+            self.scenarios = ''
         try:
             items = config.items('Power')
             for item, values in items:
@@ -498,6 +522,10 @@ class PlotWeather():
                     for s in range(len(periods)):
                         s24[i][s][k] = s24[i][s][k] / the_ssns[s]
         if self.plots['hour']:
+            if self.plots['save_plot']:
+                vals = ['hour']
+                data = []
+                data.append(x)
             fig = plt.figure('hour')
             plt.grid(True)
             hx = fig.add_subplot(111)
@@ -512,6 +540,14 @@ class PlotWeather():
                 else:
                     hx.plot(x, value, linewidth=lw, label=key, color=self.colours[key])
                     maxy = max(maxy, max(value))
+                if self.plots['save_plot']:
+                    vals.append(key)
+                    data.append(value)
+            if self.plots['save_plot']:
+                titl = 'hour'
+                dialog = displaytable.Table(map(list, zip(*data)), title=titl, fields=vals, save_folder=self.scenarios)
+                dialog.exec_()
+                del dialog, data, vals
             hx.set_ylim([0, maxy])
             plt.xlim([0, len(x)])
             plt.xticks(range(12, len(x), 168))
@@ -541,6 +577,10 @@ class PlotWeather():
             else:
                 plt.draw()
         if self.plots['total']:
+            if self.plots['save_plot']:
+                vals = ['hour of the day']
+                data = []
+                data.append(x24)
             figt = plt.figure('total')
             plt.grid(True)
             tx = figt.add_subplot(111)
@@ -557,6 +597,14 @@ class PlotWeather():
                 else:
                     tx.plot(x24, l24[i], linewidth=lw, label=key, color=self.colours[key])
                     maxy = max(maxy, max(l24[i]))
+                if self.plots['save_plot']:
+                    vals.append(key)
+                    data.append(l24[i])
+            if self.plots['save_plot']:
+                titl = 'total'
+                dialog = displaytable.Table(map(list, zip(*data)), title=titl, fields=vals, save_folder=self.scenarios)
+                dialog.exec_()
+                del dialog, data, vals
             tx.set_ylim([0, maxy])
             plt.xlim([1, 24])
             plt.xticks(range(4, 25, 4))
@@ -606,6 +654,10 @@ class PlotWeather():
             else:
                 plt.draw()
         if self.plots['monthly']:
+            if self.plots['save_plot']:
+                vals = ['monthly']
+                data = []
+                data.append(x24[:12])
             figt = plt.figure('monthly')
             plt.grid(True)
             tx = figt.add_subplot(111)
@@ -622,6 +674,14 @@ class PlotWeather():
                 else:
                     tx.step(x24[:14], t12[i], linewidth=lw, label=key, color=self.colours[key])
                     maxy = max(maxy, max(t12[i]) + 1)
+                if self.plots['save_plot']:
+                    vals.append(key)
+                    data.append(t12[i][1:-1])
+            if self.plots['save_plot']:
+                titl = 'monthly'
+                dialog = displaytable.Table(map(list, zip(*data)), title=titl, fields=vals, save_folder=self.scenarios)
+                dialog.exec_()
+                del dialog, data, vals
             tx.set_ylim([0, maxy])
             tick_spot = []
             for i in range(12):
@@ -654,6 +714,10 @@ class PlotWeather():
             else:
                 plt.draw()
         if self.plots['mthavg']:
+            if self.plots['save_plot']:
+                vals = ['monthly_average']
+                data = []
+                data.append(x24[:12])
             figt = plt.figure('monthly_average')
             plt.grid(True)
             tx = figt.add_subplot(111)
@@ -675,6 +739,14 @@ class PlotWeather():
                 else:
                     tx.plot(x24[:12], m12[i], linewidth=lw, label=key, color=self.colours[key])
                     maxy = max(maxy, max(m12[i]) + 1)
+                if self.plots['save_plot']:
+                    vals.append(key)
+                    data.append(m12[i])
+            if self.plots['save_plot']:
+                titl = 'mthavg'
+                dialog = displaytable.Table(map(list, zip(*data)), title=titl, fields=vals, save_folder=self.scenarios)
+                dialog.exec_()
+                del dialog, data, vals
             tx.set_ylim([0, maxy])
             plt.xlim([1, 12])
             plt.xticks(range(1, 13, 1))
@@ -794,11 +866,12 @@ class PlotWeather():
         plot_order = ['show_menu', 'dhi', 'dni', 'ghi', 'temp', 'wind']
         if rain:
             plot_order.append('rain')
-        plot_order2 = ['hour', 'total', 'month', 'season', 'period', 'mthavg', 'block']  # , 'pdf']
+        plot_order2 = ['hour', 'total', 'month', 'season', 'period', 'mthavg', 'block'] #, 'pdf']
         for plt in plot_order2:
             plot_order.append(plt)
         if rain:
             plot_order.append('monthly')
+        plot_order.append('save_plot')
         self.hdrs = {'show_menu': 'Check / Uncheck all',
                 'dhi': 'Solar - DHI (Diffuse)',
                 'dni': 'Solar - DNI (Beam)',
@@ -812,12 +885,14 @@ class PlotWeather():
                 'period': 'Daily average by period',
                 'mthavg': 'Monthly average',
                 'block': 'Show plots one at a time',
-                'pdf': 'Probability Density Function'}
+                'pdf': 'Probability Density Function',
+                'save_plot': 'Save plot data to a file'}
         if rain:
              self.hdrs['rain'] = 'Rainfall - mm'
              self.hdrs['monthly'] = 'Monthly totals'
         spacers = {'dhi': 'Weather values',
-                   'hour': 'Choose plots (all use a full year of data)'}
+                   'hour': 'Choose plots (all use a full year of data)',
+                   'save_plot': 'Save plot data'}
         weathers = ['dhi', 'dni', 'ghi', 'rain', 'temp', 'wind']
         self.plots = {}
         for i in range(len(plot_order)):

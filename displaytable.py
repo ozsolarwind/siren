@@ -580,7 +580,12 @@ class Table(QtGui.QDialog):
                     else:
                         line += txt
                 txt = self.hdrs[hdr]
-                hdr_types.append(self.labels[txt.lower()])
+                try:
+                    hdr_types.append(self.labels[txt.lower()])
+                except:
+                    hdr_types.append(self.labels[txt])
+                print hdr_types
+                print line
             tf.write(line + '\n')
             for rw in range(self.table.rowCount()):
                 line = ''
@@ -597,7 +602,7 @@ class Table(QtGui.QDialog):
                         elif hdr_types[cl] == 'float':
                             try:
                                 txt = str(self.table.item(rw, cl).text()).strip()
-                                txt = val1.replace(',', '')
+                                txt = txt.replace(',', '')
                             except:
                                 pass
                         if ',' in txt:
@@ -617,12 +622,16 @@ class Table(QtGui.QDialog):
                 if hdr[0] != '%':
                     ws.write(0, cl, hdr)
                 txt = self.hdrs[hdr]
-                hdr_types.append(self.labels[txt.lower()])
+                try:
+                    hdr_types.append(self.labels[txt.lower()])
+                    txt = txt.lower()
+                except:
+                    hdr_types.append(self.labels[txt])
                 style = xlwt.XFStyle()
                 try:
-                    if self.lens[txt.lower()][1] > 0:
-                        style.num_format_str = '#,##0.' + '0' * self.lens[txt.lower()][1]
-                    elif self.labels[txt.lower()] == 'int':
+                    if self.lens[txt][1] > 0:
+                        style.num_format_str = '#,##0.' + '0' * self.lens[txt][1]
+                    elif self.labels[txt] == 'int':
                         style.num_format_str = '#,##0'
                 except:
                     pass

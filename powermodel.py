@@ -185,7 +185,7 @@ class whatPlots(QtGui.QDialog):
         bold.setBold(True)
         for plot in range(len(self.plot_order)):
             if self.plot_order[plot] in self.spacers:
-                if self.plot_order[plot] == 'visualise':  # fudge to add in growth stuff
+                if self.plot_order[plot] == 'save_plot':  # fudge to add in growth stuff
                     self.percentLabel = QtGui.QLabel('        Growth. Set annual '
                                                      + 'Load growth & target year')
                     self.percentSpin = QtGui.QDoubleSpinBox()
@@ -209,11 +209,13 @@ class whatPlots(QtGui.QDialog):
                     self.grid.addWidget(label, i, 0)
                     i += 1
                     label = QtGui.QLabel('        Storage capacity (GWh) & initial value')
-                    self.storageSpin = QtGui.QSpinBox()
+                    self.storageSpin = QtGui.QDoubleSpinBox()
+                    self.storageSpin.setDecimals(3)
                     self.storageSpin.setRange(0, 500)
                     self.storageSpin.setValue(self.storage[0])
                     self.storageSpin.setSingleStep(5)
-                    self.storpctSpin = QtGui.QSpinBox()
+                    self.storpctSpin = QtGui.QDoubleSpinBox()
+                    self.storpctSpin.setDecimals(3)
                     self.storpctSpin.setRange(0, 500)
                     self.storpctSpin.setValue(self.storage[1])
                     self.storpctSpin.setSingleStep(5)
@@ -222,7 +224,8 @@ class whatPlots(QtGui.QDialog):
                     self.grid.addWidget(self.storpctSpin, i, 2)
                     i += 1
                     label = QtGui.QLabel('        Discharge cap (MW) & loss (%)')
-                    self.dischargeSpin = QtGui.QSpinBox()
+                    self.dischargeSpin = QtGui.QDoubleSpinBox()
+                    self.dischargeSpin.setDecimals(2)
                     self.dischargeSpin.setRange(0, 50000)  # max is 10% of capacity
                     self.dischargeSpin.setValue(self.discharge[0])
                     self.dischargeSpin.setSingleStep(5)
@@ -234,7 +237,8 @@ class whatPlots(QtGui.QDialog):
                     self.grid.addWidget(self.dischargepctSpin, i, 2)
                     i += 1
                     label = QtGui.QLabel('        Recharge cap (MW) & loss (%)')
-                    self.rechargeSpin = QtGui.QSpinBox()
+                    self.rechargeSpin = QtGui.QDoubleSpinBox()
+                    self.rechargeSpin.setDecimals(2)
                     self.rechargeSpin.setRange(0, 50000)  # max is 10% of capacity
                     self.rechargeSpin.setValue(self.recharge[0])
                     self.rechargeSpin.setSingleStep(5)
@@ -2524,6 +2528,23 @@ class PowerModel():
             xs = []
             for i in range(len(data[k1]) + 1):
                 xs.append(i)
+            if self.plots['save_plot']:
+                sp_data = []
+                sp_data.append(xs[1:])
+                if period == 'day':
+                    sp_vals = [period, 'Date']
+                    sp_data.append([])
+                    mm = 0
+                    dy = 1
+                    for d in range(1, len(xs)):
+                        sp_data[-1].append('%s-%s-%s' % (self.load_year, str(mm + 1).zfill(2), str(dy).zfill(2)))
+                        dy += 1
+                        if dy > the_days[mm]:
+                            mm += 1
+                            dy = 1
+                else:
+                    sp_vals = ['No.', period]
+                    sp_data.append(x_labels)
             if self.plots['cumulative']:
                 cumulative = [0.]
                 for i in range(len(data[k1])):
@@ -2562,7 +2583,10 @@ class PowerModel():
                         cumulative[j] += dval[j]
                 bbdx.step(xs, dval, linewidth=lw, label=shrinkKey(key), color=self.colours[key],
                           linestyle=self.linestyle[key])
-                if self.plots['shortfall'] and key[:4] == 'Load':
+                if self.plots['save_plot']:
+                    sp_vals.append(shrinkKey(key))
+                    sp_data.append(dval[1:])
+                if (self.plots['shortfall'] or self.plots['show_load']) and key[:4] == 'Load':
                     load = dval[:]
                 if self.plots['shortfall'] and key == 'Storage':
                     storage = dval[:]
@@ -2572,6 +2596,9 @@ class PowerModel():
             if self.plots['cumulative']:
                 bbdx.step(xs, cumulative, linewidth=self.other_width, label='Tot. Generation', color=self.colours['cumulative'])
                 maxy = max(maxy, max(cumulative))
+                if self.plots['save_plot']:
+                    sp_vals.append('Tot. Generation')
+                    sp_data.append(cumulative[1:])
             try:
                 rndup = pow(10, round(log10(maxy * 1.5) - 1)) / 2
                 maxy = ceil(maxy / rndup) * rndup
@@ -2593,8 +2620,16 @@ class PowerModel():
                 plt.axhline(0, color='black')
                 if rndup != 0 and miny < 0:
                     miny = -ceil(-miny / rndup) * rndup
+                if self.plots['save_plot']:
+                    sp_vals.append('Shortfall')
+                    sp_data.append(load2[1:])
             else:
                 miny = 0
+            if self.plots['save_plot']:
+                titl = 'by_' + period
+                dialog = displaytable.Table(map(list, zip(*sp_data)), title=titl, fields=sp_vals, save_folder=self.scenarios)
+                dialog.exec_()
+                del dialog, sp_data, sp_vals
             plt.ylim([miny, maxy])
             plt.xlim([0, len(data[k1])])
             if (len(ydata) + pc) > 9:
@@ -3174,9 +3209,9 @@ class PowerModel():
             config_file = 'SIREN.ini'
         config.read(config_file)
         try:
-            map = config.get('Map', 'map_choice')
+            mapc = config.get('Map', 'map_choice')
         except:
-            map = ''
+            mapc = ''
         self.colours = {'cumulative': '#006400', 'gross_load': '#a9a9a9', 'load': '#000000',
                         'shortfall': '#8b0000', 'wind': '#6688bb'}
         try:
@@ -3188,9 +3223,9 @@ class PowerModel():
                     self.colours[itm] = colour
         except:
             pass
-        if map != '':
+        if mapc != '':
             try:
-                colors = config.items('Colors' + map)
+                colors = config.items('Colors' + mapc)
                 for item, colour in colors:
                     if item in self.technologies or self.colours.has_key(item):
                         itm = item.replace('_', ' ').title()
@@ -3449,6 +3484,15 @@ class PowerModel():
                     for s in range(len(periods)):
                         s24[key][s][k] = s24[key][s][k] / the_ssns[s]
         if self.plots['hour']:
+            if self.plots['save_plot']:
+                sp_vals = ['hour']
+                sp_data = []
+                sp_data.append(x[1:])
+                sp_data[-1].append(len(x))
+                sp_vals.append('period')
+                sp_data.append([])
+                for i in range(len(x)):
+                    sp_data[-1].append(the_date(self.load_year, i))
             hdr = self.hdrs['hour'].replace('Power - ', '')
             fig = plt.figure(hdr + self.suffix)
             plt.grid(True)
@@ -3496,12 +3540,21 @@ class PowerModel():
                     storage = value
                 hx.plot(x, value, linewidth=lw, label=shrinkKey(key), color=self.colours[key],
                         linestyle=self.linestyle[key])
+                if self.plots['save_plot']:
+                    sp_vals.append(shrinkKey(key))
+                    sp_data.append(value)
             if self.plots['cumulative']:
                 hx.plot(x, cumulative, linewidth=self.other_width, label='Tot. Generation', color=self.colours['cumulative'])
                 maxy = max(maxy, max(cumulative))
+                if self.plots['save_plot']:
+                    sp_vals.append('Tot. Generation')
+                    sp_data.append(cumulative)
             if self.plots['gross_load'] and 'Existing Rooftop PV' in ydata.keys():
                 hx.plot(x, gross_load, linewidth=1.0, label='Gross Load', color=self.colours['gross_load'])
                 maxy = max(maxy, max(gross_load))
+                if self.plots['save_plot']:
+                    sp_vals.append('Gross Load')
+                    sp_data.append(gross_load)
             try:
                 rndup = pow(10, round(log10(maxy * 1.5) - 1)) / 2
                 maxy = ceil(maxy / rndup) * rndup
@@ -3520,8 +3573,16 @@ class PowerModel():
                 miny = min(load2)
                 if rndup != 0 and miny < 0:
                     miny = -ceil(-miny / rndup) * rndup
+                if self.plots['save_plot']:
+                    sp_vals.append('Shortfall')
+                    sp_data.append(load2)
             else:
                 miny = 0
+            if self.plots['save_plot']:
+                titl = 'hour'
+                dialog = displaytable.Table(map(list, zip(*sp_data)), title=titl, fields=sp_vals, save_folder=self.scenarios)
+                dialog.exec_()
+                del dialog, sp_data, sp_vals
             plt.ylim([miny, maxy])
             plt.xlim([0, len(x)])
             if (len(ydata) + pc) > 9:
@@ -3620,6 +3681,52 @@ class PowerModel():
             else:
                 hx.fill_between(x, load, regen, color=self.colours['shortfall']) #'#920000')
             hx.plot(x, cumulative, linewidth=self.other_width, label='RE', linestyle='--', color=self.colours['gross_load'])
+            if self.plots['save_plot']:
+                sp_vals = ['hour']
+                sp_data = []
+                sp_data.append(x[1:])
+                sp_data[-1].append(len(x))
+                sp_vals.append('period')
+                sp_data.append([])
+                for i in range(len(x)):
+                    sp_data[-1].append(the_date(self.load_year, i))
+                sp_vals.append('load')
+                sp_data.append(load)
+                l = len(sp_data) - 1
+                sp_vals.append('renewable')
+                sp_data.append(regen)
+                r = len(sp_data) - 1
+                if storage is not None:
+                    sp_vals.append('storage')
+                    sp_data.append(storage)
+                    s = len(sp_data) - 1
+                else:
+                    s = 0
+                sp_vals.append('re gen.')
+                sp_data.append(cumulative)
+                e = len(sp_data) - 1
+                titl = 'augmented'
+                dialog = displaytable.Table(map(list, zip(*sp_data)), title=titl, fields=sp_vals, save_folder=self.scenarios)
+                dialog.exec_()
+                del dialog
+                if s > 0:
+                    for i in range(len(sp_data[s])):
+                        sp_data[s][i] = sp_data[s][i] - sp_data[r][i]
+                sp_data.append([])
+                for i in range(len(sp_data[r])):
+                    sp_data[-1].append(sp_data[e][i] - sp_data[r][i])
+                sp_vals.append('excess')
+                sp_vals[e] = 'augment'
+                if s > 0:
+                    for i in range(len(sp_data[e])):
+                        sp_data[e][i] = sp_data[l][i] - sp_data[r][i] - sp_data[s][i]
+                else:
+                    for i in range(len(sp_data[e])):
+                        sp_data[e][i] = sp_data[l][i] - sp_data[r][i]
+                titl = 'augmented2'
+                dialog = displaytable.Table(map(list, zip(*sp_data)), title=titl, fields=sp_vals, save_folder=self.scenarios)
+                dialog.exec_()
+                del dialog, sp_vals, sp_data
             plt.ylim([miny, maxy])
             plt.xlim([0, len(x)])
             plt.xticks(range(12, len(x), 168))
@@ -4045,6 +4152,10 @@ class PowerModel():
                 gross_load = []
                 for i in range(len(x24)):
                     gross_load.append(0.)
+            if self.plots['save_plot']:
+                sp_data = []
+                sp_data.append(x24)
+                sp_vals = ['hour']
             hdr = self.hdrs['total'].replace('Power - ', '')
             plt.figure(hdr + self.suffix)
             plt.grid(True)
@@ -4083,12 +4194,21 @@ class PowerModel():
                     storage = value
                 tx.plot(x24, l24[key], linewidth=lw, label=shrinkKey(key), color=self.colours[key],
                         linestyle=self.linestyle[key])
+                if self.plots['save_plot']:
+                    sp_data.append(l24[key])
+                    sp_vals.append(key)
             if self.plots['cumulative']:
                 tx.plot(x24, cumulative, linewidth=self.other_width, label='Tot. Generation', color=self.colours['cumulative'])
                 maxy = max(maxy, max(cumulative))
+                if self.plots['save_plot']:
+                    sp_data.append(cumulative)
+                    sp_vals.append('Tot. Generation')
             if self.plots['gross_load'] and 'Existing Rooftop PV' in ydata.keys():
                 tx.plot(x24, gross_load, linewidth=1.0, label='Gross Load', color=self.colours['gross_load'])
                 maxy = max(maxy, max(gross_load))
+                if self.plots['save_plot']:
+                    sp_data.append(gross_load)
+                    sp_vals.append('Gross Load')
             try:
                 rndup = pow(10, round(log10(maxy * 1.5) - 1)) / 2
                 maxy = ceil(maxy / rndup) * rndup
@@ -4107,8 +4227,16 @@ class PowerModel():
                 miny = min(load2)
                 if rndup != 0 and miny < 0:
                     miny = -ceil(-miny / rndup) * rndup
+                if self.plots['save_plot']:
+                    sp_data.append(load2)
+                    sp_vals.append('Shortfall')
             else:
                 miny = 0
+            if self.plots['save_plot']:
+                titl = 'total'
+                dialog = displaytable.Table(map(list, zip(*sp_data)), title=titl, fields=sp_vals, save_folder=self.scenarios)
+                dialog.exec_()
+                del dialog, sp_data, sp_vals
             plt.ylim([miny, maxy])
             plt.xlim([1, 25])
             plt.xticks(range(0, 25, 4))
@@ -4320,7 +4448,7 @@ class PowerModel():
 #       choose what power data to collect (once only)
 #
         self.plot_order = ['show_menu', 'actual', 'cumulative', 'by_station', 'adjust',
-                           'show_load', 'shortfall', 'grid_losses', 'gross_load', 'visualise',
+                           'show_load', 'shortfall', 'grid_losses', 'gross_load', 'save_plot', 'visualise',
                            'maximise', 'block', 'show_pct', 'by_day', 'by_month', 'by_season',
                            'by_period', 'hour', 'total', 'month', 'season', 'period',
                            'duration', 'augment', 'shortfall_detail', 'summary', 'save_data', 'save_detail',
@@ -4336,6 +4464,7 @@ class PowerModel():
                 'shortfall': 'Generation - show shortfall from Load',
                 'grid_losses': 'Generation - reduce generation by grid losses',
                 'gross_load': 'Add Existing Rooftop PV to Load (Gross Load)',
+                'save_plot': 'Save plot data',
                 'visualise': 'Visualise generation',
                 'maximise': 'Maximise Plot windows',
                 'block': 'Show plots one at a time',
@@ -4359,7 +4488,7 @@ class PowerModel():
                 'save_balance': 'Save Powerbalance Inputs',
                 'financials': 'Run Financial Models'}
         self.spacers = {'actual': 'Show in Plot',
-                   'visualise': 'Choose plots (all use a full year of data)',
+                   'save_plot': 'Choose plots (all use a full year of data)',
                    'summary': 'Choose tables'}
         self.plots = {}
         for i in range(len(self.plot_order)):

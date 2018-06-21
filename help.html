@@ -266,7 +266,7 @@ You can also create additional stations, such as Rooftop PV, to be included in t
 <li>A layout of the existing electrical grid. A KML file showing the layout of the major power lines in the grid and an outline of the network (SWIS) boundary. This should be a simplified version of the grid network with all lines connecting exactly for SIREN to correctly connect new stations into the grid
 <br>
 <strong>Note:</strong> The intention of these two files is to describe the existing fossil and renewable Stations on the electricity network</li>
-<li>Hourly load details for the electricity grid. A simple CSV file with a single column of electrical load data for the 8,760 hours in the year of interest (identified by <em>load</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file)</li>
+<li>Hourly load details for the electricity grid. A simple CSV file with a single column of electrical load data for the 8,760 hours in the year of interest (identified by <em>load</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file). Each value is for one hour of load commencing on that hour.</li>
 <li>Hourly solar and weather details for the area of interest (identified by <em>solar_files</em> and <em>wind_files</em> properties of the <a href="#p_files">[Files]</a> Section of the Preferences file). This data is in formats required for input to SAM and contains entries for the 8,760 hours in the year of interest. A SAM weather file is a text file that contains one (calendar) year's worth of data describing the solar resource, wind speed, temperature, and other weather characteristics at a particular location. The approach we have adopted is to use NASA MERRA-2 data for the desired geographic area and year to create appropriately formatted weather files. This is described in <a href="#merra">Obtaining and Using NASA MERRA-2 Data for SAM weather files</a>. To enable more recent (part-year) data to be used it is possible to &ldquo;wrap&rdquo; the data by using the weather data for the prior year for the remaining part of the year.
 <br>
 You can also use TMY files such as those provided with SAM. If you have a number of weather files you can create an index of these files for SIREN. This is described in <a href="#index">Using other Weather Files</a></li>
@@ -1405,6 +1405,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">Specify the file format to save plots as. This can be one of the values supported by the Python plot routine - <em>eps, jpeg, jpeg, pdf, pgf </em>(requires LaTex)<em>, png, ps, raw, rgba, svg, svgz, tif,</em> or <em>tiff</em>. The default format is <em>png</em></td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>save_plot</dfn></td>
+<td class="none">Save data values for plots</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>save_tech</dfn></td>
 <td class="none">Save data outputs produced by the model for each technology and other options. The data will be adjusted to reflect load growth as specified by Power Model options and adjusted generation</td>
 </tr>
@@ -2080,6 +2084,10 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <td class="none">Centre the view on a particular town selected from a list</td>
 </tr>
 <tr class="none">
+<td class="none"><img src="arrow.png" alt="Go to Location">&nbsp;&nbsp;Go to Location (Ctrl+D)</td>
+<td class="none">Centre the view on a particular location</td>
+</tr>
+<tr class="none">
 <td class="none"><img src="arrow.png" alt="Go to Load Centre">&nbsp;&nbsp;Go to Load Centre (Ctrl+M)</td>
 <td class="none">Centre the view on a Load Centre</td>
 </tr>
@@ -2223,7 +2231,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 </tr>
 </table>
 <!--
-<p>Ctrl Keys: A, B, C, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Z, 2
+<p>Ctrl Keys: A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Z, 2
 -->
 <p><a href="#help">Back to top</a></p>
 <h3 id="mouse">Right Mouse Click</h3>
@@ -2343,6 +2351,8 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <td class="none">Options to specify the maximum amount of excess generation in MW(h) that can be added to storage and the losses incurred in adding this to storage</td></tr>
 <tr><td class="lr"><strong>Choose plots</strong></td>
 <td class="none">Choose what plots to show. All plots are based upon the full year of data. Energy by options produce a step chart of generation for the chosen time frame; Power - daily average options produce a line graph of the average 24 hour period for the chosen time frame.</td></tr>
+<tr><td class="lr"><dfn>Save plot data</dfn></td>
+<td class="none">This option will enable the data values for most of the plots to be saved to a spreadsheet (<em>save_plot</em>)</td></tr>
 <tr><td class="lr"><dfn>Visualise generation - period &amp; delay (secs)</dfn></td>
 <td class="none">This option will visualise generation by displaying variable generation circles for each station over the chosen periods (<em>visualise</em>)</td></tr>
 <tr><td class="lr"><dfn>Maximise Plot windows</dfn></td>
@@ -2395,6 +2405,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <p>The plots and tables are intended to assist with analysing the chosen scenario.</p>
 <h4>Plots</h4>
 <ul>
+<li><em>Save plot data</em> will enable most of the data inputs to plots to be saved to a spreadsheet. These values are usually an aggregation of the hourly outputs produced by Power Model</li>
 <li><em>Visualise generation - period &amp; delay (secs)</em> will visualise generation by displaying variable generation circles for each station over the chosen periods. This option displays an additional window to control the visualisation:
 <table border="0" class="none">
 <tr><td class="top" style="width: 12%;"><dfn>Detail</dfn></td>
