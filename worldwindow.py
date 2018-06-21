@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2017 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2017-2018 Sustainable Energy Now Inc., Angus King
 #
 #  worldwindow.py - This file is part of SIREN.
 #
@@ -26,8 +26,11 @@ import sys
 import ConfigParser   # decode getfiles.ini file
 from PyQt4 import QtCore, QtGui
 
-from mpl_toolkits.basemap.pyproj import Proj  # Import the pyproj.Proj module
-#import mpl_toolkits.basemap.pyproj as pyproj   # Import the pyproj module
+try:
+    from mpl_toolkits.basemap.pyproj import Proj  # Import the pyproj.Proj module
+except:
+    from mpl_toolkits.basemap import pyproj
+    from pyproj import Proj as Proj
 
 from colours import Colours
 from credits import fileVersion
