@@ -975,19 +975,19 @@ class SuperPower():
         dist = 99999
         closest = ''
         if wind:
-            filetype = '.srw'
+            filetype = ['.srw']
             technology = 'wind_index'
             index_file = self.wind_index
             folder = self.wind_files
         else:
-            filetype = '.smw'
+            filetype = ['.csv', '.smw']
             technology = 'solar_index'
             index_file = self.solar_index
             folder = self.solar_files
         if index_file == '':
             fils = os.listdir(folder)
             for fil in fils:
-                if fil[-4:] == filetype:
+                if fil[-4:] in filetype:
                     bit = fil.split('_')
                     if bit[-1][:4] == self.base_year:
                         dist1 = self.haversine(float(bit[-3]), float(bit[-2]), latitude, longitude)
@@ -2506,6 +2506,7 @@ class PowerModel():
                 return oukey
 
         def stepPlot(self, period, data, x_labels=None):
+            k1 = data.keys()[0]
             if self.plots['cumulative']:
                 pc = 1
             else:
@@ -2519,14 +2520,15 @@ class PowerModel():
             bbdx = fig.add_subplot(111)
             plt.title(self.hdrs['by_' + period].title() + self.suffix)
             maxy = 0
+            miny = 0
             xs = []
-            for i in range(len(data[0]) + 1):
+            for i in range(len(data[k1]) + 1):
                 xs.append(i)
             if self.plots['cumulative']:
                 cumulative = [0.]
-                for i in range(len(data[0])):
+                for i in range(len(data[k1])):
                     cumulative.append(0.)
-                load = []
+            load = []
             i = -1
             storage = None
             if self.plots['show_pct']:
@@ -2535,24 +2537,23 @@ class PowerModel():
             for key, value in iter(sorted(ydata.iteritems())):
                 if key == 'Generation':
                     continue
-                i += 1
                 dval = [0.]
                 if self.plots['show_pct']:
-                    for d in range(len(data[i])):
+                    for d in range(len(data[key])):
                         if key[:4] == 'Load':
-                            for k in range(len(data[i][d])):
-                                load_sum += data[i][d][k]
+                            for k in range(len(data[key][d])):
+                                load_sum += data[key][d][k]
                         elif key == 'Storage':
                             pass
                         else:
-                            for k in range(len(data[i][d])):
-                                gen_sum += data[i][d][k]
+                            for k in range(len(data[key][d])):
+                                gen_sum += data[key][d][k]
                                 if self.plots['gross_load'] and key == 'Existing Rooftop PV':
-                                    load_sum += data[i][d][k]
-                for d in range(len(data[i])):
+                                    load_sum += data[key][d][k]
+                for d in range(len(data[key])):
                    dval.append(0.)
-                   for k in range(len(data[i][0])):
-                       dval[-1] += data[i][d][k] / 1000
+                   for k in range(len(data[key][0])):
+                       dval[-1] += data[key][d][k] / 1000
                 maxy = max(maxy, max(dval))
                 lw = self.other_width
                 if self.plots['cumulative'] and key[:4] != 'Load' and key != 'Storage':
@@ -2581,19 +2582,21 @@ class PowerModel():
                 if storage is None:
                     for i in range(len(cumulative)):
                         load2.append(cumulative[i] - load[i])
+                        if load2[-1] < miny:
+                            miny = load2[-1]
                 else:
                     for i in range(len(cumulative)):
                         load2.append(cumulative[i] + storage[i] - load[i])
+                        if load2[-1] < miny:
+                            miny = load2[-1]
                 bbdx.step(xs, load2, linewidth=self.other_width, label='Shortfall', color=self.colours['shortfall'])
                 plt.axhline(0, color='black')
-                miny = min(load2)
-                if rndup != 0:
-                    miny = floor((miny - (rndup - 1)) / rndup) * rndup
+                if rndup != 0 and miny < 0:
+                    miny = -ceil(-miny / rndup) * rndup
             else:
-
                 miny = 0
             plt.ylim([miny, maxy])
-            plt.xlim([0, len(data[0])])
+            plt.xlim([0, len(data[k1])])
             if (len(ydata) + pc) > 9:
                  # Shrink current axis by 5%
                 box = bbdx.get_position()
@@ -2604,14 +2607,14 @@ class PowerModel():
                 bbdx.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(ydata) + pc),
                             prop=lbl_font)
             rotn = 'horizontal'
-            if len(data[0]) > 12:
+            if len(data[k1]) > 12:
                 stp = 7
                 rotn = 'vertical'
             else:
                 stp = 1
-            plt.xticks(range(0, len(data[0]), stp))
+            plt.xticks(range(0, len(data[k1]), stp))
             tick_spot = []
-            for i in range(0, len(data[0]), stp):
+            for i in range(0, len(data[k1]), stp):
                 tick_spot.append(i + .5)
             bbdx.set_xticks(tick_spot)
             bbdx.set_xticklabels(x_labels, rotation=rotn)
@@ -2632,6 +2635,7 @@ class PowerModel():
                 plt.draw()
 
         def dayPlot(self, period, data, per_labels=None, x_labels=None):
+            k1 = data.keys()[0]
             if self.plots['cumulative']:
                 pc = 1
             else:
@@ -2645,22 +2649,22 @@ class PowerModel():
             plt.suptitle(self.hdrs[period] + self.suffix, fontsize=16)
             maxy = 0
             miny = 0
-            if len(data[0]) > 9:
+            if len(data[k1]) > 9:
                 p1 = 3
                 p2 = 4
                 xl = 8
                 yl = [0, 4, 8]
-            elif len(data[0]) > 6:
+            elif len(data[k1]) > 6:
                 p1 = 3
                 p2 = 3
                 xl = 6
                 yl = [0, 3, 6]
-            elif len(data[0]) > 4:
+            elif len(data[k1]) > 4:
                 p1 = 2
                 p2 = 3
                 xl = 3
                 yl = [0, 3]
-            elif len(data[0]) > 2:
+            elif len(data[k1]) > 2:
                 p1 = 2
                 p2 = 2
                 xl = 2
@@ -2670,16 +2674,16 @@ class PowerModel():
                 p2 = 2
                 xl = 0
                 yl = [0, 1]
-            for p in range(len(data[0])):
-                for i in range(len(ydata)):
-                    maxy = max(maxy, max(data[i][p]))
+            for key in data.keys():
+                for p in range(len(data[key])):
+                    maxy = max(maxy, max(data[key][p]))
             if self.plots['show_pct']:
                 load_sum = []
                 gen_sum = []
-                for p in range(len(data[0])):
+                for p in range(len(data[k1])):
                     load_sum.append(0.)
                     gen_sum.append(0.)
-            for p in range(len(data[0])):
+            for p in range(len(data[k1])):
                 if self.plots['cumulative']:
                     cumulative = []
                     for i in range(len(x24)):
@@ -2689,34 +2693,32 @@ class PowerModel():
                     for i in range(len(x24)):
                         gross_load.append(0.)
                 px = plt.subplot(p1, p2, p + 1)
-                i = -1
-                l_i = -1
+                l_k = ''
                 for key, value in iter(sorted(ydata.iteritems())):
                     if key == 'Generation':
                         continue
-                    i += 1
                     if key[:4] == 'Load':
-                        l_i = i
+                        l_k = key
                     if self.plots['show_pct']:
-                        for d in range(len(data[i][p])):
+                        for d in range(len(data[key][p])):
                             if key[:4] == 'Load':
-                                load_sum[p] += data[i][p][d]
+                                load_sum[p] += data[key][p][d]
                             elif key == 'Storage':
                                 pass
                             else:
-                                gen_sum[p] += data[i][p][d]
+                                gen_sum[p] += data[key][p][d]
                                 if self.plots['gross_load'] and key == 'Existing Rooftop PV':
-                                    load_sum[p] += data[i][p][d]
+                                    load_sum[p] += data[key][p][d]
                     lw = self.other_width
                     if self.plots['cumulative'] and key[:4] != 'Load' and key != 'Storage':
                         lw = 1.0
                         for j in range(len(x24)):
-                            cumulative[j] += data[i][p][j]
+                            cumulative[j] += data[key][p][j]
                     if self.plots['gross_load'] and (key[:4] == 'Load' or
                       key == 'Existing Rooftop PV'):
                         for j in range(len(x24)):
-                            gross_load[j] += data[i][p][j]
-                    px.plot(x24, data[i][p], linewidth=lw, label=shrinkKey(key),
+                            gross_load[j] += data[key][p][j]
+                    px.plot(x24, data[key][p], linewidth=lw, label=shrinkKey(key),
                             color=self.colours[key], linestyle=self.linestyle[key])
                     plt.title(per_labels[p])
                 if self.plots['cumulative']:
@@ -2729,7 +2731,7 @@ class PowerModel():
                 if self.plots['shortfall'] and self.do_load:
                     load2 = []
                     for i in range(len(x24)):
-                        load2.append(cumulative[i] - data[l_i][p][i])
+                        load2.append(cumulative[i] - data[l_k][p][i])
                     miny = min(miny, min(load2))
                     px.plot(x24, load2, linewidth=self.other_width, label='Shortfall', color=self.colours['shortfall'])
                     plt.axhline(0, color='black')
@@ -2746,9 +2748,9 @@ class PowerModel():
             except:
                 pass
             if self.plots['shortfall']:
-                if rndup != 0:
-                    miny = floor((miny - (rndup - 1)) / rndup) * rndup
-            for p in range(len(data[0])):
+                if rndup != 0 and miny < 0:
+                    miny = -ceil(-miny / rndup) * rndup
+            for p in range(len(data[k1])):
                 px = plt.subplot(p1, p2, p + 1)
                 plt.ylim([miny, maxy])
                 plt.xlim([1, 24])
@@ -2757,21 +2759,21 @@ class PowerModel():
                     titl = px.get_title()
                     px.set_title(titl + pct)
                     #  px.annotate(pct, xy=(1.0, 3.0))
-            px = plt.subplot(p1, p2, len(data[0]))
+            px = plt.subplot(p1, p2, len(data[k1]))
          #    px.legend(bbox_to_anchor=[1., -0.15], loc='best', ncol=min((len(ly) + pc), 9),
          # prop=lbl_font)
             if (len(ydata) + pc) > 9:
-                if len(data[0]) > 9:
+                if len(data[k1]) > 9:
                     do_in = [1, 5, 9, 2, 6, 10, 3, 7, 11, 4, 8, 12]
-                elif len(data[0]) > 6:
+                elif len(data[k1]) > 6:
                     do_in = [1, 4, 7, 2, 5, 8, 3, 6, 9]
-                elif len(data[0]) > 4:
+                elif len(data[k1]) > 4:
                     do_in = [1, 4, 2, 5, 3, 6]
-                elif len(data[0]) > 2:
+                elif len(data[k1]) > 2:
                     do_in = [1, 3, 2, 4]
                 else:
                     do_in = [1, 2]
-                do_in = do_in[:len(data[0])]
+                do_in = do_in[:len(data[k1])]
                 for i in range(len(do_in)):
                     px = plt.subplot(p1, p2, do_in[i])
                  # Shrink current axis by 5%
@@ -2982,6 +2984,10 @@ class PowerModel():
                     wb.save(data_file)
 
         def saveBalance2(self, shortstuff):
+            def cell_format(cell, new_cell):
+                if cell.has_style:
+                    new_cell.number_format = cell.number_format
+
          #   for i in range(len(shortstuff)):
           #             ws.write(row, col, shortstuff[i].hour)
             ts = oxl.load_workbook(self.pb_template)
@@ -3111,12 +3117,15 @@ class PowerModel():
             if per_row[0] > 0:
                 for i in range(8760):
                     ws.cell(row=per_row[0] + i, column=per_col[0]).value = shortstuff[i].hour
+                    cell_format(ws.cell(row=per_row[0], column=per_col[0]), ws.cell(row=per_row[0] + i, column=per_col[0]))
             if per_row[1] > 0:
                 for i in range(8760):
                     ws.cell(row=per_row[1] + i, column=per_col[1]).value = shortstuff[i].period
+                    cell_format(ws.cell(row=per_row[1], column=per_col[1]), ws.cell(row=per_row[1] + i, column=per_col[1]))
             if tech_row[0][6] > 0:
                 for i in range(8760):
                     ws.cell(row=tech_row[0][6] + i, column=tech_col[0][6]).value = shortstuff[i].load
+                    cell_format(ws.cell(row=tech_row[0][6], column=tech_col[0][6]), ws.cell(row=tech_row[0][6] + i, column=tech_col[0][6]))
             ly_keys = []
             for t in range(len(tech_names)):
                 ly_keys.append([])
@@ -3154,6 +3163,8 @@ class PowerModel():
                 if doit or not doit:
                     for h in range(len(hrly)):
                         ws.cell(row=tech_row[te][6] + h, column=tech_col[te][6]).value = hrly[h]
+                        cell_format(ws.cell(row=tech_row[te][6], column=tech_col[te][6]), \
+                                    ws.cell(row=tech_row[te][6] + h, column=tech_col[te][6]))
             ts.save(data_file)
 
         config = ConfigParser.RawConfigParser()
@@ -3306,40 +3317,40 @@ class PowerModel():
         lbl_font = FontProperties()
         lbl_font.set_size('small')
         x24 = []
-        l24 = []
-        m24 = []
-        q24 = []
-        s24 = []
-        d365 = []
+        l24 = {}
+        m24 = {}
+        q24 = {}
+        s24 = {}
+        d365 = {}
         for i in range(24):
             x24.append(i + 1)
-        for i in range(len(ydata)):
+        for key in ydata.keys():
             if self.plots['total']:
-                l24.append([])
+                l24[key] = []
                 for j in range(24):
-                    l24[i].append(0.)
+                    l24[key].append(0.)
             if self.plots['month'] or self.plots['by_month']:
-                m24.append([])
+                m24[key] = []
                 for m in range(12):
-                    m24[i].append([])
+                    m24[key].append([])
                     for j in range(24):
-                        m24[i][m].append(0.)
+                        m24[key][m].append(0.)
             if self.plots['season'] or self.plots['by_season']:
-                q24.append([])
+                q24[key] = []
                 for q in range(len(seasons)):
-                    q24[i].append([])
+                    q24[key].append([])
                     for j in range(24):
-                        q24[i][q].append(0.)
+                        q24[key][q].append(0.)
             if self.plots['period'] or self.plots['by_period']:
-                s24.append([])
+                s24[key] = []
                 for s in range(len(periods)):
-                    s24[i].append([])
+                    s24[key].append([])
                     for j in range(24):
-                        s24[i][s].append(0.)
+                        s24[key][s].append(0.)
             if self.plots['by_day']:
-                d365.append([])
+                d365[key] = []
                 for j in range(365):
-                    d365[i].append([0.])
+                    d365[key].append([0.])
         the_qtrs = []
         for i in range(len(seasons)):
             d = 0
@@ -3364,27 +3375,25 @@ class PowerModel():
             while i < the_hours[m] and m > 0:
                 m -= 1
             for k in range(24):
-                j = -1
                 for key, value in iter(sorted(ydata.iteritems())):
                     if key == 'Generation':
                         continue
-                    j += 1
                     if self.plots['total']:
-                        l24[j][k] += value[i + k]
+                        l24[key][k] += value[i + k]
                     if self.plots['by_day']:
-                        d365[j][d][0] += value[i + k]
+                        d365[key][d][0] += value[i + k]
                     if self.plots['month'] or self.plots['by_month']:
-                        m24[j][m][k] = m24[j][m][k] + value[i + k]
+                        m24[key][m][k] = m24[key][m][k] + value[i + k]
                     if self.plots['season'] or self.plots['by_season']:
                         for q in range(len(seasons)):
                             if m in seasons[q]:
                                 break
-                        q24[j][q][k] = q24[j][q][k] + value[i + k]
+                        q24[key][q][k] = q24[key][q][k] + value[i + k]
                     if self.plots['period'] or self.plots['by_period']:
                         for s in range(len(periods)):
                             if m in periods[s]:
                                 break
-                        s24[j][s][k] = s24[j][s][k] + value[i + k]
+                        s24[key][s][k] = s24[key][s][k] + value[i + k]
         if self.plots['cumulative']:
             pc = 1
         else:
@@ -3426,19 +3435,19 @@ class PowerModel():
             stepPlot(self, 'season', q24, ssn_labels)
         if self.plots['by_period']:
             stepPlot(self, 'period', s24, smp_labels)
-        for i in range(len(ydata)):
+        for key in ydata.keys():
             for k in range(24):
                 if self.plots['total']:
-                    l24[i][k] = l24[i][k] / 365
+                    l24[key][k] = l24[key][k] / 365
                 if self.plots['month']:
                     for m in range(12):
-                        m24[i][m][k] = m24[i][m][k] / the_days[m]
+                        m24[key][m][k] = m24[key][m][k] / the_days[m]
                 if self.plots['season']:
                     for q in range(len(seasons)):
-                        q24[i][q][k] = q24[i][q][k] / the_qtrs[q]
+                        q24[key][q][k] = q24[key][q][k] / the_qtrs[q]
                 if self.plots['period']:
                     for s in range(len(periods)):
-                        s24[i][s][k] = s24[i][s][k] / the_ssns[s]
+                        s24[key][s][k] = s24[key][s][k] / the_ssns[s]
         if self.plots['hour']:
             hdr = self.hdrs['hour'].replace('Power - ', '')
             fig = plt.figure(hdr + self.suffix)
@@ -3509,8 +3518,8 @@ class PowerModel():
                 hx.plot(x, load2, linewidth=self.other_width, label='Shortfall', color=self.colours['shortfall'])
                 plt.axhline(0, color='black')
                 miny = min(load2)
-                if rndup != 0:
-                    miny = floor((miny - (rndup - 1)) / rndup) * rndup
+                if rndup != 0 and miny < 0:
+                    miny = -ceil(-miny / rndup) * rndup
             else:
                 miny = 0
             plt.ylim([miny, maxy])
@@ -3770,8 +3779,7 @@ class PowerModel():
                 try:
                     rndup = pow(10, round(log10(maxy * 1.5) - 1)) / 2
                     maxy = ceil(maxy / rndup) * rndup
-                    if miny < 0:
-                        miny = floor((miny - (rndup - 1)) / rndup) * rndup
+                    miny = -ceil(-miny / rndup) * rndup
                 except:
                     pass
                 if self.load_multiplier != 0:
@@ -4042,7 +4050,6 @@ class PowerModel():
             plt.grid(True)
             plt.title(self.hdrs['total'] + self.suffix)
             tx = plt.subplot(111)
-            i = -1
             storage = None
             if self.plots['show_pct']:
                 load_sum = 0.
@@ -4050,32 +4057,31 @@ class PowerModel():
             for key, value in iter(sorted(ydata.iteritems())):
                 if key == 'Generation':
                     continue
-                i += 1
                 if self.plots['show_pct']:
                     for j in range(len(x24)):
                         if key[:4] == 'Load':
-                            load_sum += l24[i][j]
+                            load_sum += l24[key][j]
                         elif key == 'Storage':
                             pass
                         else:
-                            gen_sum += l24[i][j]
+                            gen_sum += l24[key][j]
                             if self.plots['gross_load'] and key == 'Existing Rooftop PV':
-                                load_sum += l24[i][j]
-                maxy = max(maxy, max(l24[i]))
+                                load_sum += l24[key][j]
+                maxy = max(maxy, max(l24[key]))
                 lw = self.other_width
                 if self.plots['cumulative'] and key[:4] != 'Load' and key != 'Storage':
                     lw = 1.0
                     for j in range(len(x24)):
-                        cumulative[j] += l24[i][j]
+                        cumulative[j] += l24[key][j]
                 if self.plots['gross_load'] and (key[:4] == 'Load' or
                       key == 'Existing Rooftop PV'):
                     for j in range(len(x24)):
-                        gross_load[j] += l24[i][j]
+                        gross_load[j] += l24[key][j]
                 if self.plots['shortfall'] and key[:4] == 'Load':
                     load = value
                 if self.plots['shortfall'] and key == 'Storage':
                     storage = value
-                tx.plot(x24, l24[i], linewidth=lw, label=shrinkKey(key), color=self.colours[key],
+                tx.plot(x24, l24[key], linewidth=lw, label=shrinkKey(key), color=self.colours[key],
                         linestyle=self.linestyle[key])
             if self.plots['cumulative']:
                 tx.plot(x24, cumulative, linewidth=self.other_width, label='Tot. Generation', color=self.colours['cumulative'])
@@ -4099,8 +4105,8 @@ class PowerModel():
                 tx.plot(x24, load2, linewidth=self.other_width, label='Shortfall', color=self.colours['shortfall'])
                 plt.axhline(0, color='black')
                 miny = min(load2)
-                if rndup != 0:
-                    miny = floor((miny - (rndup - 1)) / rndup) * rndup
+                if rndup != 0 and miny < 0:
+                    miny = -ceil(-miny / rndup) * rndup
             else:
                 miny = 0
             plt.ylim([miny, maxy])
@@ -4591,7 +4597,7 @@ class PowerModel():
                     except:
                         pass
                     self.load_key = ''
-                if (self.plots['show_load'] or self.plots['save_balance']) and self.can_do_load:
+                if (self.plots['show_load'] or self.plots['save_balance'] or self.plots['shortfall']) and self.can_do_load:
                     if self.load_data is None:
                         tf = open(self.load_file, 'r')
                         lines = tf.readlines()
