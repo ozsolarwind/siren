@@ -2627,7 +2627,9 @@ class PowerModel():
                 miny = 0
             if self.plots['save_plot']:
                 titl = 'by_' + period
-                dialog = displaytable.Table(map(list, zip(*sp_data)), title=titl, fields=sp_vals, save_folder=self.scenarios)
+                decpts = [3] * len(sp_vals)
+                decpts[0] = decpts[1] = 0
+                dialog = displaytable.Table(map(list, zip(*sp_data)), title=titl, fields=sp_vals, save_folder=self.scenarios, decpts=decpts)
                 dialog.exec_()
                 del dialog, sp_data, sp_vals
             plt.ylim([miny, maxy])
@@ -3580,7 +3582,9 @@ class PowerModel():
                 miny = 0
             if self.plots['save_plot']:
                 titl = 'hour'
-                dialog = displaytable.Table(map(list, zip(*sp_data)), title=titl, fields=sp_vals, save_folder=self.scenarios)
+                decpts = [3] * len(sp_vals)
+                decpts[0] = decpts[1] = 0
+                dialog = displaytable.Table(map(list, zip(*sp_data)), title=titl, fields=sp_vals, save_folder=self.scenarios, decpts=decpts)
                 dialog.exec_()
                 del dialog, sp_data, sp_vals
             plt.ylim([miny, maxy])
@@ -3684,49 +3688,82 @@ class PowerModel():
             if self.plots['save_plot']:
                 sp_vals = ['hour']
                 sp_data = []
+                sp_tots = ['']
+                sp_pts = [0]
                 sp_data.append(x[1:])
                 sp_data[-1].append(len(x))
                 sp_vals.append('period')
                 sp_data.append([])
+                sp_tots.append('')
+                sp_pts.append(0)
                 for i in range(len(x)):
                     sp_data[-1].append(the_date(self.load_year, i))
                 sp_vals.append('load')
                 sp_data.append(load)
                 l = len(sp_data) - 1
+                sp_tots.append(0.)
+                sp_pts.append(4)
+                for ld in load:
+                    sp_tots[l] += ld
                 sp_vals.append('renewable')
                 sp_data.append(regen)
                 r = len(sp_data) - 1
+                sp_tots.append(0.)
+                sp_pts.append(4)
+                for re in regen:
+                    sp_tots[-1] += re
                 if storage is not None:
                     sp_vals.append('storage')
                     sp_data.append(storage)
                     s = len(sp_data) - 1
+                    sp_tots.append(0.)
+                    sp_pts.append(4)
                 else:
                     s = 0
                 sp_vals.append('re gen.')
                 sp_data.append(cumulative)
                 e = len(sp_data) - 1
+                sp_tots.append(0.)
+                sp_pts.append(4)
                 titl = 'augmented'
-                dialog = displaytable.Table(map(list, zip(*sp_data)), title=titl, fields=sp_vals, save_folder=self.scenarios)
+                dialog = displaytable.Table(map(list, zip(*sp_data)), title=titl, fields=sp_vals, save_folder=self.scenarios, decpts=sp_pts)
                 dialog.exec_()
                 del dialog
                 if s > 0:
                     for i in range(len(sp_data[s])):
                         sp_data[s][i] = sp_data[s][i] - sp_data[r][i]
-                sp_data.append([])
-                for i in range(len(sp_data[r])):
-                    sp_data[-1].append(sp_data[e][i] - sp_data[r][i])
+                        sp_tots[s] += sp_data[s][i]
                 sp_vals.append('excess')
                 sp_vals[e] = 'augment'
+                sp_data.append([])
+                sp_tots.append(0.)
+                sp_pts.append(4)
+                for i in range(len(sp_data[r])):
+                    sp_data[-1].append(sp_data[e][i] - sp_data[r][i])
+                    sp_tots[-1] += sp_data[-1][i]
                 if s > 0:
                     for i in range(len(sp_data[e])):
                         sp_data[e][i] = sp_data[l][i] - sp_data[r][i] - sp_data[s][i]
+                        sp_tots[e] += sp_data[e][i]
+                        sp_data[-1][i] -= sp_data[s][i]
+                        sp_tots[-1] -= sp_data[s][i]
                 else:
                     for i in range(len(sp_data[e])):
                         sp_data[e][i] = sp_data[l][i] - sp_data[r][i]
+                        sp_tots[e] += sp_data[e][i]
                 titl = 'augmented2'
-                dialog = displaytable.Table(map(list, zip(*sp_data)), title=titl, fields=sp_vals, save_folder=self.scenarios)
+                dialog = displaytable.Table(map(list, zip(*sp_data)), title=titl, fields=sp_vals, save_folder=self.scenarios, decpts=sp_pts)
                 dialog.exec_()
-                del dialog, sp_vals, sp_data
+                fields = ['row', 'component', 'MWh', 'Load %']
+                values = []
+                sp_pts = [0, 0, 4, 1]
+                for i in range(2, len(sp_vals)):
+                    values.append([i - 1, sp_vals[i].title(), sp_tots[i], 0.])
+                    values[-1][-1] = (sp_tots[i] * 100.) / sp_tots[l]
+                titl = 'augmented3'
+                dialog = displaytable.Table(values, fields=fields, title=titl, save_folder=self.scenarios, decpts=sp_pts)
+                dialog.exec_()
+                del dialog, sp_vals, sp_data, sp_tots
             plt.ylim([miny, maxy])
             plt.xlim([0, len(x)])
             plt.xticks(range(12, len(x), 168))
@@ -4195,20 +4232,20 @@ class PowerModel():
                 tx.plot(x24, l24[key], linewidth=lw, label=shrinkKey(key), color=self.colours[key],
                         linestyle=self.linestyle[key])
                 if self.plots['save_plot']:
-                    sp_data.append(l24[key])
                     sp_vals.append(key)
+                    sp_data.append(l24[key])
             if self.plots['cumulative']:
                 tx.plot(x24, cumulative, linewidth=self.other_width, label='Tot. Generation', color=self.colours['cumulative'])
                 maxy = max(maxy, max(cumulative))
                 if self.plots['save_plot']:
-                    sp_data.append(cumulative)
                     sp_vals.append('Tot. Generation')
+                    sp_data.append(cumulative)
             if self.plots['gross_load'] and 'Existing Rooftop PV' in ydata.keys():
                 tx.plot(x24, gross_load, linewidth=1.0, label='Gross Load', color=self.colours['gross_load'])
                 maxy = max(maxy, max(gross_load))
                 if self.plots['save_plot']:
-                    sp_data.append(gross_load)
                     sp_vals.append('Gross Load')
+                    sp_data.append(gross_load)
             try:
                 rndup = pow(10, round(log10(maxy * 1.5) - 1)) / 2
                 maxy = ceil(maxy / rndup) * rndup
@@ -4228,13 +4265,15 @@ class PowerModel():
                 if rndup != 0 and miny < 0:
                     miny = -ceil(-miny / rndup) * rndup
                 if self.plots['save_plot']:
-                    sp_data.append(load2)
                     sp_vals.append('Shortfall')
+                    sp_data.append(load2)
             else:
                 miny = 0
             if self.plots['save_plot']:
                 titl = 'total'
-                dialog = displaytable.Table(map(list, zip(*sp_data)), title=titl, fields=sp_vals, save_folder=self.scenarios)
+                decpts = [3] * len(sp_vals)
+                decpts[0] = 0
+                dialog = displaytable.Table(map(list, zip(*sp_data)), title=titl, fields=sp_vals, save_folder=self.scenarios, decpts=decpts)
                 dialog.exec_()
                 del dialog, sp_data, sp_vals
             plt.ylim([miny, maxy])
@@ -4856,12 +4895,12 @@ class PowerModel():
                         storage_losses.append(storage_loss)
                     if show_summ:
                         shortstuff = []
-                        summs['Shortfall'] = [0., '', 0]
+                        summs['Shortfall'] = ['', '', 0., 0]
                         for i in range(len(self.x)):
                             shortfall = total_gen[i] + wrkly['Storage'][i] - wrkly[self.load_key][i]
                             if shortfall > 0:
                                 shortfall = 0
-                            summs['Shortfall'][0] += shortfall
+                            summs['Shortfall'][2] += shortfall
                             shortstuff.append(ColumnData(i + 1, the_date(self.load_year, i),
                                               [wrkly[self.load_key][i], total_gen[i],
                                               wrkly['Storage'][i], storage_losses[i],
@@ -4877,7 +4916,7 @@ class PowerModel():
                         dialog.exec_()
                         del dialog
                         del shortstuff
-                        summs['Shortfall'][0] = round(summs['Shortfall'][0], 1)
+                        summs['Shortfall'][2] = round(summs['Shortfall'][2], 1)
                 if show_summ and self.adjustby is not None:
                     keys = []
                     for key in wrkly:
@@ -4893,15 +4932,17 @@ class PowerModel():
                             except:
                                 incr = ''
                         try:
-                            summs[key] = [round(gen, 1), round(incr, 2), 0]
+                            summs[key] = [0., round(incr, 2), round(gen, 1), 0]
+                            if key[:4] == 'Load':
+                                summs[key][0] = ''
                         except:
-                            summs[key] = [round(gen, 1), '', 0]
+                            summs[key] = ['', '', round(gen, 1), 0]
                     keys.sort()
                     xtra = ['Generation', 'Load', 'Gen. - Load', 'Storage Capacity', 'Storage', 'Excess', 'Shortfall']
                     o = 0
                     gen = 0.
                     if self.storage[0] > 0:
-                        summs['Storage Capacity'] = [self.storage[0] * 1000., '', 0]
+                        summs['Storage Capacity'] = ['', '', self.storage[0] * 1000., 0]
                     for i in range(len(keys)):
                         if keys[i][:4] == 'Load':
                             xtra[1] = keys[i]
@@ -4909,16 +4950,16 @@ class PowerModel():
                             continue
                         else:
                             o += 1
-                            summs[keys[i]][2] = o
-                            gen += summs[keys[i]][0]
+                            summs[keys[i]][3] = o
+                            gen += summs[keys[i]][2]
                     if xtra[0] not in summs.keys():
-                        summs[xtra[0]] = [gen, '', 0]
+                        summs[xtra[0]] = ['', '', gen, 0]
                     if xtra[1] in summs.keys():
-                        summs[xtra[2]] = [round(gen - summs[xtra[1]][0], 1), '', 0]
+                        summs[xtra[2]] = ['', '', round(gen - summs[xtra[1]][2], 1), 0]
                     for i in range(len(xtra)):
                         if xtra[i] in summs.keys():
                             o += 1
-                            summs[xtra[i]][2] = o
+                            summs[xtra[i]][3] = o
                     try:
                         summs['Storage Used'] = summs.pop('Storage')
                     except:
@@ -4927,9 +4968,20 @@ class PowerModel():
                         summs['Excess Gen.'] = summs.pop('Excess')
                     except:
                         pass
+                    for it in self.power_summary:
+                        if self.plots['by_station']:
+                            try:
+                                summs[it.name][0] = it.capacity
+                            except:
+                                pass
+                        else:
+                            try:
+                                summs[it.technology][0] += it.capacity
+                            except:
+                                pass
                     dialog = displaytable.Table(summs, title='Generation Summary',
                                                 save_folder=self.scenarios,
-                                                fields=['component', 'generation', 'multiplier', 'row'],
+                                                fields=['component', 'capacity', 'multiplier', 'generation', 'row'],
                                                 units='generation=MWh', sortby='row')
                     dialog.exec_()
                     del dialog
