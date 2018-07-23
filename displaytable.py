@@ -43,7 +43,7 @@ class FakeObject:
 
 class Table(QtGui.QDialog):
     def __init__(self, objects, parent=None, fields=None, fossil=True, sumby=None, sumfields=None, units='', title=None,
-                 save_folder='', edit=False, sortby=None):
+                 save_folder='', edit=False, sortby=None, decpts=None):
         super(Table, self).__init__(parent)
         if len(objects) == 0:
             buttonLayout = QtGui.QVBoxLayout()
@@ -76,6 +76,7 @@ class Table(QtGui.QDialog):
         self.units = units
         self.title = title
         self.edit_table = edit
+        self.decpts = decpts
         self.recur = False
         self.replaced = None
         if self.edit_table:
@@ -97,7 +98,10 @@ class Table(QtGui.QDialog):
                         self.fields.insert(j + 1, '%' + str(i))
                         break
         if self.title is None:
-            self.setWindowTitle('SIREN - ' + self.title_word[0] + ' ' + getattr(objects[0], '__module__') + 's')
+            try:
+                self.setWindowTitle('SIREN - ' + self.title_word[0] + ' ' + getattr(objects[0], '__module__') + 's')
+            except:
+                self.setWindowTitle('SIREN - ' + self.title_word[0] + 'items')
         else:
             self.setWindowTitle('SIREN - ' + self.title_word[0] + ' ' + self.title)
         msg = '(Right click column header to sort)'
@@ -281,12 +285,28 @@ class Table(QtGui.QDialog):
                             self.labels[prop] = 'float'
                         a = str(attr)
                         bits = a.split('.')
-                        if prop in self.lens:
-                            for i in range(2):
-                                if len(bits[i]) > self.lens[prop][i]:
-                                    self.lens[prop][i] = len(bits[i])
+                        if self.decpts is None:
+                            if prop in self.lens:
+                                for i in range(2):
+                                    if len(bits[i]) > self.lens[prop][i]:
+                                        self.lens[prop][i] = len(bits[i])
+                            else:
+                                self.lens[prop] = [len(bits[0]), len(bits[1])]
                         else:
-                            self.lens[prop] = [len(bits[0]), len(bits[1])]
+                            pts = self.decpts[self.fields.index(prop)] 
+                            if prop in self.lens:
+                                if len(bits[0]) > self.lens[prop][0]:
+                                    self.lens[prop][0] = len(bits[0])
+                                if len(bits[1]) > self.lens[prop][1]:
+                                    if len(bits[1]) > pts:
+                                        self.lens[prop][1] = pts
+                                    else:
+                                        self.lens[prop][1] = len(bits[1])
+                            else:
+                                if len(bits[1]) > pts:
+                                    self.lens[prop] = [len(bits[0]), pts]
+                                else:
+                                    self.lens[prop] = [len(bits[0]), len(bits[1])]
         self.name = 'name'
         if self.fields is None:
             if self.name in self.labels:
