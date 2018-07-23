@@ -142,7 +142,7 @@ ul {
 <li><a href="#popts">Power Model Options</a></li>
 <li><a href="#fopts">Financial Model Options</a></li>
 <li><a href="#resourcegrid">Renewable Resource Grids</a></li>
-<li><a href="#tricks">Performance Tricks</a></li>
+<li><a href="#tricks">Performance and Execution Tricks</a></li>
 </ul>
 <li><a href="#feedback">Feedback</a></li>
 <li><a href="#files">SIREN File Formats</a></li>
@@ -189,9 +189,11 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 <li><em>sam-sdk</em> contains a Windows version of the SAM SDK, <em>sam-sdk-2016-03-14</em></li>
 <li><em>source</em> contains the Python source programs for SIREN</li>
 </ul>
-<p>When you open SIREN you will be presented with a list of SIREN Models (Preferences files). Choose the SIREN Model you want by clicking on your choice. If want to use a specific Preferences file you can open the simulation passing the alternate file name, or a folder, as a parameter, for example:</p>
+<p>When you open SIREN you will be presented with a list of SIREN Models (Preferences files). Choose the SIREN Model you want by clicking on your choice. You can sort the list presented in order of either Preference File or SIREN Model by right-clicking the appropriate column header. If want to use a specific Preferences file you can open the simulation passing the alternate file name, or a folder, as a parameter, as in these examples:</p>
 <pre>
       siren.exe SIREN_NWIS.ini
+      siren.exe ../&lt;folder&gt;/SIREN_NWIS.ini
+      siren.exe ../&lt;folder with preferences files&gt;/
 </pre>
 <p>If you specify a folder you will be presented with a list of SIREN Models (Preferences files) in that folder. You can either specify the folder as the full path or relative to the siren folder. Placing your models in a separate folder will make it easier to install updates to SIREN without impacting your data files.</p>
 <p>If you want to create a new Model press the <em>New Model</em> button on the start up menu. You will be presented with a small list of Properties to update to create a new Preferences file. Many of these properties relate to files and file locations as described in <a href="#setup">Setting Up</a>. It's important to ensure they're correct for the new model to open. For the file fields click on the field to navigate to the desired file or folder. At the bottom of the Create Preferences file menu you have options to Save the new file, Save the new file and edit it, or Save it and open (launch) the new model. If you specified a folder when you opened SIREN, the new model will be saved in that folder.
@@ -438,7 +440,7 @@ You can also use TMY files such as those provided with SAM. If you have a number
 <p>Above 500MW it's a case of alternately adding 330_s and 330_d costs.</p>
 <p><a href="#help">Back to top</a></p>
 <h2 id="prefs">Preferences</h2>
-<p>Many options can be specified by a Preferences file. When you open SIREN you will be presented with a list of available Preferences files (SIREN Models) to choose from. These files (must) reside in the same directory as SIREN itself.
+<p>Many options can be specified by a Preferences file. When you open SIREN you will be presented with a list of available Preferences files (SIREN Models) to choose from. These files reside in the same folder as SIREN itself (they may be placed in a different folder by passing that folder as a parameter when SIREN is invoked).
 The format is similar to a Windows INI file. If you want to create a new Model you can press the <em>New Model</em> button on the start up menu. You will be presented with a small list of Properties to update to create a new Preferences file.
 <p>The Preferences file has the following Sections and properties. The file is a simple text file which must be saved in the <em>siren</em> folder and have a file type of <em>.ini</em> (INI File). The sample <em>siren_default.ini</em> or <em>siren_windows_default.ini</em> file will provide a useful guide as to the content.</p>
 <p>There are three special strings which will be replaced in the Files properties variables:</p>
@@ -447,7 +449,7 @@ The format is similar to a Windows INI file. If you want to create a new Model y
 <li><em>$YEAR$</em>&nbsp;will be replaced with the base year value</li>
 <li><em>$dirn</em>&nbsp;will be replaced with the corresponding variable from the <em>[Parents]</em> Section</li>
 </ul>
-<p><strong>Note:</strong> There is a quirk with the references to technologies in the <em>[Colors]</em> Section and <em>[Grid] dispatchable</em>, <em>[Power] fossil_technologies</em>, and  <em>[Power] technologies</em> variables. The technology names are changed to all lower case and spaces are replaced by underscores. Thus <em>Fixed PV</em> will appear as <em>fixed_pv</em>.</p 
+<p><strong>Note:</strong> There is a quirk with the references to technologies in the <em>[Colors]</em> Section and <em>[Grid] dispatchable</em>, <em>[Power] fossil_technologies</em>, and <em>[Power] technologies</em> variables. The technology names are changed to all lower case and spaces are replaced by underscores. Thus, <em>Fixed PV</em> will appear as <em>fixed_pv</em>.</p>
 <p>(Skip to <a href="#menus">Menus</a>)</p>
 <p>Shortcut to Sections:- <a href="#p_backtrack_pv">Backtrack PV</a>, <a href="#p_base">Base</a>, <a href="#p_biomass">Biomass</a>, <a href="#p_colors">Colors</a>,
 <a href="#p_files">Files</a>, <a href="#financial">Financial</a>, <a href="#p_fixed_pv">Fixed PV</a>,
@@ -2405,7 +2407,8 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <p>The plots and tables are intended to assist with analysing the chosen scenario.</p>
 <h4>Plots</h4>
 <ul>
-<li><em>Save plot data</em> will enable most of the data inputs to plots to be saved to a spreadsheet. These values are usually an aggregation of the hourly outputs produced by Power Model</li>
+<li><em>Save plot data</em> will enable most of the data inputs to plots to be saved to a spreadsheet. These values are usually an aggregation of the hourly outputs produced by Power Model
+<br /><strong>Note:</strong> If you choose the <em>Power by hour - augmented</em> you can estimate how much non-renewable genration is required to meet the Load (see <a href="#augment">Augmented (non-renewable) Generation</a>)</li>
 <li><em>Visualise generation - period &amp; delay (secs)</em> will visualise generation by displaying variable generation circles for each station over the chosen periods. This option displays an additional window to control the visualisation:
 <table border="0" class="none">
 <tr><td class="top" style="width: 12%;"><dfn>Detail</dfn></td>
@@ -2540,7 +2543,7 @@ By default the size of plots produced is determined by matplotlib, or by the <em
 </ul>
 <p>This feature utilises summary data stored in a file rather than having to process hourly data from the weather files (see <a href="#resource">Visualising Renewable Resource Attributes</a>).</p>
 <p><a href="#help">Back to top</a></p>
-<h3 id="tricks">Performance Tricks</h3>
+<h3 id="tricks">Performance and Execution Tricks</h3>
 <p>Processing a simulation with a large number of stations can take a while to process, especially with Solar Thermal stations. You can minimise this processing by using either of these two options:</p>
 <ol>
 <li>When you invoke Power Model processing it allows you to process Plot (and Table) options multiple times without reprocessing the stations. You can then process Financial options multiple times. The process SIREN uses is as follows:
@@ -2569,6 +2572,8 @@ By default the size of plots produced is determined by matplotlib, or by the <em
 <h4 id="optimise">Adjust Generation</h4>
 <p>The <em>Generation - adjust generation</em> option allows you to easily adjust the contribution of each technology to the overall model by allowing you to apply a multiplier to the generation figures. The multiplier multiplies each hourly generation figure to approximate increasing the station by this size. This enables you to assess changes to the technology mix without having to alter individual stations. If you also choose the <em>Generation - from chosen stations</em> option you can also do this adjustment for each station rather than each technology. This approach allows you to &ldquo;experiment&rdquo; with the generation mix without having to add or alter stations.</p>
 <strong>Note:</strong> that the multiplied figures are not passed to the Financial model(s).</p>
+<h4 id="augment">Augmented (non-renewable) Generation</h4>
+<p>You can roughly estimate how much augmented (non-renewable) generation is required to meet the Load by selecting some appropriate Power Model options. This approach will indicate how much hourly demand can be met by generation, with or without storage, in the same hour, and how much excess renewable generation is spilled. If you choose the <em>Save plot data</em> and <em>Power by hour - augmented</em> option three tables will be produced. The first is actual data as in the graph, the second will adjust values to indicate the amount of generation from each component, and the third is a summary of the totals for the second table. This final table summarises how much demand is met by renewables and storage, how much has to be met from other sources (Augment) and how much renewable generation is spilled (that is, not used to meet demand or add to storage). This gives a slightly more accurate figure on how well your scenario meets hourly Load.
 <div class="experiment">
 <p><strong>Optimise (experimental)</strong></p>
 <p>SIREN also has an experimental approach to optimise the mix of technologies. If Load data is available the menu presented to adjust generation will have an option to &ldquo;optimise&rdquo; the renewable energy mix to best meet the Load. You will be presented with an <em>Optimise for:</em> pulldown list of periods to optimise for. You choose the desired period and then press the <em>Optimise</em> button. This will then do a least squares solution for adjustment multipliers to produce a generation profile that best matches the total load and load profile for that period. The data analysis is performed on either the average 24 hour period or detailed hourly figures for the chosen period (<em>optimise</em> property of <em>[Power]</em> Section). If you don't wish to include a technology or station then uncheck the checkbox (to the right of the multiplier) for that technology or station. The generation produced by that technology or station will be removed from the optimisation. Depending on the <em>optimise_load</em> property of <em>[Power]</em> Section you can also remove the Load (multiplied by it's current multiplier) from the analysis. Any computed negative multiplier will be set to zero, which is likely to result in the computed generation exceeding the load. The <em>Check / Uncheck all zeroes</em> check box enables you to include or exclude all zeroed stations from any further optimisation. The analysis is based upon the stations in your scenario and doesn't take into account how well placed they are within the network. If you want to reset all multipliers just Optimise for <em>None</em>.
@@ -3375,7 +3380,7 @@ MERRA-2 Variable
 <li>By using an index file. To use other files you need to create index files that contain the latitude, longitude and file name for each weather file, where the filename is relative to the location for the weather files. Index files for solar and wind are defined by the <em>solar_index</em> and <em>wind_index</em> properties. You can either create these files manually or use <em>indexweather</em> to create an index</li>
 </ol>
 <h5>indexweather</h5>
-<p><code>indexweather.py</code> is a Python program that can be used to create an index of solar and/or wind weather files for input to SAM. The program generates an index file that contains latitude, longitude and file name for each weather file. You can invoke the program either by choosing <em>indexweather</em> from the SIREN Tools menu or in Windows by running <code>indexweather.exe</code> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
+<p><code>indexweather.py</code> is a Python program that can be used to create an index of solar and/or wind weather files for input to SAM. The program generates an index file that contains latitude, longitude and file name for each weather file. It does this by interrogating some of weather file formats supported by SAM - SAM CSV, SMW and SRW - to obtain the three varables. You can invoke the program either by choosing <em>indexweather</em> from the SIREN Tools menu or in Windows by running <code>indexweather.exe</code> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
 <ul>
 <li><em>Solar files</em>. Location of solar weather files</li>
 <li><em>Solar index</em>. Name and location for solar index file</li>
@@ -3813,7 +3818,7 @@ MERRA-2 Variable
 </tr>
 </table>
 <h4>getfiles Preferences</h4>
-<p>The <em>getfiles</em> Preferences file contains preferences specifically for <em>worldwindow</em> and the programs using it. The file resides in the same directory as <em>worldwindow</em> itself.
+<p>The <em>getfiles</em> Preferences file contains preferences specifically for <em>worldwindow</em> and the programs using it. The file resides in the same folder as <em>worldwindow</em> itself.
 <table border="0", class="none">
 <tr>
 <th>Section</th>
