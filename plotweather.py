@@ -579,6 +579,7 @@ class PlotWeather():
         if self.plots['total']:
             if self.plots['save_plot']:
                 vals = ['hour of the day']
+                decpts = [0]
                 data = []
                 data.append(x24)
             figt = plt.figure('total')
@@ -600,9 +601,13 @@ class PlotWeather():
                 if self.plots['save_plot']:
                     vals.append(key)
                     data.append(l24[i])
+                    if key == 'wind':
+                        decpts.append(2)
+                    else:
+                        decpts.append(1)
             if self.plots['save_plot']:
                 titl = 'total'
-                dialog = displaytable.Table(map(list, zip(*data)), title=titl, fields=vals, save_folder=self.scenarios)
+                dialog = displaytable.Table(map(list, zip(*data)), title=titl, fields=vals, save_folder=self.scenarios, decpts=decpts)
                 dialog.exec_()
                 del dialog, data, vals
             tx.set_ylim([0, maxy])
@@ -718,6 +723,7 @@ class PlotWeather():
                 vals = ['monthly_average']
                 data = []
                 data.append(x24[:12])
+                decpts = [0]
             figt = plt.figure('monthly_average')
             plt.grid(True)
             tx = figt.add_subplot(111)
@@ -742,9 +748,13 @@ class PlotWeather():
                 if self.plots['save_plot']:
                     vals.append(key)
                     data.append(m12[i])
+                    if key == 'wind':
+                        decpts.append(2)
+                    else:
+                        decpts.append(1)
             if self.plots['save_plot']:
                 titl = 'mthavg'
-                dialog = displaytable.Table(map(list, zip(*data)), title=titl, fields=vals, save_folder=self.scenarios)
+                dialog = displaytable.Table(map(list, zip(*data)), title=titl, fields=vals, save_folder=self.scenarios, decpts=decpts)
                 dialog.exec_()
                 del dialog, data, vals
             tx.set_ylim([0, maxy])
