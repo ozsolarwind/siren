@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2016-2017 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2016-2018 Sustainable Energy Now Inc., Angus King
 #
 #  sirens.py - This file is part of SIREN.
 #
@@ -55,14 +55,14 @@ class TabDialog(QtGui.QDialog):
                 self.siren_dir = sys.argv[1]
         if self.siren_dir[-1] != '/':
             self.siren_dir += '/'
-        entries = []
-        fils = sorted(os.listdir(self.siren_dir))
+        self.entries = []
+        fils = os.listdir(self.siren_dir)
         self.help = ''
         self.about = ''
         self.weather_icon = 'weather.png'
         config = ConfigParser.RawConfigParser()
         ignore = ['getfiles.ini', 'siren_default.ini', 'siren_windows_default.ini']
-        for fil in fils:
+        for fil in sorted(fils):
             if fil[-4:] == '.ini':
                 if fil in ignore:
                     continue
@@ -74,7 +74,7 @@ class TabDialog(QtGui.QDialog):
                     model_name = config.get('Base', 'name')
                 except:
                     model_name = ''
-                entries.append([fil, model_name])
+                self.entries.append([fil, model_name])
                 if self.about == '':
                     try:
                         self.about = config.get('Files', 'about')
@@ -95,7 +95,7 @@ class TabDialog(QtGui.QDialog):
                         self.weather_icon = 'weather_b.png'
                 except:
                     pass
-        if len(entries) == 0:
+        if len(self.entries) == 0:
             self.new()
      #    if len(entries) == 1:
      #        self.invoke(entries[0][0])
@@ -113,32 +113,38 @@ class TabDialog(QtGui.QDialog):
         buttons.setLayout(buttonLayout)
         layout = QtGui.QGridLayout()
         self.table = QtGui.QTableWidget()
-        self.table.setRowCount(len(entries))
+        self.table.setRowCount(len(self.entries))
         self.table.setColumnCount(2)
         hdr_labels = ['Preference File', 'SIREN Model']
         self.table.setHorizontalHeaderLabels(hdr_labels)
+        self.headers = self.table.horizontalHeader()
+        self.headers.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.headers.customContextMenuRequested.connect(self.header_click)
+        self.headers.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
         self.table.verticalHeader().setVisible(False)
         self.table.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
         self.table.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
         max_row = 30
-        for rw in range(len(entries)):
+        for rw in range(len(self.entries)):
             ln = 0
             for cl in range(2):
-                self.table.setItem(rw, cl, QtGui.QTableWidgetItem(entries[rw][cl]))
-                ln += len(entries[rw][cl])
+                self.table.setItem(rw, cl, QtGui.QTableWidgetItem(self.entries[rw][cl]))
+                ln += len(self.entries[rw][cl])
             if ln > max_row:
                 max_row = ln
+        self.sort_asc = True
+        self.sort_col = 0
         self.table.resizeColumnsToContents()
         self.table.itemClicked.connect(self.Clicked)
         fnt = self.table.fontMetrics()
         ln = max_row * max(9, fnt.averageCharWidth())
-        ln2 = (len(entries) + 8) * (fnt.xHeight() + fnt.lineSpacing())
+        ln2 = (len(self.entries) + 8) * (fnt.xHeight() + fnt.lineSpacing())
         screen = QtGui.QDesktopWidget().screenGeometry()
         if ln > screen.width() * .9:
             ln = int(screen.width() * .9)
         if ln2 > screen.height() * .9:
             ln2 = int(screen.height() * .9)
-        layout.addWidget(QtGui.QLabel('Click on row for Desired Model'), 0, 0)
+        layout.addWidget(QtGui.QLabel('Click on row for Desired Model; Right click column header to sort'), 0, 0)
         layout.addWidget(self.table, 1, 0)
         layout.addWidget(buttons, 2, 0)
         menubar = QtGui.QMenuBar()
@@ -237,6 +243,26 @@ class TabDialog(QtGui.QDialog):
                 else:
                     pid = subprocess.Popen(['python', who]).pid
         return
+
+    def header_click(self, position):
+        column = self.headers.logicalIndexAt(position)
+        self.order(column)
+
+    def order(self, col):
+        rw = 0
+        step = 1
+        if col == self.sort_col:
+            if self.sort_asc:
+                rw = self.table.rowCount() - 1
+                step = -1
+                self.sort_asc = False
+        else:
+            self.sort_asc = True
+            self.sort_col = col
+        for item in sorted(self.entries, key=lambda x: x[col]):
+            for cl in range(2):
+                self.table.setItem(rw, cl, QtGui.QTableWidgetItem(item[cl]))
+            rw += step
 
     def quit(self):
         self.close()
