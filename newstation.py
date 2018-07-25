@@ -31,6 +31,15 @@ from station import Station
 from turbine import Turbine
 
 
+class ClickableQLabel(QtGui.QLabel):
+    def __init(self, parent):
+        QLabel.__init__(self, parent)
+
+    def mousePressEvent(self, event):
+        QtGui.QApplication.widgetAt(event.globalPos()).setFocus()
+        self.emit(QtCore.SIGNAL('clicked()'))
+
+
 class AnObject(QtGui.QDialog):
 
     def get_config(self):
@@ -142,7 +151,8 @@ class AnObject(QtGui.QDialog):
         metrics = []
         widths = [0, 0]
         heights = 0
-        self.turbines = [['', '', 0.]]
+        self.turbines = [['', '', 0., 0.]]
+        #                 name, class, rotor, size
        #  self.turbine_class = ['']
         grid = QtGui.QGridLayout()
         turbcombo = QtGui.QComboBox(self)
@@ -153,7 +163,7 @@ class AnObject(QtGui.QDialog):
                 if turb['Name'] == 'Units' or turb['Name'] == '[0]':
                     pass
                 else:
-                    self.turbines.append([turb['Name'], '', turb['Rotor Diameter']])
+                    self.turbines.append([turb['Name'], '', turb['Rotor Diameter'], float(turb['KW Rating'])])
                     if turb['IEC Wind Speed Class'] in ['', ' ', '0', 'Unknown', 'unknown', 'not listed']:
                        pass
                     else:
@@ -163,17 +173,43 @@ class AnObject(QtGui.QDialog):
             sam.close()
         if os.path.exists(self.pow_dir):
             pow_files = os.listdir(self.pow_dir)
-            for pow in pow_files:
-                if pow[-4:] == '.pow':
-                    turb = Turbine(pow[:-4])
-                    self.turbines.append([pow[:-4], '', str(turb.rotor)])
+            for name in pow_files:
+                if name[-4:] == '.pow':
+                    turb = Turbine(name[:-4])
+                    if name == 'Enercon E40.pow':
+                        size = 600.
+                    else:
+                        size = 0.
+                        bits = name.lower().split('kw')
+                        if len(bits) > 1:
+                            bit = bits[0].strip()
+                            for i in range(len(bit) -1, -1, -1):
+                                if not bit[i].isdigit() and not bit[i] == '.':
+                                    break
+                            size = float(bit[i + 1:])
+                        else:
+                            bits = name.lower().split('mw')
+                            if len(bits) > 1:
+                                bit = bits[0].strip()
+                                for i in range(len(bit) -1, -1, -1):
+                                    if not bit[i].isdigit() and not bit[i] == '.':
+                                        break
+                                size = float(bit[i + 1:]) * 1000 
+                            else:
+                                for i in range(len(name) -4, -1, -1):
+                                    if not name[i].isdigit() and not name[i] == '.':
+                                        break
+                                try:
+                                    size = float(name[i + 1: -4])
+                                except:
+                                    pass
+                    self.turbines.append([name[:-4], '', str(turb.rotor), size])
         self.turbines.sort()
+        self.turbines_sorted = True
         j = -1
         for i in range(len(self.turbines)):
             if self.turbines[i][0] == 'Vestas V90-2.0':
                 j = i
-                break
-        for i in range(len(self.turbines)):
             turbcombo.addItem(self.turbines[i][0])
             if self.turbines[i][0] == self.anobject.turbine:
                 turbcombo.setCurrentIndex(i)
@@ -193,7 +229,12 @@ class AnObject(QtGui.QDialog):
                 if self.scenarios[i] == self.anobject.scenario:
                     scencombo.setCurrentIndex(i)
         for i in range(len(self.field)):
-            self.label.append(QtGui.QLabel(self.field[i].title() + ':'))
+            if self.field[i] == 'turbine':
+                self.label.append(ClickableQLabel(self.field[i].title() + ':'))
+                self.label[-1].setFrameStyle(6)
+                self.connect(self.label[-1], QtCore.SIGNAL('clicked()'), self.turbineSort)
+            else:
+                self.label.append(QtGui.QLabel(self.field[i].title() + ':'))
             if i == 0:
                 metrics.append(self.label[-1].fontMetrics())
                 if metrics[0].boundingRect(self.label[-1].text()).width() > widths[0]:
@@ -238,7 +279,8 @@ class AnObject(QtGui.QDialog):
                 self.edit[-1].setValue(self.capacity)
                 self.edit[-1].setDecimals(3)
             elif self.field[i] == 'turbine':
-                if str(self.techcomb.currentText()).find('Wind') < 0 and self.techcomb.currentText() != '':
+                if str(self.techcomb.currentText()).find('Wind') < 0 and str(self.techcomb.currentText()).find('Offshore') < 0 \
+                  and self.techcomb.currentText() != '':
                     turbcombo.setCurrentIndex(0)
                 self.turbine = turbcombo
                 self.turbines_was = turbcombo
@@ -349,7 +391,7 @@ class AnObject(QtGui.QDialog):
         pv_fields = ['direction', 'tilt']
         show_fields = []
         hide_fields = []
-        if str(self.techcomb.currentText()).find('Wind') >= 0:
+        if str(self.techcomb.currentText()).find('Wind') >= 0 or str(self.techcomb.currentText()).find('Offshore') >= 0:
             hide_fields.append(cst_fields)
             hide_fields.append(pv_fields)
             show_fields.append(wind_fields)
@@ -390,6 +432,24 @@ class AnObject(QtGui.QDialog):
 
     def turbineChanged(self, val):
         self.turbine_classd.setText(self.turbines[val][1])
+        
+    def turbineSort(self):
+        curr_turbine = self.turbine.currentText()
+        if self.turbines_sorted:
+            self.turbines_sorted = False
+            self.turbines.sort(key=lambda x: x[3])
+        else:
+            self.turbines_sorted = True
+            self.turbines.sort()
+        for i in range(self.turbine.count() - 1, -1, -1):
+            self.turbine.removeItem(i)
+        j = -1
+        for i in range(len(self.turbines)):
+            if self.turbines[i][0] == curr_turbine:
+                j = i
+            self.turbine.addItem(self.turbines[i][0])
+        if j >= 0:
+            self.turbine.setCurrentIndex(j)
 
     def setStatusText(self, text):
         if text == self.statusBar().currentMessage():
@@ -481,14 +541,14 @@ class AnObject(QtGui.QDialog):
                 setattr(self, self.field[i], self.edit[i].value())
             elif isinstance(self.edit[i], QtGui.QSpinBox):
                 setattr(self, self.field[i], self.edit[i].value())
-        if self.technology.find('Wind') < 0:
+        if self.technology.find('Wind') < 0 and self.technology.find('Offshore') < 0:
             self.rotor = 0.0
             self.turbine == ''
         if self.technology == 'Biomass':
             self.area = self.areas[self.technology] * float(self.capacity)
         elif 'PV' in self.technology:
             self.area = self.areas[self.technology] * float(self.capacity)
-        elif self.technology.find('Wind') >= 0:
+        elif self.technology.find('Wind') >= 0 or self.technology.find('Offshore') >= 0:
             if self.turbine == '':
                 self.edit[5].setFocus()
                 self.message.setText('Error with ' + self.field[5].title() + '. Choose turbine')
