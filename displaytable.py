@@ -43,7 +43,7 @@ class FakeObject:
 
 class Table(QtGui.QDialog):
     def __init__(self, objects, parent=None, fields=None, fossil=True, sumby=None, sumfields=None, units='', title=None,
-                 save_folder='', edit=False, sortby=None, decpts=None):
+                 save_folder='', edit=False, sortby=None, decpts=None, totfields=None):
         super(Table, self).__init__(parent)
         if len(objects) == 0:
             buttonLayout = QtGui.QVBoxLayout()
@@ -73,6 +73,7 @@ class Table(QtGui.QDialog):
 #       somewhere we need to cater for no fields and a sumby
         self.sumby = sumby
         self.sumfields = sumfields
+        self.totfields = totfields
         self.units = units
         self.title = title
         self.edit_table = edit
@@ -144,6 +145,9 @@ class Table(QtGui.QDialog):
         if self.fields is None:
             labels = sorted(map(lambda x: self.nice(x), self.labels.keys()))
         else:
+            for f in range(len(self.fields) -1, -1, -1):
+                if self.fields[f] not in self.labels.keys():
+                    del self.fields[f] # delete any None fields
             labels = map(lambda x: self.nice(x), self.fields)
         self.table.setHorizontalHeaderLabels(labels)
         for cl in range(self.table.columnCount()):
@@ -178,6 +182,13 @@ class Table(QtGui.QDialog):
             for f in range(len(self.sumfields)):
                 fmat_str.append('{:,.' + str(self.lens[self.sumfields[f]][1]) + 'f}')
                 clv.append(self.fields.index(self.sumfields[f]))
+            if self.totfields is not None:
+                for i in range(len(self.totfields)):
+               #     clp.append(-1)
+                    fmat_str.append('{: >' + str(self.lens[self.totfields[i][0]][0] + \
+                                    self.lens[self.totfields[i][0]][1] + 1) + ',.' + \
+                                    str(self.lens[self.totfields[i][0]][1]) + 'f}')
+                    clv.append(self.fields.index(self.totfields[i][0]))                
             if self.sumby is not None:
                 clk = self.fields.index(self.sumby[0])
                 for i in range(len(self.sumfields)):
@@ -207,12 +218,17 @@ class Table(QtGui.QDialog):
                         self.table.setItem(rw, clp[f], QtGui.QTableWidgetItem('{:.1%}'.format(float(value[f]) /
                           float(totl[f])) + ' '))
                         self.table.item(rw, clp[f]).setTextAlignment(130)  # x'82'
+            if self.totfields is not None:
+                for f in range(len(self.totfields)):
+                    self.table.setItem(rw, clv[len(self.sumfields) + f], 
+                        QtGui.QTableWidgetItem(fmat_str[len(self.sumfields) + f].format(self.totfields[f][1])))
+                    self.table.item(rw, clv[len(self.sumfields) + f]).setTextAlignment(130)  # x'82'
         self.table.resizeColumnsToContents()
         width = 0
         for cl in range(self.table.columnCount()):
             width += self.table.columnWidth(cl)
         width += 50
-        height = self.table.rowHeight(1) * (self.table.rowCount() + 3)
+        height = self.table.rowHeight(1) * (self.table.rowCount() + 4)
         screen = QtGui.QDesktopWidget().availableGeometry()
         if height > (screen.height() - 70):
             height = screen.height() - 70
@@ -604,8 +620,8 @@ class Table(QtGui.QDialog):
                     hdr_types.append(self.labels[txt.lower()])
                 except:
                     hdr_types.append(self.labels[txt])
-                print hdr_types
-                print line
+            #    print hdr_types
+            #    print line
             tf.write(line + '\n')
             for rw in range(self.table.rowCount()):
                 line = ''
@@ -646,7 +662,10 @@ class Table(QtGui.QDialog):
                     hdr_types.append(self.labels[txt.lower()])
                     txt = txt.lower()
                 except:
-                    hdr_types.append(self.labels[txt])
+                    try:
+                        hdr_types.append(self.labels[txt])
+                    except:
+                        hdr_types.append('str')
                 style = xlwt.XFStyle()
                 try:
                     if self.lens[txt][1] > 0:
