@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2016 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2016-2018 Sustainable Energy Now Inc., Angus King
 #
 #  floatstatus.py - This file is part of SIREN.
 #
@@ -18,6 +18,7 @@
 #  Public License along with SIREN.  If not, see
 #  <http://www.gnu.org/licenses/>.
 #
+import os
 import sys
 import ConfigParser   # decode .ini file
 from PyQt4 import QtGui, QtCore
@@ -64,9 +65,10 @@ class FloatStatus(QtGui.QDialog):
             line_cnt1 += 1
             if len(line[0]) > max_line:
                 max_line = len(line[0])
-        if self.log_status:
-            lines2 = '%s. %s' % (str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),
-                                'hh:mm:ss')), 'SIREN log started')
+        if self.log_status or not self.log_status: 
+            lines2 = '%s. SIREN log started\n          Preference File: %s\n          Working directory: %s' \
+                      % (str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'hh:mm:ss')), \
+                      self.config_file, os.getcwd())
             line_cnt2 = 1
             if len(lines2) > max_line:
                 max_line = len(lines2)
