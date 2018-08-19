@@ -272,6 +272,7 @@ class WAScene(QtGui.QGraphicsScene):
                 self.show_ruler = True
         except:
             pass
+        self.show_coord = False
         self.ruler = 100.
         self.ruler_ticks = 10.
         try:
@@ -363,7 +364,7 @@ class WAScene(QtGui.QGraphicsScene):
         self.hide_map = False
         try:
             hide_map = config.get('View', 'hide_map')
-            if cost_existing.lower() in ['true', 'yes', 'on']:
+            if hide_map.lower() in ['true', 'yes', 'on']:
                 self.hide_map = True
         except:
             pass
@@ -507,6 +508,11 @@ class WAScene(QtGui.QGraphicsScene):
             self._gridGroup.setVisible(False)
         if self.existing_grid2:
             self.addItem(self._gridGroup2)
+        self._coordGroup = QtGui.QGraphicsItemGroup()
+        self._setupCoordGrid()
+        self.addItem(self._coordGroup)
+        if not self.show_coord:
+            self._coordGroup.setVisible(False)
         self._townGroup = QtGui.QGraphicsItemGroup()
         self._setupTowns()
         self.addItem(self._townGroup)
@@ -550,6 +556,46 @@ class WAScene(QtGui.QGraphicsScene):
         self._lon_scale = x2 / (lr[0] - ul[0])
         self._orig_lat = ul[1]
         self._orig_lon = ul[0]
+
+    def _setupCoordGrid(self):
+        bnds = [45., 90., 180.]
+        degs = [2.5, 5., 10.]
+        mlt = 1
+        color = QtGui.QColor()
+        color.setNamedColor((self.colors['town_name']))
+        pen = QtGui.QPen(color, self.line_width)
+        pen.setJoinStyle(QtCore.Qt.RoundJoin)
+        pen.setCapStyle(QtCore.Qt.RoundCap)
+        step1 = abs((self.map_upper_left[0] - self.map_lower_right[0]))
+        step2 = abs((self.map_upper_left[1] - self.map_lower_right[1]))
+        step = min(step1, step2)
+        while step < bnds[0] * mlt:
+            mlt = mlt / 10.
+        if step > bnds[2] * mlt:
+            step = degs[2] * mlt
+        elif step > bnds[1] * mlt:
+            step = degs[1] * mlt
+        else:
+            step = degs[0] * mlt
+        lat = step * round((self.map_lower_right[0] + step / 2.) / step)
+        while lat <= self.map_upper_left[0]:
+            fromm = self.mapFromLonLat(QtCore.QPointF(self.map_upper_left[1], lat))
+            too = self.mapFromLonLat(QtCore.QPointF(self.map_lower_right[1], lat))
+            item = QtGui.QGraphicsLineItem(fromm.x(), fromm.y(), too.x(), too.y())
+            item.setPen(pen)
+            item.setZValue(3)
+            self._coordGroup.addToGroup(item)
+            lat += step
+        lon = step * round((self.map_upper_left[1] + step / 2.) / step)
+        while lon <= self.map_lower_right[1]:
+            fromm = self.mapFromLonLat(QtCore.QPointF(lon, self.map_upper_left[0]))
+            too = self.mapFromLonLat(QtCore.QPointF(lon, self.map_lower_right[0]))
+            item = QtGui.QGraphicsLineItem(fromm.x(), fromm.y(), too.x(), too.y())
+            item.setPen(pen)
+            item.setZValue(3)
+            self._coordGroup.addToGroup(item)
+            lon += step
+        return
 
     def _setupTowns(self):
         self._towns = {}
@@ -1048,11 +1094,11 @@ class WAScene(QtGui.QGraphicsScene):
             st.changeDate(d)
         self._power_tot.changeDate(d)
 
-    def mapToLonLat(self, p):
+    def mapToLonLat(self, p, decpts=4):
         x = p.x() / self._lon_scale + self._orig_lon
         y = p.y() / self._lat_scale + self._orig_lat
         lon, lat = self._proj(x, y, inverse=True)
-        return QtCore.QPointF(round(lon, 4), round(lat, 4))
+        return QtCore.QPointF(round(lon, decpts), round(lat, decpts)) 
 
     def mapFromLonLat(self, p):
         lon, lat = p.x(), p.y()
