@@ -50,6 +50,29 @@ def within_map(x, y, poly):
     return inside
 
 
+def dust(pyd, pxd, y1d, x1d, y2d, x2d):   # debug
+    px = radians(pxd)
+    py = radians(pyd)
+    x1 = radians(x1d)
+    y1 = radians(y1d)
+    x2 = radians(x2d)
+    y2 = radians(y2d)
+    p_x = x2 - x1
+    p_y = y2 - y1
+    something = p_x * p_x + p_y * p_y
+    u = ((px - x1) * p_x + (py - y1) * p_y) / float(something)
+    if u > 1:
+        u = 1
+    elif u < 0:
+        u = 0
+    x = x1 + u * p_x
+    y = y1 + u * p_y
+    dx = x - px
+    dy = y - py
+    dist = sqrt(dx * dx + dy * dy)
+    return [round(abs(dist) * RADIUS, 2), round(degrees(y), 6), round(degrees(x), 6)]
+
+        
 class Line:
     def __init__(self, name, style, coordinates, length=0., connector=-1, dispatchable=None, line_cost=None, peak_load=None,
                  peak_dispatchable=None, peak_loss=None, line_table=None, substation_cost=None):
@@ -440,28 +463,6 @@ class Grid:
      #                self.lines[i].coordinates.insert(0, [connect[0][1], connect[0][2]])
      #        self.lines[i].connector = con
 
-    def dust(self, pyd, pxd, y1d, x1d, y2d, x2d):   # debug
-        px = radians(pxd)
-        py = radians(pyd)
-        x1 = radians(x1d)
-        y1 = radians(y1d)
-        x2 = radians(x2d)
-        y2 = radians(y2d)
-        p_x = x2 - x1
-        p_y = y2 - y1
-        something = p_x * p_x + p_y * p_y
-        u = ((px - x1) * p_x + (py - y1) * p_y) / float(something)
-        if u > 1:
-            u = 1
-        elif u < 0:
-            u = 0
-        x = x1 + u * p_x
-        y = y1 + u * p_y
-        dx = x - px
-        dy = y - py
-        dist = sqrt(dx * dx + dy * dy)
-        return [round(abs(dist) * RADIUS, 2), round(degrees(y), 6), round(degrees(x), 6)]
-
     def gridConnect(self, lat, lon, ignore=[]):
         shortest = [99999, -1., -1., -1]
         for l in range(len(self.lines)):
@@ -469,10 +470,10 @@ class Grid:
                 continue
             for i in range(len(self.lines[l].coordinates) - 1):
                 if self.dummy_fix:
-                    dist = self.dust(lat, lon, self.lines[l].coordinates[i][0], self.lines[l].coordinates[i][1],
+                    dist = dust(lat, lon, self.lines[l].coordinates[i][0], self.lines[l].coordinates[i][1],
                            self.lines[l].coordinates[i + 1][0], self.lines[l].coordinates[i + 1][1])
                 elif self.kml_file == '' and self.dummy_fix:
-                    dist = self.dust(lat, lon, self.lines[l].coordinates[i][0], self.lines[l].coordinates[i][1],
+                    dist = dust(lat, lon, self.lines[l].coordinates[i][0], self.lines[l].coordinates[i][1],
                            self.lines[l].coordinates[i + 1][0], self.lines[l].coordinates[i + 1][1])
                 else:
                     dist = self.DistancePointLine(lat, lon, self.lines[l].coordinates[i][0], self.lines[l].coordinates[i][1],
