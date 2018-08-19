@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2016 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2016-2018 Sustainable Energy Now Inc., Angus King
 #
 #  visualise.py - This file is part of SIREN.
 #
@@ -156,8 +156,8 @@ class Visualise(QtGui.QDialog):
         self.grid.addWidget(QtGui.QLabel('Period Loop (secs):'), row, 0)
         self.loopSpin = QtGui.QDoubleSpinBox()
         self.loopSpin.setRange(0., 10.)
-        self.loopSpin.setDecimals(1)
-        self.loopSpin.setSingleStep(.1)
+        self.loopSpin.setDecimals(2)
+        self.loopSpin.setSingleStep(.05)
         self.loopSpin.setValue(0.)
         self.loopSpin.valueChanged[str].connect(self.loopChanged)
         self.grid.addWidget(self.loopSpin, row, 1, 1, 2)
