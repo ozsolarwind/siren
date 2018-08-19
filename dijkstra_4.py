@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2018 Sustainable Energy Now Inc., Angus King
 #
 #  djikstra_4.py - This file is part of SIREN.
 #
@@ -159,7 +159,7 @@ def dijkstra(aGraph, start):
 class Shortest:
     def isBetween(self, a, b, c):
         crossproduct = (c[1] - a[1]) * (b[0] - a[0]) - (c[0] - a[0]) * (b[1] - a[1])
-        if abs(crossproduct) > 0.01:  # sys.float_info.epsilon:
+        if abs(crossproduct) > 0.0001:  # sys.float_info.epsilon:
             return False    # (or != 0 if using integers)
         dotproduct = (c[0] - a[0]) * (b[0] - a[0]) + (c[1] - a[1]) * (b[1] - a[1])
         if dotproduct < 0:
@@ -185,11 +185,10 @@ class Shortest:
         return round(abs(dst) * RADIUS, 2)
 
     def __init__(self, lines, source, target, grid):
-        self.existing_grid = grid  # existing grid lines count
         self.source = source
         self.target = target
         self.lines = lines
-        self.grid = grid
+        self.grid = grid # existing grid lines count
         self.edges = {}
         self.g = Graph()
         for li in range(len(self.lines)):
@@ -235,8 +234,11 @@ class Shortest:
             self.g.add_vertex(str(self.source))
         dijkstra(self.g, self.g.get_vertex(str(self.source)))
         target = self.g.get_vertex(str(self.target))
-        self.path = [target.get_id()]
-        shortest(target, self.path)
+        try:
+            self.path = [target.get_id()]
+            shortest(target, self.path)
+        except:
+            self.path = []           
 
     def getPath(self):
         the_path = []
