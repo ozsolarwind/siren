@@ -303,7 +303,8 @@ You can also use TMY files such as those provided with SAM. If you have a number
 </tr>
 <tr class="none">
 <td class="none"><dfn>Maximum Capacity (MW)</dfn></td>
-<td class="none">Maximum capacity of the station. This is the amount of power the station produces for export into the network</td>
+<td class="none">Maximum capacity of the station. This is the amount of power the station produces for export into the network
+<br /><strong>Note:</strong> In the case of PV (and biomass) SAM uses nameplate capacity as the basis for it's calculations. SIREN has been designed to use generation capacity. The PV capacity figures you input into SIREN are increased by the dc_as_ratio to give the nameplate capacity before they are passed to SAM</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>Turbine</dfn></td>
@@ -848,10 +849,12 @@ as embedded solar - Rooftop PV - installed on the grid but not registered with A
 <td class="none"><dfn>analysis_period</dfn></td>
 <td class="none">Analysis period in years (e.g. 30)</td>
 </tr>
+<!--
 <tr class="none">
 <td class="none"><dfn>bid_price_esc</dfn></td>
 <td class="none">PPA escalation (Price escalation). Can be suffixed with % for readability, for example, 0%</td>
 </tr>
+-->
 <tr class="none">
 <td class="none"><dfn>debt_fraction</dfn></td>
 <td class="none">Debt fraction. Can be suffixed with % for readability, for example, 0%</td>
@@ -916,18 +919,22 @@ as embedded solar - Rooftop PV - installed on the grid but not registered with A
 <td class="none"><dfn>optimize_lcoe_wrt_debt_fraction</dfn></td>
 <td class="none">Optimise LCOE with respect to debt percent (e.g. 0)</td>
 </tr>
+<!--
 <tr class="none">
 <td class="none"><dfn>optimize_lcoe_wrt_ppa_escalation</dfn></td>
 <td class="none">Optimise LCOE with respect to PPA escalation (e.g. 0)</td>
 </tr>
+-->
 <tr class="none">
 <td class="none"><dfn>positive_cashflow_required</dfn></td>
 <td class="none">Positive cash flow required. 1 = yes</td>
 </tr>
+<!--
 <tr class="none">
 <td class="none"><dfn>ppa_escalation</dfn></td>
 <td class="none">PPA escalation ??. Can be suffixed with % for readability, for example, 0.6%</td>
 </tr>
+-->
 <tr class="none">
 <td class="none"><dfn>real_discount_rate</dfn></td>
 <td class="none">Real discount rate. Can be suffixed with % for readability, for example, 0%</td>
@@ -1390,11 +1397,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <tr class="none">
 <td class="none"><dfn>save_balance</dfn></td>
 <td class="none">Save inputs for PowerBalance</td>
-</tr>
-<tr class="none">
-<td class="none"><dfn>save_format</dfn></td>
-<td class="none">Specify the file format to save plots as. This can be one of the values supported by the Python plot routine - <em>eps, jpeg, jpeg, pdf, pgf </em>(requires LaTex)<em>, png, ps, raw, rgba, svg, svgz, tif,</em> or <em>tiff</em>. The default format is <em>png</em></td>
-</tr>
+</tr>   
 <tr class="none">
 <td class="none"><dfn>save_data</dfn></td>
 <td class="none">Save initial data outputs produced by the model for each station</td>
@@ -1708,6 +1711,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">If True then centre on nearest station on left-click</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>crop_save</dfn></td>
+<td class="none">If True then when saving a View the image will be cropped to the edge of the map. The default is True</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>existing_grid</dfn></td>
 <td class="none">Display existing grid lines</td>
 </tr>
@@ -1766,6 +1773,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <tr class="none">
 <td class="none"><dfn>ruler</dfn></td>
 <td class="none">Length of ruler in kilometres in format <em<length></em> or <em>length, ticks</em> where <em>length</em> specifies the total length of the ruler and <em>ticks</em> ticks indicates the length of tick marks along the ruler</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>scene_save</dfn></td>
+<td class="none">If True then when saving a View the image will be the underlying map image; otherwise the image will be the (screen) view. The image resolution can be different in the two options, dependent upon screen resolution, image resolution, sceen window size and how much of the map is being saved. The default is False</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>show_towns</dfn></td>
@@ -2077,6 +2088,10 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <tr class="none">
 <td class="none"><img src="refresh.png" alt="Refresh Grid">&nbsp;&nbsp;Refresh Grid</td>
 <td class="none">This is a temporary option to refresh the Grid if the grid tracing and shortest path algorithms misbehave</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="check-mark_b.png" alt="Show Coordinates Grid">&nbsp;&nbsp;Coordinates Grid</td>
+<td class="none">Display a grid of latitude and longitude. The spacing of the grid is based upon the geographic size of the map.</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="arrow.png" alt="Go to Station">&nbsp;&nbsp;Go to Station (Ctrl+G)</td>
@@ -2468,57 +2483,70 @@ By default the size of plots produced is determined by matplotlib, or by the <em
 </ul>
 <p><a href="#help">Back to top</a></p>
 <h3 id="fopts">Financial Model Options</h3>
+<p><strong>Note:</strong> Implementation of the SAM Financial models in SIREN is a work in progress. If you have suggestions on how you would like SIREN to be extended in this area contact <a href="mailto:siren@sen.asn.au?Subject=SIREN%20Financial%20Models">siren@sen.asn.au</a>.
 <p>If you have chosen to run the Financial models you will be presented with an additional options menu as set out here. The default values are specified in the <a href="#financial">[Financial]</a> Section of the Preferences file. The associated property is indicated in brackets at the end of the description. If you hover over the window title bar or press F1 a help for the Options will be displayed.</p>
-<table border="0" class="none">
-<tr><td class="top" style="width: 30%;"><dfn>Analysis period</dfn></td>
+<table border="0" class="none" cellpadding="2">
+<tr><td class="top" style="width: 25%;"><dfn>Analysis period (years)</dfn></td>
 <td class="none"> (<em>analysis_period</em>)</td></tr>
-<tr><td class="lr"><dfn>Federal tax rate</dfn></td>
+<tr><td class="lr"><dfn>Federal tax rate (%)</dfn></td>
 <td class="none"> (<em>federal_tax_rate</em>)</td></tr>
-<tr><td class="lr"><dfn>Real discount rate</dfn></td>
+<tr><td class="lr"><dfn>Real discount rate (%)</dfn></td>
 <td class="none"> (<em>real_discount_rate</em>)</td></tr>
-<tr><td class="lr"><dfn>Inflation rate</dfn></td>
+<tr><td class="lr"><dfn>Inflation rate (%)</dfn></td>
 <td class="none"> (<em>inflation_rate</em>)</td></tr>
-<tr><td class="lr"><dfn>Insurance rate</dfn></td>
+<tr><td class="lr"><dfn>Insurance rate (%)</dfn></td>
 <td class="none"> (<em>insurance_rate</em>)</td></tr>
-<tr><td class="lr"><dfn>Loan term</dfn></td>
+<tr><td class="lr"><dfn>Loan term (years)</dfn></td>
 <td class="none"> (<em>loan_term</em>)</td></tr>
-<tr><td class="lr"><dfn>Loan rate</dfn></td>
+<tr><td class="lr"><dfn>Loan rate (%)</dfn></td>
 <td class="none"> (<em>loan_rate</em>)</td></tr>
-<tr><td class="lr"><dfn>Debt percentage</dfn></td>
+<tr><td class="lr"><dfn>Debt percentage (%)</dfn></td>
 <td class="none"> (<em>debt_fraction</em>)</td></tr>
 <tr><td class="lr"><dfn>Federal depreciation type</dfn></td>
 <td class="none">2=straight line (<em>depr_fed_type</em>)</td></tr>
-<tr><td class="lr"><dfn>Federal depreciation Years</dfn></td>
-<td class="none">Federal depreciation straight-line Years (<em>depr_fed_sl_years</em>)</td></tr>
-<tr><td class="lr"><dfn>Bid Price escalation</dfn></td>
-<td class="none"> (<em>bid_price_esc</em>)</td></tr>
-<tr><td class="lr"><dfn>Salvage value percentage</dfn></td>
+<tr><td class="lr"><dfn>Depreciation straight-line term (years)</dfn></td>
+<td class="none">Federal depreciation straight-line term in years (<em>depr_fed_sl_years</em>)</td></tr>
+<!--
+<tr><td class="lr"><dfn>Bid Price escalation (%)</dfn></td>
+<td class="none"> Not implemented yet (<em>bid_price_esc</em>)</td></tr>
+-->
+<tr><td class="lr"><dfn>Salvage value percentage (%)</dfn></td>
 <td class="none"> (<em>salvage_percentage</em>)</td></tr>
-<tr><td class="lr"><dfn>Minimum required DSCR</dfn></td>
+<tr><td class="lr"><dfn>Minimum required DSCR (ratio)</dfn></td>
 <td class="none"> (<em>min_dscr_target</em>)</td></tr>
-<tr><td class="lr"><dfn>Minimum required IRR</dfn></td>
+<tr><td class="lr"><dfn>Minimum required IRR (%)</dfn></td>
 <td class="none"> (<em>min_irr_target</em>)</td></tr>
-<tr><td class="lr"><dfn>PPA escalation</dfn></td>
-<td class="none"> (<em>ppa_escalation</em>)</td></tr>
-<tr><td class="lr"><dfn>IPP option</dfn></td>
-<td class="none">0=Utility IPP or 1=Commercial PPA (<em>market</em>)</td></tr>
-<tr><td class="lr"><dfn>Minimum DSCR required</dfn></td>
+<!--
+<tr><td class="lr"><dfn>PPA escalation (%)</dfn></td>
+<td class="none"> Not implemented yet  (<em>ppa_escalation</em>)</td></tr>
+-->
+<tr><td class="lr"><dfn>Commercial PPA (on), Utility IPP (off)</dfn></td>
+<td class="none">IPP option - Utility IPP or Commercial PPA (<em>market</em>)</td></tr>
+<tr><td class="lr"><dfn>Minimum DSCR required?</dfn></td>
 <td class="none"> (<em>min_dscr_required</em>)</td></tr>
-<tr><td class="lr"><dfn>Positive cash flow required</dfn></td>
+<tr><td class="lr"><dfn>Positive cash flow required?</dfn></td>
 <td class="none"> (<em>positive_cashflow_required</em>)</td></tr>
-<tr><td class="lr"><dfn>Optimise LCOE with respect to debt percent</dfn></td>
+<tr><td class="lr"><dfn>Optimise LCOE with respect to debt percent?</dfn></td>
 <td class="none"> (<em>optimize_lcoe_wrt_debt_fraction</em>)</td></tr>
-<tr><td class="lr"><dfn>Optimise LCOE with respect to PPA escalation</dfn></td>
-<td class="none"> (<em>optimize_lcoe_wrt_ppa_escalation</em>)</td></tr>
-<tr><td class="lr"><dfn>Reduce power by Grid losses</dfn></td>
+<!--
+<tr><td class="lr"><dfn>Optimise LCOE with respect to PPA escalation?</dfn></td>
+<td class="none"> Not implemented yet  (<em>optimize_lcoe_wrt_ppa_escalation</em>)</td></tr>
+-->
+<tr><td class="lr"><dfn>Reduce power by Grid losses?</dfn></td>
 <td class="none">Reduce the power passed to the financial model by the amount of grid losses. This will slightly increase LCOE. If chosen this will reduce power by losses related to the line connecting the station into the grid. To reduce power by losses for the the full grid path length to the load centre you need to also choose the <em>Include full grid path ...</em> option (below)</td></tr>
-<tr><td class="lr"><dfn>Include Grid costs in LCOE</dfn></td>
+<tr><td class="lr"><dfn>Include Grid costs in LCOE?</dfn></td>
 <td class="none">Increase station costs by the line costs to connect the station to the grid. This only includes the cost of the line to connect the station into the main grid and for the capacity of the station</td></tr>
-<tr><td class="lr"><dfn>Include full grid path in LCOE</dfn></td>
+<tr><td class="lr"><dfn>Include full grid path in LCOE?</dfn></td>
 <td class="none">Increase station costs by the line costs to connect the station to the grid. This includes the cost of the line to connect the station to the load centre for the capacity of the station. <strong>This option may over-inflate grid costs as each station path to the load centre is traced individually</strong></td></tr>
 <tr><td class="bottom"><strong>Proceed, Save Options, All Done</strong></td>
 <td class="none">At the bottom of the menu is the <strong>Proceed</strong> button. If the button is not visible use the scroll bar to navigate down the table. You can also <strong>Save</strong> the options for future sessions; this writes the updated options to the Preferences file. The model will allow multiple iterations of the financial models. Use the <strong>All Done</strong> button to exit financial model processing</td></tr>
 </table>
+<h4>Notes on the Financial Model Table</h4>
+<ul>
+<li>The table presents LCOE figures for each station and an overall LCOE estimate. The overall estimate is calculated by multiplying the LCOE for each station by the ratio of it's generation to total generation</li>
+<li>Strictly speaking LCOE does not include grid costs. The grid options are provided to enable the impact of this cost to be included in the model</li>
+<li>As mentioned previously, <em>Include full grid path in LCOE?</em> may over-inflate grid costs as each station path to the load centre is traced individually</li>
+</ul>
 <p><a href="#help">Back to top</a></p>
 <h3 id="resourcegrid">Resource Grids</h3>
 <p>To assist with placement of renewable energy stations SIREN can display a grid of renewable resource attributes derived from the SAM weather files. The grid can be displayed by invoking the <em>Show Resource Grid</em> (Ctrl+B) menu option. The Resource Overlay menu presented has the following fields:</p>
@@ -2575,6 +2603,9 @@ By default the size of plots produced is determined by matplotlib, or by the <em
 <strong>Note:</strong> that the multiplied figures are not passed to the Financial model(s).</p>
 <h4 id="augment">Augmented (non-renewable) Generation</h4>
 <p>You can roughly estimate how much augmented (non-renewable) generation is required to meet the Load by selecting some appropriate Power Model options. This approach will indicate how much hourly demand can be met by generation, with or without storage, in the same hour, and how much excess renewable generation is spilled. If you choose the <em>Save plot data</em> and <em>Power by hour - augmented</em> option three tables will be produced. The first is actual data as in the graph, the second will adjust values to indicate the amount of generation from each component, and the third is a summary of the totals for the second table. This final table summarises how much demand is met by renewables and storage, how much has to be met from other sources (Augment) and how much renewable generation is spilled (that is, not used to meet demand or add to storage). This gives a slightly more accurate figure on how well your scenario meets hourly Load.
+<h4>Saving the Current View</h4>
+<p>It is possible to save the current view of the main SIREN window using the <strong>Save View</strong> (Ctrl+V) option. Depending on the options chosen you can choose to crop the view at the map boundary (<em>crop_save</em>=True) or to save the full view, and to save either the underlying map (<em>scene_save</em>=True) or the screen view. The image resolution can be different in the two options, dependent upon screen resolution, image resolution, sceen window size and how much of the map is being saved.
+</p>
 <div class="experiment">
 <p><strong>Optimise (experimental)</strong></p>
 <p>SIREN also has an experimental approach to optimise the mix of technologies. If Load data is available the menu presented to adjust generation will have an option to &ldquo;optimise&rdquo; the renewable energy mix to best meet the Load. You will be presented with an <em>Optimise for:</em> pulldown list of periods to optimise for. You choose the desired period and then press the <em>Optimise</em> button. This will then do a least squares solution for adjustment multipliers to produce a generation profile that best matches the total load and load profile for that period. The data analysis is performed on either the average 24 hour period or detailed hourly figures for the chosen period (<em>optimise</em> property of <em>[Power]</em> Section). If you don't wish to include a technology or station then uncheck the checkbox (to the right of the multiplier) for that technology or station. The generation produced by that technology or station will be removed from the optimisation. Depending on the <em>optimise_load</em> property of <em>[Power]</em> Section you can also remove the Load (multiplied by it's current multiplier) from the analysis. Any computed negative multiplier will be set to zero, which is likely to result in the computed generation exceeding the load. The <em>Check / Uncheck all zeroes</em> check box enables you to include or exclude all zeroed stations from any further optimisation. The analysis is based upon the stations in your scenario and doesn't take into account how well placed they are within the network. If you want to reset all multipliers just Optimise for <em>None</em>.
