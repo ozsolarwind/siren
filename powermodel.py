@@ -475,61 +475,64 @@ class whatStations(QtGui.QDialog):
 
 
 class whatFinancials(QtGui.QDialog):
-    def __init__(self, helpfile=None):
+    def __init__(self, parms=None, helpfile=None):
         super(whatFinancials, self).__init__()
         self.proceed = False
         self.helpfile = helpfile
-        self.financials = [['analysis_period', 'Analyis period', 0, 50, 30],
-                      ['federal_tax_rate', 'Federal tax rate', 0, 30., 30.],
-                      ['real_discount_rate', 'Real discount rate', 0, 20., 0],
-                      ['inflation_rate', 'Inflation rate', 0, 20., 0],
-                      ['insurance_rate', 'Insurance rate', 0, 15., 0],
-                      ['loan_term', 'Loan term', 0, 60, 0],
-                      ['loan_rate', 'Loan rate', 0, 30., 0],
-                      ['debt_fraction', 'Debt percentage', 0, 100, 0],
+        self.financials = [['analysis_period', 'Analysis period (years)', 0, 50, 30],
+                      ['federal_tax_rate', 'Federal tax rate (%)', 0, 30., 30.],
+                      ['real_discount_rate', 'Real discount rate (%)', 0, 20., 0],
+                      ['inflation_rate', 'Inflation rate (%)', 0, 20., 0],
+                      ['insurance_rate', 'Insurance rate (%)', 0, 15., 0],
+                      ['loan_term', 'Loan term (years)', 0, 60., 0],
+                      ['loan_rate', 'Loan rate (%)', 0, 30., 0],
+                      ['debt_fraction', 'Debt percentage (%)', 0, 100, 0],
                       ['depr_fed_type', 'Federal depreciation type 2=straight line', 0, 2, 2],
-                      ['depr_fed_sl_years', 'Federal depreciation straight-line Years', 0, 60, 20],
+                      ['depr_fed_sl_years', 'Depreciation straight-line term (years)', 0, 60, 20],
                       ['market', 'Commercial PPA (on), Utility IPP (off)', 0, 1, 0],
-                      ['bid_price_esc', 'Bid Price escalation', 0, 100, 0],
-                      ['salvage_percentage', 'Salvage value percentage', 0, 100, 0],
-                      ['min_dscr_target', 'Minimum required DSCR', 0, 5., 1.4],
-                      ['min_irr_target', 'Minimum required IRR', 0, 30., 15],
-                      ['ppa_escalation', 'PPA escalation', 0, 100., 0.6],
-                      ['min_dscr_required', 'Minimum DSCR required', 0, 1, 1],
-                      ['positive_cashflow_required', 'Positive cash flow required', 0, 1, 1],
+                   #   ['bid_price_esc', 'Bid Price escalation (%)', 0, 100., 0],
+                      ['salvage_percentage', 'Salvage value percentage (%)', 0, 100., 0],
+                      ['min_dscr_target', 'Minimum required DSCR (ratio)', 0, 5., 1.4],
+                      ['min_irr_target', 'Minimum required IRR (%)', 0, 30., 15.],
+                   #   ['ppa_escalation', 'PPA escalation (%)', 0, 100., 0.6],
+                      ['min_dscr_required', 'Minimum DSCR required?', 0, 1, 1],
+                      ['positive_cashflow_required', 'Positive cash flow required?', 0, 1, 1],
                       ['optimize_lcoe_wrt_debt_fraction', 'Optimize LCOE with respect to debt' +
-                       ' percent', 0, 1, 0],
-                      ['optimize_lcoe_wrt_ppa_escalation', 'Optimize LCOE with respect to PPA' +
-                       ' escalation', 0, 1, 0],
-                      ['grid_losses', 'Reduce power by Grid losses', False, True, False],
-                      ['grid_costs', 'Include Grid costs in LCOE', False, True, False],
-                      ['grid_path_costs', 'Include full grid path in LCOE', False, True, False]]
-        config = ConfigParser.RawConfigParser()
-        if len(sys.argv) > 1:
-            config_file = sys.argv[1]
-        else:
-            config_file = 'SIREN.ini'
-        config.read(config_file)
-        beans = []
-        try:
-            beans = config.items('Financial')
-            for key, value in beans:
-                for i in range(len(self.financials)):
-                    if key == self.financials[i][0]:
-                        if value[-1] == '%':
-                            self.financials[i][4] = float(value[:-1])
-                        elif '.' in value:
-                            self.financials[i][4] = float(value)
-                        elif isinstance(self.financials[i][4], bool):
-                            if value == 'True':
-                                self.financials[i][4] = True
+                       ' percent?', 0, 1, 0],
+                   #   ['optimize_lcoe_wrt_ppa_escalation', 'Optimize LCOE with respect to PPA' +
+                   #    ' escalation?', 0, 1, 0],
+                      ['grid_losses', 'Reduce power by Grid losses?', False, True, False],
+                      ['grid_costs', 'Include Grid costs in LCOE?', False, True, False],
+                      ['grid_path_costs', 'Include full grid path in LCOE?', False, True, False]]
+        if parms is None:
+            config = ConfigParser.RawConfigParser()
+            if len(sys.argv) > 1:
+                config_file = sys.argv[1]
+            else:
+                config_file = 'SIREN.ini'
+            config.read(config_file)
+            beans = []
+            try:
+                beans = config.items('Financial')
+                for key, value in beans:
+                    for i in range(len(self.financials)):
+                        if key == self.financials[i][0]:
+                            if value[-1] == '%':
+                                self.financials[i][4] = float(value[:-1])
+                            elif '.' in value:
+                                self.financials[i][4] = float(value)
+                            elif isinstance(self.financials[i][4], bool):
+                                if value == 'True':
+                                    self.financials[i][4] = True
+                                else:
+                                    self.financials[i][4] = False
                             else:
-                                self.financials[i][4] = False
-                        else:
-                            self.financials[i][4] = int(value)
-                        break
-        except:
-            pass
+                                self.financials[i][4] = int(value)
+                            break
+            except:
+                pass
+        else:
+            self.financials = parms
         self.grid = QtGui.QGridLayout()
         self.labels = []
         self.spin = []
@@ -654,6 +657,28 @@ class whatFinancials(QtGui.QDialog):
                     break
         return values
 
+    def getParms(self):
+# This is in some sense a repeat of getvalues except that's a dictionary and this is a list
+# It's inefficeint and untidy but in anotehr time I'll look at it
+        for i in range(len(self.spin)):
+            for item in self.financials:
+                if item[1] == self.labels[i].text():
+                    item[4] = self.spin[i].value()
+        for i in range(len(self.checkbox)):
+            for item in self.financials:
+                if item[1] == self.checkbox[i].text():
+                    if isinstance(item[2], bool) and isinstance(item[3], bool):
+                        if self.checkbox[i].checkState() == QtCore.Qt.Checked:
+                            item[4] = 1
+                        else:
+                            item[4] = 0
+                    else:
+                        if self.checkbox[i].checkState() == QtCore.Qt.Checked:
+                            item[4] = 1
+                        else:
+                            item[4] = 0
+                    break
+        return self.financials
 
 class Adjustments(QtGui.QDialog):
     def __init__(self, keys, load_key=None, load=None, data=None, base_year=None):
@@ -2060,8 +2085,16 @@ class FinancialModel():
                 elif worksheet.cell_value(curr_row, var['DATA']) == 'SSC_NUMBER':
                     if overrides is not None and worksheet.cell_value(curr_row, var['NAME']) \
                       in overrides:
-                        data.set_number(worksheet.cell_value(curr_row, var['NAME']),
-                          overrides[worksheet.cell_value(curr_row, var['NAME'])])
+                        if worksheet.cell_value(curr_row, var['DATA']) == 'SSC_ARRAY':
+                            if type(overrides[worksheet.cell_value(curr_row, var['NAME'])]) is list:
+                                data.set_array(worksheet.cell_value(curr_row, var['NAME']),
+                                  overrides[worksheet.cell_value(curr_row, var['NAME'])])
+                            else:
+                                data.set_array(worksheet.cell_value(curr_row, var['NAME']),
+                                  [overrides[worksheet.cell_value(curr_row, var['NAME'])]])
+                        else:
+                            data.set_number(worksheet.cell_value(curr_row, var['NAME']),
+                              overrides[worksheet.cell_value(curr_row, var['NAME'])])
                     else:
                         if isinstance(worksheet.cell_value(curr_row, var['DEFAULT']), float):
                             data.set_number(worksheet.cell_value(curr_row, var['NAME']),
@@ -2077,7 +2110,7 @@ class FinancialModel():
                                         worksheet.cell_value(curr_row, var['DATA'])])
         return data, output_variables
 
-    def __init__(self, name, technology, capacity, power, grid, path, year=None, status=None):
+    def __init__(self, name, technology, capacity, power, grid, path, year=None, status=None, parms=None):
         def set_grid_variables():
             self.dispatchable = None
             self.line_loss = 0.
@@ -2190,6 +2223,7 @@ class FinancialModel():
 
         self.stations = []
         self.status = status
+        self.parms = parms
         config = ConfigParser.RawConfigParser()
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
@@ -2247,9 +2281,10 @@ class FinancialModel():
             annual_file = 'annualoutput_variables.xls'
             ippppa = 'ippppa_variables.xls'
         annual_data, annual_outputs = self.get_variables(annual_file)
-        what_beans = whatFinancials(helpfile=self.helpfile)
+        what_beans = whatFinancials(parms=self.parms, helpfile=self.helpfile)
         what_beans.exec_()
         ippas = what_beans.getValues()
+        self.parms = what_beans.getParms()
         if ippas is None:
             self.stations = None
             return
@@ -2306,8 +2341,11 @@ class FinancialModel():
             if (module.exec_(annual_data)):
              # return the relevant outputs desired
                 net_hourly = annual_data.get_array('hourly_energy')
+                print '(2344)', net_hourly
                 net_annual = annual_data.get_array('annual_energy')
+                print '(2346)', net_annual
                 degradation = annual_data.get_array('annual_degradation')
+                print '(2348)', degradation
                 del module
                 do_ippppa()
             else:
@@ -2326,6 +2364,9 @@ class FinancialModel():
 
     def getValues(self):
         return self.stations
+        
+    def getParms(self):
+        return self.parms
 
 
 class ProgressModel(QtGui.QDialog):
@@ -5053,26 +5094,45 @@ class PowerModel():
 #
          # run the financials model
         if do_financials:
-            while True:
+            self.financial_parms = None
+            while True:            
                 self.financials = FinancialModel(self.stn_outs, self.stn_tech, self.stn_size,
-                                  self.stn_pows, self.stn_grid, self.stn_path, year=self.base_year)
+                                  self.stn_pows, self.stn_grid, self.stn_path, year=self.base_year,
+                                  parms=self.financial_parms)
                 if self.financials.stations is None:
                     break
+                self.financial_parms = self.financials.getParms()
                 fin_fields = ['name', 'technology', 'capacity', 'generation', 'cf',
                               'capital_cost', 'lcoe_real', 'lcoe_nominal', 'npv']
                 fin_sumfields = ['capacity', 'generation', 'capital_cost', 'npv']
                 fin_units = 'capacity=MW generation=MWh capital_cost=$ lcoe_real=c/kWh' + \
                             ' lcoe_nominal=c/kWh npv=$'
+                tot_capital = 0.
+                tot_capacity = 0.
+                tot_generation = 0.
+                tot_lcoe_real = [0., 0.]
+                tot_lcoe_nom = [0., 0.]
                 for stn in self.financials.stations:
+                    tot_capital += stn.capital_cost
+                    tot_capacity += stn.capacity
+                    tot_generation += stn.generation
+                for stn in self.financials.stations:
+                    tot_lcoe_real[0] += stn.lcoe_real * (stn.generation / tot_generation)
+                    tot_lcoe_nom[0] += stn.lcoe_nominal * (stn.generation / tot_generation)
+                    tot_lcoe_real[1] += stn.lcoe_real * (stn.capacity / tot_capacity)
+                    tot_lcoe_nom[1] += stn.lcoe_nominal * (stn.capacity / tot_capacity)
                     if stn.grid_cost > 0:
                         i = fin_fields.index('capital_cost')
                         fin_fields.insert(i + 1, 'grid_cost')
                         fin_sumfields.append('grid_cost')
                         fin_units += ' grid_cost=$'
                         break
+                tot_fields = [['cf', tot_generation / tot_capacity / 8760],
+                              ['lcoe_real', tot_lcoe_real[0]],
+                              ['lcoe_nominal', tot_lcoe_nom[0]]]
                 dialog = displaytable.Table(self.financials.stations, fields=fin_fields,
                          sumfields=fin_sumfields, units=fin_units, sumby='technology',
-                         save_folder=self.scenarios, title='Financials')
+                         save_folder=self.scenarios, title='Financials', totfields=tot_fields)
                 dialog.exec_()
                 del dialog
         self.something.power_signal = None
