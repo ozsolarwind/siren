@@ -49,6 +49,7 @@ from wascene import WAScene
 from editini import EdtDialog, EditTech, EditSect, SaveIni
 from dijkstra_4 import Shortest
 from credits import Credits, fileVersion
+from grid import dust
 from viewresource import Resource
 from floatmenu import FloatMenu
 from floatlegend import FloatLegend
@@ -59,6 +60,19 @@ from sirenicons import Icons
 def p2str(p):
     return '(%.4f,%.4f)' % (p.y(), p.x())
 
+
+def find_shortest(coords1, coords2):
+#               dist,  lat, lon, itm, prev_item
+    shortest = [99999, -1., -1., -1, -1]
+    for i in range(len(coords2) - 1):
+        dist = dust(coords1[0], coords1[1],
+               coords2[i][0], coords2[i][1], coords2[i + 1][0], coords2[i + 1][1])
+        if dist[0] >= 0 and dist[0] < shortest[0]:
+            ls = shortest[-2]
+            shortest = dist[:]
+            shortest.append(i)
+            shortest.append(ls)
+    return shortest
 
 class Location(QtGui.QDialog):
     def __init__(self, upper_left, lower_right, parent=None):
@@ -695,12 +709,14 @@ class MapView(QtGui.QGraphicsView):
         pen = QtGui.QPen(color, self.scene().line_width)
         pen.setJoinStyle(QtCore.Qt.RoundJoin)
         pen.setCapStyle(QtCore.Qt.RoundCap)
+        centre = ''
         if coords is None:
             for li in range(len(self.scene().lines.lines)):
-                if self.scene().lines.lines[li].name == station.name:
+                if self.scene().lines.lines[li].name == station.name \
+                  or self.scene().lines.lines[li].coordinates[0] == [station.lat, station.lon]:
                     break
             else:
-                return
+                return 0, None # handle this better
             nearest = 99999
             j = -1
             dims = self.scene().lines.lines[li].coordinates[0]
@@ -710,15 +726,19 @@ class MapView(QtGui.QGraphicsView):
                 if thisone < nearest:
                     nearest = thisone
                     j = i
+                    centre = self.scene().load_centre[j][0]
             path = Shortest(self.scene().lines.lines, self.scene().lines.lines[li].coordinates[0],
                    [self.scene().load_centre[j][1], self.scene().load_centre[j][2]], self.scene().grid_lines)
             route = path.getPath()
+            if len(route) < 1:
+                self.emit(QtCore.SIGNAL('statusmsg'), 'No path to Load Centre %s for %s' % (centre, station.name))
+                return
 #           check we don't go through another load_centre
             if len(self.scene().load_centre) > 1:
                 for co in range(len(route) - 1, 0, -1):
                     for i in range(len(self.scene().load_centre)):
-                        if route[co][0] == self.scene().load_centre[i][1] and \
-                          route[co][1] == self.scene().load_centre[i][2]:
+                        if route[co][0] == self.scene().load_centre[i][1] \
+                          and route[co][1] == self.scene().load_centre[i][2]:
                             route = route[i:]
                             break
         else:
@@ -733,7 +753,7 @@ class MapView(QtGui.QGraphicsView):
             self.trace_items[-1].setZValue(3)
             self.scene().addItem(self.trace_items[-1])
             st_scn = en_scn
-        return grid_path_len
+        return grid_path_len, centre
 
 
 class MainWindow(QtGui.QMainWindow):
@@ -863,6 +883,20 @@ class MainWindow(QtGui.QMainWindow):
                 self.grid_icon = 'network_b.png'
                 self.check_icon = 'check-mark_b.png'
                 self.weather_icon = 'weather_b.png'
+        except:
+            pass
+        self.crop_save = True
+        try:
+            crop_save = config.get('View', 'crop_save')
+            if crop_save.lower() in ['false', 'no', 'off']:
+                self.crop_save = False
+        except:
+            pass
+        self.scene_save = False
+        try:
+            scene_save = config.get('View', 'scene_save')
+            if scene_save.lower() in ['true', 'yes', 'on']:
+                self.scene_save = True
         except:
             pass
         self.restorewindows = False
@@ -1075,6 +1109,9 @@ class MainWindow(QtGui.QMainWindow):
         self.refreshGrid = QtGui.QAction(QtGui.QIcon('refresh.png'), 'Refresh Grid', self)
         self.refreshGrid.setStatusTip('Refresh Grid')
         self.refreshGrid.triggered.connect(self.refresh_Grid)
+        self.coordGrid = QtGui.QAction(QtGui.QIcon(self.grid_icon), 'Show Coordinates Grid', self)
+        self.coordGrid.setStatusTip('Show Coordinates Grid')
+        self.coordGrid.triggered.connect(self.coord_Grid)
         self.goTo = QtGui.QAction(QtGui.QIcon('arrow.png'), 'Go to Station', self)
         self.goTo.setShortcut('Ctrl+G')
         self.goTo.setStatusTip('Locate specific Station')
@@ -1102,6 +1139,7 @@ class MainWindow(QtGui.QMainWindow):
         viewMenu.addAction(self.hideTrace)
         viewMenu.addAction(self.showGrid)
         viewMenu.addAction(self.refreshGrid)
+        viewMenu.addAction(self.coordGrid)
         viewMenu.addAction(self.goTo)
         viewMenu.addAction(self.goToTown)
         viewMenu.addAction(self.goToLocn)
@@ -1837,11 +1875,80 @@ class MainWindow(QtGui.QMainWindow):
         self.view.emit(QtCore.SIGNAL('statusmsg'), comment)
 
     def save_View(self):
-        outputimg = QtGui.QPixmap(self.view.width(), self.view.height())
-        painter = QtGui.QPainter(outputimg)
-        targetrect = QtCore.QRectF(0, 0, self.view.width(), self.view.height())
-        sourcerect = QtCore.QRect(0, 0, self.view.width(), self.view.height())
-        self.view.render(painter, targetrect, sourcerect)
+        full_view = False
+        bottom = self.view.mapFromScene(self.view.scene().upper_left[0], self.view.scene().upper_left[1])
+        top = self.view.mapFromScene(self.view.scene().lower_right[0], self.view.scene().lower_right[1])
+        if bottom.x() >= 0 and bottom.y() >= 0 \
+          and top.x() - bottom.x() <= self.view.width() and top.y() - bottom.y() <= self.view.height():
+            full_view = True
+        if self.scene_save: # save full resolution
+            if not self.crop_save: # old way
+                bottom.setX(0)
+                bottom.setY(0)
+                bottom = self.view.mapToScene(bottom)
+                top.setX(self.view.width())
+                top.setY(self.view.height())
+                top = self.view.mapToScene(top)
+            elif full_view: # full map in view?
+                bottom.setX(0)
+                bottom.setY(0)
+                top.setX(self.view.scene().lower_right[0])
+                top.setY(self.view.scene().lower_right[1])
+            else: # part of map in view
+                if bottom.x() < 0:
+                    bottom.setX(0)
+                elif bottom.x() > self.view.width():
+                    bottom.setX(self.view.width())
+                if bottom.y() < 0:
+                    bottom.setY(0)
+                elif bottom.y() > self.view.height():
+                    bottom.setY(self.view.height())
+                bottom = self.view.mapToScene(bottom)
+                if top.x() < 0:
+                    top.setX(self.view.width())
+                elif top.x() > self.width():
+                    top.setX(self.view.width())
+                if top.y() < 0:
+                    top.setY(self.view.height())
+                elif top.y() > self.view.height():
+                    top.setY(self.view.height())
+                top = self.view.mapToScene(top)
+            outputimg = QtGui.QPixmap(top.x() - bottom.x(), top.y() - bottom.y())
+            painter = QtGui.QPainter(outputimg)
+            targetrect = QtCore.QRectF(0, 0, outputimg.width(), outputimg.height())
+            sourcerect = QtCore.QRectF(bottom.x(), bottom.y(), outputimg.width(), outputimg.height())
+            self.view.scene().render(painter, targetrect, sourcerect)
+        else: # save view resolution
+            if not self.crop_save: # old way
+                bottom.setX(0)
+                bottom.setY(0)
+                top.setX(self.view.width())
+                top.setY(self.view.height())
+            elif full_view: # full map in view?
+                bottom = self.view.mapFromScene(QtCore.QPointF(0 ,0))
+                top = self.view.mapFromScene(QtCore.QPointF(self.view.scene().lower_right[0], self.view.scene().lower_right[1]))
+            else: # part of map in view
+                if bottom.x() < 0:
+                    bottom.setX(0)
+                elif bottom.x() > self.view.width():
+                    bottom.setX(self.view.width())
+                if bottom.y() < 0:
+                    bottom.setY(0)
+                elif bottom.y() > self.view.height():
+                    bottom.setY(self.view.height())
+                if top.x() < 0:
+                    top.setX(self.view.width())
+                elif top.x() > self.width():
+                    top.setX(self.view.width())
+                if top.y() < 0:
+                    top.setY(self.view.height())
+                elif top.y() > self.view.height():
+                    top.setY(self.view.height())
+            outputimg = QtGui.QPixmap(top.x() - bottom.x(), top.y() - bottom.y())
+            painter = QtGui.QPainter(outputimg)
+            targetrect = QtCore.QRectF(0, 0, outputimg.width(), outputimg.height())
+            sourcerect = QtCore.QRect(bottom.x(), bottom.y(), outputimg.width(), outputimg.height())
+            self.view.render(painter, targetrect, sourcerect)
         fname = self.new_scenario[:self.new_scenario.rfind('.')] + '.png'
         fname = QtGui.QFileDialog.getSaveFileName(self, 'Save image file',
                 self.scenarios + fname, 'Image Files (*.png *.jpg *.bmp)')
@@ -2097,10 +2204,10 @@ class MainWindow(QtGui.QMainWindow):
                 dialog = displayobject.AnObject(QtGui.QDialog(), station)
                 dialog.exec_()
         elif action == trcAction:
-            grid_path_len = self.view.traceGrid(station)
+            grid_path_len, centre = self.view.traceGrid(station)
             try:
-                self.view.emit(QtCore.SIGNAL('statusmsg'), 'Grid traced for %s (%s Km)' % (station.name,
-                              '{:0.1f}'.format(grid_path_len)))
+                self.view.emit(QtCore.SIGNAL('statusmsg'), 'Grid traced for %s to %s (%s Km)' % (station.name,
+                              centre, '{:0.1f}'.format(grid_path_len)))
             except:
                 self.view.emit(QtCore.SIGNAL('statusmsg'), 'No Grid line for %s' % station.name)
         elif action == run1Action or action in subPwr:
@@ -2321,10 +2428,17 @@ class MainWindow(QtGui.QMainWindow):
 
     def save_Grid(self):
         kfile = self.view.scene().model_name + ' Grid.kml'
+        kfile = QtGui.QFileDialog.getSaveFileName(None, 'Save Grid File',
+                    self.scenarios + kfile, 'KML Files (*.kml);;All Files (*.*)')
+        if kfile == '':
+            comment = 'Grid save aborted'
+            self.view.emit(QtCore.SIGNAL('statusmsg'), comment)
+            return
         pline = ['<?xml version="1.0" encoding="UTF-8"?>',
                  '<kml xmlns="http://www.opengis.net/kml/2.2">',
                  '<Document>']
-        pline.append('<name>' + kfile + '</name>')
+        kfile = str(kfile)
+        pline.append('<name>' + kfile[kfile.rfind('/') + 1:] + '</name>')
         pline.append('<description><![CDATA[This KML file is the grid for ' + \
                      self.view.scene().model_name + ' at ' + \
                      str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'yyyy-MM-dd hh:mm')) + \
@@ -2333,47 +2447,108 @@ class MainWindow(QtGui.QMainWindow):
         pline.append('<name>Grid Lines</name>')
         gline = []
         styles = []
-        for line in self.view.scene().lines.lines:
-            print '(2239)', line.name, line.line_table
-            if line.line_table is None:
+        coords = []
+        ndx = []
+        for li in range(len(self.view.scene().lines.lines)):
+            coords.append(self.view.scene().lines.lines[li].coordinates[:])
+            ndx.append(-1)
+        for li in range(len(self.view.scene().lines.lines)):
+            if self.view.scene().lines.lines[li].line_table is None:
                 style = 'grid_boundary'
             else:
-                style = line.line_table
+                style = self.view.scene().lines.lines[li].line_table
             if style in styles:
                 pass
             else:
                 styles.append(style)
-	    gline.append('\t<Placemark>\n\t\t<name>' + line.name.replace('&', '&amp;') + \
+            gline.append('\t<Placemark>\n\t\t<name>' + \
+                         self.view.scene().lines.lines[li].name.replace('&', '&amp;') + \
                          '</name>\n\t\t<styleUrl>#' + style + \
                          '</styleUrl>\n\t\t\t<LineString>\n\t\t\t<tessellate>1</tessellate>\n\t\t\t<coordinates>')
-            coords = '\t\t\t\t'
-            for coord in line.coordinates:
-                coords += '%s,%s,0 ' % (str(coord[1]), str(coord[0]))
-            gline.append(coords)
+            gline.append('\t\t\t\t')
+            ndx[li] = len(gline) - 1
+            if self.view.scene().lines.lines[li].connector >= 0:
+                cli = self.view.scene().lines.lines[li].connector
+                found = False
+                for coord in coords[li]:
+                    for coord2 in coords[cli]:
+                        if coord == coord2:
+                            found = True
+                            break
+                    if found:
+                        break
+                else:
+                    shortest = find_shortest(coords[li][-1], coords[cli])
+                    if shortest[-1] >= 0:
+                        if shortest[-1] < shortest[-2]:
+                            coords[cli][shortest[-1] + 1:shortest[-1] + 1] = [coords[li][-1]]
+                        else:
+                            coords[cli][shortest[-2] + 1:shortest[-2] + 1] = [coords[li][-1]]
+                    else:
+                        coords[cli][shortest[-2] + 1:shortest[-2] + 1] = [coords[li][-1]]
             gline.append('\t\t\t</coordinates>\n\t\t</LineString>\n\t</Placemark>')
-        print '(2256)', styles
+        if self.view.scene().load_centre is not None: # check Load centres are there
+            for lc in range(len(self.view.scene().load_centre)):
+                found = False
+                for li in range(len(coords)): # check Load centres are there
+                    for co in range(len(coords[li])):
+                        if coords[li][co] == [self.view.scene().load_centre[lc][1], \
+                          self.view.scene().load_centre[lc][2]]:
+                              found = True
+                              break
+                    if found:
+                        break
+                else:
+                    coord = [self.view.scene().load_centre[lc][1], self.view.scene().load_centre[lc][2]]
+                    grid_point = self.view.scene().lines.gridConnect(coord[0], coord[1])
+                    li = grid_point[-1]
+                    shortest = find_shortest(grid_point[1:3], coords[li])
+                    if shortest[-1] >= 0:
+                        if shortest[-1] < shortest[-2]:
+                            coords[li][shortest[-1] + 1:shortest[-1] + 1] = [grid_point[1:3]]
+                        else:
+                            coords[li][shortest[-2] + 1:shortest[-2] + 1] = [grid_point[1:3]]
+                    else:
+                        coords[li][shortest[-2] + 1:shortest[-2] + 1] = [grid_point[1:3]]
+                    style = 'grid_boundary'
+                    if style in styles:
+                        pass
+                    else:
+                        styles.append(style)
+                    gline.append('\t<Placemark>\n\t\t<name>' + \
+                         self.view.scene().load_centre[lc][0].replace('&', '&amp;') + \
+                         'Load Centre</name>\n\t\t<styleUrl>#' + style + \
+                         '</styleUrl>\n\t\t\t<LineString>\n\t\t\t<tessellate>1</tessellate>\n\t\t\t<coordinates>')
+                    gline.append('\t\t\t\t')
+                    gline[-1] += '%s,%s,0 %s,%s,0' % (str(coord[1]), str(coord[0]), str(grid_point[2]), str(grid_point[1]))
+                    gline.append('\t\t\t</coordinates>\n\t\t</LineString>\n\t</Placemark>')
+        # now place coordinates, including updated ones
+        for li in range(len(coords)):
+            for coord in coords[li]:
+                gline[ndx[li]] += '%s,%s,0 ' % (str(coord[1]), str(coord[0]))
         gline.append('</Folder>\n</Document>\n</kml>')
         sline = []
-        print '(2259)', self.view.scene().colors
         for style in styles:
-            print '(2261)', style
             try:
                 colr = self.view.scene().colors[style]
             except:
-                colr = self.view.scene().colors['grid_boundary']
+                try:
+                    colr = self.view.scene().colors['grid_' + style]
+                except:
+                    colr = self.view.scene().colors['grid_boundary']
             sline.append('<Style id="' + style + '">\n\t<LineStyle>\n\t\t<color>ff' + colr[-2:] + colr[-4:-2] + \
                          colr[1:3] + '</color>\n\t\t<width>4</width>\n\t</LineStyle>\n</Style>')
-        if os.path.exists(self.scenarios + kfile):
-            if os.path.exists(self.scenarios + kfile + '~'):
-                os.remove(self.scenarios + kfile + '~')
-            os.rename(self.scenarios + kfile, self.scenarios + kfile + '~')
-        k_file = open(self.scenarios + kfile, 'wb')
-        for line in pline:
-            k_file.write(line + '\n')
-        for line in sline:
-            k_file.write(line + '\n')
-        for line in gline:
-            k_file.write(line + '\n')
+        if os.path.exists(kfile):
+            if os.path.exists(kfile + '~'):
+                os.remove(kfile + '~')
+            os.rename(kfile, kfile + '~')
+        k_file = open(kfile, 'wb')
+        for tline in pline:
+            k_file.write(tline + '\n')
+        for tline in sline:
+            k_file.write(tline + '\n')
+        for tline in gline:
+            k_file.write(tline + '\n')
         k_file.close()
         comment = 'Grid saved to ' + kfile
         self.view.emit(QtCore.SIGNAL('statusmsg'), comment)
@@ -2504,12 +2679,26 @@ class MainWindow(QtGui.QMainWindow):
         if action is not None:
             for li in range(len(self.view.scene().lines.lines)):
                 if self.view.scene().lines.lines[li].name == action.text():
-                    grid_path_len = self.view.traceGrid(None, coords=self.view.scene().lines.lines[li].coordinates)
+                    grid_path_len, centre = self.view.traceGrid(None, coords=self.view.scene().lines.lines[li].coordinates)
             try:
                 self.view.emit(QtCore.SIGNAL('statusmsg'), 'Grid traced for %s (%s, %s Km)' % (action.text(),
                                self.view.scene().lines.lines[li].line_table, '{:0.1f}'.format(grid_path_len)))
             except:
                 self.view.emit(QtCore.SIGNAL('statusmsg'), 'No Grid line for %s' % action.text())
+
+    def coord_Grid(self):
+        comment = 'Coordinate Grid Toggled '
+        if self.view.scene().show_coord:
+            self.view.scene().show_coord = False
+            self.view.scene()._coordGroup.setVisible(False)
+            self.coordGrid.setIcon(QtGui.QIcon('blank.png'))
+            comment += 'Off'
+        else:
+            self.view.scene().show_coord = True
+            self.view.scene()._coordGroup.setVisible(True)
+            self.coordGrid.setIcon(QtGui.QIcon(self.check_icon))
+            comment += 'On'
+        self.view.emit(QtCore.SIGNAL('statusmsg'), comment)
 
     def show_Ruler(self):
         comment = 'Scale Ruler Toggled'
