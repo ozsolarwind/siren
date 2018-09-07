@@ -36,8 +36,8 @@ def spawn(who, cwd, log):
     stdoutf = cwd + '/' + log
     stdout = open(stdoutf, 'wb')
     who = who.split(' ')
-    for i in range(len(who)):
-        who[i] = who[i].replace('~', os.path.expanduser('~'))
+  #  for i in range(len(who)):
+   #     who[i] = who[i].replace('~', os.path.expanduser('~'))
     try:
         if type(who) is list:
             pid = subprocess.Popen(who, cwd=cwd, stderr=subprocess.STDOUT, stdout=stdout).pid
@@ -46,6 +46,202 @@ def spawn(who, cwd, log):
     except:
         pass
     return
+
+def checkFiles(chk_key, tgt_dir, ini_file=None, collection=None):
+    def get_range(top):
+        chk_folders.append(top)
+        ndx = len(chk_folders) - 1
+        chk_src_key.append([])
+        chk_src_dte.append([])
+        fils = sorted(os.listdir(top))
+        for fil in fils:
+            if os.path.isdir(top + '/' + fil):
+                if fil.isdigit() and len(fil) == 4:
+                    get_range(top + '/' + fil)
+            elif fil.find('MERRA') >= 0:
+                if fil[-6:] == '.gz.nc': # ignore unzipped
+                    continue
+                ndy = 0 #value[1]
+                j = fil.find(chk_collection)
+                l = len(chk_collection)
+                if j > 0:
+                    fil_key = fil[:j + l + 1] + fil[j + l + 9:]
+                    if fil_key not in chk_src_key[-1]:
+                        chk_src_key[-1].append(fil_key)
+                        chk_src_dte[-1].append([])
+                        chk_src_dte[-1][-1].append(fil[j + l + 1: j + l + 9])
+                    else:
+                        k = chk_src_key[-1].index(fil_key)
+                        chk_src_dte[-1][k].append(fil[j + l + 1: j + l + 9])
+        del fils
+
+    if collection is None:
+        config = ConfigParser.RawConfigParser()
+        config_file = ini_file
+        config.read(config_file)
+        chk_collection = config.get('getmerra2', chk_key + '_collection')
+    else:
+        chk_collection = collection
+    msg_text = ''
+    chk_folders = []
+    chk_src_key = []
+    chk_src_dte = []
+    top = tgt_dir
+    get_range(top)
+    first_dte = 0
+    not_contiguous = False
+    log1 = None
+    log2 = None
+    for i in range(len(chk_folders)):
+        for j in range(len(chk_src_key[i])):
+            if len(chk_src_key[i][j]) > 0:
+                break
+        else:
+            continue
+        for j in range(len(chk_src_key[i])):
+            dtes = sorted(chk_src_dte[i][j])
+            try:
+                dte1 = datetime.datetime.strptime(dtes[0], '%Y%m%d')
+                if first_dte == 0:
+                    first_dte = dtes[0]
+            except:
+                continue
+            try:
+                dte2 = datetime.datetime.strptime(dtes[-1], '%Y%m%d')
+            except:
+                continue
+            l = chk_src_key[i][j].index(chk_collection)
+            file1 = chk_src_key[i][j][: l + len(chk_collection) + 1] + dtes[0] + \
+                    chk_src_key[i][j][l + len(chk_collection) + 1:]
+            log1 = fileInfo(chk_folders[i] + '/' + file1)
+            if not log1.ok:
+                msg_text = log1.log
+                return [log1.log]
+            file2 = chk_src_key[i][j][: l + len(chk_collection) + 1] + dtes[-1] + \
+                    chk_src_key[i][j][l + len(chk_collection) + 1:]
+            log2 = fileInfo(chk_folders[i] + '/' + file2)
+            if not log2.ok:
+                msg_text = log2.log
+                return [log2.log]
+            dte_msg = '.\nCurrent day range %s to %s' % (str(first_dte), str(dtes[-1]))
+            if len(dtes) != (dte2-dte1).days + 1:
+                print '(128)', len(dtes), (dte2-dte1).days + 1, dte2, dte1
+                not_contiguous = True
+                print 'getmerra2: File template ' + chk_src_key[i][j]
+                years = {}
+                for dte in dtes:
+                    y = dte[:4]
+                    m = int(dte[4:6])
+                    try:
+                        years[y][m] = years[y][m] + 1
+                    except:
+                        years[y] = []
+                        for l in range(13):
+                            years[y].append(0)
+                        years[y][m] = years[y][m] + 1
+                for key, value in iter(sorted(years.iteritems())):
+                    print 'getmerra2: Days per month', key, value[1:]
+    if log1 is None or log2 is None:
+        msg_text = 'Check ' + chk_key.title() + ' incomplete.'
+        return [msg_text]
+    lats = latn = lonw = lone = 0.
+    if log1.latitudes == log2.latitudes:
+        lats = log1.latitudes[0]
+        latn = log1.latitudes[-1]
+        lat_rnge = latn - lats
+        if lat_rnge < 1:
+            if len(log1.latitudes) == 2:
+                lats = lats - .005
+            latn = lats + 1
+    if log1.longitudes == log2.longitudes:
+        lonw = log1.longitudes[0]
+        lone = log1.longitudes[-1]
+        lon_rnge = lone - lonw
+        if lon_rnge < 1.25:
+            if len(log1.longitudes) == 2:
+                lonw = lonw - .005
+            lone = lonw + 1.25
+    dte = dte2 + datetime.timedelta(days=1)
+    if not_contiguous:
+        dte_msg += ' but days not contiguous'
+    msg_text = 'Boundaries and start date set for ' + chk_key.title() + dte_msg
+    return [msg_text, dte, dte2, latn, lats, lonw, lone]
+
+def invokeWget(ini_file, coll, date1, date2, lat1, lat2, lon1, lon2, tgt_dir, spawn_wget):
+    config = ConfigParser.RawConfigParser()
+    config.read(ini_file)
+    if coll == 'solar':
+        ignor = 'wind'
+    else:
+        ignor = 'solar'
+    variables = []
+    try:
+        variables = config.items('getmerra2')
+        wget = config.get('getmerra2', 'wget')
+    except:
+        return 'Error accessing', ini_file, 'variables'
+    working_vars = []
+    for prop, value in variables:
+        valu = value
+        if prop != 'url_prefix':
+            valu = valu.replace('/', '%2F')
+            valu = valu.replace(',', '%2C')
+        if prop[:len(ignor)] == ignor:
+            continue
+        elif prop[:len(coll)] == coll:
+            working_vars.append(('$' + prop[len(coll) + 1:] + '$', valu))
+        else:
+            working_vars.append(('$' + prop + '$', valu))
+    working_vars.append(('$lat1$', str(lat1)))
+    working_vars.append(('$lon1$', str(lon1)))
+    working_vars.append(('$lat2$', str(lat2)))
+    working_vars.append(('$lon2$', str(lon2)))
+    wget_base = wget[:]
+    while '$' in wget:
+        for key, value in working_vars:
+            wget = wget.replace(key, value)
+        if wget == wget_base:
+            break
+        wget_base = wget
+    a_date = datetime.datetime.now().strftime('%Y-%m-%d_%H%M')
+    wget_file = 'wget_' + coll + '_' + a_date + '.txt'
+    wf = open(tgt_dir + '/' + wget_file, 'w')
+    days = (date2 - date1).days + 1
+    while date1 <= date2:
+        date_vars = []
+        date_vars.append(('$year$','{0:04d}'.format(date1.year)))
+        date_vars.append(('$month$', '{0:02d}'.format(date1.month)))
+        date_vars.append(('$day$', '{0:02d}'.format(date1.day)))
+        wget = wget_base[:]
+        for key, value in date_vars:
+            wget = wget.replace(key, value)
+        wf.write(wget + '\n')
+        date1 = date1 + datetime.timedelta(days=1)
+    wf.close()
+    curdir = os.getcwd()
+    os.chdir(tgt_dir)
+    wget_cmd = config.get('getmerra2', 'wget_cmd')
+    os.chdir(curdir)
+    log_file = wget_file[:-3] + 'log'
+    cwd = tgt_dir
+    bat_file = wget_file[:-3] + 'bat'
+    bf = open(tgt_dir + '/' + bat_file, 'w')
+    who = wget_cmd.split(' ')
+    for i in range(len(who)):
+        if who[i] == '-i': # input file
+            who[i] = who[i] + ' ' + wget_file
+        elif who[i] == '-o' or who[i] == '-a':
+            who[i] = who[i] + ' ' + log_file
+        who[i] = who[i].replace('~', os.path.expanduser('~'))
+    bat_cmd = ' '.join(who)
+    bf.write(bat_cmd)
+    bf.close()
+    if sys.platform == 'linux' or sys.platform == 'linux2':
+        os.chmod(tgt_dir + '/' + bat_file, 0777)
+    if spawn_wget:
+        spawn(bat_cmd, cwd, log_file)
+        return 'wget being launched (logging to: ' + log_file +')'
+    return bat_file + ', ' + wget_file + ' (' + str(days) + ' days) created.'
 
 
 class fileInfo:
@@ -136,7 +332,7 @@ class getMERRA2(QtGui.QDialog):
 
     def get_config(self):
         self.config = ConfigParser.RawConfigParser()
-        self.config_file = 'getfiles.ini'
+        self.config_file = self.ini_file
         self.config.read(self.config_file)
         try:
             self.help = self.config.get('Files', 'help')
@@ -161,10 +357,11 @@ class getMERRA2(QtGui.QDialog):
         except:
             pass
 
-    def __init__(self, help='help.html', parent=None):
+    def __init__(self, help='help.html', ini_file='getfiles.ini', parent=None):
         super(getMERRA2, self).__init__(parent)
-        self.get_config()
         self.help = help
+        self.ini_file = ini_file
+        self.get_config()
         self.ignore = False
         self.worldwindow = None
         ok = False
@@ -265,30 +462,30 @@ class getMERRA2(QtGui.QDialog):
         self.grid.addWidget(area, 0, 1, 1, 2)
         area.clicked.connect(self.areaClicked)
         self.grid.addWidget(QtGui.QLabel('Upper left:'), 1, 0, 1, 2)
-   #     self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignCenter) 
+   #     self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignCenter)
         self.grid.addWidget(QtGui.QLabel('North'), 2, 0)
-        self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignRight) 
+        self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignRight)
         self.grid.addWidget(self.northSpin, 2, 1)
         self.grid.addWidget(QtGui.QLabel('West'), 3, 0)
-        self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignRight) 
+        self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignRight)
         self.grid.addWidget(self.westSpin, 3, 1)
         self.grid.addWidget(QtGui.QLabel('Lower right:'), 1, 2)
-    #    self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignCenter)  
-        self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignRight) 
+    #    self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignCenter)
+        self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignRight)
         self.grid.addWidget(QtGui.QLabel('South'), 2, 2)
-        self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignRight) 
+        self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignRight)
         self.grid.addWidget(self.southSpin, 2, 3)
         self.grid.addWidget(QtGui.QLabel('East'), 3, 2)
-        self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignRight)  
+        self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignRight)
         self.grid.addWidget(self.eastSpin, 3, 3)
         self.grid.addWidget(QtGui.QLabel('Centre:'), 1, 4)
-   #     self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignCenter)  
-        self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignRight) 
+   #     self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignCenter)
+        self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignRight)
         self.grid.addWidget(QtGui.QLabel('Lat.'), 2, 4)
-        self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignRight) 
+        self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignRight)
         self.grid.addWidget(self.latSpin, 2, 5)
         self.grid.addWidget(QtGui.QLabel('Lon.'), 3, 4)
-        self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignRight) 
+        self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignRight)
         self.grid.addWidget(self.lonSpin, 3, 5)
         self.grid.addWidget(QtGui.QLabel('Degrees'), 1, 6)
    #     self.grid.addWidget(QtGui.QLabel('  South'), 2, 2)
@@ -540,99 +737,33 @@ class getMERRA2(QtGui.QDialog):
             ndx = 1
         self.log.setText('')
         self.chk_collection = self.collections[ndx]
-        self.chk_folders = []
-        self.chk_src_key = []
-        self.chk_src_dte = []
-        top = str(self.dirs[ndx].text())
-        get_range(str(self.dirs[ndx].text()))
-        first_dte = 0
-        not_contiguous = False
-        log1 = None
-        log2 = None
-        for i in range(len(self.chk_folders)):
-            for j in range(len(self.chk_src_key[i])):
-                if len(self.chk_src_key[i][j]) > 0:
-                    break
-            else:
-                continue
-            for j in range(len(self.chk_src_key[i])):
-                dtes = sorted(self.chk_src_dte[i][j])
-                try:
-                    dte1 = datetime.datetime.strptime(dtes[0], '%Y%m%d')
-                    if first_dte == 0:
-                        first_dte = dtes[0]
-                except:
-                    continue
-                try:
-                    dte2 = datetime.datetime.strptime(dtes[-1], '%Y%m%d')
-                except:
-                    continue
-                l = self.chk_src_key[i][j].index(self.chk_collection)
-                file1 = self.chk_src_key[i][j][: l + len(self.chk_collection) + 1] + dtes[0] + \
-                        self.chk_src_key[i][j][l + len(self.chk_collection) + 1:]
-                log1 = fileInfo(self.chk_folders[i] + '/' + file1)
-                if not log1.ok:
-                    self.log.setText(log1.log)
-                    return
-                file2 = self.chk_src_key[i][j][: l + len(self.chk_collection) + 1] + dtes[-1] + \
-                        self.chk_src_key[i][j][l + len(self.chk_collection) + 1:]
-                log2 = fileInfo(self.chk_folders[i] + '/' + file2)
-                if not log2.ok:
-                    self.log.setText(log2.log)
-                    return
-                dte_msg = '.\nCurrent day range %s to %s' % (str(first_dte), str(dtes[-1]))
-                if len(dtes) != (dte2-dte1).days + 1:
-                    not_contiguous = True
-                    print 'getmerra2: File template ' + self.chk_src_key[i][j]
-                    years = {}
-                    for dte in dtes:
-                        y = dte[:4]
-                        m = int(dte[4:6])
-                        try:
-                            years[y][m] = years[y][m] + 1
-                        except:
-                            years[y] = []
-                            for l in range(13):
-                                years[y].append(0)
-                            years[y][m] = years[y][m] + 1
-                    for key, value in iter(sorted(years.iteritems())):
-                        print 'getmerra2: Days per month', key, value[1:]
-        if log1 is None or log2 is None:
-            self.log.setText('Check ' + chk_key.title() + ' incomplete.')
-            return
-        if log1.latitudes == log2.latitudes:
+
+        check = checkFiles(chk_key, str(self.dirs[ndx].text()), ini_file=self.ini_file, collection=self.chk_collection)
+        if len(check) > 1: # ok
             self.ignore = True
-            self.southSpin.setValue(log1.latitudes[0])
-            self.northSpin.setValue(log1.latitudes[-1])
-            lat_rnge = self.northSpin.value() - self.southSpin.value()
-            if lat_rnge < 1:
-                if len(log1.latitudes) == 2:
-                    self.southSpin.setValue(self.southSpin.value() - .005)
-                self.northSpin.setValue(self.southSpin.value() + 1)
+            self.southSpin.setValue(check[4])
+            self.northSpin.setValue(check[3])
             self.latwSpin.setValue(self.northSpin.value() - self.southSpin.value())
             self.latSpin.setValue(self.northSpin.value() - (self.northSpin.value() - self.southSpin.value()) / 2.)
-            self.ignore = False
-        if log1.longitudes == log2.longitudes:
-            self.ignore = True
-            self.westSpin.setValue(log1.longitudes[0])
-            self.eastSpin.setValue(log1.longitudes[-1])
-            lon_rnge = self.eastSpin.value() - self.westSpin.value()
-            if lon_rnge < 1.25:
-                if len(log1.longitudes) == 2:
-                    self.westSpin.setValue(self.westSpin.value() - .005)
-                self.eastSpin.setValue(self.westSpin.value() + 1.25)
+            self.westSpin.setValue(check[5])
+            self.eastSpin.setValue(check[6])
             self.lonwSpin.setValue(self.eastSpin.value() - self.westSpin.value())
             self.lonSpin.setValue(self.eastSpin.value() - (self.eastSpin.value() - self.westSpin.value()) / 2.)
+            self.strt_date.setDate(check[1])
+            self.end_date.setDate(datetime.datetime.now() - datetime.timedelta(days=42))
+            if self.end_date.date() < self.strt_date.date():
+                self.end_date.setDate(self.strt_date.date())
             self.ignore = False
-        merra_dims = worldwindow.merra_cells(self.northSpin.value(), self.westSpin.value(),
-                     self.southSpin.value(), self.eastSpin.value())
-        self.merra_cells.setText(merra_dims)
-        dte = dte2 + datetime.timedelta(days=1)
-        self.strt_date.setDate(dte)
-        if not_contiguous:
-            dte_msg += ' but days not contiguous'
-        self.log.setText('Boundaries and start date set for ' + chk_key.title() + dte_msg)
-        del self.chk_collection, self.chk_folders, self.chk_src_key, self.chk_src_dte
+            merra_dims = worldwindow.merra_cells(self.northSpin.value(), self.westSpin.value(),
+                         self.southSpin.value(), self.eastSpin.value())
+            self.merra_cells.setText(merra_dims)
+        self.log.setText(check[0])
+        if self.worldwindow is None:
+            return
+        approx_area = self.worldwindow.view.drawRect([QtCore.QPointF(self.westSpin.value(), self.northSpin.value()),
+                                   QtCore.QPointF(self.eastSpin.value(), self.southSpin.value())])
+        self.approx_area.setText(approx_area)
+        self.worldwindow.view.emit(QtCore.SIGNAL('statusmsg'), approx_area + ' ' + merra_dims)
 
     def getClicked(self):
         lat_rnge = self.northSpin.value() - self.southSpin.value()
@@ -642,77 +773,18 @@ class getMERRA2(QtGui.QDialog):
             return
         if self.sender().text() == 'Get Solar':
             me = 'solar'
-            ignor = 'wind'
         elif self.sender().text() == 'Get Wind':
             me = 'wind'
-            ignor = 'solar'
-        variables = []
-        try:
-            variables = self.config.items('getmerra2')
-            wget = self.config.get('getmerra2', 'wget')
-        except:
-            self.log.setText('Error accessing getfiles.ini variables')
-            return
-        working_vars = []
-        for prop, value in variables:
-            valu = value
-            if prop != 'url_prefix':
-                valu = valu.replace('/', '%2F')
-                valu = valu.replace(',', '%2C')
-            if prop[:len(ignor)] == ignor:
-                continue
-            elif prop[:len(me)] == me:
-                working_vars.append(('$' + prop[len(me) + 1:] + '$', valu))
-            else:
-                working_vars.append(('$' + prop + '$', valu))
-        working_vars.append(('$lat1$', str(self.northSpin.value())))
-        working_vars.append(('$lon1$', str(self.westSpin.value())))
-        working_vars.append(('$lat2$', str(self.southSpin.value())))
-        working_vars.append(('$lon2$', str(self.eastSpin.value())))
-        wget_base = wget[:]
-        while '$' in wget:
-            for key, value in working_vars:
-                wget = wget.replace(key, value)
-            if wget == wget_base:
-                break
-            wget_base = wget
-        a_date = QtCore.QDate()
-        y = int(self.strt_date.date().year())
-        m = int(self.strt_date.date().month())
-        d = int(self.strt_date.date().day())
-        a_date.setDate(y, m, d)
+        date1 = datetime.date(int(self.strt_date.date().year()), int(self.strt_date.date().month()),
+                int(self.strt_date.date().day()))
+        date2 = datetime.date(int(self.end_date.date().year()), int(self.end_date.date().month()),
+                int(self.end_date.date().day()))
         i = self.dir_labels.index(me.title())
-        wget_file = 'wget_' + me + '_' + \
-                    str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), \
-                                                  'yyyy-MM-dd_hhmm')) + '.txt'
-        wf = open(str(self.dirs[i].text()) + '/' + wget_file, 'w')
-        while a_date.__le__(self.end_date.date()):
-            date_vars = []
-            date_vars.append(('$year$','{0:04d}'.format(a_date.year())))
-            date_vars.append(('$month$', '{0:02d}'.format(a_date.month())))
-            date_vars.append(('$day$', '{0:02d}'.format(a_date.day())))
-            wget = wget_base[:]
-            for key, value in date_vars:
-                wget = wget.replace(key, value)
-            wf.write(wget + '\n')
-            a_date = QtCore.QDate(a_date.addDays(1))
-        wf.close()
-        curdir = os.getcwd()
-        os.chdir(str(self.dirs[i].text()))
-        wget_cmd = self.config.get('getmerra2', 'wget_cmd') + ' ' + wget_file
-        os.chdir(curdir)
-        log = wget_file[:-3] + 'log'
-        cwd = str(self.dirs[i].text())
-        spawn(wget_cmd, cwd, log)
-        self.log.setText('wget launched (logging to: ' + log +')')
-        bat = wget_file[:-3] + 'bat'
-        bf = open(str(self.dirs[i].text()) + '/' + bat, 'w')
-        who = wget_cmd.split(' ')
-        for i in range(len(who)):
-            who[i] = who[i].replace('~', os.path.expanduser('~'))
-        bat_cmd = ' '.join(who)
-        bf.write(bat_cmd)
-        bf.close()
+        tgt_dir = str(self.dirs[i].text())
+        wgot = invokeWget(self.ini_file, me, date1, date2, self.northSpin.value(),
+               self.southSpin.value(), self.westSpin.value(), self.eastSpin.value(), tgt_dir, True)
+        self.log.setText(wgot)
+        return
 
     def create_netrc(self):
         self.mySubwindow = subwindow()
@@ -769,8 +841,155 @@ class getMERRA2(QtGui.QDialog):
 
 
 if '__main__' == __name__:
-    app = QtGui.QApplication(sys.argv)
-    ex = getMERRA2()
-    app.exec_()
-    app.deleteLater()
-    sys.exit()
+    batch = False
+    check = False
+    ini_file = 'getfiles.ini'
+    if len(sys.argv) > 2:  # arguments
+        batch = True
+    elif len(sys.argv) == 2:
+        if sys.argv[1][-4:] == '.ini':
+            ini_file = sys.argv[1]
+        else:
+            batch = True
+    if batch:
+        ini_parms = ['ini', 'config', 'configuration']
+        coll = 'solar'
+        coll_parms = ['coll', 'collection']
+        date1 = ''
+        date1_parms = ['date', 'date1', 'strtdate', 'startdate', 'year']
+        date2 = ''
+        date2_parms = ['date2', 'enddate']
+        lat1 = 0.
+        lat1_parms = ['lat1', 'toplat', 'northlat', 'north']
+        lat2 = 0.
+        lat2_parms = ['lat2', 'bottomlat', 'botlat', 'southlat', 'south']
+        lon1 = 0.
+        lon1_parms = ['lon1', 'leftlon', 'westlon', 'west']
+        lon2 = 0.
+        lon2_parms = ['lon2', 'rightlon', 'eastlon', 'east']
+        tgt_dir = os.getcwd()
+        tgt_parms = ['tgt_dir', 'dir', 'folder', 'target']
+        spawn_wget = False
+        spawn_parms = ['get', 'wget', 'spawn']
+        errors = []
+        for i in range(1, len(sys.argv)):
+            argv = sys.argv[i].split('=')
+            if len(argv) > 1:
+                if argv[0] in ini_parms:
+                    ini_file = argv[1]
+                elif argv[0] in coll_parms:
+                    coll = argv[1]
+                    if coll not in ['wind', 'solar']:
+                        errors.append(sys.argv[i])
+                elif argv[0] in date1_parms:
+                    date1 = argv[1]
+                    if argv[0] == 'year':
+                        date1 = argv[1] + '-01-01'
+                        try:
+                            date1 = datetime.datetime.strptime(date1, '%Y-%m-%d')
+                            date2 = date1.replace(date1.year + 1)
+                            date1 = date1 - datetime.timedelta(days=1)
+                        except:
+                            errors.append(sys.argv[i])
+                    else:
+                        try:
+                            date1 = datetime.datetime.strptime(date1, '%Y-%m-%d')
+                        except:
+                            errors.append(sys.argv[i])
+                elif argv[0] in date2_parms:
+                    date2 = argv[1]
+                    try:
+                        date2 = datetime.datetime.strptime(date2, '%Y-%m-%d')
+                    except:
+                        errors.append(sys.argv[i])
+                elif argv[0] in lat1_parms:
+                    try:
+                        lat1 = float(argv[1])
+                        if lat1 < -85. or lat1 > 85.:
+                            errors.append(sys.argv[i])
+                    except:
+                        errors.append(sys.argv[i])
+                elif argv[0] in lat2_parms:
+                    try:
+                        lat2 = float(argv[1])
+                        if lat2 < -85. or lat2 > 85.:
+                            errors.append(sys.argv[i])
+                    except:
+                        errors.append(sys.argv[i])
+                elif argv[0] in lon1_parms:
+                    try:
+                        lon1 = float(argv[1])
+                        if lon1 < -180. or lon1 > 180.:
+                            errors.append(sys.argv[i])
+                    except:
+                        errors.append(sys.argv[i])
+                elif argv[0] in lon2_parms:
+                    try:
+                        lon2 = float(argv[1])
+                        if lon2 < -180. or lon2 > 180.:
+                            errors.append(sys.argv[i])
+                    except:
+                        errors.append(sys.argv[i])
+                elif argv[0] in tgt_parms:
+                    tgt_dir = argv[1]
+                    if not os.path.exists(tgt_dir):
+                        errors.append(sys.argv[i])
+                elif argv[0] in spawn_parms:
+                    if argv[1].lower() in ['true', 'yes', 'on']:
+                        spawn_wget = True
+                    elif argv[1].lower() in ['false', 'no', 'off']:
+                        spawn_wget = False
+                    else:
+                        errors.append(sys.argv[i])
+                elif argv[0] == 'check':
+                    if argv[1].lower() in ['true', 'yes', 'on']:
+                        check = True
+                    elif argv[1].lower() in ['false', 'no', 'off']:
+                        check = False
+                    else:
+                        errors.append(sys.argv[i])
+            else:
+                if sys.argv[i] in spawn_parms:
+                    spawn_wget = True
+                elif sys.argv[i][-4:] == '.ini':
+                    ini_file = sys.argv[i]
+                elif sys.argv[i] == 'solar' or sys.argv[i] == 'wind':
+                    coll = sys.argv[i]
+                elif sys.argv[i] == 'check':
+                    check = True
+                else:
+                    errors.append(sys.argv[i])
+        if len(errors) > 0:
+            print 'Errors in parameters:', errors
+            sys.exit(4)
+        if check:
+            check = checkFiles(coll, tgt_dir, ini_file=ini_file)
+            if len(check) > 1: # ok
+                date1 = check[1]
+                if date2 == '':
+                    date2 = datetime.datetime.now() - datetime.timedelta(days=42)
+                    if date2 < date1:
+                        date2 = date1
+                lat1 = check[3]
+                lat2 = check[4]
+                lon1 = check[5]
+                lon2 = check[6]
+                print check[0]
+            else:
+                print check[0]
+                sys.exit(4)
+        if abs(lat1 - lat2) < 1 or abs(lon2 - lon1) < 1.25:
+            print 'Area too small. Range must be at least 1 degree Lat x 1.25 Lon'
+            sys.exit(4)
+        if date2 < date1:
+            print 'Date2 (End) less than Date1 (Start)'
+            sys.exit(4)
+        wgot = invokeWget(ini_file, coll, date1, date2, lat1, lat2, lon1, lon2, tgt_dir, spawn_wget)
+        print wgot
+        sys.exit()
+    else:
+        app = QtGui.QApplication(sys.argv)
+        ex = getMERRA2(ini_file=ini_file)
+        app.exec_()
+        app.deleteLater()
+        sys.exit()

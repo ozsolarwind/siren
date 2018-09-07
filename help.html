@@ -179,7 +179,7 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 <li><code>siren_application.exe</code> contains the packaged Windows version of the SIREN application</li>
 <li><code>siren_powerbalance.exe</code> contains the SIREN PowerBalance files. These are a set of spreadsheets used to quantify and cost dispatchable energy generation, storage and CO2 emissions. This enables you to complete a costed renewable energy scenario</li>
 <li><code>siren_sample.exe</code> contains the files and data for the sample SIREN simulation of the SWIS</li>
-<li>(<code>siren_makeweatherfiles.exe</code> contains a standalone version of <code>makeweather2.py</code>. It allows you to create SAM weather files  without requiring any other parts of SIREN. See <a href="makeweatherfiles.html" target="_blank">makeweatherfiles.html</a>)</li>
+<li>(<code>sen_makeweather_getmerra2.exe</code> is a package containing both <code>makeweatherfiles</code>, a standalone program to produce SAM weather files, and <code>getmerra2</code> which enables MERRA-2 files to be downloaded. This package allows you to create SAM weather files from MERRA-2 files without requiring any other parts of SIREN. See <a href="makeweatherfiles.html" target="_blank">makeweatherfiles.html</a>)</li>
 </ul>
 <p>Occasionally new versions of some of the SIREN programs will be uploaded to SourceForge. You can check for new versions and download them by selecting the <code>sirenupd</code> option in SIREN.
 <h3 id="execute">Execution of SIREN</h3>
@@ -206,15 +206,15 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><img src="map.png" alt="getmap">&nbsp;&nbsp;getmap</td>
-<td class="none">Invoke getmap to create a map image for SIREN (see <a href="#map">Obtaining a Suitable Map Image</a>)</td>
+<td class="none">Invoke <code>getmap</code> to create a map image for SIREN (see <a href="#map">Obtaining a Suitable Map Image</a>)</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="download.png" alt="getmerra2">&nbsp;&nbsp;getmerra2</td>
-<td class="none">Invoke getmerra2 to download MERRA-2 data files (see <a href="#getmerra2">Get MERRA-2 Files</a>)</td>
+<td class="none">Invoke <code>getmerra2</code> to download MERRA-2 data files (see <a href="#getmerra2">Get MERRA-2 Files</a>)</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="weather_b.png" alt="makeweather2">&nbsp;&nbsp;makeweather2</td>
-<td class="none">Invoke makeweather2 to create weather files for SAM (see <a href="#merra5">Produce wind and solar weather files</a>)</td>
+<td class="none">Invoke <code>makeweather2</code> to create weather files for SAM (see <a href="#merra5">Produce wind and solar weather files</a>)</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="download.png" alt="sirenupd">&nbsp;&nbsp;sirenupd</td>
@@ -228,7 +228,7 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 <tr>
 <tr class="none">
 <td class="none"><img src="help.png" alt="Help">&nbsp;&nbsp;Help (F1)</td>
-<td class="none">Display the help file. The default help file, <em>help.html</em>, is a standard HTML file which can be displayed with your browser</td>
+<td class="none">Display the help file. The default help file, <code>help.html</code>, is a standard HTML file which can be displayed with your browser</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="about.png" alt="About">&nbsp;&nbsp;About (Ctrl+I)</td>
@@ -255,7 +255,7 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 <h2 id="setup">Setting Up</h2>
 <p>The simulation uses external data files to model the potential for renewable energy generation for a geographic region. The approach is to model the data on an hourly basis for a desired year (ignoring leap days, that is, 8,760 hours). The following data files are required / desirable. Due to the initial source for each data file the format for each is different (see <a href="#files">SIREN File Formats</a> for further details). Please <a href="#feedback">feedback</a> any desired formats as it's relatively easy to accommodate standard file formats.</p>
 <ul>
-<li>A map of the area of interest (identified in the <a href="#p_map">[Map]</a> Section of the Preferences file). A simple JPEG or PNG image is fine although most conventional image formats should be acceptable. The map covers a geographically rectangular area of the earth. Obtaining a suitable map image is described in <a href="#map">Obtaining a Suitable Map Image</a></li>
+<li>A map of the area of interest (identified in the <a href="#p_map">[Map]</a> Section of the Preferences file). A simple JPEG or PNG image is fine although most conventional image formats should be acceptable. The map covers a geographically &ldquo;rectangular&rdquo; area of the earth. Obtaining a suitable map image is described in <a href="#map">Obtaining a Suitable Map Image</a></li>
 <li>Names and locations of towns. Two files are used as input (either or both can be specified):
 <ol>
 <li>An Excel file containing a list of weather stations from the BOM (identified by <em>bom</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file)</li>
@@ -284,7 +284,7 @@ You can also use TMY files such as those provided with SAM. If you have a number
 <p>Stations represent either existing generation stations on the grid or new ones you have created during a simulation session. The station files can be updated outside of the simulation. The fields for a station are:</p>
 <table border="0", class="none">
 <tr class="none">
-<td class="none"><dfn>Station Name</dfn></td>
+<td class="none" width="10%"><dfn>Station Name</dfn></td>
 <td class="none">The name you assigned to the station. They must be unique within a simulation session. If you add a new scenario with a station that has the same name as one already active the program will append a number to make the name(s) unique</td>
 </tr>
 <tr class="none">
@@ -304,11 +304,11 @@ You can also use TMY files such as those provided with SAM. If you have a number
 <tr class="none">
 <td class="none"><dfn>Maximum Capacity (MW)</dfn></td>
 <td class="none">Maximum capacity of the station. This is the amount of power the station produces for export into the network
-<br /><strong>Note:</strong> In the case of PV (and biomass) SAM uses nameplate capacity as the basis for it's calculations. SIREN has been designed to use generation capacity. The PV capacity figures you input into SIREN are increased by the dc_as_ratio to give the nameplate capacity before they are passed to SAM</td>
+<br /><strong>Note:</strong> In the case of PV (and biomass) SAM uses nameplate capacity as the basis for it's calculations. SIREN has been designed to use generation capacity. The PV capacity figures you input into SIREN are increased by the <em>dc_ac_ratio</em> to give the nameplate capacity before they are passed to SAM</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>Turbine</dfn></td>
-<td class="none">The type of turbine for a Wind station. The name must be either one of the turbines in the Turbine file provided by SAM or the name of a turbine power (.POW) file. 
+<td class="none">The type of turbine for a Wind station. The name must be either one of the turbines in the Turbine file provided by SAM or the name of a turbine power (.POW) file.
 <br /><strong>Note:</strong> When editing a Wind or Offshore station you will be presented with the list of turbines available. Initially, the list is sorted in name order. You can toggle the sort order between name order and turbine size by clicking on the <em>Turbine:</em> label field.</td>
 </tr>
 <tr class="none">
@@ -1397,7 +1397,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <tr class="none">
 <td class="none"><dfn>save_balance</dfn></td>
 <td class="none">Save inputs for PowerBalance</td>
-</tr>   
+</tr>
 <tr class="none">
 <td class="none"><dfn>save_data</dfn></td>
 <td class="none">Save initial data outputs produced by the model for each station</td>
@@ -2195,27 +2195,27 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><img src="map.png" alt="getmap">&nbsp;&nbsp;getmap</td>
-<td class="none">Invoke getmap to create a map image for SIREN (see <a href="#map">Obtaining a Suitable Map Image</a>)</td>
+<td class="none">Invoke <code>getmap</code> to create a map image for SIREN (see <a href="#map">Obtaining a Suitable Map Image</a>)</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="download.png" alt="getmerra2">&nbsp;&nbsp;getmerra2</td>
-<td class="none">Invoke getmerra2 to download MERRA-2 data files (see <a href="#getmerra2">Get MERRA-2 Files</a>)</td>
+<td class="none">Invoke <code>getmerra2</code> to download MERRA-2 data files (see <a href="#getmerra2">Get MERRA-2 Files</a>)</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="list.png" alt="indexweather">&nbsp;&nbsp;indexweather</td>
-<td class="none">Invoke indexweather to create an index for weather files (see <a href="#index">Using other Weather Files</a>)</td>
+<td class="none">Invoke <code>indexweather</code> to create an index for weather files (see <a href="#index">Using other Weather Files</a>)</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="grid.png" alt="makegrid">&nbsp;&nbsp;makegrid</td>
-<td class="none">Invoke makegrid to create resource grid file (see <a href="#resource">Visualising Renewable Resource Attributes</a>)</td>
+<td class="none">Invoke <code>makegrid</code> to create resource grid file (see <a href="#resource">Visualising Renewable Resource Attributes</a>)</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="weather_b.png" alt="makeweather2">&nbsp;&nbsp;makeweather2</td>
-<td class="none">Invoke makeweather2 to create weather files for SAM (see <a href="#merra5">Produce wind and solar weather files</a>)</td>
+<td class="none">Invoke <code>makeweather2</code> to create weather files for SAM (see <a href="#merra5">Produce wind and solar weather files</a>)</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="list.png" alt="updateswis">&nbsp;&nbsp;updateswis</td>
-<td class="none">Invoke updateswis to update the list of existing SWIS Stations (facilities; see <a href="#updateswis">Existing Stations (Facilities)</a>) or SWIS Load data</td>
+<td class="none">Invoke <code>updateswis</code> to update the list of existing SWIS Stations (facilities; see <a href="#updateswis">Existing Stations (Facilities)</a>) or SWIS Load data</td>
 </tr>
 </table>
 <div class="experiment">
@@ -2225,7 +2225,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 </tr>
 <tr class="none">
 <td class="none"><img src="rain.png" alt="makerainfall2">&nbsp;&nbsp;makerainfall2&nbsp;</td>
-<td class="none">Invoke makerainfall2 to create rainfall files (see <a href="#merrar">Produce rainfall files (experimental)</a>)</td>
+<td class="none">Invoke <code>makerainfall2</code> to create rainfall files (see <a href="#merrar">Produce rainfall files (experimental)</a>)</td>
 </tr>
 </table>
 </div>
@@ -2237,7 +2237,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><img src="help.png" alt="Help">&nbsp;&nbsp;Help (F1)</td>
-<td class="none">Display the help file. The default help file, <em>help.html</em>, is a standard HTML file which can be displayed with your browser</td>
+<td class="none">Display the help file. The default help file, <code>help.html</code>, is a standard HTML file which can be displayed with your browser</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="about.png" alt="About">&nbsp;&nbsp;About (Ctrl+I)</td>
@@ -2739,7 +2739,7 @@ Additional rows specify power output at speeds increasing by 1 m/s</td>
 <p><a href="#help">Back to top</a></p>
 <h2 id="notes">Supporting Notes</h2>
 <h3 id="map">Obtaining a Suitable Map Image</h3>
-<p>Among other publicly available resources, OpenStreetMap provides a set of open map tiles (&ldquo;Slippy Map&rdquo; tiles. Refer <a href="http://wiki.openstreetmap.org/wiki/Slippy_Map" target="_blank">http://wiki.openstreetmap.org/wiki/Slippy_Map</a>) which can be stitched together into a single image. These produce a traditional map type.  A satellite map can be obtained from MapQuest (<a href="https://www.mapquestapi.com/staticmap/" target="_blank">https://www.mapquestapi.com/staticmap/</a> or you can save an image from another source such as Google Maps. Map data copyright (&copy;) OpenStreetMap contributors CC-BY-SA <a href="http://www.openstreetmap.org/copyright" target="_blank"> http://www.openstreetmap.org/copyright</a>. You can obtain a suitable image using <em>getmap</em>.</p>
+<p>Among other publicly available resources, OpenStreetMap provides a set of open map tiles (&ldquo;Slippy Map&rdquo; tiles. Refer <a href="http://wiki.openstreetmap.org/wiki/Slippy_Map" target="_blank">http://wiki.openstreetmap.org/wiki/Slippy_Map</a>) which can be stitched together into a single image. These produce a traditional map type.  A satellite map can be obtained from MapQuest (<a href="https://www.mapquestapi.com/staticmap/" target="_blank">https://www.mapquestapi.com/staticmap/</a> or you can save an image from another source such as Google Maps. Map data copyright (&copy;) OpenStreetMap contributors CC-BY-SA <a href="http://www.openstreetmap.org/copyright" target="_blank"> http://www.openstreetmap.org/copyright</a>. You can obtain a suitable image using <code>getmap</code>.</p>
 <h4>getmap</h4>
 <p><code>getmap.py</code> is a Python program that can be used to create a map image for any area of the globe. Using this program you can obtain a map from one of the two sources above. You specify:
 <ul>
@@ -2747,16 +2747,16 @@ Additional rows specify power output at speeds increasing by 1 m/s</td>
 <li>for OpenStreetMap, a zoom level and a URL template (Internet address) for the map tiles. The default value (<code>http://[abc].tile.openstreetmap.org/zoom/x/y.png</code>) represents the normal OpenStreetMap tiles</li>
 <li>for MapQuest, the width and height for the image file you wish to create. The ratio of these values will affect the area the map represents</li>
 </ul>
-<p>You can invoke the program either by choosing <em>getmap</em> from the SIREN Tools menu or in Windows by running <code>getmap.exe</code> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to allow you to define the map/image desired. <em>getmap</em> displays a map of the world to visualise the chosen are of interest at a global scale. The window fields are:</p>
+<p>You can invoke the program either by choosing <code>getmap</code> from the SIREN Tools menu or in Windows by running <code>getmap.exe</code> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to allow you to define the map/image desired. <code>getmap</code> displays a map of the world to visualise the chosen are of interest at a global scale. The window fields are:</p>
 <ul>
-<li><em>Area of interest</em>. You specify the boundaries for the area of the world you want a map generated for. This can be chosen either by pressing <em>Choose area via Map</em> to invoke <em>worldwindow</em> (see <a href="#worldwindow">Select area on world map</a>) to choose the area on a world map or by specifying the bounding coordinates for the area:
+<li><em>Area of interest</em>. You specify the boundaries for the area of the world you want a map generated for. This can be chosen either by pressing <em>Choose area via Map</em> to invoke <code>worldwindow</code> (see <a href="#worldwindow">Select area on world map</a>) to choose the area on a world map or by specifying the bounding coordinates for the area:
 <ul>
 <li><em>North</em>. Upper latitude</li>
 <li><em>West</em>. Left (west) longitude</li>
 <li><em>South</em>. Lower latitude</li>
 <li><em>East</em>. Right (east) longitude</li>
 </ul>
-You can alternate between both approaches to choose the desired area. If you have passed a SIREN Preferences file or invoked <em>getmap</em> from within SIREN the bounding coordinates will be set to those of the current map. North and South can range from +85.06 to -85.06 degrees and East and West from -180 to +180</li>
+You can alternate between both approaches to choose the desired area. If you have passed a SIREN Preferences file or invoked <code>getmap</code> from within SIREN the bounding coordinates will be set to those of the current map. North and South can range from +85.06 to -85.06 degrees and East and West from -180 to +180</li>
 <li><em>Map Scale (Zoom)</em>. The scale of the map can be from 0 - 1:500 million - to 11 - 1:250,000 (OpenStreetMap has zoom levels to 19, 1:1,000). You can either use the arrows to increase or decrease the level or type in a value. The program will show an approximate scale for the level chosen</li>
 <li><em>URL template</em>. The URL template for the location of the map tiles. The default value, <code>http://[abc].tile.openstreetmap.org/zoom/x/y.png</code>, is for OSM &lsquo;standard&rsquo; style maps. You can override this value to specify a different source (for example, <code>http://tile.stamen.com/terrain-background/zoom/x/y.png</code> for Migurski's Terrain; US-only)</li>
 <li><em>Image Width</em>. The width of the image to be created (for MapQuest)</li>
@@ -2823,15 +2823,15 @@ You can alternate between both approaches to choose the desired area. If you hav
 <p>SIREN uses a simplified network to reduce the overhead in adding stations into the network and to trace their links to the Perth Load Centre. This simple network was derived from a national network diagram for Australia available in a number of formats, including as a KMZ file, from Geoscience Australia (<a href="https://data.gov.au/dataset/electricity-transmission-lines" target="_blank">Electricity Transmission Lines</a>; accessed Oct 2017)</p>
 <p>There is also a list of Australian power stations available (<a href="https://data.gov.au/dataset/power-stations" target="_blank">Power Stations</a>; accessed Oct 2017)</p>
 <h4 id="updateswis">Existing Stations (Facilities)</h4>
-<p>SIREN uses the list of <a href="http://data.wa.aemo.com.au/#facilities" target="_blank">registered facilities</a> available from AEMO (specifically <a href="http://data.wa.aemo.com.au/datafiles/facilities/facilities.csv" target="_blank">facilities.csv</a>) for it's existing stations. If you want an updated version you can use <em>updateswis</em> to obtain the current list (see below).</p>
+<p>SIREN uses the list of <a href="http://data.wa.aemo.com.au/#facilities" target="_blank">registered facilities</a> available from AEMO (specifically <a href="http://data.wa.aemo.com.au/datafiles/facilities/facilities.csv" target="_blank">facilities.csv</a>) for it's existing stations. If you want an updated version you can use <code>updateswis</code> to obtain the current list (see below).</p>
 <h4>Load Data</h4>
-<p>The load data for the SWIS has been obtained from <a href="http://data.wa.aemo.com.au/#load-summary" target="_blank">Load Summary</a> data available from AEMO. SIREN uses hourly load data rather than half hourly. The figures used are derived by summing the &lsquo;Operational Load (MWh)&rsquo; data for the two half hourly intervals. You can use <em>updateswis</em> to obtain the latest load data (see below). The SWIS load data is generally available mid-month for two months prior.</p>
+<p>The load data for the SWIS has been obtained from <a href="http://data.wa.aemo.com.au/#load-summary" target="_blank">Load Summary</a> data available from AEMO. SIREN uses hourly load data rather than half hourly. The figures used are derived by summing the &lsquo;Operational Load (MWh)&rsquo; data for the two half hourly intervals. You can use <code>updateswis</code> to obtain the latest load data (see below). The SWIS load data is generally available mid-month for two months prior.</p>
 <p>The AEMO also publish <a href="http://data.wa.aemo.com.au/#facility-scada" target="_blank">facility SCADA data</a>.</p>
 <h4>updateswis</h4>
 <p><code>updateswis.py</code> is a Python program that can be used to access the current list of facilities (power stations) for the SWIS and to obtain recent load data.
 The program will download the list of existing stations and optionally update the file SIREN uses for existing stations (<em>grid_stations</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file). To aid readability you can optionally produce an additional file, Excel or CSV, that will save the list in the same format as a SIREN scenario file.
 Load data can also be downloaded for prior years to a filename defined by the <em>load</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file.</p>
-<p>You can run <em>updateswis</em> from the SIREN Tools menu or in Windows by running <code>updateswis.exe</code> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
+<p>You can run <code>updateswis</code> from the SIREN Tools menu or in Windows by running <code>updateswis.exe</code> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
 <ul>
 <li><em>Host site</em>. The URL of the AEMO Market Data website</li>
 <li>Existing Stations (Facilities)
@@ -2844,7 +2844,7 @@ Load data can also be downloaded for prior years to a filename defined by the <e
 <li>System Load
 <ul>
 <li><em>Year</em>. The year you want load data for</li>
-<li><em>Wrap to prior year</em>. To enable you to use (more) recent load data you can check this option to indicate load data should wrap to the prior year. As an example, if load data is available up until April of the current year updateswis will use load data from the prior year for May onwards to give a full year of data</li>
+<li><em>Wrap to prior year</em>. To enable you to use (more) recent load data you can check this option to indicate load data should wrap to the prior year. As an example, if load data is available up until April of the current year <code>updateswis</code> will use load data from the prior year for May onwards to give a full year of data</li>
 <li><em>Load File location</em>. The location of the file on the AEMO Market Data website. The year will be updated when you update the Year field so you shouldn't need to change this field</li>
 <li><em>Target load file</em>. The target file for the load data. The file name is derived from the <em>load</em> property. The year will be updated when you update the Year field so you shouldn't need to change this field</li>
 </ul>
@@ -2911,15 +2911,15 @@ Click the <em>APPROVE MORE APPLICATIONS</em> button
 Search for <em>NASA GESDICS DATA ARCHIVE</em> and <em>APPROVE</em> that application
 </li>
 <li>
-Create a <em>.netrc</em> file for authentication to download the MERRA-2 files.
+Create a <code>.netrc</code> file for authentication to download the MERRA-2 files.
 <ul>
-<li>If you're using <em>getmerra2</em> to download MERRA-2 files it will ask for details to create a <em>.netrc</em> file for you</li>
+<li>If you're using <code>getmerra2</code> to download MERRA-2 files it will ask for details to create a <code>.netrc</code> file for you</li>
 <li>Alternatively, read <a href="https://wiki.earthdata.nasa.gov/display/HDD/Wget+with+URS+Authentication#WgetwithURSAuthentication-Step-by-stepguide" target="_blank">Wget with URS Authentication</a> to create the file for authentication to download the MERRA-2 files</li>
 </ul>
 </li>
 </ol>
 <p id="merra3"><strong>Obtaining data</strong></p>
-<p>As an easier alternative to following these steps you might want to use <em>getmerra2</em> - see <a href="#getmerra2">Get MERRA-2 Files</a>.</p>
+<p>As an easier alternative to following these steps you might want to use <code>getmerra2</code> - see <a href="#getmerra2">Get MERRA-2 Files</a>.</p>
 <ol>
 <li>Enter the MERRA-2 data subset URL, <a href="http://disc.sci.gsfc.nasa.gov/daac-bin/FTPSubset2.pl" target="_blank">http://disc.sci.gsfc.nasa.gov/daac-bin/FTPSubset2.pl</a> in your browser
 <li>Within the MDISC Data Subset page choose appropriate options as follows:
@@ -3006,11 +3006,11 @@ wget --load-cookies ~/.urs_cookies --save-cookies ~/.urs_cookies --auth-no-chall
 <p><code>getmerra2</code> provides an easier alternate way of downloading MERRA-2 files than that described in <a href="#merra3">Obtaining data</a>. This approach uses <code>wget</code> but removes the need to manually follow those steps above. You still need to <a href="#merra2a">Register for access</a>.</p>
 <p>When you first execute <code>getmerra2</code> it will check for a <code>.netrc</code> file and if it can't find one it will prompt for the details required. If you've invoked <code>getmerra2</code> in a Windows terminal window and a <code>HOME</code> environment variable does not exist you will need to close and reopen a new terminal window to make the environment variable available to <code>getmerra2</code>.</p>
 <h5>getmerra2</h5>
-<p><code>getmerra2.py</code> is a Python program that can be used to download MERRA-2 files required to create weather files for SAM. You can invoke the program either by choosing <em>getmerra2</em> from the SIREN Tools menu or in Windows by running <code>getmerra2.exe</code> in the <em>siren</em> folder. The program accepts a SIREN Preferences file as an optional parameter. The window fields are:</p>
+<p><code>getmerra2.py</code> is a Python program that can be used to download MERRA-2 files required to create weather files for SAM. You can invoke the program either by choosing <code>getmerra2</code> from the SIREN Tools menu or in Windows by running <code>getmerra2.exe</code> in the <em>siren</em> folder. The program accepts a SIREN Preferences file as an optional parameter. The window fields are:</p>
 <ul>
 <li><em>Area of Interest</em>. Area of interest for files to be downloaded. There are three ways the area can be chosen:
 <ol>
-<li>Pressing <em>Choose area via Map</em> to invoke <em>worldwindow</em> (see <a href="#worldwindow">Select area on world map</a>) to choose the area on a world map</li>
+<li>Pressing <em>Choose area via Map</em> to invoke <code>worldwindow</code> (see <a href="#worldwindow">Select area on world map</a>) to choose the area on a world map</li>
 <li>Specifying the bounding coordinates for the area:
 <ul>
 <li><em>North</em>. Upper latitude</li>
@@ -3028,7 +3028,7 @@ wget --load-cookies ~/.urs_cookies --save-cookies ~/.urs_cookies --auth-no-chall
 </ul>
 </li>
 </ol>
-You can alternate between these approaches to choose the desired area. If you have passed a SIREN Preferences file or invoked <em>getmerra2</em> from within SIREN the bounding coordinates will be set to those of the current map. The chosen area must be at least 1 degree of latitude by 1.25 degrees of longitude. North and South can range from +85.06 to -85.06 degrees and East and West from -180 to +180
+You can alternate between these approaches to choose the desired area. If you have passed a SIREN Preferences file or invoked <code>getmerra2</code> from within SIREN the bounding coordinates will be set to those of the current map. The chosen area must be at least 1 degree of latitude by 1.25 degrees of longitude. North and South can range from +85.06 to -85.06 degrees and East and West from -180 to +180
 <br />
 <strong>Note:</strong> The behaviour of the bounding coordinates fields are a little quirky in that they will adjust themselves so the west (left) value is always west of the east value and the north (upper) value is always higher than the south value
 </li>
@@ -3048,14 +3048,40 @@ You can alternate between these approaches to choose the desired area. If you ha
 <li><em>Check Wind</em> will interrogate MERRA-2 wind files in the Wind Target Folder to provide the boundaries for the Area of Interest and set the starting date to download the next day in sequence. The interrogation will cater for files in yearly subfolders</li>
 <li><em>Help</em> Display this help</li>
 </ul>
-<p>Downloading the MERRA-2 files are performed by new tasks allowing you to close the <em>getmerra2</em> window once you have requested the files. Depending on the area and date range the process of downloading is likely to take significant time. A log file named <em>wget_type_yyyy-mm-dd_hhmm.log</em> will be produced, where <em>type</em> is either wind or solar and <em>yyyy-mm-dd_hhmm.log</em> is the date and time <code>wget</code> was invoked. A file named <em>wget_type_yyyy-mm-dd_hhmm.txt</em> will contain the list of files to be downloaded and <em>wget_type_yyyy-mm-dd_hhmm.bat</em> will contain the <code>wget</code> command (in case you encounter problems).</p>
+<p>Downloading the MERRA-2 files are performed by new tasks allowing you to close the <code>getmerra2</code> window once you have requested the files. Depending on the area and date range the process of downloading is likely to take significant time. A log file named <em>wget_type_yyyy-mm-dd_hhmm.log</em> will be produced, where <em>type</em> is either wind or solar and <em>yyyy-mm-dd_hhmm.log</em> is the date and time <code>wget</code> was invoked. A file named <em>wget_type_yyyy-mm-dd_hhmm.txt</em> will contain the list of files to be downloaded and <em>wget_type_yyyy-mm-dd_hhmm.bat</em> will contain the <code>wget</code> command (in case you encounter problems).</p>
+<p>You can also run the program on the command line. In this case the parameters are passed to the program as follows:</p>
+<pre>
+      getmerra2.exe &lt;parm1=value parm2=value&gt;
+</pre>
+<p>Parameters are as described above and can be passed to the program as follows:</p>
+<ul>
+<li><em>check</em>. If this parameter is passed the program will interrogate MERRA-2 files in the target folder to provide the boundaries for the area of interest and set the starting date to download the next day in sequence and the end date to 42 days prior to the current date</li>
+<li><em>coll=</em> or <em>collection=</em>. The MERRA-2 collection, either <em>solar</em> or <em>wind</em>. Default value is <em>solar</em>. You can also specify just the collection value, i.e. <em>solar</em> or <em>wind</em></li>
+<li><em>config=</em> or <em>configuration=</em> or <em>ini=</em>. Alternative Preferences file. Default value is <code>getfiles.ini</code>. You can also specify just the filename</li>
+<li><em>date=</em> or <em>date1=</em> or <em>strtdate=</em> or <em>startdate=</em>. The first date to download. The format is <em>yyyy-mm-dd</em></li>
+<li><em>date2=</em> or <em>enddate=</em>. The last date to download. The format is <em>yyyy-mm-dd</em></li>
+<li><em>dir=</em> or <em>folder=</em> or <em>target=</em> or <em>tgt_dir=</em>. The target folder for the MERRA-2 files to be downloaded</li>
+<li><em>get</em> or <em>wget</em> or <em>spawn</em>. Passing this parameter will cause <code>wget</code> to be launched to download the files. If not passed the <em>wget_type_yyyy-mm-dd_hhmm.txt</em> and <em>wget_type_yyyy-mm-dd_hhmm.bat</em> files are created but <code>wget</code> is not launched</li>
+<li><em>lat2=</em> or <em>bottomlat=</em> or <em>botlat=</em> or <em>southlat=</em> or <em>south=</em>. The south latitude of the area of interest</li>
+<li><em>lat1=</em> or <em>toplat=</em> or <em>northlat=</em> or <em>north=</em>. The north latitude of the area of interest</li>
+<li><em>lon1=</em> or <em>leftlon=</em> or <em>westlon=</em> or <em>west=</em>. The west longitude of the area of interest</li>
+<li><em>lon2=</em> or <em>rightlon=</em> or <em>eastlon=</em> or <em>east=</em>. The east longitude of the area of interest</li>
+<li><em>year=</em> As an alternative to passing the start and end dates you can pass the year of interest. If passed, the first date will be 31 December of the prior year and the last date will be 1 January of the following year</li>
+</ul>
+</p>
+<p><strong>Notes:</strong>
+<ol class="none">
+<li>The first time you use <code>getmerra2</code> you should run it interactively to ensure the correct environment (e.g. <code>.netrc</code> file) is established</li>
+<li>If you invoke the program with collection, target folder, check and wget parameters <code>wget</code> will be launched to download more recent files into the target folder with the same area of interest as the existing files.</li>
+</ol>
+</p>
 <!-- Back to top< -->
 <h4 id="makeweather">Produce wind and solar weather files</h4>
 <h5>makeweather2</h5>
-<p><code>makeweather2.py</code> is a Python program that can be used to produce solar and/or wind weather files for input to SAM. The program generates SMW (preferred for SAM) or CSV format solar resource files and SRW format wind resource files. These file formats have been chosen as they're easier to generate than other formats. Using the program you specify the source folder for the MERRA-2 data files, the time zone for the area of interest, a file format and target folder for the weather files. The program will generate files for each of the MERRA-2 grid squares within the chosen MERRA-2 data files or optionally for a number of latitude and longitude positions. You can invoke the program either by choosing <em>makeweather2</em> from the SIREN Tools menu or in Windows by running <code>makeweather2.exe</code> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
+<p><code>makeweather2.py</code> is a Python program that can be used to produce solar and/or wind weather files for input to SAM. The program generates SMW (preferred for SAM) or CSV format solar resource files and SRW format wind resource files. These file formats have been chosen as they're easier to generate than other formats. Using the program you specify the source folder for the MERRA-2 data files, the time zone for the area of interest, a file format and target folder for the weather files. The program will generate files for each of the MERRA-2 grid squares within the chosen MERRA-2 data files or optionally for a number of latitude and longitude positions. You can invoke the program either by choosing <code>makeweather2</code> from the SIREN Tools menu or in Windows by running <code>makeweather2.exe</code> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
 <ul>
 <li><em>Year</em>. Year of interest. The naming conventions for MERRA-2 files include the date so this defines the date range. The tool processes dates from the last day of the prior year through to the first day of the next year (ignoring 29 February)</li>
-<li><em>Wrap to prior year</em>. To enable you to use (more) recent weather data this option will indicate that weather data should wrap to the prior year. As an example, if you have downloaded MERRA-2 data up until April for the current year makeweather2 will use weather data from the prior year for May onwards to give a full year of data. The MERRA data for both years must reside in the same folder (or the next subfolder if yearly folders are used)</li>
+<li><em>Wrap to prior year</em>. To enable you to use (more) recent weather data this option will indicate that weather data should wrap to the prior year. As an example, if you have downloaded MERRA-2 data up until April for the current year <code>makeweather2</code> will use weather data from the prior year for May onwards to give a full year of data. The MERRA data for both years must reside in the same folder (or the next subfolder if yearly folders are used)</li>
 <li><em>Time Zone</em>. The (solar) time zone for the area of interest. This is used to create suitable weather files where the first hour in the file is the first hour of the year in the local time zone. A value of <em>auto</em> will cause the program to use the (first) longitude in the MERRA-2 data files to calculate the time zone</li>
 <li><em>Solar Format</em>. The solar option can produce weather files in either of two formats - SMW or CSV format. This option allows you to choose your preferred one. SMW format is suitable for SAM while it may have trouble with the CSV format</li>
 <li><em>Solar Variable</em>. There are two MERRA-2 solar variables to use to create weather files - swgdn or swgnt. </li>
@@ -3332,7 +3358,7 @@ MERRA-2 Variables
 <p><code>makerainfall2.py</code> is a Python program that can be used to produce rainfall weather files. The program generates CSV format files that resembles solar resource files with a single Rainfall variable. Using the program you specify the source folder for the MERRA-2 data files, the time zone for the area of interest, a file format and target folder for the weather files. The program will generate files for each of the MERRA-2 grid squares within the chosen MERRA-2 data files or optionally for a number of latitude and longitude positions. You can invoke the program either by choosing <em>makerainfall2</em> from the SIREN Tools menu or in Windows by running <code>makerainfall2.exe</code> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
 <ul>
 <li><em>Year</em>. Year of interest. The naming conventions for MERRA-2 files include the date so this defines the date range. The tool processes dates from the last day of the prior year through to the first day of the next year (ignoring 29 February)</li>
-<li><em>Wrap to prior year</em>. To enable you to use (more) recent weather data this option will indicate that weather data should wrap to the prior year. As an example, if you have downloaded MERRA-2 data up until April for the current year makeweather2 will use weather data from the prior year for May onwards to give a full year of data. The MERRA data for both years must reside in the same folder</li>
+<li><em>Wrap to prior year</em>. To enable you to use (more) recent weather data this option will indicate that weather data should wrap to the prior year. As an example, if you have downloaded MERRA-2 data up until April for the current year <code>makeweather2</code> will use weather data from the prior year for May onwards to give a full year of data. The MERRA data for both years must reside in the same folder</li>
 <li><em>Time Zone</em>. The (solar) time zone for the area of interest. This is used to create suitable weather files where the first hour in the file is the first hour of the year in the local time zone. A value of <em>auto</em> will cause the program to use the (first) longitude in the MERRA-2 data files to calculate the time zone</li>
 <li><em>File Format</em>. The MERRA-2 input file format. This is three-letter group mnemonic - <em>flx</em>, <em>lnd</em> or <em>mld</em></li>
 <li><em>Coordinates</em>. Rather than producing weather files for each grid cell in the chosen area you can restrict it by passing a string of comma-separated latitude and longitude values. The tool will then generate files for just these coordinates</li>
@@ -3412,7 +3438,7 @@ MERRA-2 Variable
 <li>By using an index file. To use other files you need to create index files that contain the latitude, longitude and file name for each weather file, where the filename is relative to the location for the weather files. Index files for solar and wind are defined by the <em>solar_index</em> and <em>wind_index</em> properties. You can either create these files manually or use <em>indexweather</em> to create an index</li>
 </ol>
 <h5>indexweather</h5>
-<p><code>indexweather.py</code> is a Python program that can be used to create an index of solar and/or wind weather files for input to SAM. The program generates an index file that contains latitude, longitude and file name for each weather file. It does this by interrogating some of weather file formats supported by SAM - SAM CSV, SMW and SRW - to obtain the three varables. You can invoke the program either by choosing <em>indexweather</em> from the SIREN Tools menu or in Windows by running <code>indexweather.exe</code> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
+<p><code>indexweather.py</code> is a Python program that can be used to create an index of solar and/or wind weather files for input to SAM. The program generates an index file that contains latitude, longitude and file name for each weather file. It does this by interrogating some of weather file formats supported by SAM - SAM CSV, SMW and SRW - to obtain the three varables. You can invoke the program either by choosing <code>indexweather</code> from the SIREN Tools menu or in Windows by running <code>indexweather.exe</code> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
 <ul>
 <li><em>Solar files</em>. Location of solar weather files</li>
 <li><em>Solar index</em>. Name and location for solar index file</li>
@@ -3451,14 +3477,14 @@ MERRA-2 Variable
 <li><em>Wind @ 50m</em>. Average hourly wind speed at 50m height (m/s). Important for Wind generation</li>
 </ul>
 <p>The Resource Grid window allows you to choose the period and weather variable to display and how it will appear on the SIREN map. By default the period can be either the full year, a month or a season. If there are appropriate files you can also display the variable for an hour within a month or a day. The window also has a <em>Next</em> button which allows you to &ldquo;step&rdquo; through the weather periods. You can also use <em>Page Down</em> and <em>Page Up</em> to step forward and back through the weather periods.</p>
-<p>The resource files, created by <em>makegrid</em>, summarise weather data for each grid cell to avoid having to process each weather file to obtain the data for the desired time period or hour. There are three possible levels of detail:</p>
+<p>The resource files, created by <code>makegrid</code>, summarise weather data for each grid cell to avoid having to process each weather file to obtain the data for the desired time period or hour. There are three possible levels of detail:</p>
 <ul>
 <li>Daily By Month (default). These files summarise the average daily figures for a year, month or season. It provides a gross view to see variances at the monthly level. This is a single spreadsheet with a very approximate disk requirement of about 11Kb per cell</li>
 <li>Hourly By Month. These files summarise the average hourly figures for each month. It provides hourly variances at the monthly level. This is a spreadsheet for each month with a very approximate disk requirement of about 190Kb per cell (15Kb per month)</li>
 <li>Hourly By Day. These files have hourly figures for each day. It provides hourly variances at the daily level. This is a spreadsheet for each day with a very approximate disk requirement of about 5.8Mb per cell (15Kb per day). It allows you to visualise the actual movement of weather events (sun, wind fronts) at the expense of significantly larger disk storage requirements</li>
 </ul>
 <h4>makegrid</h4>
-<p><code>makegrid.py</code> is a Python program that can be used to create the resource grid file used by SIREN. You can invoke the program either by choosing <em>makegrid</em> from the SIREN Tools menu or in Windows by running <code>makegrid.exe</code> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to allow you to define what file to create. The window fields are:</p>
+<p><code>makegrid.py</code> is a Python program that can be used to create the resource grid file used by SIREN. You can invoke the program either by choosing <code>makegrid</code> from the SIREN Tools menu or in Windows by running <code>makegrid.exe</code> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to allow you to define what file to create. The window fields are:</p>
 <ul>
 <li><em>Year</em>. Year of interest</li>
 <li><em>Update year</em>. If this is checked changes to the year selected will be propagated to the two Folder and Resource File fields</li>
@@ -3494,7 +3520,7 @@ MERRA-2 Variable
 <li><em>wind=</em> Location of the wind weather files</li>
 <li><em>target=</em> or <em>tgtfil=</em> Resource grid file to be produced</li>
 </ul>
-<p>If the source folder(s) contains other CSV files <em>makegrid</em> may fail. If this happens it is probably safer to copy the weather files to a separate folder.
+<p>If the source folder(s) contains other CSV files <code>makegrid</code> may fail. If this happens it is probably safer to copy the weather files to a separate folder.
 <p><a href="#help">Back to top</a></p>
 <h3 id="sam">SAM Models used by SIREN</h3>
 <p>SIREN uses the NREL SAM SDK API for energy calculations. This is a collection of tools developed by NREL for creating renewable energy system models. See <a href="https://sam.nrel.gov/sdk" target="_blank">SAM Simulation Core SDK</a> for details on the SDK. NREL also provide a user-friendly front end, <a href="https://sam.nrel.gov/" target="_blank">SAM</a>, to facilitate usage of the SAM models.</p>
@@ -3787,9 +3813,9 @@ MERRA-2 Variable
 </div>
 <p><a href="#help">Back to top</a></p>
 <h3 id="worldwindow">Select area on world map</h3>
-<p><em>worldwindow</em> can be used with <em>getmap</em> (see <a href="#map">Obtaining a Suitable Map Image</a>) and <em>getmerra2</em> (see <a href="#getmerra2">Get MERRA-2 Files</a>) to choose the Area of Interest for a map or for downloading MERRA-2 data. It presents a world map and allows you to choose the area of interest by clicking within the map and updating the area values in the two calling programs</p>
+<p><code>worldwindow</code> can be used with <code>getmap</code> (see <a href="#map">Obtaining a Suitable Map Image</a>) and <code>getmerra2</code> (see <a href="#getmerra2">Get MERRA-2 Files</a>) to choose the Area of Interest for a map or for downloading MERRA-2 data. It presents a world map and allows you to choose the area of interest by clicking within the map and updating the area values in the two calling programs</p>
 <h4>Using worldwindow</h4>
-<p>To use <em>worldwindow</em> you simply left click in the map the top left corner of the desired Area of Interest and then left click the bottom right corner. <em>worldwindow</em> will display a rectangle on the world map highlighting the desired area and update the Area of Interest in the calling program. To choose a different area just repeat the process.
+<p>To use <code>worldwindow</code>> you simply left click in the map the top left corner of the desired Area of Interest and then left click the bottom right corner. <code>worldwindow</code> will display a rectangle on the world map highlighting the desired area and update the Area of Interest in the calling program. To choose a different area just repeat the process.
 <h4>worldwindow Menu Structure</h4>
 <table border="0", class="none">
 <tr class="none">
@@ -3820,11 +3846,11 @@ MERRA-2 Variable
 </td>
 <tr class="none">
 <td class="none"><dfn><strong>Preferences</strong></dfn></td></p>
-<td class="none">Edit or display aspects of the <em>getfiles</em> Preferences file. Changes for some variables will take effect immediately on exit from the edit program while others (such as the map) will require you to restart the simulation</p>
+<td class="none">Edit or display aspects of the <code>getfiles</code> Preferences file. Changes for some variables will take effect immediately on exit from the edit program while others (such as the map) will require you to restart the simulation</p>
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><img src="edit.png" alt="Edit Preferences">&nbsp;&nbsp;Edit Preferences File(Ctrl+E)</td>
-<td class="none">Edit the <em>getfiles</em> Preferences file. This option invokes a simple text editor to allow the whole file to be edited</td>
+<td class="none">Edit the <code>getfiles</code> Preferences file. This option invokes a simple text editor to allow the whole file to be edited</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="rainbow-icon.png" alt="Edit Colours">&nbsp;&nbsp;Edit Colours (Ctrl+U)</td>
@@ -3843,14 +3869,14 @@ MERRA-2 Variable
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><img src="help.png" alt="Help">&nbsp;&nbsp;Help (F1)</td>
-<td class="none">Display the help for <em>worldwindow</em>. The default help file, <em>help.html</em>, is a standard HTML file which can be displayed with your browser</td>
+<td class="none">Display the help for <code>worldwindow</code>. The default help file, <code>help.html</code>, is a standard HTML file which can be displayed with your browser</td>
 </tr>
 </table>
 </td>
 </tr>
 </table>
 <h4>getfiles Preferences</h4>
-<p>The <em>getfiles</em> Preferences file contains preferences specifically for <em>worldwindow</em> and the programs using it. The file resides in the same folder as <em>worldwindow</em> itself.
+<p>The <code>getfiles</code> Preferences file contains preferences specifically for <code>worldwindow</code> and the programs using it. The file resides in the same folder as <code>worldwindow</code> itself.
 <table border="0", class="none">
 <tr>
 <th>Section</th>
@@ -3892,7 +3918,7 @@ MERRA-2 Variable
 </tr>
 </table>
 </td></tr><tr class="none"><td><dfn><strong>[getmerra2]</strong></dfn></td>
-<td>These properties are used by <em>getmerra2</em> to create requests to download MERRA-2 data files. Normally they should not be changed. They're here just to document their content and purpose. Values enclosed in dollars signs ($) are substituted at execution time. Properties are:</p>
+<td>These properties are used by <code>getmerra2</code> to create requests to download MERRA-2 data files. Normally they should not be changed. They're here just to document their content and purpose. Values enclosed in dollars signs ($) are substituted at execution time. Properties are:</p>
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><dfn>filename</dfn></td>
@@ -3949,7 +3975,7 @@ MERRA-2 Variable
 </table>
 </td></tr>
 <tr class="none"><td><dfn><strong>[getmap]</strong></dfn></td>
-<td>These properties are used by <em>getmap</em> to create requests to download map images. Normally they should not be changed. They're here just to document their content and purpose. Properties are:</p>
+<td>These properties are used by <code>getmap</code> to create requests to download map images. Normally they should not be changed. They're here just to document their content and purpose. Properties are:</p>
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><dfn>mapquest_url</dfn></td>
@@ -4054,7 +4080,7 @@ MERRA-2 Variable
 </tr>
 <tr class="none">
 <td class="none"><dfn>restorewindows</dfn></td>
-<td class="none">If True <em>worldwindow</em> will remember the window layout between sessions. Default is False</td>
+<td class="none">If True <code>worldwindow</code> will remember the window layout between sessions. Default is False</td>
 </tr>
 </table>
 </tr>

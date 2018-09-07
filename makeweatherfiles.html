@@ -96,13 +96,7 @@ ul {
 <body>
 <h1 id="help">Help for makeweatherfiles</h1>
 <h2>Preliminaries</h2>
-<p>A packaged version of <code>makeweatherfiles</code> for Windows is available as a self-extracting zip file from <a href="https://sourceforge.net/projects/sensiren/" target="_blank">https://sourceforge.net/projects/sensiren/</a> (the package has been created with PyInstaller). The file is <a href="https://sourceforge.net/projects/sensiren/files/sen_makeweatherfiles.exe/download" target="_blank">sen_makeweatherfiles.exe</a>. To use the program download and execute <code>sen_makeweatherfiles.exe</code> to copy the contents to your hard drive. It requires approximately 69Mb of space. There are three files of interest:
-<ul>
-<li><code>makeweatherfiles.exe</code> is the Windows executable
-<li><code>makeweatherfiles.html</code> is this help file
-<li><code>makeweatherfiles.py</code> is the Python source
-</ul>
-<p>There is an additional package, <a href="https://sourceforge.net/projects/sensiren/files/sen_makeweather_getmerra2.exe/download" target="_blank">sen_makeweather_getmerra2.exe</a>, which contains both <code>makeweatherfiles</code> and <code>getmerra2</code>, a program to assist with downloading MERRA-2 files. If you plan to use both programs this package is recommended to avoid duplicating some of the library files used by both of them. To use the program download and execute <code>sen_makeweather_getmerra2.exe</code> to copy the contents to your hard drive. It requires approximately 126Mb of space. See <a href="#getmerra2">Get MERRA-2 Files</a> for details on <code>getmerra2</code> and <a href="#usage">Using getmerra2 and makeweather files</a> for a brief description on usage of these two programs.</p>
+<p>A packaged version of <code>makeweatherfiles</code> for Windows is available as a self-extracting zip file from <a href="https://sourceforge.net/projects/sensiren/" target="_blank">https://sourceforge.net/projects/sensiren/</a>. The file is <a href="https://sourceforge.net/projects/sensiren/files/sen_makeweather_getmerra2.exe/download" target="_blank">sen_makeweather_getmerra2.exe</a> (the package has been created with PyInstaller) and contains both <code>makeweatherfiles</code>, a standalone program to produce SAM weather files, and <code>getmerra2</code> which enables MERRA-2 files to be downloaded. This package allows you to create SAM weather files from MERRA-2 files without requiring any other parts of SIREN. To use the program download and execute <code>sen_makeweather_getmerra2.exe</code> to copy the contents to your hard drive. It requires approximately 135Mb of space. See <a href="#getmerra2">Get MERRA-2 Files</a> for details on <code>getmerra2</code> and <a href="#usage">Using getmerra2 and makeweather files</a> for a brief description on usage of both programs.</p>
 <h2 id="makeweather">Produce wind and solar weather files</h2>
 <h3>makeweatherfiles</h3>
 <p><code>makeweatherfiles.py</code> is a Python program that can be used to produce solar and/or wind weather files for input to SAM. The program generates SMW (preferred for SAM) or CSV format solar resource files and SRW format wind resource files. These file formats have been chosen as they're easier to generate than other formats. Using the program you specify the source folder for the MERRA-2 data files, the time zone for the area of interest, a file format and target folder for the weather files. The program will generate files for each of the MERRA-2 grid squares within the chosen MERRA-2 data files or optionally for a number of latitude and longitude positions. You invoke the program in Windows by running <code>makeweatherfiles.exe</code> or <code>makeweatherfiles.py</code> if you have Python installed (and appropriate libraries). Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
@@ -382,9 +376,9 @@ Click the <em>APPROVE MORE APPLICATIONS</em> button
 Search for <em>NASA GESDICS DATA ARCHIVE</em> and <em>APPROVE</em> that application
 </li>
 <li>
-Create a <em>.netrc</em> file for authentication to download the MERRA-2 files.
+Create a <code>.netrc</code> file for authentication to download the MERRA-2 files.
 <ul>
-<li>If you're using <em>getmerra2</em> to download MERRA-2 files it will ask for details to create a <em>.netrc</em> file for you</li>
+<li>If you're using <code>getmerra2</code> to download MERRA-2 files it will ask for details to create a <code>.netrc</code> file for you</li>
 <li>Alternatively, read <a href="https://wiki.earthdata.nasa.gov/display/HDD/Wget+with+URS+Authentication#WgetwithURSAuthentication-Step-by-stepguide" target="_blank">Wget with URS Authentication</a> to create the file for authentication to download the MERRA-2 files</li>
 </ul>
 </li>
@@ -474,7 +468,7 @@ wget --load-cookies ~/.urs_cookies --save-cookies ~/.urs_cookies --auth-no-chall
 <ul>
 <li><em>Area of Interest</em>. Area of interest for files to be downloaded. There are three ways the area can be chosen:
 <ol>
-<li>Pressing <em>Choose area via Map</em> to invoke <em>worldwindow</em> (see <a href="#worldwindow">Select area on world map</a>) to choose the area on a world map</li>
+<li>Pressing <em>Choose area via Map</em> to invoke <code>worldwindow</code> (see <a href="#worldwindow">Select area on world map</a>) to choose the area on a world map</li>
 <li>Specifying the bounding coordinates for the area:
 <ul>
 <li><em>North</em>. Upper latitude</li>
@@ -492,7 +486,7 @@ wget --load-cookies ~/.urs_cookies --save-cookies ~/.urs_cookies --auth-no-chall
 </ul>
 </li>
 </ol>
-You can alternate between these approaches to choose the desired area. If you have passed a SIREN Preferences file or invoked <em>getmerra2</em> from within SIREN the bounding coordinates will be set to those of the current map. The chosen area must be at least 1 degree of latitude by 1.25 degrees of longitude. North and South can range from +85.06 to -85.06 degrees and East and West from -180 to +180
+You can alternate between these approaches to choose the desired area. If you have passed a SIREN Preferences file or invoked <code>getmerra2</code> from within SIREN the bounding coordinates will be set to those of the current map. The chosen area must be at least 1 degree of latitude by 1.25 degrees of longitude. North and South can range from +85.06 to -85.06 degrees and East and West from -180 to +180
 <br />
 <strong>Note:</strong> The behaviour of the bounding coordinates fields are a little quirky in that they will adjust themselves so the west (left) value is always west of the east value and the north (upper) value is always higher than the south value
 </li>
@@ -513,6 +507,32 @@ You can alternate between these approaches to choose the desired area. If you ha
 <li><em>Help</em> Display this help</li>
 </ul>
 <p>Downloading the MERRA-2 files are performed by new tasks allowing you to close the <code>getmerra2</code> window once you have requested the files. Depending on the area and date range the process of downloading is likely to take significant time. A log file named <em>wget_type_yyyy-mm-dd_hhmm.log</em> will be produced, where <em>type</em> is either wind or solar and <em>yyyy-mm-dd_hhmm.log</em> is the date and time <code>wget</code> was invoked.</p>
+<p>You can also run the program on the command line. In this case the parameters are passed to the program as follows:</p>
+<pre>
+      getmerra2.exe &lt;parm1=value parm2=value&gt;
+</pre>
+<p>Parameters are as described above and can be passed to the program as follows:</p>
+<ul>
+<li><em>check</em>. If this parameter is passed the program will interrogate MERRA-2 files in the target folder to provide the boundaries for the area of interest and set the starting date to download the next day in sequence and the end date to 42 days prior to the current date</li>
+<li><em>coll=</em> or <em>collection=</em>. The MERRA-2 collection, either <em>solar</em> or <em>wind</em>. Default value is <em>solar</em>. You can also specify just the collection value, i.e. <em>solar</em> or <em>wind</em></li>
+<li><em>config=</em> or <em>configuration=</em> or <em>ini=</em>. Alternative Preferences file. Default value is <code>getfiles.ini</code>. You can also specify just the filename</li>
+<li><em>date=</em> or <em>date1=</em> or <em>strtdate=</em> or <em>startdate=</em>. The first date to download. The format is <em>yyyy-mm-dd</em></li>
+<li><em>date2=</em> or <em>enddate=</em>. The last date to download. The format is <em>yyyy-mm-dd</em></li>
+<li><em>dir=</em> or <em>folder=</em> or <em>target=</em> or <em>tgt_dir=</em>. The target folder for the MERRA-2 files to be downloaded</li>
+<li><em>get</em> or <em>wget</em> or <em>spawn</em>. Passing this parameter will cause <code>wget</code> to be launched to download the files. If not passed the <em>wget_type_yyyy-mm-dd_hhmm.txt</em> and <em>wget_type_yyyy-mm-dd_hhmm.bat</em> files are created but <code>wget</code> is not launched</li>
+<li><em>lat2=</em> or <em>bottomlat=</em> or <em>botlat=</em> or <em>southlat=</em> or <em>south=</em>. The south latitude of the area of interest</li>
+<li><em>lat1=</em> or <em>toplat=</em> or <em>northlat=</em> or <em>north=</em>. The north latitude of the area of interest</li>
+<li><em>lon1=</em> or <em>leftlon=</em> or <em>westlon=</em> or <em>west=</em>. The west longitude of the area of interest</li>
+<li><em>lon2=</em> or <em>rightlon=</em> or <em>eastlon=</em> or <em>east=</em>. The east longitude of the area of interest</li>
+<li><em>year=</em> As an alternative to passing the start and end dates you can pass the year of interest. If passed, the first date will be 31 December of the prior year and the last date will be 1 January of the following year</li>
+</ul>
+</p>
+<p><strong>Notes:</strong>
+<ol class="none">
+<li>The first time you use <code>getmerra2</code> you should run it interactively to ensure the correct environment (e.g. <code>.netrc</code> file) is established</li>
+<li>If you invoke the program with collection, target folder, check and wget parameters <code>wget</code> will be launched to download more recent files into the target folder with the same area of interest as the existing files.</li>
+</ol>
+</p>
 <h4 id="merra34">Background on MERRA-2</h4>
 <p>&ldquo;The Modern Era Retrospective-analysis for Research and Applications, Version 2 (MERRA-2) is a NASA atmospheric data reanalysis for the satellite era using a major new version of the Goddard Earth Observing System Data Assimilation System Version 5 (GEOS-5). MERRA-2 focuses on historical analyses of the hydrological cycle on a broad range of weather and climate time scales, and places the NASA EOS suite of observations in a climate context.&rdquo;</p>
 <ul>
