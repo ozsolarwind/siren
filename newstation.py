@@ -27,6 +27,7 @@ import ConfigParser  # decode .ini file
 from PyQt4 import QtGui, QtCore
 
 from senuser import getUser
+from parents import getParents
 from station import Station
 from turbine import Turbine
 
@@ -55,14 +56,7 @@ class AnObject(QtGui.QDialog):
             self.base_year = '2012'
         parents = []
         try:
-            aparents = config.items('Parents')
-            for key, value in aparents:
-                for key2, value2 in aparents:
-                    if key2 == key:
-                        continue
-                    value = value.replace(key2, value2)
-                parents.append((key, value))
-            del aparents
+            parents = getParents(config.items('Parents'))
         except:
             pass
         try:
@@ -194,7 +188,7 @@ class AnObject(QtGui.QDialog):
                                 for i in range(len(bit) -1, -1, -1):
                                     if not bit[i].isdigit() and not bit[i] == '.':
                                         break
-                                size = float(bit[i + 1:]) * 1000 
+                                size = float(bit[i + 1:]) * 1000
                             else:
                                 for i in range(len(name) -4, -1, -1):
                                     if not name[i].isdigit() and not name[i] == '.':
@@ -432,7 +426,7 @@ class AnObject(QtGui.QDialog):
 
     def turbineChanged(self, val):
         self.turbine_classd.setText(self.turbines[val][1])
-        
+
     def turbineSort(self):
         curr_turbine = self.turbine.currentText()
         if self.turbines_sorted:

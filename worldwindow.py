@@ -36,6 +36,7 @@ from colours import Colours
 from credits import fileVersion
 import displayobject
 from editini import EdtDialog, EditSect, SaveIni
+from parents import getParents
 from senuser import getUser
 
 RADIUS = 6367.
@@ -136,14 +137,7 @@ class WorldScene(QtGui.QGraphicsScene):
         config.read(config_file)
         parents = []
         try:
-            aparents = config.items('Parents')
-            for key, value in aparents:
-                for key2, value2 in aparents:
-                    if key2 == key:
-                        continue
-                    value = value.replace(key2, value2)
-                parents.append((key, value))
-            del aparents
+            parents = getParents(config.items('Parents'))
         except:
             pass
         try:
@@ -699,14 +693,7 @@ class WorldWindow(QtGui.QMainWindow):
         self.config.read(self.config_file)
         parents = []
         try:
-            aparents = config.items('Parents')
-            for key, value in aparents:
-                for key2, value2 in aparents:
-                    if key2 == key:
-                        continue
-                    value = value.replace(key2, value2)
-                parents.append((key, value))
-            del aparents
+            parents = getParents(config.items('Parents'))
         except:
             pass
         try:

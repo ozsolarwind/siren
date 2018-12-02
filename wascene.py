@@ -34,6 +34,7 @@ except:
     from mpl_toolkits.basemap import pyproj as pyproj
 from towns import Towns
 from grid import Grid, Grid_Boundary, Line
+from parents import getParents
 from senuser import getUser
 from station import Station, Stations
 from dijkstra_4 import Shortest
@@ -65,14 +66,7 @@ class WAScene(QtGui.QGraphicsScene):
             self.model_name = ''
         parents = []
         try:
-            aparents = config.items('Parents')
-            for key, value in aparents:
-                for key2, value2 in aparents:
-                    if key2 == key:
-                        continue
-                    value = value.replace(key2, value2)
-                parents.append((key, value))
-            del aparents
+            parents = getParents(config.items('Parents'))
         except:
             pass
         try:
@@ -1098,7 +1092,7 @@ class WAScene(QtGui.QGraphicsScene):
         x = p.x() / self._lon_scale + self._orig_lon
         y = p.y() / self._lat_scale + self._orig_lat
         lon, lat = self._proj(x, y, inverse=True)
-        return QtCore.QPointF(round(lon, decpts), round(lat, decpts)) 
+        return QtCore.QPointF(round(lon, decpts), round(lat, decpts))
 
     def mapFromLonLat(self, p):
         lon, lat = p.x(), p.y()

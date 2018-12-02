@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2018 Sustainable Energy Now Inc., Angus King
 #
 #  station.py - This file is part of SIREN.
 #
@@ -27,6 +27,7 @@ import xlrd
 
 import ConfigParser   # decode .ini file
 
+from parents import getParents
 from senuser import getUser
 
 
@@ -90,14 +91,7 @@ class Stations:
             self.base_year = '2012'
         parents = []
         try:
-            aparents = config.items('Parents')
-            for key, value in aparents:
-                for key2, value2 in aparents:
-                    if key2 == key:
-                        continue
-                    value = value.replace(key2, value2)
-                parents.append((key, value))
-            del aparents
+            parents = getParents(config.items('Parents'))
         except:
             pass
         try:
@@ -327,7 +321,7 @@ class Stations:
                                              turbs,
                                              float(facility['Area']),
                                              'Existing'))
-                                if self.stations[-1].technology == 'Wind':
+                                if 'Wind' in self.stations[-1].technology:
                                     if self.stations[-1].rotor == 0 or self.stations[-1].rotor == '':
                                         rotor = 0
                                         if self.stations[-1].turbine[:7] == 'Enercon':
@@ -356,7 +350,7 @@ class Stations:
                                     except:
                                         pass
                                 if self.stations[-1].area == 0 or self.stations[-1].area == '':
-                                    if self.stations[-1].technology == 'Wind':
+                                    if 'Wind' in self.stations[-1].technology:
                                         self.stations[-1].area = self.areas[self.stations[-1].technology] * \
                                                                  float(self.stations[-1].no_turbines) * \
                                                                  pow((self.stations[-1].rotor * .001), 2)
@@ -423,7 +417,7 @@ class Stations:
                                              worksheet.cell_value(curr_row, var['No. turbines']),
                                              worksheet.cell_value(curr_row, var['Area']),
                                              'Existing'))
-                        if self.stations[-1].technology == 'Wind':
+                        if 'Wind' in self.stations[-1].technology:
                             if self.stations[-1].rotor == 0 or self.stations[-1].rotor == '':
                                 rotor = 0
                                 if self.stations[-1].turbine[:7] == 'Enercon':
@@ -453,7 +447,7 @@ class Stations:
                                     pass
                         try:
                             if self.stations[-1].area == 0 or self.stations[-1].area == '':
-                                if self.stations[-1].technology == 'Wind':
+                                if 'Wind' in self.stations[-1].technology:
                                     self.stations[-1].area = self.areas[self.stations[-1].technology] * \
                                                              float(self.stations[-1].no_turbines) * \
                                                              pow((self.stations[-1].rotor * .001), 2)

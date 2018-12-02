@@ -29,6 +29,7 @@ import openpyxl as oxl
 import os
 import sys
 import ssc
+import time
 import xlrd
 import xlwt
 
@@ -40,6 +41,7 @@ import displayobject
 import displaytable
 from editini import SaveIni
 from grid import Grid
+from parents import getParents
 from sirenicons import Icons
 # import Station
 from turbine import Turbine
@@ -1187,14 +1189,7 @@ class SuperPower():
             self.base_year = year
         parents = []
         try:
-            aparents = config.items('Parents')
-            for key, value in aparents:
-                for key2, value2 in aparents:
-                    if key2 == key:
-                        continue
-                    value = value.replace(key2, value2)
-                parents.append((key, value))
-            del aparents
+            parents = getParents(config.items('Parents'))
         except:
             pass
         try:
@@ -1682,9 +1677,15 @@ class SuperPower():
             self.data.set_number('wind_turbine_rotor_diameter', turbine.rotor)
             self.data.set_number('wind_turbine_cutin', turbine.cutin)
             self.do_defaults(station)
+            if self.status:
+                clock_start = time.clock()
             module = ssc.Module('windpower')
+            if self.status:
+                self.status.emit(QtCore.SIGNAL('log'), '(%.6f seconds)' % (time.clock() - clock_start))
             if (module.exec_(self.data)):
                 farmpwr = self.data.get_array('gen')
+                if self.status:
+                    self.status.emit(QtCore.SIGNAL('log'), '(%.6f seconds)' % (time.clock() - clock_start))
                 del module
                 return farmpwr
             else:
@@ -2246,14 +2247,7 @@ class FinancialModel():
             self.base_year = year
         parents = []
         try:
-            aparents = config.items('Parents')
-            for key, value in aparents:
-                for key2, value2 in aparents:
-                    if key2 == key:
-                        continue
-                    value = value.replace(key2, value2)
-                parents.append((key, value))
-            del aparents
+            parents = getParents(config.items('Parents'))
         except:
             pass
         try:
@@ -2364,7 +2358,7 @@ class FinancialModel():
 
     def getValues(self):
         return self.stations
-        
+
     def getParms(self):
         return self.parms
 
@@ -3348,15 +3342,7 @@ class PowerModel():
                 self.pb_template = False
         if self.pb_template:
             try:
-                parents = []
-                aparents = config.items('Parents')
-                for key, value in aparents:
-                    for key2, value2 in aparents:
-                        if key2 == key:
-                            continue
-                        value = value.replace(key2, value2)
-                    parents.append((key, value))
-                del aparents
+                parents = getParents(config.items('Parents'))
                 for key, value in parents:
                     self.pb_template = self.pb_template.replace(key, value)
                 self.pb_template = self.pb_template.replace('$USER$', getUser())
@@ -4466,14 +4452,7 @@ class PowerModel():
             self.base_year = year
         parents = []
         try:
-            aparents = config.items('Parents')
-            for key, value in aparents:
-                for key2, value2 in aparents:
-                    if key2 == key:
-                        continue
-                    value = value.replace(key2, value2)
-                parents.append((key, value))
-            del aparents
+            parents = getParents(config.items('Parents'))
         except:
             pass
         try:
@@ -4931,7 +4910,7 @@ class PowerModel():
                                     storage_carry = self.discharge[0]
                                 wrkly['Storage'][i] = storage_carry * (1 / (2 - self.discharge[1]))
                                 storage_loss = storage_carry - wrkly['Storage'][i]
-                                storage_carry = 0
+                                storage_carry = 0 # ???? bug ???
                         storage_bal.append(storage_carry)
                         storage_losses.append(storage_loss)
                     if show_summ:
@@ -5095,7 +5074,7 @@ class PowerModel():
          # run the financials model
         if do_financials:
             self.financial_parms = None
-            while True:            
+            while True:
                 self.financials = FinancialModel(self.stn_outs, self.stn_tech, self.stn_size,
                                   self.stn_pows, self.stn_grid, self.stn_path, year=self.base_year,
                                   parms=self.financial_parms)

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2016-2017 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2016-2018 Sustainable Energy Now Inc., Angus King
 #
 #  indexweather.py - This file is part of SIREN.
 #
@@ -27,6 +27,7 @@ import xlwt
 
 import displayobject
 from credits import fileVersion
+from parents import getParents
 from senuser import getUser
 
 
@@ -141,14 +142,7 @@ class getParms(QtGui.QWidget):
             self.base_year = '2012'
         self.parents = []
         try:
-            aparents = config.items('Parents')
-            for key, value in aparents:
-                for key2, value2 in aparents:
-                    if key2 == key:
-                        continue
-                    value = value.replace(key2, value2)
-                self.parents.append((key, value))
-            del aparents
+            self.parents = getParents(config.items('Parents'))
         except:
             pass
         try:

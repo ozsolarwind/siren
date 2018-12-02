@@ -14,6 +14,7 @@ from ctypes import *
 
 import os
 import ConfigParser  # decode .ini file
+from parents import getParents
 from senuser import getUser
 
 c_number = c_float  # must be c_double or c_float depending on how defined in sscapi.h
@@ -22,9 +23,9 @@ c_number = c_float  # must be c_double or c_float depending on how defined in ss
 class SSCAPI:
         config = ConfigParser.RawConfigParser()
         if len(sys.argv) > 1:
-            config_file = sys.argv[1]
+                config_file = sys.argv[1]
         else:
-            config_file = 'SIREN.ini'
+                config_file = 'SIREN.ini'
         config.read(config_file)
         try:
                 base_year = config.get('Base', 'year')
@@ -32,14 +33,7 @@ class SSCAPI:
                 base_year = '2014'
         parents = []
         try:
-                aparents = config.items('Parents')
-                for key, value in aparents:
-                        for key2, value2 in aparents:
-                                if key2 == key:
-                                        continue
-                                value = value.replace(key2, value2)
-                        parents.append((key, value))
-                del aparents
+                parents = getParents(config.items('Parents'))
         except:
                 pass
         try:

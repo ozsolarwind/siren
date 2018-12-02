@@ -27,6 +27,7 @@ import xlwt
 
 import displayobject
 from credits import fileVersion
+from parents import getParents
 from senuser import getUser
 
 
@@ -160,7 +161,7 @@ class makeFile():
                 tf.close()
                 fst_row = len(lines) - 8760
                 if fst_row < 0: # probably not for us
-                    continue 
+                    continue
                 calc_mth = False
                 if fil[-4:] == '.smw':
                     calc_mth = True
@@ -807,14 +808,7 @@ class getParms(QtGui.QWidget):
             self.years.append(self.base_year)
         self.parents = []
         try:
-            aparents = config.items('Parents')
-            for key, value in aparents:
-                for key2, value2 in aparents:
-                    if key2 == key:
-                        continue
-                    value = value.replace(key2, value2)
-                self.parents.append((key, value))
-            del aparents
+            self.parents = getParents(config.items('Parents'))
         except:
             pass
         self.do_rain = False

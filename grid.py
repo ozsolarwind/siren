@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2018 Sustainable Energy Now Inc., Angus King
 #
 #  grid.py - This file is part of SIREN.
 #
@@ -28,6 +28,7 @@ import zipfile
 import ConfigParser   # decode .ini file
 from xml.etree.ElementTree import ElementTree, fromstring
 
+from parents import getParents
 from senuser import getUser
 
 RADIUS = 6367.   # radius of earth in km
@@ -72,7 +73,7 @@ def dust(pyd, pxd, y1d, x1d, y2d, x2d):   # debug
     dist = sqrt(dx * dx + dy * dy)
     return [round(abs(dist) * RADIUS, 2), round(degrees(y), 6), round(degrees(x), 6)]
 
-        
+
 class Line:
     def __init__(self, name, style, coordinates, length=0., connector=-1, dispatchable=None, line_cost=None, peak_load=None,
                  peak_dispatchable=None, peak_loss=None, line_table=None, substation_cost=None):
@@ -198,14 +199,7 @@ class Grid:
             self.base_year = '2012'
         parents = []
         try:
-            aparents = config.items('Parents')
-            for key, value in aparents:
-                for key2, value2 in aparents:
-                    if key2 == key:
-                        continue
-                    value = value.replace(key2, value2)
-                parents.append((key, value))
-            del aparents
+            parents = getParents(aparents = config.items('Parents'))
         except:
             pass
         try:
@@ -589,14 +583,7 @@ class Grid_Boundary:
             self.base_year = '2012'
         parents = []
         try:
-            aparents = config.items('Parents')
-            for key, value in aparents:
-                for key2, value2 in aparents:
-                    if key2 == key:
-                        continue
-                    value = value.replace(key2, value2)
-                parents.append((key, value))
-            del aparents
+            parents = getParents(config.items('Parents'))
         except:
             pass
         try:

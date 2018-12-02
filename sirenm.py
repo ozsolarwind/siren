@@ -50,6 +50,7 @@ from editini import EdtDialog, EditTech, EditSect, SaveIni
 from dijkstra_4 import Shortest
 from credits import Credits, fileVersion
 from grid import dust
+from parents import getParents
 from viewresource import Resource
 from floatmenu import FloatMenu
 from floatlegend import FloatLegend
@@ -790,14 +791,7 @@ class MainWindow(QtGui.QMainWindow):
             pass
         parents = []
         try:
-            aparents = config.items('Parents')
-            for key, value in aparents:
-                for key2, value2 in aparents:
-                    if key2 == key:
-                        continue
-                    value = value.replace(key2, value2)
-                parents.append((key, value))
-            del aparents
+            parents = getParents(config.items('Parents'))
         except:
             pass
         try:
@@ -1221,9 +1215,9 @@ class MainWindow(QtGui.QMainWindow):
         self.floatlegend = None
         self.floatstatus = None
         self.power_signal = None
-        utilities = ['getmap', 'getmerra2', 'indexweather', 'makegrid', 'makerainfall2', 'makeweather2', 'updateswis']
-        utilini = [True, True, True, True, False, False, True]
-        utilicon = ['map.png', 'download.png', 'list.png', 'grid.png', 'rain.png', self.weather_icon, 'list.png']
+        utilities = ['getmap', 'getmerra2', 'indexweather', 'makegrid', 'makerainfall2', 'makeweather2', 'powerbalance2', 'updateswis']
+        utilini = [True, True, True, True, False, False, True, True]
+        utilicon = ['map.png', 'download.png', 'list.png', 'grid.png', 'rain.png', self.weather_icon, 'power.png', 'list.png']
         spawns = []
         icons = []
         if sys.platform == 'win32' or sys.platform == 'cygwin':
@@ -1293,14 +1287,7 @@ class MainWindow(QtGui.QMainWindow):
             pass
         parents = []
         try:
-            aparents = config.items('Parents')
-            for key, value in aparents:
-                for key2, value2 in aparents:
-                    if key2 == key:
-                        continue
-                    value = value.replace(key2, value2)
-                parents.append((key, value))
-            del aparents
+            parents = getParents(config.items('Parents'))
         except:
             pass
         check_sections = ['Files', 'SAM Modules']

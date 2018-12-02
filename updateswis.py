@@ -30,6 +30,7 @@ import xlwt
 
 import displayobject
 from credits import fileVersion
+from parents import getParents
 from senuser import getUser
 from station import Stations
 
@@ -88,8 +89,6 @@ class makeFile():
         for new_facility in new_facilities:
             if new_facility['Extracted At'] != '':
                 info = 'Extracted At: ' + new_facility['Extracted At']
-                break
-        for new_facility in new_facilities:
             facile.seek(0)
             for facility in facilities:
                 if new_facility['Facility Code'] == facility['Facility Code']:
@@ -114,7 +113,8 @@ class makeFile():
                             changes += 1
                     break
             else:
-                self.log += 'New facility' + new_facility['Facility Code'] + '\n'
+                self.log += 'New facility ' + new_facility['Facility Code'] + '\n'
+                changes += 1
         facile.seek(0)
         keeps = []
         for facility in facilities:
@@ -129,7 +129,7 @@ class makeFile():
                 if keep:
                     nl = ' will be retained\n'
                     keeps.append(facility['Facility Code'])
-                self.log += "Facility '%s' no longer on file%s" % (facility['Facility Code'], nl) 
+                self.log += "Facility '%s' no longer on file%s" % (facility['Facility Code'], nl)
         if changes > 0:
             msgbox = QtGui.QMessageBox()
             msgbox.setWindowTitle('SIREN - updateswis Status')
@@ -175,7 +175,7 @@ class makeFile():
                                         new_line.append('Deleted')
                                     elif field == 'Capacity Credits (MW)':
                                         new_line.append('')
-                                    else:    
+                                    else:
                                         new_line.append(facility[field])
                                 for field in extra_fields:
                                     try:
@@ -189,9 +189,9 @@ class makeFile():
                     os.remove(fac_file + '~')
                 os.rename(fac_file, fac_file + '~')
                 os.rename(fac_file + '.csv', fac_file)
-            self.log = '%s updated' % tgt_fil[tgt_fil.rfind('/') + 1:]
+            self.log += '%s updated' % tgt_fil[tgt_fil.rfind('/') + 1:]
         else:
-            self.log = 'No changes to existing file. No update required.'
+            self.log += 'No changes to existing file. No update required.'
         if self.excel != '':
             if self.excel[-4:] == '.csv' or self.excel[-4:] == '.xls' or self.excel[-5:] == '.xlsx':
                 pass
@@ -409,14 +409,7 @@ class getParms(QtGui.QWidget):
             self.years.append(self.base_year)
         parents = []
         try:
-            aparents = config.items('Parents')
-            for key, value in aparents:
-                for key2, value2 in aparents:
-                    if key2 == key:
-                        continue
-                    value = value.replace(key2, value2)
-                parents.append((key, value))
-            del aparents
+            parents = getParents(config.items('Parents'))
         except:
             pass
         self.grid_stations = ''

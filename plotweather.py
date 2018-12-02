@@ -31,8 +31,8 @@ import xlrd
 import ConfigParser  # decode .ini file
 from PyQt4 import QtGui, QtCore
 
-from senuser import getUser
 import displaytable
+from parents import getParents
 from senuser import getUser
 from sammodels import getZenith
 
@@ -333,14 +333,7 @@ class PlotWeather():
         periods = []
         parents = []
         try:
-            aparents = config.items('Parents')
-            for key, value in aparents:
-                for key2, value2 in aparents:
-                    if key2 == key:
-                        continue
-                    value = value.replace(key2, value2)
-                parents.append((key, value))
-            del aparents
+            parents = getParents(config.items('Parents'))
         except:
             pass
         try:
@@ -805,14 +798,7 @@ class PlotWeather():
             self.base_year = year
         parents = []
         try:
-            aparents = config.items('Parents')
-            for key, value in aparents:
-                for key2, value2 in aparents:
-                    if key2 == key:
-                        continue
-                    value = value.replace(key2, value2)
-                parents.append((key, value))
-            del aparents
+            parents = getParents(config.items('Parents'))
         except:
             pass
         try:

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2018 Sustainable Energy Now Inc., Angus King
 #
 #  towns.py - This file is part of SIREN.
 #
@@ -26,6 +26,7 @@ import sys
 import xlrd
 from math import radians, cos, sin, asin, sqrt
 
+from parents import getParents
 from senuser import getUser
 
 
@@ -58,14 +59,7 @@ class Towns:
             self.base_year = '2012'
         parents = []
         try:
-            aparents = config.items('Parents')
-            for key, value in aparents:
-                for key2, value2 in aparents:
-                    if key2 == key:
-                        continue
-                    value = value.replace(key2, value2)
-                parents.append((key, value))
-            del aparents
+            parents = getParents(config.items('Parents'))
         except:
             pass
         try:
