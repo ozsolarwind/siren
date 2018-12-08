@@ -19,6 +19,7 @@
 #  <http://www.gnu.org/licenses/>.
 #
 import os
+import ssc
 import sys
 import ConfigParser   # decode .ini file
 from PyQt4 import QtGui, QtCore
@@ -65,10 +66,12 @@ class FloatStatus(QtGui.QDialog):
             line_cnt1 += 1
             if len(line[0]) > max_line:
                 max_line = len(line[0])
-        if self.log_status or not self.log_status: 
-            lines2 = '%s. SIREN log started\n          Preference File: %s\n          Working directory: %s' \
+        if self.log_status or not self.log_status:
+            ssc_api = ssc.API()
+            comment = 'SAM SDK Core: Version = %s. Build info = %s.' % (ssc_api.version(), ssc_api.build_info())
+            lines2 = '%s. SIREN log started\n          Preference File: %s\n          Working directory: %s\n          %s' \
                       % (str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'hh:mm:ss')), \
-                      self.config_file, os.getcwd())
+                      self.config_file, os.getcwd(), comment)
             line_cnt2 = 1
             if len(lines2) > max_line:
                 max_line = len(lines2)
