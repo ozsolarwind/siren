@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2018 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
 #
 #  station.py - This file is part of SIREN.
 #
@@ -102,6 +102,14 @@ class Stations:
             self.sam_file = self.sam_file.replace('$YEAR$', self.base_year)
         except:
             self.sam_file = ''
+        try:
+            self.pow_dir = config.get('Files', 'pow_files')
+            for key, value in parents:
+                self.pow_dir = self.pow_dir.replace(key, value)
+            self.pow_dir = self.pow_dir.replace('$USER$', getUser())
+            self.pow_dir = self.pow_dir.replace('$YEAR$', self.base_year)
+        except:
+            self.pow_dir = ''
         self.fac_files = []
         try:
             fac_file = config.get('Files', 'grid_stations')
@@ -239,11 +247,22 @@ class Stations:
                                     else:
                                         turb = turbine.split(';')
                                         if len(turb) > 1:
-                                            sam.seek(0)
                                             turbine = turb[1]
-                                            for turb in sam_turbines:
-                                                if turb['Name'] == turbine:
-                                                    rotor = turb['Rotor Diameter']
+                                        else:
+                                            turbine = turb[0]
+                                        sam.seek(0)
+                                        for turb in sam_turbines:
+                                            if turb['Name'] == turbine:
+                                                rotor = turb['Rotor Diameter']
+                                                break
+                                        else: # try and find .pow file
+                                            pow_file = self.pow_dir + '/' + turbine + '.pow'
+                                            if os.path.exists(pow_file):
+                                                tf = open(pow_file, 'r')
+                                                lines = tf.readlines()
+                                                tf.close()
+                                                rotor = float(lines[1].strip('" \t\n\r'))
+                                                del lines
                                     no_turbines = int(facility['No. turbines'])
                                     try:
                                         rotor = float(rotor)
