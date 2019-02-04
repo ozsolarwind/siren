@@ -101,14 +101,16 @@ pre {
 <tr><td>makeweather2.py (*)</td><td>Create weather files from MERRA-2 data</td></tr>
 <tr><td>makeweatherfiles.py (*)</td><td>Standalone program to create weather files from MERRA-2 data</td></tr>
 <tr><td>newstation.py</td><td>Create/edit a new power station</td></tr>
+<tr><td>parents.py (*)</td><td>Adjust file names from Parents properties in config (.ini) file</td></tr>
 <tr><td>plotweather.py (*)</td><td>Plot (graph) weather data</td></tr>
+<tr><td>powerbalance2.py</td><td>PowerBalance implementation. Produce costed scenarios</td></tr>
 <tr><td>powermodel.py (*)</td><td>Process SAM models for stations to produce spreadsheets and plots</td></tr>
 <tr><td>sammodels.py</td><td>Routines for SAM/NREL models for DHI, DNI and Zenith angle</td></tr>
 <tr><td>samrun.py</td><td>Run a SAM model</td></tr>
 <tr><td>senuser.py (*)</td><td>Obtain current userid details</td></tr>
+<tr><td>siren.py (*)</td><td>Display a menu of SIREN Models (invokes sirenm.py for the chosen Model)</td></tr>
 <tr><td>sirenicons.py</td><td>Get a technology icon</td></tr>
 <tr><td>sirenm.py (*)</td><td>Main SIREN program</td></tr>
-<tr><td>siren.py (*)</td><td>Display a menu of SIREN Models (invokes sirenm.py for the chosen Model)</td></tr>
 <tr><td>sirenupd.py (*)</td><td>Update to newer SIREN programs without having to download the full toolkit</td></tr>
 <tr><td>ssc.py (*)</td><td>Access SAM models</td></tr>
 <tr><td>station.py</td><td>Station class. Populate stations from files and scenarios</td></tr>
@@ -123,4 +125,18 @@ pre {
 <h2>Packaging for Windows</h2>
 <p>I use <em>pyinstaller</em> (currently Version 3.2.1) to package SIREN for Windows. I use the multi-package facility to create executables for <code>siren.py, sirenm.py</code> and the tools (<code>getmap.py, getmerra2.py, indexweather.py, makerainfall2.py, makegrid.py, makeweather2.py, sirenupd.py</code> and <code>updateswis.py</code>). <code>siren_application.spec</code> is the spec file (<code>c:\Python27\scripts\pyinstaller.exe siren-application.spec</code>). This enables all programs to be included in a single library for distribution. <em>pyinstaller</em> places them in individual directories - I use <code>package_siren.py</code> to copy all the executables into the <em>siren</em> directory and remove some unwanted files that are included as part of the packaging process. All these have a version file where the version is <em>&lt;version&gt;,&lt;modification&gt;.&lt;yyyy&gt;.&lt;mmdd&gt;</em> The date part is the date the program was last changed.</p>
 <p><code>makeweather_getmerra2.spec</code> and <code>package_makeweatherfiles.py</code> package <code>makeweatherfiles.py</code> and <code>getmerra2.py</code> to provide a standalone tool to create SAM weather files from MERRA-2 datasets.</p>
+<h2>Useful tools</h2>
+<p>The parameters and variables utilised by the SAM API often change between versions. <code>sam_models_list.py</code> can be run to list the SAM models and variables for different SAM versions. Usage:</p>
+<ul style="list-style-type:none">
+<li><code>python sam_models_list.py</code> &rArr; Produce HTML file of models for current SSC version</li>
+<li><code>python sam_models_list.py &lt;Preference file&gt;</code> &rArr; Produce HTML file of models for chosen SSC version</li>
+<li><code>python sam_models_list.py &lt;Preference file&gt; &lt;SAM model&gt;</code> &rArr; Produce spreadsheet of variables for model of chosen SSC version</li>
+<li><code>python sam_models_list.py &lt;Preference file&gt; &lt;SAM model&gt; &lt;Ver 1&gt; &lt;Ver 2&gt;</code>Produce spreadsheet comparing model variables between two SSC versions</li>
+</ul>
+<p>Where:</p>
+<ul style="list-style-type:none">
+<li><code>&lt;Preference file&gt;</code> is a SIREN Prefences (.ini) file containing the directory for the SAM SDK</li>
+<li><code>&lt;SAM model&gt;</code> is a SAM Model</li>
+<li><code>&lt;Ver n&gt;</code> is an SDK Version<li>
+</ul>
 </body>
