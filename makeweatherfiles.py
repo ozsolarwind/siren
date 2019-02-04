@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2018 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
 #
 #  makeweatherfiles.py - Make weather files for SAM
 #
@@ -661,8 +661,13 @@ class makeWeather():
         cdf_file.close()
         return
 
-    def __init__(self, src_year, src_zone, src_dir_s, src_dir_w, tgt_dir, fmat, swg='swgnt', wrap=None, src_lat_lon=None, info=False):
+    def __init__(self, caller, src_year, src_zone, src_dir_s, src_dir_w, tgt_dir, fmat, swg='swgnt', wrap=None, src_lat_lon=None, info=False):
       #  self.last_time = datetime.datetime.now()
+        if caller is None:
+            self.show_progress = False
+        else:
+            self.show_progress = True
+            self.caller = caller
         self.log = ''
         self.return_code = 0
         self.src_year = int(src_year)
@@ -671,9 +676,9 @@ class makeWeather():
         self.src_dir_s = src_dir_s
         self.src_dir_w = src_dir_w
         self.yearly = [False, False]
-        if self.src_dir_s[-5:] == '/' + src_year:
+        if self.src_dir_s[-5:] == '/' + str(src_year):
             self.yearly[0] = True
-        if self.src_dir_w[-5:] == '/' + src_year:
+        if self.src_dir_w[-5:] == '/' + str(src_year):
             self.yearly[1] = True
         self.tgt_dir = tgt_dir
         self.fmat = fmat
@@ -744,7 +749,7 @@ class makeWeather():
              # get variables from "solar" file
             self.getInfo(self.findFile(inp_strt, False))
             return
-        if self.src_zone.lower() == 'auto':
+        if str(self.src_zone).lower() == 'auto':
             self.auto_zone = True
             inp_strt = '{0:04d}'.format(self.src_year) + '0101'
              # get longitude from "wind" file
@@ -850,11 +855,21 @@ class makeWeather():
         else:
             yrs = 1
         for mt in range(len(dys)):
-            self.log += 'Processing month %s wind\n' % str(mt + 1)
+            txt = 'Processing month %s wind\n' % str(mt + 1)
+            self.log += txt
+            if self.show_progress:
+                self.caller.progresslabel.setText(txt[:-1])
+                if self.make_wind:
+                    self.caller.progress(mt / 12.)
+                else:
+                    self.caller.progress(mt * 2 / 36.)
+                self.caller.daybar.setMaximum(dys[mt])
             for dy in range(1, dys[mt] + 1):
                 if self.src_zone <= 0:
                     if mt == 0 and dy == 1:
                         continue
+                if self.show_progress:
+                    self.caller.daybar.setValue(dy)
                 for yr in range(yrs):
                     inp_strt = '{0:04d}'.format(self.the_year) + '{0:02d}'.format(mt + 1) + \
                                '{0:02d}'.format(dy)
@@ -907,13 +922,20 @@ class makeWeather():
                     del self.d50m[-1]
                     del self.t_2m[-1]
         if self.make_wind:
+            if self.show_progress:
+                self.caller.daybar.setValue(0)
+                self.caller.progresslabel.setText('Creating wind weather files')
             target_dir = self.tgt_dir
             self.log += 'Target directory is %s\n' % target_dir
             if not os.path.exists(target_dir):
                 self.log += 'mkdir %s\n' % target_dir
                 os.makedirs(target_dir)
             if self.src_lat is not None:   # specific location(s)
+                if self.show_progress:
+                    self.caller.daybar.setMaximum(len(self.src_lat) - 1)
                 for i in range(len(self.src_lat)):
+                    if self.show_progress:
+                        self.caller.daybar.setValue(i)
                     for lat2 in range(len(self.lati)):
                         if self.src_lat[i] <= self.lati[lat2]:
                             break
@@ -970,8 +992,12 @@ class makeWeather():
                     tf.close()
                     self.log += '%s created\n' % out_file[out_file.rfind('/') + 1:]
             else:
+                if self.show_progress:
+                    self.caller.daybar.setMaximum(len(self.s50m[0]) * len(self.s50m[0][0]))
                 for lat in range(len(self.s50m[0])):
                     for lon in range(len(self.s50m[0][0])):
+                        if self.show_progress:
+                            self.caller.daybar.setValue(len(self.s10m[0][0]) * lat + lon)
                         if self.longrange[0] is None:
                             self.longrange[0] = self.longi[lon]
                         else:
@@ -1033,11 +1059,18 @@ class makeWeather():
         else:
             yrs = 1
         for mt in range(len(dys)):
-            self.log += 'Processing month %s solar\n' % str(mt + 1)
+            txt = 'Processing month %s solar\n' % str(mt + 1)
+            self.log += txt
+            if self.show_progress:
+                self.caller.progress((mt + 24) / 36.)
+                self.caller.daybar.setMaximum(dys[mt])
+                self.caller.progresslabel.setText(txt[:-1])
             for dy in range(1, dys[mt] + 1):
                 if self.src_zone <= 0:
                     if mt == 0 and dy == 1:
                         continue
+                if self.show_progress:
+                    self.caller.daybar.setValue(dy)
                 found = False
                 for yr in range(yrs):
                     inp_strt = '{0:04d}'.format(self.the_year) + '{0:02d}'.format(mt + 1) + \
@@ -1068,13 +1101,20 @@ class makeWeather():
                 return
             for i in range(24 + self.src_zone):  # delete last n hours
                 del self.swgnt[-1]
+        if self.show_progress:
+            self.caller.daybar.setValue(0)
+            self.caller.progresslabel.setText('Creating solar weather files')
         target_dir = self.tgt_dir
         self.log += 'Target directory is %s\n' % target_dir
         if not os.path.exists(target_dir):
             self.log += 'mkdir %s\n' % target_dir
             os.makedirs(target_dir)
         if self.src_lat is not None:  # specific location(s)
+            if self.show_progress:
+                self.caller.daybar.setMaximum(len(self.src_lat) - 1)
             for i in range(len(self.src_lat)):
+                if self.show_progress:
+                    self.caller.daybar.setValue(i)
                 for lat2 in range(len(self.lati)):
                     if self.src_lat[i] <= self.lati[lat2]:
                         break
@@ -1149,8 +1189,12 @@ class makeWeather():
                 tf.close()
                 self.log += '%s created\n' % out_file[out_file.rfind('/') + 1:]
         else:
+            if self.show_progress:
+                self.caller.daybar.setMaximum(len(self.s10m[0]) * len(self.s10m[0][0]))
             for lat in range(len(self.s10m[0])):
                 for lon in range(len(self.s10m[0][0])):
+                    if self.show_progress:
+                        self.caller.daybar.setValue(len(self.s10m[0][0]) * lat + lon)
                     if self.longrange[0] is None:
                         self.longrange[0] = self.longi[lon]
                     else:
@@ -1285,25 +1329,46 @@ class getParms(QtGui.QWidget):
             self.dirs[i].setFrameStyle(6)
             self.connect(self.dirs[i], QtCore.SIGNAL('clicked()'), self.dirChanged)
             self.grid.addWidget(self.dirs[i], 7 + i, 1, 1, 4)
+        self.daybar = QtGui.QProgressBar()
+        self.daybar.setMinimum(0)
+        self.daybar.setMaximum(31)
+        self.daybar.setValue(0)
+        #6891c6 #CB6720
+        self.daybar.setStyleSheet('QProgressBar {border: 1px solid grey; border-radius: 2px; text-align: center;}' \
+                                       + 'QProgressBar::chunk { background-color: #CB6720;}')
+        self.daybar.setHidden(True)
+        self.grid.addWidget(self.daybar, 10, 0)
+        self.progressbar = QtGui.QProgressBar()
+        self.progressbar.setMinimum(0)
+        self.progressbar.setMaximum(100)
+        self.progressbar.setValue(0)
+        #6891c6 #CB6720
+        self.progressbar.setStyleSheet('QProgressBar {border: 1px solid grey; border-radius: 2px; text-align: center;}' \
+                                       + 'QProgressBar::chunk { background-color: #6891c6;}')
+        self.grid.addWidget(self.progressbar, 10, 1, 1, 4)
+        self.progressbar.setHidden(True)
+        self.progresslabel = QtGui.QLabel('')
+        self.grid.addWidget(self.progresslabel, 10, 1, 1, 2)
+        self.progresslabel.setHidden(True)
         quit = QtGui.QPushButton('Quit', self)
-        self.grid.addWidget(quit, 10, 0)
+        self.grid.addWidget(quit, 11, 0)
         quit.clicked.connect(self.quitClicked)
         QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
         dosolar = QtGui.QPushButton('Produce Solar Files', self)
         wdth = dosolar.fontMetrics().boundingRect(dosolar.text()).width() + 9
-        self.grid.addWidget(dosolar, 10, 1)
+        self.grid.addWidget(dosolar, 11, 1)
         dosolar.clicked.connect(self.dosolarClicked)
         dowind = QtGui.QPushButton('Produce Wind Files', self)
         dowind.setMaximumWidth(wdth)
-        self.grid.addWidget(dowind, 10, 2)
+        self.grid.addWidget(dowind, 11, 2)
         dowind.clicked.connect(self.dowindClicked)
         info = QtGui.QPushButton('File Info', self)
         info.setMaximumWidth(wdth)
-        self.grid.addWidget(info, 10, 3)
+        self.grid.addWidget(info, 11, 3)
         info.clicked.connect(self.infoClicked)
         help = QtGui.QPushButton('Help', self)
         help.setMaximumWidth(wdth)
-        self.grid.addWidget(help, 10, 4)
+        self.grid.addWidget(help, 11, 4)
         help.clicked.connect(self.helpClicked)
         QtGui.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
       #   self.grid.setColumnStretch(4, 2)
@@ -1316,7 +1381,7 @@ class getParms(QtGui.QWidget):
         self.layout.addWidget(self.scroll)
         self.setWindowTitle('makeweatherfiles (' + fileVersion() + ') - Make weather files from MERRA data')
         self.center()
-        self.resize(int(self.sizeHint().width()* 1.07), int(self.sizeHint().height() * 1.07))
+        self.resize(int(self.sizeHint().width()* 1.27), int(self.sizeHint().height() * 1.07))
         self.show()
 
     def center(self):
@@ -1366,6 +1431,9 @@ class getParms(QtGui.QWidget):
         self.close()
 
     def dosolarClicked(self):
+        self.progressbar.setHidden(False)
+        self.progresslabel.setHidden(False)
+        self.daybar.setHidden(False)
         coords = str(self.coords.toPlainText())
         if coords != '':
             if coords.find(' ') >= 0:
@@ -1381,7 +1449,7 @@ class getParms(QtGui.QWidget):
             zone = 'auto'
         else:
             zone = str(self.zoneCombo.currentIndex() - 13)
-        solar = makeWeather(str(self.yearSpin.value()), zone, str(self.dirs[0].text()), \
+        solar = makeWeather(self, str(self.yearSpin.value()), zone, str(self.dirs[0].text()), \
                             str(self.dirs[1].text()), str(self.dirs[2].text()), str(self.fmatcombo.currentText()), \
                             str(self.swgcombo.currentText()), wrap, coords)
         dialr = RptDialog(str(self.yearSpin.value()), zone, str(self.dirs[0].text()), \
@@ -1390,8 +1458,17 @@ class getParms(QtGui.QWidget):
         dialr.exec_()
         del solar
         del dialr
+        self.progressbar.setValue(0)
+        self.progressbar.setHidden(True)
+        self.progresslabel.setHidden(True)
+        self.daybar.setMaximum(31)
+        self.daybar.setValue(0)
+        self.daybar.setHidden(True)
 
     def dowindClicked(self):
+        self.progressbar.setHidden(False)
+        self.progresslabel.setHidden(False)
+        self.daybar.setHidden(False)
         coords = str(self.coords.toPlainText())
         if coords != '':
             if coords.find(' ') >= 0:
@@ -1407,7 +1484,7 @@ class getParms(QtGui.QWidget):
             zone = 'auto'
         else:
             zone = str(self.zoneCombo.currentIndex() - 13)
-        wind = makeWeather(str(self.yearSpin.value()), zone, str(self.dirs[0].text()), \
+        wind = makeWeather(self, str(self.yearSpin.value()), zone, str(self.dirs[0].text()), \
                             str(self.dirs[1].text()), str(self.dirs[2].text()), \
                             'wind', '', wrap, coords)
         dialr = RptDialog(str(self.yearSpin.value()), zone, str(self.dirs[0].text()), \
@@ -1416,6 +1493,12 @@ class getParms(QtGui.QWidget):
         dialr.exec_()
         del wind
         del dialr
+        self.progressbar.setValue(0)
+        self.progressbar.setHidden(True)
+        self.progresslabel.setHidden(False)
+        self.daybar.setMaximum(31)
+        self.daybar.setValue(0)
+        self.daybar.setHidden(True)
 
     def infoClicked(self):
         coords = str(self.coords.toPlainText())
@@ -1433,7 +1516,7 @@ class getParms(QtGui.QWidget):
             zone = 'auto'
         else:
             zone = str(self.zoneCombo.currentIndex() - 13)
-        wind = makeWeather(str(self.yearSpin.value()), zone, str(self.dirs[0].text()), \
+        wind = makeWeather(self, str(self.yearSpin.value()), zone, str(self.dirs[0].text()), \
                             str(self.dirs[1].text()), str(self.dirs[2].text()), \
                             'both', str(self.swgcombo.currentText()), wrap, coords, info=True)
         dialr = RptDialog(str(self.yearSpin.value()), zone, str(self.dirs[0].text()), \
@@ -1443,6 +1526,8 @@ class getParms(QtGui.QWidget):
         del wind
         del dialr
 
+    def progress(self, pct):
+        self.progressbar.setValue(int(pct * 100.))  #  @QtCore.pyqtSlot()
 
 class RptDialog(QtGui.QDialog):
     def __init__(self, year, zone, solar_dir, wind_dir, tgt_dir, fmat, swg, wrap, coords, return_code, output):
@@ -1533,7 +1618,7 @@ class RptDialog(QtGui.QDialog):
         fileName = QtGui.QFileDialog.getSaveFileName(self,
                                          self.tr('Save makeweatherfiles Report'),
                                          save_filename,
-                                         self.tr("All Files (*);;Text Files (*.txt)"))
+                                         self.tr('All Files (*);;Text Files (*.txt)'))
         if not fileName.isEmpty():
             s = open(fileName, 'w')
             s.write(self.lines)
@@ -1548,7 +1633,7 @@ if "__main__" == __name__:
         src_year = 2014
         swg = 'swgdn'
         wrap = ''
-        src_zone = 0
+        src_zone = 'auto'
         fmat = 'srw'
         src_dir_s = ''
         src_dir_w = ''
@@ -1578,8 +1663,8 @@ if "__main__" == __name__:
                 src_dir_w = sys.argv[i][5:]
             elif sys.argv[i][:7] == 'target=' or sys.argv[i][:7] == 'tgtdir=':
                 tgt_dir = sys.argv[i][7:]
-        files = makeWeather(src_year, src_zone, src_dir_s, src_dir_w, tgt_dir, fmat, swg, wrap, src_lat_lon)
-        dialr = RptDialog(files.returnCode(), files.getLog())
+        files = makeWeather(None, src_year, src_zone, src_dir_s, src_dir_w, tgt_dir, fmat, swg, wrap, src_lat_lon)
+        dialr = RptDialog(str(src_year), src_zone, src_dir_s, src_dir_w, tgt_dir, fmat, swg, wrap, src_lat_lon, files.returnCode(), files.getLog())
         dialr.exec_()
     else:
         ex = getParms()

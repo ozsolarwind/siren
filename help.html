@@ -141,6 +141,7 @@ ul {
 <ul class="none">
 <li><a href="#popts">Power Model Options</a></li>
 <li><a href="#fopts">Financial Model Options</a></li>
+<li><a href="#powerbalance">PowerBalance</a></li>
 <li><a href="#resourcegrid">Renewable Resource Grids</a></li>
 <li><a href="#tricks">Performance and Execution Tricks</a></li>
 </ul>
@@ -177,7 +178,7 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 <ul>
 <li><code>siren_toolkit.exe</code> contains the full SIREN toolkit, It contains the contents of three other files in this list</li>
 <li><code>siren_application.exe</code> contains the packaged Windows version of the SIREN application</li>
-<li><code>siren_powerbalance.exe</code> contains the SIREN PowerBalance files. These are a set of spreadsheets used to quantify and cost dispatchable energy generation, storage and CO2 emissions. This enables you to complete a costed renewable energy scenario</li>
+<li><code>siren_powerbalance.exe</code> contains the SIREN PowerBalance files. These are a set of spreadsheets used to quantify and cost dispatchable energy generation, storage and CO<sub>2</sub>-e emissions. This enables you to complete a costed renewable energy scenario</li>
 <li><code>siren_sample.exe</code> contains the files and data for the sample SIREN simulation of the SWIS</li>
 <li>(<code>sen_makeweather_getmerra2.exe</code> is a package containing both <code>makeweatherfiles</code>, a standalone program to produce SAM weather files, and <code>getmerra2</code> which enables MERRA-2 files to be downloaded. This package allows you to create SAM weather files from MERRA-2 files without requiring any other parts of SIREN. See <a href="makeweatherfiles.html" target="_blank">makeweatherfiles.html</a>)</li>
 </ul>
@@ -458,7 +459,7 @@ The format is similar to a Windows INI file. If you want to create a new Model y
 <a href="#p_fossil_coal">Fossil Coal</a>, <a href="#p_fossil_cogen">Fossil Cogen</a>, <a href="#p_fossil_gas">Fossil Gas</a>,
 <a href="#p_fossil_mixed">Fossil Mixed</a>, <a href="#p_geothermal">Geothermal</a>, <a href="#p_grid">Grid</a>,
 <a href="#p_hydro">Hydro</a>, <a href="#p_map">Map</a>, <a href="#p_offw">Offshore Wind</a>, <a href="#p_other">Other</a>, <a href="#p_parents">Parents</a>,
-<a href="#power">Power</a>, <a href="#p_pv">PV</a>, <a href="#p_rooftop_pv">Rooftop PV</a>,
+<a href="#power">Power</a>, <a href="#p_pb">Powerbalance</a>, <a href="#p_pv">PV</a>, <a href="#p_rooftop_pv">Rooftop PV</a>,
 <a href="#p_sam_modules">SAM Modules</a>, <a href="#p_single_pv">Single Axis PV</a>, <a href="#p_solar_thermal">Solar Thermal</a>, <a href="#p_storage">Storage</a>,
 <a href="#p_tracking_pv">Tracking PV</a>, <a href="#p_view">View</a>, <a href="#p_wave">Wave</a>, <a href="#p_wind">Wind</a>,
 <a href="#p_windows">Windows</a>.</p>
@@ -1486,6 +1487,47 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </table>
 </div>
 </td></tr>
+<tr class="none" id="p_pb"><td><dfn><strong>[Powerbalance]</strong></dfn></td>
+<td>File names, worksheet names and other variables used by PowerBalance. Properties are:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>adjust_renewables</dfn></td>
+<td class="none">Indicates whether to adjust renewable inputs or not. Default is False</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>change_results</dfn></td>
+<td class="none">If True the name of the results file will be changed when the data file is changed. Default is True</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>constraints_file</dfn></td>
+<td class="none">File name for constraints spreadsheet</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>constraints_sheet</dfn></td>
+<td class="none">Worksheet name for constraints table</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>data_file</dfn></td>
+<td class="none">File name for PowerBalance input (data) spreadsheet</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>generators_file</dfn></td>
+<td class="none">File name for generators (facilities) spreadsheet</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>generators_sheet</dfn></td>
+<td class="none">Worksheet name for generators (facilities) table</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>renewables_details</dfn></td>
+<td class="none">Either show details for each renewable technology (True) or just show a summary for renewables (False). Default is True</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>results_file</dfn></td>
+<td class="none">File name for PowerBalance output (report) spreadsheet</td>
+</tr>
+</table>
+</td></tr>
 <tr class="none" id="p_pv"><td><dfn><strong>[PV]</strong></dfn></td>
 <td>Specifics on PV characteristics. Properties are:</p>
 <table border="0", class="none">
@@ -2332,7 +2374,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <p>To add a new station simply right-click on the map at the desired location and then update the details for the station (Name, Technology, Capacity and so forth) and press <em>Save &amp; Exit</em>. You can also copy an existing station and other options as specified above. </p>
 <p>As you build your scenario, the simulation adds additional infrastructure to connect the new generation plants to the grid. The colours for the majority of the items on the map are as you specify in the Preferences file. You navigate around the map using normal mouse movements to scroll, zoom, etc. and interact with it as described previously (<a href="#menus">Menus</a>). Using the various menu options you can model your whole scenario, or by right-clicking you can deal with an individual station. There are a number of additional windows, such as menu options, that can be opened to assist with using SIREN (see <a href="#windows">Windows</a>)</p>
 <p>You can save multiple scenarios and add them and remove them as you wish. When you exit the simulation normally or <em>Save</em> scenarios (Ctrl+S) any modified scenarios will be saved. When you add new stations to your model they will be added as a new scenario which includes the date and time in its name, for example, Scenario_2015-06-09_1000. You can save all open scenarios as a single new scenario by using the <em>Save As...</em> option.</p>
-<p>The strength of the simulation is in running the SAM Power Models (e.g. Ctrl+P). This will run the appropriate SAM model for each station you have chosen or for all renewable stations in your current simulation. SAM calculates a list of power outputs for each hour of the year (8,760 points). If the <em>show_menu</em> property is True you will be presented with a menu to specify what processing and plots to produce (see below). If you choose to run the Financial Models you will be presented with an additional menu of options.</p>
+<p>The strength of the simulation is in running the SAM Power Models (e.g. Ctrl+P). This will run the appropriate SAM model for each station you have chosen or for all renewable stations in your current simulation. SAM calculates a list of power outputs for each hour of the year (8,760 points). If the <em>show_menu</em> property is True you will be presented with a menu to specify what processing and plots to produce (see below). If you choose to run the Financial Models or PowerBalance you will be presented with an additional menu of options.</p>
 <p><a href="#help">Back to top</a></p>
 <h3 id="popts">Power Model Options</h3>
 <p>The Power Model options menu are as set out here. The default values are specified in the <a href="#power">[Power]</a> Section of the Preferences file. The associated property is indicated in brackets at the end of the description. If you hover over the window title bar or press F1 a help for the Options will be displayed.</p>
@@ -2460,7 +2502,7 @@ By default the size of plots produced is determined by matplotlib, or by the <em
 <li><em>Save Powerbalance data</em> option will save save the input data for Powerbalance. There are two possible output formats:
 <ol>
 <li>The original Powerbalance uses the hourly shortfalls and overall generation figures in its computations. This option saves this data in a spreadsheet to simplify copying it into a Powerbalance workbook. The cells required for Powerbalance are highlighted in colour. The worksheet contains the generation summary data followed by the shortfall data. The file can be saved as <em>.csv</em> for a CSV file or <em>.xls</em> for an Excel file</li>
-<li>The new version of PowerBalance use scenario worksheets. If the <em>pb_template</em> property of <em>[Files]</em> Section is set, SIREN will save the inputs in this format. The file can (only) be saved as an <em>.xlsx</em> format file</li>
+<li>The new version of PowerBalance use scenario worksheets. If the <em>pb_template</em> property of the <em>[Files]</em> Section is set, SIREN will save the inputs in this format. The file can (only) be saved as an <em>.xlsx</em> format file</li>
 </ol>
 <li><em>Show Summary/Other Tables</em> option will cause various tables to be presented:
 <ul>
@@ -2481,7 +2523,6 @@ By default the size of plots produced is determined by matplotlib, or by the <em
 </li>
 <li>The <em>Power - Shortfall analysis</em> Plot option produces a table showing hourly figures for Load, Generation, Shortfall, and, optionally, grid losses. If iterations are chosen an additional table showing daily shortfalls for each iteration will also be produced. The default file(s) name will in the format of <em>Hourly Shortfall_Table_yyyy-mm-dd_hhmm</em> and <em>Daily Shortfall_Table_yyyy-mm-dd_hhmm</em></li>
 </ul>
-<p><a href="#help">Back to top</a></p>
 <h3 id="fopts">Financial Model Options</h3>
 <p><strong>Note:</strong> Implementation of the SAM Financial models in SIREN is a work in progress. If you have suggestions on how you would like SIREN to be extended in this area contact <a href="mailto:siren@sen.asn.au?Subject=SIREN%20Financial%20Models">siren@sen.asn.au</a>.
 <p>If you have chosen to run the Financial models you will be presented with an additional options menu as set out here. The default values are specified in the <a href="#financial">[Financial]</a> Section of the Preferences file. The associated property is indicated in brackets at the end of the description. If you hover over the window title bar or press F1 a help for the Options will be displayed.</p>
@@ -2546,7 +2587,65 @@ By default the size of plots produced is determined by matplotlib, or by the <em
 <li>The table presents LCOE figures for each station and an overall LCOE estimate. The overall estimate is calculated by multiplying the LCOE for each station by the ratio of it's generation to total generation</li>
 <li>Strictly speaking LCOE does not include grid costs. The grid options are provided to enable the impact of this cost to be included in the model</li>
 <li>As mentioned previously, <em>Include full grid path in LCOE?</em> may over-inflate grid costs as each station path to the load centre is traced individually</li>
+</ul><p><a href="#help">Back to top</a></p>
+<h3 id="powerbalance">PowerBalance</h3>
+<p>Running the SIREN models will produce hourly generation figures which identify generation shortfalls and excesses against load (demand). One of the outputs from SIREN is a table of these generation shortfalls which can be met by dispatchable energy generation. The PowerBalance component of SIREN can be used to quantify and cost dispatchable energy generation, storage and CO<sub>2</sub>-e emissions. This enables you to complete a costed renewable energy scenario. <strong>The SIREN PowerBalance component has been created from the PowerBalance worksheets developed by Ben Rose. The great work and inspiration by Ben is acknowledged.</strong></p>
+<p>The PowerBalance options are as set out here. The option are specified in the <a href="#p_pb">[Powerbalance]</a> Section of the Preferences file. The associated property is indicated in brackets at the end of the description. All files are located in the SIREN Scenarios folder.</p>
+<table border="0" class="none" cellpadding="2">
+<tr><td class="top" style="width: 15%;"><dfn>Constraints File</dfn></td>
+<td class="none">File name for constraints spreadsheet. Clicking on the field will allow you to choose another spreadsheet from the SIREN Scenarios folder (<em>constraints_file</em>)</td></tr>
+<tr><td class="lr"><dfn>Constraints Sheet</dfn></td>
+<td class="none">Worksheet name for constraints table (<em>constraints_sheet</em>)</td></tr>
+<tr><td class="lr"><dfn>Generators file</dfn></td>
+<td class="none">File name for generators (facilities) spreadsheet Clicking on the field will allow you to choose another spreadsheet (<em>generators_file</em>)</td></tr>
+<tr><td class="lr"><dfn>Generators Sheet</dfn></td>
+<td class="none">Worksheet name for generators (facilities) table (<em>generators_sheet</em>)</td></tr>
+<tr><td class="lr"><dfn>Data File</dfn></td>
+<td class="none">File name for PowerBalance input (data) spreadsheet. Clicking on the field will allow you to choose another spreadsheet (<em>data_file</em>)</td></tr>
+<tr><td class="lr"><dfn>Results File</dfn></td>
+<td class="none">File name for PowerBalance output (report) spreadsheet. Clicking on the field will allow you to choose the name for the report spreadsheet. <strong>Note:</strong> If the  <em>change_results</em> property of the <em>[Powerbalance]</em> Section is set changes to the input spreadsheet name will cause this Results spreadsheet name to change (<em>results_file</em>)</td></tr>
+<tr><td class="lr"><dfn>Adjust Renewables</dfn></td>
+<td class="none">If this option is checked you will be presented with a table to enable you to adjust the input data for each renewable technology. You can specify a multiplier between 0 and 25 (<em>adjust_renewables</em>)</td></tr>
+<tr><td class="lr"><dfn>Dispatch Order</dfn></td>
+<td class="none">The order in which the dispatchable technologies will be processed by PowerBalance. You can change the order by clicking on each value and moving it up and down the list. The initial order is derived from the generators (facilities) table</td></tr>
+<tr><td class="bottom"><strong>Done, Constraints, Generators, Powerbalance, Help</strong></td>
+<td class="none">At the bottom of the menu are a number of buttons as described below:</td></tr>
+</table>
+<ul>
+<li><strong>Done</strong>. Exit PowerBalance. Any changed options will be saved</li>
+<li><strong>Constraints</strong>. Display the Constraints table. Values can be changed and the table Saved or Exported as a new file</li>
+<li><strong>Generators</strong>. Display the Generators (facilities) table. Values can be changed and the table Saved or Exported as a new file</li>
+<li><strong>PowerBalance</strong>. Invoke PowerBalance</li>
+<li><strong>Help</strong>. Display the PowerBalance help</li>
 </ul>
+<h4>Constraints</h4>
+<p>Utilisation of each generator by PowerBalance can be constrained by specifying a number of constraints. All figures are expressed as a percentage. In the tables the values will be displayed as a decimal fraction (0.00 to 1.00). All figures are hourly except for Parasitic Loss which is daily. The constraints are:
+<table border="0" class="none">
+<tr><td class="none"><dfn>Name</dfn></td><td class="none">Name of the Constraint</td></tr>
+<tr><td class="none"><dfn>Constraint</dfn></td><td class="none">Name of the Constraint (same as Name)</td></tr>
+<tr><td class="none"><dfn>Category</dfn></td><td class="none">The category of the constraint. Values are either Storage or Generator</td></tr>
+<tr><td class="none"><dfn>Capacity Max</dfn></td><td class="none">For a Generator the maximum rate the plant can run at. For Storage the maximum amount of storage that can be used</td></tr>
+<tr><td class="none"><dfn>Capacity Min</dfn></td><td class="none">For a Generator the minimum rate (other than zero) the plant can run at. For Storage the facility should not be drained below this value</td></tr>
+<tr><td class="none"><dfn>Discharge Loss</dfn></td><td class="none">Losses when storage is used</td></tr>
+<tr><td class="none"><dfn>Discharge Max</dfn></td><td class="none">For Storage the maximum rate at which the storage can be used</td></tr>
+<tr><td class="none"><dfn>Parasitic Losses</dfn></td><td class="none">Storage may lose capacity over time (e.g. batteries discharging). This constraint enables those losses to be catered for</td></tr>
+<tr><td class="none"><dfn>Rampdown Max</dfn></td><td class="none">The maximum rate that a generator can be ramped down (not fully implemented)</td></tr>
+<tr><td class="none"><dfn>Rampup Max</dfn></td><td class="none">The maximum rate that a generator can be ramped up (not fully implemented)</td></tr>
+<tr><td class="none"><dfn>Recharge Loss</dfn></td><td class="none">Losses when storage is increased</td></tr>
+<tr><td class="none"><dfn>Recharge Max</dfn></td><td class="none">For Storage the maximum rate at which the storage can be increased</td></tr>
+</table>
+<h4>Generators</h4>
+<p>To address the shortfall in generation encountered by a renewable scenario other generation and storage facilites can be used. These are defined in a Generators table. The fields are:
+<table border="0" class="none">
+<tr><td class="none"><dfn>Name</dfn></td><td class="none">Name of the Facility</td></tr>
+<tr><td class="none"><dfn>(Dispatch) Order</dfn></td><td class="none">Specifies the order in which the dispatchable facilities are used (for the moment zero values are ignored)</td></tr>
+<tr><td class="none"><dfn>Constraint</dfn></td><td class="none">Name of the Constraint that applies to this facility</td></tr>
+<tr><td class="none"><dfn>Capacity</dfn></td><td class="none">The capacity for the facility in MW</td></tr>
+<tr><td class="none"><dfn>Initial</dfn></td><td class="none">For storage this species the initial level of storage</td></tr>
+<tr><td class="none"><dfn>LCOE</dfn></td><td class="none">The LCOE for the facility</td></tr>
+<tr><td class="none"><dfn>LCOE CF</dfn></td><td class="none">The capacity factor (CF) at which the LCOE was determined. A combination of <em>LCOE</em> and <em>LCOE CF</em> allws the cost of the generation or storage to be determined. In indertaking any calculations PowerBalance adjusts the resulting LCOE to reflect the difference between this CF and the calculated CF</td></tr>
+<tr><td class="none"><dfn>Emissions</dfn></td><td class="none">Specifies the carbon dioxide equivalent emissions in tonnes per unit of electricity (t CO<sub>2</sub>-e / MWh)</td></tr>
+</table>
 <p><a href="#help">Back to top</a></p>
 <h3 id="resourcegrid">Resource Grids</h3>
 <p>To assist with placement of renewable energy stations SIREN can display a grid of renewable resource attributes derived from the SAM weather files. The grid can be displayed by invoking the <em>Show Resource Grid</em> (Ctrl+B) menu option. The Resource Overlay menu presented has the following fields:</p>
@@ -2591,7 +2690,7 @@ By default the size of plots produced is determined by matplotlib, or by the <em
 <li>If the location and size of stations haven't changed you can avoid reprocessing stations by used Power data from a previous simulation run, using the following approach.
 <ol>
 <li>Choose the <em>Save Hourly Data Output</em> (<em>save_data</em>) Power Model option</li>
-<li>Save the data file. This file contains power output for all stations in the current simulation. It should be located in the same folder as your scenario files (<em>scenarios</em> property of <em>[Files]</em> Section). The data is saved as MWh with 4 decimal places because SAM uses kWh</li>
+<li>Save the data file. This file contains power output for all stations in the current simulation. It should be located in the same folder as your scenario files (<em>scenarios</em> property of the <em>[Files]</em> Section). The data is saved as MWh with 4 decimal places because SAM uses kWh</li>
 <li>With your spreadsheet application (Excel) update the scenarios and stations that you want to use the saved data with. Either add or use the column headed <em>Power File</em> to specify the file name you've selected for the power output. For each station enter the full name and extension of the file, for example, <em>Power_Table_Saved.xls</em></li>
 <li>When you next run the simulation it will load this saved data rather than invoking the SAM module for each station that has an <em>Power File</em> entry</li>
 <li>If the file is not found the SAM module will be re-invoked. So you can simply delete or rename the Power data file and re-run the simulation to get a new set of data points</li>
@@ -2608,7 +2707,7 @@ By default the size of plots produced is determined by matplotlib, or by the <em
 </p>
 <div class="experiment">
 <p><strong>Optimise (experimental)</strong></p>
-<p>SIREN also has an experimental approach to optimise the mix of technologies. If Load data is available the menu presented to adjust generation will have an option to &ldquo;optimise&rdquo; the renewable energy mix to best meet the Load. You will be presented with an <em>Optimise for:</em> pulldown list of periods to optimise for. You choose the desired period and then press the <em>Optimise</em> button. This will then do a least squares solution for adjustment multipliers to produce a generation profile that best matches the total load and load profile for that period. The data analysis is performed on either the average 24 hour period or detailed hourly figures for the chosen period (<em>optimise</em> property of <em>[Power]</em> Section). If you don't wish to include a technology or station then uncheck the checkbox (to the right of the multiplier) for that technology or station. The generation produced by that technology or station will be removed from the optimisation. Depending on the <em>optimise_load</em> property of <em>[Power]</em> Section you can also remove the Load (multiplied by it's current multiplier) from the analysis. Any computed negative multiplier will be set to zero, which is likely to result in the computed generation exceeding the load. The <em>Check / Uncheck all zeroes</em> check box enables you to include or exclude all zeroed stations from any further optimisation. The analysis is based upon the stations in your scenario and doesn't take into account how well placed they are within the network. If you want to reset all multipliers just Optimise for <em>None</em>.
+<p>SIREN also has an experimental approach to optimise the mix of technologies. If Load data is available the menu presented to adjust generation will have an option to &ldquo;optimise&rdquo; the renewable energy mix to best meet the Load. You will be presented with an <em>Optimise for:</em> pulldown list of periods to optimise for. You choose the desired period and then press the <em>Optimise</em> button. This will then do a least squares solution for adjustment multipliers to produce a generation profile that best matches the total load and load profile for that period. The data analysis is performed on either the average 24 hour period or detailed hourly figures for the chosen period (<em>optimise</em> property of the <em>[Power]</em> Section). If you don't wish to include a technology or station then uncheck the checkbox (to the right of the multiplier) for that technology or station. The generation produced by that technology or station will be removed from the optimisation. Depending on the <em>optimise_load</em> property of the <em>[Power]</em> Section you can also remove the Load (multiplied by it's current multiplier) from the analysis. Any computed negative multiplier will be set to zero, which is likely to result in the computed generation exceeding the load. The <em>Check / Uncheck all zeroes</em> check box enables you to include or exclude all zeroed stations from any further optimisation. The analysis is based upon the stations in your scenario and doesn't take into account how well placed they are within the network. If you want to reset all multipliers just Optimise for <em>None</em>.
 </div>
 <p><a href="#help">Back to top</a></p>
 <h2 id="feedback">Feedback</h2>
@@ -2657,17 +2756,18 @@ By default the size of plots produced is determined by matplotlib, or by the <em
 </tr>
 <tr class="none">
 <td class="none"><dfn>pow_files</dfn></td>
-<td class="none">To augment the list of turbines provided by SAM you can create individual files in WAsP Power Curve format. SIREN uses the data in these files to produce a power curve in the same format as SAM by running a 13th order polynomial on the POW file. The file is a simple text file with rows defined as set out here. All values are enclosed in double quotes. Row contents are:
+<td class="none">To augment the list of turbines provided by SAM you can create individual files in old-style WAsP Power Curve (.pow) format. SIREN uses the data in these files to produce a power curve in the same format as SAM by running a 13th order polynomial on the POW file. The file is a simple text file with rows defined as set out here. All values are enclosed in double quotes. Row contents are:
 <ol>
 <li>Turbine name</li>
-<li>Hub height</li>
-<li>ignored</li>
+<li>Rotor diameter</li>
+<li>Ignored</li>
 <li>Cut out speed (m/s)</li>
 <li>Cut in speed (m/s)</li>
 <li>Power output in kW at 0 m/s</li>
-<li>Power output in kW at 1 m/s</li>
+<li>Power output in kW at 1 m/s<br />... Additional rows specify power output at speeds increasing by 1 m/s</li>
+<li value="30">Power output in kW at 25 m/s</li>
 </ol>
-Additional rows specify power output at speeds increasing by 1 m/s</td>
+</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>resource_grid</dfn></td>
@@ -2769,7 +2869,7 @@ You can alternate between both approaches to choose the desired area. If you hav
 <li><em>Choose area via Map</em> (as above) will open the world map
 <li><em>Quit</em> will exit the program</li>
 <li><em>Query Map</em> will calculate the size of the map and indicate the boundaries for the map on the world view. The size of the boundary area is dependent on the map scale (zoom)</li>
-<li><em>Get Map</em> will produce the map. It downloads map tiles from OpenStreetMap and stitches them into a single image file at the location specified. It will update the Properties field with the valuables to be added into the Preferences file. If you are downloading a map with many tiles this may take some time so <strong>please be patient</strong></li>
+<li><em>Get Map</em> will produce the map. It downloads map tiles from OpenStreetMap and stitches them into a single image file at the location specified. It will update the Properties field with the valuables to be added into the Preferences file. If you are downloading a map with many tiles this may take some time so please be patient. There is a progress bar that will indicate how far along the process the program is</li>
 <li><em>MapQuest</em> will produce a map from MapQuest. It issues a request to MapQuest for a static map with the coordinates and image properties you specify. The coordinates for the image (map) should contain your specified area but the exact bounding coordinates are likely to be different - this is a work-in-progress</li>
 <li><em>Help</em> Display this help</li>
 </ul>
@@ -3099,7 +3199,7 @@ You can alternate between these approaches to choose the desired area. If you ha
 <li><em>Help</em> Display this help</li>
 <li><em>File Info</em> Display details about the weather file dimensions and variables</li>
 </ul>
-<p>Creation of weather files may take some time so please be patient. The tool will produce an output report which will include the list of weather files produced. The report will include a return code as follows:</p>
+<p>Creation of weather files may take some time so please be patient. There are two progress bars that will display to indicate how far along the process the program is. The tool will produce an output report which will include the list of weather files produced. The report will include a return code as follows:</p>
 <ol class="none">
 <li value="0">Successful execution</li>
 <li value="1">Successful execution, however, the time zone chosen does not match the time zone(s) suggested by the MERRA-2 data files. If you chose <em>auto</em> this indicates more than one time zone is suggested by the MERRA-2 data files</li>
@@ -3155,7 +3255,7 @@ You can alternate between these approaches to choose the desired area. If you ha
 <li>Click on the source folder(s) to locate the MERRA-2 files. This will be the same as point 1.3 above</li>
 <li>Click on Target folder to specify a location for the weather files. It's convenient to use a different folder to the MERRA-2 files</li>
 <li>You can click <em>File Info</em> to test if the MERRA-2 files are OK. This reads the first file of the year (e.g. 20160101) and displays the dimensions of the MERRA-2 file. The output shows the latitude and longitude cells covered</li>
-<li>Click <em>Produce Solar Files</em> to create solar weather files. Clicking the button will cause <code>makeweather2</code> to create the weather files. It will take a while to run so please be patient. It will eventually return with an output listing of the files produced</li>
+<li>Click <em>Produce Solar Files</em> to create solar weather files. Clicking the button will cause <code>makeweather2</code> to create the weather files. It will take a while to run so please be patient. There are two progress bars that will display to indicate how far along the process the program is. It will eventually return with an output listing of the files produced</li>
 <li>Click <em>Produce Wind Files</em> to create wind weather files. Same deal as solar</li>
 </ol></p></li></ol>
 <h4>SAM Weather Files</h4>
@@ -3372,7 +3472,7 @@ MERRA-2 Variables
 <li><em>Produce Rainfall Files</em> will produce rainfall weather files</li>
 <li><em>Help</em> Display this help</li>
 </ul>
-<p>Creation of weather files may take some time so please be patient. The tool will produce an output report which will include the list of weather files produced. The report will include a return code as follows:</p>
+<p>Creation of weather files may take some time so please be patient. There are two progress bars that will display to indicate how far along the process the program is. The tool will produce an output report which will include the list of weather files produced. The report will include a return code as follows:</p>
 <ol class="none">
 <li value="0">Successful execution</li>
 <li value="1">Successful execution, however, the time zone chosen does not match the time zone(s) suggested by the MERRA-2 data files. If you chose <em>auto</em> this indicates more than one time zone is suggested by the MERRA-2 data files</li>
@@ -4100,6 +4200,8 @@ MERRA-2 Variable
 <td class="none">Australian Bureau of Meteorology</td></tr>
 <tr><td class="none"><dfn>CF</dfn></td>
 <td class="none">Capacity Factor. Average power generated divided by rated capacity (peak power)</td></tr>
+<tr><td class="none"><dfn>CO<sub>2</sub>-e</dfn></td>
+<td class="none">A measure of greenhouse gas emissions in carbon dioxide equivalence. Greenhouse gas emissions can be one of a number of gases including carbon dioxide (CO<sub>2</sub>), methane (CH<sub>4</sub>) and nitrous oxide (N<sub>2</sub>O). The equivalence measure allows the global warming potential of each greenhouse gas to be standardised relative to carbon dioxide</td></tr>
 <tr><td class="none"><dfn>CSV</dfn></td>
 <td class="none">comma-separated-variable file</td></tr>
 <tr><td class="none"><dfn>DHI</dfn></td>

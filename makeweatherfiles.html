@@ -120,7 +120,7 @@ ul {
 <li><em>Help</em> Display this help</li>
 <li><em>File Info</em> Display details about the weather file dimensions and variables</li>
 </ul>
-<p>Creation of weather files may take some time so please be patient. The tool will produce an output report which will include the list of weather files produced. The report will include a return code as follows:</p>
+<p>Creation of weather files may take some time so please be patient. There are two progress bars that will display to indicate how far along the process the program is. The tool will produce an output report which will include the list of weather files produced. The report will include a return code as follows:</p>
 <ol class="none">
 <li value="0">Successful execution</li>
 <li value="1">Successful execution, however, the time zone chosen does not match the time zone(s) suggested by the MERRA-2 data files. If you chose <em>auto</em> this indicates more than one time zone is suggested by the MERRA-2 data files</li>
@@ -559,7 +559,7 @@ You can alternate between these approaches to choose the desired area. If you ha
 <li>Click on the source folder(s) to locate the MERRA-2 files. This will be the same as point 1.3 above</li>
 <li>Click on Target folder to specify a location for the weather files. It's convenient to use a different folder to the MERRA-2 files</li>
 <li>You can click <em>File Info</em> to test if the MERRA-2 files are OK. This reads the first file of the year (e.g. 20160101) and displays the dimensions of the MERRA-2 file. The output shows the latitude and longitude cells covered</li>
-<li>Click <em>Produce Solar Files</em> to create solar weather files. Clicking the button will cause <code>makeweatherfiles</code> to create the weather files. It will take a while to run so please be patient. It will eventually return with an output listing of the files produced</li>
+<li>Click <em>Produce Solar Files</em> to create solar weather files. Clicking the button will cause <code>makeweatherfiles</code> to create the weather files. It will take a while to run so please be patient. There are two progress bars that will display to indicate how far along the process the program is. It will eventually return with an output listing of the files produced</li>
 <li>Click <em>Produce Wind Files</em> to create wind weather files. Same deal as solar</li>
 </ol></p></li>
 <li>If you encounter any problems or have any suggestions send an email to <a href="mailto:siren@sen.asn.au?Subject=Makeweatherfiles%20Feedback">siren@sen.asn.au</a></li>
