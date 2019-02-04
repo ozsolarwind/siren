@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2017 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
 #
 #  getmap.py - This file is part of SIREN.
 #
@@ -114,11 +114,12 @@ class retrieveMap():
         conn.close()
         return file_name
 
-    def __init__(self, upper_lat, upper_lon, lower_lat, lower_lon, output, zoom=None, url=None, width=None, height=None):
+    def __init__(self, upper_lat, upper_lon, lower_lat, lower_lon, output, zoom=None, url=None, width=None, height=None, caller=None):
         if len(sys.argv) > 1 and sys.argv[1][-4:] != '.ini':
             self.batch = True
         else:
             self.batch = False
+            self.caller = caller
         self.log = ''
         self.properties = ''
         config_file = 'getfiles.ini'
@@ -229,10 +230,16 @@ class retrieveMap():
             print 'Saving map to ' + fname
         else:
             self.log += '\nSaving map to ' + fname
+            tl = 0
+            self.caller.progressbar.setMaximum((bottom_right[0] - top_left[0] + 1) * (bottom_right[1] - top_left[1] + 1) - 1)
+            self.caller.progresslabel.setText('Downloading tiles')
         for x in range(top_left[0], bottom_right[0] + 1):
             for y in range(top_left[1], bottom_right[1] + 1):
                 foo = QtGui.QImage(self.tmp_location + self.writetile(x, y, zoom))
                 painter.drawImage(QtCore.QPoint(256 * (x - top_left[0]), 256 * (y - top_left[1])), foo)
+                if not self.batch:
+                    tl += 1
+                    self.caller.progressbar.setValue(tl)
         outputimg.save(fname, fname[i + 1:])
         painter.end()
         if len(sys.argv) == 1:
@@ -390,25 +397,36 @@ class getMap(QtGui.QWidget):
         self.grid.addWidget(self.properties, 9, 1, 3, 5)
         self.log = QtGui.QLabel()
         self.grid.addWidget(self.log, 14, 1, 3, 5)
+        self.progressbar = QtGui.QProgressBar()
+        self.progressbar.setMinimum(0)
+        self.progressbar.setMaximum(100)
+        self.progressbar.setValue(0)
+        self.progressbar.setStyleSheet('QProgressBar {border: 1px solid grey; border-radius: 2px; text-align: center;}' \
+                                       + 'QProgressBar::chunk { background-color: #6891c6;}')
+        self.grid.addWidget(self.progressbar, 17, 1, 1, 5)
+        self.progressbar.setHidden(True)
+        self.progresslabel=QtGui.QLabel('')
+        self.grid.addWidget(self.progresslabel, 17, 1, 1, 2)
+        self.progresslabel.setHidden(True)
         quit = QtGui.QPushButton('Quit', self)
-        self.grid.addWidget(quit, 17, 0)
+        self.grid.addWidget(quit, 18, 0)
         quit.clicked.connect(self.quitClicked)
         QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
         query = QtGui.QPushButton('Query Map', self)
         wdth = query.fontMetrics().boundingRect(query.text()).width() + 9
-        self.grid.addWidget(query, 17, 1)
+        self.grid.addWidget(query, 18, 1)
         query.clicked.connect(self.queryClicked)
         make = QtGui.QPushButton('Get Map', self)
         make.setMaximumWidth(wdth)
-        self.grid.addWidget(make, 17, 2)
+        self.grid.addWidget(make, 18, 2)
         make.clicked.connect(self.makeClicked)
         mapquest = QtGui.QPushButton('MapQuest', self)
         mapquest.setMaximumWidth(wdth)
-        self.grid.addWidget(mapquest, 17, 3)
+        self.grid.addWidget(mapquest, 18, 3)
         mapquest.clicked.connect(self.mapquestClicked)
         help = QtGui.QPushButton('Help', self)
         help.setMaximumWidth(wdth)
-        self.grid.addWidget(help, 17, 4)
+        self.grid.addWidget(help, 18, 4)
         help.clicked.connect(self.helpClicked)
         QtGui.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
         frame = QtGui.QFrame()
@@ -421,7 +439,7 @@ class getMap(QtGui.QWidget):
   #      self.resize(self.width() + int(self.world_width * .7), self.height() + int(self.world_height * .7))
         self.setWindowTitle('SIREN - getmap (' + fileVersion() + ") - Make Map from OSM or MapQuest")
         self.center()
-        self.resize(int(self.sizeHint().width()* 1.07), int(self.sizeHint().height() * 1.1))
+        self.resize(int(self.sizeHint().width()* 1.27), int(self.sizeHint().height() * 1.1))
         self.show()
 
     def center(self):
@@ -462,19 +480,31 @@ class getMap(QtGui.QWidget):
             self.eastSpin.setValue(self.westSpin.value())
             self.westSpin.setValue(l)
         mapp = retrieveMap(self.northSpin.value(), self.westSpin.value(), self.southSpin.value(), self.eastSpin.value(),
-               '?', self.zoomSpin.value(), url=str(self.urltemplate.text()))
+               '?', self.zoomSpin.value(), url=str(self.urltemplate.text()), caller=self)
         self.properties.setPlainText(mapp.getProperties())
         self.log.setText(mapp.getLog())
 
     def makeClicked(self):
+        self.progressbar.setHidden(False)
+        self.progresslabel.setText('')
+        self.progresslabel.setHidden(False)
         mapp = retrieveMap(self.northSpin.value(), self.westSpin.value(), self.southSpin.value(), self.eastSpin.value(),
-               str(self.filename.text()), zoom=self.zoomSpin.value(), url=str(self.urltemplate.text()))
+               str(self.filename.text()), zoom=self.zoomSpin.value(), url=str(self.urltemplate.text()), caller=self)
+        self.progressbar.setValue(0)
+        self.progressbar.setHidden(True)
+        self.progresslabel.setHidden(True)
         self.properties.setPlainText(mapp.getProperties())
         self.log.setText(mapp.getLog())
 
     def mapquestClicked(self):
+        self.progressbar.setHidden(False)
+        self.progresslabel.setText('')
+        self.progresslabel.setHidden(False)
         mapp = retrieveMap(self.northSpin.value(), self.westSpin.value(), self.southSpin.value(), self.eastSpin.value(),
-               str(self.filename.text()), width=self.widthSpin.value(), height=self.heightSpin.value())
+               str(self.filename.text()), width=self.widthSpin.value(), height=self.heightSpin.value(), caller=self)
+        self.progressbar.setValue(0)
+        self.progressbar.setHidden(True)
+        self.progresslabel.setHidden(True)
         self.properties.setPlainText(mapp.getProperties())
         self.log.setText(mapp.getLog())
 
