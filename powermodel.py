@@ -22,8 +22,7 @@
 from math import asin, ceil, cos, fabs, floor, log10, pow, radians, sin, sqrt
 import pylab as plt
 from matplotlib.font_manager import FontProperties
-import numpy.linalg as linalg
-from numpy import *
+import numpy as np
 import csv
 import openpyxl as oxl
 import os
@@ -938,7 +937,7 @@ class Adjustments(QtGui.QDialog):
         if len(gen) == 0:
             self.optmsg.setText('None chosen')
             return
-        B = array(load)
+        B = np.array(load)
         if self.daily:
             pass
         else:
@@ -951,8 +950,8 @@ class Adjustments(QtGui.QDialog):
                 for j in range(len(gen)):
                     gen2[i][j] = gen[j][i]
             gen = gen2
-        A = array(gen)
-        res = linalg.lstsq(A, B)  # least squares solution of the generation vs load
+        A = np.array(gen)
+        res = np.linalg.lstsq(A, B)  # least squares solution of the generation vs load
         x = res[0]
         do_corr = True
         for i in range(len(okeys)):
@@ -969,7 +968,7 @@ class Adjustments(QtGui.QDialog):
             for i in range(len(gen)):
                 for j in range(len(gen[i])):
                     cgen[i] += gen[i][j] * x[j]
-            corr = corrcoef(load, cgen)
+            corr = np.corrcoef(load, cgen)
             self.optmsg.setText('Corr: %.2f' % corr[0][1])
         self.zeroCheck()
 
