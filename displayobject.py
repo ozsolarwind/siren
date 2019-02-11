@@ -31,12 +31,13 @@ from turbine import Turbine
 class AnObject(QtGui.QDialog):
     procStart = QtCore.pyqtSignal(str)
 
-    def __init__(self, dialog, anobject, readonly=True, title=None, section=None):
+    def __init__(self, dialog, anobject, readonly=True, title=None, section=None, textedit=True):
         super(AnObject, self).__init__()
         self.anobject = anobject
         self.readonly = readonly
         self.title = title
         self.section = section
+        self.textedit = textedit
         dialog.setObjectName('Dialog')
         self.initUI()
 
@@ -67,11 +68,10 @@ class AnObject(QtGui.QDialog):
                 pct = 0.90
             h = int(screen.height() * pct)
         self.resize(widths[0] + widths[1] + 40, h)
-        if isinstance(self.anobject, str) or isinstance(self.anobject, dict):
-            if self.title is None:
-                self.setWindowTitle('SIREN - ?')
-            else:
-                self.setWindowTitle('SIREN - ' + self.title)
+        if self.title is not None:
+            self.setWindowTitle('SIREN - ' + self.title)
+        elif isinstance(self.anobject, str) or isinstance(self.anobject, dict):
+            self.setWindowTitle('SIREN - ?')
         else:
             self.setWindowTitle('SIREN - Review ' + getattr(self.anobject, '__module__'))
 
@@ -151,43 +151,71 @@ class AnObject(QtGui.QDialog):
             grid.addWidget(self.web, 0, 0)
             self.set_stuff(grid, widths, heights, i)
         elif isinstance(self.anobject, dict):
-            self.keys = []
-            for key, value in self.anobject.iteritems():
-                self.field_type.append('str')
-                label.append(QtGui.QLabel(key + ':'))
-                self.keys.append(key)
-                self.edit.append(QtGui.QTextEdit())
-                self.edit[-1].setPlainText(value)
-                if i < 0:
-                    metrics.append(label[-1].fontMetrics())
-                    metrics.append(self.edit[-1].fontMetrics())
-                bits = value.split('\n')
-                ln = 0
-                for lin in bits:
-                    if len(lin) > ln:
-                        ln = len(lin)
-                ln2 = len(bits)
-                ln = (ln + 5) * metrics[0].maxWidth()
-                ln2 = (ln2 + 4) * metrics[0].height()
-                self.edit[-1].resize(ln, ln2)
-                if metrics[0].boundingRect(label[-1].text()).width() > widths[0]:
-                    widths[0] = metrics[0].boundingRect(label[-1].text()).width()
-                try:
-                    if metrics[1].boundingRect(self.edit[-1].text()).width() > widths[1]:
-                        widths[1] = metrics[1].boundingRect(self.edit[-1].text()).width()
-                except:
-                    widths[1] = ln
-                for j in range(2):
+            if self.textedit:
+                self.keys = []
+                for key, value in self.anobject.iteritems():
+                    self.field_type.append('str')
+                    label.append(QtGui.QLabel(key + ':'))
+                    self.keys.append(key)
+                    self.edit.append(QtGui.QTextEdit())
+                    self.edit[-1].setPlainText(value)
+                 #   print '(160)', key, self.edit[-1].document().blockCount()
+                    if i < 0:
+                        metrics.append(label[-1].fontMetrics())
+                        metrics.append(self.edit[-1].fontMetrics())
+                    bits = value.split('\n')
+                    ln = 0
+                    for lin in bits:
+                        if len(lin) > ln:
+                            ln = len(lin)
+                    ln2 = len(bits)
+                    ln = (ln + 5) * metrics[0].maxWidth()
+                    ln2 = (ln2 + 4) * metrics[0].height()
+                    self.edit[-1].resize(ln, ln2)
+                    if metrics[0].boundingRect(label[-1].text()).width() > widths[0]:
+                        widths[0] = metrics[0].boundingRect(label[-1].text()).width()
                     try:
-                        if metrics[j].boundingRect(label[-1].text()).height() > heights:
-                            heights = metrics[j].boundingRect(label[-1].text()).height()
+                        if metrics[1].boundingRect(self.edit[-1].text()).width() > widths[1]:
+                            widths[1] = metrics[1].boundingRect(self.edit[-1].text()).width()
                     except:
-                        heights = ln2
-                if self.readonly:
-                    self.edit[-1].setReadOnly(True)
-                i += 1
-                grid.addWidget(label[-1], i + 1, 0)
-                grid.addWidget(self.edit[-1], i + 1, 1)
+                        widths[1] = ln
+                    for j in range(2):
+                        try:
+                            if metrics[j].boundingRect(label[-1].text()).height() > heights:
+                                heights = metrics[j].boundingRect(label[-1].text()).height()
+                        except:
+                            heights = ln2
+                    if self.readonly:
+                        self.edit[-1].setReadOnly(True)
+                    i += 1
+                    grid.addWidget(label[-1], i + 1, 0)
+                    grid.addWidget(self.edit[-1], i + 1, 1)
+            else:
+                self.keys = []
+                for key, value in self.anobject.iteritems():
+                    self.field_type.append('str')
+                    label.append(QtGui.QLabel(key + ':'))
+                    self.keys.append(key)
+                    self.edit.append(QtGui.QLineEdit())
+                    self.edit[-1].setText(value)
+                    if i < 0:
+                        metrics.append(label[-1].fontMetrics())
+                        metrics.append(self.edit[-1].fontMetrics())
+                    ln = (len(value) + 5) * metrics[0].maxWidth()
+                    ln2 = metrics[0].height()
+                    self.edit[-1].resize(ln, ln2)
+                    if metrics[0].boundingRect(label[-1].text()).width() > widths[0]:
+                        widths[0] = metrics[0].boundingRect(label[-1].text()).width()
+                    try:
+                        if metrics[1].boundingRect(self.edit[-1].text()).width() > widths[1]:
+                            widths[1] = metrics[1].boundingRect(self.edit[-1].text()).width()
+                    except:
+                        widths[1] = ln
+                    if self.readonly:
+                        self.edit[-1].setReadOnly(True)
+                    i += 1
+                    grid.addWidget(label[-1], i, 0)
+                    grid.addWidget(self.edit[-1], i, 1)
             self.set_stuff(grid, widths, heights, i)
         else:
             units = {'area': 'sq. Km', 'capacity': 'MW', 'rotor': 'm', 'generation': 'MWh', 'grid_len': 'Km',
@@ -241,8 +269,23 @@ class AnObject(QtGui.QDialog):
 
     def saveClicked(self):
         if isinstance(self.anobject, dict):
-            for i in range(len(self.keys)):
-                self.anobject[self.keys[i]] = str(self.edit[i].toPlainText())
+            if self.textedit:
+                for i in range(len(self.keys)):
+                    self.anobject[self.keys[i]] = str(self.edit[i].toPlainText())
+            else:
+                for i in range(len(self.keys)):
+                    self.anobject[self.keys[i]] = str(self.edit[i].text())
+        else:
+            i = -1
+            for prop in dir(self.anobject):
+                if prop[:2] != '__' and prop[-2:] != '__':
+                    i += 1
+                    if self.field_type[i] == 'int':
+                        setattr(self.anobject, prop, int(self.edit[i].text()))
+                    elif self.field_type[i] == 'float':
+                        setattr(self.anobject, prop, float(self.edit[i].text()))
+                    else:
+                        setattr(self.anobject, prop, str(self.edit[i].text()))
         self.close()
 
     def getValues(self):
