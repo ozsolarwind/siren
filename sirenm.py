@@ -703,7 +703,7 @@ class MapView(QtGui.QGraphicsView):
     def traceGrid(self, station, coords=None):
         self.clear_Trace()
         if self.scene().load_centre is None and coords is None:
-            return 0
+            return 0, None
         self.trace_items = []
         color = QtGui.QColor()
         color.setNamedColor((self.scene().colors['grid_trace']))
@@ -733,7 +733,7 @@ class MapView(QtGui.QGraphicsView):
             route = path.getPath()
             if len(route) < 1:
                 self.emit(QtCore.SIGNAL('statusmsg'), 'No path to Load Centre %s for %s' % (centre, station.name))
-                return
+                return 0, None
 #           check we don't go through another load_centre
             if len(self.scene().load_centre) > 1:
                 for co in range(len(route) - 1, 0, -1):
@@ -1026,6 +1026,16 @@ class MainWindow(QtGui.QMainWindow):
         powerMenu.addAction(listStations)
         powerMenu.addAction(listGrid)
         powerMenu.addAction(saveGrid)
+        getLoad = QtGui.QAction(QtGui.QIcon('power.png'), 'Load for ' + self.base_year, self)
+        getLoad.setStatusTip('Show Load for ' + self.base_year)
+        getLoad.triggered.connect(self.get_Load)
+        powerMenu.addAction(getLoad)
+        if self.years is not None:
+            subLoadMenu = powerMenu.addMenu('&Load for year')
+            for year in self.years:
+                subLoad = QtGui.QAction(QtGui.QIcon('power.png'), year, self)
+                subLoad.triggered.connect(self.get_Load)
+                subLoadMenu.addAction(subLoad)
         samver = QtGui.QAction(QtGui.QIcon('question.png'), 'SAM Version', self)
         samver.setStatusTip('Query SAM Version')
         samver.triggered.connect(self.get_SAMVer)
@@ -2327,6 +2337,39 @@ class MainWindow(QtGui.QMainWindow):
             if pct is not None:
                 comment += ' (generation meets ' + pct[2:]
         del power
+        self.view.emit(QtCore.SIGNAL('statusmsg'), comment)
+
+    def get_Load(self):
+        if self.sender().text()[:4] == 'Load':
+            power = PowerModel(None, visualise=self, loadonly=True)
+        else:
+            power = PowerModel(None, year=self.sender().text(), visualise=self, loadonly=True)
+        tf = open(power.load_file, 'r')
+        lines = tf.readlines()
+        tf.close()
+        load_data = []
+        bit = lines[0].rstrip().split(',')
+        if len(bit) > 0: # multiple columns
+            for b in range(len(bit)):
+                if bit[b][:4].lower() == 'load':
+                    if bit[b].lower().find('kwh') > 0: # kWh not MWh
+                        for i in range(1, len(lines)):
+                            bit = lines[i].rstrip().split(',')
+                            load_data.append(float(bit[b]) * 0.001)
+                    else:
+                        for i in range(1, len(lines)):
+                            bit = lines[i].rstrip().split(',')
+                            load_data.append(float(bit[b]))
+        else:
+            for i in range(1, len(lines)):
+                load_data.append(float(lines[i].rstrip()))
+        if self.sender().text()[:4] == 'Load':
+            power.suffix = ' - ' + str(self.sender().text())
+        else:
+            power.suffix = ' - Load for ' + str(self.sender().text())
+        power.showGraphs({'Load': load_data}, range(8760))
+        comment = power.suffix[2:] + ' displayed'
+        del power, load_data
         self.view.emit(QtCore.SIGNAL('statusmsg'), comment)
 
     def get_SAMVer(self):

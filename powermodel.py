@@ -306,7 +306,10 @@ class whatPlots(QtGui.QDialog):
         self.layout.setMenuBar(menubar)
         #
         screen = QtGui.QDesktopWidget().availableGeometry()
-        h = int(screen.height() * .9)
+        if self.grid.geometry().height() > screen.height():
+            h = int(screen.height() * .9)
+        else:
+            h = int(self.grid.geometry().height() * 1.07)
         self.resize(600, h)
         self.setWindowTitle('SIREN - Power dialog for ' + str(self.base_year))
         QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
@@ -3281,15 +3284,17 @@ class PowerModel():
         landscape = False
         papersize = ''
         self.other_width = 2.
-        seasons = [[], [], [], []]
-        periods = [[], []]
+        seasons = []
+        periods = []
         try:
             items = config.items('Power')
         except:
+            seasons = [[], [], [], []]
             seasons[0] = ['Summer', 11, 0, 1]
             seasons[1] = ['Autumn', 2, 3, 4]
             seasons[2] = ['Winter', 5, 6, 7]
             seasons[3] = ['Spring', 8, 9, 10]
+            periods = [[], []]
             periods[0] = ['Winter', 4, 5, 6, 7, 8, 9]
             periods[1] = ['Summer', 10, 11, 0, 1, 2, 3]
         for item, values in items:
@@ -4424,7 +4429,7 @@ class PowerModel():
             wb.save(data_file)
             del wb
 
-    def __init__(self, stations, show_progress=None, year=None, status=None, visualise=None):
+    def __init__(self, stations, show_progress=None, year=None, status=None, visualise=None, loadonly=False):
         self.something = visualise
         self.something.power_signal = self
         self.status = status
@@ -4507,7 +4512,7 @@ class PowerModel():
 #
         self.plot_order = ['show_menu', 'actual', 'cumulative', 'by_station', 'adjust',
                            'show_load', 'shortfall', 'grid_losses', 'gross_load', 'save_plot', 'visualise',
-                           'maximise', 'block', 'show_pct', 'by_day', 'by_month', 'by_season',
+                           'show_pct', 'maximise', 'block', 'by_day', 'by_month', 'by_season',
                            'by_period', 'hour', 'total', 'month', 'season', 'period',
                            'duration', 'augment', 'shortfall_detail', 'summary', 'save_data', 'save_detail',
                            'save_tech', 'save_balance', 'financials']
@@ -4524,9 +4529,9 @@ class PowerModel():
                 'gross_load': 'Add Existing Rooftop PV to Load (Gross Load)',
                 'save_plot': 'Save plot data',
                 'visualise': 'Visualise generation',
+                'show_pct': 'Show generation as a percentage of load',
                 'maximise': 'Maximise Plot windows',
                 'block': 'Show plots one at a time',
-                'show_pct': 'Show generation as a percentage of load',
                 'by_day': 'Energy by day',
                 'by_month': 'Energy by month',
                 'by_season': 'Energy by season',
@@ -4551,12 +4556,20 @@ class PowerModel():
         self.plots = {}
         for i in range(len(self.plot_order)):
             self.plots[self.plot_order[i]] = False
+        self.load_year = self.base_year
+        if loadonly:
+            plot_order = ['show_menu', 'save_plot', 'maximise', 'block', 'by_day', 'by_month', 'by_season',
+                           'by_period', 'hour', 'total', 'month', 'season', 'period']
+            spacers = {'maximise': 'Choose plots (all use a full year of data)'}
+            what_plots = whatPlots(self.plots, plot_order, self.hdrs, spacers, 0., self.base_year, self.load_year,
+                                   0, [0, 0], [0, 0], [0, 0], [], initial=False, helpfile=helpfile)
+            what_plots.exec_()
+            return
         self.technologies = ''
         self.load_growth = 0.
         self.storage = [0., 0.]
         self.recharge = [0., 1.]
         self.discharge = [0., 1.]
-        self.load_year = self.base_year
         plot_opts = []
         try:
             plot_opts = config.items('Power')
