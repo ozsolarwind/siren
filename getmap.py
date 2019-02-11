@@ -93,6 +93,10 @@ class retrieveMap():
         url_tail = self.url_tail.replace('/zoom', '/' + str(zoom))
         url_tail = url_tail.replace('/x', '/' + str(x))
         url_tail = url_tail.replace('/y', '/' + str(y))
+        if 1 == 2: # Google?
+            url_tail = self.url_tail.replace('z=zoom', 'z=' + str(zoom))
+            url_tail = url_tail.replace('x=x', 'x=' + str(x))
+            url_tail = url_tail.replace('y=y', 'y=' + str(y))
         if self.batch:
             print url + url_tail
         conn = httplib.HTTPConnection(url)
@@ -352,7 +356,14 @@ class getMap(QtGui.QWidget):
         zoom = QtGui.QLabel('Map Scale (Zoom):')
         self.zoomSpin = QtGui.QSpinBox()
         self.zoomSpin.setValue(6)
-        self.zoomSpin.setRange(0, 11)
+        config_file = 'getfiles.ini'
+        config = ConfigParser.RawConfigParser()
+        config.read(config_file)
+        try:
+            maxz = int(config.get('getmap', 'max_zoom'))
+        except:
+            maxz = 11
+        self.zoomSpin.setRange(0, maxz)
         self.zoomSpin.valueChanged[str].connect(self.zoomChanged)
         self.zoomScale = QtGui.QLabel('(' + scale[6] + ')')
         self.grid.addWidget(zoom, 5, 0)
