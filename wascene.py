@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2018 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
 #
 #  wascene.py - This file is part of SIREN.
 #
@@ -362,6 +362,10 @@ class WAScene(QtGui.QGraphicsScene):
                 self.hide_map = True
         except:
             pass
+        try:
+            self.txt_ratio = float(config.get('View', 'txt_ratio')) / 10.
+        except:
+            self.txt_ratio = 0.01
         self.load_centre = None
         try:
             load_centre = config.get('Grid', 'load_centre')
@@ -604,10 +608,9 @@ class WAScene(QtGui.QGraphicsScene):
             self._townGroup.addToGroup(el)
             txt = QtGui.QGraphicsSimpleTextItem(st.name)
             new_font = txt.font()
-            new_font.setPointSizeF(self.width() / 20)
+            new_font.setPointSizeF(self.width() * (self.txt_ratio / 2.))
             txt.setFont(new_font)
             txt.setPos(p + QtCore.QPointF(1.5, -0.5))
-            txt.scale(0.1, 0.1)
             txt.setBrush(QtGui.QColor(self.colors['town_name']))
             txt.setZValue(0)
             self._townGroup.addToGroup(txt)
@@ -616,9 +619,8 @@ class WAScene(QtGui.QGraphicsScene):
     def _setupStations(self):
         self._current_name = QtGui.QGraphicsSimpleTextItem('')
         new_font = self._current_name.font()
-        new_font.setPointSizeF(self.width() / 10)
+        new_font.setPointSizeF(self.width() * self.txt_ratio)
         self._current_name.setFont(new_font)
-        self._current_name.scale(0.1, 0.1)
         self._current_name.setZValue(2)
         self.addItem(self._current_name)
         self._stations = {}
@@ -880,10 +882,9 @@ class WAScene(QtGui.QGraphicsScene):
         self.addLine(st)
         txt = QtGui.QGraphicsSimpleTextItem(st.name)
         new_font = txt.font()
-        new_font.setPointSizeF(self.width() / 10)
+        new_font.setPointSizeF(self.width() * self.txt_ratio)
         txt.setFont(new_font)
         txt.setPos(p + QtCore.QPointF(1.5, -0.5))
-        txt.scale(0.1, 0.1)
         if st.technology[:6] == 'Fossil':
             txt.setBrush(QtGui.QColor(self.colors['fossil_name']))
         else:
