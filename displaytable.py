@@ -197,6 +197,11 @@ class Table(QtGui.QDialog):
         else:
             self.order(self.fields.index(sortby))
         if self.sumfields is not None:
+            for i in range(len(self.sumfields) -1, -1, -1): # make sure sumfield has a field
+                try:
+                    self.fields.index(self.sumfields[i])
+                except:
+                    del self.sumfields[i]
             fmat_str = []
             clv = []
             clp = []
