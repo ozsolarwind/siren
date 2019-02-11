@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2018 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
 #
 #  grid.py - This file is part of SIREN.
 #
@@ -378,17 +378,27 @@ class Grid:
         iterat = root.getiterator()
         placemark_id = ''
         line_names = []
+        stylm = ''
         for element in iterat:
             elem = element.tag[element.tag.find('}') + 1:]
             if elem == 'Style':
                 for name, value in element.items():
                     if name == 'id':
                         styl = value
+            elif elem == 'StyleMap':
+                for name, value in element.items():
+                    if name == 'id':
+                        stylm = value
             elif elem == 'color':
                 if styl in self.colors:
                     style[styl] = self.colors[styl]
                 else:
                     style[styl] = '#' + element.text[-2:] + element.text[-4:-2] + element.text[-6:-4]
+                if stylm != '':
+                    if stylm in self.colors:
+                        style[stylm] = self.colors[stylm]
+                    else:
+                        style[stylm] = '#' + element.text[-2:] + element.text[-4:-2] + element.text[-6:-4]
             elif elem == 'name':
                 line_name = element.text
                 if placemark_id != '':
@@ -415,8 +425,12 @@ class Grid:
                 coordinates = ' '.join(element.text.split()).split(' ')
                 for i in range(len(coordinates)):
                     coords.append([float(coordinates[i].split(',')[1]), float(coordinates[i].split(',')[0])])
-                if within_map(coords[0][0], coords[0][1], self.map_polygon) or \
-                   within_map(coords[-1][0], coords[-1][1], self.map_polygon):
+                inmap = False
+                for coord in coords:
+                    if within_map(coord[0], coord[1], self.map_polygon):
+                        inmap = True
+                        break
+                if inmap:
                     if self.default_length >= 0:
                         grid_len = 0.
                         for j in range(1, len(coords)):
@@ -433,7 +447,11 @@ class Grid:
                     if grid2:
                         self.lines.append(Line(line_name, styl, coords, length=grid_len))
                     else:
-                        self.lines.append(Line(line_name, style[styl], coords, length=grid_len))
+                        try:
+                            self.lines.append(Line(line_name, style[styl], coords, length=grid_len))
+                        except:
+                            style[styl] = '#FFFFFF'
+                            self.lines.append(Line(line_name, style[styl], coords, length=grid_len))
         if zipped:
             memory_file.close()
             zf.close()
