@@ -157,7 +157,7 @@ class AnObject(QtGui.QDialog):
                 if turb['Name'] == 'Units' or turb['Name'] == '[0]':
                     pass
                 else:
-                    self.turbines.append([turb['Name'], '', turb['Rotor Diameter'], float(turb['KW Rating'])])
+                    self.turbines.append([turb['Name'].strip(), '', turb['Rotor Diameter'], float(turb['KW Rating'])])
                     if turb['IEC Wind Speed Class'] in ['', ' ', '0', 'Unknown', 'unknown', 'not listed']:
                        pass
                     else:
@@ -200,7 +200,8 @@ class AnObject(QtGui.QDialog):
                     self.turbines.append([name[:-4], '', str(turb.rotor), size])
         self.turbines.sort()
         self.turbines_sorted = True
-        j = -1
+        got_turbine = False
+        j = 0 # in case no Vestas V90-2.0
         for i in range(len(self.turbines)):
             if self.turbines[i][0] == 'Vestas V90-2.0':
                 j = i
@@ -208,8 +209,8 @@ class AnObject(QtGui.QDialog):
             if self.turbines[i][0] == self.anobject.turbine:
                 turbcombo.setCurrentIndex(i)
                 if self.turbines[i][0] != '':
-                    j = -1
-        if j >= 0:
+                    got_turbine = True
+        if not got_turbine:
             turbcombo.setCurrentIndex(j)
         techcombo = QtGui.QComboBox(self)
         for i in range(len(self.technologies)):
