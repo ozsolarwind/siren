@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2017 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2017-2019 Sustainable Energy Now Inc., Angus King
 #
 #  sirenupd.py - This file is part of SIREN.
 #
@@ -124,7 +124,7 @@ class UpdDialog(QtGui.QDialog):
                 self.newbox[p].setCheckState(QtCore.Qt.Unchecked)
                 self.newbox[p].setFlags(self.newbox[p].flags() ^ QtCore.Qt.ItemIsUserCheckable)
                 s = self.newprog[p].rfind('.')
-                if s < len(self.newprog[p]) - 4:
+                if s < len(self.newprog[p]) - 4 and self.newprog[p][s:] != '.html':
                     suffix = default_suffix
                 else:
                     suffix = ''
