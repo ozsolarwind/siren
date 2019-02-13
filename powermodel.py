@@ -306,7 +306,7 @@ class whatPlots(QtGui.QDialog):
         self.layout.setMenuBar(menubar)
         #
         screen = QtGui.QDesktopWidget().availableGeometry()
-        if self.grid.geometry().height() > screen.height():
+        if self.grid.geometry().height() > (screen.height() / 1.2):
             h = int(screen.height() * .9)
         else:
             h = int(self.grid.geometry().height() * 1.07)
