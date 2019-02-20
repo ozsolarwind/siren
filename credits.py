@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2017 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
 #
 #  credits.py - This file is part of SIREN.
 #
@@ -28,8 +28,9 @@ if sys.platform == 'win32' or sys.platform == 'cygwin':
 
 from editini import SaveIni
 
-def fileVersion(program=None):
+def fileVersion(program=None, year=False):
     ver = '?'
+    ver_yr = '????'
     if program == None:
         check = sys.argv[0]
     else:
@@ -44,12 +45,14 @@ def fileVersion(program=None):
         try:
             modtime = datetime.fromtimestamp(os.path.getmtime(check))
             ver = '1.0.%04d.%d%02d' % (modtime.year, modtime.month, modtime.day)
+            ver_yr = '%04d' % modtime.year
         except:
             pass
     elif check[-5:] == '.html':
         try:
             modtime = datetime.fromtimestamp(os.path.getmtime(check))
             ver = '1.0.%04d.%d%02d' % (modtime.year, modtime.month, modtime.day)
+            ver_yr = '%04d' % modtime.year
         except:
             pass
     else:
@@ -63,15 +66,20 @@ def fileVersion(program=None):
               #  ls = info['FileVersionLS']
                 ls = info['ProductVersionLS']
                 ver = str(HIWORD(ms)) + '.' + str(LOWORD(ms)) + '.' + str(HIWORD(ls)) + '.' + str(LOWORD(ls))
+                ver_yr = str(HIWORD(ls))
             except:
                 try:
                     info = os.path.getmtime(os.getcwd() + '\\' + check)
                     ver = '1.0.' + datetime.datetime.fromtimestamp(info).strftime('%Y.%m%d')
+                    ver_yr = datetime.datetime.fromtimestamp(info).strftime('%Y')
                     if ver[9] == '0':
                         ver = ver[:9] + ver[10:]
                 except:
                     pass
-    return ver
+    if year:
+        return ver_yr
+    else:
+        return ver
 
 
 class Credits(QtGui.QDialog):
@@ -107,6 +115,7 @@ class Credits(QtGui.QDialog):
             htf = open('credits.html', 'r')
             html = htf.read()
             html = html.replace('[VERSION]', fileVersion())
+            html = html.replace('[VERSION-YEAR]', fileVersion(year=True))
             htf.close()
             if html[:5] == '<html' or html[:15] == '<!DOCTYPE html>':
                 web.setHtml(QtCore.QString(html))
@@ -122,7 +131,7 @@ class Credits(QtGui.QDialog):
             bold.setBold(True)
             labels = []
             labels.append("SIREN - SEN's Interactive Renewable Energy Network tool")
-            labels.append('Copyright (C) 2015-2017 Sustainable Energy Now Inc., Angus King')
+            labels.append('Copyright (C) 2015-' + fileVersion(year=True) + ' Sustainable Energy Now Inc., Angus King')
             labels.append('Release:' + fileVersion())
             labels.append('SIREN is free software: you can redistribute it and/or modify it under the terms of the' +
                           ' GNU Affero General Public License. The program is distributed WITHOUT ANY WARRANTY')
@@ -168,6 +177,7 @@ class Credits(QtGui.QDialog):
         frameGm.moveTopLeft(tlPoint)
         self.move(frameGm.topLeft())
         self.setWindowTitle('SIREN - Credits')
+        self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         if self.restorewindows:
             try:
                 rw = config.get('Windows', 'credits_size').split(',')
