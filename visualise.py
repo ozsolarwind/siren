@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2016-2018 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2016-2019 Sustainable Energy Now Inc., Angus King
 #
 #  visualise.py - This file is part of SIREN.
 #
@@ -177,6 +177,7 @@ class Visualise(QtGui.QDialog):
         self.layout = QtGui.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
         self.setWindowTitle('SIREN - Visualise generation')
+        self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         if sys.platform == 'win32' or sys.platform == 'cygwin':
             move_right = False
         else:

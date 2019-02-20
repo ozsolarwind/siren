@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2018 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
 #
 #  Editini.py - This file is part of SIREN.
 #
@@ -27,6 +27,8 @@ import sys
 
 import displaytable
 import inisyntax
+from senuser import techClean
+
 
 class EdtDialog(QtGui.QDialog):
     def __init__(self, in_file, parent=None):
@@ -78,6 +80,7 @@ class EdtDialog(QtGui.QDialog):
         layout.addLayout(buttonLayout)
         self.setLayout(layout)
         self.setWindowTitle('SIREN - Edit - ' + self.in_file[self.in_file.rfind('/') + 1:])
+        self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         size = self.geometry()
         self.setGeometry(1, 1, ln + 10, ln2 + 35)
         size = self.geometry()
@@ -146,8 +149,7 @@ class EditTech():
         technologies += ' ' + config.get('Power', 'fossil_technologies')
         technologies = technologies.split(' ')
         for i in range(len(technologies)):
-            technologies[i] = technologies[i].replace('_', ' ').title()
-            technologies[i] = technologies[i].replace('Pv', 'PV')
+            technologies[i] = techClean(technologies[i])
         technologies = sorted(technologies)
         tech_dict = {}
         for technology in technologies:
@@ -237,6 +239,6 @@ class SaveIni():
         for i in range(len(lines)):
             if i in del_lines:
                 pass
-            else:    
+            else:
                 sou.write(lines[i])
         sou.close()

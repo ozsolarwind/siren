@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
 #
 #  colours.py - This file is part of SIREN.
 #
@@ -22,7 +22,7 @@ import os
 import sys
 from PyQt4 import QtGui
 import ConfigParser  # decode .ini file
-
+from senuser import techClean
 
 class Colours(QtGui.QDialog):
 
@@ -32,8 +32,7 @@ class Colours(QtGui.QDialog):
 
     def initUI(self, ini_file):
         def add_item(key, value, i):
-            wht = key.replace('_', ' ').title()
-            wht = wht.replace('Pv', 'PV')
+            wht = techClean(key)
             wht = wht.replace('hi ', 'HI ')
             wht = wht.replace('ni ', 'NI ')
             self.grid.addWidget(QtGui.QLabel(wht), i, 0)
@@ -192,6 +191,7 @@ class Colours(QtGui.QDialog):
         if config_file != 'getfiles.ini':
             self.resize(self.width * 3 + 80, int(screen.height() * .9))
         self.setWindowTitle('SIREN - Color dialog')
+        self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
 
     def mousePressEvent(self, event):
