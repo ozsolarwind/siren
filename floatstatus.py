@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2016-2018 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2016-2019 Sustainable Energy Now Inc., Angus King
 #
 #  floatstatus.py - This file is part of SIREN.
 #
@@ -121,6 +121,7 @@ class FloatStatus(QtGui.QDialog):
         layout.addLayout(buttonLayout)
         self.setLayout(layout)
         self.setWindowTitle('SIREN - Status - ' + self.config_file)
+        self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         if self.restorewindows:
             try:
                 rw = config.get('Windows', 'log_size').split(',')
@@ -166,7 +167,12 @@ class FloatStatus(QtGui.QDialog):
     @QtCore.pyqtSlot()
     def log(self, text):
         self.loglines.appendPlainText(str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),
-                            'hh:mm:ss. ')) + text)
+                                'hh:mm:ss. ')) + text)
+        self.logged = True
+
+    @QtCore.pyqtSlot()
+    def log2(self, text):
+        self.loglines.appendPlainText(text)
         self.logged = True
 
     @QtCore.pyqtSlot()
