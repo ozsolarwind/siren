@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2018 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2018-2019 Sustainable Energy Now Inc., Angus King
 #
 #  powerbalance2.py - This file is possibly part of SIREN.
 #
@@ -160,7 +160,8 @@ class Adjustments(QtGui.QDialog):
         self.scroll.setWidget(frame)
         self.layout = QtGui.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
-        self.setWindowTitle('SIREN - PB2 - Adjust renewables')
+        self.setWindowTitle('SIREN - PowerBalance2 - Adjust renewables')
+        self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
         self.show()
 
@@ -320,6 +321,7 @@ class powerBalance(QtGui.QWidget):
         self.layout = QtGui.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
         self.setWindowTitle('SIREN - powerbalance2 (' + fileVersion() + ') - PowerBalance 2.0')
+        self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         self.center()
         self.resize(int(self.sizeHint().width()* 1.07), int(self.sizeHint().height() * 1.07))
         self.show()

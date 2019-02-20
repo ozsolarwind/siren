@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2018 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
 #
 #  displayobject.py - This file is part of SIREN.
 #
@@ -74,6 +74,7 @@ class AnObject(QtGui.QDialog):
             self.setWindowTitle('SIREN - ?')
         else:
             self.setWindowTitle('SIREN - Review ' + getattr(self.anobject, '__module__'))
+        self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
 
     def initUI(self):
         label = []

@@ -45,6 +45,7 @@ class UpdDialog(QtGui.QDialog):
         self.debug = False
         QtGui.QDialog.__init__(self, parent)
         self.setWindowTitle('SIREN Update (' + fileVersion() + ') - Check for new versions')
+        self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         row = 0
         newgrid = QtGui.QGridLayout()
         host = 'https://sourceforge.net/projects/sensiren/files/'

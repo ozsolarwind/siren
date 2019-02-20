@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2018 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
 #
 #  plotweather.py - This file is part of SIREN.
 #
@@ -81,6 +81,7 @@ class whatPlots(QtGui.QDialog):
         commnt = QtGui.QLabel('Nearest weather files:\n' + self.comment)
         self.layout.addWidget(commnt)
         self.setWindowTitle('SIREN - Weather dialog for ' + str(self.base_year))
+        self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
         self.show_them = False
         self.show()

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2017-2018 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2017-2019 Sustainable Energy Now Inc., Angus King
 #
 #  worldwindow.py - This file is part of SIREN.
 #
@@ -95,6 +95,7 @@ class GetMany(QtGui.QDialog):
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
         self.setWindowTitle('SIREN - worldwindow (' + fileVersion() + ") - List of Coordinates")
+        self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
 
     def list(self):
         coords = str(self.text.toPlainText())
@@ -713,6 +714,7 @@ class WorldWindow(QtGui.QMainWindow):
         except:
             pass
         self.setWindowTitle('SIREN - worldwindow (' + fileVersion() + ')')
+        self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         note = QtCore.QString('Map data ' + unichr(169) + ' OpenStreetMap contributors CC-BY-SA ' +
                '(http://www.openstreetmap.org/copyright)')
         self.view.emit(QtCore.SIGNAL('statusmsg'), note)

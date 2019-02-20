@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2017 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
 #
 #  viewresource.py - This file is part of SIREN.
 #
@@ -340,6 +340,7 @@ class Resource(QtGui.QDialog):
         self.layout = QtGui.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
         self.setWindowTitle('SIREN - Renewable Resource Overlay')
+        self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         self.stepChanged('a')
         if sys.platform == 'win32' or sys.platform == 'cygwin':
             move_right = False

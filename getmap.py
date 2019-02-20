@@ -449,6 +449,7 @@ class getMap(QtGui.QWidget):
         self.layout.addWidget(self.scroll)
   #      self.resize(self.width() + int(self.world_width * .7), self.height() + int(self.world_height * .7))
         self.setWindowTitle('SIREN - getmap (' + fileVersion() + ") - Make Map from OSM or MapQuest")
+        self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         self.center()
         self.resize(int(self.sizeHint().width()* 1.27), int(self.sizeHint().height() * 1.1))
         self.show()

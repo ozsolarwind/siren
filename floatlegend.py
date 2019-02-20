@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2016 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2016-2019 Sustainable Energy Now Inc., Angus King
 #
 #  floatlegend.py - This file is part of SIREN.
 #
@@ -126,6 +126,7 @@ class FloatLegend(QtGui.QDialog):
         self.layout = QtGui.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
         self.setWindowTitle('SIREN - Legend')
+        self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         screen = QtGui.QApplication.desktop().primaryScreen()
         scr_right = QtGui.QApplication.desktop().availableGeometry(screen).right()
         scr_bottom = QtGui.QApplication.desktop().availableGeometry(screen).bottom()

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2017-2018 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2017-2019 Sustainable Energy Now Inc., Angus King
 #
 #  getmerra2.py - This file is part of SIREN.
 #
@@ -573,6 +573,7 @@ class getMERRA2(QtGui.QDialog):
         frame2.setLayout(buttongrid)
         self.layout.addWidget(frame2)
         self.setWindowTitle('SIREN - getmerra2 (' + fileVersion() + ') - Get MERRA-2 data')
+        self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         self.resize(int(self.sizeHint().width()* 1.4), int(self.sizeHint().height() * 1.07))
         self.show()
 

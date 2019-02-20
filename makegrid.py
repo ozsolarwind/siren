@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2018 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
 #
 #  makegrid.py - This file is part of SIREN.
 #
@@ -944,6 +944,7 @@ class getParms(QtGui.QWidget):
         self.layout = QtGui.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
         self.setWindowTitle('SIREN - makegrid (' + fileVersion() + ') - Make resource grid file')
+        self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         self.center()
         self.resize(int(self.sizeHint().width()* 1.07), int(self.sizeHint().height() * 1.07))
         self.show()

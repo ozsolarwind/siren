@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
 #
 #  floatmenu.py - This file is part of SIREN.
 #
@@ -133,6 +133,7 @@ class FloatMenu(QtGui.QDialog):
         self.layout = QtGui.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
         self.setWindowTitle('SIREN - Menu')
+        self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         if self.restorewindows:
             try:
                 rw = config.get('Windows', 'menu_size').split(',')

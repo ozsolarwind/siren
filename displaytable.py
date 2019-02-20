@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2018 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
 #
 #  displaytable.py - This file is part of SIREN.
 #
@@ -26,6 +26,7 @@ from PyQt4 import QtGui
 
 import displayobject
 from sirenicons import Icons
+from senuser import techClean
 
 
 class FakeObject:
@@ -121,6 +122,7 @@ class Table(QtGui.QDialog):
                 self.setWindowTitle('SIREN - ' + self.title_word[0] + 'items')
         else:
             self.setWindowTitle('SIREN - ' + self.title_word[0] + ' ' + self.title)
+        self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         msg = '(Right click column header to sort)'
         if self.edit_table and self.fields[0] == 'name':
             msg = msg[:-1] + '; right click row number to delete)'
@@ -275,11 +277,9 @@ class Table(QtGui.QDialog):
         if string == '':
             strout = string
         else:
-            strout = string.replace('_', ' ').title()
-            strout = strout.replace('Cf', 'CF')
+            strout = techClean(string)
             strout = strout.replace('Lcoe', 'LCOE')
             strout = strout.replace('Npv', 'NPV')
-            strout = strout.replace('Pv', 'PV')
             if string != '' and string in self.units:
                 i = self.units.find(string)
                 j = self.units.find(' ', i)

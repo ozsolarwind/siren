@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2018 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
 #
 #  powermodel.py - This file is part of SIREN.
 #
@@ -35,7 +35,7 @@ import xlwt
 import ConfigParser  # decode .ini file
 from PyQt4 import Qt, QtGui, QtCore
 
-from senuser import getUser
+from senuser import getUser, techClean
 import displayobject
 import displaytable
 from editini import SaveIni
@@ -61,7 +61,13 @@ def split_array(array):
         bits = varbl2.split(';')
     if '.' in varbl:
         for bit in bits:
-            arry.append(float(bit))
+            if float(bit) == 0:
+                try:
+                    arry.append(int(bit[:bit.find('.')]))
+                except:
+                    arry.append(int(bit))
+            else:
+                arry.append(float(bit))
     else:
         for bit in bits:
             arry.append(int(bit))
@@ -88,7 +94,10 @@ def split_matrix(matrix):
             bits = arry.split(';')
         if '.' in varbl:
             for bit in bits:
-                mtrx[-1].append(float(bit))
+                if float(bit) == 0:
+                    mtrx[-1].append(int(bit))
+                else:
+                    mtrx[-1].append(float(bit))
         else:
             for bit in bits:
                 mtrx[-1].append(int(bit))
@@ -312,6 +321,7 @@ class whatPlots(QtGui.QDialog):
             h = int(self.grid.geometry().height() * 1.07)
         self.resize(600, h)
         self.setWindowTitle('SIREN - Power dialog for ' + str(self.base_year))
+        self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
         self.show_them = False
         self.show()
@@ -447,6 +457,7 @@ class whatStations(QtGui.QDialog):
         show.clicked.connect(self.showClicked)
         self.setLayout(self.grid)
         self.setWindowTitle('SIREN - Power Stations dialog')
+        self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
         self.show_them = False
         self.show()
@@ -604,6 +615,7 @@ class whatFinancials(QtGui.QDialog):
         h = int(screen.height() * .9)
         self.resize(600, h)
         self.setWindowTitle('SIREN - Financial Parameters dialog')
+        self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
         self.show()
 
@@ -825,6 +837,7 @@ class Adjustments(QtGui.QDialog):
         self.layout = QtGui.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
         self.setWindowTitle('SIREN - Gen Adj. multiplier')
+        self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
         self.show()
 
@@ -1162,6 +1175,55 @@ class SuperPower():
                         mtrx = split_matrix(var['DEFAULT'])
                         self.data.set_matrix(var['NAME'], mtrx)
 
+    def debug_sam(self, name, tech, module, data, status):
+        data_typs = ['invalid', 'string', 'number', 'array', 'matrix', 'table']
+        var_typs = ['?', 'input', 'output', 'inout']
+        var_names = []
+        ssc_info = ssc.Info(module)
+        while ssc_info.get():
+            var_names.append(ssc_info.name() + ' ' + str(ssc_info.var_type()) + ' ' + str(ssc_info.data_type()))
+        if status:
+            status.emit(QtCore.SIGNAL('log'), 'SAM Variable list for ' + tech + ' - ' + name)
+        else:
+            print 'SAM Variable list for ' + tech + ' - ' + name
+        var_names = sorted(var_names, key=lambda s: s.lower())
+        info = []
+        for fld in var_names:
+            bits = fld.split(' ')
+            msg = bits[0] + ',' + var_typs[int(bits[1])] + ',' + data_typs[int(bits[2])] + ','
+            if bits[2] == '1':
+                msg += data.get_string(bits[0])
+            elif bits[2] == '2':
+                msg += str(data.get_number(bits[0]))
+            elif bits[2] == '3':
+                dat = data.get_array(bits[0])
+                if len(dat) == 0:
+                    msg += '"[]"'
+                else:
+                    msg += '"['
+                    stop = len(dat)
+                    if stop > 12:
+                        fin = '...] ' + str(stop) + ' items in total"'
+                        stop = 13
+                    else:
+                        fin = ']"'
+                    for i in range(stop):
+                        msg += str(dat[i]) + ','
+                    msg = msg[:-1]
+                    msg += fin
+            elif bits[2] == '4':
+                msg += str(len(data.get_matrix(bits[0]))) + ' entries'
+            info.append(msg)
+        if status:
+            for msg in info:
+                status.emit(QtCore.SIGNAL('log2'), msg)
+            status.emit(QtCore.SIGNAL('log'), 'Variable list complete for ' + tech + ' - ' + name)
+        else:
+            for msg in info:
+                print msg
+            print 'Variable list complete for ' + tech + ' - ' + name
+        return
+
     def __init__(self, stations, plots, show_progress=None, parent=None, year=None, selected=None, status=None):
         self.stations = stations
         self.plots = plots
@@ -1201,38 +1263,38 @@ class SuperPower():
         try:
             resource = config.get('Geothermal', 'resource')
             if resource.lower()[0:1] == 'hy':
-                self.geores = 0
+                self.geo_res = 0
             else:
-                self.geores = 1
+                self.geo_res = 1
         except:
-            self.geores = 0
-        self.dc_ac_ratio = [1.1] * 5
+            self.geo_res = 0
+        self.pv_dc_ac_ratio = [1.1] * 5
         try:
-            self.dc_ac_ratio = [float(config.get('PV', 'dc_ac_ratio'))] * 5
-        except:
-            pass
-        try:
-            self.dc_ac_ratio[0] = float(config.get('Fixed PV', 'dc_ac_ratio'))
+            self.pv_dc_ac_ratio = [float(config.get('PV', 'dc_ac_ratio'))] * 5
         except:
             pass
         try:
-            self.dc_ac_ratio[1] = float(config.get('Rooftop PV', 'dc_ac_ratio'))
+            self.pv_dc_ac_ratio[0] = float(config.get('Fixed PV', 'dc_ac_ratio'))
         except:
             pass
         try:
-            self.dc_ac_ratio[2] = float(config.get('Single Axis PV', 'dc_ac_ratio'))
+            self.pv_dc_ac_ratio[1] = float(config.get('Rooftop PV', 'dc_ac_ratio'))
         except:
             pass
         try:
-            self.dc_ac_ratio[3] = float(config.get('Backtrack PV', 'dc_ac_ratio'))
+            self.pv_dc_ac_ratio[2] = float(config.get('Single Axis PV', 'dc_ac_ratio'))
         except:
             pass
         try:
-            self.dc_ac_ratio[4] = float(config.get('Tracking PV', 'dc_ac_ratio'))
+            self.pv_dc_ac_ratio[3] = float(config.get('Backtrack PV', 'dc_ac_ratio'))
         except:
             pass
         try:
-            self.dc_ac_ratio[4] = float(config.get('Dual Axis PV', 'dc_ac_ratio'))
+            self.pv_dc_ac_ratio[4] = float(config.get('Tracking PV', 'dc_ac_ratio'))
+        except:
+            pass
+        try:
+            self.pv_dc_ac_ratio[4] = float(config.get('Dual Axis PV', 'dc_ac_ratio'))
         except:
             pass
         try:
@@ -1253,29 +1315,29 @@ class SuperPower():
                 self.wave_efficiency = self.wave_efficiency / 100.
         except:
             self.wave_efficiency = 0
-        self.turbine_spacing = [8, 8] # onshore and offshore winds
-        self.row_spacing = [8, 8]
-        self.offset_spacing = [4, 4]
+        self.wind_turbine_spacing = [8, 8] # onshore and offshore winds
+        self.wind_row_spacing = [8, 8]
+        self.wind_offset_spacing = [4, 4]
         self.wind_farm_losses_percent = [2, 2]
         try:
-            self.turbine_spacing[0] = int(config.get('Wind', 'turbine_spacing'))
+            self.wind_turbine_spacing[0] = int(config.get('Wind', 'turbine_spacing'))
         except:
             try:
-                self.turbine_spacing[0] = int(config.get('Onshore Wind', 'turbine_spacing'))
+                self.wind_turbine_spacing[0] = int(config.get('Onshore Wind', 'turbine_spacing'))
             except:
                 pass
         try:
-            self.row_spacing[0] = int(config.get('Wind', 'row_spacing'))
+            self.wind_row_spacing[0] = int(config.get('Wind', 'row_spacing'))
         except:
             try:
-                self.row_spacing[0] = int(config.get('Onshore Wind', 'row_spacing'))
+                self.wind_row_spacing[0] = int(config.get('Onshore Wind', 'row_spacing'))
             except:
                 pass
         try:
-            self.offset_spacing[0] = int(config.get('Wind', 'offset_spacing'))
+            self.wind_offset_spacing[0] = int(config.get('Wind', 'offset_spacing'))
         except:
             try:
-                self.offset_spacing[0] = int(config.get('Onshore Wind', 'offset_spacing'))
+                self.wind_offset_spacing[0] = int(config.get('Onshore Wind', 'offset_spacing'))
             except:
                 pass
         try:
@@ -1286,34 +1348,44 @@ class SuperPower():
             except:
                 pass
         try:
-            self.turbine_spacing[1] = int(config.get('Offshore Wind', 'turbine_spacing'))
+            self.wind_turbine_spacing[1] = int(config.get('Offshore Wind', 'turbine_spacing'))
         except:
             pass
         try:
-            self.row_spacing[1] = int(config.get('Offshore Wind', 'row_spacing'))
+            self.wind_row_spacing[1] = int(config.get('Offshore Wind', 'row_spacing'))
         except:
             pass
         try:
-            self.offset_spacing[1] = int(config.get('Offshore Wind', 'offset_spacing'))
+            self.wind_offset_spacing[1] = int(config.get('Offshore Wind', 'offset_spacing'))
         except:
             pass
         try:
             self.wind_farm_losses_percent[1] = int(config.get('Offshore Wind', 'wind_farm_losses_percent').strip('%'))
         except:
             pass
-        self.gross_net = 0.87
+        self.st_gross_net = 0.87
         try:
-            self.gross_net = float(config.get('Solar Thermal', 'gross_net'))
+            self.st_gross_net = float(config.get('Solar Thermal', 'gross_net'))
         except:
             pass
-        self.tshours = 0
+        self.st_tshours = 0
         try:
-            self.tshours = float(config.get('Solar Thermal', 'tshours'))
+            self.st_tshours = float(config.get('Solar Thermal', 'tshours'))
         except:
             pass
-        self.volume = 12.9858
+        self.st_volume = 12.9858
         try:
-            self.volume = float(config.get('Solar Thermal', 'volume'))
+            self.st_volume = float(config.get('Solar Thermal', 'volume'))
+        except:
+            pass
+        self.cst_gross_net = 0.87
+        try:
+            self.cst_gross_net = float(config.get('CST', 'gross_net'))
+        except:
+            pass
+        self.cst_tshours = 0
+        try:
+            self.cst_tshours = float(config.get('CST', 'tshours'))
         except:
             pass
         try:
@@ -1371,10 +1443,15 @@ class SuperPower():
             for tech, default in defaults:
                 if '_variables' in tech:
                     tec = tech.replace('_variables', '')
-                    tec = tec.replace('_', ' ').title()
-                    tec = tec.replace('Pv', 'PV')
+                    tec = techClean(tec)
                     self.defaults[tec] = default
                     self.default_files[tec] = None
+                elif tech == 'helio_positions':
+                    self.default_files['helio_positions'] = default
+                    self.defaults['helio_positions'] = None
+                elif tech == 'optical_table':
+                    self.default_files['optical_table'] = default
+                    self.defaults['optical_table'] = None
             self.default_files['solar_index'] = None
             self.default_files['wind_index'] = None
             self.default_files['actual'] = None
@@ -1403,17 +1480,24 @@ class SuperPower():
         try:
             subs_loss = config.get('Grid', 'substation_loss')
             if subs_loss[-1] == '%':
-                self.subs_loss = float(subs_loss[:-1]) / 100.
+                self.grid_subs_loss = float(subs_loss[:-1]) / 100.
             else:
-                self.subs_loss = float(subs_loss) / 10.
+                self.grid_subs_loss = float(subs_loss) / 10.
             line_loss = config.get('Grid', 'line_loss')
             if line_loss[-1] == '%':
-                self.line_loss = float(line_loss[:-1]) / 100000.
+                self.grid_line_loss = float(line_loss[:-1]) / 100000.
             else:
-                self.line_loss = float(line_loss) / 1000.
+                self.grid_line_loss = float(line_loss) / 1000.
         except:
-            self.subs_loss = 0.
-            self.line_loss = 0.
+            self.grid_subs_loss = 0.
+            self.grid_line_loss = 0.
+        self.debug = False
+        try:
+            debug = config.get('Power', 'debug_sam')
+            if debug.lower() in ['true', 'yes', 'on']:
+                self.debug = True
+        except:
+            pass
         self.gen_pct = None
         ssc_api = ssc.API()
 # to supress messages
@@ -1520,9 +1604,9 @@ class SuperPower():
                 for i in range(len(power)):
                     if self.plots['grid_losses']:
                         if stn.grid_path_len is not None:
-                            enrgy = power[i] * (1 - self.line_loss * stn.grid_path_len - self.subs_loss)
+                            enrgy = power[i] * (1 - self.grid_line_loss * stn.grid_path_len - self.grid_subs_loss)
                         else:
-                            enrgy = power[i] * (1 - self.subs_loss)
+                            enrgy = power[i] * (1 - self.grid_subs_loss)
                         self.ly[key][i] += enrgy / 1000.
                         total_energy += enrgy / 1000.
                         self.ly['Generation'][i] += power[i] / 1000.
@@ -1555,7 +1639,43 @@ class SuperPower():
         return
 
     def getStationPower(self, station):
-        farmpwr = []
+        def do_module(modname, station, field):
+            if self.debug and self.status:
+                do_time = True
+                clock_start = time.clock()
+            else:
+                do_time = False
+            module = ssc.Module(modname)
+            if do_time:
+                time2 = time.clock() - clock_start
+                self.status.emit(QtCore.SIGNAL('log'), 'Load (%.6f seconds)' % (time2))
+            if (module.exec_(self.data)):
+                if do_time:
+                    time3 = time.clock() - clock_start - time2
+                    self.status.emit(QtCore.SIGNAL('log'), 'Execute (%.6f seconds)' % (time3))
+                if self.debug:
+                    self.debug_sam(station.name, station.technology, module, self.data, self.status)
+                farmpwr = self.data.get_array(field)
+                if do_time:
+                    time4 = time.clock() - clock_start - time2 - time3
+                    self.status.emit(QtCore.SIGNAL('log'), 'Get data (%.6f seconds)' % (time4))
+                del module
+                return farmpwr
+            else:
+                if self.status:
+                   self.status.emit(QtCore.SIGNAL('log'), 'Errors encountered processing ' + station.name)
+                idx = 0
+                msg = module.log(idx)
+                while (msg is not None):
+                    if self.status:
+                       self.status.emit(QtCore.SIGNAL('log'), modname + ' error [' + str(idx) + ']: ' + msg)
+                    else:
+                        print modname + ' error [', idx, ' ]: ', msg
+                    idx += 1
+                    msg = module.log(idx)
+                del module
+                return None
+
         if self.plots['actual'] and self.actual_power != '':
             if self.actual_power[-4:] == '.xls' or self.actual_power[-5:] == '.xlsx':
                 do_excel = True
@@ -1634,11 +1754,11 @@ class SuperPower():
         if station.capacity == 0:
             return None
         if self.status:
-            self.status.emit(QtCore.SIGNAL('log'), 'Processing ' + station.name)
+            self.status.emit(QtCore.SIGNAL('log'), 'Processing ' + station.name + ' (' + station.technology + ')')
         self.data = None
         self.data = ssc.Data()
-        if station.technology[-4:] == 'Wind':
-            if station.technology[:3] == 'Off': # offshore?
+        if 'Wind' in station.technology:
+            if 'Off' in station.technology: # offshore?
                 wtyp = 1
             else:
                 wtyp = 0
@@ -1666,9 +1786,9 @@ class SuperPower():
             wt_y = []
             for r in range(t_rows):
                 for c in range(t_rows):
-                    wt_x.append(r * self.row_spacing[wtyp] * turbine.rotor)
-                    wt_y.append(c * self.turbine_spacing[wtyp] * turbine.rotor +
-                                (r % 2) * self.offset_spacing[wtyp] * turbine.rotor)
+                    wt_x.append(r * self.wind_row_spacing[wtyp] * turbine.rotor)
+                    wt_y.append(c * self.wind_turbine_spacing[wtyp] * turbine.rotor +
+                                (r % 2) * self.wind_offset_spacing[wtyp] * turbine.rotor)
                     ctr -= 1
                     if ctr < 1:
                         break
@@ -1679,39 +1799,58 @@ class SuperPower():
             self.data.set_number('wind_turbine_rotor_diameter', turbine.rotor)
             self.data.set_number('wind_turbine_cutin', turbine.cutin)
             self.do_defaults(station)
-            if self.status:
-                clock_start = time.clock()
-            module = ssc.Module('windpower')
-            if self.status:
-                self.status.emit(QtCore.SIGNAL('log'), '(%.6f seconds)' % (time.clock() - clock_start))
-            if (module.exec_(self.data)):
-                farmpwr = self.data.get_array('gen')
-                if self.status:
-                    self.status.emit(QtCore.SIGNAL('log'), '(%.6f seconds)' % (time.clock() - clock_start))
-                del module
-                return farmpwr
+            farmpwr = do_module('windpower', station, 'gen')
+            return farmpwr
+        elif station.technology == 'CST':
+            closest = self.find_closest(station.lat, station.lon)
+            base_capacity = 104.
+            self.data.set_string('file_name', self.solar_files + '/' + closest)
+            self.data.set_number('system_capacity', int(base_capacity * 1000))
+            self.data.set_number('w_des', base_capacity / self.cst_gross_net)
+            self.data.set_number('latitude', station.lat)
+            self.data.set_number('longitude', station.lon)
+            self.data.set_number('timezone', int(round(station.lon / 15.)))
+            if station.storage_hours is None:
+                tshours = self.cst_tshours
             else:
-                if self.status:
-                   self.status.emit(QtCore.SIGNAL('log'), 'Errors encountered processing ' + station.name)
-                idx = 0
-                msg = module.log(idx)
-                while (msg is not None):
+                tshours = station.storage_hours
+            self.data.set_number('hrs_tes', tshours)
+            sched = [[1] * 24] * 12
+            self.data.set_matrix('weekday_schedule', sched[:])
+            self.data.set_matrix('weekend_schedule', sched[:])
+            if self.defaults['optical_table'] is None:
+                optic_file = self.variable_files + '/' + self.default_files['optical_table']
+                if not os.path.exists(optic_file):
                     if self.status:
-                       self.status.emit(QtCore.SIGNAL('log'), 'windpower error [' + str(idx) + ']: ' + msg)
-                    else:
-                        print 'windpower error [', idx, ' ]: ', msg
-                    idx += 1
-                    msg = module.log(idx)
-                del module
-                return None
+                        self.status.emit(QtCore.SIGNAL('log'), 'optical_table file required for ' + station.name)
+                    return
+                self.defaults['optical_table'] = []
+                hf = open(optic_file)
+                lines = hf.readlines()
+                hf.close()
+                for line in lines:
+                    row = []
+                    bits = line.split(',')
+                    for bit in bits:
+                        row.append(float(bit))
+                    self.defaults['optical_table'].append(row)
+                del lines
+            self.data.set_matrix('OpticalTable', self.defaults['optical_table'][:])
+            self.do_defaults(station)
+            farmpwr = do_module('tcsgeneric_solar', station, 'gen')
+            if farmpwr is not None:
+                if station.capacity != base_capacity:
+                    for i in range(len(farmpwr)):
+                        farmpwr[i] = farmpwr[i] * station.capacity / float(base_capacity)
+            return farmpwr
         elif station.technology == 'Solar Thermal':
             closest = self.find_closest(station.lat, station.lon)
-            base_capacity = 100
+            base_capacity = 104
             self.data.set_string('solar_resource_file', self.solar_files + '/' + closest)
             self.data.set_number('system_capacity', base_capacity * 1000)
-            self.data.set_number('P_ref', base_capacity / self.gross_net)
+            self.data.set_number('P_ref', base_capacity / self.st_gross_net)
             if station.storage_hours is None:
-                tshours = self.tshours
+                tshours = self.st_tshours
             else:
                 tshours = station.storage_hours
             self.data.set_number('tshours', tshours)
@@ -1721,60 +1860,59 @@ class SuperPower():
             if ssc.API().version() >= 159:
                 self.data.set_matrix('dispatch_sched_weekday', sched[:])
                 self.data.set_matrix('dispatch_sched_weekend', sched[:])
+                if ssc.API().version() >= 206:
+                    self.data.set_number('gross_net_conversion_factor', self.st_gross_net)
+                    if self.defaults['helio_positions'] is None:
+                        helio_file = self.variable_files + '/' + self.default_files['helio_positions']
+                        if not os.path.exists(helio_file):
+                            if self.status:
+                               self.status.emit(QtCore.SIGNAL('log'), 'helio_positions file required for ' + station.name)
+                            return
+                        self.defaults['helio_positions'] = []
+                        hf = open(helio_file)
+                        lines = hf.readlines()
+                        hf.close()
+                        for line in lines:
+                            row = []
+                            bits = line.split(',')
+                            for bit in bits:
+                                row.append(float(bit))
+                            self.defaults['helio_positions'].append(row)
+                        del lines
+                    self.data.set_matrix('helio_positions', self.defaults['helio_positions'][:])
             else:
-                self.data.set_number('Design_power', base_capacity / self.gross_net)
-                self.data.set_number('W_pb_design', base_capacity / self.gross_net)
-                vol_tank = base_capacity * tshours * self.volume
+                self.data.set_number('Design_power', base_capacity / self.st_gross_net)
+                self.data.set_number('W_pb_design', base_capacity / self.st_gross_net)
+                vol_tank = base_capacity * tshours * self.st_volume
                 self.data.set_number('vol_tank', vol_tank)
                 f_tc_cold = self.data.get_number('f_tc_cold')
                 V_tank_hot_ini = vol_tank * (1. - f_tc_cold)
                 self.data.set_number('V_tank_hot_ini', V_tank_hot_ini)
             self.do_defaults(station)
-            module = ssc.Module('tcsmolten_salt')
-            if (module.exec_(self.data)):
-                farmpwr = self.data.get_array('gen')
-                idx = 0
-                msg = module.log(idx)
-                while (msg is not None):
-                    idx += 1
-                    msg = module.log(idx)
-                del module
+            farmpwr = do_module('tcsmolten_salt', station, 'gen')
+            if farmpwr is not None:
                 if station.capacity != base_capacity:
                     for i in range(len(farmpwr)):
                         farmpwr[i] = farmpwr[i] * station.capacity / float(base_capacity)
-                return farmpwr
-            else:
-                if self.status:
-                   self.status.emit(QtCore.SIGNAL('log'), 'Errors encountered processing ' + station.name)
-                idx = 0
-                msg = module.log(idx)
-                while (msg is not None):
-                    if self.status:
-                       self.status.emit(QtCore.SIGNAL('log'), 'tcsmolten_salt error [' + str(idx) + ']: ' + msg)
-                    else:
-                        print 'tcsmolten_salt error [', idx, ' ]: ', msg
-                    idx += 1
-                    msg = module.log(idx)
-                del module
-                return None
+            return farmpwr
         elif 'PV' in station.technology:
             closest = self.find_closest(station.lat, station.lon)
             self.data.set_string('solar_resource_file', self.solar_files + '/' + closest)
-            dc_ac_ratio = self.dc_ac_ratio[0]
+            dc_ac_ratio = self.pv_dc_ac_ratio[0]
             if station.technology[:5] == 'Fixed':
-                dc_ac_ratio = self.dc_ac_ratio[0]
+                dc_ac_ratio = self.pv_dc_ac_ratio[0]
                 self.data.set_number('array_type', 0)
             elif station.technology[:7] == 'Rooftop':
-                dc_ac_ratio = self.dc_ac_ratio[1]
+                dc_ac_ratio = self.pv_dc_ac_ratio[1]
                 self.data.set_number('array_type', 1)
             elif station.technology[:11] == 'Single Axis':
-                dc_ac_ratio = self.dc_ac_ratio[2]
+                dc_ac_ratio = self.pv_dc_ac_ratio[2]
                 self.data.set_number('array_type', 2)
             elif station.technology[:9] == 'Backtrack':
-                dc_ac_ratio = self.dc_ac_ratio[3]
+                dc_ac_ratio = self.pv_dc_ac_ratio[3]
                 self.data.set_number('array_type', 3)
             elif station.technology[:8] == 'Tracking' or station.technology[:9] == 'Dual Axis':
-                dc_ac_ratio = self.dc_ac_ratio[4]
+                dc_ac_ratio = self.pv_dc_ac_ratio[4]
                 self.data.set_number('array_type', 4)
             self.data.set_number('system_capacity', station.capacity * 1000 * dc_ac_ratio)
             self.data.set_number('dc_ac_ratio', dc_ac_ratio)
@@ -1801,25 +1939,8 @@ class SuperPower():
             self.data.set_number('azimuth', azi)
             self.data.set_number('losses', self.pv_losses)
             self.do_defaults(station)
-            module = ssc.Module('pvwattsv5')
-            if (module.exec_(self.data)):
-                farmpwr = self.data.get_array('gen')
-                del module
-                return farmpwr
-            else:
-                if self.status:
-                   self.status.emit(QtCore.SIGNAL('log'), 'Errors encountered processing ' + station.name)
-                idx = 0
-                msg = module.log(idx)
-                while (msg is not None):
-                    if self.status:
-                       self.status.emit(QtCore.SIGNAL('log'), 'pvwattsv5 error [' + str(idx) + ']: ' + msg)
-                    else:
-                        print 'pvwattsv5 error [', idx, ' ]: ', msg
-                    idx += 1
-                    msg = module.log(idx)
-                del module
-                return None
+            farmpwr = do_module('pvwattsv5', station, 'gen')
+            return farmpwr
         elif station.technology == 'Biomass':
             closest = self.find_closest(station.lat, station.lon)
             self.data.set_string('file_name', self.solar_files + '/' + closest)
@@ -1831,56 +1952,24 @@ class SuperPower():
             carbon_pct = self.data.get_number('biopwr.feedstock.total_biomass_c')
             self.data.set_number('biopwr.feedstock.total_c', feedstock * carbon_pct / 100.)
             self.do_defaults(station)
-            module = ssc.Module('biomass')
-            if (module.exec_(self.data)):
-                energy = self.data.get_number('annual_energy')
-                farmpwr = self.data.get_array('gen')
-                del module
-                return farmpwr
-            else:
-                if self.status:
-                   self.status.emit(QtCore.SIGNAL('log'), 'Errors encountered processing ' + station.name)
-                idx = 0
-                msg = module.log(idx)
-                while (msg is not None):
-                    if self.status:
-                       self.status.emit(QtCore.SIGNAL('log'), 'biomass error [' + str(idx) + ']: ' + msg)
-                    else:
-                        print 'biomass error [', idx, ' ]: ', msg
-                    idx += 1
-                    msg = module.log(idx)
-                del module
-                return None
+            farmpwr = do_module('biomass', station, 'gen')
+            return farmpwr
         elif station.technology == 'Geothermal':
             closest = self.find_closest(station.lat, station.lon)
             self.data.set_string('file_name', self.solar_files + '/' + closest)
             self.data.set_number('nameplate', station.capacity * 1000)
-            self.data.set_number('resource_potential', station.capacity * 10)
-            self.data.set_number('resource_type', self.geores)
+            self.data.set_number('resource_potential', station.capacity * 10.)
+            self.data.set_number('resource_type', self.geo_res)
             self.data.set_string('hybrid_dispatch_schedule', '1' * 24 * 12)
             self.do_defaults(station)
-            module = ssc.Module('geothermal')
-            if (module.exec_(self.data)):
-                energy = self.data.get_number('annual_energy')
-                pwr = self.data.get_array('monthly_energy')
+            pwr = do_module('geothermal', station, 'monthly_energy')
+            if pwr is not None:
+                farmpwr = []
                 for i in range(12):
                     for j in range(the_days[i] * 24):
                         farmpwr.append(pwr[i] / (the_days[i] * 24))
-                del module
                 return farmpwr
             else:
-                if self.status:
-                   self.status.emit(QtCore.SIGNAL('log'), 'Errors encountered processing ' + station.name)
-                idx = 0
-                msg = module.log(idx)
-                while (msg is not None):
-                    if self.status:
-                       self.status.emit(QtCore.SIGNAL('log'), 'geothermal error [' + str(idx) + ']: ' + msg)
-                    else:
-                        print 'geothermal error [', idx, ' ]: ', msg
-                    idx += 1
-                    msg = module.log(idx)
-                del module
                 return None
         elif station.technology == 'Hydro':   # fudge Hydro purely by Capacity Factor
             pwr = station.capacity * 1000 * self.hydro_cf
@@ -2116,23 +2205,22 @@ class FinancialModel():
     def __init__(self, name, technology, capacity, power, grid, path, year=None, status=None, parms=None):
         def set_grid_variables():
             self.dispatchable = None
-            self.line_loss = 0.
+            self.grid_line_loss = 0.
             self.subs_cost = 0.
-            self.subs_loss = 0.
+            self.grid_subs_loss = 0.
             try:
                 itm = config.get('Grid', 'dispatchable')
-                itm = itm.replace('_', ' ').title()
-                self.dispatchable = itm.replace('Pv', 'PV')
+                self.dispatchable = techClean(itm)
                 line_loss = config.get('Grid', 'line_loss')
                 if line_loss[-1] == '%':
-                    self.line_loss = float(line_loss[:-1]) / 100000.
+                    self.grid_line_loss = float(line_loss[:-1]) / 100000.
                 else:
-                    self.line_loss = float(line_loss) / 1000.
+                    self.grid_line_loss = float(line_loss) / 1000.
                 line_loss = config.get('Grid', 'substation_loss')
                 if line_loss[-1] == '%':
-                    self.subs_loss = float(line_loss[:-1]) / 100.
+                    self.grid_subs_loss = float(line_loss[:-1]) / 100.
                 else:
-                    self.subs_loss = float(line_loss)
+                    self.grid_subs_loss = float(line_loss)
             except:
                 pass
 
@@ -2322,12 +2410,12 @@ class FinancialModel():
             if do_grid_loss and grid[stn] != 0:
                 if do_grid_path_cost:
                     for hr in range(len(power[stn])):
-                        energy.append(power[stn][hr] * 1000 * (1 - self.line_loss * path[stn] -
-                                      self.subs_loss))
+                        energy.append(power[stn][hr] * 1000 * (1 - self.grid_line_loss * path[stn] -
+                                      self.grid_subs_loss))
                 else:
                     for hr in range(len(power[stn])):
-                        energy.append(power[stn][hr] * 1000 * (1 - self.line_loss * grid[stn] -
-                                      self.subs_loss))
+                        energy.append(power[stn][hr] * 1000 * (1 - self.grid_line_loss * grid[stn] -
+                                      self.grid_subs_loss))
             else:
                 for hr in range(len(power[stn])):
                     energy.append(power[stn][hr] * 1000)
@@ -2388,6 +2476,7 @@ class ProgressModel(QtGui.QDialog):
         main_layout.addWidget(self.progress_stn, 1, 1)
         self.setLayout(main_layout)
         self.setWindowTitle('SIREN - Power Model Progress')
+        self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         self.resize(250, 30)
 
     def handleButton(self):
@@ -2425,7 +2514,7 @@ class ProgressModel(QtGui.QDialog):
                 continue
             to_do.append(st)
         for st in to_do:
-            self.progress_stn.setText('Processing ' + self.model.stations[st].name)
+            self.progress_stn.setText('Processing ' + self.model.stations[st].name + ' (' + self.model.stations[st].technology + ')')
             stn = self.model.stations[st]
             if stn.technology[:6] == 'Fossil' and not self.model.plots['actual']:
                 value = self.progressbar.value() + 1
@@ -3257,8 +3346,7 @@ class PowerModel():
             colors = config.items('Colors')
             for item, colour in colors:
                 if item in self.technologies or self.colours.has_key(item):
-                    itm = item.replace('_', ' ').title()
-                    itm = itm.replace('Pv', 'PV')
+                    itm = techClean(item)
                     self.colours[itm] = colour
         except:
             pass
@@ -3267,8 +3355,7 @@ class PowerModel():
                 colors = config.items('Colors' + mapc)
                 for item, colour in colors:
                     if item in self.technologies or self.colours.has_key(item):
-                        itm = item.replace('_', ' ').title()
-                        itm = itm.replace('Pv', 'PV')
+                        itm = techClean(item)
                         self.colours[itm] = colour
             except:
                 pass
@@ -3331,6 +3418,11 @@ class PowerModel():
             elif item == 'orientation':
                 if values.lower()[0] == 'l':
                     landscape = True
+            elif item == 'debug_sam':
+                if values.lower() in ['true', 'yes', 'on']:
+                    self.debug = True
+                else:
+                    self.debug = False
         if papersize != '':
             if landscape:
                 bit = papersize.split(',')

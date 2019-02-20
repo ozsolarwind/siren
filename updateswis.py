@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2018 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
 #
 #  updateswis.py - This file is part of SIREN.
 #
@@ -133,6 +133,7 @@ class makeFile():
         if changes > 0:
             msgbox = QtGui.QMessageBox()
             msgbox.setWindowTitle('SIREN - updateswis Status')
+            self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
             msgbox.setText(str(changes) + ' changes. Do you want to replace existing file (Y)?')
             msgbox.setInformativeText(info)
             msgbox.setDetailedText(self.log)
@@ -525,6 +526,7 @@ class getParms(QtGui.QWidget):
         self.layout = QtGui.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
         self.setWindowTitle('SIREN - updateswis (' + fileVersion() + ') - Update SWIS Data')
+        self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         self.center()
         self.resize(int(self.sizeHint().width()* 1.07), int(self.sizeHint().height() * 1.07))
         self.show()
