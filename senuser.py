@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
 #
 #  senuser.py - This file is part of SIREN.
 #
@@ -41,3 +41,9 @@ def getUser():
         return pwd.getpwuid(os.geteuid()).pw_name
     else:
         return os.environ.get("USERNAME")
+
+def techClean(tech):
+    cleantech = tech.replace('_', ' ').title()
+    cleantech = cleantech.replace('Cst', 'CST')
+    cleantech = cleantech.replace('Pv', 'PV')
+    return cleantech
