@@ -35,7 +35,7 @@ except:
 from towns import Towns
 from grid import Grid, Grid_Boundary, Line
 from parents import getParents
-from senuser import getUser
+from senuser import getUser, techClean
 from station import Station, Stations
 from dijkstra_4 import Shortest
 
@@ -173,8 +173,7 @@ class WAScene(QtGui.QGraphicsScene):
             colours = config.items('Colors')
             for item, colour in colours:
                 if item in technologies or (item[:6] == 'fossil' and item != 'fossil_name'):
-                    itm = item.replace('_', ' ').title()
-                    itm = itm.replace('Pv', 'PV')
+                    itm = techClean(item)
                     self.colors[itm] = colour
                 else:
                     self.colors[item] = colour
@@ -183,8 +182,7 @@ class WAScene(QtGui.QGraphicsScene):
         self.areas = {}
         try:
             for item in technologies:
-                itm = item.replace('_', ' ').title()
-                itm = itm.replace('Pv', 'PV')
+                itm = techClean(item)
                 try:
                     self.areas[itm] = float(config.get(itm, 'area'))
                 except:
@@ -195,8 +193,7 @@ class WAScene(QtGui.QGraphicsScene):
             technologies = config.get('Power', 'fossil_technologies')
             technologies = technologies.split(' ')
             for item in technologies:
-                itm = item.replace('_', ' ').title()
-                itm = itm.replace('Pv', 'PV')
+                itm = techClean(item)
                 try:
                     self.areas[itm] = float(config.get(itm, 'area'))
                 except:
@@ -208,8 +205,7 @@ class WAScene(QtGui.QGraphicsScene):
                 colours = config.items('Colors' + self.map)
                 for item, colour in colours:
                     if item in technologies or (item[:6] == 'fossil' and item != 'fossil_name'):
-                        itm = item.replace('_', ' ').title()
-                        itm = itm.replace('Pv', 'PV')
+                        itm = techClean(item)
                         self.colors[itm] = colour
                     else:
                         self.colors[item] = colour
@@ -410,8 +406,7 @@ class WAScene(QtGui.QGraphicsScene):
       #   self.subs_loss=0.
         try:
             itm = config.get('Grid', 'dispatchable')
-            itm = itm.replace('_', ' ').title()
-            self.dispatchable = itm.replace('Pv', 'PV')
+            self.dispatchable = techClean(itm)
             line_loss = config.get('Grid', 'line_loss')
             if line_loss[-1] == '%':
                 self.line_loss = float(line_loss[:-1]) / 100000.
@@ -440,9 +435,14 @@ class WAScene(QtGui.QGraphicsScene):
                 self.line_width = float(line_width)
         except:
             pass
-        self.tshours = 0
+        self.cst_tshours = 0
         try:
-            self.tshours = float(config.get('Solar Thermal', 'tshours'))
+            self.cst_tshours = float(config.get('CST', 'tshours'))
+        except:
+            pass
+        self.st_tshours = 0
+        try:
+            self.st_tshours = float(config.get('Solar Thermal', 'tshours'))
         except:
             pass
 

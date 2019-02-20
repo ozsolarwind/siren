@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2016-2018 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2016-2019 Sustainable Energy Now Inc., Angus King
 #
 #  sirens.py - This file is part of SIREN.
 #
@@ -101,6 +101,7 @@ class TabDialog(QtGui.QDialog):
      #        self.invoke(entries[0][0])
      #        sys.exit()
         self.setWindowTitle('SIREN (' + fileVersion() + ') - Select SIREN Model')
+        self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         buttonLayout = QtGui.QHBoxLayout()
         self.quitButton = QtGui.QPushButton(self.tr('&Quit'))
         buttonLayout.addWidget(self.quitButton)
@@ -478,6 +479,7 @@ class makeNew(QtGui.QDialog):
                 spawnMenu.addAction(spawnitem[-1])
             self.layout.setMenuBar(menubar)
         self.setWindowTitle('SIREN (' + fileVersion() + ') - Create Preferences file')
+        self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         self.show()
 
     def filenameChanged(self):

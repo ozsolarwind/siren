@@ -28,7 +28,7 @@ import xlrd
 import ConfigParser   # decode .ini file
 
 from parents import getParents
-from senuser import getUser
+from senuser import getUser, techClean
 
 
 def within_map(x, y, poly):
@@ -135,8 +135,7 @@ class Stations:
         try:
             technologies = config.get('Power', 'technologies')
             for item in technologies.split(' '):
-                itm = item.replace('_', ' ').title()
-                itm = itm.replace('Pv', 'PV')
+                itm = techClean(item)
                 self.technologies.append(itm)
                 try:
                     self.areas[itm] = float(config.get(itm, 'area'))
@@ -148,8 +147,7 @@ class Stations:
             technologies = config.get('Power', 'fossil_technologies')
             technologies = technologies.split(' ')
             for item in technologies:
-                itm = item.replace('_', ' ').title()
-                itm = itm.replace('Pv', 'PV')
+                itm = techClean(item)
                 try:
                     self.areas[itm] = float(config.get(itm, 'area'))
                 except:
@@ -397,7 +395,7 @@ class Stations:
                                             self.stations[-1].tilt = float(facility['Tilt'])
                                     except:
                                         pass
-                                if self.stations[-1].technology == 'Solar Thermal':
+                                if self.stations[-1].technology in ['CST', 'Solar Thermal']:
                                     try:
                                         if facility['Storage Hours'] != '':
                                             self.stations[-1].storage_hours = float(facility['Storage Hours'])
@@ -500,7 +498,7 @@ class Stations:
                                     self.stations[-1].tilt = tilt
                             except:
                                 pass
-                        if self.stations[-1].technology == 'Solar Thermal':
+                        if self.stations[-1].technology in ['CST', 'Solar Thermal']:
                             try:
                                 storage_hours = worksheet.cell_value(curr_row, var['Storage Hours'])
                                 if storage_hours != '':

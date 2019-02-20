@@ -151,6 +151,7 @@ ul {
 <ul class="none">
 <li><a href="#map">Obtaining a Suitable Map Image</a></li>
 <li><a href="#swisupd">Obtaining Current SWIS Facilities</a></li>
+<li><a href="#corr">Validation of NASA MERRA-2 Data and the SAM Models</a></li>
 <li><a href="#merra">Obtaining and Using NASA MERRA-2 Data for SAM weather files</a></li>
 <li><a href="#index">Using other Weather Files</a></li>
 <li><a href="#resource">Visualising Renewable Resource Attributes</a></li>
@@ -317,8 +318,9 @@ You can also use TMY files such as those provided with SAM. If you have a number
 </tr>
 <tr class="none">
 <td class="none"><dfn>Technology</dfn></td>
-<td class="none">One of the defined technologies:- Biomass, Fixed PV, Geothermal, Solar Thermal, Rooftop PV, Tracking PV, Wind (refer to <a href="#sam">SAM Models used by SIREN</a>), and
+<td class="none">One of the defined technologies:- Biomass, CST, Fixed PV, Geothermal, Solar Thermal, Rooftop PV, Tracking PV, Wind (refer to <a href="#sam">SAM Models used by SIREN</a>), and
 <div  class="experiment">Hydro, Wave and Other (refer to <a href="#nonsam">Other Models used by SIREN (experimental)</a>)</div>
+<strong>Note:</strong> SIREN uses two of the SAM Concentrated Solar Power models. <em>Solar Thermal</em> is the SAM model for Power tower concentrating solar power (molten salt and direct steam) and <em>CST</em> is A simple "generic model" for conventional thermal
 </td>
 </tr>
 <tr class="none">
@@ -357,7 +359,7 @@ You can also use TMY files such as those provided with SAM. If you have a number
 </tr>
 <tr class="none">
 <td class="none"><dfn>Storage Hours</dfn></td>
-<td class="none">The number of hours of storage for Solar Thermal stations. If the value isn't set SIREN will use the <em>tshours</em> property in the <a href="#p_solar_thermal">[Solar Thermal]</a> Section of the Preferences file</td>
+<td class="none">The number of hours of storage for CST and Solar Thermal stations. If the value isn't set SIREN will use the <em>tshours</em> property in the <a href="#p_cst">[CST]</a> or <a href="#p_solar_thermal">[Solar Thermal]</a> Section of the Preferences file</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>Grid Line</dfn></td>
@@ -481,7 +483,7 @@ The format is similar to a Windows INI file. If you want to create a new Model y
 </ul>
 <p><strong>Note:</strong> There is a quirk with the references to technologies in the <em>[Colors]</em> Section and <em>[Grid] dispatchable</em>, <em>[Power] fossil_technologies</em>, and <em>[Power] technologies</em> variables. The technology names are changed to all lower case and spaces are replaced by underscores. Thus, <em>Fixed PV</em> will appear as <em>fixed_pv</em>.</p>
 <p>(Skip to <a href="#menus">Menus</a>)</p>
-<p>Shortcut to Sections:- <a href="#p_backtrack_pv">Backtrack PV</a>, <a href="#p_base">Base</a>, <a href="#p_biomass">Biomass</a>, <a href="#p_colors">Colors</a>,
+<p>Shortcut to Sections:- <a href="#p_backtrack_pv">Backtrack PV</a>, <a href="#p_base">Base</a>, <a href="#p_biomass">Biomass</a>, <a href="#p_colors">Colors</a>, <a href="#p_cst">CST</a>,
 <a href="#p_files">Files</a>, <a href="#financial">Financial</a>, <a href="#p_fixed_pv">Fixed PV</a>,
 <a href="#p_fossil_coal">Fossil Coal</a>, <a href="#p_fossil_cogen">Fossil Cogen</a>, <a href="#p_fossil_gas">Fossil Gas</a>,
 <a href="#p_fossil_mixed">Fossil Mixed</a>, <a href="#p_geothermal">Geothermal</a>, <a href="#p_grid">Grid</a>,
@@ -744,6 +746,43 @@ The format is similar to a Windows INI file. If you want to create a new Model y
 <tr class="none">
 <td class="none"><dfn>shortfall</dfn></td>
 <td class="none">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Also used as the augmented generation colour for the Augmented power plot</td>
+</tr>
+</table>
+</td></tr>
+<tr class="none" id="p_cst"><td><dfn><strong>[CST]</strong></dfn></td>
+<td>Specifics on CST characteristics. Properties are:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>area</dfn></td>
+<td class="none">Estimated area in km<sup>2</sup> per MW</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>capital_cost</dfn></td>
+<td class="none">Capital cost per peak MW. A suffix of K indicates thousands and M millions</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>gross_net</dfn></td>
+<td class="none">Estimated gross to net power conversion factor</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>icon</dfn></td>
+<td class="none">Icon to display for this technology. Default is solar_g.png</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>o_m_cost</dfn></td>
+<td class="none">Operations and Maintenance cost per peak MW. A suffix of K indicates thousands and M millions</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>optical_table</dfn></td>
+<td class="none">Mirror layout file. Provided by SIREN (from SAM modelling)</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>tshours</dfn></td>
+<td class="none">Hours of storage. The default is 0</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>volume</dfn></td>
+<td class="none">Storage volume in m<sup>3</sup> per MW per hour of storage. Default is 12.9858</td>
 </tr>
 </table>
 </td></tr>
@@ -1366,6 +1405,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">Include a cumulative curve for renewables</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>debug_sam</dfn></td>
+<td class="none">If a SAM model is not producing what is expected this option will cause a list of SAM variables for a model execution to be displayed in the status window or command line window. The default value is False. It is recommended to leave it as False unless you need it for debugging purposes</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>duration</dfn></td>
 <td class="none">Display load duration curves</td>
 </tr>
@@ -1598,7 +1641,8 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </table>
 </td></tr>
 <tr class="none" id="p_sam_modules"><td><dfn><strong>[SAM_Modules]</strong></dfn></td>
-<td>SAM models (modules) and default variables for each technology currently implemented. The variables files can be either CSV or Excel files. Properties are:</p>
+<td>SAM models (modules) and default variables for each technology currently implemented. The variables files can be either CSV or Excel files. Properties are as follows.</p>
+<p><strong>Note:</strong> SIREN is using SSC Version 206 which has created some changes to the default variables for <em>ippppa</em>, <em>geothermal</em>, <em>tcsgeneric_solar</em> and <em>tcsmolten_salt</em>. The variable files for these models provided by SIREN have a suffix of <em>_206</em>. You may need to adjust these variables in older SIREN Preference files</p>
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><dfn>annualoutput_variables</dfn></td>
@@ -1613,6 +1657,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <tr class="none">
 <td class="none"><dfn>biomass_variables</dfn></td>
 <td class="none">Default values required for the biomass module</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>cst_variables</dfn></td>
+<td class="none">Default values required for the CST module</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>ippppa_variables</dfn></td>
@@ -1689,6 +1737,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <tr class="none">
 <td class="none"><dfn>gross_net</dfn></td>
 <td class="none">Estimated gross to net power conversion factor</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>helio_positions</dfn></td>
+<td class="none">Heliostat layout file. Provided by SIREN (from SAM modelling)</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>icon</dfn></td>
@@ -2788,8 +2840,16 @@ By default the size of plots produced is determined by matplotlib, or by the <em
 <td class="none">A file defining additional stations on the grid. This can be either a CSV file or Excel (XLS or XLSX) file in the same format as <em>scenario</em> files. This additional file allows you to specify stations that you want to include that are not part of the existing grid, such as Rooftop PV stations</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>helio_positions</dfn></td>
+<td class="none">A simple CSV file of heliostat positions for Solar Thermal. This is provided by SIREN (from SAM modelling)</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>load</em></dfn></td>
 <td class="none">An Excel (XLS or XLSX) or CSV file containing a single column of hourly load demand for each hour of the year (8,760 hours)</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>optical_table</dfn></td>
+<td class="none">A simple CSV file of mirror/optical layout for CST. This is provided by SIREN (from SAM modelling)</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>pb_template</dfn></td>
@@ -3014,15 +3074,20 @@ Load data can also be downloaded for prior years to a filename defined by the <e
 </ul>
 </li>
 <p><a href="#help">Back to top</a></p>
+
+<h3 id="corr">Validation of NASA MERRA-2 Data and the SAM Models</h3>
+<p>SAM uses meteorological and solar data to model output of various renewable energy technologies.
+NASA MERRA-2 data is a suitable source to generate data files containing all weather variables required for input to SAM. It allows weather files to be created on a grid of 0.625 degree of longitude by 0.5 degree of latitude. This is approximately an area of 55 Km x 55 Km for the SWIS latitudes.</p>
+<p>Initial correlations between generation calculated by SAM models using NASA MERRA data and actual SCADA generation data (<a href="http://data.wa.aemo.com.au/#facility-scada" target="_blank">AEMO facility SCADA data</a>) obtained by SEN in 2014 are strong enough to support the use of NASA MERRA-derived data for the purposes of the simulation. Average correlation was 0.77, varying from 0.70 to 0.83 for wind and 0.95 for the one utility scale PV farm on the SWIS network.</p>
+<p>More recently MERRA-2 data has been used. The level of correlation measured in 2014 has continued over the years. The following figure graphically presents this correlation for 2018 by showing progressive calculated generation (solid lines) with actual SCADA data (dotted lines) for each renewable generation station on the SWIS. Average correlation for 2018 was 0.79, varying from 0.69 to 0.83 for wind and 0.94 for the one utility scale PV farm on the SWIS network.</p>
+<p>
+<img src="scada_vs_sam_2018_detailed.png" alt="Correlation">
+</p>
+<p><strong>Note:</strong> Initially, the <em>swgnt</em> (surface net downward shortwave flux) MERRA variable was used to generate the solar weather variables. This produced outputs that were slightly lower than observed data. To compensate for this a losses percentage of 5 (percent) was used for the SAM pvwattsv5 model. Subsequent work has identified the <em>swgdn</em> (surface incoming shortwave flux) MERRA-2 variable as a more appropriate resource. Using this variable, a losses percentage of 14 - the SAM default - can be used. Validation using either variable (swgnt and 5%, or swgdn and 14%) produces essentially identical results and correlations.
 <h3 id="merra">Obtaining and Using NASA MERRA-2 Data for SAM weather files</h3>
 <h4 id="merra1">Using NASA MERRA-2 Data for input to SAM</h4>
 <p>SAM uses meteorological and solar data to model output of various renewable energy technologies.
 NASA MERRA-2 data is a suitable source to generate data files containing all weather variables required for input to SAM. It allows weather files to be created on a grid of 0.625 degree of longitude by 0.5 degree of latitude. This is approximately an area of 55 Km x 55 Km for the SWIS latitudes.</p>
-<p>Initial correlations between generation calculated by SAM models using NASA MERRA data and actual observations from BOM data obtained by SEN in 2014 are strong enough to support the use of NASA MERRA-derived data for the purposes of the simulation. Average correlation was 0.77, varying from 0.70 to 0.83 for wind and 0.95 for the one utility scale PV farm on the SWIS network. The following figure graphically presents this correlation by showing progressive calculated generation (solid lines) with actual SCADA data (dotted lines) for each renewable generation station on the SWIS.</p>
-<p>
-<img src="scada_vs_sam_2014_detailed.png" alt="Correlation">
-</p>
-<p><strong>Note:</strong> Initially, the <em>swgnt</em> (surface net downward shortwave flux) MERRA variable was used to generate the solar weather variables. This produced outputs that were slightly lower than observed data. To compensate for this a losses percentage of 5 (percent) was used for the SAM pvwattsv5 model. Subsequent work has identified the <em>swgdn</em> (surface incoming shortwave flux) MERRA-2 variable as a more appropriate resource. Using this variable, a losses percentage of 14 - the SAM default - can be used. Validation using either variable (swgnt and 5%, or swgdn and 14%) produces essentially identical results and correlations.
 <p>Two MERRA-2 data files are appropriate for our needs:</p>
 <ul>
 <li><em>tavg1_2d_slv_Nx</em> for wind</li>
@@ -3608,7 +3673,7 @@ MERRA-2 Variable
 <p>To assist with placement of renewable energy stations SIREN can display a grid of renewable resource attributes derived from the SAM format weather files. This feature utilises summary data stored in a file rather than having to process hourly data from the weather files. The weather data values available are:</p>
 <ul>
 <li><em>DHI (Diffuse)</em>. Average daily DHI insolation (W)</li>
-<li><em>DNI (Normal)</em>. Average daily DNI insolation (W). Important for Solar Thermal generation</li>
+<li><em>DNI (Normal)</em>. Average daily DNI insolation (W). Important for CST and Solar Thermal generation</li>
 <li><em>GHI (Direct)</em>. Average daily GHI insolation (W). Important for PV generation</li>
 <div class="experiment">
 <li><em>Rainfall</em>. Average hourly rainfall (mm) (experimental)</li>
@@ -3664,51 +3729,66 @@ MERRA-2 Variable
 <p>If the source folder(s) contains other CSV files <code>makegrid</code> may fail. If this happens it is probably safer to copy the weather files to a separate folder.
 <p><a href="#help">Back to top</a></p>
 <h3 id="sam">SAM Models used by SIREN</h3>
-<p>SIREN uses the NREL SAM SDK API for energy calculations. This is a collection of tools developed by NREL for creating renewable energy system models. See <a href="https://sam.nrel.gov/sdk" target="_blank">SAM Simulation Core SDK</a> for details on the SDK. NREL also provide a user-friendly front end, <a href="https://sam.nrel.gov/" target="_blank">SAM</a>, to facilitate usage of the SAM models.</p>
+<p>SIREN uses the NREL SAM SDK API (or SSC) for energy calculations. The current SSC version is 206 (Feb 9 2019). This is a collection of tools developed by NREL for creating renewable energy system models. See <a href="https://sam.nrel.gov/sdk" target="_blank">SAM Simulation Core SDK</a> for details on the SDK. NREL also provide a user-friendly front end, <a href="https://sam.nrel.gov/" target="_blank">SAM</a>, to facilitate usage of the SAM models. The SAM front end will allow you to progress any modelling by SIREN to a greater level of detail.</p>
 <p>The SAM models are very comprehensive and can be quite complex. For example, there are around 200 input variables possible for the Solar Thermal model SIREN uses. To simplify the interface to SAM, SIREN uses a variable file for each technology to store default values for most variables and only requires a minimal number of variables to be set by the user, such as Capacity. The models used by SIREN and their variable files are as follows:</p>
 <table class="none">
 <tr class="none">
 <th>Technology</th>
 <th>SAM Model</th>
 <th>[SAM_Modules] property</th>
+<th>SAM Description</th>
 </tr>
 <tr class="none">
 <td>Biomass</td>
 <td>biomass</td>
 <td>biomass_variables</td>
+<td>Utility scale wind farm model (adapted from TRNSYS code by P.Quinlan and openWind software by AWS Truepower)</td>
+</tr>
+<tr class="none">
+<td>CST</td>
+<td>tcsgeneric_solar</td>
+<td>cst_variables</td>
+<td>Generic CSP model using the generic solar TCS types</td>
 </tr>
 <tr class="none">
 <td>Financial model 1</td>
 <td>annualoutput</td>
 <td>annualoutput_variables</td>
+<td>Annual Output</td>
 </tr>
 <tr class="none">
 <td>Financial model 2</td>
 <td>ippppa</td>
 <td>ippppa_variables</td>
+<td>Utility IPP/Commerical PPA Finance model</td>
 </tr>
 <tr class="none">
 <td>Geothermal</td>
 <td>geothermal</td>
 <td>geothermal_variables</td>
+<td>Geothermal monthly and hourly models using general power block code from TRNSYS Type 224 code by M.Wagner, and some GETEM model code</td>
 </tr>
 <tr class="none">
 <td>PV<br \>Fixed PV<br \>Rooftop PV<br \>Single Axis PV<br \>Backtrack PV<br \>Tracking (Dual Axis) PV</td>
 <td>pvwattsv5</td>
 <td>pv_variables</td>
+<td>PVWatts V5 - integrated hourly weather reader and PV system simulator</td>
 </tr>
 <tr class="none">
 <td>Solar Thermal</td>
 <td>tcsmolten_salt</td>
 <td>solar_thermal_variables</td>
+<td>CSP molten salt power tower with hierarchical controller and dispatch optimization</td>
 </tr>
 <tr class="none">
-<td>Wind</td>
+<td>Offshore Wind<br \>Wind</td>
 <td>windpower</td>
 <td>wind_variables</td>
+<td>Utility scale wind farm model (adapted from TRNSYS code by P.Quinlan and openWind software by AWS Truepower)</td>
 </tr>
 </table>
-<p>The variables SIREN requires are as follows. Those from the Preferences file are preceded with the Section they are in:</p>
+<p>The variables SIREN requires are as follows. Those from the Preferences file are preceded with the Section they are in.<br />
+<strong>Note:</strong> SAM Variables for tcsmolten_salt vary with SAM (SSC) Version</p>
 <table class="none">
 <tr class="none">
 <th>SAM Model</th>
@@ -3723,13 +3803,18 @@ MERRA-2 Variable
 <td>Output from Power models</td>
 </tr>
 <tr class="none">
-<td rowspan="6">biomass</td>
+<td rowspan="7">biomass</td>
 <td>biopwr.feedstock.total</td>
 <td>[Biomass] multiplier</td>
 <td>Multiply by Station Capacity</td>
 </tr>
 <tr class="none">
 <td>biopwr.feedstock.total_biomass</td>
+<td>[Biomass] multiplier</td>
+<td>Multiply by Station Capacity</td>
+</tr>
+<tr class="none">
+<td>biopwr.feedstock.total_biomass_c</td>
 <td>[Biomass] multiplier</td>
 <td>Multiply by Station Capacity</td>
 </tr>
@@ -3754,15 +3839,30 @@ MERRA-2 Variable
 <td>&nbsp;</td>
 </tr>
 <tr class="none">
-<td rowspan="2">geothermal</td>
+<td rowspan="5">geothermal</td>
 <td>file_name</td>
 <td>Station location</td>
 <td>Determines wind weather file to use</td>
 </tr>
 <tr class="none">
+<td>hybrid_dispatch_schedule</td>
+<td>n/a</td>
+<td>Computed by SIREN</td>
+</tr>
+<tr class="none">
 <td>nameplate</td>
 <td>Station Capacity</td>
 <td>&nbsp;</td>
+</tr>
+<tr class="none">
+<td>resource_potential</td>
+<td>Station Capacity * 10</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="none">
+<td>resource_type</td>
+<td>Station Technology</td>
+<td>Currently computed as EGS</td>
 </tr>
 <tr class="none">
 <td rowspan="4">ippppa</td>
@@ -3787,7 +3887,7 @@ MERRA-2 Variable
 <td>Same as construction_financing_cost</td>
 </tr>
 <tr class="none">
-<td rowspan="5">pvwattsv5</td>
+<td rowspan="7">pvwattsv5</td>
 <td>array_type</td>
 <td>Station Technology</td>
 <td>&nbsp;</td>
@@ -3811,7 +3911,7 @@ MERRA-2 Variable
 <tr class="none">
 <td>solar_resource_file</td>
 <td>Station location</td>
-<td>Determines wind weather file to use</td>
+<td>Determines solar weather file to use</td>
 </tr>
 <tr class="none">
 <td>system_capacity</td>
@@ -3819,20 +3919,97 @@ MERRA-2 Variable
 <td>Multiplied by dc_ac_ratio</td>
 </tr>
 <tr class="none">
-<td rowspan="8">tcsmolten_salt</td>
+<td>tilt</td>
+<td>Station Tilt</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="none">
+<td rowspan="10">tcsgeneric_solar</td>
+<td>file_name</td>
+<td>Station location</td>
+<td>Determines solar weather file to use</td>
+</tr>
+<tr class="none">
+<td>hrs_tes</td>
+<td>Station Storage_Hours or<br>[CST] tshours</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="none">
+<td>latitude</td>
+<td>Station latitude</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="none">
+<td>longitude</td>
+<td>Station longitude</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="none">
+<td>optical_table</td>
+<td>Mirror layout</td>
+<td>Provided by SIREN (from SAM modelling)</td>
+</tr>
+<tr class="none">
+<td>system_capacity</td>
+<td>Station Capacity</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="none">
+<td>timezone</td>
+<td>Station timezone</td>
+<td>Computed by SIREN from Station location</td>
+</tr>
+<tr class="none">
+<td>w_des</td>
+<td>Station Capacity /<br>[CST] gross_net</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="none">
+<td>weekday_schedule</td>
+<td>n/a</td>
+<td>Computed by SIREN</td>
+</tr>
+<tr class="none">
+<td>weekend_schedule</td>
+<td>n/a</td>
+<td>Computed by SIREN</td>
+</tr>
+
+<tr class="none">
+<td rowspan="13">tcsmolten_salt</td>
 <td>Design_power</td>
 <td>Station Capacity</td>
 <td>&nbsp;</td>
 </tr>
 <tr class="none">
+<td>dispatch_sched_weekday</td>
+<td>n/a</td>
+<td>Computed by SIREN</td>
+</tr>
+<tr class="none">
+<td>dispatch_sched_weekend</td>
+<td>n/a</td>
+<td>Computed by SIREN</td>
+</tr>
+<tr class="none">
+<td>gross_net_conversion_factor</td>
+<td>[Solar Thermal] gross_net</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="none">
+<td>helio_positions</td>
+<td>Heliostat layout</td>
+<td>Provided by SIREN (from SAM modelling)</td>
+</tr>
+<tr class="none">
 <td>P_ref</td>
-<td>Station Capacity /<br>[Geothermal] gross_net</td>
+<td>Station Capacity /<br>[Solar Thermal] gross_net</td>
 <td>&nbsp;</td>
 </tr>
 <tr class="none">
 <td>solar_resource_file</td>
 <td>Station location</td>
-<td>Determines wind weather file to use</td>
+<td>Determines solar weather file to use</td>
 </tr>
 <tr class="none">
 <td>system_capacity</td>
@@ -3845,8 +4022,13 @@ MERRA-2 Variable
 <td>&nbsp;</td>
 </tr>
 <tr class="none">
+<td>vol_tank</td>
+<td>Station Capacity * <br />storage hours *<br />[Solar Thermal] volume    </td>
+<td>&nbsp;</td>
+</tr>
+<tr class="none">
 <td>W_pb_design</td>
-<td>Station Capacity /<br>[Geothermal] gross_net</td>
+<td>Station Capacity /<br>[Solar Thermal] gross_net</td>
 <td>&nbsp;</td>
 </tr>
 <tr class="none">
@@ -3860,9 +4042,14 @@ MERRA-2 Variable
 <td>Computed by SIREN</td>
 </tr>
 <tr class="none">
-<td rowspan="7">windpower</td>
+<td rowspan="9">windpower</td>
 <td>system_capacity</td>
 <td>Station Capacity</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="none">
+<td>wind_farm_losses_percent</td>
+<td>[Wind] wind_farm_losses_percent</td>
 <td>&nbsp;</td>
 </tr>
 <tr class="none">
@@ -3876,9 +4063,9 @@ MERRA-2 Variable
 <td>Determines wind weather file to use</td>
 </tr>
 <tr class="none">
-<td>wind_turbine_rotor_diameter</td>
-<td>Station Rotor</td>
-<td>&nbsp;</td>
+<td>wind_turbine_cutin</td>
+<td>Station Turbine</td>
+<td>From turbine details</td>
 </tr>
 <tr class="none">
 <td>wind_turbine_powercurve_windspeeds</td>
@@ -3889,6 +4076,11 @@ MERRA-2 Variable
 <td>wind_turbine_powercurve_powerout</td>
 <td>Station Turbine</td>
 <td>From turbine details</td>
+</tr>
+<tr class="none">
+<td>wind_turbine_rotor_diameter</td>
+<td>Station Rotor</td>
+<td>&nbsp;</td>
 </tr>
 <tr class="none">
 <td>wind_turbine_cutin</td>
@@ -4248,14 +4440,20 @@ MERRA-2 Variable
 <td class="none">Capacity Factor. Average power generated divided by rated capacity (peak power)</td></tr>
 <tr><td class="none"><dfn>CO<sub>2</sub>-e</dfn></td>
 <td class="none">A measure of greenhouse gas emissions in carbon dioxide equivalence. Greenhouse gas emissions can be one of a number of gases including carbon dioxide (CO<sub>2</sub>), methane (CH<sub>4</sub>) and nitrous oxide (N<sub>2</sub>O). The equivalence measure allows the global warming potential of each greenhouse gas to be standardised relative to carbon dioxide</td></tr>
+<tr><td class="none"><dfn>CSP</dfn> or <dfn>CST</dfn></td>
+<td class="none">concentrated solar thermal power</td></tr>
 <tr><td class="none"><dfn>CSV</dfn></td>
 <td class="none">comma-separated-variable file</td></tr>
+<tr><td class="none"><dfn>debugging</dfn></td>
+<td class="none">The process of identifying and removing errors from computer hardware or software</td></tr>
 <tr><td class="none"><dfn>DHI</dfn></td>
 <td class="none">Diffuse Horizontal Irradiance</td></tr>
 <tr><td class="none"><dfn>DNI</dfn></td>
 <td class="none">Direct Normal Irradiance</td></tr>
 <tr><td class="none"><dfn>DSCR</dfn></td>
 <td class="none">Debt-Service Coverage Ratio</td></tr>
+<tr><td class="none"><dfn>EGS</dfn></td>
+<td class="none">Enhanced Geothermal Systems geothermal energy</td></tr>
 <tr><td class="none"><dfn>EOS</dfn></td>
 <td class="none">Earth Observing System</td></tr>
 <tr><td class="none"><dfn>FTP</dfn></td>
@@ -4264,8 +4462,6 @@ MERRA-2 Variable
 <td class="none">Greenwich Mean Time. It is the mean solar time at the Royal Observatory in Greenwich, London. GMT was formerly used as the international civil time standard, now superseded in that function by Coordinated Universal Time (UTC).</td></tr>
 <tr><td class="none"><dfn>GEOS-5</dfn></td>
 <td class="none">Goddard Earth Observing System Data Assimilation System Version 5</td></tr>
-<tr><td class="none"><dfn>EGS</dfn></td>
-<td class="none">Enhanced Geothermal Systems geothermal energy</td></tr>
 <tr><td class="none"><dfn>GHI</dfn></td>
 <td class="none">Global Horizontal Irradiance</td></tr>
 <tr><td class="none"><dfn>GMAO</dfn></td>

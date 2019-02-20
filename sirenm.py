@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2015-2018 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
 #
 #  siren.py - This file is part of SIREN.
 #
@@ -43,7 +43,7 @@ import displayobject
 import newstation
 from plotweather import PlotWeather
 from powermodel import PowerModel
-from senuser import getUser
+from senuser import getUser, techClean
 from station import Station, Stations
 from wascene import WAScene
 from editini import EdtDialog, EditTech, EditSect, SaveIni
@@ -1227,7 +1227,7 @@ class MainWindow(QtGui.QMainWindow):
         self.floatstatus = None
         self.power_signal = None
         utilities = ['getmap', 'getmerra2', 'indexweather', 'makegrid', 'makerainfall2', 'makeweather2', 'powerbalance2', 'updateswis']
-        utilini = [True, True, True, True, False, False, True, True]
+        utilini = [True, False, True, True, False, False, True, True]
         utilicon = ['map.png', 'download.png', 'list.png', 'grid.png', 'rain.png', self.weather_icon, 'power.png', 'list.png']
         spawns = []
         icons = []
@@ -1395,8 +1395,7 @@ class MainWindow(QtGui.QMainWindow):
             colours = colours0
         for item, colour in colours:
             if item in technologies or (item[:6] == 'fossil' and item != 'fossil_name'):
-                itm = item.replace('_', ' ').title()
-                itm = itm.replace('Pv', 'PV')
+                itm = techClean(item)
             else:
                 itm = item
             if itm == 'ruler':
@@ -1708,6 +1707,7 @@ class MainWindow(QtGui.QMainWindow):
             self.floatstatus.procStart.connect(self.getStatus)
             if self.log_status:
                 self.connect(self.floatstatus, QtCore.SIGNAL('log'), self.floatstatus.log)
+                self.connect(self.floatstatus, QtCore.SIGNAL('log2'), self.floatstatus.log2)
             self.connect(self.floatstatus, QtCore.SIGNAL('scenarios'), self.floatstatus.updateScenarios)
             self.floatstatus.show()
             self.activateWindow()
@@ -3069,10 +3069,16 @@ class MainWindow(QtGui.QMainWindow):
                             lens[fields.index('Grid Line')] = max(lens[fields.index('Grid Line')],
                                                                len(str(stn.grid_line)))
                         if stn.storage_hours is not None:
-                            if stn.storage_hours != self.view.scene().tshours:
-                                ws.write(ctr, fields.index('Storage Hours'), stn.storage_hours)
-                                lens[fields.index('Storage Hours')] = max(lens[fields.index('Storage Hours')],
-                                                                      len(str(stn.storage_hours)))
+                            if stn.technology == 'CST':
+                                if stn.storage_hours != self.view.scene().cst_tshours:
+                                    ws.write(ctr, fields.index('Storage Hours'), stn.storage_hours)
+                                    lens[fields.index('Storage Hours')] = max(lens[fields.index('Storage Hours')],
+                                                                          len(str(stn.storage_hours)))
+                            elif stn.technology == 'Solar Thermal':
+                                if stn.storage_hours != self.view.scene().st_tshours:
+                                    ws.write(ctr, fields.index('Storage Hours'), stn.storage_hours)
+                                    lens[fields.index('Storage Hours')] = max(lens[fields.index('Storage Hours')],
+                                                                          len(str(stn.storage_hours)))
                         try:
                             if stn.direction is not None:
                                 ws.write(ctr, fields.index('Direction'), str(stn.direction))
@@ -3106,6 +3112,7 @@ def main():
     QtGui.QShortcut(QtGui.QKeySequence('x'), mw, mw.exit)
     ver = fileVersion()
     mw.setWindowTitle('SIREN (' + ver + ') - ' + scene.model_name)
+    mw.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
     scene_ratio = float(mw.view.scene().width()) / mw.view.scene().height()
     screen = QtGui.QDesktopWidget().availableGeometry()
     screen_ratio = float(screen.width()) / screen.height()

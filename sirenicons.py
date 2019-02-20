@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#  Copyright (C) 2016 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2016-2019 Sustainable Energy Now Inc., Angus King
 #
 #  sirenicons.py - This file is part of SIREN.
 #
@@ -21,6 +21,7 @@
 
 import ConfigParser   # decode .ini file
 import sys
+from senuser import techClean
 
 
 class Icons:
@@ -31,22 +32,21 @@ class Icons:
         else:
             config_file = 'SIREN.ini'
         config.read(config_file)
-        self.icons = {'Biomass': 'biomass_g.png', 'Fossil': 'fossil_g.png', 'Geothermal': 'hot_rocks_g.png',
-                      'Hydro': 'hydro_g.png', 'Other': 'question.png', 'PV': 'solar_pv_g.png',
+        self.icons = {'Biomass': 'biomass_g.png', 'CST': 'solar_g.png', 'Fossil': 'fossil_g.png',
+                      'Geothermal': 'hot_rocks_g.png', 'Hydro': 'hydro_g.png',
+                      'Other': 'question.png', 'PV': 'solar_pv_g.png',
                       'Solar Thermal': 'solar_g.png', 'Wave': 'wave_g.png', 'Wind': 'wind_g.png'}
         try:
             technologies = config.get('Power', 'technologies').split(' ')
             for tec in technologies:
-                tec = tec.replace('_', ' ').title()
-                tec = tec.replace('Pv', 'PV')
+                tec = techClean(tec)
                 try:
                     self.icons[tec] = config.get(tec, 'icon')
                 except:
                     pass
             technologies = config.get('Power', 'fossil_technologies').split(' ')
             for tec in technologies:
-                tec = tec.replace('_', ' ').title()
-                tec = tec.replace('Pv', 'PV')
+                tec = techClean(tec)
                 try:
                     self.icons[tec] = config.get(tec, 'icon')
                 except:

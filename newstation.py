@@ -26,7 +26,7 @@ import sys
 import ConfigParser  # decode .ini file
 from PyQt4 import QtGui, QtCore
 
-from senuser import getUser
+from senuser import getUser, techClean
 from parents import getParents
 from station import Station
 from turbine import Turbine
@@ -103,8 +103,7 @@ class AnObject(QtGui.QDialog):
         try:
             technologies = config.get('Power', 'technologies')
             for item in technologies.split(' '):
-                itm = item.replace('_', ' ').title()
-                itm = itm.replace('Pv', 'PV')
+                itm = techClean(item)
                 self.technologies.append(itm)
                 try:
                     self.areas[itm] = float(config.get(itm, 'area'))
@@ -112,9 +111,14 @@ class AnObject(QtGui.QDialog):
                     self.areas[itm] = 0.
         except:
             pass
-        self.tshours = 0
+        self.cst_tshours = 0
         try:
-            self.tshours = float(config.get('Solar Thermal', 'tshours'))
+            self.cst_tshours = float(config.get('CST', 'tshours'))
+        except:
+            pass
+        self.st_tshours = 0
+        try:
+            self.st_tshours = float(config.get('Solar Thermal', 'tshours'))
         except:
             pass
 
@@ -330,7 +334,13 @@ class AnObject(QtGui.QDialog):
                 if attr is not None:
                     self.edit.append(QtGui.QLineEdit(str(self.storage_hours)))
                 else:
-                    self.edit.append(QtGui.QLineEdit(str(self.tshours)))
+                    try:
+                        if str(self.techcomb.currentText()) == 'CST':
+                            self.edit.append(QtGui.QLineEdit(str(self.cst_tshours)))
+                        else:
+                            self.edit.append(QtGui.QLineEdit(str(self.st_tshours)))
+                    except:
+                        pass
             elif self.field[i] == 'direction':
                 self.direction = attr
                 self.show_hide['direction'] = len(self.edit)
@@ -395,7 +405,7 @@ class AnObject(QtGui.QDialog):
         else:
             self.curve.hide()
             self.turbine_classd.hide()
-            if str(self.techcomb.currentText()) == 'Solar Thermal':
+            if str(self.techcomb.currentText()) in ['CST', 'Solar Thermal']:
                 show_fields.append(cst_fields)
                 hide_fields.append(pv_fields)
                 hide_fields.append(wind_fields)
@@ -429,7 +439,10 @@ class AnObject(QtGui.QDialog):
         self.turbine_classd.setText(self.turbines[val][1])
 
     def turbineSort(self):
-        curr_turbine = self.turbine.currentText()
+        try:
+            curr_turbine = self.turbine.currentText()
+        except:
+            curr_turbine = ''
         if self.turbines_sorted:
             self.turbines_sorted = False
             self.turbines.sort(key=lambda x: x[3])
@@ -555,7 +568,7 @@ class AnObject(QtGui.QDialog):
             self.capacity = self.no_turbines * turbine.capacity / 1000.  # reduce from kW to MW
             self.rotor = turbine.rotor
             self.area = self.areas[self.technology] * float(self.no_turbines) * pow((self.rotor * .001), 2)
-        elif self.technology == 'Solar Thermal':
+        elif self.technology  in ['CST', 'Solar Thermal']:
             self.area = self.areas[self.technology] * float(self.capacity)  # temp calc. Should be 3.83 x collector area
         elif self.technology == 'Geothermal':
             self.area = self.areas[self.technology] * float(self.capacity)
@@ -583,12 +596,19 @@ class AnObject(QtGui.QDialog):
                     station.direction = self.direction
                 if self.tilt is not None:
                     station.tilt = self.tilt
-            if self.storage_hours is not None and self.technology == 'Solar Thermal':
-                try:
-                    if self.storage_hours != self.tshours:
-                        station.storage_hours = float(self.storage_hours)
-                except:
-                    pass
+            if self.storage_hours is not None:
+                if self.technology == 'CST':
+                    try:
+                        if self.storage_hours != self.cst_tshours:
+                            station.storage_hours = float(self.storage_hours)
+                    except:
+                        pass
+                elif self.technology == 'Solar Thermal':
+                    try:
+                        if self.storage_hours != self.st_tshours:
+                            station.storage_hours = float(self.storage_hours)
+                    except:
+                        pass
             return station
         else:
             return None
