@@ -91,6 +91,7 @@ class Power_Curve:
             self.capacity = last_valu
         else:
             print 'No', pow_file
+            return None
 
     def Power(self, wind_speed):
         """return power for wind speed."""
@@ -153,9 +154,13 @@ class Turbine:
                          if self.powers[i] > 0 and self.cutin == 0:
                              self.cutin = self.speeds[i]
                      self.wind_class = turbine['IEC Wind Speed Class']
+                     turb_fil.close()
                      break
              else:
+                 turb_fil.close()
                  pow_turbine = Power_Curve(name, poly)
+                 if not hasattr(pow_turbine, 'capacity'):
+                     return None
                  self.capacity = pow_turbine.capacity
                  self.cutin = pow_turbine.cutin
                  self.rotor = pow_turbine.rotor
@@ -172,7 +177,7 @@ class Turbine:
                          self.powers.append(last_pow)
                      else:
                          self.powers.append(powr)
-             turb_fil.close()
+
 
     def Power(self):
         """return power curve values for wind speed."""
@@ -180,6 +185,8 @@ class Turbine:
 
     def PowerCurve(self):
         """plot power curve."""
+        if not hasattr(self, 'speeds'):
+            return None
         plt.plot(self.speeds, self.powers, linewidth=2.0)
         plt.title('Power Curve for ' + self.name)
         plt.grid(True)
