@@ -48,7 +48,6 @@ from visualise import Visualise
 
 the_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
-
 def split_array(array):
     arry = []
     varbl = array.replace('(', '[')
@@ -72,7 +71,6 @@ def split_array(array):
         for bit in bits:
             arry.append(int(bit))
     return arry
-
 
 def split_matrix(matrix):
     mtrx = []
@@ -102,7 +100,6 @@ def split_matrix(matrix):
             for bit in bits:
                 mtrx[-1].append(int(bit))
     return mtrx
-
 
 def the_date(year, h):
     mm = 0
@@ -235,7 +232,7 @@ class whatPlots(QtGui.QDialog):
                     i += 1
                     label = QtGui.QLabel('        Discharge cap (MW) & loss (%)')
                     self.dischargeSpin = QtGui.QDoubleSpinBox()
-                    self.dischargeSpin.setDecimals(2)
+                    self.dischargeSpin.setDecimals(3)
                     self.dischargeSpin.setRange(0, 50000)  # max is 10% of capacity
                     self.dischargeSpin.setValue(self.discharge[0])
                     self.dischargeSpin.setSingleStep(5)
@@ -248,7 +245,7 @@ class whatPlots(QtGui.QDialog):
                     i += 1
                     label = QtGui.QLabel('        Recharge cap (MW) & loss (%)')
                     self.rechargeSpin = QtGui.QDoubleSpinBox()
-                    self.rechargeSpin.setDecimals(2)
+                    self.rechargeSpin.setDecimals(3)
                     self.rechargeSpin.setRange(0, 50000)  # max is 10% of capacity
                     self.rechargeSpin.setValue(self.recharge[0])
                     self.rechargeSpin.setSingleStep(5)
@@ -259,7 +256,7 @@ class whatPlots(QtGui.QDialog):
                     self.grid.addWidget(self.rechargeSpin, i, 1)
                     self.grid.addWidget(self.rechargepctSpin, i, 2)
                     i += 1
-                elif self.plot_order[plot] == 'summary':  # fudge to add in iterations stuff
+                elif self.plot_order[plot] == 'summary' and 'shortfall' in self.plot_order:  # fudge to add in iterations stuff
                     self.iterLabel = QtGui.QLabel('        Shortfall. Choose analysis iterations')
                     self.iterSpin = QtGui.QSpinBox()
                     self.iterSpin.setRange(0, 3)
@@ -344,7 +341,8 @@ class whatPlots(QtGui.QDialog):
                 if not self.initial:
                     if self.plot_order[i] in self.initials:
                         continue
-                self.checkbox[i].setCheckState(QtCore.Qt.Checked)
+                if self.checkbox[i].isEnabled():
+                    self.checkbox[i].setCheckState(QtCore.Qt.Checked)
         else:
             for i in range(len(self.checkbox)):
                 if self.plot_order[i] == 'show_menu':
@@ -352,12 +350,13 @@ class whatPlots(QtGui.QDialog):
                 if not self.initial:
                     if self.plot_order[i] in self.initials:
                         continue
-                self.checkbox[i].setCheckState(QtCore.Qt.Unchecked)
+                if self.checkbox[i].isEnabled():
+                    self.checkbox[i].setCheckState(QtCore.Qt.Unchecked)
 
     def check_balance(self, event):
         if event:
             for i in range(len(self.checkbox)):
-                if self.plot_order[i] == 'show_load' or self.plot_order[i] == 'grid_losses':
+                if self.plot_order[i] == 'show_load': # or self.plot_order[i] == 'grid_losses':
                     self.checkbox[i].setCheckState(QtCore.Qt.Checked)
 
     def closeEvent(self, event):
@@ -1224,13 +1223,13 @@ class SuperPower():
             print 'Variable list complete for ' + tech + ' - ' + name
         return
 
-    def __init__(self, stations, plots, show_progress=None, parent=None, year=None, selected=None, status=None):
+    def __init__(self, stations, plots, parent=None, year=None, selected=None, status=None, progress=None):
         self.stations = stations
         self.plots = plots
-        self.show_progress = show_progress
         self.power_summary = []
         self.selected = selected
         self.status = status
+        self.progress = progress
         config = ConfigParser.RawConfigParser()
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
@@ -1491,6 +1490,23 @@ class SuperPower():
         except:
             self.grid_subs_loss = 0.
             self.grid_line_loss = 0.
+        if self.progress is None:
+            self.show_progress = None
+        else:
+            progress_bar = True
+            try:
+                progress_bar = config.get('View', 'progress_bar')
+                if progress_bar in ['false', 'no', 'off']:
+                    self.show_progress = None
+                else:
+                    self.show_progress = True
+                    try:
+                        self.progress_bar = int(progress_bar)
+                    except:
+                        self.progress_bar = 0
+            except:
+                self.show_progress = True
+                self.progress_bar = 0
         self.debug = False
         try:
             debug = config.get('Power', 'debug_sam')
@@ -1528,14 +1544,11 @@ class SuperPower():
             self.ly['Generation'] = []
             for i in range(len_x):
                 self.ly['Generation'].append(0.)
-     #   if self.plots['by_station']:
-     #       self.plots['show_pct'] = False
-        if not self.show_progress:
-            self.getPowerLoop()
-            self.getPowerDone()
+        self.getPowerLoop()
 
     def getPowerLoop(self):
         self.all_done = False
+        to_do = []
         for st in range(len(self.stations)):
             if self.plots['by_station']:
                 if self.stations[st].name not in self.selected:
@@ -1547,13 +1560,27 @@ class SuperPower():
             if self.stations[st].technology[:6] == 'Fossil' \
               and not self.plots['actual']:
                 continue
-            stn = self.stations[st]
-            if stn.technology[:6] == 'Fossil' and not self.plots['actual']:
+            to_do.append(st)
+        show_progress = False
+        if self.show_progress:
+            if self.progress_bar == 0:
+                show_progress = True
+                self.progress.emit(QtCore.SIGNAL('range'), 0, len(to_do))
+            elif len(to_do) >= self.progress_bar:
+                show_progress = True
+                self.progress.emit(QtCore.SIGNAL('range'), 0, len(to_do))
+        for st in range(len(to_do)):
+  #      for st in range(len(self.stations)):
+            stn = self.stations[to_do[st]]
+            if show_progress:
                 try:
-                    value = self.progressbar.value() + 1
-                    self.progressbar.setValue(value)
+                    self.progress.emit(QtCore.SIGNAL('progress'), st, 'Processing ' + stn.name + ' (' + stn.technology + ')')
+                    QtGui.qApp.processEvents()
+                    if not self.progress.be_open:
+                        break
                 except:
-                    pass
+                    break
+            if stn.technology[:6] == 'Fossil' and not self.plots['actual']:
                 continue
             if self.plots['by_station']:
                 if stn.name not in self.selected:
@@ -1621,22 +1648,8 @@ class SuperPower():
             else:
                 pt = PowerSummary(stn.name, stn.technology, total_power, stn.capacity)
             self.power_summary.append(pt)
-            if self.show_progress:
-                value = self.progressbar.value() + 1
-                if value > self.progressbar.maximum():
-                    self.all_done = True
-                    break
-                self.progressbar.setValue(value)
-                QtGui.qApp.processEvents()
-                if not self._active:
-                    break
-        else:
-            self.all_done = True
-        if self.show_progress:
-            self.close()
-
-    def getPowerDone(self):
-        return
+        if show_progress:
+            self.progress.emit(QtCore.SIGNAL('progress'), -1)
 
     def getStationPower(self, station):
         def do_module(modname, station, field):
@@ -1755,6 +1768,7 @@ class SuperPower():
             return None
         if self.status:
             self.status.emit(QtCore.SIGNAL('log'), 'Processing ' + station.name + ' (' + station.technology + ')')
+            QtGui.qApp.processEvents()
         self.data = None
         self.data = ssc.Data()
         if 'Wind' in station.technology:
@@ -1765,6 +1779,8 @@ class SuperPower():
             closest = self.find_closest(station.lat, station.lon, wind=True)
             self.data.set_string('wind_resource_filename', self.wind_files + '/' + closest)
             turbine = Turbine(station.turbine)
+            if not hasattr(turbine, 'capacity'):
+                return None
             no_turbines = int(station.no_turbines)
             if station.scenario == 'Existing' and (no_turbines * turbine.capacity) != (station.capacity * 1000):
                 loss = round(1. - (station.capacity * 1000) / (no_turbines * turbine.capacity), 2)
@@ -2301,6 +2317,7 @@ class FinancialModel():
             else:
                 if self.status:
                    self.status.emit(QtCore.SIGNAL('log'), 'Errors encountered processing ' + name[stn])
+                   QtGui.qApp.processEvents()
                 idx = 0
                 msg = module.log(idx)
                 while (msg is not None):
@@ -2425,11 +2442,8 @@ class FinancialModel():
             if (module.exec_(annual_data)):
              # return the relevant outputs desired
                 net_hourly = annual_data.get_array('hourly_energy')
-                print '(2344)', net_hourly
                 net_annual = annual_data.get_array('annual_energy')
-                print '(2346)', net_annual
                 degradation = annual_data.get_array('annual_degradation')
-                print '(2348)', degradation
                 del module
                 do_ippppa()
             else:
@@ -2452,172 +2466,6 @@ class FinancialModel():
     def getParms(self):
         return self.parms
 
-
-class ProgressModel(QtGui.QDialog):
-    def __init__(self, stations, plots, show_progress, year=None, selected=None, status=None):
-        super(ProgressModel, self).__init__()
-        self.plots = plots
-        self.model = SuperPower(stations, self.plots, False, year=year, selected=selected, status=status)
-        self._active = False
-        self.power_summary = []
-        self.model.show_progress = show_progress
-        self.progressbar = QtGui.QProgressBar()
-        self.progressbar.setMinimum(1)
-        try:
-            self.progressbar.setMaximum(len(self.model.selected))
-        except:
-            self.progressbar.setMaximum(len(self.model.stations))
-        self.button = QtGui.QPushButton('Start')
-        self.button.clicked.connect(self.handleButton)
-        self.progress_stn = QtGui.QLabel('Note: Solar Thermal Stations take a while to process')
-        main_layout = QtGui.QGridLayout()
-        main_layout.addWidget(self.button, 0, 0)
-        main_layout.addWidget(self.progressbar, 0, 1)
-        main_layout.addWidget(self.progress_stn, 1, 1)
-        self.setLayout(main_layout)
-        self.setWindowTitle('SIREN - Power Model Progress')
-        self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
-        self.resize(250, 30)
-
-    def handleButton(self):
-        if not self._active:
-            self._active = True
-            if self.progressbar.value() == self.progressbar.maximum():
-                # self.progressbar.reset()
-                self.button.setText('Finished')
-            else:
-                self.button.setText('Stop')
-                self.model.getPower()
-                self.getPowerLoop()
-        else:
-            self.close()
-            self._active = False
-            self.button.setText('Start')
-
-    def closeEvent(self, event):
-        self._active = False
-        event.accept()
-
-    def getPowerLoop(self):
-        self.model.all_done = False
-        to_do = []
-        for st in range(len(self.model.stations)):
-            if self.model.plots['by_station']:
-                if self.model.stations[st].name not in self.model.selected:
-                    continue
-            if self.model.stations[st].technology == 'Rooftop PV' \
-              and self.model.stations[st].scenario == 'Existing' \
-              and not self.plots['gross_load']:
-                continue
-            if self.model.stations[st].technology[:6] == 'Fossil' \
-              and not self.model.plots['actual']:
-                continue
-            to_do.append(st)
-        for st in to_do:
-            self.progress_stn.setText('Processing ' + self.model.stations[st].name + ' (' + self.model.stations[st].technology + ')')
-            stn = self.model.stations[st]
-            if stn.technology[:6] == 'Fossil' and not self.model.plots['actual']:
-                value = self.progressbar.value() + 1
-                self.progressbar.setValue(value)
-                continue
-            if self.model.plots['by_station']:
-                if stn.name not in self.model.selected:
-                    continue
-            if self.model.plots['save_data'] or self.model.plots['financials'] or self.plots['save_detail']:
-                self.model.stn_outs.append(stn.name)
-                self.model.stn_tech.append(stn.technology)
-                self.model.stn_size.append(stn.capacity)
-                self.model.stn_pows.append([])
-                if stn.grid_len is not None:
-                    self.model.stn_grid.append(stn.grid_len)
-                else:
-                    self.model.stn_grid.append(0.)
-                if stn.grid_path_len is not None:
-                    self.model.stn_path.append(stn.grid_path_len)
-                else:
-                    self.model.stn_path.append(0.)
-            elif self.model.plots['save_tech'] or self.plots['save_balance']:
-                self.model.stn_outs.append(stn.name)
-                self.model.stn_tech.append(stn.technology)
-            elif self.plots['visualise']:
-                self.model.stn_outs.append(stn.name)
-                self.model.stn_pows.append([])
-            if stn.technology == 'Rooftop PV' and stn.scenario == 'Existing' \
-              and not self.model.plots['gross_load']:
-                continue
-            if self.model.plots['by_station']:
-                if stn.name not in self.model.selected:
-                    continue
-                key = stn.name
-            else:
-                if stn.technology == 'Rooftop PV' and stn.scenario == 'Existing':
-                    key = 'Existing Rooftop PV'
-                else:
-                    key = stn.technology
-            power = self.model.getStationPower(stn)
-            total_power = 0.
-            total_energy = 0.
-            if power is None:
-                pass
-            else:
-                if key in self.model.ly:
-                    pass
-                else:
-                    self.model.ly[key] = []
-                    for i in range(len(self.model.x)):
-                        self.model.ly[key].append(0.)
-                for i in range(len(power)):
-                    if self.model.plots['grid_losses']:
-                        if stn.grid_path_len is not None:
-                            enrgy = power[i] * (1 - self.model.line_loss * stn.grid_path_len -
-                                    self.model.subs_loss)
-                        else:
-                            enrgy = power[i] * (1 - self.model.subs_loss)
-                        self.model.ly[key][i] += enrgy / 1000.
-                        total_energy += enrgy / 1000.
-                        self.model.ly['Generation'][i] += power[i] / 1000.
-                    else:
-                        self.model.ly[key][i] += power[i] / 1000.
-                    total_power += power[i] / 1000.
-                    if self.model.plots['save_data'] or self.model.plots['financials'] or \
-                      self.plots['save_detail'] or self.plots['visualise']:
-                        self.model.stn_pows[-1].append(power[i] / 1000.)
-            if total_energy > 0:
-                pt = PowerSummary(stn.name, stn.technology, total_power, stn.capacity,
-                                  total_energy)
-            else:
-                pt = PowerSummary(stn.name, stn.technology, total_power, stn.capacity)
-            self.power_summary.append(pt)
-            value = self.progressbar.value() + 1
-            if value > self.progressbar.maximum():
-                self.model.all_done = True
-                break
-            self.progressbar.setValue(value)
-            QtGui.qApp.processEvents()
-            if not self._active:
-                break
-        else:
-            self.model.all_done = True
-        self.close()
-        self.model.getPowerDone()
-
-    def getValues(self):
-        return self.power_summary
-
-    def getPct(self):
-        return self.model.getPct()
-
-    def getLy(self):
-        return self.model.getLy()
-
-    def getStnOuts(self):
-        return self.model.getStnOuts()
-
-    def getStnTech(self):
-        return self.model.getStnTech()
-
-    def getStnPows(self):
-        return self.model.getStnPows()
 
 class PowerModel():
     powerExit = QtCore.pyqtSignal(str)
@@ -2752,7 +2600,7 @@ class PowerModel():
             else:
                 miny = 0
             if self.plots['save_plot']:
-                titl = 'by_' + period
+                titl = 'By_' + period
                 decpts = [3] * len(sp_vals)
                 decpts[0] = decpts[1] = 0
                 dialog = displaytable.Table(map(list, zip(*sp_data)), title=titl, fields=sp_vals, save_folder=self.scenarios, decpts=decpts)
@@ -3704,7 +3552,7 @@ class PowerModel():
             else:
                 miny = 0
             if self.plots['save_plot']:
-                titl = 'hour'
+                titl = 'Hour'
                 decpts = [3] * len(sp_vals)
                 decpts[0] = decpts[1] = 0
                 dialog = displaytable.Table(map(list, zip(*sp_data)), title=titl, fields=sp_vals, save_folder=self.scenarios, decpts=decpts)
@@ -3848,7 +3696,7 @@ class PowerModel():
                 e = len(sp_data) - 1
                 sp_tots.append(0.)
                 sp_pts.append(4)
-                titl = 'augmented'
+                titl = 'Augmented'
                 dialog = displaytable.Table(map(list, zip(*sp_data)), title=titl, fields=sp_vals, save_folder=self.scenarios, decpts=sp_pts)
                 dialog.exec_()
                 del dialog
@@ -4209,8 +4057,11 @@ class PowerModel():
                 sfx = plt.subplot(111)
                 sfx.plot(x, shortfall[0], linewidth=self.other_width, label='Shortfall', color=self.colours['shortfall'])
                 for s in range(1, self.iterations + 1):
-                    lbl = 'iteration %s - add %s MW to generation' % \
-                          (s, '{:0,.0f}'.format(h_storage[s - 1]))
+                    if h_storage[s - 1] > 1:
+                        amt = '{:0,.0f}'.format(h_storage[s - 1])
+                    else:
+                        amt = '{:0,.1f}'.format(h_storage[s - 1])
+                    lbl = 'iteration %s - add %s MW to generation' % (s, amt )
                     sfx.plot(x, shortfall[s], linewidth=self.other_width, label=lbl, color=colours[s])
                 plt.xticks(range(0, len(x), 168))
                 tick_spot = []
@@ -4245,8 +4096,11 @@ class PowerModel():
                 sfx = plt.subplot(111)
                 sfx.plot(x, shortfall[0], linewidth=self.other_width, label='Shortfall', color=self.colours['shortfall'])
                 for s in range(1, self.iterations + 1):
-                    lbl = 'iteration %s - add %s MW to generation' % \
-                          (s, '{:0,.0f}'.format(h_storage[s - 1]))
+                    if h_storage[s - 1] > 1:
+                        amt = '{:0,.0f}'.format(h_storage[s - 1])
+                    else:
+                        amt = '{:0,.1f}'.format(h_storage[s - 1])
+                    lbl = 'iteration %s - add %s MW to generation' % (s, amt )
                     sfx.plot(x, shortfall[s], linewidth=self.other_width, label=lbl, color=colours[s])
                 plt.axhline(0, color='black')
                 plt.xticks(range(0, len(x), 168))
@@ -4291,7 +4145,7 @@ class PowerModel():
                                       rgen[i], shortfall[0][i]], values=vals))
             vals.insert(0, 'period')
             vals.insert(0, 'hour')
-            if self.plots['shortfall_detail']:
+            if self.plots['shortfall_detail'] and self.plots['save_plot']:
                 dialog = displaytable.Table(shortstuff, title='Hourly Shortfall',
                                             save_folder=self.scenarios, fields=vals)
                 dialog.exec_()
@@ -4325,7 +4179,7 @@ class PowerModel():
             if self.plots['show_pct']:
                 load_sum = 0.
                 gen_sum = 0.
-            for key, value in iter(sorted(ydata.iteritems())):
+            for key in iter(sorted(l24.iterkeys())):
                 if key == 'Generation':
                     continue
                 if self.plots['show_pct']:
@@ -4349,9 +4203,9 @@ class PowerModel():
                     for j in range(len(x24)):
                         gross_load[j] += l24[key][j]
                 if self.plots['shortfall'] and key[:4] == 'Load':
-                    load = value
+                    load = l24[key]
                 if self.plots['shortfall'] and key == 'Storage':
-                    storage = value
+                    storage = l24[key]
                 tx.plot(x24, l24[key], linewidth=lw, label=shrinkKey(key), color=self.colours[key],
                         linestyle=self.linestyle[key])
                 if self.plots['save_plot']:
@@ -4378,10 +4232,10 @@ class PowerModel():
                 load2 = []
                 if storage is None:
                     for i in range(len(cumulative)):
-                        load2.append(cumulative[i] - load[i])
+                        load2.append(cumulative[i] - l24[self.load_key][i])
                 else:
                     for i in range(len(cumulative)):
-                        load2.append(cumulative[i] + storage[i] - load[i])
+                        load2.append(cumulative[i] + storage[i] - l24[self.load_key][i])
                 tx.plot(x24, load2, linewidth=self.other_width, label='Shortfall', color=self.colours['shortfall'])
                 plt.axhline(0, color='black')
                 miny = min(load2)
@@ -4393,10 +4247,11 @@ class PowerModel():
             else:
                 miny = 0
             if self.plots['save_plot']:
-                titl = 'total'
+                titl = 'Total'
                 decpts = [3] * len(sp_vals)
                 decpts[0] = 0
-                dialog = displaytable.Table(map(list, zip(*sp_data)), title=titl, fields=sp_vals, save_folder=self.scenarios, decpts=decpts)
+                dialog = displaytable.Table(map(list, zip(*sp_data)), title=titl, fields=sp_vals,
+                                            save_folder=self.scenarios, decpts=decpts)
                 dialog.exec_()
                 del dialog, sp_data, sp_vals
             plt.ylim([miny, maxy])
@@ -4521,11 +4376,13 @@ class PowerModel():
             wb.save(data_file)
             del wb
 
-    def __init__(self, stations, show_progress=None, year=None, status=None, visualise=None, loadonly=False):
+#       __init__ for PowerModel
+    def __init__(self, stations, year=None, status=None, visualise=None, loadonly=False, progress=None):
         self.something = visualise
         self.something.power_signal = self
         self.status = status
         self.stations = stations
+        self.progress = progress
         config = ConfigParser.RawConfigParser()
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
@@ -4595,10 +4452,23 @@ class PowerModel():
             helpfile = helpfile.replace('$YEAR$', self.base_year)
         except:
             helpfile = ''
-        try:
-            progress_bar = config.get('View', 'progress_bar')
-        except:
+        if self.progress is None:
+            self.show_progress = None
+        else:
             progress_bar = True
+            try:
+                progress_bar = config.get('View', 'progress_bar')
+                if progress_bar in ['false', 'no', 'off']:
+                    self.show_progress = None
+                else:
+                    self.show_progress = True
+                    try:
+                        self.progress_bar = int(self.progress_bar)
+                    except:
+                        self.progress_bar = 0
+            except:
+                self.show_progress = True
+                self.progress_bar = 0
 #
 #       choose what power data to collect (once only)
 #
@@ -4609,7 +4479,7 @@ class PowerModel():
                            'duration', 'augment', 'shortfall_detail', 'summary', 'save_data', 'save_detail',
                            'save_tech', 'save_balance', 'financials']
         self.initials = ['actual', 'by_station', 'grid_losses', 'save_data', 'gross_load',
-                         'summary', 'financials', 'show_menu']
+                         'summary', 'financials'] #, 'show_menu']
         self.hdrs = {'show_menu': 'Check / Uncheck all',
                 'actual': 'Generation - use actual generation figures',
                 'cumulative': 'Generation - total (cumulative)',
@@ -4650,9 +4520,13 @@ class PowerModel():
             self.plots[self.plot_order[i]] = False
         self.load_year = self.base_year
         if loadonly:
+            if self.load_file == '' or not os.path.exists(self.load_file):
+                self.load_file = None
+                return
             plot_order = ['show_menu', 'save_plot', 'maximise', 'block', 'by_day', 'by_month', 'by_season',
                            'by_period', 'hour', 'total', 'month', 'season', 'period']
             spacers = {'maximise': 'Choose plots (all use a full year of data)'}
+            self.plots['show_load'] == True
             what_plots = whatPlots(self.plots, plot_order, self.hdrs, spacers, 0., self.base_year, self.load_year,
                                    0, [0, 0], [0, 0], [0, 0], [], initial=False, helpfile=helpfile)
             what_plots.exec_()
@@ -4719,6 +4593,17 @@ class PowerModel():
             self.plot_order.remove('cumulative')
             self.plot_order.remove('by_station')
             self.plot_order.remove('gross_load')
+      # check if we can find a load file
+        if self.load_file == '' or not os.path.exists(self.load_file):
+            self.can_do_load = False
+            self.plot_order.remove('augment')
+            self.plot_order.remove('duration')
+            self.plot_order.remove('show_load')
+            self.plot_order.remove('show_pct')
+            self.plot_order.remove('shortfall')
+            self.plot_order.remove('shortfall_detail')
+        else:
+            self.can_do_load = True
         if self.show_menu:
             if __name__ == '__main__':
                 app = QtGui.QApplication(sys.argv)
@@ -4747,63 +4632,21 @@ class PowerModel():
 #
 #       collect the data (once only)
 #
-        if show_progress is not None:
-            progress_bar = show_progress
-        self.show_progress = True
-        if isinstance(progress_bar, bool):
-           if not progress_bar:
-               self.show_progress = False
-        else:
-           if progress_bar.lower() in ['false', 'no', 'off']:
-               self.show_progress = False
-           else:
-               ctr = 0
-               for st in stations:
-                   if st.technology[:6] != 'Fossil':
-                       ctr += 1
-               try:
-                   if int(progress_bar) > ctr:
-                       self.show_progress = False
-               except:
-                   pass
         self.stn_outs = []
-        if self.show_progress:
-            power = ProgressModel(stations, self.plots, True, year=self.base_year,
-                                  selected=self.selected, status=self.status)
-            power.open()
-            if __name__ == '__main__':
-                app.exec_()
-            else:
-                power.exec_()
-            if len(power.power_summary) == 0:
-                return
-            self.power_summary = power.power_summary
-            self.gen_pct = power.getPct()
-            self.ly, self.x = power.getLy()
-            if self.ly is None:
-                return
-            if self.plots['save_data'] or self.plots['financials'] or self.plots['save_detail']:
-                self.stn_outs, self.stn_tech, self.stn_size, self.stn_pows, self.stn_grid, \
-                  self.stn_path = power.getStnOuts()
-            elif self.plots['save_tech'] or self.plots['save_balance']:
-                self.stn_outs, self.stn_tech = power.getStnTech()
-            elif self.plots['visualise']:
-                self.stn_outs, self.stn_pows = power.getStnPows()
-        else:
-            self.model = SuperPower(stations, self.plots, False, year=self.base_year,
-                                    selected=self.selected, status=status)
-            self.model.getPower()
-            if len(self.model.power_summary) == 0:
-                return
-            self.power_summary = self.model.power_summary
-            self.ly, self.x = self.model.getLy()
-            if self.plots['save_data'] or self.plots['financials'] or self.plots['save_detail']:
-                self.stn_outs, self.stn_tech, self.stn_size, self.stn_pows, self.stn_grid, \
-                  self.stn_path = self.model.getStnOuts()
-            elif self.plots['save_tech'] or self.plots['save_balance']:
-                self.stn_outs, self.stn_tech = self.model.getStnTech()
-            elif self.plots['visualise']:
-                self.stn_outs, self.stn_pows = self.model.getStnPows()
+        self.model = SuperPower(stations, self.plots, False, year=self.base_year,
+                                selected=self.selected, status=status, progress=self.progress)
+        self.model.getPower()
+        if len(self.model.power_summary) == 0:
+            return
+        self.power_summary = self.model.power_summary
+        self.ly, self.x = self.model.getLy()
+        if self.plots['save_data'] or self.plots['financials'] or self.plots['save_detail']:
+            self.stn_outs, self.stn_tech, self.stn_size, self.stn_pows, self.stn_grid, \
+              self.stn_path = self.model.getStnOuts()
+        elif self.plots['save_tech'] or self.plots['save_balance']:
+            self.stn_outs, self.stn_tech = self.model.getStnTech()
+        elif self.plots['visualise']:
+            self.stn_outs, self.stn_pows = self.model.getStnPows()
         self.suffix = ''
         if len(self.stations) == 1:
             self.suffix = ' - ' + self.stations[0].name
@@ -4854,15 +4697,6 @@ class PowerModel():
                 plt.switch_backend('TkAgg')
             self.gen_pct = None
             self.load_data = None
-            if os.path.exists(self.load_file):
-                self.can_do_load = True
-            else:
-                self.plots['show_load'] = False
-                self.plots['show_pct'] = False
-                self.can_do_load = False
-                self.initials.append('augment')
-                self.initials.append('show_load')
-                self.initials.append('show_pct')
             if self.plots['save_detail']:
                 pass
             else:
@@ -4889,7 +4723,8 @@ class PowerModel():
                     except:
                         pass
                     self.load_key = ''
-                if (self.plots['show_load'] or self.plots['save_balance'] or self.plots['shortfall']) and self.can_do_load:
+                if (self.plots['show_load'] or self.plots['save_balance'] or self.plots['shortfall'] \
+                    or self.plots['shortfall_detail']) and self.can_do_load:
                     if self.load_data is None:
                         tf = open(self.load_file, 'r')
                         lines = tf.readlines()
@@ -4960,20 +4795,9 @@ class PowerModel():
                     self.do_load = False
                 else:
                     self.do_load = True
-                if self.plots['show_load'] and self.storage[0] > 0:
-                    storage_cap = self.storage[0] * 1000.
-                    if self.storage[1] > self.storage[0]:
-                        storage_carry = self.storage[0] * 1000.
-                    else:
-                        storage_carry = self.storage[1] * 1000.
-                    total_gen = [0.]
-                    storage_bal = []
-                    storage_losses = []
-                    wrkly['Storage'] = [0.]
-                    wrkly['Excess'] = [0.]
-                    for i in range(1, len(self.x)):
-                        wrkly['Storage'].append(0.)
-                        wrkly['Excess'].append(0.)
+                if self.plots['show_load']:
+                    total_gen = []
+                    for i in range(len(self.x)):
                         total_gen.append(0.)
                     for key, value in wrkly.iteritems():
                         if key == 'Generation':
@@ -4985,62 +4809,114 @@ class PowerModel():
                         else:
                             for i in range(len(value)):
                                 total_gen[i] += value[i]
-                    for i in range(len(self.x)):
-                        gap = gape = total_gen[i] - wrkly[self.load_key][i]
-                        storage_loss = 0.
-                        if gap >= 0:  # excess generation
-                            if self.recharge[0] > 0 and gap > self.recharge[0]:
-                                gap = self.recharge[0]
-                            if storage_carry >= storage_cap:
-                                wrkly['Excess'][i] = gape
-                            else:
-                                if storage_carry + gap > storage_cap:
-                                    gap = (storage_cap - storage_carry) * (1 / self.recharge[1])
-                                storage_loss = gap - gap * self.recharge[1]
-                                storage_carry += gap - storage_loss
-                                if gape - gap > 0:
-                                    wrkly['Excess'][i] = gape - gap
-                                if storage_carry > storage_cap:
-                                    storage_carry = storage_cap
-                        else:
-                            if self.discharge[0] > 0 and -gap > self.discharge[0]:
-                                gap = -self.discharge[0]
-                            if storage_carry > -gap / self.discharge[1]:  # extra storage
-                                wrkly['Storage'][i] = -gap
-                                storage_loss = gap * self.discharge[1] - gap
-                                storage_carry += gap - storage_loss
-                            else:  # not enough storage
-                                if self.discharge[0] > 0 and storage_carry > self.discharge[0]:
-                                    storage_carry = self.discharge[0]
-                                wrkly['Storage'][i] = storage_carry * (1 / (2 - self.discharge[1]))
-                                storage_loss = storage_carry - wrkly['Storage'][i]
-                                storage_carry = 0 # ???? bug ???
-                        storage_bal.append(storage_carry)
-                        storage_losses.append(storage_loss)
-                    if show_summ:
-                        shortstuff = []
-                        summs['Shortfall'] = ['', '', 0., 0]
+                    if self.storage[0] > 0:
+                        wrkly['Storage'] = []
+                        wrkly['Excess'] = []
                         for i in range(len(self.x)):
-                            shortfall = total_gen[i] + wrkly['Storage'][i] - wrkly[self.load_key][i]
-                            if shortfall > 0:
-                                shortfall = 0
-                            summs['Shortfall'][2] += shortfall
-                            shortstuff.append(ColumnData(i + 1, the_date(self.load_year, i),
-                                              [wrkly[self.load_key][i], total_gen[i],
-                                              wrkly['Storage'][i], storage_losses[i],
-                                              storage_bal[i], shortfall, wrkly['Excess'][i]],
-                                              values=['load', 'generation', 'storage_used',
-                                                      'storage_loss', 'storage_balance',
-                                                      'shortfall', 'excess']))
-                        dialog = displaytable.Table(shortstuff, title='Storage',
-                                                    save_folder=self.scenarios,
-                                                    fields=['hour', 'period', 'load', 'generation',
-                                                            'storage_used', 'storage_loss',
-                                                            'storage_balance', 'shortfall', 'excess'])
-                        dialog.exec_()
-                        del dialog
-                        del shortstuff
-                        summs['Shortfall'][2] = round(summs['Shortfall'][2], 1)
+                            wrkly['Storage'].append(0.)
+                            wrkly['Excess'].append(0.)
+                        storage_cap = self.storage[0] * 1000.
+                        if self.storage[1] > self.storage[0]:
+                            storage_carry = self.storage[0] * 1000.
+                        else:
+                            storage_carry = self.storage[1] * 1000.
+                        storage_bal = []
+                        storage_losses = []
+                        for i in range(len(self.x)):
+                            gap = gape = total_gen[i] - wrkly[self.load_key][i]
+                            storage_loss = 0.
+                            if gap >= 0:  # excess generation
+                                if self.recharge[0] > 0 and gap > self.recharge[0]:
+                                    gap = self.recharge[0]
+                                if storage_carry >= storage_cap:
+                                    wrkly['Excess'][i] = gape
+                                else:
+                                    if storage_carry + gap > storage_cap:
+                                        gap = (storage_cap - storage_carry) * (1 / self.recharge[1])
+                                    storage_loss = gap - gap * self.recharge[1]
+                                    storage_carry += gap - storage_loss
+                                    if gape - gap > 0:
+                                        wrkly['Excess'][i] = gape - gap
+                                    if storage_carry > storage_cap:
+                                        storage_carry = storage_cap
+                            else:
+                                if self.discharge[0] > 0 and -gap > self.discharge[0]:
+                                    gap = -self.discharge[0]
+                                if storage_carry > -gap / self.discharge[1]:  # extra storage
+                                    wrkly['Storage'][i] = -gap
+                                    storage_loss = gap * self.discharge[1] - gap
+                                    storage_carry += gap - storage_loss
+                                else:  # not enough storage
+                                    if self.discharge[0] > 0 and storage_carry > self.discharge[0]:
+                                        storage_carry = self.discharge[0]
+                                    wrkly['Storage'][i] = storage_carry * (1 / (2 - self.discharge[1]))
+                                    storage_loss = storage_carry - wrkly['Storage'][i]
+                                    storage_carry = 0 # ???? bug ???
+                            storage_bal.append(storage_carry)
+                            storage_losses.append(storage_loss)
+                        if self.plots['shortfall_detail']:
+                            shortstuff = []
+                            for i in range(len(self.x)):
+                                shortfall = total_gen[i] + wrkly['Storage'][i] - wrkly[self.load_key][i]
+                                if shortfall > 0:
+                                    shortfall = 0
+                                shortstuff.append(ColumnData(i + 1, the_date(self.load_year, i),
+                                                  [wrkly[self.load_key][i], total_gen[i],
+                                                  wrkly['Storage'][i], storage_losses[i],
+                                                  storage_bal[i], shortfall, wrkly['Excess'][i]],
+                                                  values=['load', 'generation', 'storage_used',
+                                                          'storage_loss', 'storage_balance',
+                                                          'shortfall', 'excess']))
+                            dialog = displaytable.Table(shortstuff, title='Storage',
+                                                        save_folder=self.scenarios,
+                                                        fields=['hour', 'period', 'load', 'generation',
+                                                                'storage_used', 'storage_loss',
+                                                                'storage_balance', 'shortfall', 'excess'])
+                            dialog.exec_()
+                            del dialog
+                            del shortstuff
+                        if show_summ:
+                            summs['Shortfall'] = ['', '', 0., 0]
+                            summs['Excess'] = ['', '', 0., 0]
+                            for i in range(len(self.x)):
+                                if total_gen[i] > wrkly[self.load_key][i]:
+                                    summs['Excess'][2] += total_gen[i] - wrkly[self.load_key][i]
+                                else:
+                                    summs['Shortfall'][2] += total_gen[i]  - wrkly[self.load_key][i]
+                            summs['Shortfall'][2] = round(summs['Shortfall'][2], 1)
+                            summs['Excess'][2] = round(summs['Excess'][2], 1)
+                    elif show_summ or self.plots['shortfall_detail']:
+                        if self.plots['shortfall_detail']:
+                            shortstuff = []
+                            for i in range(len(self.x)):
+                                if total_gen[i] > wrkly[self.load_key][i]:
+                                    excess = total_gen[i] - wrkly[self.load_key][i]
+                                    shortfall = 0
+                                else:
+                                    shortfall = total_gen[i]  - wrkly[self.load_key][i]
+                                    excess = 0
+                                shortstuff.append(ColumnData(i + 1, the_date(self.load_year, i),
+                                                  [wrkly[self.load_key][i], total_gen[i],
+                                                   shortfall, excess],
+                                                  values=['load', 'generation',
+                                                          'shortfall', 'excess']))
+                            dialog = displaytable.Table(shortstuff, title='Hourly Shortfall',
+                                                        save_folder=self.scenarios,
+                                                        fields=['hour', 'period', 'load', 'generation',
+                                                                'shortfall', 'excess'])
+                            dialog.exec_()
+                            del dialog
+                            del shortstuff
+                        else:
+                            summs['Shortfall'] = ['', '', 0., 0]
+                            summs['Excess'] = ['', '', 0., 0]
+                            for i in range(len(self.x)):
+                                if total_gen[i] > wrkly[self.load_key][i]:
+                                    summs['Excess'][2] += total_gen[i] - wrkly[self.load_key][i]
+                                else:
+                                    summs['Shortfall'][2] += total_gen[i] - wrkly[self.load_key][i]
+                            summs['Shortfall'][2] = round(summs['Shortfall'][2], 1)
+                            summs['Excess'][2] = round(summs['Excess'][2], 1)
                 if show_summ and self.adjustby is not None:
                     keys = []
                     for key in wrkly:
@@ -5062,11 +4938,11 @@ class PowerModel():
                         except:
                             summs[key] = ['', '', round(gen, 1), 0]
                     keys.sort()
-                    xtra = ['Generation', 'Load', 'Gen. - Load', 'Storage Capacity', 'Storage', 'Excess', 'Shortfall']
+                    xtra = ['Generation', 'Load', 'Gen. - Load', 'Storage Capacity', 'Storage', 'Shortfall', 'Excess']
                     o = 0
                     gen = 0.
                     if self.storage[0] > 0:
-                        summs['Storage Capacity'] = ['', '', self.storage[0] * 1000., 0]
+                        summs['Storage Capacity'] = [self.storage[0] * 1000., '', '', 0]
                     for i in range(len(keys)):
                         if keys[i][:4] == 'Load':
                             xtra[1] = keys[i]
