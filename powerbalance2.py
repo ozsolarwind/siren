@@ -160,7 +160,7 @@ class Adjustments(QtGui.QDialog):
         self.scroll.setWidget(frame)
         self.layout = QtGui.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
-        self.setWindowTitle('SIREN - PowerBalance2 - Adjust renewables')
+        self.setWindowTitle('SIREN - PB2 - Adjust renewables')
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
         self.show()
@@ -285,24 +285,32 @@ class powerBalance(QtGui.QWidget):
         msg_palette.setColor(QtGui.QPalette.Foreground, QtCore.Qt.red)
         self.log.setPalette(msg_palette)
         self.grid.addWidget(self.log, 8, 1, 1, 4)
+        self.progressbar = QtGui.QProgressBar()
+        self.progressbar.setMinimum(0)
+        self.progressbar.setMaximum(10)
+        self.progressbar.setValue(0)
+        self.progressbar.setStyleSheet('QProgressBar {border: 1px solid grey; border-radius: 2px; text-align: center;}' \
+                                       + 'QProgressBar::chunk { background-color: #6891c6;}')
+        self.grid.addWidget(self.progressbar, 9, 1, 1, 4)
+        self.progressbar.setHidden(True)
         quit = QtGui.QPushButton('Done', self)
-        self.grid.addWidget(quit, 9, 0)
+        self.grid.addWidget(quit, 10, 0)
         quit.clicked.connect(self.quitClicked)
         QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
         edit = [None, None]
         for i in range(2):
             edit[i] = QtGui.QPushButton(self.file_labels[i], self)
-            self.grid.addWidget(edit[i], 9, 1 + i)
+            self.grid.addWidget(edit[i], 10, 1 + i)
             edit[i].clicked.connect(self.editClicked)
         wdth = edit[1].fontMetrics().boundingRect(edit[1].text()).width() + 9
         pb = QtGui.QPushButton('PowerBalance', self)
      #   pb.setMaximumWidth(wdth)
-        self.grid.addWidget(pb, 9, 3)
+        self.grid.addWidget(pb, 10, 3)
         pb.clicked.connect(self.pbClicked)
         help = QtGui.QPushButton('Help', self)
         help.setMaximumWidth(wdth)
         quit.setMaximumWidth(wdth)
-        self.grid.addWidget(help, 9, 5)
+        self.grid.addWidget(help, 10, 5)
         help.clicked.connect(self.helpClicked)
         QtGui.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
         try:
@@ -439,7 +447,6 @@ class powerBalance(QtGui.QWidget):
             dialog.exec_()
             if dialog.getValues() is not None:
                 newgenerators = dialog.getValues()
-                print '(361)', generators
                 self.setOrder(generators)
         if ts is not None:
             ts.release_resources()
@@ -580,6 +587,9 @@ class powerBalance(QtGui.QWidget):
 
     def pbClicked(self):
         self.log.setText('PowerBalance processing started')
+        self.progressbar.setMinimum(0)
+        self.progressbar.setMaximum(10)
+        self.progressbar.setHidden(False)
         details = self.details
         try:
             if str(self.files[0].text()).find('/') >= 0:
@@ -592,6 +602,7 @@ class powerBalance(QtGui.QWidget):
             del ts
         except:
             self.log.setText('Error accessing Constraints.')
+            self.progressbar.setHidden(True)
             return
         try:
             if str(self.files[1].text()).find('/') >= 0:
@@ -604,6 +615,7 @@ class powerBalance(QtGui.QWidget):
             del ts
         except:
             self.log.setText('Error accessing Generators.')
+            self.progressbar.setHidden(True)
             return
         start_time = time.time()
         clock_start = time.clock()
@@ -624,6 +636,7 @@ class powerBalance(QtGui.QWidget):
             if ws.cell_value(0, 0) != 'Hourly Shortfall Table' \
               or ws.cell_value(0, 4) != 'Generation Summary Table':
                 self.log.setText('not a pb1 spreadsheet')
+                self.progressbar.setHidden(True)
                 return
             for row in range(20):
                 if ws.cell_value(row, 5) == 'Total':
@@ -642,6 +655,7 @@ class powerBalance(QtGui.QWidget):
             top_row = ws.max_row - 8760
             if ws.cell(row=top_row, column=1).value != 'Hour' or ws.cell(row=top_row, column=2).value != 'Period':
                 self.log.setText('not a pb data spreadsheet')
+                self.progressbar.setHidden(True)
                 return
             typ_row = top_row - 1
             while typ_row > 0:
@@ -674,15 +688,17 @@ class powerBalance(QtGui.QWidget):
                 adjustby = adjust.getValues()
                 if adjustby is None:
                     self.log.setText('Execution aborted.')
+                    self.progressbar.setHidden(True)
                     return
             load_col = -1
             det_col = 3
+            self.progressbar.setValue(1)
             for col in range(3, ws.max_column + 1):
                 try:
                     valu = ws.cell(row=typ_row, column=col).value.replace('-','')
                     i = tech_names.index(valu)
                 except:
-                    break
+                    break # ?? or continue??
                 if tech_names[i] != 'Load':
                     if ws.cell(row=icap_row, column=col).value <= 0:
                         continue
@@ -726,31 +742,33 @@ class powerBalance(QtGui.QWidget):
                 data_file = self.scenarios + str(self.files[3].text())
         if not xlsx:
             data_file += 'x'
+        self.progressbar.setValue(2)
+        headers = ['Facility', 'Capacity (MW)', 'Subtotal (MWh)', 'CF', 'Cost ($)', 'LCOE ($/MWh)', 'Emissions (tCO2e)']
         ds = oxl.Workbook()
         ns = ds.active
         ns.title = 'Detail'
         ss = ds.create_sheet('Summary', 0)
         cap_row = 1
-        ns.cell(row=cap_row, column=2).value = 'Capacity (MW)'
-        ss.cell(row=3, column=1).value = 'Facility'
-        ss.cell(row=3, column=2).value = 'Capacity (MW)'
+        ns.cell(row=cap_row, column=2).value = headers[1]
+        ss.cell(row=3, column=1).value = headers[0]
+        ss.cell(row=3, column=2).value = headers[1]
         ini_row = 2
         ns.cell(row=ini_row, column=2).value = 'Initial Capacity'
         sum_row = 3
-        ns.cell(row=sum_row, column=2).value = 'Subtotal (MWh)'
-        ss.cell(row=3, column=3).value = 'Subtotal (MWh)'
+        ns.cell(row=sum_row, column=2).value = headers[2]
+        ss.cell(row=3, column=3).value = headers[2]
         cf_row = 4
-        ns.cell(row=cf_row, column=2).value = 'CF'
-        ss.cell(row=3, column=4).value = 'CF'
+        ns.cell(row=cf_row, column=2).value = headers[3]
+        ss.cell(row=3, column=4).value = headers[3]
         cost_row = 5
-        ns.cell(row=cost_row, column=2).value = 'Cost ($)'
-        ss.cell(row=3, column=5).value = 'Cost ($)'
+        ns.cell(row=cost_row, column=2).value = headers[4]
+        ss.cell(row=3, column=5).value = headers[4]
         lcoe_row = 6
-        ns.cell(row=lcoe_row, column=2).value = 'LCOE ($/MWh)'
-        ss.cell(row=3, column=6).value = 'LCOE ($/MWh)'
+        ns.cell(row=lcoe_row, column=2).value = headers[5]
+        ss.cell(row=3, column=6).value = headers[5]
         emi_row = 7
-        ns.cell(row=emi_row, column=2).value = 'Emissions (tCO2e)'
-        ss.cell(row=3, column=7).value = 'Emissions (tCO2e)'
+        ns.cell(row=emi_row, column=2).value = headers[6]
+        ss.cell(row=3, column=7).value = headers[6]
         ss_row = 3
         fall_row = 8
         ns.cell(row=fall_row, column=2).value = 'Shortfall periods'
@@ -854,6 +872,7 @@ class powerBalance(QtGui.QWidget):
             order.append(str(self.order.item(itm).text()))
         col = shrt_col + 1
         #storage? = []
+        self.progressbar.setValue(3)
         for gen in order:
             if constraints[generators[gen].constraint].category == 'Storage': # storage
                 storage = [0., 0., 0., 0.] # capacity, initial, min level, max drain
@@ -948,6 +967,7 @@ class powerBalance(QtGui.QWidget):
                 ns.cell(row=cf_row, column=col).value = '=' + ss_col(col) + '3/' + ss_col(col) + '1/8760'
                 ns.cell(row=cf_row, column=col).number_format = '#,##0.00'
                 col += 2
+        self.progressbar.setValue(4)
         for column_cells in ns.columns:
             length = 0
             value = ''
@@ -1006,6 +1026,7 @@ class powerBalance(QtGui.QWidget):
                         + str(hrows) + ':' + ss_col(col + 1) + str(hrows + 8759) + ',">0")'
                 ns.cell(row=fall_row, column=col + 1).number_format = '#,##0'
                 col += 2
+        self.progressbar.setValue(6)
         ns.row_dimensions[what_row].height = 30
         ns.freeze_panes = 'C' + str(hrows)
         ns.activeCell = 'C' + str(hrows)
@@ -1100,6 +1121,7 @@ class powerBalance(QtGui.QWidget):
         ss.cell(row=ss_row, column=2).value = str(self.files[1].text()) \
                + '.' + str(self.sheets[1].currentText())
         ss.merge_cells('B' + str(ss_row) + ':G' + str(ss_row))
+        self.progressbar.setValue(7)
         try:
             if adjustby is not None:
                 adjusted = ''
@@ -1115,12 +1137,14 @@ class powerBalance(QtGui.QWidget):
         ss.freeze_panes = 'B4'
         ss.activeCell = 'B4'
         ds.save(data_file)
+        self.progressbar.setValue(10)
         j = data_file.rfind('/')
         data_file = data_file[j + 1:]
         msg = '%s created (%.2f or %.2f seconds)' % (data_file, time.time() - start_time,
               time.clock() - clock_start)
         msg = '%s created.' % data_file
         self.log.setText(msg)
+        self.progressbar.setHidden(True)
 
 if "__main__" == __name__:
     app = QtGui.QApplication(sys.argv)

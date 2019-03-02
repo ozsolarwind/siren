@@ -52,9 +52,7 @@ from credits import Credits, fileVersion
 from grid import dust
 from parents import getParents
 from viewresource import Resource
-from floatmenu import FloatMenu
-from floatlegend import FloatLegend
-from floatstatus import FloatStatus
+from floaters import FloatLegend, FloatMenu, FloatStatus, ProgressBar
 from sirenicons import Icons
 
 
@@ -926,6 +924,17 @@ class MainWindow(QtGui.QMainWindow):
                 self.zoom = 0.75
         except:
             pass
+        self.progress_bar = True
+        try:
+            self.progress_bar = config.get('View', 'progress_bar')
+            if self.progress_bar in ['false', 'no', 'off']:
+                self.progress_bar = False
+            try:
+                self.progress_bar = int(self.progress_bar)
+            except:
+                pass
+        except:
+            pass
 
     def __init__(self, scene):
         QtGui.QMainWindow.__init__(self)
@@ -1225,6 +1234,7 @@ class MainWindow(QtGui.QMainWindow):
         self.floatmenu = None
         self.floatlegend = None
         self.floatstatus = None
+        self.progressbar = None
         self.power_signal = None
         utilities = ['getmap', 'getmerra2', 'indexweather', 'makegrid', 'makerainfall2', 'makeweather2', 'powerbalance2', 'updateswis']
         utilini = [True, False, True, True, False, False, True, True]
@@ -1711,12 +1721,21 @@ class MainWindow(QtGui.QMainWindow):
             self.connect(self.floatstatus, QtCore.SIGNAL('scenarios'), self.floatstatus.updateScenarios)
             self.floatstatus.show()
             self.activateWindow()
-     #        self.credits.exec_()
 
     @QtCore.pyqtSlot(str)
     def getStatus(self, text):
         if text == 'goodbye':
             self.floatstatus = None
+
+    def show_ProgressBar(self):
+        if self.progressbar is None:
+            self.progressbar = ProgressBar()
+            self.progressbar.setWindowModality(QtCore.Qt.WindowModal)
+            self.connect(self.progressbar, QtCore.SIGNAL('progress'), self.progressbar.progress)
+            self.connect(self.progressbar, QtCore.SIGNAL('range'), self.progressbar.range)
+            self.progressbar.show()
+            self.progressbar.setVisible(False)
+            self.activateWindow()
 
     def showAbout(self):
         dialog = displayobject.AnObject(QtGui.QDialog(), self.aboutfile, title='About SENs SAM Model')
@@ -2194,6 +2213,7 @@ class MainWindow(QtGui.QMainWindow):
                         if self.view.scene()._scenarios[i][0] == station.scenario \
                         or self.view.scene()._scenarios[i][0] == s_was:
                             self.view.scene()._scenarios[i][1] = True
+                    self.view.scene().refreshGrid()
                     comment = 'Altered station %s (%s,%s) ' % (station.name,
                               '{:0.4f}'.format(station.lat), '{:0.4f}'.format(station.lon))
                     self.view.emit(QtCore.SIGNAL('statusmsg'), comment)
@@ -2320,10 +2340,12 @@ class MainWindow(QtGui.QMainWindow):
     def get_Power(self):
         self.view.scene().exitLoop = False
         self.escape.setVisible(True)
+        if self.progress_bar > 0 and self.progressbar is None:
+            self.show_ProgressBar()
         if self.sender().text()[:4] == 'Powe':
-            power = PowerModel(self.view.scene()._stations.stations, status=self.floatstatus, visualise=self)
+            power = PowerModel(self.view.scene()._stations.stations, status=self.floatstatus, visualise=self, progress=self.progressbar)
         else:
-            power = PowerModel(self.view.scene()._stations.stations, year=self.sender().text(), status=self.floatstatus, visualise=self)
+            power = PowerModel(self.view.scene()._stations.stations, year=self.sender().text(), status=self.floatstatus, visualise=self, progress=self.progressbar)
         self.escape.setVisible(False)
         generated = power.getValues()
         if generated is None:
@@ -2345,6 +2367,11 @@ class MainWindow(QtGui.QMainWindow):
             power = PowerModel(None, visualise=self, loadonly=True)
         else:
             power = PowerModel(None, year=self.sender().text(), visualise=self, loadonly=True)
+        if power.load_file is None:
+            comment = 'Load for ' + self.sender().text()[-4:] + ' not available'
+            del power
+            self.view.emit(QtCore.SIGNAL('statusmsg'), comment)
+            return
         tf = open(power.load_file, 'r')
         lines = tf.readlines()
         tf.close()
@@ -2368,6 +2395,7 @@ class MainWindow(QtGui.QMainWindow):
             power.suffix = ' - ' + str(self.sender().text())
         else:
             power.suffix = ' - Load for ' + str(self.sender().text())
+        power.do_load = True
         power.showGraphs({'Load': load_data}, range(8760))
         comment = power.suffix[2:] + ' displayed'
         del power, load_data
