@@ -127,25 +127,37 @@ class Facility:
 
 
 class Adjustments(QtGui.QDialog):
-    def __init__(self, data):
+    def __init__(self, data, adjustin):
         super(Adjustments, self).__init__()
         self.adjusts = {}
         self.checkbox = {}
+        self.labels = {}
         self.results = None
         self.grid = QtGui.QGridLayout()
+        self.data = {}
         ctr = 0
         for key, capacity in data:
             if key != 'Load' and capacity is None:
                 continue
             self.adjusts[key] = QtGui.QDoubleSpinBox()
             self.adjusts[key].setRange(0, 25)
-            self.adjusts[key].setValue(1.)
+            try:
+                self.adjusts[key].setValue(adjustin[key])
+            except:
+                self.adjusts[key].setValue(1.)
+            self.data[key] = capacity
             self.adjusts[key].setDecimals(2)
             self.adjusts[key].setSingleStep(.1)
+            self.adjusts[key].setObjectName(key)
             self.grid.addWidget(QtGui.QLabel(key), ctr, 0)
             self.grid.addWidget(self.adjusts[key], ctr, 1)
             if key != 'Load':
-                self.grid.addWidget(QtGui.QLabel(str(capacity) + 'MW'), ctr, 2)
+                self.adjusts[key].valueChanged.connect(self.adjust)
+                self.labels[key] = QtGui.QLabel('')
+                self.labels[key].setObjectName(key + 'label')
+                mw = '{:.0f} MW'.format(capacity * self.adjusts[key].value())
+                self.labels[key].setText(mw)
+                self.grid.addWidget(self.labels[key], ctr, 2)
             ctr += 1
         quit = QtGui.QPushButton('Quit', self)
         self.grid.addWidget(quit, ctr, 0)
@@ -164,6 +176,11 @@ class Adjustments(QtGui.QDialog):
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
         self.show()
+
+    def adjust(self):
+        key = str(self.sender().objectName())
+        mw = '{:.0f} MW'.format(self.data[key] * self.sender().value())
+        self.labels[key].setText(mw)
 
     def closeEvent(self, event):
         event.accept()
@@ -248,9 +265,16 @@ class powerBalance(QtGui.QWidget):
                          self.details = False
         except:
             pass
+        self.adjustby = None
         self.initUI()
 
     def initUI(self):
+   #     self.tabs = QtGui.QTabWidget()    # Create tabs
+   #     tab1 = QtGui.QWidget()
+   #     tab2 = QtGui.QWidget()
+   #     tab3 = QtGui.QWidget()
+   #     tab4 = QtGui.QWidget()
+   #     tab5 = QtGui.QWidget()
         self.grid = QtGui.QGridLayout()
         self.files = [None] * 4
         self.sheets = self.file_labels[:]
@@ -307,6 +331,10 @@ class powerBalance(QtGui.QWidget):
      #   pb.setMaximumWidth(wdth)
         self.grid.addWidget(pb, 10, 3)
         pb.clicked.connect(self.pbClicked)
+        pbs = QtGui.QPushButton('PB2 Summ', self)
+     #   pb.setMaximumWidth(wdth)
+        self.grid.addWidget(pbs, 10, 4)
+        pbs.clicked.connect(self.pbClicked)
         help = QtGui.QPushButton('Help', self)
         help.setMaximumWidth(wdth)
         quit.setMaximumWidth(wdth)
@@ -328,6 +356,12 @@ class powerBalance(QtGui.QWidget):
         self.scroll.setWidget(frame)
         self.layout = QtGui.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
+    #    tab1.setLayout(self.layout)
+    #    self.tabs.addTab(tab1,'Parms')
+    #    self.tabs.addTab(tab2,'Constraints')
+    #    self.tabs.addTab(tab3,'Generators')
+    #    self.tabs.addTab(tab4,'Summary')
+    #    self.tabs.addTab(tab5,'Details')
         self.setWindowTitle('SIREN - powerbalance2 (' + fileVersion() + ') - PowerBalance 2.0')
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         self.center()
@@ -586,7 +620,11 @@ class powerBalance(QtGui.QWidget):
                     self.order.addItem(stn)
 
     def pbClicked(self):
-        self.log.setText('PowerBalance processing started')
+        self.log.setText(self.sender().text() + ' processing started')
+        if self.sender().text()[:3] == 'PB2': # summary only?
+            summ_only = True
+        else:
+            summ_only = False
         self.progressbar.setMinimum(0)
         self.progressbar.setMaximum(10)
         self.progressbar.setHidden(False)
@@ -673,7 +711,7 @@ class powerBalance(QtGui.QWidget):
             else:
                 self.log.setText('no capacity data')
                 return
-            adjustby = None
+       #     adjustby = None
             if self.adjust.isChecked():
                 adjustin = []
                 for col in range(3, ws.max_column + 1):
@@ -682,11 +720,14 @@ class powerBalance(QtGui.QWidget):
                         i = tech_names.index(valu)
                     except:
                         break
-                    adjustin.append([tech_names[i], ws.cell(row=icap_row, column=col).value])
-                adjust = Adjustments(adjustin)
+                    try:
+                        adjustin.append([tech_names[i], float(ws.cell(row=icap_row, column=col).value)])
+                    except:
+                        pass
+                adjust = Adjustments(adjustin, self.adjustby)
                 adjust.exec_()
-                adjustby = adjust.getValues()
-                if adjustby is None:
+                self.adjustby = adjust.getValues()
+                if self.adjustby is None:
                     self.log.setText('Execution aborted.')
                     self.progressbar.setHidden(True)
                     return
@@ -704,7 +745,7 @@ class powerBalance(QtGui.QWidget):
                         continue
                 data.append([])
                 try:
-                    multiplier = adjustby[tech_names[i]]
+                    multiplier = self.adjustby[tech_names[i]]
                 except:
                     multiplier = 1
                 if details:
@@ -744,141 +785,161 @@ class powerBalance(QtGui.QWidget):
             data_file += 'x'
         self.progressbar.setValue(2)
         headers = ['Facility', 'Capacity (MW)', 'Subtotal (MWh)', 'CF', 'Cost ($)', 'LCOE ($/MWh)', 'Emissions (tCO2e)']
-        ds = oxl.Workbook()
-        ns = ds.active
-        ns.title = 'Detail'
-        ss = ds.create_sheet('Summary', 0)
-        cap_row = 1
-        ns.cell(row=cap_row, column=2).value = headers[1]
-        ss.cell(row=3, column=1).value = headers[0]
-        ss.cell(row=3, column=2).value = headers[1]
-        ini_row = 2
-        ns.cell(row=ini_row, column=2).value = 'Initial Capacity'
-        sum_row = 3
-        ns.cell(row=sum_row, column=2).value = headers[2]
-        ss.cell(row=3, column=3).value = headers[2]
-        cf_row = 4
-        ns.cell(row=cf_row, column=2).value = headers[3]
-        ss.cell(row=3, column=4).value = headers[3]
-        cost_row = 5
-        ns.cell(row=cost_row, column=2).value = headers[4]
-        ss.cell(row=3, column=5).value = headers[4]
-        lcoe_row = 6
-        ns.cell(row=lcoe_row, column=2).value = headers[5]
-        ss.cell(row=3, column=6).value = headers[5]
-        emi_row = 7
-        ns.cell(row=emi_row, column=2).value = headers[6]
-        ss.cell(row=3, column=7).value = headers[6]
-        ss_row = 3
-        fall_row = 8
-        ns.cell(row=fall_row, column=2).value = 'Shortfall periods'
-        what_row = 9
-        hrows = 10
-        ns.cell(row=what_row, column=1).value = 'Hour'
-        ns.cell(row=what_row, column=2).value = 'Period'
-        ns.cell(row=what_row, column=3).value = 'Load'
-        o = 4
-        col = 3
-        if details:
+        sp_cols = []
+        sp_cap = []
+        if summ_only: # summary only?
+            sp_data = []
+            sp_gen = []
+            sp_load = 0.
             for i in cols:
                 if tech_names[i] == 'Load':
+                    for l in data[load_col]:
+                        sp_load += l
                     continue
-                col += 1
-                ss_row += 1
-                ns.cell(row=what_row, column=col).value = tech_names[i]
-                ss.cell(row=ss_row, column=1).value = '=Detail!' + ss_col(col) + str(what_row)
-                ns.cell(row=cap_row, column=col).value = re_capacities[i]
-                ns.cell(row=cap_row, column=col).number_format = '#,##0.00'
-                ss.cell(row=ss_row, column=2).value = '=Detail!' + ss_col(col) + str(cap_row)
-                ss.cell(row=ss_row, column=2).number_format = '#,##0.00'
-                ns.cell(row=sum_row, column=col).value = '=SUM(' + ss_col(col) \
-                        + str(hrows) + ':' + ss_col(col) + str(hrows + 8759) + ')'
-                ns.cell(row=sum_row, column=col).number_format = '#,##0'
-                ss.cell(row=ss_row, column=3).value = '=Detail!' + ss_col(col) + str(sum_row)
-                ss.cell(row=ss_row, column=3).number_format = '#,##0'
-                ns.cell(row=cf_row, column=col).value = '=' + ss_col(col) + '3/' \
-                        + ss_col(col) + '1/8760'
-                ns.cell(row=cf_row, column=col).number_format = '#,##0.00'
-                ss.cell(row=ss_row, column=4).value = '=Detail!' + ss_col(col) + str(cf_row)
-                ss.cell(row=ss_row, column=4).number_format = '#,##0.00'
-                if generators[tech_names[i]].lcoe > 0:
-                    ns.cell(row=cost_row, column=col).value = generators[tech_names[i]].lcoe * generators[tech_names[i]].lcoe_cf \
-                            * 8760 * re_capacities[i]
-                    ns.cell(row=cost_row, column=col).number_format = '$#,##0'
-                    ss.cell(row=ss_row, column=5).value = '=Detail!' + ss_col(col) + str(cost_row)
-                    ss.cell(row=ss_row, column=5).number_format = '$#,##0'
-                    ns.cell(row=lcoe_row, column=col).value = '=' + ss_col(col) + str(cost_row) + '/8760/' \
-                            + ss_col(col) + str(cf_row) +'/' + ss_col(col) + str(cap_row)
-                    ns.cell(row=lcoe_row, column=col).number_format = '$#,##0.00'
-                    ss.cell(row=ss_row, column=6).value = '=Detail!' + ss_col(col) + str(lcoe_row)
-                    ss.cell(row=ss_row, column=6).number_format = '$#,##0.00'
-                if generators[tech_names[i]].emissions > 0:
-                    ns.cell(row=emi_row, column=col).value = '=' + ss_col(col) + str(sum_row) \
-                            + '*' + str(generators[tech_names[i]].emissions)
-                    ns.cell(row=emi_row, column=col).number_format = '#,##0'
-                    ss.cell(row=ss_row, column=7).value = '=Detail!' + ss_col(col) + str(emi_row)
-                    ss.cell(row=ss_row, column=7).number_format = '#,##0'
-            shrt_col = col + 1
-        else:
-            shrt_col = 5
-            ns.cell(row=what_row, column=4).value = 'Renewable'
-            ns.cell(row=cap_row, column=4).value = re_capacity
-            ns.cell(row=cap_row, column=4).number_format = '#,##0.00'
-            if xlsx:
-                ns.cell(row=sum_row, column=4).value = '=SUM(D' + str(hrows) + ':D' + str(hrows + 8759) + ')'
-            else:
-                ns.cell(row=sum_row, column=4).value = re_generation
-            ns.cell(row=sum_row, column=4).number_format = '#,##0'
-            ns.cell(row=cf_row, column=4).value = '=D3/D1/8760'
-            ns.cell(row=cf_row, column=4).number_format = '#,##0.00'
-            ss_row += 1
-            ss.cell(row=ss_row, column=1).value = '=Detail!D' + str(what_row)
-            ss.cell(row=ss_row, column=2).value = '=Detail!D' + str(cap_row)
-            ss.cell(row=ss_row, column=2).number_format = '#,##0.00'
-            ss.cell(row=ss_row, column=3).value = '=Detail!D' + str(sum_row)
-            ss.cell(row=ss_row, column=3).number_format = '#,##0'
-            ss.cell(row=ss_row, column=4).value = '=Detail!D' + str(cf_row)
-            ss.cell(row=ss_row, column=4).number_format = '#,##0.00'
-        ns.cell(row=fall_row, column=shrt_col).value = '=COUNTIF(' + ss_col(shrt_col) \
-                        + str(hrows) + ':' + ss_col(shrt_col) + str(hrows + 8759) + ',">0")'
-        ns.cell(row=fall_row, column=shrt_col).number_format = '#,##0'
-        ns.cell(row=what_row, column=shrt_col).value = 'Shortfall'
-        for col in range(3, shrt_col + 1):
-            ns.cell(row=what_row, column=col).alignment = oxl.styles.Alignment(wrap_text=True,
-                    vertical='bottom', horizontal='center')
-        for row in range(hrows, 8760 + hrows):
-            if xlsx:
-                ns.cell(row=row, column=1).value = ws.cell(row=top_row + row - hrows + 1, column=1).value
-                ns.cell(row=row, column=2).value = ws.cell(row=top_row + row - hrows + 1, column=2).value
-                ns.cell(row=row, column=3).value = round(data[load_col][row - hrows], 2)
-                if not details:
-                    ns.cell(row=row, column=4).value = round(data[load_col][row - hrows] - shortfall[row - hrows], 2)
-            else:
-                ns.cell(row=row, column=1).value = ws.cell_value(row - hrows + 2, 0)
-                ns.cell(row=row, column=2).value = ws.cell_value(row - hrows + 2, 1)
-            ns.cell(row=row, column=shrt_col).value = round(shortfall[row - hrows], 2)
-            for col in range(3, shrt_col + 1):
-                ns.cell(row=row, column=col).number_format = '#,##0.00'
-        if details:
+                sp_data.append([tech_names[i], re_capacities[i], 0., '', '', '', ''])
+                for g in data[len(sp_data)]:
+                    sp_data[-1][2] += g
+        else: # normal
+            ds = oxl.Workbook()
+            ns = ds.active
+            ns.title = 'Detail'
+            ss = ds.create_sheet('Summary', 0)
+            cap_row = 1
+            ns.cell(row=cap_row, column=2).value = headers[1]
+            ss.cell(row=3, column=1).value = headers[0]
+            ss.cell(row=3, column=2).value = headers[1]
+            ini_row = 2
+            ns.cell(row=ini_row, column=2).value = 'Initial Capacity'
+            sum_row = 3
+            ns.cell(row=sum_row, column=2).value = headers[2]
+            ss.cell(row=3, column=3).value = headers[2]
+            cf_row = 4
+            ns.cell(row=cf_row, column=2).value = headers[3]
+            ss.cell(row=3, column=4).value = headers[3]
+            cost_row = 5
+            ns.cell(row=cost_row, column=2).value = headers[4]
+            ss.cell(row=3, column=5).value = headers[4]
+            lcoe_row = 6
+            ns.cell(row=lcoe_row, column=2).value = headers[5]
+            ss.cell(row=3, column=6).value = headers[5]
+            emi_row = 7
+            ns.cell(row=emi_row, column=2).value = headers[6]
+            ss.cell(row=3, column=7).value = headers[6]
+            ss_row = 3
+            fall_row = 8
+            ns.cell(row=fall_row, column=2).value = 'Shortfall periods'
+            what_row = 9
+            hrows = 10
+            ns.cell(row=what_row, column=1).value = 'Hour'
+            ns.cell(row=what_row, column=2).value = 'Period'
+            ns.cell(row=what_row, column=3).value = 'Load'
+            o = 4
             col = 3
-            for i in range(len(data)):
-                if cols[i] == load_col:
-                    continue
-                col += 1
-                for row in range(hrows, 8760 + hrows):
-                    ns.cell(row=row, column=col).value = data[i][row - hrows]
+            if details:
+                for i in cols:
+                    if tech_names[i] == 'Load':
+                        continue
+                    col += 1
+                    sp_cols.append(tech_names[i])
+                    sp_cap.append(re_capacities[i])
+                    ss_row += 1
+                    ns.cell(row=what_row, column=col).value = tech_names[i]
+                    ss.cell(row=ss_row, column=1).value = '=Detail!' + ss_col(col) + str(what_row)
+                    ns.cell(row=cap_row, column=col).value = re_capacities[i]
+                    ns.cell(row=cap_row, column=col).number_format = '#,##0.00'
+                    ss.cell(row=ss_row, column=2).value = '=Detail!' + ss_col(col) + str(cap_row)
+                    ss.cell(row=ss_row, column=2).number_format = '#,##0.00'
+                    ns.cell(row=sum_row, column=col).value = '=SUM(' + ss_col(col) \
+                            + str(hrows) + ':' + ss_col(col) + str(hrows + 8759) + ')'
+                    ns.cell(row=sum_row, column=col).number_format = '#,##0'
+                    ss.cell(row=ss_row, column=3).value = '=Detail!' + ss_col(col) + str(sum_row)
+                    ss.cell(row=ss_row, column=3).number_format = '#,##0'
+                    ns.cell(row=cf_row, column=col).value = '=' + ss_col(col) + '3/' \
+                            + ss_col(col) + '1/8760'
+                    ns.cell(row=cf_row, column=col).number_format = '#,##0.00'
+                    ss.cell(row=ss_row, column=4).value = '=Detail!' + ss_col(col) + str(cf_row)
+                    ss.cell(row=ss_row, column=4).number_format = '#,##0.00'
+                    if generators[tech_names[i]].lcoe > 0:
+                        ns.cell(row=cost_row, column=col).value = generators[tech_names[i]].lcoe * generators[tech_names[i]].lcoe_cf \
+                                * 8760 * re_capacities[i]
+                        ns.cell(row=cost_row, column=col).number_format = '$#,##0'
+                        ss.cell(row=ss_row, column=5).value = '=Detail!' + ss_col(col) + str(cost_row)
+                        ss.cell(row=ss_row, column=5).number_format = '$#,##0'
+                        ns.cell(row=lcoe_row, column=col).value = '=' + ss_col(col) + str(cost_row) + '/8760/' \
+                                + ss_col(col) + str(cf_row) +'/' + ss_col(col) + str(cap_row)
+                        ns.cell(row=lcoe_row, column=col).number_format = '$#,##0.00'
+                        ss.cell(row=ss_row, column=6).value = '=Detail!' + ss_col(col) + str(lcoe_row)
+                        ss.cell(row=ss_row, column=6).number_format = '$#,##0.00'
+                    if generators[tech_names[i]].emissions > 0:
+                        ns.cell(row=emi_row, column=col).value = '=' + ss_col(col) + str(sum_row) \
+                                + '*' + str(generators[tech_names[i]].emissions)
+                        ns.cell(row=emi_row, column=col).number_format = '#,##0'
+                        ss.cell(row=ss_row, column=7).value = '=Detail!' + ss_col(col) + str(emi_row)
+                        ss.cell(row=ss_row, column=7).number_format = '#,##0'
+                shrt_col = col + 1
+            else:
+                shrt_col = 5
+                sp_cols.append('Renewable')
+                sp_cap.append(re_capacity)
+                ns.cell(row=what_row, column=4).value = 'Renewable'
+                ns.cell(row=cap_row, column=4).value = re_capacity
+                ns.cell(row=cap_row, column=4).number_format = '#,##0.00'
+                if xlsx:
+                    ns.cell(row=sum_row, column=4).value = '=SUM(D' + str(hrows) + ':D' + str(hrows + 8759) + ')'
+                else:
+                    ns.cell(row=sum_row, column=4).value = re_generation
+                ns.cell(row=sum_row, column=4).number_format = '#,##0'
+                ns.cell(row=cf_row, column=4).value = '=D3/D1/8760'
+                ns.cell(row=cf_row, column=4).number_format = '#,##0.00'
+                ss_row += 1
+                ss.cell(row=ss_row, column=1).value = '=Detail!D' + str(what_row)
+                ss.cell(row=ss_row, column=2).value = '=Detail!D' + str(cap_row)
+                ss.cell(row=ss_row, column=2).number_format = '#,##0.00'
+                ss.cell(row=ss_row, column=3).value = '=Detail!D' + str(sum_row)
+                ss.cell(row=ss_row, column=3).number_format = '#,##0'
+                ss.cell(row=ss_row, column=4).value = '=Detail!D' + str(cf_row)
+                ss.cell(row=ss_row, column=4).number_format = '#,##0.00'
+            ns.cell(row=fall_row, column=shrt_col).value = '=COUNTIF(' + ss_col(shrt_col) \
+                            + str(hrows) + ':' + ss_col(shrt_col) + str(hrows + 8759) + ',">0")'
+            ns.cell(row=fall_row, column=shrt_col).number_format = '#,##0'
+            ns.cell(row=what_row, column=shrt_col).value = 'Shortfall'
+            for col in range(3, shrt_col + 1):
+                ns.cell(row=what_row, column=col).alignment = oxl.styles.Alignment(wrap_text=True,
+                        vertical='bottom', horizontal='center')
+            for row in range(hrows, 8760 + hrows):
+                if xlsx:
+                    ns.cell(row=row, column=1).value = ws.cell(row=top_row + row - hrows + 1, column=1).value
+                    ns.cell(row=row, column=2).value = ws.cell(row=top_row + row - hrows + 1, column=2).value
+                    ns.cell(row=row, column=3).value = round(data[load_col][row - hrows], 2)
+                    if not details:
+                        ns.cell(row=row, column=4).value = round(data[load_col][row - hrows] - shortfall[row - hrows], 2)
+                else:
+                    ns.cell(row=row, column=1).value = ws.cell_value(row - hrows + 2, 0)
+                    ns.cell(row=row, column=2).value = ws.cell_value(row - hrows + 2, 1)
+                ns.cell(row=row, column=shrt_col).value = round(shortfall[row - hrows], 2)
+                for col in range(3, shrt_col + 1):
+                    ns.cell(row=row, column=col).number_format = '#,##0.00'
+            if details:
+                col = 3
+                for i in range(len(data)):
+                    if cols[i] == load_col:
+                        continue
+                    col += 1
+                    for row in range(hrows, 8760 + hrows):
+                        ns.cell(row=row, column=col).value = data[i][row - hrows]
+            col = shrt_col + 1
         order = [] #'Storage', 'Biomass', 'PHS', 'Gas', 'CCG1', 'Other', 'Coal']
         for itm in range(self.order.count()):
             order.append(str(self.order.item(itm).text()))
-        col = shrt_col + 1
         #storage? = []
         self.progressbar.setValue(3)
         for gen in order:
             if constraints[generators[gen].constraint].category == 'Storage': # storage
                 storage = [0., 0., 0., 0.] # capacity, initial, min level, max drain
                 storage[0] = generators[gen].capacity
-                ns.cell(row=cap_row, column=col).value = round(generators[gen].capacity, 2)
-                ns.cell(row=cap_row, column=col).number_format = '#,##0.00'
+                if not summ_only:
+                    ns.cell(row=cap_row, column=col).value = round(generators[gen].capacity, 2)
+                    ns.cell(row=cap_row, column=col).number_format = '#,##0.00'
                 storage[1] = generators[gen].initial
                 if constraints[generators[gen].constraint].capacity_min > 0:
                     storage[2] = generators[gen].capacity * constraints[generators[gen].constraint].capacity_min
@@ -903,9 +964,11 @@ class powerBalance(QtGui.QWidget):
                 else:
                     parasite = 0.
                 storage_carry = storage[1] # generators[gen].initial
-                ns.cell(row=ini_row, column=col).value = round(storage_carry, 2)
-                ns.cell(row=ini_row, column=col).number_format = '#,##0.00'
+                if not summ_only:
+                    ns.cell(row=ini_row, column=col).value = round(storage_carry, 2)
+                    ns.cell(row=ini_row, column=col).number_format = '#,##0.00'
                 storage_bal = []
+                storage_can = 0.
                 for row in range(8760):
                     if storage_carry > 0:
                         storage_carry = storage_carry * (1 - parasite)
@@ -934,40 +997,113 @@ class powerBalance(QtGui.QWidget):
                         else:
                             can_use = 0.
                     storage_bal.append(storage_carry)
-                    ns.cell(row=row + hrows, column=col).value = round(can_use, 2)
-                    ns.cell(row=row + hrows, column=col + 1).value = round(storage_carry, 2)
-                    ns.cell(row=row + hrows, column=col + 2).value = round(shortfall[row], 2)
-                    ns.cell(row=row + hrows, column=col).number_format = '#,##0.00'
-                    ns.cell(row=row + hrows, column=col + 1).number_format = '#,##0.00'
-                    ns.cell(row=row + hrows, column=col + 2).number_format = '#,##0.00'
-                ns.cell(row=sum_row, column=col).value = '=SUMIF(' + ss_col(col) + \
-                        str(hrows) + ':' + ss_col(col) + str(hrows + 8759) + ',">0")'
-                ns.cell(row=sum_row, column=col).number_format = '#,##0'
-                ns.cell(row=cf_row, column=col).value = '=' + ss_col(col) + '3/' + ss_col(col) + '1/8760'
-                ns.cell(row=cf_row, column=col).number_format = '#,##0.00'
-                col += 3
-            else:
-                ns.cell(row=cap_row, column=col).value = round(generators[gen].capacity, 2)
-                ns.cell(row=cap_row, column=col).number_format = '#,##0.00'
-                for row in range(8760):
-                    if shortfall[row] >= 0: # shortfall?
-                        if shortfall[row] >= generators[gen].capacity:
-                            shortfall[row] = shortfall[row] - generators[gen].capacity
-                            ns.cell(row=row + hrows, column=col).value = round(generators[gen].capacity, 2)
-                        else:
-                            ns.cell(row=row + hrows, column=col).value = round(shortfall[row], 2)
-                            shortfall[row] = 0
+                    if not summ_only:
+                        ns.cell(row=row + hrows, column=col).value = round(can_use, 2)
+                        ns.cell(row=row + hrows, column=col + 1).value = round(storage_carry, 2)
+                        ns.cell(row=row + hrows, column=col + 2).value = round(shortfall[row], 2)
+                        ns.cell(row=row + hrows, column=col).number_format = '#,##0.00'
+                        ns.cell(row=row + hrows, column=col + 1).number_format = '#,##0.00'
+                        ns.cell(row=row + hrows, column=col + 2).number_format = '#,##0.00'
                     else:
-                        ns.cell(row=row + hrows, column=col).value = 0
-                    ns.cell(row=row + hrows, column=col + 1).value = round(shortfall[row], 2)
-                    ns.cell(row=row + hrows, column=col).number_format = '#,##0.00'
-                    ns.cell(row=row + hrows, column=col + 1).number_format = '#,##0.00'
-                ns.cell(row=sum_row, column=col).value = '=SUM(' + ss_col(col) + str(hrows) + ':' + ss_col(col) + str(hrows + 8759) + ')'
-                ns.cell(row=sum_row, column=col).number_format = '#,##0'
-                ns.cell(row=cf_row, column=col).value = '=' + ss_col(col) + '3/' + ss_col(col) + '1/8760'
-                ns.cell(row=cf_row, column=col).number_format = '#,##0.00'
-                col += 2
+                        if can_use > 0:
+                            storage_can += can_use
+                if not summ_only:
+                    ns.cell(row=sum_row, column=col).value = '=SUMIF(' + ss_col(col) + \
+                            str(hrows) + ':' + ss_col(col) + str(hrows + 8759) + ',">0")'
+                    ns.cell(row=sum_row, column=col).number_format = '#,##0'
+                    ns.cell(row=cf_row, column=col).value = '=' + ss_col(col) + '3/' + ss_col(col) + '1/8760'
+                    ns.cell(row=cf_row, column=col).number_format = '#,##0.00'
+                    col += 3
+                else:
+                    sp_data.append([gen, storage[0], storage_can, '', '', '', ''])
+            else:
+                if not summ_only:
+                    ns.cell(row=cap_row, column=col).value = round(generators[gen].capacity, 2)
+                    ns.cell(row=cap_row, column=col).number_format = '#,##0.00'
+                    for row in range(8760):
+                        if shortfall[row] >= 0: # shortfall?
+                            if shortfall[row] >= generators[gen].capacity:
+                                shortfall[row] = shortfall[row] - generators[gen].capacity
+                                ns.cell(row=row + hrows, column=col).value = round(generators[gen].capacity, 2)
+                            else:
+                                ns.cell(row=row + hrows, column=col).value = round(shortfall[row], 2)
+                                shortfall[row] = 0
+                        else:
+                            ns.cell(row=row + hrows, column=col).value = 0
+                        ns.cell(row=row + hrows, column=col + 1).value = round(shortfall[row], 2)
+                        ns.cell(row=row + hrows, column=col).number_format = '#,##0.00'
+                        ns.cell(row=row + hrows, column=col + 1).number_format = '#,##0.00'
+                    ns.cell(row=sum_row, column=col).value = '=SUM(' + ss_col(col) + str(hrows) + ':' + ss_col(col) + str(hrows + 8759) + ')'
+                    ns.cell(row=sum_row, column=col).number_format = '#,##0'
+                    ns.cell(row=cf_row, column=col).value = '=' + ss_col(col) + '3/' + ss_col(col) + '1/8760'
+                    ns.cell(row=cf_row, column=col).number_format = '#,##0.00'
+                    col += 2
+                else:
+                    gen_can = 0.
+                    for row in range(8760):
+                        if shortfall[row] >= 0: # shortfall?
+                            if shortfall[row] >= generators[gen].capacity:
+                                shortfall[row] = shortfall[row] - generators[gen].capacity
+                                gen_can += generators[gen].capacity
+                            else:
+                                gen_can += shortfall[row]
+                                shortfall[row] = 0
+                    sp_data.append([gen, generators[gen].capacity, gen_can, '', '', '', ''])
         self.progressbar.setValue(4)
+        if summ_only:
+            cap_sum = 0.
+            gen_sum = 0.
+            cost_sum = 0.
+            co2_sum = 0.
+            for sp in range(len(sp_data)):
+                if sp_data[sp][1] > 0:
+                    cap_sum += sp_data[sp][1]
+                    sp_data[sp][3] = sp_data[sp][2] / sp_data[sp][1] / 8760
+                gen_sum += sp_data[sp][2]
+                gen = sp_data[sp][0]
+                if generators[gen].lcoe > 0:
+                    sp_data[sp][4] = generators[gen].lcoe * generators[gen].lcoe_cf * 8760 * sp_data[sp][1]
+                    sp_data[sp][5] = sp_data[sp][4] / 8760 / sp_data[sp][3] / sp_data[sp][1]
+                    cost_sum += sp_data[sp][4]
+                if generators[gen].emissions > 0:
+                    sp_data[sp][6] = sp_data[sp][2] * generators[gen].emissions
+                    co2_sum += sp_data[sp][6]
+            sp_data.append(['Total', cap_sum, gen_sum, gen_sum / cap_sum / 8760, cost_sum,
+                           cost_sum / gen_sum, co2_sum])
+            sf_sums = [0., 0., 0.]
+            for sf in range(len(shortfall)):
+                if shortfall[sf] > 0:
+                    sf_sums[0] += shortfall[sf]
+                    sf_sums[2] += data[0][sf]
+                else:
+                    sf_sums[1] += shortfall[sf]
+                    sf_sums[2] += data[0][sf]
+            sp_data.append(' ')
+            sp_data.append('Load Analysis')
+            pct = '{:.1%})'.format((sf_sums[2] - sf_sums[0]) / sp_load)
+            sp_data.append(['Load met (' + pct, '', sf_sums[2] - sf_sums[0],])
+            pct = '{:.1%})'.format(sf_sums[0] / sp_load)
+            sp_data.append(['Shortfall (' + pct, '', sf_sums[0]])
+            sp_data.append(['Total Load', '', sp_load])
+            pct = '{:.1%})'.format( -sf_sums[1] / sp_load)
+            sp_data.append(['Surplus (' + pct, '', -sf_sums[1]])
+            adjusted = False
+            if self.adjustby is not None:
+                for key, value in iter(sorted(self.adjustby.iteritems())):
+                    if value != 1:
+                        if not adjusted:
+                            adjusted = True
+                            sp_data.append('RE Adjustments:')
+                        sp_data.append([key, value])
+            map(list, zip(*sp_data))
+            sp_pts = [0, 2, 0, 2, 0, 2, 0]
+            dialog = displaytable.Table(sp_data, title=self.sender().text(), fields=headers,
+                     save_folder=self.scenarios, sortby='', decpts=sp_pts)
+            dialog.exec_()
+            self.progressbar.setValue(10)
+            self.log.setText(self.sender().text() + ' completed')
+            self.progressbar.setHidden(True)
+            return
         for column_cells in ns.columns:
             length = 0
             value = ''
@@ -1123,9 +1259,9 @@ class powerBalance(QtGui.QWidget):
         ss.merge_cells('B' + str(ss_row) + ':G' + str(ss_row))
         self.progressbar.setValue(7)
         try:
-            if adjustby is not None:
+            if self.adjustby is not None:
                 adjusted = ''
-                for key, value in iter(sorted(adjustby.iteritems())):
+                for key, value in iter(sorted(self.adjustby.iteritems())):
                     if value != 1:
                         adjusted += key + ': ' + str(value) + '; '
                 if len(adjusted) > 0:
