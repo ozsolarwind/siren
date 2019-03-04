@@ -1771,6 +1771,7 @@ class SuperPower():
             QtGui.qApp.processEvents()
         self.data = None
         self.data = ssc.Data()
+        farmpwr = [] # just in case
         if 'Wind' in station.technology:
             if 'Off' in station.technology: # offshore?
                 wtyp = 1
