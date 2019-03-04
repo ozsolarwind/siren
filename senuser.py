@@ -42,8 +42,13 @@ def getUser():
     else:
         return os.environ.get("USERNAME")
 
-def techClean(tech):
+def techClean(tech, full=False):
     cleantech = tech.replace('_', ' ').title()
     cleantech = cleantech.replace('Cst', 'CST')
     cleantech = cleantech.replace('Pv', 'PV')
+    if full:
+        alll = [['Cf', 'CF'], ['hi ', 'HI '], ['Lcoe', 'LCOE'], ['Mw', 'MW'],
+                ['ni ', 'NI '], ['Npv', 'NPV'], ['Tco2E', 'tCO2e']]
+        for each in alll:
+            cleantech = cleantech.replace(each[0], each[1])
     return cleantech

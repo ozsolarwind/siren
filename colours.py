@@ -32,9 +32,7 @@ class Colours(QtGui.QDialog):
 
     def initUI(self, ini_file):
         def add_item(key, value, i):
-            wht = techClean(key)
-            wht = wht.replace('hi ', 'HI ')
-            wht = wht.replace('ni ', 'NI ')
+            wht = techClean(key, full=True)
             self.grid.addWidget(QtGui.QLabel(wht), i, 0)
             if self.map != '':
                 self.btn.append(QtGui.QPushButton(key, self))
