@@ -32,6 +32,12 @@ from senuser import techClean
 class FakeObject:
     def __init__(self, fake_object, fields):
         f = -1
+        if not isinstance(fake_object, list) and len(fields) > 1:
+            f += 1
+            setattr(self, fields[f], fake_object)
+            for f in range(1, len(fields)):
+                setattr(self, fields[f], '')
+            return
         for i in range(len(fake_object)):
             if isinstance(fake_object[i], list):
                 for j in range(len(fake_object[i])):
@@ -196,8 +202,11 @@ class Table(QtGui.QDialog):
         self.sort_asc = False
         if sortby is None:
             self.order(0)
+        elif sortby == '':
+            self.order(-1)
         else:
             self.order(self.fields.index(sortby))
+
         if self.sumfields is not None:
             for i in range(len(self.sumfields) -1, -1, -1): # make sure sumfield has a field
                 try:
@@ -277,9 +286,7 @@ class Table(QtGui.QDialog):
         if string == '':
             strout = string
         else:
-            strout = techClean(string)
-            strout = strout.replace('Lcoe', 'LCOE')
-            strout = strout.replace('Npv', 'NPV')
+            strout = techClean(string, full=True)
             if string != '' and string in self.units:
                 i = self.units.find(string)
                 j = self.units.find(' ', i)
@@ -437,14 +444,15 @@ class Table(QtGui.QDialog):
         return len(self.objects)
 
     def order(self, col):
-        key = self.fields[col]
-        numbrs = True
-        orderd = {}
-        norderd = {}   # minus
-        if 1 == 2:   # key == self.name:
+        if col < 0:   # key == self.name:
+            torder = []
             for rw in range(len(self.entry)):
-                orderd[self.entry[rw][key]] = rw
+                torder.append(rw)
         else:
+            numbrs = True
+            orderd = {}
+            norderd = {}   # minus
+            key = self.fields[col]
             if key != '#':
                 max_l = 0
                 for rw in range(len(self.entry)):
@@ -481,25 +489,25 @@ class Table(QtGui.QDialog):
                             orderd[str(self.entry[rw][key]) + self.entry[rw][self.name]] = rw
                         except:
                             orderd[' ' + self.entry[rw][self.name]] = rw
-        torder = []
-        if col != self.sort_col:
-            self.table.horizontalHeaderItem(self.sort_col).setIcon(QtGui.QIcon('blank.png'))
-            self.sort_asc = False
-        self.sort_col = col
-        if self.sort_asc:   # swap order
-            for key, value in iter(sorted(orderd.iteritems(), reverse=True)):
-                torder.append(value)
-            for key, value in iter(sorted(norderd.iteritems())):
-                torder.append(value)
-            self.sort_asc = False
-            self.table.horizontalHeaderItem(col).setIcon(QtGui.QIcon('arrowd.png'))
-        else:
-            self.sort_asc = True
-            for key, value in iter(sorted(norderd.iteritems(), reverse=True)):
-                torder.append(value)
-            for key, value in iter(sorted(orderd.iteritems())):
-                torder.append(value)
-            self.table.horizontalHeaderItem(col).setIcon(QtGui.QIcon('arrowu.png'))
+            torder = []
+            if col != self.sort_col:
+                self.table.horizontalHeaderItem(self.sort_col).setIcon(QtGui.QIcon('blank.png'))
+                self.sort_asc = False
+            self.sort_col = col
+            if self.sort_asc:   # swap order
+                for key, value in iter(sorted(orderd.iteritems(), reverse=True)):
+                    torder.append(value)
+                for key, value in iter(sorted(norderd.iteritems())):
+                    torder.append(value)
+                self.sort_asc = False
+                self.table.horizontalHeaderItem(col).setIcon(QtGui.QIcon('arrowd.png'))
+            else:
+                self.sort_asc = True
+                for key, value in iter(sorted(norderd.iteritems(), reverse=True)):
+                    torder.append(value)
+                for key, value in iter(sorted(orderd.iteritems())):
+                    torder.append(value)
+                self.table.horizontalHeaderItem(col).setIcon(QtGui.QIcon('arrowu.png'))
         self.entry = [self.entry[i] for i in torder]
         for rw in range(len(self.entry)):
             for cl in range(self.table.columnCount()):
