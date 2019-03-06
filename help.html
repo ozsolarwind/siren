@@ -1152,7 +1152,7 @@ as embedded solar - Rooftop PV - installed on the grid but not registered with A
 <!--
 <tr class="none">
 <td class="none"><dfn>capacity_cap</dfn></td>
-<td class="none">In costing (currently) the existing grid this option allows stepwise increments in costing grid capacity. If the peak load on a grid line exceeds this value the cost of the line will multiplied by the number of times it exceeds it. If no second value is given the increment will be 100% of the increase, otherwise it will be by the second step value. For example, setting a value of <em>1000</em> will cost the lines in 1000 MW limits while <em>1000,100</em> will cost lines greater than 1000 MW in 100 MW steps</td>
+<td class="none">In costing (currently) the existing grid this option allows step-wise increments in costing grid capacity. If the peak load on a grid line exceeds this value the cost of the line will multiplied by the number of times it exceeds it. If no second value is given the increment will be 100% of the increase, otherwise it will be by the second step value. For example, setting a value of <em>1000</em> will cost the lines in 1000 MW limits while <em>1000,100</em> will cost lines greater than 1000 MW in 100 MW steps</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>converter_cost</dfn></td>
@@ -1173,7 +1173,7 @@ as embedded solar - Rooftop PV - installed on the grid but not registered with A
 <tr class="none">
 <td class="none"><dfn>substation_costs</dfn></td>
 <td class="none">
-This entails all costs associated with connecting a power station to the network such as sub-stations, shunt capacitors, and dynamic reactive power compensation and so forth. There is a lower end cap for either dispatchable or non-dispatchable power. If the total generation capacity is less than the lower cap the costs will be distributed across all power stations based upon their capacity and dispatchable nature. Above the lower cap costs will be prorated</td>
+This entails all costs associated with connecting a power station to the network such as substations, shunt capacitors, and dynamic reactive power compensation and so forth. There is a lower end cap for either dispatchable or non-dispatchable power. If the total generation capacity is less than the lower cap the costs will be distributed across all power stations based upon their capacity and dispatchable nature. Above the lower cap costs will be prorated</td>
 </tr>
 -->
 <tr class="none">
@@ -1290,7 +1290,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </table>
 </td></tr>
 <tr class="none" id="p_offw"><td><dfn><strong>[Offshore Wind]</strong></dfn></td>
-<td>Specifics on offshore wind and turbine spacings. Properties are:</p>
+<td>Specifics on offshore wind and turbine spacing. Properties are:</p>
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><dfn>area</dfn></td>
@@ -1897,7 +1897,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>scene_save</dfn></td>
-<td class="none">If True then when saving a View the image will be the underlying map image; otherwise the image will be the (screen) view. The image resolution can be different in the two options, dependent upon screen resolution, image resolution, sceen window size and how much of the map is being saved. The default is False</td>
+<td class="none">If True then when saving a View the image will be the underlying map image; otherwise the image will be the (screen) view. The image resolution can be different in the two options, dependent upon screen resolution, image resolution, screen window size and how much of the map is being saved. The default is False</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>show_towns</dfn></td>
@@ -1964,7 +1964,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </div>
 </td></tr>
 <tr class="none" id="p_wind"><td><dfn><strong>[Wind]</strong></dfn></td>
-<td>Specifics on Wind and turbine spacings. Properties are:</p>
+<td>Specifics on Wind and turbine spacing. Properties are:</p>
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><dfn>area</dfn></td>
@@ -2052,7 +2052,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>menu_show</dfn></td>
-<td class="none">Display floating menu on startup (True or False). If the floating menu is active when you exit SIREN this flag will indicate to reshow it the next time you run SIREN</td>
+<td class="none">Display floating menu on startup (True or False). If the floating menu is active when you exit SIREN this flag will indicate to re-show it the next time you run SIREN</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>menu_size</dfn></td>
@@ -2559,7 +2559,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <h4>Plots</h4>
 <ul>
 <li><em>Save plot data</em> will enable most of the data inputs to plots to be saved to a spreadsheet. These values are usually an aggregation of the hourly outputs produced by Power Model
-<br /><strong>Note:</strong> If you choose the <em>Power by hour - augmented</em> you can estimate how much non-renewable genration is required to meet the Load (see <a href="#augment">Augmented (non-renewable) Generation</a>)</li>
+<br /><strong>Note:</strong> If you choose the <em>Power by hour - augmented</em> you can estimate how much non-renewable generation is required to meet the Load (see <a href="#augment">Augmented (non-renewable) Generation</a>)</li>
 <li><em>Visualise generation - period &amp; delay (secs)</em> will visualise generation by displaying variable generation circles for each station over the chosen periods. This option displays an additional window to control the visualisation:
 <table border="0" class="none">
 <tr><td class="top" style="width: 12%;"><dfn>Detail</dfn></td>
@@ -2570,7 +2570,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <li>Hourly. Visualise generation for each hour of the year (8,760 hours)</li>
 </ul></td></tr>
 <tr><td class="lr"><dfn>Period</dfn></td>
-<td class="none">This row provides pulldown menus to allow you to choose a period, day and hour to visualise</td></tr>
+<td class="none">This row provides pull-down menus to allow you to choose a period, day and hour to visualise</td></tr>
 <tr><td class="lr"><strong>&lt;</strong></td>
 <td class="none">You can also navigate to a particular time period by dragging the slider bar. Clicking <strong>&lt;</strong> will step back one period while <strong>&gt;</strong> steps forward one period. You can also use <em>Page Down</em> and <em>Page Up</em> to step forward and back</td></tr>
 <tr><td class="lr"><dfn>Period Loop (secs)</dfn></td>
@@ -2590,8 +2590,8 @@ By default the size of plots produced is determined by matplotlib, or by the <em
 <h4>Tables</h4>
 <ul>
 <li><em>Save Hourly Data Output</em> option will save generation in MWh for each chosen station for each hour of the year (8,760 hours) as calculated by SAM. This can be used in detailed analysis or as an option to avoid having to reprocess the station in the future, by updating a Station's </em>Power File</em> field. The default file name can be set using the <em>data_file</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file; otherwise it will in the format of <em>Power_Table_yyyy-mm-dd_hhmm...</em></li>
-<li><em>Save (adjusted) Hourly Data Output by Station</em> option will save generation in MWh for each station and other options for each hour of the year (8,760 hours). This is the hourly output calculated by the SAM model mutiplied by any adjustments. If appropriate Power Model options are chosen data for Generation, Excess, Load and Storage will also be saved. The default file name can be set using the <em>data_file</em> property of the [Files] Section of the Preferences file; otherwise it will in the format of <em>Power_Detail_yyyy-mm-dd_hhmm...</em></li>
-<li><em>Save (adjusted) Hourly Data Output by Technology</em> option will save generation in MWh for each technology and other options for each hour of the year (8,760 hours). This is the hourly output calculated by the SAM model mutiplied by any adjustments. If appropriate Power Model options are chosen data for Generation, Excess, Load and Storage will also be saved. The default file name can be set using the <em>data_file</em> property of the [Files] Section of the Preferences file; otherwise it will in the format of <em>Power_Detail_Technology_yyyy-mm-dd_hhmm...</em></li>
+<li><em>Save (adjusted) Hourly Data Output by Station</em> option will save generation in MWh for each station and other options for each hour of the year (8,760 hours). This is the hourly output calculated by the SAM model multiplied by any adjustments. If appropriate Power Model options are chosen data for Generation, Excess, Load and Storage will also be saved. The default file name can be set using the <em>data_file</em> property of the [Files] Section of the Preferences file; otherwise it will in the format of <em>Power_Detail_yyyy-mm-dd_hhmm...</em></li>
+<li><em>Save (adjusted) Hourly Data Output by Technology</em> option will save generation in MWh for each technology and other options for each hour of the year (8,760 hours). This is the hourly output calculated by the SAM model multiplied by any adjustments. If appropriate Power Model options are chosen data for Generation, Excess, Load and Storage will also be saved. The default file name can be set using the <em>data_file</em> property of the [Files] Section of the Preferences file; otherwise it will in the format of <em>Power_Detail_Technology_yyyy-mm-dd_hhmm...</em></li>
 <li><em>Save Powerbalance data</em> option will save save the input data for Powerbalance. There are two possible output formats:
 <ol>
 <li>The original Powerbalance uses the hourly shortfalls and overall generation figures in its computations. This option saves this data in a spreadsheet to simplify copying it into a Powerbalance workbook. The cells required for Powerbalance are highlighted in colour. The worksheet contains the generation summary data followed by the shortfall data. The file can be saved as <em>.csv</em> for a CSV file or <em>.xls</em> for an Excel file</li>
@@ -2700,7 +2700,7 @@ By default the size of plots produced is determined by matplotlib, or by the <em
 <tr><td class="lr"><dfn>Adjust Renewables</dfn></td>
 <td class="none">If this option is checked you will be presented with a table to enable you to adjust the input data for each renewable technology. You can specify a multiplier between 0 and 25 (<em>adjust_renewables</em>)</td></tr>
 <tr><td class="lr"><dfn>Dispatch Order</dfn></td>
-<td class="none">The order in which the dispatchable technologies will be processed by PowerBalance. You can change the order by clicking on each value and moving it up and down the list. The initial order is derived from the generators (facilities) table</td></tr>
+<td class="none">The order in which the dispatchable technologies will be processed by PowerBalance. You can change the order by clicking on each value and moving it up and down the list. The initial order is derived from the generators (facilities) table. If you want to exclude a generator you can drag it to the right hand list (and drag it back to the left to re-include)</td></tr>
 <tr><td class="bottom"><strong>Done, Constraints, Generators,<br />Powerbalance, PB2 Summ,<br />Help</strong></td>
 <td class="none">At the bottom of the menu are a number of buttons as described below:</td></tr>
 </table>
@@ -2729,15 +2729,15 @@ By default the size of plots produced is determined by matplotlib, or by the <em
 <tr><td class="none"><dfn>Recharge Max</dfn></td><td class="none">For Storage the maximum rate at which the storage can be increased</td></tr>
 </table>
 <h4>Generators</h4>
-<p>To address the shortfall in generation encountered by a renewable scenario other generation and storage facilites can be used. These are defined in a Generators table. The fields are:
+<p>To address the shortfall in generation encountered by a renewable scenario other generation and storage facilities can be used. These are defined in a Generators table. The fields are:
 <table border="0" class="none">
 <tr><td class="none"><dfn>Name</dfn></td><td class="none">Name of the Facility</td></tr>
-<tr><td class="none"><dfn>(Dispatch) Order</dfn></td><td class="none">Specifies the order in which the dispatchable facilities are used (for the moment zero values are ignored)</td></tr>
+<tr><td class="none"><dfn>(Dispatch) Order</dfn></td><td class="none">Specifies the order in which the dispatchable facilities are used, with a value of 1 being the first in the order. Zero values are placed after those with a positive number</td></tr>
 <tr><td class="none"><dfn>Constraint</dfn></td><td class="none">Name of the Constraint that applies to this facility</td></tr>
 <tr><td class="none"><dfn>Capacity</dfn></td><td class="none">The capacity for the facility in MW</td></tr>
 <tr><td class="none"><dfn>Initial</dfn></td><td class="none">For storage this species the initial level of storage</td></tr>
 <tr><td class="none"><dfn>LCOE</dfn></td><td class="none">The LCOE for the facility</td></tr>
-<tr><td class="none"><dfn>LCOE CF</dfn></td><td class="none">The capacity factor (CF) at which the LCOE was determined. A combination of <em>LCOE</em> and <em>LCOE CF</em> allws the cost of the generation or storage to be determined. In indertaking any calculations PowerBalance adjusts the resulting LCOE to reflect the difference between this CF and the calculated CF</td></tr>
+<tr><td class="none"><dfn>LCOE CF</dfn></td><td class="none">The capacity factor (CF) at which the LCOE was determined. A combination of <em>LCOE</em> and <em>LCOE CF</em> allows the cost of the generation or storage to be determined. In undertaking any calculations PowerBalance adjusts the resulting LCOE to reflect the difference between this CF and the calculated CF</td></tr>
 <tr><td class="none"><dfn>Emissions</dfn></td><td class="none">Specifies the carbon dioxide equivalent emissions in tonnes per unit of electricity (t CO<sub>2</sub>-e / MWh)</td></tr>
 </table>
 <p><a href="#help">Back to top</a></p>
@@ -2745,10 +2745,10 @@ By default the size of plots produced is determined by matplotlib, or by the <em
 <p>To assist with placement of renewable energy stations SIREN can display a grid of renewable resource attributes derived from the SAM weather files. The grid can be displayed by invoking the <em>Show Resource Grid</em> (Ctrl+B) menu option. The Resource Overlay menu presented has the following fields:</p>
 <ul>
 <li><em>Weather Detail</em>. If appropriate resource files are found you'll be presented with this menu option. Possible choices are:- <em>Daily By Month</em> (default), <em>Hourly By Month</em>, or <em>Hourly By Day</em></li>
-<li><em>Weather Period</em>. This row provides pulldown menus to allow you to choose a period, day and hour to display</li>
+<li><em>Weather Period</em>. This row provides pull-down menus to allow you to choose a period, day and hour to display</li>
 <li><em>&lt;</em>. You can also navigate to a particular time period by dragging the slider bar. Clicking <strong>&lt;</strong> will step back one period while <strong>&gt;</strong> steps forward one period. You can also use <em>Page Down</em> and <em>Page Up</em> to step forward and back through the weather periods</li>
 <li><em>Period Loop (secs)</em>. You can also cause the visualisation to automatically loop through all time periods. The number field allows you to specify the delay in seconds between each period - between 0 and 10 in .2 second increments. You press the <em>Loop</em> button to start the loop. Press <em>Stop</em> (or the <em>Window -> Exit Visualise</em>, Ctrl+Z, menu option) to stop the loop</li>
-<li><em>Weather Variable</em>. This pulldown menu allows you to select the desired variable to display</li>
+<li><em>Weather Variable</em>. This pull-down menu allows you to select the desired variable to display</li>
 <li><em>Colour Steps</em>. The grid displayed can have values grouped in to up to 10 steps. A value of 0 will give a smooth graduation rather than stepped colours</li>
 <li><em>Opacity</em>. Gives the degree of opacity of grid colours. A value of 1 is completely opaque while a value of 0 is completely transparent</li>
 <li><em>Low Colour</em> and <em>High Colour</em>. These options present a set of buttons for each weather variable. Pressing the appropriate button will allow you to alter the upper or lower colour value for each variable. The range of colours steps will be displayed beside the buttons</li>
@@ -2773,12 +2773,12 @@ By default the size of plots produced is determined by matplotlib, or by the <em
 <li>Displays the Power Model menu allowing you to specify initial options. This allows you to choose the stations of interest and the data options you want. This first display of the menu also allows you to save these options</li>
 <li>Calls the appropriate SAM module for each chosen station, or other options as specified</li>
 <li>Presents the tables and plots you have selected</li>
-<li>Redisplays the Power Model menu allowing you to specify different growth options, storage options and plots. A number of options, such as <em>Generation - from chosen stations</em> will no longer be available as they would require reprocessing the SAM models. To process these new options press the <strong>Proceed</strong> button. To exit this phase of processing press the
+<li>Re-displays the Power Model menu allowing you to specify different growth options, storage options and plots. A number of options, such as <em>Generation - from chosen stations</em> will no longer be available as they would require reprocessing the SAM models. To process these new options press the <strong>Proceed</strong> button. To exit this phase of processing press the
 <strong>All Done</strong> or <strong>Do Financials</strong> button</li>
 <li>If you have chosen to run the Financial Models the Financial Model menu will be displayed, allowing you to specify initial finance options. Press the <strong>Proceed</strong> button to continue with these options</li>
 <li>Calls the SAM financial module for each chosen station</li>
 <li>Presents the financial table</li>
-<li>Redisplays the Financial Model menu allowing you to specify different options. Press the <strong>Proceed</strong> button to invoke these new options. To exit this phase of processing press the <strong>All Done</strong> button</li>
+<li>Re displays the Financial Model menu allowing you to specify different options. Press the <strong>Proceed</strong> button to invoke these new options. To exit this phase of processing press the <strong>All Done</strong> button</li>
 </ol>
 <p>
 <li>If the location and size of stations haven't changed you can avoid reprocessing stations by used Power data from a previous simulation run, using the following approach.
@@ -2797,11 +2797,11 @@ By default the size of plots produced is determined by matplotlib, or by the <em
 <h4 id="augment">Augmented (non-renewable) Generation</h4>
 <p>You can roughly estimate how much augmented (non-renewable) generation is required to meet the Load by selecting some appropriate Power Model options. This approach will indicate how much hourly demand can be met by generation, with or without storage, in the same hour, and how much excess renewable generation is spilled. If you choose the <em>Save plot data</em> and <em>Power by hour - augmented</em> option three tables will be produced. The first is actual data as in the graph, the second will adjust values to indicate the amount of generation from each component, and the third is a summary of the totals for the second table. This final table summarises how much demand is met by renewables and storage, how much has to be met from other sources (Augment) and how much renewable generation is spilled (that is, not used to meet demand or add to storage). This gives a slightly more accurate figure on how well your scenario meets hourly Load.
 <h4>Saving the Current View</h4>
-<p>It is possible to save the current view of the main SIREN window using the <strong>Save View</strong> (Ctrl+V) option. Depending on the options chosen you can choose to crop the view at the map boundary (<em>crop_save</em>=True) or to save the full view, and to save either the underlying map (<em>scene_save</em>=True) or the screen view. The image resolution can be different in the two options, dependent upon screen resolution, image resolution, sceen window size and how much of the map is being saved.
+<p>It is possible to save the current view of the main SIREN window using the <strong>Save View</strong> (Ctrl+V) option. Depending on the options chosen you can choose to crop the view at the map boundary (<em>crop_save</em>=True) or to save the full view, and to save either the underlying map (<em>scene_save</em>=True) or the screen view. The image resolution can be different in the two options, dependent upon screen resolution, image resolution, screen window size and how much of the map is being saved.
 </p>
 <div class="experiment">
 <p><strong>Optimise (experimental)</strong></p>
-<p>SIREN also has an experimental approach to optimise the mix of technologies. If Load data is available the menu presented to adjust generation will have an option to &ldquo;optimise&rdquo; the renewable energy mix to best meet the Load. You will be presented with an <em>Optimise for:</em> pulldown list of periods to optimise for. You choose the desired period and then press the <em>Optimise</em> button. This will then do a least squares solution for adjustment multipliers to produce a generation profile that best matches the total load and load profile for that period. The data analysis is performed on either the average 24 hour period or detailed hourly figures for the chosen period (<em>optimise</em> property of the <em>[Power]</em> Section). If you don't wish to include a technology or station then uncheck the checkbox (to the right of the multiplier) for that technology or station. The generation produced by that technology or station will be removed from the optimisation. Depending on the <em>optimise_load</em> property of the <em>[Power]</em> Section you can also remove the Load (multiplied by it's current multiplier) from the analysis. Any computed negative multiplier will be set to zero, which is likely to result in the computed generation exceeding the load. The <em>Check / Uncheck all zeroes</em> check box enables you to include or exclude all zeroed stations from any further optimisation. The analysis is based upon the stations in your scenario and doesn't take into account how well placed they are within the network. If you want to reset all multipliers just Optimise for <em>None</em>.
+<p>SIREN also has an experimental approach to optimise the mix of technologies. If Load data is available the menu presented to adjust generation will have an option to &ldquo;optimise&rdquo; the renewable energy mix to best meet the Load. You will be presented with an <em>Optimise for:</em> pull-down list of periods to optimise for. You choose the desired period and then press the <em>Optimise</em> button. This will then do a least squares solution for adjustment multipliers to produce a generation profile that best matches the total load and load profile for that period. The data analysis is performed on either the average 24 hour period or detailed hourly figures for the chosen period (<em>optimise</em> property of the <em>[Power]</em> Section). If you don't wish to include a technology or station then uncheck the checkbox (to the right of the multiplier) for that technology or station. The generation produced by that technology or station will be removed from the optimisation. Depending on the <em>optimise_load</em> property of the <em>[Power]</em> Section you can also remove the Load (multiplied by it's current multiplier) from the analysis. Any computed negative multiplier will be set to zero, which is likely to result in the computed generation exceeding the load. The <em>Check / Uncheck all zeroes</em> check box enables you to include or exclude all zeroed stations from any further optimisation. The analysis is based upon the stations in your scenario and doesn't take into account how well placed they are within the network. If you want to reset all multipliers just Optimise for <em>None</em>.
 </div>
 <p><a href="#help">Back to top</a></p>
 <h2 id="feedback">Feedback</h2>
@@ -3132,7 +3132,7 @@ Create a <code>.netrc</code> file for authentication to download the MERRA-2 fil
 <li>Within the MDISC Data Subset page choose appropriate options as follows:
 <ol>
 <li>Data Product<br/>
-Select Data Product from the pulldown list:
+Select Data Product from the pull-down list:
 <ol>
 <li>MERRA-2 <em>tavg1_2d_slv_Nx</em> for wind</li>
 <!--http://disc.sci.gsfc.nasa.gov/uui/datasets/M2T1NXSLV_V5.12.4/summary-->
@@ -3150,7 +3150,7 @@ Press <em>Update Map</em> to check geographic spread
 </li>
 <li>
 Temporal Order Option<br/>
-Select range of dates. It is most convenient to select full years. As times are UTC we need the last last day of the prior period (year) to obtain data for the initial hours of the first day in the local time-zone (8 hours for WA)
+Select range of dates. It is most convenient to select full years. As times are UTC we need the last last day of the prior period (year) to obtain data for the initial hours of the first day in the local timezone (8 hours for WA)
 </li>
 <li>
 Parameters<br/>
@@ -3167,7 +3167,7 @@ To reduce the size of the data files select just those variables we need:
 </ol>
 </li>
 <li>Output File Format<br/>
-Select <em>NetCDF</em> from the pulldown list
+Select <em>NetCDF</em> from the pull-down list
 </li>
 <li>
 Press <em>Start Search</em>
@@ -3251,8 +3251,8 @@ You can alternate between these approaches to choose the desired area. If you ha
 <li><em>Quit</em> will exit the program</li>
 <li><em>Get Solar</em> will invoke <em>wget</em> as a new task to download the solar files for the selected area and date range. As part of the execution a log file will be saved to the Solar Target Folder</li>
 <li><em>Get Wind</em> will invoke <em>wget</em> as a new task to download the wind files for the selected area and date range. As part of the execution a log file will be saved to the Wind Target Folder</li>
-<li><em>Check Solar</em> will interrogate MERRA-2 solar files in the Solar Target Folder to provide the boundaries for the Area of Interest and set the starting date to download the next day in sequence. The interrogation will cater for files in yearly subfolders</li>
-<li><em>Check Wind</em> will interrogate MERRA-2 wind files in the Wind Target Folder to provide the boundaries for the Area of Interest and set the starting date to download the next day in sequence. The interrogation will cater for files in yearly subfolders</li>
+<li><em>Check Solar</em> will interrogate MERRA-2 solar files in the Solar Target Folder to provide the boundaries for the Area of Interest and set the starting date to download the next day in sequence. The interrogation will cater for files in yearly sub-folders</li>
+<li><em>Check Wind</em> will interrogate MERRA-2 wind files in the Wind Target Folder to provide the boundaries for the Area of Interest and set the starting date to download the next day in sequence. The interrogation will cater for files in yearly sub-folders</li>
 <li><em>Help</em> Display this help</li>
 </ul>
 <p>Downloading the MERRA-2 files are performed by new tasks allowing you to close the <code>getmerra2</code> window once you have requested the files. Depending on the area and date range the process of downloading is likely to take significant time. A log file named <em>wget_type_yyyy-mm-dd_hhmm.log</em> will be produced, where <em>type</em> is either wind or solar and <em>yyyy-mm-dd_hhmm.log</em> is the date and time <code>wget</code> was invoked. A file named <em>wget_type_yyyy-mm-dd_hhmm.txt</em> will contain the list of files to be downloaded and <em>wget_type_yyyy-mm-dd_hhmm.bat</em> will contain the <code>wget</code> command (in case you encounter problems).</p>
@@ -3288,7 +3288,7 @@ You can alternate between these approaches to choose the desired area. If you ha
 <p><code>makeweather2.py</code> is a Python program that can be used to produce solar and/or wind weather files for input to SAM. The program generates SMW (preferred for SAM) or CSV format solar resource files and SRW format wind resource files. These file formats have been chosen as they're easier to generate than other formats. Using the program you specify the source folder for the MERRA-2 data files, the time zone for the area of interest, a file format and target folder for the weather files. The program will generate files for each of the MERRA-2 grid squares within the chosen MERRA-2 data files or optionally for a number of latitude and longitude positions. You can invoke the program either by choosing <code>makeweather2</code> from the SIREN Tools menu or in Windows by running <code>makeweather2.exe</code> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
 <ul>
 <li><em>Year</em>. Year of interest. The naming conventions for MERRA-2 files include the date so this defines the date range. The tool processes dates from the last day of the prior year through to the first day of the next year (ignoring 29 February)</li>
-<li><em>Wrap to prior year</em>. To enable you to use (more) recent weather data this option will indicate that weather data should wrap to the prior year. As an example, if you have downloaded MERRA-2 data up until April for the current year <code>makeweather2</code> will use weather data from the prior year for May onwards to give a full year of data. The MERRA data for both years must reside in the same folder (or the next subfolder if yearly folders are used)</li>
+<li><em>Wrap to prior year</em>. To enable you to use (more) recent weather data this option will indicate that weather data should wrap to the prior year. As an example, if you have downloaded MERRA-2 data up until April for the current year <code>makeweather2</code> will use weather data from the prior year for May onwards to give a full year of data. The MERRA data for both years must reside in the same folder (or the next sub-folder if yearly folders are used)</li>
 <li><em>Time Zone</em>. The (solar) time zone for the area of interest. This is used to create suitable weather files where the first hour in the file is the first hour of the year in the local time zone. A value of <em>auto</em> will cause the program to use the (first) longitude in the MERRA-2 data files to calculate the time zone</li>
 <li><em>Solar Format</em>. The solar option can produce weather files in either of two formats - SMW or CSV format. This option allows you to choose your preferred one. SMW format is suitable for SAM while it may have trouble with the CSV format</li>
 <li><em>Solar Variable</em>. There are two MERRA-2 solar variables to use to create weather files - swgdn or swgnt. </li>
@@ -3354,7 +3354,7 @@ You can alternate between these approaches to choose the desired area. If you ha
 <li>Specify the date range. To create a SAM weather file you need at least one year of data plus the last day of the prior year and/or the first day of the next year. As an example Start date: 31/12/15 (or 2015-12-31) and End date: 01/01/17 (or 2017-01-01) will download data for 2016. MERRA-2 data is based upon UTC while SAM files are local time. In the case of the SWIS, UTC+8, the first 8 hours of the year will be in the last day of the previous year; for UTC-n, the last n hours of the year will be in the first day of the next year</li>
 <li>Click on the target folder field to specify a location for the MERRA-2 data. It's OK to store both wind and solar files in the same folder</li>
 <li>Click <em>Get Solar</em> for solar files and <em>Get Wind</em> for wind files. If you're creating solar weather files you'll need both. When you click the buttons <code>getmerra2</code> will launch separate tasks to download the files into the target folder. You can Quit out of <code>getmerra2</code> as this stage. The two tasks will probably take a while to run as they have to download individual files for each day in the range. The output and success will be in a log file in the target folder</li>
-<li>If you click <em>Check Solar</em> or <em>Check Wind</em> <code>getmerra2</code> will interrogate MERRA-2 solar files in the appropriate Target Folder to provide the boundaries for the Area of Interest and set the starting date to download the next day in sequence. The interrogation will cater for files in yearly subfolders</li>
+<li>If you click <em>Check Solar</em> or <em>Check Wind</em> <code>getmerra2</code> will interrogate MERRA-2 solar files in the appropriate Target Folder to provide the boundaries for the Area of Interest and set the starting date to download the next day in sequence. The interrogation will cater for files in yearly sub-folders</li>
 </ol></p></li>
 <li>Once the MERRA-2 files are downloaded run <code>makeweather2</code> to create the SAM weather files</p>
 <ol>
@@ -3645,7 +3645,7 @@ MERRA-2 Variable
 <li>By using an index file. To use other files you need to create index files that contain the latitude, longitude and file name for each weather file, where the filename is relative to the location for the weather files. Index files for solar and wind are defined by the <em>solar_index</em> and <em>wind_index</em> properties. You can either create these files manually or use <em>indexweather</em> to create an index</li>
 </ol>
 <h5>indexweather</h5>
-<p><code>indexweather.py</code> is a Python program that can be used to create an index of solar and/or wind weather files for input to SAM. The program generates an index file that contains latitude, longitude and file name for each weather file. It does this by interrogating some of weather file formats supported by SAM - SAM CSV, SMW and SRW - to obtain the three varables. You can invoke the program either by choosing <code>indexweather</code> from the SIREN Tools menu or in Windows by running <code>indexweather.exe</code> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
+<p><code>indexweather.py</code> is a Python program that can be used to create an index of solar and/or wind weather files for input to SAM. The program generates an index file that contains latitude, longitude and file name for each weather file. It does this by interrogating some of weather file formats supported by SAM - SAM CSV, SMW and SRW - to obtain the three variables. You can invoke the program either by choosing <code>indexweather</code> from the SIREN Tools menu or in Windows by running <code>indexweather.exe</code> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
 <ul>
 <li><em>Solar files</em>. Location of solar weather files</li>
 <li><em>Solar index</em>. Name and location for solar index file</li>
@@ -3722,7 +3722,7 @@ MERRA-2 Variable
 <div class="experiment">
 <li><em>rain=</em> Location of the rain weather files (experimental)</li>
 </div>
-<li><em>nonzero=</em> Passing a parameter of T(rue) will create non-zero minimums; otehrwise the minimum value may be zero</li>
+<li><em>nonzero=</em> Passing a parameter of T(rue) will create non-zero minimums; otherwise the minimum value may be zero</li>
 <li><em>solar=</em> Location of the solar weather files</li>
 <li><em>wind=</em> Location of the wind weather files</li>
 <li><em>target=</em> or <em>tgtfil=</em> Resource grid file to be produced</li>
@@ -3761,7 +3761,7 @@ MERRA-2 Variable
 <td>Financial model 2</td>
 <td>ippppa</td>
 <td>ippppa_variables</td>
-<td>Utility IPP/Commerical PPA Finance model</td>
+<td>Utility IPP/Commercial PPA Finance model</td>
 </tr>
 <tr class="none">
 <td>Geothermal</td>
@@ -4170,7 +4170,7 @@ MERRA-2 Variable
 </tr>
 <tr class="none">
 <td class="none"><img src="blank.png" alt="many Areas">&nbsp;&nbsp;Show many Areas</td>
-<td class="none">This will allow input of coordinates for a number of areas. You enter name (optional), upper latitude, west (left) longitude, lower latutude and east (right) longitude separated by commas for each area of interest. This will then update the map highlighting all areas on the map. This option is useful if you want to show a view of several areas of interest. Note: At present you cannot download maps for each area</td>
+<td class="none">This will allow input of coordinates for a number of areas. You enter name (optional), upper latitude, west (left) longitude, lower latitude and east (right) longitude separated by commas for each area of interest. This will then update the map highlighting all areas on the map. This option is useful if you want to show a view of several areas of interest. Note: At present you cannot download maps for each area</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="camera.png" alt="Save View">&nbsp;&nbsp;Save View (Ctrl+V)</td>

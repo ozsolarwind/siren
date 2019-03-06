@@ -44,6 +44,41 @@ def ss_col(col, base=1):
     c2 = col % 26
     return (col_letters[c1] + col_letters[c2 + 1]).strip()
 
+
+class ThumbListWidget(QtGui.QListWidget):
+    def __init__(self, type, parent=None):
+        super(ThumbListWidget, self).__init__(parent)
+        self.setIconSize(QtCore.QSize(124, 124))
+        self.setDragDropMode(QtGui.QAbstractItemView.DragDrop)
+        self.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
+        self.setAcceptDrops(True)
+
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasUrls():
+            event.accept()
+        else:
+            super(ThumbListWidget, self).dragEnterEvent(event)
+
+    def dragMoveEvent(self, event):
+        if event.mimeData().hasUrls():
+            event.setDropAction(QtCore.Qt.CopyAction)
+            event.accept()
+        else:
+            super(ThumbListWidget, self).dragMoveEvent(event)
+
+    def dropEvent(self, event):
+        if event.mimeData().hasUrls():
+            event.setDropAction(QtCore.Qt.CopyAction)
+            event.accept()
+            links = []
+            for url in event.mimeData().urls():
+                links.append(str(url.toLocalFile()))
+            self.emit(QtCore.SIGNAL("dropped"), links)
+        else:
+            event.setDropAction(QtCore.Qt.MoveAction)
+            super(ThumbListWidget, self).dropEvent(event)
+
+
 class ClickableQLabel(QtGui.QLabel):
     def __init(self, parent):
         QLabel.__init__(self, parent)
@@ -300,10 +335,13 @@ class powerBalance(QtGui.QWidget):
         if self.adjust_re:
             self.adjust.setCheckState(QtCore.Qt.Checked)
         self.grid.addWidget(self.adjust, 6, 1, 1, 3)
-        self.grid.addWidget(QtGui.QLabel('Dispatch Order:'), 7, 0)
-        self.order = QtGui.QListWidget()
-        self.order.setDragDropMode(QtGui.QAbstractItemView.InternalMove)
+        self.grid.addWidget(QtGui.QLabel('Dispatch Order:\n(move to right\nto exclude)'), 7, 0)
+        self.order = ThumbListWidget(self) #QtGui.QListWidget()
+      #  self.order.setDragDropMode(QtGui.QAbstractItemView.InternalMove)
         self.grid.addWidget(self.order, 7, 1, 1, 2)
+        self.ignore = ThumbListWidget(self) # QtGui.QListWidget()
+      #  self.ignore.setDragDropMode(QtGui.QAbstractItemView.InternalMove)
+        self.grid.addWidget(self.ignore, 7, 3, 1, 2)
         self.log = QtGui.QLabel('')
         msg_palette = QtGui.QPalette()
         msg_palette.setColor(QtGui.QPalette.Foreground, QtCore.Qt.red)
@@ -481,6 +519,24 @@ class powerBalance(QtGui.QWidget):
             dialog.exec_()
             if dialog.getValues() is not None:
                 newgenerators = dialog.getValues()
+    #            print '(522)', newgenerators
+    #            for key, values in newgenerators.iteritems():
+    #                for value in values:
+    #                    left = value[:value.find('=')]
+    #                    right = value[value.find('=')+1:]
+    #                    print '(527)', left, right
+    #    section_dict = {}
+    #    section_items = []
+    #    for key in values:
+    #        try:
+    #            section_items.append(key + '=' + values[key][0][6:])
+    #        except:
+    #            section_items.append(key + '=')
+    #    section_dict[self.section] = section_items
+    #            for generator in newgenerators:
+    #                print generator
+    #                for item in generator:
+    #                    print item
                 self.setOrder(generators)
         if ts is not None:
             ts.release_resources()
@@ -600,21 +656,28 @@ class powerBalance(QtGui.QWidget):
 
     def setOrder(self, generators=None):
         self.order.clear()
+        self.ignore.clear()
         if generators is None:
             order = ['Storage', 'Biomass', 'PHS', 'Gas', 'CCG1', 'Other', 'Coal']
             for stn in order:
                 self.order.addItem(stn)
         else:
             order = []
+            zero = []
             for key, value in generators.iteritems():
+                if value.capacity == 0:
+                    continue
                 try:
                     o = int(value.order)
                     if o > 0:
                         while len(order) <= o:
                             order.append([])
                         order[o - 1].append(key)
+                    elif o == 0:
+                        zero.append(key)
                 except:
                     pass
+            order.append(zero)
             for cat in order:
                 for stn in cat:
                     self.order.addItem(stn)
@@ -865,8 +928,9 @@ class powerBalance(QtGui.QWidget):
                         ns.cell(row=cost_row, column=col).number_format = '$#,##0'
                         ss.cell(row=ss_row, column=5).value = '=Detail!' + ss_col(col) + str(cost_row)
                         ss.cell(row=ss_row, column=5).number_format = '$#,##0'
-                        ns.cell(row=lcoe_row, column=col).value = '=' + ss_col(col) + str(cost_row) + '/8760/' \
-                                + ss_col(col) + str(cf_row) +'/' + ss_col(col) + str(cap_row)
+                        ns.cell(row=lcoe_row, column=col).value = '=IF(AND(' + ss_col(col) + str(cf_row) + '>0,' \
+                                + ss_col(col) + str(cap_row) + '>0),' + ss_col(col) + str(cost_row) + '/8760/' \
+                                + ss_col(col) + str(cf_row) +'/' + ss_col(col) + str(cap_row) + ',"")'
                         ns.cell(row=lcoe_row, column=col).number_format = '$#,##0.00'
                         ss.cell(row=ss_row, column=6).value = '=Detail!' + ss_col(col) + str(lcoe_row)
                         ss.cell(row=ss_row, column=6).number_format = '$#,##0.00'
@@ -1063,13 +1127,21 @@ class powerBalance(QtGui.QWidget):
                 gen = sp_data[sp][0]
                 if generators[gen].lcoe > 0:
                     sp_data[sp][4] = generators[gen].lcoe * generators[gen].lcoe_cf * 8760 * sp_data[sp][1]
-                    sp_data[sp][5] = sp_data[sp][4] / 8760 / sp_data[sp][3] / sp_data[sp][1]
+                    if sp_data[sp][1] > 0 and sp_data[sp][3] > 0:
+                        sp_data[sp][5] = sp_data[sp][4] / 8760 / sp_data[sp][3] / sp_data[sp][1]
                     cost_sum += sp_data[sp][4]
                 if generators[gen].emissions > 0:
                     sp_data[sp][6] = sp_data[sp][2] * generators[gen].emissions
                     co2_sum += sp_data[sp][6]
-            sp_data.append(['Total', cap_sum, gen_sum, gen_sum / cap_sum / 8760, cost_sum,
-                           cost_sum / gen_sum, co2_sum])
+            if cap_sum > 0:
+                cs = gen_sum / cap_sum / 8760
+            else:
+                cs = ''
+            if gen_sum > 0:
+                gs = cost_sum / gen_sum
+            else:
+                gs = ''
+            sp_data.append(['Total', cap_sum, gen_sum, cs, cost_sum, gs, co2_sum])
             sf_sums = [0., 0., 0.]
             for sf in range(len(shortfall)):
                 if shortfall[sf] > 0:
@@ -1103,6 +1175,7 @@ class powerBalance(QtGui.QWidget):
             self.progressbar.setValue(10)
             self.log.setText(self.sender().text() + ' completed')
             self.progressbar.setHidden(True)
+            self.progressbar.setValue(0)
             return
         for column_cells in ns.columns:
             length = 0
@@ -1132,8 +1205,9 @@ class powerBalance(QtGui.QWidget):
                 ns.cell(row=cost_row, column=col).number_format = '$#,##0'
                 ss.cell(row=ss_row, column=5).value = '=Detail!' + ss_col(col) + str(cost_row)
                 ss.cell(row=ss_row, column=5).number_format = '$#,##0'
-                ns.cell(row=lcoe_row, column=col).value = '=' + ss_col(col) + str(cost_row) + '/8760/' \
-                            + ss_col(col) + str(cf_row) +'/' + ss_col(col) + str(cap_row)
+                ns.cell(row=lcoe_row, column=col).value = '=IF(AND(' + ss_col(col) + str(cf_row) + '>0,' \
+                            + ss_col(col) + str(cap_row) + '>0),' + ss_col(col) + str(cost_row) + '/8760/' \
+                            + ss_col(col) + str(cf_row) + '/' + ss_col(col) + str(cap_row)+  ',"")'
                 ns.cell(row=lcoe_row, column=col).number_format = '$#,##0.00'
                 ss.cell(row=ss_row, column=6).value = '=Detail!' + ss_col(col) + str(lcoe_row)
                 ss.cell(row=ss_row, column=6).number_format = '$#,##0.00'
@@ -1281,6 +1355,7 @@ class powerBalance(QtGui.QWidget):
         msg = '%s created.' % data_file
         self.log.setText(msg)
         self.progressbar.setHidden(True)
+        self.progressbar.setValue(0)
 
 if "__main__" == __name__:
     app = QtGui.QApplication(sys.argv)
