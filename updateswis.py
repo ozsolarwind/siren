@@ -133,7 +133,7 @@ class makeFile():
         if changes > 0:
             msgbox = QtGui.QMessageBox()
             msgbox.setWindowTitle('SIREN - updateswis Status')
-            self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
+            msgbox.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
             msgbox.setText(str(changes) + ' changes. Do you want to replace existing file (Y)?')
             msgbox.setInformativeText(info)
             msgbox.setDetailedText(self.log)
