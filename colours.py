@@ -213,7 +213,7 @@ class Colours(QtGui.QDialog):
         if self.colours[key][ndx] != '':
             col = QtGui.QColorDialog.getColor(self.colours[key][ndx])
         else:
-            col = QtGui.QColorDialog.getColor(QtGui.QColor(''))
+            col = QtGui.QColorDialog.getColor(QtGui.QColor('white'))
         if col.isValid():
             if ndx == 0:
                 self.colours[key] = [col, self.colours[key][1]]
