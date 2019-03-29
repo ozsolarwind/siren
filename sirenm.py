@@ -1215,7 +1215,7 @@ class MainWindow(QtGui.QMainWindow):
         windowMenu.addAction(credit)
         windowMenu.addAction(self.showResource)
         if self.years is not None:
-            subWindowMenu = windowMenu.addMenu('Resource for year')
+            subWindowMenu = windowMenu.addMenu('&Resource for year')
             for year in self.years:
                 subResource = QtGui.QAction(QtGui.QIcon('grid.png'), year, self)
                 subResource.triggered.connect(self.show_Resource)
