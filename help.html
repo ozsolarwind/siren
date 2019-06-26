@@ -183,7 +183,7 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 <li><code>siren_sample.exe</code> contains the files and data for the sample SIREN simulation of the SWIS</li>
 <li>(<code>sen_makeweather_getmerra2.exe</code> is a package containing both <code>makeweatherfiles</code>, a standalone program to produce SAM weather files, and <code>getmerra2</code> which enables MERRA-2 files to be downloaded. This package allows you to create SAM weather files from MERRA-2 files without requiring any other parts of SIREN. See <a href="makeweatherfiles.html" target="_blank">makeweatherfiles.html</a>)</li>
 </ul>
-<p>Occasionally new versions of some of the SIREN programs will be uploaded to SourceForge. You can check for new versions and download them by selecting the <code>sirenupd</code> option in SIREN.</p>
+<p>Occasionally new versions of some of the SIREN programs will be uploaded to SourceForge. You can check for new versions and download them by selecting the <code>sirenupd</code> option in SIREN. (Major new releases can also be indicated but these will require a complete new SIREN version to be installed.)</p>
 <p>To install the required package you can just open/launch it and extract it to your desired location. It may be necessary to execute the program as Administrator.</p>
 <h3>Possible folder setup for SIREN</h3>
 <p>To enable new versions of SIREN to be installed without affecting your work a folder structure similar to the following is suggested.</p>
@@ -1490,6 +1490,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">Save data outputs produced by the model for each technology and other options. The data will be adjusted to reflect load growth as specified by Power Model options and adjusted generation</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>save_view</dfn></td>
+<td class="none">If True this Property will allow you to save individual images of visualised generation. The default value is False</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>season</dfn></td>
 <td class="none">Display plots of the average 24 hour period for the seasons defined by the <em>season&lt;n&gt;</em> properties
 </td>
@@ -2571,8 +2575,10 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 </ul></td></tr>
 <tr><td class="lr"><dfn>Period</dfn></td>
 <td class="none">This row provides pull-down menus to allow you to choose a period, day and hour to visualise</td></tr>
-<tr><td class="lr"><strong>&lt;</strong></td>
+<tr><td class="lr"><strong>&lt;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&gt;</strong></td>
 <td class="none">You can also navigate to a particular time period by dragging the slider bar. Clicking <strong>&lt;</strong> will step back one period while <strong>&gt;</strong> steps forward one period. You can also use <em>Page Down</em> and <em>Page Up</em> to step forward and back</td></tr>
+<tr><td class="lr"><dfn>Save Views</dfn></td><td class="none">If the <em>save_view</em> property of the <em>[Power]</em> section is True you will be able to save individual views of the visualised generation. When you first set an increment value you will be presented with an option to specify a location for the saved files. The files will be saved in the chsoen location with a filename equal to the chosen value plus an indication of the period it relates to. This will enable you to create a video of the sequence using an appropriate tool. You set the total number of files (views) to be saved and each iteration of the visualisation will save a file and decrement the counter until it reaches zero</td></tr>
+<tr><td class="lr"><dfn>Repeat Loop</dfn></td><td class="none">If checked this option will cause the visualisation to repeat continuously</td></tr>
 <tr><td class="lr"><dfn>Period Loop (secs)</dfn></td>
 <td class="none">You can also cause the visualisation to automatically loop through all time periods. The number field allows you to specify the delay in seconds between each period - between 0 and 10 in .2 second increments. You press the <strong>Loop</strong> button to start the loop. Press <strong>Stop</strong> (or the <em>Power -> Exit Visualise</em>, Ctrl+Z, menu option) to stop the loop.</td></tr>
 <tr><td class="bottom"><strong>Quit</strong></td>

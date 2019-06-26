@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 #  Copyright (C) 2016-2019 Sustainable Energy Now Inc., Angus King
 #
@@ -24,7 +24,7 @@ import os
 import sys
 import time
 from PyQt4 import QtCore, QtGui
-import ConfigParser   # decode .ini file
+import configparser   # decode .ini file
 
 
 class Visualise(QtGui.QDialog):
@@ -36,7 +36,7 @@ class Visualise(QtGui.QDialog):
         """
         radius = 6367.  # km is the radius of the Earth
       # convert decimal degrees to radians
-        ln1, lt1, baring = map(math.radians, [lon1, lat1, bearing])
+        ln1, lt1, baring = list(map(math.radians, [lon1, lat1, bearing]))
       # "reverse" haversine formula
         lat2 = math.asin(math.sin(lt1) * math.cos(distance / radius) +
                math.cos(lt1) * math.sin(distance / radius) * math.cos(baring))
@@ -50,6 +50,10 @@ class Visualise(QtGui.QDialog):
         self.stations = stations
         self.powers = powers
         self.scene = main.view.scene()
+        self.save_View = main.save_View
+        self.viewPrefix = None
+        self.viewSuffix = None
+        self.viewDo = False
         self.visual_group = QtGui.QGraphicsItemGroup()
         self.visual_items = []
         self.scene.addItem(self.visual_group)
@@ -60,7 +64,7 @@ class Visualise(QtGui.QDialog):
         self.mth_index = [0]
         for i in range(len(self.the_days) - 1):
             self.mth_index.append(self.mth_index[-1] + self.the_days[i] * 24)
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
         else:
@@ -76,14 +80,14 @@ class Visualise(QtGui.QDialog):
         self.daily = True
         try:
             items = config.items('Power')
-            for item, values in items:
+            for item, value in items:
                 if item[:6] == 'season':
                     if item == 'season':
                         continue
                     i = int(item[6:]) - 1
                     if i >= len(self.seasons):
                         self.seasons.append([])
-                    self.seasons[i] = values.split(',')
+                    self.seasons[i] = value.split(',')
                     for j in range(1, len(self.seasons[i])):
                         self.seasons[i][j] = int(self.seasons[i][j]) - 1
                 elif item[:6] == 'period':
@@ -92,9 +96,12 @@ class Visualise(QtGui.QDialog):
                     i = int(item[6:]) - 1
                     if i >= len(self.periods):
                         self.periods.append([])
-                    self.periods[i] = values.split(',')
+                    self.periods[i] = value.split(',')
                     for j in range(1, len(self.periods[i])):
                         self.periods[i][j] = int(self.periods[i][j]) - 1
+                elif item == 'save_view':
+                    if value.lower() in ['true', 'yes', 'on']:
+                        self.viewDo = True
         except:
             pass
         if len(self.seasons) == 0:
@@ -140,12 +147,20 @@ class Visualise(QtGui.QDialog):
         self.slider = QtGui.QSlider(QtCore.Qt.Horizontal)
         self.slider.valueChanged.connect(self.slideChanged)
         self.grid.addWidget(self.slider, row, 1, 1, 5)
-        next = QtGui.QPushButton('>', self)
-        width = next.fontMetrics().boundingRect('>').width() + 10
-        next.setMaximumWidth(width)
-        self.grid.addWidget(next, row, 7)
-        next.clicked.connect(self.nextClicked)
+        nextt = QtGui.QPushButton('>', self)
+        width = nextt.fontMetrics().boundingRect('>').width() + 10
+        nextt.setMaximumWidth(width)
+        self.grid.addWidget(nextt, row, 7)
+        nextt.clicked.connect(self.nextClicked)
         row += 1
+        self.viewSpin = QtGui.QSpinBox()
+        self.viewSpin.setRange(0, 100)
+        self.viewSpin.setValue(0)
+        if self.viewDo:
+            self.grid.addWidget(QtGui.QLabel('Save Views:'), row, 0)
+            self.viewSpin.valueChanged.connect(self.viewChanged)
+            self.grid.addWidget(self.viewSpin, row, 1)
+            row += 1
         self.grid.addWidget(QtGui.QLabel('Repeat Loop:'), row, 0)
         self.repeat = QtGui.QCheckBox()
         self.repeat.setCheckState(QtCore.Qt.Unchecked)
@@ -197,8 +212,20 @@ class Visualise(QtGui.QDialog):
     def loopChanged(self, val):
         return
 
+    def viewChanged(self, val):
+        if self.viewDo:
+            if self.detailCombo.currentText() == 'Diurnal':
+                txt = self.periodCombo.currentText() + ' ' + self.hourCombo.currentText()
+            else:
+                txt = self.periodCombo.currentText() + '-' + self.dayCombo.currentText() + \
+                      ' ' + self.hourCombo.currentText()
+            self.saveImage(txt)
+            self.viewDo = False
+        return
+
     def changeDetail(self, val):
         self.setPeriod()
+        self.showPeriod(0)
 
     def nextClicked(self):
         if self.slider.value() == self.slider.maximum():
@@ -390,6 +417,34 @@ class Visualise(QtGui.QDialog):
     def quitClicked(self):
         self.close()
 
+    def saveImage(self, txt):
+        txt = txt.replace(' ', '_')
+        txt = txt.replace(':00', '')
+        if self.viewPrefix is None:
+            fname = 'Image_' + txt + '.png'
+            fname = QtGui.QFileDialog.getSaveFileName(self, 'Save image file',
+                    self.scene.scenarios + fname, 'Image Files (*.png *.jpg *.bmp)')
+            if fname == '':
+                self.viewSpin.setValue(1)
+            else:
+                i = fname.rfind(txt)
+                if i >= 0:
+                    self.viewPrefix = fname[:i]
+                    self.viewSuffix = fname[i + len(txt):]
+                else:
+                    i = fname.rfind('.')
+                    if i < 0:
+                        self.viewPrefix = fname
+                        self.viewSuffix = '.png'
+                    else:
+                        self.viewPrefix = fname[:i]
+                        self.viewSuffix = fname[i:]
+                self.save_View(filename=self.viewPrefix + txt + self.viewSuffix)
+        else:
+            self.save_View(filename=self.viewPrefix + txt + self.viewSuffix)
+        if self.viewSpin.value() > 0:
+            self.viewSpin.setValue(self.viewSpin.value() - 1)
+
     def showPeriod(self, period):
         self.visual_group.setVisible(False)
         while len(self.visual_items) > 0:
@@ -419,10 +474,10 @@ class Visualise(QtGui.QDialog):
             el.setZValue(1)
             self.visual_items.append(el)
             self.visual_group.addToGroup(self.visual_items[-1])
-        if  self.detailCombo.currentText() == 'Diurnal':
+        if self.detailCombo.currentText() == 'Diurnal':
             txt = self.periodCombo.currentText() + ' ' + self.hourCombo.currentText()
         else:
-            txt = self.periodCombo.currentText() + ' ' + self.dayCombo.currentText() + ' ' + self.hourCombo.currentText()
+            txt = self.periodCombo.currentText() + '-' + self.dayCombo.currentText() + ' ' + self.hourCombo.currentText()
         itm = QtGui.QGraphicsSimpleTextItem(txt)
         new_font = itm.font()
         new_font.setPointSizeF(self.scene.width() / 50)
@@ -438,6 +493,8 @@ class Visualise(QtGui.QDialog):
         self.visual_items.append(itm)
         self.visual_group.addToGroup(self.visual_items[-1])
         self.visual_group.setVisible(True)
+        if self.viewSpin.value() > 0:
+            self.saveImage(txt)
         QtCore.QCoreApplication.processEvents()
         QtCore.QCoreApplication.flush()
         if self.do_loop and not self.scene.exitLoop:
