@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 #  Copyright (C) 2017-2019 Sustainable Energy Now Inc., Angus King
 #
@@ -72,7 +72,17 @@ class UpdDialog(QtGui.QDialog):
             for program in programs:
                 version = fileVersion(program=program['Program'])
                 if version != '?' and version != program['Version']:
-                    new_versions.append([program['Program'], version, program['Version']])
+                    cur = version.split('.')
+                    new = program['Version'].split('.')
+                    if new[0] == cur[0]: # must be same major release
+                        cur[-1] = cur[-1].rjust(4, '0')
+                        new[-1] = new[-1].rjust(4, '0')
+                        for b in range(len(cur)):
+                            if new[b] > cur[b]:
+                                new_versions.append([program['Program'], version, program['Version']])
+                                break
+                    elif new[0] > cur[0]:
+                        new_versions.append([program['Program'], version, 'New Release'])                        
             versions.close()
             if len(new_versions) > 0:
                 newgrid.addWidget(QtGui.QLabel('New versions are available for the following programs.' + \
@@ -92,8 +102,9 @@ class UpdDialog(QtGui.QDialog):
                      rw += 1
                      self.newbox.append(QtGui.QTableWidgetItem())
                      self.newprog.append(new_version[0])
-                     self.newbox[-1].setFlags(QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
-                     self.newbox[-1].setCheckState(QtCore.Qt.Unchecked)
+                     if new_version[2] != 'New Release':
+                         self.newbox[-1].setFlags(QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
+                         self.newbox[-1].setCheckState(QtCore.Qt.Unchecked)
                      self.table.setItem(rw, 0, self.newbox[-1])
                      self.table.setItem(rw, 1, QtGui.QTableWidgetItem(new_version[0]))
                      self.table.setItem(rw, 2, QtGui.QTableWidgetItem(new_version[2]))

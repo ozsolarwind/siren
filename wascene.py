@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 #  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
 #
@@ -26,12 +26,12 @@ import os
 import sys
 import xlrd
 
-import ConfigParser   # decode .ini file
+import configparser   # decode .ini file
 from PyQt4 import QtCore, QtGui
-try:
-    import mpl_toolkits.basemap.pyproj as pyproj   # Import the pyproj module
-except:
-    from mpl_toolkits.basemap import pyproj as pyproj
+#try:
+#    import mpl_toolkits.basemap.pyproj as pyproj   # Import the pyproj module
+#except:
+from mpl_toolkits.basemap import pyproj as pyproj
 from towns import Towns
 from grid import Grid, Grid_Boundary, Line
 from parents import getParents
@@ -43,7 +43,7 @@ from dijkstra_4 import Shortest
 class WAScene(QtGui.QGraphicsScene):
 
     def get_config(self):
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
         else:
@@ -454,7 +454,7 @@ class WAScene(QtGui.QGraphicsScene):
         """
         radius = 6367.   # km is the radius of the Earth
      # convert decimal degrees to radians
-        ln1, lt1, baring = map(radians, [lon1, lat1, bearing])
+        ln1, lt1, baring = list(map(radians, [lon1, lat1, bearing]))
      # "reverse" haversine formula
         lat2 = asin(sin(lt1) * cos(distance / radius) +
                                 cos(lt1) * sin(distance / radius) * cos(baring))
@@ -628,7 +628,7 @@ class WAScene(QtGui.QGraphicsScene):
         self._stationGroups = {}
         self._stationLabels = []
         self._stationCircles = {}
-        for key, value in self.colors.iteritems():
+        for key, value in self.colors.items():
             self._stationCircles[key] = []
         if self.existing:
             self._stations = Stations()
@@ -1085,7 +1085,7 @@ class WAScene(QtGui.QGraphicsScene):
     def changeDate(self, d):
         return
         d = datetime.date(d.year(), d.month(), d.day())
-        for st in self._stations.values():
+        for st in list(self._stations.values()):
             st.changeDate(d)
         self._power_tot.changeDate(d)
 

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 #  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
 #
@@ -32,7 +32,7 @@ import time
 import xlrd
 import xlwt
 
-import ConfigParser  # decode .ini file
+import configparser  # decode .ini file
 from PyQt4 import Qt, QtGui, QtCore
 
 from senuser import getUser, techClean
@@ -519,7 +519,7 @@ class whatFinancials(QtGui.QDialog):
                       ['grid_costs', 'Include Grid costs in LCOE?', False, True, False],
                       ['grid_path_costs', 'Include full grid path in LCOE?', False, True, False]]
         if parms is None:
-            config = ConfigParser.RawConfigParser()
+            config = configparser.RawConfigParser()
             if len(sys.argv) > 1:
                 config_file = sys.argv[1]
             else:
@@ -698,7 +698,7 @@ class whatFinancials(QtGui.QDialog):
 class Adjustments(QtGui.QDialog):
     def __init__(self, keys, load_key=None, load=None, data=None, base_year=None):
         super(Adjustments, self).__init__()
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
         else:
@@ -793,7 +793,7 @@ class Adjustments(QtGui.QDialog):
         if octr >= 0:
             ctr = 0
         if load is not None:
-            for key in data.keys():
+            for key in list(data.keys()):
                 if key[:4] == 'Load':
                     self.lkey = key
                     break
@@ -966,7 +966,7 @@ class Adjustments(QtGui.QDialog):
                     gen2[i][j] = gen[j][i]
             gen = gen2
         A = np.array(gen)
-        res = np.linalg.lstsq(A, B)  # least squares solution of the generation vs load
+        res = np.linalg.lstsq(A, B, rcond=None)  # least squares solution of the generation vs load
         x = res[0]
         do_corr = True
         for i in range(len(okeys)):
@@ -989,7 +989,7 @@ class Adjustments(QtGui.QDialog):
 
     def showClicked(self):
         self.results = {}
-        for key in self.adjusts.keys():
+        for key in list(self.adjusts.keys()):
             self.results[key] = round(self.adjusts[key].value(), 2)
         self.close()
 
@@ -1004,7 +1004,7 @@ class SuperPower():
         on the earth (specified in decimal degrees)
         """
    #     convert decimal degrees to radians
-        lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
+        lon1, lat1, lon2, lat2 = list(map(radians, [lon1, lat1, lon2, lat2]))
 
    #     haversine formula
         dlon = lon2 - lon1
@@ -1093,7 +1093,7 @@ class SuperPower():
                     closest = fil[2]
                     dist = dist1
         if __name__ == '__main__':
-            print closest
+            print(closest)
         return closest
 
     def do_defaults(self, station):
@@ -1140,39 +1140,39 @@ class SuperPower():
                   worksheet.cell_value(curr_row, var['DEFAULT']) != '' and \
                   str(worksheet.cell_value(curr_row, var['DEFAULT'])).lower() != 'input':
                     if worksheet.cell_value(curr_row, var['DATA']) == 'SSC_STRING':
-                        self.data.set_string(worksheet.cell_value(curr_row, var['NAME']),
-                          worksheet.cell_value(curr_row, var['DEFAULT']))
+                        self.data.set_string(worksheet.cell_value(curr_row, var['NAME']).encode('utf-8'),
+                          worksheet.cell_value(curr_row, var['DEFAULT']).encode('utf-8'))
                     elif worksheet.cell_value(curr_row, var['DATA']) == 'SSC_ARRAY':
                         arry = split_array(worksheet.cell_value(curr_row, var['DEFAULT']))
-                        self.data.set_array(worksheet.cell_value(curr_row, var['NAME']), arry)
+                        self.data.set_array(worksheet.cell_value(curr_row, var['NAME']).encode('utf-8'), arry)
                     elif worksheet.cell_value(curr_row, var['DATA']) == 'SSC_NUMBER':
                         if isinstance(worksheet.cell_value(curr_row, var['DEFAULT']), float):
-                            self.data.set_number(worksheet.cell_value(curr_row, var['NAME']),
+                            self.data.set_number(worksheet.cell_value(curr_row, var['NAME']).encode('utf-8'),
                               float(worksheet.cell_value(curr_row, var['DEFAULT'])))
                         else:
-                            self.data.set_number(worksheet.cell_value(curr_row, var['NAME']),
+                            self.data.set_number(worksheet.cell_value(curr_row, var['NAME']).encode('utf-8'),
                               worksheet.cell_value(curr_row, int(var['DEFAULT'])))
                     elif worksheet.cell_value(curr_row, var['DATA']) == 'SSC_MATRIX':
                         mtrx = split_matrix(worksheet.cell_value(curr_row, var['DEFAULT']))
-                        self.data.set_matrix(worksheet.cell_value(curr_row, var['NAME']), mtrx)
+                        self.data.set_matrix(worksheet.cell_value(curr_row, var['NAME']).encode('utf-8'), mtrx)
         else:
             dft_variables = csv.DictReader(self.default_files[technology])
             for var in dft_variables:
                 if (var['TYPE'] == 'SSC_INPUT' or var['TYPE'] == 'SSC_INOUT') and \
                   var['DEFAULT'] != '' and var['DEFAULT'].lower() != 'input':
                     if var['DATA'] == 'SSC_STRING':
-                        self.data.set_string(var['NAME'], var['DEFAULT'])
+                        self.data.set_string(var['NAME'].encode('utf-8'), var['DEFAULT'].encode('utf-8'))
                     elif var['DATA'] == 'SSC_ARRAY':
                         arry = split_array(var['DEFAULT'])
-                        self.data.set_array(var['NAME'], arry)
+                        self.data.set_array(var['NAME'].encode('utf-8'), arry)
                     elif var['DATA'] == 'SSC_NUMBER':
                         if var['DEFAULT'].find('.') >= 0:
-                            self.data.set_number(var['NAME'], float(var['DEFAULT']))
+                            self.data.set_number(var['NAME'].encode('utf-8'), float(var['DEFAULT']))
                         else:
-                            self.data.set_number(var['NAME'], int(var['DEFAULT']))
+                            self.data.set_number(var['NAME'].encode('utf-8'), int(var['DEFAULT']))
                     elif var['DATA'] == 'SSC_MATRIX':
                         mtrx = split_matrix(var['DEFAULT'])
-                        self.data.set_matrix(var['NAME'], mtrx)
+                        self.data.set_matrix(var['NAME'].encode('utf-8'), mtrx)
 
     def debug_sam(self, name, tech, module, data, status):
         data_typs = ['invalid', 'string', 'number', 'array', 'matrix', 'table']
@@ -1184,7 +1184,7 @@ class SuperPower():
         if status:
             status.emit(QtCore.SIGNAL('log'), 'SAM Variable list for ' + tech + ' - ' + name)
         else:
-            print 'SAM Variable list for ' + tech + ' - ' + name
+            print('SAM Variable list for ' + tech + ' - ' + name)
         var_names = sorted(var_names, key=lambda s: s.lower())
         info = []
         for fld in var_names:
@@ -1219,8 +1219,8 @@ class SuperPower():
             status.emit(QtCore.SIGNAL('log'), 'Variable list complete for ' + tech + ' - ' + name)
         else:
             for msg in info:
-                print msg
-            print 'Variable list complete for ' + tech + ' - ' + name
+                print(msg)
+            print('Variable list complete for ' + tech + ' - ' + name)
         return
 
     def __init__(self, stations, plots, parent=None, year=None, selected=None, status=None, progress=None):
@@ -1230,7 +1230,7 @@ class SuperPower():
         self.selected = selected
         self.status = status
         self.progress = progress
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
         else:
@@ -1655,22 +1655,22 @@ class SuperPower():
         def do_module(modname, station, field):
             if self.debug and self.status:
                 do_time = True
-                clock_start = time.clock()
+                clock_start = time.time()
             else:
                 do_time = False
-            module = ssc.Module(modname)
+            module = ssc.Module(modname.encode('utf-8'))
             if do_time:
-                time2 = time.clock() - clock_start
+                time2 = time.time() - clock_start
                 self.status.emit(QtCore.SIGNAL('log'), 'Load (%.6f seconds)' % (time2))
             if (module.exec_(self.data)):
                 if do_time:
-                    time3 = time.clock() - clock_start - time2
+                    time3 = time.time() - clock_start - time2
                     self.status.emit(QtCore.SIGNAL('log'), 'Execute (%.6f seconds)' % (time3))
                 if self.debug:
                     self.debug_sam(station.name, station.technology, module, self.data, self.status)
-                farmpwr = self.data.get_array(field)
+                farmpwr = self.data.get_array(field.encode('utf-8'))
                 if do_time:
-                    time4 = time.clock() - clock_start - time2 - time3
+                    time4 = time.time() - clock_start - time2 - time3
                     self.status.emit(QtCore.SIGNAL('log'), 'Get data (%.6f seconds)' % (time4))
                 del module
                 return farmpwr
@@ -1681,9 +1681,9 @@ class SuperPower():
                 msg = module.log(idx)
                 while (msg is not None):
                     if self.status:
-                       self.status.emit(QtCore.SIGNAL('log'), modname + ' error [' + str(idx) + ']: ' + msg)
+                       self.status.emit(QtCore.SIGNAL('log'), modname + ' error [' + str(idx) + ']: ' + msg.decode())
                     else:
-                        print modname + ' error [', idx, ' ]: ', msg
+                        print(modname + ' error [', idx, ' ]: ', msg.decode())
                     idx += 1
                     msg = module.log(idx)
                 del module
@@ -1778,7 +1778,7 @@ class SuperPower():
             else:
                 wtyp = 0
             closest = self.find_closest(station.lat, station.lon, wind=True)
-            self.data.set_string('wind_resource_filename', self.wind_files + '/' + closest)
+            self.data.set_string(b'wind_resource_filename', (self.wind_files + '/' + closest).encode('utf-8'))
             turbine = Turbine(station.turbine)
             if not hasattr(turbine, 'capacity'):
                 return None
@@ -1788,15 +1788,15 @@ class SuperPower():
                 loss = loss * 100
                 if loss < 0.:
                     loss = self.wind_farm_losses_percent[wtyp]
-                self.data.set_number('system_capacity', station.capacity * 1000000)
-                self.data.set_number('wind_farm_losses_percent', loss)
+                self.data.set_number(b'system_capacity', station.capacity * 1000000)
+                self.data.set_number(b'wind_farm_losses_percent', loss)
             else:
-                self.data.set_number('system_capacity', no_turbines * turbine.capacity * 1000)
-                self.data.set_number('wind_farm_losses_percent', self.wind_farm_losses_percent[wtyp])
+                self.data.set_number(b'system_capacity', no_turbines * turbine.capacity * 1000)
+                self.data.set_number(b'wind_farm_losses_percent', self.wind_farm_losses_percent[wtyp])
             pc_wind = turbine.speeds
             pc_power = turbine.powers
-            self.data.set_array('wind_turbine_powercurve_windspeeds', pc_wind)
-            self.data.set_array('wind_turbine_powercurve_powerout', pc_power)
+            self.data.set_array(b'wind_turbine_powercurve_windspeeds', pc_wind)
+            self.data.set_array(b'wind_turbine_powercurve_powerout', pc_power)
             t_rows = int(ceil(sqrt(no_turbines)))
             ctr = no_turbines
             wt_x = []
@@ -1811,30 +1811,30 @@ class SuperPower():
                         break
                 if ctr < 1:
                     break
-            self.data.set_array('wind_farm_xCoordinates', wt_x)
-            self.data.set_array('wind_farm_yCoordinates', wt_y)
-            self.data.set_number('wind_turbine_rotor_diameter', turbine.rotor)
-            self.data.set_number('wind_turbine_cutin', turbine.cutin)
+            self.data.set_array(b'wind_farm_xCoordinates', wt_x)
+            self.data.set_array(b'wind_farm_yCoordinates', wt_y)
+            self.data.set_number(b'wind_turbine_rotor_diameter', turbine.rotor)
+            self.data.set_number(b'wind_turbine_cutin', turbine.cutin)
             self.do_defaults(station)
             farmpwr = do_module('windpower', station, 'gen')
             return farmpwr
         elif station.technology == 'CST':
             closest = self.find_closest(station.lat, station.lon)
             base_capacity = 104.
-            self.data.set_string('file_name', self.solar_files + '/' + closest)
-            self.data.set_number('system_capacity', int(base_capacity * 1000))
-            self.data.set_number('w_des', base_capacity / self.cst_gross_net)
-            self.data.set_number('latitude', station.lat)
-            self.data.set_number('longitude', station.lon)
-            self.data.set_number('timezone', int(round(station.lon / 15.)))
+            self.data.set_string(b'file_name', (self.solar_files + '/' + closest).encode('utf-8'))
+            self.data.set_number(b'system_capacity', int(base_capacity * 1000))
+            self.data.set_number(b'w_des', base_capacity / self.cst_gross_net)
+            self.data.set_number(b'latitude', station.lat)
+            self.data.set_number(b'longitude', station.lon)
+            self.data.set_number(b'timezone', int(round(station.lon / 15.)))
             if station.storage_hours is None:
                 tshours = self.cst_tshours
             else:
                 tshours = station.storage_hours
-            self.data.set_number('hrs_tes', tshours)
+            self.data.set_number(b'hrs_tes', tshours)
             sched = [[1] * 24] * 12
-            self.data.set_matrix('weekday_schedule', sched[:])
-            self.data.set_matrix('weekend_schedule', sched[:])
+            self.data.set_matrix(b'weekday_schedule', sched[:])
+            self.data.set_matrix(b'weekend_schedule', sched[:])
             if self.defaults['optical_table'] is None:
                 optic_file = self.variable_files + '/' + self.default_files['optical_table']
                 if not os.path.exists(optic_file):
@@ -1852,7 +1852,7 @@ class SuperPower():
                         row.append(float(bit))
                     self.defaults['optical_table'].append(row)
                 del lines
-            self.data.set_matrix('OpticalTable', self.defaults['optical_table'][:])
+            self.data.set_matrix(b'OpticalTable', self.defaults['optical_table'][:])
             self.do_defaults(station)
             farmpwr = do_module('tcsgeneric_solar', station, 'gen')
             if farmpwr is not None:
@@ -1863,22 +1863,22 @@ class SuperPower():
         elif station.technology == 'Solar Thermal':
             closest = self.find_closest(station.lat, station.lon)
             base_capacity = 104
-            self.data.set_string('solar_resource_file', self.solar_files + '/' + closest)
-            self.data.set_number('system_capacity', base_capacity * 1000)
-            self.data.set_number('P_ref', base_capacity / self.st_gross_net)
+            self.data.set_string(b'solar_resource_file', (self.solar_files + '/' + closest).encode('utf-8'))
+            self.data.set_number(b'system_capacity', base_capacity * 1000)
+            self.data.set_number(b'P_ref', base_capacity / self.st_gross_net)
             if station.storage_hours is None:
                 tshours = self.st_tshours
             else:
                 tshours = station.storage_hours
-            self.data.set_number('tshours', tshours)
+            self.data.set_number(b'tshours', tshours)
             sched = [[1.] * 24] * 12
-            self.data.set_matrix('weekday_schedule', sched[:])
-            self.data.set_matrix('weekend_schedule', sched[:])
+            self.data.set_matrix(b'weekday_schedule', sched[:])
+            self.data.set_matrix(b'weekend_schedule', sched[:])
             if ssc.API().version() >= 159:
-                self.data.set_matrix('dispatch_sched_weekday', sched[:])
-                self.data.set_matrix('dispatch_sched_weekend', sched[:])
+                self.data.set_matrix(b'dispatch_sched_weekday', sched[:])
+                self.data.set_matrix(b'dispatch_sched_weekend', sched[:])
                 if ssc.API().version() >= 206:
-                    self.data.set_number('gross_net_conversion_factor', self.st_gross_net)
+                    self.data.set_number(b'gross_net_conversion_factor', self.st_gross_net)
                     if self.defaults['helio_positions'] is None:
                         helio_file = self.variable_files + '/' + self.default_files['helio_positions']
                         if not os.path.exists(helio_file):
@@ -1896,15 +1896,15 @@ class SuperPower():
                                 row.append(float(bit))
                             self.defaults['helio_positions'].append(row)
                         del lines
-                    self.data.set_matrix('helio_positions', self.defaults['helio_positions'][:])
+                    self.data.set_matrix(b'helio_positions', self.defaults['helio_positions'][:])
             else:
-                self.data.set_number('Design_power', base_capacity / self.st_gross_net)
-                self.data.set_number('W_pb_design', base_capacity / self.st_gross_net)
+                self.data.set_number(b'Design_power', base_capacity / self.st_gross_net)
+                self.data.set_number(b'W_pb_design', base_capacity / self.st_gross_net)
                 vol_tank = base_capacity * tshours * self.st_volume
-                self.data.set_number('vol_tank', vol_tank)
-                f_tc_cold = self.data.get_number('f_tc_cold')
+                self.data.set_number(b'vol_tank', vol_tank)
+                f_tc_cold = self.data.get_number(b'f_tc_cold')
                 V_tank_hot_ini = vol_tank * (1. - f_tc_cold)
-                self.data.set_number('V_tank_hot_ini', V_tank_hot_ini)
+                self.data.set_number(b'V_tank_hot_ini', V_tank_hot_ini)
             self.do_defaults(station)
             farmpwr = do_module('tcsmolten_salt', station, 'gen')
             if farmpwr is not None:
@@ -1914,29 +1914,29 @@ class SuperPower():
             return farmpwr
         elif 'PV' in station.technology:
             closest = self.find_closest(station.lat, station.lon)
-            self.data.set_string('solar_resource_file', self.solar_files + '/' + closest)
+            self.data.set_string(b'solar_resource_file', (self.solar_files + '/' + closest).encode('utf-8'))
             dc_ac_ratio = self.pv_dc_ac_ratio[0]
             if station.technology[:5] == 'Fixed':
                 dc_ac_ratio = self.pv_dc_ac_ratio[0]
-                self.data.set_number('array_type', 0)
+                self.data.set_number(b'array_type', 0)
             elif station.technology[:7] == 'Rooftop':
                 dc_ac_ratio = self.pv_dc_ac_ratio[1]
-                self.data.set_number('array_type', 1)
+                self.data.set_number(b'array_type', 1)
             elif station.technology[:11] == 'Single Axis':
                 dc_ac_ratio = self.pv_dc_ac_ratio[2]
-                self.data.set_number('array_type', 2)
+                self.data.set_number(b'array_type', 2)
             elif station.technology[:9] == 'Backtrack':
                 dc_ac_ratio = self.pv_dc_ac_ratio[3]
-                self.data.set_number('array_type', 3)
+                self.data.set_number(b'array_type', 3)
             elif station.technology[:8] == 'Tracking' or station.technology[:9] == 'Dual Axis':
                 dc_ac_ratio = self.pv_dc_ac_ratio[4]
-                self.data.set_number('array_type', 4)
-            self.data.set_number('system_capacity', station.capacity * 1000 * dc_ac_ratio)
-            self.data.set_number('dc_ac_ratio', dc_ac_ratio)
+                self.data.set_number(b'array_type', 4)
+            self.data.set_number(b'system_capacity', station.capacity * 1000 * dc_ac_ratio)
+            self.data.set_number(b'dc_ac_ratio', dc_ac_ratio)
             try:
-                self.data.set_number('tilt', fabs(station.tilt))
+                self.data.set_number(b'tilt', fabs(station.tilt))
             except:
-                self.data.set_number('tilt', fabs(station.lat))
+                self.data.set_number(b'tilt', fabs(station.lat))
             if float(station.lat) < 0:
                 azi = 0
             else:
@@ -1953,31 +1953,31 @@ class SuperPower():
                         azi = dirns[station.direction]
                     except:
                         pass
-            self.data.set_number('azimuth', azi)
-            self.data.set_number('losses', self.pv_losses)
+            self.data.set_number(b'azimuth', azi)
+            self.data.set_number(b'losses', self.pv_losses)
             self.do_defaults(station)
             farmpwr = do_module('pvwattsv5', station, 'gen')
             return farmpwr
         elif station.technology == 'Biomass':
             closest = self.find_closest(station.lat, station.lon)
-            self.data.set_string('file_name', self.solar_files + '/' + closest)
-            self.data.set_number('system_capacity', station.capacity * 1000)
-            self.data.set_number('biopwr.plant.nameplate', station.capacity * 1000)
+            self.data.set_string(b'file_name', (self.solar_files + '/' + closest).encode('utf-8'))
+            self.data.set_number(b'system_capacity', station.capacity * 1000)
+            self.data.set_number(b'biopwr.plant.nameplate', station.capacity * 1000)
             feedstock = station.capacity * 1000 * self.biomass_multiplier
-            self.data.set_number('biopwr.feedstock.total', feedstock)
-            self.data.set_number('biopwr.feedstock.total_biomass', feedstock)
-            carbon_pct = self.data.get_number('biopwr.feedstock.total_biomass_c')
-            self.data.set_number('biopwr.feedstock.total_c', feedstock * carbon_pct / 100.)
+            self.data.set_number(b'biopwr.feedstock.total', feedstock)
+            self.data.set_number(b'biopwr.feedstock.total_biomass', feedstock)
+            carbon_pct = self.data.get_number(b'biopwr.feedstock.total_biomass_c')
+            self.data.set_number(b'biopwr.feedstock.total_c', feedstock * carbon_pct / 100.)
             self.do_defaults(station)
             farmpwr = do_module('biomass', station, 'gen')
             return farmpwr
         elif station.technology == 'Geothermal':
             closest = self.find_closest(station.lat, station.lon)
-            self.data.set_string('file_name', self.solar_files + '/' + closest)
-            self.data.set_number('nameplate', station.capacity * 1000)
-            self.data.set_number('resource_potential', station.capacity * 10.)
-            self.data.set_number('resource_type', self.geo_res)
-            self.data.set_string('hybrid_dispatch_schedule', '1' * 24 * 12)
+            self.data.set_string(b'file_name', (self.solar_files + '/' + closest).encode('utf-8'))
+            self.data.set_number(b'nameplate', station.capacity * 1000)
+            self.data.set_number(b'resource_potential', station.capacity * 10.)
+            self.data.set_number(b'resource_type', self.geo_res)
+            self.data.set_string(b'hybrid_dispatch_schedule', ('1' * 24 * 12).encode('utf-8'))
             self.do_defaults(station)
             pwr = do_module('geothermal', station, 'monthly_energy')
             if pwr is not None:
@@ -2017,7 +2017,7 @@ class SuperPower():
                         farmpwr.append(pwr)
             return farmpwr
         elif station.technology[:5] == 'Other':
-            config = ConfigParser.RawConfigParser()
+            config = configparser.RawConfigParser()
             if len(sys.argv) > 1:
                 config_file = sys.argv[1]
             else:
@@ -2101,7 +2101,7 @@ class SuperPower():
                         elif form == 'wind50':
                             formula += bits2[wnd50_col]
                         else:
-                            for key in propty.keys():
+                            for key in list(propty.keys()):
                                 if form == key:
                                     formula += propty[key]
                                     break
@@ -2169,7 +2169,10 @@ class FinancialModel():
         data = None
         data = ssc.Data()
         var = {}
-        workfile = xlrd.open_workbook(xl_file)
+        try:
+            workfile = xlrd.open_workbook(xl_file)
+        except:
+            return None, None
         worksheet = workfile.sheet_by_index(0)
         num_rows = worksheet.nrows - 1
         num_cols = worksheet.ncols - 1
@@ -2186,36 +2189,36 @@ class FinancialModel():
               worksheet.cell_value(curr_row, var['DEFAULT']) != '' and \
               str(worksheet.cell_value(curr_row, var['DEFAULT'])).lower() != 'input':
                 if worksheet.cell_value(curr_row, var['DATA']) == 'SSC_STRING':
-                    data.set_string(worksheet.cell_value(curr_row, var['NAME']),
-                    worksheet.cell_value(curr_row, var['DEFAULT']))
+                    data.set_string(worksheet.cell_value(curr_row, var['NAME']).encode('utf-8'),
+                    worksheet.cell_value(curr_row, var['DEFAULT']).encode('utf-8'))
                 elif worksheet.cell_value(curr_row, var['DATA']) == 'SSC_ARRAY':
                     arry = split_array(worksheet.cell_value(curr_row, var['DEFAULT']))
-                    data.set_array(worksheet.cell_value(curr_row, var['NAME']), arry)
+                    data.set_array(worksheet.cell_value(curr_row, var['NAME']).encode('utf-8'), arry)
                 elif worksheet.cell_value(curr_row, var['DATA']) == 'SSC_NUMBER':
                     if overrides is not None and worksheet.cell_value(curr_row, var['NAME']) \
                       in overrides:
                         if worksheet.cell_value(curr_row, var['DATA']) == 'SSC_ARRAY':
                             if type(overrides[worksheet.cell_value(curr_row, var['NAME'])]) is list:
-                                data.set_array(worksheet.cell_value(curr_row, var['NAME']),
+                                data.set_array(worksheet.cell_value(curr_row, var['NAME']).encode('utf-8'),
                                   overrides[worksheet.cell_value(curr_row, var['NAME'])])
                             else:
-                                data.set_array(worksheet.cell_value(curr_row, var['NAME']),
+                                data.set_array(worksheet.cell_value(curr_row, var['NAME']).encode('utf-8'),
                                   [overrides[worksheet.cell_value(curr_row, var['NAME'])]])
                         else:
-                            data.set_number(worksheet.cell_value(curr_row, var['NAME']),
+                            data.set_number(worksheet.cell_value(curr_row, var['NAME']).encode('utf-8'),
                               overrides[worksheet.cell_value(curr_row, var['NAME'])])
                     else:
                         if isinstance(worksheet.cell_value(curr_row, var['DEFAULT']), float):
-                            data.set_number(worksheet.cell_value(curr_row, var['NAME']),
+                            data.set_number(worksheet.cell_value(curr_row, var['NAME']).encode('utf-8'),
                               float(worksheet.cell_value(curr_row, var['DEFAULT'])))
                         else:
-                            data.set_number(worksheet.cell_value(curr_row, var['NAME']),
+                            data.set_number(worksheet.cell_value(curr_row, var['NAME']).encode('utf-8'),
                               worksheet.cell_value(curr_row, int(var['DEFAULT'])))
                 elif worksheet.cell_value(curr_row, var['DATA']) == 'SSC_MATRIX':
                     mtrx = split_matrix(worksheet.cell_value(curr_row, var['DEFAULT']))
-                    data.set_matrix(worksheet.cell_value(curr_row, var['NAME']), mtrx)
+                    data.set_matrix(worksheet.cell_value(curr_row, var['NAME']).encode('utf-8'), mtrx)
             elif worksheet.cell_value(curr_row, var['TYPE']) == 'SSC_OUTPUT':
-                output_variables.append([worksheet.cell_value(curr_row, var['NAME']),
+                output_variables.append([worksheet.cell_value(curr_row, var['NAME']).encode('utf-8'),
                                         worksheet.cell_value(curr_row, var['DATA'])])
         return data, output_variables
 
@@ -2291,28 +2294,28 @@ class FinancialModel():
 
         def do_ippppa():
             capital_cost, grid_cost = stn_costs()
-            ippppa_data.set_number('system_capacity', capacity[stn] * 1000)
-            ippppa_data.set_array('gen', net_hourly)
-            ippppa_data.set_number('construction_financing_cost', capital_cost + grid_cost)
-            ippppa_data.set_number('total_installed_cost', capital_cost + grid_cost)
-            ippppa_data.set_array('om_capacity', [costs[technology[stn]][1]])
+            ippppa_data.set_number(b'system_capacity', capacity[stn] * 1000)
+            ippppa_data.set_array(b'gen', net_hourly)
+            ippppa_data.set_number(b'construction_financing_cost', capital_cost + grid_cost)
+            ippppa_data.set_number(b'total_installed_cost', capital_cost + grid_cost)
+            ippppa_data.set_array(b'om_capacity', [costs[technology[stn]][1]])
             if technology[stn] == 'Biomass':
-                ippppa_data.set_number('om_opt_fuel_1_usage', self.biomass_multiplier
+                ippppa_data.set_number(b'om_opt_fuel_1_usage', self.biomass_multiplier
                                        * capacity[stn] * 1000)
-                ippppa_data.set_array('om_opt_fuel_1_cost', [costs[technology[stn]][2]])
-                ippppa_data.set_number('om_opt_fuel_1_cost_escal',
-                                       ippppa_data.get_number('inflation_rate'))
-            module = ssc.Module('ippppa')
+                ippppa_data.set_array(b'om_opt_fuel_1_cost', [costs[technology[stn]][2]])
+                ippppa_data.set_number(b'om_opt_fuel_1_cost_escal',
+                                       ippppa_data.get_number(b'inflation_rate'))
+            module = ssc.Module(b'ippppa')
             if (module.exec_(ippppa_data)):
              # return the relevant outputs desired
-                energy = ippppa_data.get_array('gen')
+                energy = ippppa_data.get_array(b'gen')
                 generation = 0.
                 for i in range(len(energy)):
                     generation += energy[i]
                 generation = generation * pow(10, -3)
-                lcoe_real = ippppa_data.get_number('lcoe_real')
-                lcoe_nom = ippppa_data.get_number('lcoe_nom')
-                npv = ippppa_data.get_number('npv')
+                lcoe_real = ippppa_data.get_number(b'lcoe_real')
+                lcoe_nom = ippppa_data.get_number(b'lcoe_nom')
+                npv = ippppa_data.get_number(b'npv')
                 self.stations.append(FinancialSummary(name[stn], technology[stn], capacity[stn],
                   generation, 0, round(capital_cost), lcoe_real, lcoe_nom, npv, round(grid_cost)))
             else:
@@ -2323,9 +2326,9 @@ class FinancialModel():
                 msg = module.log(idx)
                 while (msg is not None):
                     if self.status:
-                       self.status.emit(QtCore.SIGNAL('log'), 'ippppa error [' + str(idx) + ']: ' + msg)
+                       self.status.emit(QtCore.SIGNAL('log'), 'ippppa error [' + str(idx) + ']: ' + msg.decode())
                     else:
-                        print 'ippppa error [', idx, ' ]: ', msg
+                        print('ippppa error [', idx, ' ]: ', msg.decode())
                     idx += 1
                     msg = module.log(idx)
             del module
@@ -2333,7 +2336,7 @@ class FinancialModel():
         self.stations = []
         self.status = status
         self.parms = parms
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
         else:
@@ -2383,6 +2386,13 @@ class FinancialModel():
             annual_file = 'annualoutput_variables.xls'
             ippppa = 'ippppa_variables.xls'
         annual_data, annual_outputs = self.get_variables(annual_file)
+        if annual_data is None:
+            if self.status:
+                self.status.emit(QtCore.SIGNAL('log'), 'Error accessing ' + annual_file)
+            else:
+                print('Error accessing ' + annual_file)
+            self.stations = None
+            return
         what_beans = whatFinancials(parms=self.parms, helpfile=self.helpfile)
         what_beans.exec_()
         ippas = what_beans.getValues()
@@ -2395,6 +2405,13 @@ class FinancialModel():
         if not self.expert:
             ssc_api.set_print(0)
         ippppa_data, ippppa_outputs = self.get_variables(ippppa_file, overrides=ippas)
+        if ippppa_data is None:
+            if self.status:
+                self.status.emit(QtCore.SIGNAL('log'), 'Error accessing ' + ippppa_file)
+            else:
+                print('Error accessing ' + ippppa_file)
+            self.stations = None
+            return
         costs = {}
         do_grid_loss = False
         do_grid_cost = False
@@ -2437,14 +2454,14 @@ class FinancialModel():
             else:
                 for hr in range(len(power[stn])):
                     energy.append(power[stn][hr] * 1000)
-            annual_data.set_array('system_hourly_energy', energy)
+            annual_data.set_array(b'system_hourly_energy', energy)
             net_hourly = None
-            module = ssc.Module('annualoutput')
+            module = ssc.Module(b'annualoutput')
             if (module.exec_(annual_data)):
              # return the relevant outputs desired
-                net_hourly = annual_data.get_array('hourly_energy')
-                net_annual = annual_data.get_array('annual_energy')
-                degradation = annual_data.get_array('annual_degradation')
+                net_hourly = annual_data.get_array(b'hourly_energy')
+                net_annual = annual_data.get_array(b'annual_energy')
+                degradation = annual_data.get_array(b'annual_degradation')
                 del module
                 do_ippppa()
             else:
@@ -2454,9 +2471,9 @@ class FinancialModel():
                 msg = module.log(idx)
                 while (msg is not None):
                     if self.status:
-                       self.status.emit(QtCore.SIGNAL('log'), 'annualoutput error [' + str(idx) + ']: ' + msg)
+                       self.status.emit(QtCore.SIGNAL('log'), 'annualoutput error [' + str(idx) + ']: ' + msg.decode())
                     else:
-                        print 'annualoutput error [', idx, ' ]: ', msg
+                        print('annualoutput error [', idx, ' ]: ', msg.decode())
                     idx += 1
                     msg = module.log(idx)
                 del module
@@ -2485,7 +2502,7 @@ class PowerModel():
                 return oukey
 
         def stepPlot(self, period, data, x_labels=None):
-            k1 = data.keys()[0]
+            k1 = list(data.keys())[0]
             if self.plots['cumulative']:
                 pc = 1
             else:
@@ -2530,7 +2547,7 @@ class PowerModel():
             if self.plots['show_pct']:
                 load_sum = 0.
                 gen_sum = 0.
-            for key, value in iter(sorted(ydata.iteritems())):
+            for key, value in iter(sorted(ydata.items())):
                 if key == 'Generation':
                     continue
                 dval = [0.]
@@ -2604,7 +2621,8 @@ class PowerModel():
                 titl = 'By_' + period
                 decpts = [3] * len(sp_vals)
                 decpts[0] = decpts[1] = 0
-                dialog = displaytable.Table(map(list, zip(*sp_data)), title=titl, fields=sp_vals, save_folder=self.scenarios, decpts=decpts)
+                dialog = displaytable.Table(list(map(list, list(zip(*sp_data)))), title=titl, fields=sp_vals,
+                                            save_folder=self.scenarios, decpts=decpts)
                 dialog.exec_()
                 del dialog, sp_data, sp_vals
             plt.ylim([miny, maxy])
@@ -2624,7 +2642,7 @@ class PowerModel():
                 rotn = 'vertical'
             else:
                 stp = 1
-            plt.xticks(range(0, len(data[k1]), stp))
+            plt.xticks(list(range(0, len(data[k1]), stp)))
             tick_spot = []
             for i in range(0, len(data[k1]), stp):
                 tick_spot.append(i + .5)
@@ -2647,7 +2665,7 @@ class PowerModel():
                 plt.draw()
 
         def dayPlot(self, period, data, per_labels=None, x_labels=None):
-            k1 = data.keys()[0]
+            k1 = list(data.keys())[0]
             if self.plots['cumulative']:
                 pc = 1
             else:
@@ -2686,7 +2704,7 @@ class PowerModel():
                 p2 = 2
                 xl = 0
                 yl = [0, 1]
-            for key in data.keys():
+            for key in list(data.keys()):
                 for p in range(len(data[key])):
                     maxy = max(maxy, max(data[key][p]))
             if self.plots['show_pct']:
@@ -2706,7 +2724,7 @@ class PowerModel():
                         gross_load.append(0.)
                 px = plt.subplot(p1, p2, p + 1)
                 l_k = ''
-                for key, value in iter(sorted(ydata.iteritems())):
+                for key, value in iter(sorted(ydata.items())):
                     if key == 'Generation':
                         continue
                     if key[:4] == 'Load':
@@ -2737,7 +2755,7 @@ class PowerModel():
                     px.plot(x24, cumulative, linewidth=self.other_width, label='Tot. Generation',
                             color=self.colours['cumulative'])
                     maxy = max(maxy, max(cumulative))
-                if self.plots['gross_load'] and 'Existing Rooftop PV' in ydata.keys():
+                if self.plots['gross_load'] and 'Existing Rooftop PV' in list(ydata.keys()):
                     px.plot(x24, gross_load, linewidth=1.0, label='Gross Load', color=self.colours['gross_load'])
                     maxy = max(maxy, max(gross_load))
                 if self.plots['shortfall'] and self.do_load:
@@ -2747,7 +2765,7 @@ class PowerModel():
                     miny = min(miny, min(load2))
                     px.plot(x24, load2, linewidth=self.other_width, label='Shortfall', color=self.colours['shortfall'])
                     plt.axhline(0, color='black')
-                plt.xticks(range(4, 25, 4))
+                plt.xticks(list(range(4, 25, 4)))
                 px.set_xticklabels(x_labels[1:])
                 plt.xlim([1, 24])
                 if p >= xl:
@@ -2845,7 +2863,7 @@ class PowerModel():
                     if getattr(self.power_summary[0], 'transmitted') != None:
                         line += ',Transmitted'
                     tf.write(line + '\n')
-                    for key, value in iter(sorted(stns.iteritems())):
+                    for key, value in iter(sorted(stns.items())):
                         if self.power_summary[value].generation > 0:
                             cf = '{:0.2f}'.format(self.power_summary[value].generation /
                                  (self.power_summary[value].capacity * 8760))
@@ -2866,7 +2884,7 @@ class PowerModel():
                         techs[self.power_summary[value].technology][1] += self.power_summary[value].generation
                         tf.write(line + '\n')
                     total = [0., 0., 0.]
-                    for key, value in iter(sorted(techs.iteritems())):
+                    for key, value in iter(sorted(techs.items())):
                         total[0] += value[0]
                         total[1] += value[1]
                         if value[2] > 0:
@@ -2945,7 +2963,7 @@ class PowerModel():
                         if j < 0:
                             j = len(sum_cols[i])
                         xl_lens[col + i] = j
-                    for key, value in iter(stns.iteritems()):
+                    for key, value in iter(stns.items()):
                         techs[self.power_summary[value].technology][0] += self.power_summary[value].capacity
                         techs[self.power_summary[value].technology][1] += self.power_summary[value].generation
                         if self.power_summary[value].transmitted is not None:
@@ -2954,7 +2972,7 @@ class PowerModel():
                     row = 2
                     ws.write(row, col, 'Totals', styleb)
                     row += 1
-                    for key, value in iter(sorted(techs.iteritems())):
+                    for key, value in iter(sorted(techs.items())):
                         ws.write(row, col + 1, key)
                         ws.write(row, col + 2, value[0], style2db)
                         total[0] += value[0]
@@ -2972,7 +2990,7 @@ class PowerModel():
                     row += 1
                     ws.write(row, col, 'Stations', styleb)
                     row += 1
-                    for key, value in iter(sorted(stns.iteritems())):
+                    for key, value in iter(sorted(stns.items())):
                         ws.write(row, col, self.power_summary[value].name)
                         xl_lens[col] = max(xl_lens[col], len(self.power_summary[value].name))
                         ws.write(row, col + 1, self.power_summary[value].technology)
@@ -3006,8 +3024,8 @@ class PowerModel():
             ws = ts.active
             type_tags = ['name', 'tech', 'cap', 'cf', 'gen', 'tmit', 'hrly']
             tech_tags = ['load', 'wind', 'offw', 'roof', 'fixed', 'single', 'dual', 'biomass', 'geotherm', 'other1', 'cst']
-            tech_names = ['Load', 'Wind', 'Offshore Wind', 'Rooftop PV', 'Fixed PV', 'Single Axis PV', 'Tracking PV', 'Biomass',
-                       'Geothermal', 'Other1', 'CST']
+            tech_names = ['Load', 'Wind', 'Offshore Wind', 'Rooftop PV', 'Fixed PV', 'Single Axis PV', 'Tracking PV',
+                          'Biomass', 'Geothermal', 'Other1', 'CST']
             tech_names2 = [''] * len(tech_names)
             tech_names2[tech_names.index('Wind')] = 'Onshore Wind'
             tech_names2[tech_names.index('Tracking PV')] = 'Dual Axis PV'
@@ -3095,7 +3113,7 @@ class PowerModel():
                 stns[self.power_summary[i].name] = i
                 techs[self.power_summary[i].technology] = [0., 0., 0.]
             st = 0
-            for key, value in iter(sorted(stns.iteritems())):
+            for key, value in iter(sorted(stns.items())):
                 ws.cell(row=st_row[0] + st, column=st_col[0]).value = self.power_summary[value].name
                 ws.cell(row=st_row[1] + st, column=st_col[1]).value = self.power_summary[value].technology
                 ws.cell(row=st_row[2] + st, column=st_col[2]).value = self.power_summary[value].capacity
@@ -3106,12 +3124,12 @@ class PowerModel():
                 if self.power_summary[value].transmitted is not None:
                     ws.cell(row=st_row[5] + st, column=st_col[5]).value = self.power_summary[value].transmitted
                 st += 1
-            for key, value in iter(stns.iteritems()):
+            for key, value in iter(stns.items()):
                 techs[self.power_summary[value].technology][0] += self.power_summary[value].capacity
                 techs[self.power_summary[value].technology][1] += self.power_summary[value].generation
                 if self.power_summary[value].transmitted is not None:
                     techs[self.power_summary[value].technology][2] += self.power_summary[value].transmitted
-            for key, value in iter(techs.iteritems()):
+            for key, value in iter(techs.items()):
                 try:
                     te = tech_names.index(key)
                 except:
@@ -3137,7 +3155,8 @@ class PowerModel():
             if tech_row[0][6] > 0:
                 for i in range(8760):
                     ws.cell(row=tech_row[0][6] + i, column=tech_col[0][6]).value = shortstuff[i].load
-                    cell_format(ws.cell(row=tech_row[0][6], column=tech_col[0][6]), ws.cell(row=tech_row[0][6] + i, column=tech_col[0][6]))
+                    cell_format(ws.cell(row=tech_row[0][6], column=tech_col[0][6]), ws.cell(row=tech_row[0][6] + i,
+                                column=tech_col[0][6]))
             ly_keys = []
             for t in range(len(tech_names)):
                 ly_keys.append([])
@@ -3153,10 +3172,10 @@ class PowerModel():
                     ly_keys[i].append(self.stn_outs[t])
             else:
                 for t in range(len(tech_names)):
-                    if tech_names[t] in techs.keys():
+                    if tech_names[t] in list(techs.keys()):
                         ly_keys[t].append(tech_names[t])
                     if tech_names2[t] != '':
-                        if tech_names2[t] in techs.keys():
+                        if tech_names2[t] in list(techs.keys()):
                             ly_keys[t].append(tech_names2[t])
             for te in range(len(tech_row)):
                 if tech_row[te][6] == 0 or len(ly_keys[te]) == 0:
@@ -3179,7 +3198,7 @@ class PowerModel():
                                     ws.cell(row=tech_row[te][6] + h, column=tech_col[te][6]))
             ts.save(data_file)
 
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
         else:
@@ -3194,7 +3213,7 @@ class PowerModel():
         try:
             colors = config.items('Colors')
             for item, colour in colors:
-                if item in self.technologies or self.colours.has_key(item):
+                if item in self.technologies or item in self.colours:
                     itm = techClean(item)
                     self.colours[itm] = colour
         except:
@@ -3203,7 +3222,7 @@ class PowerModel():
             try:
                 colors = config.items('Colors' + mapc)
                 for item, colour in colors:
-                    if item in self.technologies or self.colours.has_key(item):
+                    if item in self.technologies or item in self.colours:
                         itm = techClean(item)
                         self.colours[itm] = colour
             except:
@@ -3333,7 +3352,7 @@ class PowerModel():
         d365 = {}
         for i in range(24):
             x24.append(i + 1)
-        for key in ydata.keys():
+        for key in list(ydata.keys()):
             if self.plots['total']:
                 l24[key] = []
                 for j in range(24):
@@ -3384,7 +3403,7 @@ class PowerModel():
             while i < the_hours[m] and m > 0:
                 m -= 1
             for k in range(24):
-                for key, value in iter(sorted(ydata.iteritems())):
+                for key, value in iter(sorted(ydata.items())):
                     if key == 'Generation':
                         continue
                     if self.plots['total']:
@@ -3444,7 +3463,7 @@ class PowerModel():
             stepPlot(self, 'season', q24, ssn_labels)
         if self.plots['by_period']:
             stepPlot(self, 'period', s24, smp_labels)
-        for key in ydata.keys():
+        for key in list(ydata.keys()):
             for k in range(24):
                 if self.plots['total']:
                     l24[key][k] = l24[key][k] / 365
@@ -3485,7 +3504,7 @@ class PowerModel():
             if self.plots['show_pct']:
                 load_sum = 0.
                 gen_sum = 0.
-            for key, value in iter(sorted(ydata.iteritems())):
+            for key, value in iter(sorted(ydata.items())):
                 if key == 'Generation':
                     continue
                 if self.plots['show_pct']:
@@ -3523,7 +3542,7 @@ class PowerModel():
                 if self.plots['save_plot']:
                     sp_vals.append('Tot. Generation')
                     sp_data.append(cumulative)
-            if self.plots['gross_load'] and 'Existing Rooftop PV' in ydata.keys():
+            if self.plots['gross_load'] and 'Existing Rooftop PV' in list(ydata.keys()):
                 hx.plot(x, gross_load, linewidth=1.0, label='Gross Load', color=self.colours['gross_load'])
                 maxy = max(maxy, max(gross_load))
                 if self.plots['save_plot']:
@@ -3556,7 +3575,8 @@ class PowerModel():
                 titl = 'Hour'
                 decpts = [3] * len(sp_vals)
                 decpts[0] = decpts[1] = 0
-                dialog = displaytable.Table(map(list, zip(*sp_data)), title=titl, fields=sp_vals, save_folder=self.scenarios, decpts=decpts)
+                dialog = displaytable.Table(list(map(list, list(zip(*sp_data)))), title=titl, fields=sp_vals,
+                                            save_folder=self.scenarios, decpts=decpts)
                 dialog.exec_()
                 del dialog, sp_data, sp_vals
             plt.ylim([miny, maxy])
@@ -3570,7 +3590,7 @@ class PowerModel():
             else:
                 hx.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(ydata) + pc),
                           prop=lbl_font)
-            plt.xticks(range(12, len(x), 168))
+            plt.xticks(list(range(12, len(x), 168)))
             hx.set_xticklabels(day_labels, rotation='vertical')
             hx.set_xlabel('Month of the year')
             hx.set_ylabel('Power (MW)')
@@ -3609,7 +3629,7 @@ class PowerModel():
             if self.plots['show_pct']:
                 load_sum = 0.
                 gen_sum = 0.
-            for key, value in iter(sorted(ydata.iteritems())):
+            for key, value in iter(sorted(ydata.items())):
                 if key == 'Generation' or key == 'Excess': # might need to keep excess
                     continue
                 if self.plots['show_pct']:
@@ -3698,7 +3718,8 @@ class PowerModel():
                 sp_tots.append(0.)
                 sp_pts.append(4)
                 titl = 'Augmented'
-                dialog = displaytable.Table(map(list, zip(*sp_data)), title=titl, fields=sp_vals, save_folder=self.scenarios, decpts=sp_pts)
+                dialog = displaytable.Table(list(map(list, list(zip(*sp_data)))), title=titl, fields=sp_vals,
+                                            save_folder=self.scenarios, decpts=sp_pts)
                 dialog.exec_()
                 del dialog
                 if s > 0:
@@ -3724,7 +3745,8 @@ class PowerModel():
                         sp_data[e][i] = sp_data[l][i] - sp_data[r][i]
                         sp_tots[e] += sp_data[e][i]
                 titl = 'augmented2'
-                dialog = displaytable.Table(map(list, zip(*sp_data)), title=titl, fields=sp_vals, save_folder=self.scenarios, decpts=sp_pts)
+                dialog = displaytable.Table(list(map(list, list(zip(*sp_data)))), title=titl, fields=sp_vals,
+                                            save_folder=self.scenarios, decpts=sp_pts)
                 dialog.exec_()
                 fields = ['row', 'component', 'MWh', 'Load %']
                 values = []
@@ -3738,7 +3760,7 @@ class PowerModel():
                 del dialog, sp_vals, sp_data, sp_tots
             plt.ylim([miny, maxy])
             plt.xlim([0, len(x)])
-            plt.xticks(range(12, len(x), 168))
+            plt.xticks(list(range(12, len(x), 168)))
             hx.set_xticklabels(day_labels, rotation='vertical')
             hx.set_xlabel('Month of the year')
             hx.set_ylabel('Power (MW)')
@@ -3787,7 +3809,7 @@ class PowerModel():
             if self.plots['show_pct']:
                 load_sum = 0.
                 gen_sum = 0.
-            for key, value in iter(sorted(ydata.iteritems())):
+            for key, value in iter(sorted(ydata.items())):
                 if key == 'Generation':
                     continue
                 if self.plots['show_pct']:
@@ -3830,7 +3852,7 @@ class PowerModel():
                 dx.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(ydata) + pc),
                           prop=lbl_font)
             tics = int(len(x) / (len(pct_labels) - 1))
-            plt.xticks(range(0, len(x), tics))
+            plt.xticks(list(range(0, len(x), tics)))
             dx.set_xticklabels(pct_labels)
             dx.set_xlabel('Percentage of Year')
             dx.set_ylabel('Power (MW)')
@@ -3868,7 +3890,7 @@ class PowerModel():
                 if self.plots['show_pct']:
                     load_sum = 0.
                     gen_sum = 0.
-                for key, value in ydata.iteritems():
+                for key, value in ydata.items():
                     if key == 'Generation':
                         continue
                     if self.plots['show_pct']:
@@ -3910,7 +3932,7 @@ class PowerModel():
                 plt.xlim([0, len(x)])
                 lx.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=2, prop=lbl_font)
                 tics = int(len(x) / (len(pct_labels) - 1))
-                plt.xticks(range(0, len(x), tics))
+                plt.xticks(list(range(0, len(x), tics)))
                 lx.set_xticklabels(pct_labels)
                 lx.set_xlabel('Percentage of Year')
                 lx.set_ylabel('Power (MW)')
@@ -3942,7 +3964,7 @@ class PowerModel():
             for i in range(len(self.x)):
                 rgen.append(0.)
                 shortfall[0].append(0.)
-            for key, value in ydata.iteritems():
+            for key, value in ydata.items():
                 if key == 'Generation':
                     generation = value
                 elif key[:4] == 'Load':
@@ -3987,7 +4009,7 @@ class PowerModel():
                 for i in range(self.iterations):
                     sdfx.step(xs, d_short[i], linewidth=self.other_width, label=str(i + 1) + ' day average',
                               color=colours[i])
-                plt.xticks(range(0, len(xs), 7))
+                plt.xticks(list(range(0, len(xs), 7)))
                 tick_spot = []
                 for i in range(0, len(xs), 7):
                     tick_spot.append(i + .5)
@@ -4064,7 +4086,7 @@ class PowerModel():
                         amt = '{:0,.1f}'.format(h_storage[s - 1])
                     lbl = 'iteration %s - add %s MW to generation' % (s, amt )
                     sfx.plot(x, shortfall[s], linewidth=self.other_width, label=lbl, color=colours[s])
-                plt.xticks(range(0, len(x), 168))
+                plt.xticks(list(range(0, len(x), 168)))
                 tick_spot = []
                 for i in range(0, len(x), 168):
                     tick_spot.append(i + .5)
@@ -4104,7 +4126,7 @@ class PowerModel():
                     lbl = 'iteration %s - add %s MW to generation' % (s, amt )
                     sfx.plot(x, shortfall[s], linewidth=self.other_width, label=lbl, color=colours[s])
                 plt.axhline(0, color='black')
-                plt.xticks(range(0, len(x), 168))
+                plt.xticks(list(range(0, len(x), 168)))
                 tick_spot = []
                 for i in range(0, len(x), 168):
                     tick_spot.append(i + .5)
@@ -4180,7 +4202,7 @@ class PowerModel():
             if self.plots['show_pct']:
                 load_sum = 0.
                 gen_sum = 0.
-            for key in iter(sorted(l24.iterkeys())):
+            for key in iter(sorted(l24.keys())):
                 if key == 'Generation':
                     continue
                 if self.plots['show_pct']:
@@ -4218,7 +4240,7 @@ class PowerModel():
                 if self.plots['save_plot']:
                     sp_vals.append('Tot. Generation')
                     sp_data.append(cumulative)
-            if self.plots['gross_load'] and 'Existing Rooftop PV' in ydata.keys():
+            if self.plots['gross_load'] and 'Existing Rooftop PV' in list(ydata.keys()):
                 tx.plot(x24, gross_load, linewidth=1.0, label='Gross Load', color=self.colours['gross_load'])
                 maxy = max(maxy, max(gross_load))
                 if self.plots['save_plot']:
@@ -4251,13 +4273,13 @@ class PowerModel():
                 titl = 'Total'
                 decpts = [3] * len(sp_vals)
                 decpts[0] = 0
-                dialog = displaytable.Table(map(list, zip(*sp_data)), title=titl, fields=sp_vals,
+                dialog = displaytable.Table(list(map(list, list(zip(*sp_data)))), title=titl, fields=sp_vals,
                                             save_folder=self.scenarios, decpts=decpts)
                 dialog.exec_()
                 del dialog, sp_data, sp_vals
             plt.ylim([miny, maxy])
             plt.xlim([1, 25])
-            plt.xticks(range(0, 25, 4))
+            plt.xticks(list(range(0, 25, 4)))
           #   tx.legend(loc='lower left', numpoints = 2, prop=lbl_font)
             tx.set_xticklabels(labels)
             tx.set_xlabel('Hour of the Day')
@@ -4384,7 +4406,7 @@ class PowerModel():
         self.status = status
         self.stations = stations
         self.progress = progress
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
         else:
@@ -4655,7 +4677,7 @@ class PowerModel():
             self.suffix = ' - ' + self.stn_outs[0]
         elif self.plots['by_station']:
             if len(self.ly) == 1:
-                self.suffix = ' - ' + self.ly.keys()[0]
+                self.suffix = ' - ' + list(self.ly.keys())[0]
             else:
                 self.suffix = ' - Chosen Stations'
         if self.plots['save_data']:
@@ -4762,12 +4784,13 @@ class PowerModel():
                 if self.plots['adjust']:
                     if self.load_key == '':
                         if self.adjustby is None:
-                            adjust = Adjustments(self.ly.keys())
+                            adjust = Adjustments(list(self.ly.keys()))
                         else:
                             adjust = Adjustments(self.adjustby)
                     else:
                         if self.adjustby is None:
-                            adjust = Adjustments(self.ly.keys(), self.load_key, wrkly[self.load_key], self.ly, self.load_year)
+                            adjust = Adjustments(list(self.ly.keys()), self.load_key, wrkly[self.load_key], self.ly,
+                                                 self.load_year)
                         else:
                             adjust = Adjustments(self.adjustby, self.load_key, wrkly[self.load_key], self.ly, self.load_year)
                     adjust.exec_()
@@ -4800,7 +4823,7 @@ class PowerModel():
                     total_gen = []
                     for i in range(len(self.x)):
                         total_gen.append(0.)
-                    for key, value in wrkly.iteritems():
+                    for key, value in wrkly.items():
                         if key == 'Generation':
                             continue
                         if key == 'Storage' or key == 'Excess':
@@ -4953,12 +4976,12 @@ class PowerModel():
                             o += 1
                             summs[keys[i]][3] = o
                             gen += summs[keys[i]][2]
-                    if xtra[0] not in summs.keys():
+                    if xtra[0] not in list(summs.keys()):
                         summs[xtra[0]] = ['', '', gen, 0]
-                    if xtra[1] in summs.keys():
+                    if xtra[1] in list(summs.keys()):
                         summs[xtra[2]] = ['', '', round(gen - summs[xtra[1]][2], 1), 0]
                     for i in range(len(xtra)):
-                        if xtra[i] in summs.keys():
+                        if xtra[i] in list(summs.keys()):
                             o += 1
                             summs[xtra[i]][3] = o
                     try:
@@ -4980,6 +5003,11 @@ class PowerModel():
                                 summs[it.technology][0] += it.capacity
                             except:
                                 pass
+                    for key, value in summs.items():
+                        try:
+                            value[0] = round(value[0], 2)
+                        except:
+                            pass
                     dialog = displaytable.Table(summs, title='Generation Summary',
                                                 save_folder=self.scenarios,
                                                 fields=['component', 'capacity', 'multiplier', 'generation', 'row'],
@@ -5008,10 +5036,10 @@ class PowerModel():
                         keys2 = []
                         if dos[l] != '':
                             techs = {}
-                            for key, value in iter(wrkly.iteritems()):
+                            for key, value in iter(wrkly.items()):
                                 try:
                                     i = self.stn_outs.index(key)
-                                    if self.stn_tech[i] in techs.keys():
+                                    if self.stn_tech[i] in list(techs.keys()):
                                         for j in range(len(value)):
                                             techs[self.stn_tech[i]][j] += value[j]
                                     else:
@@ -5025,7 +5053,7 @@ class PowerModel():
                             self.save_detail(data_file, techs, keys=keys2)
                             del techs
                         else:
-                            for key in wrkly.keys():
+                            for key in list(wrkly.keys()):
                                 try:
                                     i = self.stn_outs.index(key)
                                     keys.append(self.stn_outs[i])
@@ -5058,7 +5086,7 @@ class PowerModel():
             while True:
                 self.financials = FinancialModel(self.stn_outs, self.stn_tech, self.stn_size,
                                   self.stn_pows, self.stn_grid, self.stn_path, year=self.base_year,
-                                  parms=self.financial_parms)
+                                  parms=self.financial_parms, status=self.status)
                 if self.financials.stations is None:
                     break
                 self.financial_parms = self.financials.getParms()

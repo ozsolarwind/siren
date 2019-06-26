@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 #  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
 #
@@ -21,7 +21,7 @@
 
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtGui import QDesktopWidget
-import ConfigParser   # decode .ini file
+import configparser   # decode .ini file
 import os
 import sys
 
@@ -106,7 +106,7 @@ class EdtDialog(QtGui.QDialog):
 class EditSect():
     def __init__(self, section, save_folder, ini_file=None):
         self.section = section
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         if ini_file is not None:
             config_file = ini_file
         elif len(sys.argv) > 1:
@@ -137,7 +137,7 @@ class EditSect():
 
 class EditTech():
     def __init__(self, save_folder, ini_file=None):
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         if ini_file is not None:
             config_file = ini_file
         elif len(sys.argv) > 1:

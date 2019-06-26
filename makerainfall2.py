@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 #  Copyright (C) 2016-2019 Sustainable Energy Now Inc., Angus King
 #
@@ -23,10 +23,7 @@ import datetime
 import gzip
 import os
 import sys
-if sys.platform == 'win32' or sys.platform == 'cygwin':
-    from netCDF4 import Dataset
-else:
-    from Scientific.IO.NetCDF import *
+from netCDF4 import Dataset
 import time
 from PyQt4 import QtCore, QtGui
 import displayobject
@@ -93,10 +90,7 @@ class makeRainfall():
         if self.return_code != 0:
             return
         try:
-            if sys.platform == 'win32' or sys.platform == 'cygwin':
-                cdf_file = Dataset(unzip_file, 'r')
-            else:
-                cdf_file = NetCDFFile(unzip_file, 'r')
+            cdf_file = Dataset(unzip_file, 'r')
         except:
             self.decodeError(inp_file)
             return
@@ -149,10 +143,7 @@ class makeRainfall():
         unzip_file = self.unZip(inp_file)
         if self.return_code != 0:
             return
-        if sys.platform == 'win32' or sys.platform == 'cygwin':
-            cdf_file = Dataset(unzip_file, 'r')
-        else:
-            cdf_file = NetCDFFile(unzip_file, 'r')
+        cdf_file = Dataset(unzip_file, 'r')
         i = unzip_file.rfind('/')
         self.log += '\nFile:\n    '
         self.log += unzip_file[i + 1:] + '\n'
@@ -163,8 +154,8 @@ class makeRainfall():
             self.log += '\n'
         self.log += ' Dimensions:\n    '
         vals = ''
-        keys = cdf_file.dimensions.keys()
-        values = cdf_file.dimensions.values()
+        keys = list(cdf_file.dimensions.keys())
+        values = list(cdf_file.dimensions.values())
         if type(cdf_file.dimensions) is dict:
             for i in range(len(keys)):
                 vals += keys[i] + ': ' + str(values[i]) + ', '
@@ -175,7 +166,7 @@ class makeRainfall():
         self.log += vals[:-2] + '\n'
         self.log += ' Variables:\n    '
         vals = ''
-        for key in iter(sorted(cdf_file.variables.iterkeys())):
+        for key in iter(sorted(cdf_file.variables.keys())):
             vals += key + ', '
         self.log += vals[:-2] + '\n'
         latitude = cdf_file.variables[self.vars['latitude']][:]
@@ -218,7 +209,7 @@ class makeRainfall():
                             break
             del fils
         if self.src_pfx.find('MERRA300') >= 0:
-            for key in self.vars.keys():
+            for key in list(self.vars.keys()):
                 self.vars[key] = self.vars[key].lower()
             self.vars['latitude'] = 'latitude'
             self.vars['longitude'] = 'longitude'
@@ -246,10 +237,7 @@ class makeRainfall():
             unzip_file = self.unZip(inp_file)
             if self.return_code != 0:
                 return
-            if sys.platform == 'win32' or sys.platform == 'cygwin':
-                cdf_file = Dataset(unzip_file, 'r')
-            else:
-                cdf_file = NetCDFFile(unzip_file, 'r')
+            cdf_file = Dataset(unzip_file, 'r')
             longitude = cdf_file.variables[self.vars['longitude']][:]
             self.src_zone = int(round(longitude[0] / 15))
             self.log += 'Time zone: %s based on MERRA (west) longitude (%s to %s)\n' % (str(self.src_zone),
@@ -685,7 +673,7 @@ class RptDialog(QtGui.QDialog):
                                          self.tr("QFileDialog.getSaveFileName()"),
                                          save_filename,
                                          self.tr("All Files (*);;Text Files (*.txt)"))
-        if not fileName.isEmpty():
+        if fileName != '':
             s = open(fileName, 'w')
             s.write(self.lines)
             s.close()

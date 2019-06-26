@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 #  Copyright (C) 2016-2019 Sustainable Energy Now Inc., Angus King
 #
@@ -19,7 +19,7 @@
 #  <http://www.gnu.org/licenses/>.
 #
 
-import ConfigParser   # decode .ini file
+import configparser   # decode .ini file
 import datetime
 from functools import partial
 import os
@@ -60,7 +60,7 @@ class TabDialog(QtGui.QDialog):
         self.help = ''
         self.about = ''
         self.weather_icon = 'weather.png'
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         ignore = ['getfiles.ini', 'siren_default.ini', 'siren_windows_default.ini']
         for fil in sorted(fils):
             if fil[-4:] == '.ini':
@@ -68,6 +68,9 @@ class TabDialog(QtGui.QDialog):
                     continue
                 try:
                     config.read(self.siren_dir + fil)
+                except configparser.DuplicateOptionError as err:
+                    print('DuplicateOptionError ' + str(err))
+                    continue
                 except:
                     continue
                 try:
@@ -208,7 +211,7 @@ class TabDialog(QtGui.QDialog):
             elif os.path.exists('sirenm.py'):
                 pid = subprocess.Popen(['sirenm.py', ent], shell=True).pid
         else:
-            pid = subprocess.Popen(['python', 'sirenm.py', ent]).pid
+            pid = subprocess.Popen(['python3', 'sirenm.py', ent]).pid # python3
 
     def new(self):
         do_new = makeNew(self.siren_dir)
@@ -233,7 +236,7 @@ class TabDialog(QtGui.QDialog):
                     else:
                         pid = subprocess.Popen([who]).pid
                 else:
-                    pid = subprocess.Popen(['python', who[0], who[1]]).pid
+                    pid = subprocess.Popen(['python3', who[0], who[1]]).pid
         else:
             if os.path.exists(who):
                 if sys.platform == 'win32' or sys.platform == 'cygwin':
@@ -242,7 +245,7 @@ class TabDialog(QtGui.QDialog):
                     else:
                         pid = subprocess.Popen([who]).pid
                 else:
-                    pid = subprocess.Popen(['python', who]).pid
+                    pid = subprocess.Popen(['python3', who]).pid
         return
 
     def header_click(self, position):
@@ -332,7 +335,7 @@ class makeNew(QtGui.QDialog):
         self.msg = QtGui.QLabel('')
         self.grid.addWidget(self.msg, row, 2, 1, 3)
         now = datetime.datetime.now()
-        if '[Base]' in sections.keys():
+        if '[Base]' in list(sections.keys()):
             for key, value in sections['[Base]']:
                 row += 1
                 self.fields.append(['[Base]', 'txt', key, value, QtGui.QLineEdit()])
@@ -346,7 +349,7 @@ class makeNew(QtGui.QDialog):
         self.parents = {}
         sections['[Parents]'].append(['$USER$', getUser()])
         sections['[Parents]'].append(['$YEAR$', str((now.year - 1))])
-        if '[Parents]' in sections.keys():
+        if '[Parents]' in list(sections.keys()):
             for key, value in sections['[Parents]']:
                 self.parents[key] = value
                 row += 1
@@ -365,7 +368,7 @@ class makeNew(QtGui.QDialog):
                     self.fields[row][4].setFrameStyle(6)
                     self.grid.addWidget(self.fields[row][4], row, 2, 1, 3)
                     self.connect(self.fields[row][4], QtCore.SIGNAL('clicked()'), self.itemClicked)
-        for section, props in iter(sections.iteritems()):
+        for section, props in iter(sections.items()):
             if section == '[Base]' or section == '[Parents]':
                 continue
             elif section == '[Map]':
@@ -502,7 +505,7 @@ class makeNew(QtGui.QDialog):
         for i in range(len(self.fields)):
             if self.fields[i][4].hasFocus():
                 upd_field = self.fields[i][4].text()
-                for key, value in iter(self.parents.iteritems()):
+                for key, value in iter(self.parents.items()):
                     upd_field = upd_field.replace(key, value)
                 if self.fields[i][1] == 'dir':
                     curdir = upd_field
@@ -514,7 +517,7 @@ class makeNew(QtGui.QDialog):
                             self.parents[self.fields[i][2]] = newone
                         else:
                             longest = [0, '']
-                            for key, value in iter(self.parents.iteritems()):
+                            for key, value in iter(self.parents.items()):
                                 if len(newone) > len(value) and len(value) > longest[0]:
                                     if newone[:len(value)] == value:
                                         longest = [len(value), key]
@@ -532,7 +535,7 @@ class makeNew(QtGui.QDialog):
                     if newone != '':
                         newone = QtCore.QDir.toNativeSeparators(newone)
                         longest = [0, '']
-                        for key, value in iter(self.parents.iteritems()):
+                        for key, value in iter(self.parents.items()):
                             if len(newone) > len(value) and len(value) > longest[0]:
                                 if newone[:len(value)] == value:
                                     longest = [len(value), key]
@@ -595,7 +598,7 @@ class makeNew(QtGui.QDialog):
                 continue
             if field[0] == '[Parents]' and (field[2] == '$USER$' or field[2] == '$YEAR$'):
                 continue
-            if field[0] not in updates.keys():
+            if field[0] not in list(updates.keys()):
                 updates[field[0]] = []
             fld = str(field[4].text())
             if self.parents['$YEAR$'] in fld:
@@ -617,7 +620,7 @@ class makeNew(QtGui.QDialog):
                                 pfx = ('..' + '/') * (len(bits) - 1)
                                 fld = pfx + fld[that_len + 1:]
             updates[field[0]].append(field[2] + '=' + fld)
-        if '[Parents]' in updates.keys():
+        if '[Parents]' in list(updates.keys()):
             my_dir = os.getcwd()
             my_dir = my_dir.replace(self.parents['$YEAR$'], '$YEAR$')
             my_dir = my_dir.replace(self.parents['$USER$'], '$USER$')
@@ -684,7 +687,7 @@ class makeNew(QtGui.QDialog):
                     else:
                         pid = subprocess.Popen([who]).pid
                 else:
-                    pid = subprocess.Popen(['python', who[0], who[1]]).pid
+                    pid = subprocess.Popen(['python3', who[0], who[1]]).pid
         else:
             if os.path.exists(who):
                 if sys.platform == 'win32' or sys.platform == 'cygwin':
@@ -693,7 +696,7 @@ class makeNew(QtGui.QDialog):
                     else:
                         pid = subprocess.Popen([who]).pid
                 else:
-                    pid = subprocess.Popen(['python', who]).pid
+                    pid = subprocess.Popen(['python3', who]).pid
         return
 
 

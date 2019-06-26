@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 #  Copyright (C) 2018-2019 Sustainable Energy Now Inc., Angus King
 #
@@ -32,7 +32,7 @@ from parents import getParents
 from senuser import getUser
 from editini import SaveIni
 import xlrd
-import ConfigParser  # decode .ini file
+import configparser  # decode .ini file
 
 tech_names = ['Load', 'Onshore Wind', 'Offshore Wind', 'Rooftop PV', 'Fixed PV', 'Single Axis PV',
               'Dual Axis PV', 'Biomass', 'Geothermal', 'Other1', 'CST', 'Shortfall']
@@ -225,7 +225,7 @@ class Adjustments(QtGui.QDialog):
 
     def showClicked(self):
         self.results = {}
-        for key in self.adjusts.keys():
+        for key in list(self.adjusts.keys()):
             self.results[key] = round(self.adjusts[key].value(), 2)
         self.close()
 
@@ -237,7 +237,7 @@ class powerBalance(QtGui.QWidget):
     def __init__(self, help='help.html'):
         super(powerBalance, self).__init__()
         self.help = help
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
         else:
@@ -664,7 +664,7 @@ class powerBalance(QtGui.QWidget):
         else:
             order = []
             zero = []
-            for key, value in generators.iteritems():
+            for key, value in generators.items():
                 if value.capacity == 0:
                     continue
                 try:
@@ -719,7 +719,6 @@ class powerBalance(QtGui.QWidget):
             self.progressbar.setHidden(True)
             return
         start_time = time.time()
-        clock_start = time.clock()
         re_capacities = [0.] * len(tech_names)
         if str(self.files[2].text()).find('/') >= 0:
             pb_data_file = str(self.files[2].text())
@@ -804,7 +803,10 @@ class powerBalance(QtGui.QWidget):
                 except:
                     break # ?? or continue??
                 if tech_names[i] != 'Load':
-                    if ws.cell(row=icap_row, column=col).value <= 0:
+                    try:
+                        if ws.cell(row=icap_row, column=col).value <= 0:
+                            continue
+                    except:
                         continue
                 data.append([])
                 try:
@@ -862,6 +864,7 @@ class powerBalance(QtGui.QWidget):
                 sp_data.append([tech_names[i], re_capacities[i], 0., '', '', '', ''])
                 for g in data[len(sp_data)]:
                     sp_data[-1][2] += g
+                # if ignore not used
         else: # normal
             ds = oxl.Workbook()
             ns = ds.active
@@ -922,6 +925,8 @@ class powerBalance(QtGui.QWidget):
                     ns.cell(row=cf_row, column=col).number_format = '#,##0.00'
                     ss.cell(row=ss_row, column=4).value = '=Detail!' + ss_col(col) + str(cf_row)
                     ss.cell(row=ss_row, column=4).number_format = '#,##0.00'
+                    if tech_names[i] not in generators:
+                        continue
                     if generators[tech_names[i]].lcoe > 0:
                         ns.cell(row=cost_row, column=col).value = generators[tech_names[i]].lcoe * generators[tech_names[i]].lcoe_cf \
                                 * 8760 * re_capacities[i]
@@ -1125,6 +1130,8 @@ class powerBalance(QtGui.QWidget):
                     sp_data[sp][3] = sp_data[sp][2] / sp_data[sp][1] / 8760
                 gen_sum += sp_data[sp][2]
                 gen = sp_data[sp][0]
+                if gen not in generators:
+                    continue
                 if generators[gen].lcoe > 0:
                     sp_data[sp][4] = generators[gen].lcoe * generators[gen].lcoe_cf * 8760 * sp_data[sp][1]
                     if sp_data[sp][1] > 0 and sp_data[sp][3] > 0:
@@ -1161,13 +1168,13 @@ class powerBalance(QtGui.QWidget):
             sp_data.append(['Surplus (' + pct, '', -sf_sums[1]])
             adjusted = False
             if self.adjustby is not None:
-                for key, value in iter(sorted(self.adjustby.iteritems())):
+                for key, value in iter(sorted(self.adjustby.items())):
                     if value != 1:
                         if not adjusted:
                             adjusted = True
                             sp_data.append('RE Adjustments:')
                         sp_data.append([key, value])
-            map(list, zip(*sp_data))
+            list(map(list, list(zip(*sp_data))))
             sp_pts = [0, 2, 0, 2, 0, 2, 0]
             dialog = displaytable.Table(sp_data, title=self.sender().text(), fields=headers,
                      save_folder=self.scenarios, sortby='', decpts=sp_pts)
@@ -1187,7 +1194,10 @@ class powerBalance(QtGui.QWidget):
                         length = len(str(cell.value))
                         value = cell.value
                         row = cell.row
-            ns.column_dimensions[column_cells[0].column].width = max(length, 10)
+            try:
+                ns.column_dimensions[column_cells[0].column].width = max(length, 10)
+            except:
+                ns.column_dimensions[ss_col(column_cells[0].column)].width = max(length, 10)
         ns.column_dimensions['A'].width = 6
         col = shrt_col + 1
         for gen in order:
@@ -1269,7 +1279,10 @@ class powerBalance(QtGui.QWidget):
                     length = len(str(cell.value))
                     value = cell.value
                     row = cell.row
-            ss.column_dimensions[column_cells[0].column].width = length * 1.15
+            try:
+                ss.column_dimensions[column_cells[0].column].width = length * 1.15
+            except:
+                ss.column_dimensions[ss_col(column_cells[0].column)].width = length * 1.15
         ss.column_dimensions['D'].width = 7
         ss.column_dimensions['E'].width = 18
         last_col = ss_col(ns.max_column)
@@ -1335,7 +1348,7 @@ class powerBalance(QtGui.QWidget):
         try:
             if self.adjustby is not None:
                 adjusted = ''
-                for key, value in iter(sorted(self.adjustby.iteritems())):
+                for key, value in iter(sorted(self.adjustby.items())):
                     if value != 1:
                         adjusted += key + ': ' + str(value) + '; '
                 if len(adjusted) > 0:
@@ -1350,8 +1363,7 @@ class powerBalance(QtGui.QWidget):
         self.progressbar.setValue(10)
         j = data_file.rfind('/')
         data_file = data_file[j + 1:]
-        msg = '%s created (%.2f or %.2f seconds)' % (data_file, time.time() - start_time,
-              time.clock() - clock_start)
+        msg = '%s created (%.2f seconds)' % (data_file, time.time() - start_time)
         msg = '%s created.' % data_file
         self.log.setText(msg)
         self.progressbar.setHidden(True)

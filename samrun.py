@@ -1,6 +1,6 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
-#  Copyright (C) 2015-2016 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
 #
 #  samrun.py - This file is part of SIREN.
 #
@@ -180,7 +180,7 @@ class RptDialog(QtGui.QDialog):
                                          self.tr("QFileDialog.getSaveFileName()"),
                                          save_filename,
                                          self.tr("All Files (*);;Text Files (*.txt)"))
-        if not fileName.isEmpty():
+        if fileName != '':
             s = open(fileName, 'w')
             s.write(self.lines)
             s.close()

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 #  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
 #
@@ -349,8 +349,8 @@ class makeWeather():
             self.log += '?\n'
         self.log += ' Dimensions:\n    '
         vals = ''
-        keys = cdf_file.dimensions.keys()
-        values = cdf_file.dimensions.values()
+        keys = list(cdf_file.dimensions.keys())
+        values = list(cdf_file.dimensions.values())
         if type(cdf_file.dimensions) is dict:
             for i in range(len(keys)):
                 vals += keys[i] + ': ' + str(values[i]) + ', '
@@ -361,7 +361,7 @@ class makeWeather():
         self.log += vals[:-2] + '\n'
         self.log += ' Variables:\n    '
         vals = ''
-        for key in iter(sorted(cdf_file.variables.iterkeys())):
+        for key in iter(sorted(cdf_file.variables.keys())):
             vals += key + ', '
         self.log += vals[:-2] + '\n'
         latitude = cdf_file.variables[self.vars['latitude']][:]
@@ -431,7 +431,7 @@ class makeWeather():
                      #   break
             del fils
         if merra300:
-            for key in self.vars.keys():
+            for key in list(self.vars.keys()):
                 self.vars[key] = self.vars[key].lower()
             self.vars['latitude'] = 'latitude'
             self.vars['longitude'] = 'longitude'
@@ -454,7 +454,7 @@ class makeWeather():
                      #   break
             del fils
         if merra300:
-            for key in self.vars.keys():
+            for key in list(self.vars.keys()):
                 self.vars[key] = self.vars[key].lower()
             self.vars['latitude'] = 'latitude'
             self.vars['longitude'] = 'longitude'
@@ -1341,7 +1341,7 @@ class RptDialog(QtGui.QDialog):
                                          self.tr('Save makeweather2 Report'),
                                          save_filename,
                                          self.tr('All Files (*);;Text Files (*.txt)'))
-        if not fileName.isEmpty():
+        if fileName != '':
             s = open(fileName, 'w')
             s.write(self.lines)
             s.close()

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 #  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
 #
@@ -28,7 +28,7 @@ import os
 import sys
 import xlrd
 
-import ConfigParser  # decode .ini file
+import configparser  # decode .ini file
 from PyQt4 import QtGui, QtCore
 
 import displaytable
@@ -125,7 +125,7 @@ class PlotWeather():
         on the earth (specified in decimal degrees)
         """
    #     convert decimal degrees to radians
-        lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
+        lon1, lat1, lon2, lat2 = list(map(radians, [lon1, lat1, lon2, lat2]))
 
    #     haversine formula
         dlon = lon2 - lon1
@@ -209,7 +209,7 @@ class PlotWeather():
                             closest = fil[2]
                             dist = dist1
         if __name__ == '__main__':
-            print closest
+            print(closest)
         return closest, dist, close_lat, close_lon
 
     def showGraphs(self, ly, x, locn):
@@ -252,7 +252,7 @@ class PlotWeather():
             ra = -1
             te = -1
             i = -1
-            for key, value in iter(sorted(self.ly.iteritems())):
+            for key, value in iter(sorted(self.ly.items())):
                 i += 1
                 if key == 'wind':
                     wi = i
@@ -270,7 +270,7 @@ class PlotWeather():
                 i = -1
                 if self.two_axes:
                     px2 = px.twinx()
-                for key, value in iter(sorted(self.ly.iteritems())):
+                for key, value in iter(sorted(self.ly.items())):
                     i += 1
                     lw = 2.0
                     if self.two_axes and key in self.ylabel2[0]:
@@ -279,7 +279,7 @@ class PlotWeather():
                         px.plot(x24, data[i][p], linewidth=lw, label=key, color=self.colours[key])
                     plt.title(per_labels[p])
                 plt.xlim([1, 24])
-                plt.xticks(range(4, 25, 4))
+                plt.xticks(list(range(4, 25, 4)))
        #         px.set_xticklabels(labels])
   #              plt.xticks(range(0, 25, 4))
                 px.set_xticklabels(x_labels[1:])
@@ -323,7 +323,7 @@ class PlotWeather():
                     'legal': '8.5,14.09', 'letter': '8.5,11.0'}
         landscape = False
         papersize = ''
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
         else:
@@ -482,7 +482,7 @@ class PlotWeather():
                 m -= 1
             for k in range(24):
                 j = -1
-                for key, value in iter(sorted(self.ly.iteritems())):
+                for key, value in iter(sorted(self.ly.items())):
                     if len(value) == 0:
                         continue
                     j += 1
@@ -527,7 +527,7 @@ class PlotWeather():
             maxy = 0
             if self.two_axes:
                 hx2 = hx.twinx()
-            for key, value in iter(sorted(self.ly.iteritems())):
+            for key, value in iter(sorted(self.ly.items())):
                 lw = 2.0
                 if self.two_axes and key in self.ylabel2[0]:
                     hx2.plot(x, value, linewidth=lw, label=key, color=self.colours[key])
@@ -539,12 +539,12 @@ class PlotWeather():
                     data.append(value)
             if self.plots['save_plot']:
                 titl = 'hour'
-                dialog = displaytable.Table(map(list, zip(*data)), title=titl, fields=vals, save_folder=self.scenarios)
+                dialog = displaytable.Table(list(map(list, list(zip(*data)))), title=titl, fields=vals, save_folder=self.scenarios)
                 dialog.exec_()
                 del dialog, data, vals
             hx.set_ylim([0, maxy])
             plt.xlim([0, len(x)])
-            plt.xticks(range(12, len(x), 168))
+            plt.xticks(list(range(12, len(x), 168)))
             hx.set_xticklabels(day_labels, rotation='vertical')
             hx.set_xlabel('Month of the year')
             hx.set_ylabel(self.ylabel[0])
@@ -585,7 +585,7 @@ class PlotWeather():
             lw = 2.0
             if self.two_axes:
                 tx2 = tx.twinx()
-            for key, value in iter(sorted(self.ly.iteritems())):
+            for key, value in iter(sorted(self.ly.items())):
                 i += 1
                 if self.two_axes and key in self.ylabel2[0]:
                     tx2.plot(x24, l24[i], linewidth=lw, label=key, color=self.colours[key])
@@ -601,12 +601,12 @@ class PlotWeather():
                         decpts.append(1)
             if self.plots['save_plot']:
                 titl = 'total'
-                dialog = displaytable.Table(map(list, zip(*data)), title=titl, fields=vals, save_folder=self.scenarios, decpts=decpts)
+                dialog = displaytable.Table(list(map(list, list(zip(*data)))), title=titl, fields=vals, save_folder=self.scenarios, decpts=decpts)
                 dialog.exec_()
                 del dialog, data, vals
             tx.set_ylim([0, maxy])
             plt.xlim([1, 24])
-            plt.xticks(range(4, 25, 4))
+            plt.xticks(list(range(4, 25, 4)))
             tx.set_xticklabels(labels[1:])
             tx.set_xlabel('Hour of the Day')
             tx.set_ylabel(self.ylabel[0])
@@ -638,7 +638,7 @@ class PlotWeather():
             dayPlot(self, 'season', q24, locn, ssn_labels, labels)
         if self.plots['period']:
             dayPlot(self, 'period', s24, locn, smp_labels, labels)
-        if 'pdf' in self.plots.keys():
+        if 'pdf' in list(self.plots.keys()):
             if self.plots['pdf'] and self.plots['wind']:
                 j = int(ceil(max(self.ly['wind'])))
                 figp = plt.figure('pdf')
@@ -657,6 +657,7 @@ class PlotWeather():
                 vals = ['monthly']
                 data = []
                 data.append(x24[:12])
+                decpts = [0]
             figt = plt.figure('monthly')
             plt.grid(True)
             tx = figt.add_subplot(111)
@@ -665,7 +666,7 @@ class PlotWeather():
             i = -1
             if self.two_axes:
                 tx2 = tx.twinx()
-            for key, value in iter(sorted(self.ly.iteritems())):
+            for key, value in iter(sorted(self.ly.items())):
                 i += 1
                 lw = 2.0
                 if self.two_axes and key in self.ylabel2[0]:
@@ -676,9 +677,13 @@ class PlotWeather():
                 if self.plots['save_plot']:
                     vals.append(key)
                     data.append(t12[i][1:-1])
+                    if key == 'wind':
+                        decpts.append(2)
+                    else:
+                        decpts.append(1)
             if self.plots['save_plot']:
                 titl = 'monthly'
-                dialog = displaytable.Table(map(list, zip(*data)), title=titl, fields=vals, save_folder=self.scenarios)
+                dialog = displaytable.Table(list(map(list, list(zip(*data)))), title=titl, fields=vals, save_folder=self.scenarios, decpts=decpts)
                 dialog.exec_()
                 del dialog, data, vals
             tx.set_ylim([0, maxy])
@@ -732,7 +737,7 @@ class PlotWeather():
                     m12[-1].append(t12[i][m] / the_days[m - 1] / 24.)
             i = -1
             lw = 2.0
-            for key, value in iter(sorted(self.ly.iteritems())):
+            for key, value in iter(sorted(self.ly.items())):
                 i += 1
                 if self.two_axes and key in self.ylabel2[0]:
                     tx2.plot(x24[:12], m12[i], linewidth=lw, label=key, color=self.colours[key])
@@ -748,12 +753,12 @@ class PlotWeather():
                         decpts.append(1)
             if self.plots['save_plot']:
                 titl = 'mthavg'
-                dialog = displaytable.Table(map(list, zip(*data)), title=titl, fields=vals, save_folder=self.scenarios, decpts=decpts)
+                dialog = displaytable.Table(list(map(list, list(zip(*data)))), title=titl, fields=vals, save_folder=self.scenarios, decpts=decpts)
                 dialog.exec_()
                 del dialog, data, vals
             tx.set_ylim([0, maxy])
             plt.xlim([1, 12])
-            plt.xticks(range(1, 13, 1))
+            plt.xticks(list(range(1, 13, 1)))
             tx.set_xticklabels(mth_labels)
             tx.set_xlabel('Month')
             tx.set_ylabel(self.ylabel[0])
@@ -783,7 +788,7 @@ class PlotWeather():
             plt.show()
 
     def __init__(self, latitude, longitude, year=None, adjust_wind=None):
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
         else:
@@ -900,7 +905,7 @@ class PlotWeather():
         self.plots = what_plots.getValues()
         if self.plots is None:
             return
-        if 'rain' not in self.plots.keys():
+        if 'rain' not in list(self.plots.keys()):
             self.plots['monthly'] = False
             self.plots['rain'] = False
         self.x = []

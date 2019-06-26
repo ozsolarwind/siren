@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 #  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
 #
@@ -22,7 +22,7 @@
 import os
 import sys
 from PyQt4 import QtCore, QtGui
-import ConfigParser   # decode .ini file
+import configparser   # decode .ini file
 import xlwt
 
 import displayobject
@@ -40,7 +40,7 @@ class makeFile():
         return self.log, self.property
 
     def __init__(self, src_year, src_dir, wnd_dir, tgt_fil, detail='Daily By Month', rain='', nonzero='False'):
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
         else:
@@ -170,7 +170,7 @@ class makeFile():
                     bits = lines[0].split(',')
                     src_lat = float(bits[4])
                     src_lon = float(bits[5])
-                    src_yr = bits[8]
+                    src_yr = int(bits[8])
                     fst_row = 1
                 elif fil[-10:] == '(TMY2).csv' or fil[-10:] == '(TMY3).csv' \
                   or fil[-10:] == '(INTL).csv' or fil[-4:] == '.csv':
@@ -774,7 +774,7 @@ class getParms(QtGui.QWidget):
         self.initUI()
 
     def initUI(self):
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
         else:

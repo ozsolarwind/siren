@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 #  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
 #
@@ -32,7 +32,7 @@ import xlrd
 import xlwt
 from functools import partial
 
-import ConfigParser  # decode .ini file
+import configparser  # decode .ini file
 from PyQt4 import QtCore, QtGui
 import ssc
 import subprocess
@@ -162,7 +162,7 @@ class MapView(QtGui.QGraphicsView):
         self.setMouseTracking(True)
 
         self._shown = set()
-        self._show_places = set(xrange(1, 10))
+        self._show_places = set(range(1, 10))
         self._station_to_move = None
         self._move_station = False
         self._move_grid = False
@@ -183,7 +183,7 @@ class MapView(QtGui.QGraphicsView):
         """
         radius = 6367.  # km is the radius of the Earth
      # convert decimal degrees to radians
-        ln1, lt1, baring = map(math.radians, [lon1, lat1, bearing])
+        ln1, lt1, baring = list(map(math.radians, [lon1, lat1, bearing]))
      # "reverse" haversine formula
         lat2 = math.asin(math.sin(lt1) * math.cos(distance / radius) +
                math.cos(lt1) * math.sin(distance / radius) * math.cos(baring))
@@ -310,7 +310,7 @@ class MapView(QtGui.QGraphicsView):
             self.verticalScrollBar().setValue(val.y())
         else:
             p = self.mapToScene(event.pos())
-            x, y = map(int, [p.x(), p.y()])
+            x, y = list(map(int, [p.x(), p.y()]))
             try:
                 stations = self.view.scene().positions()[(x, y)]
                 for st in self._shown.difference(stations):
@@ -526,7 +526,7 @@ class MapView(QtGui.QGraphicsView):
         self.scene().addItem(self.legend_items[-1])
         p.setY(p.y() + fh)
         tot_area = 0
-        for key, value in iter(sorted(tech_sizes.iteritems())):
+        for key, value in iter(sorted(tech_sizes.items())):
             tot_area += value
             self.legend_items.append(QtGui.QGraphicsPolygonItem(QtGui.QPolygonF([QtCore.QPointF(p.x(), p.y() + int(fh * .45)),
                                      QtCore.QPointF(p.x() + int(fh * .4), p.y() + int(fh * .05)),
@@ -628,7 +628,7 @@ class MapView(QtGui.QGraphicsView):
         self.scene().addItem(self.legend_items[-1])
         p.setY(p.y() + fh * 2)
         frl = self.scene().mapToLonLat(p)
-        for key, value in sorted(tech_sizes.iteritems(), key=lambda x: x[1]):
+        for key, value in sorted(iter(tech_sizes.items()), key=lambda x: x[1]):
             size = math.sqrt(value)
             e = self.destinationxy(frl.x(), frl.y(), 90., size)
             s = self.destinationxy(frl.x(), frl.y(), 180., size)
@@ -758,7 +758,7 @@ class MapView(QtGui.QGraphicsView):
 
 class MainWindow(QtGui.QMainWindow):
     def get_config(self):
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
             self.config_file = sys.argv[1]
         else:
@@ -1294,7 +1294,7 @@ class MainWindow(QtGui.QMainWindow):
         helpMenu = menubar.addMenu('&Help')
         helpMenu.addAction(help)
         helpMenu.addAction(about)
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
         else:
@@ -1376,7 +1376,7 @@ class MainWindow(QtGui.QMainWindow):
         dialr = Colours()
         dialr.exec_()
        # refresh some config values
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         config.read(self.config_file)
         technologies = config.get('Power', 'technologies')
         technologies = technologies.split(' ')
@@ -1421,7 +1421,7 @@ class MainWindow(QtGui.QMainWindow):
         self.view.emit(QtCore.SIGNAL('statusmsg'), comment)
 
     def editSects(self):
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         config.read(self.config_file)
         sections = sorted(config.sections())
         menu = QtGui.QMenu()
@@ -1891,7 +1891,7 @@ class MainWindow(QtGui.QMainWindow):
                   '{:0.4f}'.format(lat), '{:0.4f}'.format(lon))
         self.view.emit(QtCore.SIGNAL('statusmsg'), comment)
 
-    def save_View(self):
+    def save_View(self, filename=None):
         full_view = False
         bottom = self.view.mapFromScene(self.view.scene().upper_left[0], self.view.scene().upper_left[1])
         top = self.view.mapFromScene(self.view.scene().lower_right[0], self.view.scene().lower_right[1])
@@ -1966,21 +1966,28 @@ class MainWindow(QtGui.QMainWindow):
             targetrect = QtCore.QRectF(0, 0, outputimg.width(), outputimg.height())
             sourcerect = QtCore.QRect(bottom.x(), bottom.y(), outputimg.width(), outputimg.height())
             self.view.render(painter, targetrect, sourcerect)
-        fname = self.new_scenario[:self.new_scenario.rfind('.')] + '.png'
-        fname = QtGui.QFileDialog.getSaveFileName(self, 'Save image file',
-                self.scenarios + fname, 'Image Files (*.png *.jpg *.bmp)')
-        if fname != '':
-            fname = str(fname)
-            i = fname.rfind('.')
-            if i < 0:
-                fname = fname + '.png'
+        if filename is None:
+            fname = self.new_scenario[:self.new_scenario.rfind('.')] + '.png'
+            fname = QtGui.QFileDialog.getSaveFileName(self, 'Save image file',
+                    self.scenarios + fname, 'Image Files (*.png *.jpg *.bmp)')
+            if fname != '':
+                fname = str(fname)
                 i = fname.rfind('.')
-            outputimg.save(fname, fname[i + 1:])
-            try:
-                comment = 'View saved to ' + fname[fname.rfind('/') + 1:]
-            except:
-                comment = 'View saved to ' + fname
-            self.view.emit(QtCore.SIGNAL('statusmsg'), comment)
+                if i < 0:
+                    fname = fname + '.png'
+                    i = fname.rfind('.')
+                outputimg.save(fname, fname[i + 1:])
+                try:
+                    comment = 'View saved to ' + fname[fname.rfind('/') + 1:]
+                except:
+                    comment = 'View saved to ' + fname
+                self.view.emit(QtCore.SIGNAL('statusmsg'), comment)
+        else:
+            i = filename.rfind('.')
+            if i < 0:
+                filename = filename + '.png'
+                i = filename.rfind('.')
+            outputimg.save(filename, filename[i + 1:])
         painter.end()
 
     def spawn(self, who):
@@ -1992,7 +1999,7 @@ class MainWindow(QtGui.QMainWindow):
                     else:
                         pid = subprocess.Popen(who).pid
                 else:
-                    pid = subprocess.Popen(['python', who[0], who[1]]).pid
+                    pid = subprocess.Popen(['python3', who[0], who[1]]).pid
                 self.view.emit(QtCore.SIGNAL('statusmsg'), who[0] + ' invoked')
         else:
             if os.path.exists(who):
@@ -2002,7 +2009,7 @@ class MainWindow(QtGui.QMainWindow):
                     else:
                         pid = subprocess.Popen([who]).pid
                 else:
-                    pid = subprocess.Popen(['python', who]).pid
+                    pid = subprocess.Popen(['python3', who]).pid
             self.view.emit(QtCore.SIGNAL('statusmsg'), who + ' invoked')
         return
 
@@ -2396,14 +2403,14 @@ class MainWindow(QtGui.QMainWindow):
         else:
             power.suffix = ' - Load for ' + str(self.sender().text())
         power.do_load = True
-        power.showGraphs({'Load': load_data}, range(8760))
+        power.showGraphs({'Load': load_data}, list(range(8760)))
         comment = power.suffix[2:] + ' displayed'
         del power, load_data
         self.view.emit(QtCore.SIGNAL('statusmsg'), comment)
 
     def get_SAMVer(self):
         ssc_api = ssc.API()
-        comment = 'SAM SDK Core: Version = %s. Build info = %s.' % (ssc_api.version(), ssc_api.build_info())
+        comment = 'SAM SDK Core: Version = %s. Build info = %s.' % (ssc_api.version(), ssc_api.build_info().decode())
         self.view.emit(QtCore.SIGNAL('statusmsg'), comment)
 
     def list_Stations(self):
@@ -2415,8 +2422,11 @@ class MainWindow(QtGui.QMainWindow):
         for st in self.view.scene()._stations.stations:
             if st.technology[:6] != 'Fossil':
                 ctr[0] += 1
-                if st.generation > 0:
-                    ctr[1] += 1
+                try:
+                    if st.generation > 0:
+                        ctr[1] += 1
+                except:
+                    pass
         if ctr[0] == 0 and not self.view.scene().show_fossil:
             comment = 'No Stations to display'
             self.view.emit(QtCore.SIGNAL('statusmsg'), comment)
@@ -2463,14 +2473,14 @@ class MainWindow(QtGui.QMainWindow):
             if j < 0:
                 cost = 0.
                 if self.view.scene().lines.lines[i].peak_load is not None:
-                    for key, value in self.view.scene().lines.substation_costs.iteritems():
+                    for key, value in self.view.scene().lines.substation_costs.items():
                         if key in self.view.scene().lines.lines[i].line_table:
                             if value > cost:
                                 cost = value
                 if self.view.scene().lines.lines[i].connector >= 0:
                     j = self.view.scene().lines.lines[i].connector
                     if self.view.scene().lines.lines[j].peak_load is not None:
-                        for key, value in self.view.scene().lines.substation_costs.iteritems():
+                        for key, value in self.view.scene().lines.substation_costs.items():
                             if key in self.view.scene().lines.lines[j].line_table:
                                 if value > cost:
                                     cost = value
@@ -2480,6 +2490,7 @@ class MainWindow(QtGui.QMainWindow):
                          'peak_loss', 'coordinates', 'connector'],
                  units='length=Km line_cost=$ substation_cost=$ peak_load=MW peak_dispatchable=MW peak_loss=MW',
                  sumfields=['length', 'line_cost', 'substation_cost'],
+                 decpts=[0, 0, 2, 1, 1, 3, 2, 3],
                  save_folder=self.scenarios)  # '#', 'connector',
         dialog.exec_()
         comment = 'Grid displayed'
@@ -2838,7 +2849,7 @@ class MainWindow(QtGui.QMainWindow):
             tech_data = {}
             flags = [self.view.scene().show_capacity, self.view.scene().show_generation,
                      self.view.scene().station_square, self.view.scene().show_fossil]
-            for key in self.view.scene().areas.keys():
+            for key in list(self.view.scene().areas.keys()):
                 tech_data[key] = [self.view.scene().areas[key], self.view.scene().colors[key], flags]
             self.floatlegend = FloatLegend(tech_data, self.view.scene()._stations.stations, flags)
             self.floatlegend.setWindowModality(QtCore.Qt.WindowModal)
@@ -2955,7 +2966,8 @@ class MainWindow(QtGui.QMainWindow):
             self.floatstatus.exit()
         if self.power_signal is not None:
             self.power_signal.exit()
-        exit()
+            sys.exit() # rude way to close all windows and exit
+        self.exit()
 
     def writeStations(self, scenario, description):
         the_scenario = str(scenario)
@@ -3162,7 +3174,7 @@ def main():
     show_floatlegend = False
     show_floatmenu = False
     if mw.restorewindows:
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         config.read(mw.config_file)
         try:
             rw = config.get('Windows', 'main_size').split(',')
@@ -3171,7 +3183,7 @@ def main():
             mp = config.get('Windows', 'main_pos').split(',')
             mw.move(int(mp[0]), int(mp[1]))
             vw = config.get('Windows', 'main_view').split(',')
-            vw = map(float, vw)
+            vw = list(map(float, vw))
             tgt_width = vw[2] - vw[0]
             tgt_height = vw[3] - vw[1]
             mw.view.centerOn(vw[0] + (vw[2] - vw[0]) / 2, vw[1] + (vw[3] - vw[1]) / 2)

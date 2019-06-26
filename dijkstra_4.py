@@ -1,6 +1,6 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
-#  Copyright (C) 2015-2018 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
 #
 #  djikstra_4.py - This file is part of SIREN.
 #
@@ -35,17 +35,22 @@ class Vertex:
         self.id = node
         self.adjacent = {}
          # Set distance to infinity for all nodes
-        self.distance = float(sys.maxint)
+        self.distance = float(sys.maxsize)
          # Mark all nodes unvisited
         self.visited = False
          # Predecessor
         self.previous = None
 
+    # defining comparators less_than and equals
+    # clued from https://stackoverflow.com/questions/47912064/typeerror-not-supported-between-instances-of-heapnode-and-heapnode
+    def __lt__(self, other):
+        return self.distance < other.distance
+
     def add_neighbor(self, neighbor, weight=0):
         self.adjacent[neighbor] = weight
 
     def get_connections(self):
-        return self.adjacent.keys()
+        return list(self.adjacent.keys())
 
     def get_id(self):
         return self.id
@@ -76,7 +81,7 @@ class Graph:
         self.num_vertices = 0
 
     def __iter__(self):
-        return iter(self.vert_dict.values())
+        return iter(list(self.vert_dict.values()))
 
     def add_vertex(self, node):
         self.num_vertices = self.num_vertices + 1
@@ -99,7 +104,7 @@ class Graph:
         self.vert_dict[to].add_neighbor(self.vert_dict[frm], cost)
 
     def get_vertices(self):
-        return self.vert_dict.keys()
+        return list(self.vert_dict.keys())
 
     def set_previous(self, current):
         self.previous = current
@@ -238,7 +243,7 @@ class Shortest:
             self.path = [target.get_id()]
             shortest(target, self.path)
         except:
-            self.path = []           
+            self.path = []
 
     def getPath(self):
         the_path = []

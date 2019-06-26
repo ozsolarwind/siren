@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 #  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
 #
@@ -22,7 +22,7 @@ from datetime import datetime
 import os
 import sys
 from PyQt4 import QtGui, QtCore
-import ConfigParser  # decode .ini file
+import configparser  # decode .ini file
 if sys.platform == 'win32' or sys.platform == 'cygwin':
     from win32api import GetFileVersionInfo, LOWORD, HIWORD
 
@@ -44,14 +44,14 @@ def fileVersion(program=None, year=False):
     if check[-3:] == '.py':
         try:
             modtime = datetime.fromtimestamp(os.path.getmtime(check))
-            ver = '1.0.%04d.%d%02d' % (modtime.year, modtime.month, modtime.day)
+            ver = '2.0.%04d.%d%02d' % (modtime.year, modtime.month, modtime.day)
             ver_yr = '%04d' % modtime.year
         except:
             pass
     elif check[-5:] == '.html':
         try:
             modtime = datetime.fromtimestamp(os.path.getmtime(check))
-            ver = '1.0.%04d.%d%02d' % (modtime.year, modtime.month, modtime.day)
+            ver = '2.0.%04d.%d%02d' % (modtime.year, modtime.month, modtime.day)
             ver_yr = '%04d' % modtime.year
         except:
             pass
@@ -70,7 +70,7 @@ def fileVersion(program=None, year=False):
             except:
                 try:
                     info = os.path.getmtime(os.getcwd() + '\\' + check)
-                    ver = '1.0.' + datetime.datetime.fromtimestamp(info).strftime('%Y.%m%d')
+                    ver = '2.0.' + datetime.datetime.fromtimestamp(info).strftime('%Y.%m%d')
                     ver_yr = datetime.datetime.fromtimestamp(info).strftime('%Y')
                     if ver[9] == '0':
                         ver = ver[:9] + ver[10:]
@@ -91,7 +91,7 @@ class Credits(QtGui.QDialog):
         self.initUI()
 
     def initUI(self):
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
         else:
@@ -118,9 +118,9 @@ class Credits(QtGui.QDialog):
             html = html.replace('[VERSION-YEAR]', fileVersion(year=True))
             htf.close()
             if html[:5] == '<html' or html[:15] == '<!DOCTYPE html>':
-                web.setHtml(QtCore.QString(html))
+                web.setHtml(html)
             else:
-                web.setPlainText(QtCore.QString(html))
+                web.setPlainText(html)
             web.setReadOnly(True)
             small = QtGui.QFont()
             small.setPointSize(10)

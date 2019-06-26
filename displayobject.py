@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 #  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
 #
@@ -119,16 +119,16 @@ class AnObject(QtGui.QDialog):
                                 break
                         for i in range(i, len(line)):
                             html += line[i] + '\n'
-                    self.web.setHtml(QtCore.QString(html))
+                    self.web.setHtml(html)
                 else:
-                    self.web.setPlainText(QtCore.QString(html))
+                    self.web.setPlainText(html)
             else:
                 html = self.anobject
                 if self.anobject[:5] == '<html':
                     self.anobject = self.anobject.replace('[VERSION]', credits.fileVersion())
-                    self.web.setHtml(QtCore.QString(self.anobject))
+                    self.web.setHtml(self.anobject)
                 else:
-                    self.web.setPlainText(QtCore.QString(self.anobject))
+                    self.web.setPlainText(self.anobject)
             metrics.append(self.web.fontMetrics())
             try:
                 widths[0] = metrics[0].boundingRect(self.web.text()).width()
@@ -154,7 +154,7 @@ class AnObject(QtGui.QDialog):
         elif isinstance(self.anobject, dict):
             if self.textedit:
                 self.keys = []
-                for key, value in self.anobject.iteritems():
+                for key, value in self.anobject.items():
                     self.field_type.append('str')
                     label.append(QtGui.QLabel(key + ':'))
                     self.keys.append(key)
@@ -193,7 +193,7 @@ class AnObject(QtGui.QDialog):
                     grid.addWidget(self.edit[-1], i + 1, 1)
             else:
                 self.keys = []
-                for key, value in self.anobject.iteritems():
+                for key, value in self.anobject.items():
                     self.field_type.append('str')
                     label.append(QtGui.QLabel(key + ':'))
                     self.keys.append(key)
@@ -250,7 +250,7 @@ class AnObject(QtGui.QDialog):
                     i += 1
                     grid.addWidget(label[-1], i + 1, 0)
                     grid.addWidget(self.edit[-1], i + 1, 1)
-                    if prop in units.keys():
+                    if prop in list(units.keys()):
                         grid.addWidget(QtGui.QLabel(units[prop]), i + 1, 2)
                     if prop == 'turbine':
                         i += 1

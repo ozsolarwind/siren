@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 #  Copyright (C) 2016-2019 Sustainable Energy Now Inc., Angus King
 #
@@ -19,14 +19,14 @@
 #  <http://www.gnu.org/licenses/>.
 #
 
-import ConfigParser   # decode .ini file
+import configparser   # decode .ini file
 import sys
 from senuser import techClean
 
 
 class Icons:
     def __init__(self):
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
         else:
@@ -55,7 +55,7 @@ class Icons:
             pass
 
     def getIcon(self, technology):
-        if technology in self.icons.keys():
+        if technology in list(self.icons.keys()):
             return self.icons[technology]
         tech = technology
         if technology == 'Biogas':

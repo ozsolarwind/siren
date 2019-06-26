@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 #  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
 #
@@ -24,7 +24,7 @@ import csv
 import os
 import sys
 
-import ConfigParser    # decode .ini file
+import configparser    # decode .ini file
 
 from parents import getParents
 from senuser import getUser
@@ -33,7 +33,7 @@ from senuser import getUser
 class Power_Curve:
 
     def get_config(self):
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
         else:
@@ -90,7 +90,7 @@ class Power_Curve:
             self.power_curve = plt.polyfit(x, y, poly)
             self.capacity = last_valu
         else:
-            print 'No', pow_file
+            print('No', pow_file)
             return None
 
     def Power(self, wind_speed):
@@ -109,7 +109,7 @@ class Turbine:
     """Specifications for a Wind Turbine (Power Curve, ...)."""
 
     def get_config(self):
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
         else:

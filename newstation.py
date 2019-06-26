@@ -1,6 +1,6 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
-#  Copyright (C) 2015-2018 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
 #
 #  newstation.py - This file is part of SIREN.
 #
@@ -23,7 +23,7 @@ import csv
 import os
 import sys
 
-import ConfigParser  # decode .ini file
+import configparser  # decode .ini file
 from PyQt4 import QtGui, QtCore
 
 from senuser import getUser, techClean
@@ -44,7 +44,7 @@ class ClickableQLabel(QtGui.QLabel):
 class AnObject(QtGui.QDialog):
 
     def get_config(self):
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
         else:
@@ -361,7 +361,7 @@ class AnObject(QtGui.QDialog):
             except:
                 pass
             grid.addWidget(self.edit[-1], i + 1, 1)
-            if self.field[i] in units.keys():
+            if self.field[i] in list(units.keys()):
                 grid.addWidget(QtGui.QLabel(units[self.field[i]]), i + 1, 2)
         self.technologyChanged(self.techcomb.currentIndex)
         grid.setColumnMinimumWidth(0, widths[0] + 10)

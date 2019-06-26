@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 #  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
 #
@@ -20,12 +20,12 @@
 #
 
 import csv
-import httplib
+import http.client
 import os
 import sys
 import time
 from PyQt4 import QtCore, QtGui
-import ConfigParser   # decode .ini file
+import configparser   # decode .ini file
 import xlwt
 
 import displayobject
@@ -59,13 +59,13 @@ class makeFile():
         self.url = url
         self.tgt_fil = tgt_fil
         self.excel = excel
-        conn = httplib.HTTPConnection(self.host)
-        conn.request("GET", self.url)
+        conn = http.client.HTTPConnection(self.host)
+        conn.request('GET', self.url)
         response = conn.getresponse()
         if response.status != 200:
             self.log = 'Error Response: ' + str(response.status) + ' ' + response.reason
             return
-        datas = response.read().split('\n')
+        datas = response.read().decode().split('\n')
         conn.close()
         common_fields = ['Facility Code', 'Participant Name', 'Participant Code',
                          'Facility Type', 'Balancing Status', 'Capacity Credits (MW)',
@@ -142,7 +142,7 @@ class makeFile():
             reply = msgbox.exec_()
             if reply == QtGui.QMessageBox.Yes:
                 extra_fields = ['Latitude', 'Longitude', 'Facility Name', 'Turbine', 'No. turbines', 'Tilt']
-                upd_file = open(fac_file + '.csv', 'wb')
+                upd_file = open(fac_file + '.csv', 'w')
                 upd_writer = csv.writer(upd_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 upd_writer.writerow(common_fields + extra_fields)
                 new_facilities = csv.DictReader(datas)
@@ -295,13 +295,13 @@ class makeLoadFile():
         the_year = int(year)
         for yr in range(the_year - 1, the_year + 1):
             last_url = url.replace(year, str(yr))
-            conn = httplib.HTTPConnection(host)
-            conn.request("GET", last_url)
+            conn = http.client.HTTPConnection(host)
+            conn.request('GET', last_url)
             response = conn.getresponse()
             if response.status != 200:
                 self.log = 'Error Response: ' + str(response.status) + ' ' + response.reason
                 return
-            datas = response.read().split('\n')
+            datas = response.read().decode().split('\n')
             conn.close()
             load_detl = csv.DictReader(datas)
             for itm in load_detl:
@@ -370,7 +370,7 @@ class getParms(QtGui.QWidget):
         self.initUI()
 
     def initUI(self):
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
         else:
@@ -433,7 +433,7 @@ class getParms(QtGui.QWidget):
             self.load_file = fac_file
         except:
             pass
-        my_config = ConfigParser.RawConfigParser()
+        my_config = configparser.RawConfigParser()
         my_config_file = 'getfiles.ini'
         my_config.read(my_config_file)
         try:
@@ -604,7 +604,7 @@ class getParms(QtGui.QWidget):
 if "__main__" == __name__:
     app = QtGui.QApplication(sys.argv)
     if len(sys.argv) > 2:   # arguments
-        my_config = ConfigParser.RawConfigParser()
+        my_config = configparser.RawConfigParser()
         my_config_file = 'getfiles.ini'
         my_config.read(my_config_file)
         try:

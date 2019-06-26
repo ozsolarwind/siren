@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 #  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
 #
@@ -20,7 +20,7 @@
 #  <http://www.gnu.org/licenses/>.
 #
 #  The routines getDHI and getDNI in this program have been derived
-#  from models #  developed by The National Renewable Energy
+#  from models developed by The National Renewable Energy
 #  Laboratory (NREL) Center for Renewable Energy Resources.
 #  Copyright for these routines remain with them.
 #
@@ -94,14 +94,14 @@ class AnObject(QtGui.QDialog):
             htf = open(self.anobject, 'r')
             html = htf.read()
             htf.close()
-            self.web.setHtml(QtCore.QString(html))
+            self.web.setHtml(html)
         else:
             html = self.anobject
             if self.anobject[:5] == '<html':
                 self.anobject = self.anobject.replace('[VERSION]', credits.fileVersion())
-                self.web.setHtml(QtCore.QString(self.anobject))
+                self.web.setHtml(self.anobject)
             else:
-                self.web.setPlainText(QtCore.QString(self.anobject))
+                self.web.setPlainText(self.anobject)
         metrics.append(self.web.fontMetrics())
         try:
             widths[0] = metrics[0].boundingRect(self.web.text()).width()
@@ -629,8 +629,8 @@ class makeWeather():
             self.log += '?\n'
         self.log += ' Dimensions:\n    '
         vals = ''
-        keys = cdf_file.dimensions.keys()
-        values = cdf_file.dimensions.values()
+        keys = list(cdf_file.dimensions.keys())
+        values = list(cdf_file.dimensions.values())
         if type(cdf_file.dimensions) is dict:
             for i in range(len(keys)):
                 vals += keys[i] + ': ' + str(values[i]) + ', '
@@ -641,7 +641,7 @@ class makeWeather():
         self.log += vals[:-2] + '\n'
         self.log += ' Variables:\n    '
         vals = ''
-        for key in iter(sorted(cdf_file.variables.iterkeys())):
+        for key in iter(sorted(cdf_file.variables.keys())):
             vals += key + ', '
         self.log += vals[:-2] + '\n'
         latitude = cdf_file.variables[self.vars['latitude']][:]
@@ -711,7 +711,7 @@ class makeWeather():
                      #   break
             del fils
         if merra300:
-            for key in self.vars.keys():
+            for key in list(self.vars.keys()):
                 self.vars[key] = self.vars[key].lower()
             self.vars['latitude'] = 'latitude'
             self.vars['longitude'] = 'longitude'
@@ -734,7 +734,7 @@ class makeWeather():
                      #   break
             del fils
         if merra300:
-            for key in self.vars.keys():
+            for key in list(self.vars.keys()):
                 self.vars[key] = self.vars[key].lower()
             self.vars['latitude'] = 'latitude'
             self.vars['longitude'] = 'longitude'
@@ -1621,7 +1621,7 @@ class RptDialog(QtGui.QDialog):
                                          self.tr('Save makeweatherfiles Report'),
                                          save_filename,
                                          self.tr('All Files (*);;Text Files (*.txt)'))
-        if not fileName.isEmpty():
+        if fileName != '':
             s = open(fileName, 'w')
             s.write(self.lines)
             s.close()

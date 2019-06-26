@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 #  Copyright (C) 2017-2019 Sustainable Energy Now Inc., Angus King
 #
@@ -25,7 +25,7 @@ import os
 import subprocess
 import sys
 from netCDF4 import Dataset
-import ConfigParser   # decode .ini file
+import configparser   # decode .ini file
 from PyQt4 import QtCore, QtGui
 
 from credits import fileVersion
@@ -76,7 +76,7 @@ def checkFiles(chk_key, tgt_dir, ini_file=None, collection=None):
         del fils
 
     if collection is None:
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         config_file = ini_file
         config.read(config_file)
         chk_collection = config.get('getmerra2', chk_key + '_collection')
@@ -125,9 +125,9 @@ def checkFiles(chk_key, tgt_dir, ini_file=None, collection=None):
                 return [log2.log]
             dte_msg = '.\nCurrent day range %s to %s' % (str(first_dte), str(dtes[-1]))
             if len(dtes) != (dte2-dte1).days + 1:
-                print '(128)', len(dtes), (dte2-dte1).days + 1, dte2, dte1
+                print('(128)', len(dtes), (dte2-dte1).days + 1, dte2, dte1)
                 not_contiguous = True
-                print 'getmerra2: File template ' + chk_src_key[i][j]
+                print('getmerra2: File template ' + chk_src_key[i][j])
                 years = {}
                 for dte in dtes:
                     y = dte[:4]
@@ -139,8 +139,8 @@ def checkFiles(chk_key, tgt_dir, ini_file=None, collection=None):
                         for l in range(13):
                             years[y].append(0)
                         years[y][m] = years[y][m] + 1
-                for key, value in iter(sorted(years.iteritems())):
-                    print 'getmerra2: Days per month', key, value[1:]
+                for key, value in iter(sorted(years.items())):
+                    print('getmerra2: Days per month', key, value[1:])
     if log1 is None or log2 is None:
         msg_text = 'Check ' + chk_key.title() + ' incomplete.'
         return [msg_text]
@@ -168,7 +168,7 @@ def checkFiles(chk_key, tgt_dir, ini_file=None, collection=None):
     return [msg_text, dte, dte2, latn, lats, lonw, lone]
 
 def invokeWget(ini_file, coll, date1, date2, lat1, lat2, lon1, lon2, tgt_dir, spawn_wget):
-    config = ConfigParser.RawConfigParser()
+    config = configparser.RawConfigParser()
     config.read(ini_file)
     if coll == 'solar':
         ignor = 'wind'
@@ -237,7 +237,7 @@ def invokeWget(ini_file, coll, date1, date2, lat1, lat2, lon1, lon2, tgt_dir, sp
     bf.write(bat_cmd)
     bf.close()
     if sys.platform == 'linux' or sys.platform == 'linux2':
-        os.chmod(tgt_dir + '/' + bat_file, 0777)
+        os.chmod(tgt_dir + '/' + bat_file, 0o777)
     if spawn_wget:
         spawn(bat_cmd, cwd, log_file)
         return 'wget being launched (logging to: ' + log_file +')'
@@ -275,8 +275,8 @@ class fileInfo:
         except:
             self.format = '?'
         self.dimensions = ''
-        keys = cdf_file.dimensions.keys()
-        values = cdf_file.dimensions.values()
+        keys = list(cdf_file.dimensions.keys())
+        values = list(cdf_file.dimensions.values())
         if type(cdf_file.dimensions) is dict:
             for i in range(len(keys)):
                 self.dimensions += keys[i] + ': ' + str(values[i]) + ', '
@@ -285,7 +285,7 @@ class fileInfo:
                 bits = str(values[i]).strip().split(' ')
                 self.dimensions += keys[i] + ': ' + bits[-1] + ', '
         self.variables = ''
-        for key in iter(sorted(cdf_file.variables.iterkeys())):
+        for key in iter(sorted(cdf_file.variables.keys())):
             self.variables += key + ', '
         self.latitudes = []
         try:
@@ -331,7 +331,7 @@ class getMERRA2(QtGui.QDialog):
     procStart = QtCore.pyqtSignal(str)
 
     def get_config(self):
-        self.config = ConfigParser.RawConfigParser()
+        self.config = configparser.RawConfigParser()
         self.config_file = self.ini_file
         self.config.read(self.config_file)
         try:
@@ -425,7 +425,7 @@ class getMERRA2(QtGui.QDialog):
         self.lonwSpin.setObjectName('lonw')
         if len(sys.argv) > 1:
             his_config_file = sys.argv[1]
-            his_config = ConfigParser.RawConfigParser()
+            his_config = configparser.RawConfigParser()
             his_config.read(his_config_file)
             try:
                 mapp = his_config.get('Map', 'map_choice')
@@ -961,7 +961,7 @@ if '__main__' == __name__:
                 else:
                     errors.append(sys.argv[i])
         if len(errors) > 0:
-            print 'Errors in parameters:', errors
+            print('Errors in parameters:', errors)
             sys.exit(4)
         if check:
             check = checkFiles(coll, tgt_dir, ini_file=ini_file)
@@ -975,18 +975,18 @@ if '__main__' == __name__:
                 lat2 = check[4]
                 lon1 = check[5]
                 lon2 = check[6]
-                print check[0]
+                print(check[0])
             else:
-                print check[0]
+                print(check[0])
                 sys.exit(4)
         if abs(lat1 - lat2) < 1 or abs(lon2 - lon1) < 1.25:
-            print 'Area too small. Range must be at least 1 degree Lat x 1.25 Lon'
+            print('Area too small. Range must be at least 1 degree Lat x 1.25 Lon')
             sys.exit(4)
         if date2 < date1:
-            print 'Date2 (End) less than Date1 (Start)'
+            print('Date2 (End) less than Date1 (Start)')
             sys.exit(4)
         wgot = invokeWget(ini_file, coll, date1, date2, lat1, lat2, lon1, lon2, tgt_dir, spawn_wget)
-        print wgot
+        print(wgot)
         sys.exit()
     else:
         app = QtGui.QApplication(sys.argv)

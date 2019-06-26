@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 #  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
 #
@@ -71,19 +71,19 @@ class Table(QtGui.QDialog):
             fakes = []
             if fields is None: # assume we have some class objects
                 fields = []
-                if hasattr(objects[objects.keys()[0]], 'name'):
+                if hasattr(objects[list(objects.keys())[0]], 'name'):
                     fields.append('name')
-                for prop in dir(objects[objects.keys()[0]]):
+                for prop in dir(objects[list(objects.keys())[0]]):
                     if prop[:2] != '__' and prop[-2:] != '__':
                         if prop != 'name':
                             fields.append(prop)
-                for key, value in objects.iteritems():
+                for key, value in objects.items():
                      values = []
                      for field in fields:
                          values.append(getattr(value, field))
                      fakes.append(FakeObject(values, fields))
             else:
-                for key, value in objects.iteritems():
+                for key, value in objects.items():
                     fakes.append(FakeObject([key, value], fields))
             self.objects = fakes
         else:
@@ -169,12 +169,12 @@ class Table(QtGui.QDialog):
             self.table.setRowCount(len(self.entry) + len(self.sums))
         self.table.setColumnCount(len(self.labels))
         if self.fields is None:
-            labels = sorted(map(lambda x: self.nice(x), self.labels.keys()))
+            labels = sorted([self.nice(x) for x in list(self.labels.keys())])
         else:
             for f in range(len(self.fields) -1, -1, -1):
-                if self.fields[f] not in self.labels.keys():
+                if self.fields[f] not in list(self.labels.keys()):
                     del self.fields[f] # delete any None fields
-            labels = map(lambda x: self.nice(x), self.fields)
+            labels = [self.nice(x) for x in self.fields]
         self.table.setHorizontalHeaderLabels(labels)
         for cl in range(self.table.columnCount()):
             self.table.horizontalHeaderItem(cl).setIcon(QtGui.QIcon('blank.png'))
@@ -235,7 +235,7 @@ class Table(QtGui.QDialog):
                     clp[i] = clv[i] + 1
                     totl.append(self.sums['~~'][i])
             rw = len(self.entry) - 1
-            for key, value in iter(sorted(self.sums.iteritems())):
+            for key, value in iter(sorted(self.sums.items())):
                 if key == '~~':
                     tkey = 'Total'
                 else:
@@ -273,7 +273,7 @@ class Table(QtGui.QDialog):
         if height > (screen.height() - 70):
             height = screen.height() - 70
         self.setLayout(layout)
-        size = QtCore.QVariant(QtCore.QSize(int(width), int(height))).toSize()
+        size = QtCore.QSize(QtCore.QSize(int(width), int(height)))
         self.resize(size)
         self.updated = QtCore.pyqtSignal(QtGui.QLabel)   # ??
         QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quit)
@@ -377,7 +377,7 @@ class Table(QtGui.QDialog):
                 self.fields = [self.name]
             else:
                 self.fields = []
-            for key, value in iter(sorted(self.labels.iteritems())):
+            for key, value in iter(sorted(self.labels.items())):
                 if key != self.name:
                     self.fields.append(key)
         else:
@@ -400,7 +400,7 @@ class Table(QtGui.QDialog):
                 if attr < 0:
                     continue
             values = {}
-            for key, value in self.labels.iteritems():
+            for key, value in self.labels.items():
                 try:
                     if key == '#':
                         attr = obj
@@ -495,24 +495,24 @@ class Table(QtGui.QDialog):
                 self.sort_asc = False
             self.sort_col = col
             if self.sort_asc:   # swap order
-                for key, value in iter(sorted(orderd.iteritems(), reverse=True)):
+                for key, value in iter(sorted(iter(orderd.items()), reverse=True)):
                     torder.append(value)
-                for key, value in iter(sorted(norderd.iteritems())):
+                for key, value in iter(sorted(norderd.items())):
                     torder.append(value)
                 self.sort_asc = False
                 self.table.horizontalHeaderItem(col).setIcon(QtGui.QIcon('arrowd.png'))
             else:
                 self.sort_asc = True
-                for key, value in iter(sorted(norderd.iteritems(), reverse=True)):
+                for key, value in iter(sorted(iter(norderd.items()), reverse=True)):
                     torder.append(value)
-                for key, value in iter(sorted(orderd.iteritems())):
+                for key, value in iter(sorted(orderd.items())):
                     torder.append(value)
                 self.table.horizontalHeaderItem(col).setIcon(QtGui.QIcon('arrowu.png'))
         self.entry = [self.entry[i] for i in torder]
         for rw in range(len(self.entry)):
             for cl in range(self.table.columnCount()):
                 self.table.setItem(rw, cl, QtGui.QTableWidgetItem(''))
-            for key, value in sorted(self.entry[rw].items(), key=lambda i: self.fields.index(i[0])):
+            for key, value in sorted(list(self.entry[rw].items()), key=lambda i: self.fields.index(i[0])):
                 cl = self.fields.index(key)
                 if key == 'technology':
                     icon = self.icons.getIcon(value)

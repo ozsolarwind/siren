@@ -1,6 +1,6 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
-#  Copyright (C) 2015 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
 #
 #  sammodels.py - This file is part of SIREN.
 #
@@ -86,24 +86,24 @@ def getDNI(ghi=0, hour=0, lat=0, lon=0, press=1013.25, zone=8, debug=False):
         knc = 0.886 - 0.122 * am + 0.0121 * pow(am, 2) - 0.000653 * pow(am, 3) + \
               0.000014 * pow(am, 4)
     if debug:
-        print 'hour', hour
-        print 'latitude', latitude
-        print 'longitude', longitude
-        print 'time_zone', time_zone
-        print 'pressure', pressure
-        print 'day_angle', day_angle
-        print 'etr', etr
-        print 'dec', dec
-        print 'eqt', eqt
-        print 'hour_angle', hour_angle
-        print 'zenith_angle', zenith_angle
-        print 'am', am
-        print 'kt', kt
-        print 'a', a
-        print 'b', b
-        print 'c', c
-        print 'kn', kn
-        print 'knc', knc
+        print('hour', hour)
+        print('latitude', latitude)
+        print('longitude', longitude)
+        print('time_zone', time_zone)
+        print('pressure', pressure)
+        print('day_angle', day_angle)
+        print('etr', etr)
+        print('dec', dec)
+        print('eqt', eqt)
+        print('hour_angle', hour_angle)
+        print('zenith_angle', zenith_angle)
+        print('am', am)
+        print('kt', kt)
+        print('a', a)
+        print('b', b)
+        print('c', c)
+        print('kn', kn)
+        print('knc', knc)
     if kt > 0:
         if etr * (knc - kn) >= 0:
             return etr * (knc - kn)
@@ -192,28 +192,28 @@ def getDHI(ghi=0, dni=0, hour=0, lat=0, azimuth=0., tilt=0., reflectance=0.2, de
 # Z
     dhi_rounded = round(dhi_negative, 1)
     if debug:
-        print 'ghi', ghi
-        print 'dni', dni
-        print 'latitude', latitude
-        print 'hour_of_year', hour_of_year
-        print 'day_of_year', day_of_year
-        print 'declination_angle', declination_angle
-        print 'hour_angle', hour_angle
-        print 'sun_rise_hour_angle', sun_rise_hour_angle
-        print 'hour_angle_2', hour_angle_2
-        print 'sun_rise_set_adjusted_hour_angle', sun_rise_set_adjusted_hour_angle
-        print 'sun_rise_hr_am', sun_rise_hr_am
-        print 'sun_set_hr_pm', sun_set_hr_pm
-        print 'sun_rise_set_hsr', sun_rise_set_hsr
-        print 'altitude_angle', altitude_angle
-        print 'solar_azimuth', solar_azimuth
-        print 'incidence_angle', incidence_angle
-        print 'beam_component', beam_component
-        print 'diffuse_component', diffuse_component
-        print 'reflected_component', reflected_component
-        print 'total_wh', total_wh
-        print 'check_total', check_total
-        print 'dhi_negative', dhi_negative
+        print('ghi', ghi)
+        print('dni', dni)
+        print('latitude', latitude)
+        print('hour_of_year', hour_of_year)
+        print('day_of_year', day_of_year)
+        print('declination_angle', declination_angle)
+        print('hour_angle', hour_angle)
+        print('sun_rise_hour_angle', sun_rise_hour_angle)
+        print('hour_angle_2', hour_angle_2)
+        print('sun_rise_set_adjusted_hour_angle', sun_rise_set_adjusted_hour_angle)
+        print('sun_rise_hr_am', sun_rise_hr_am)
+        print('sun_set_hr_pm', sun_set_hr_pm)
+        print('sun_rise_set_hsr', sun_rise_set_hsr)
+        print('altitude_angle', altitude_angle)
+        print('solar_azimuth', solar_azimuth)
+        print('incidence_angle', incidence_angle)
+        print('beam_component', beam_component)
+        print('diffuse_component', diffuse_component)
+        print('reflected_component', reflected_component)
+        print('total_wh', total_wh)
+        print('check_total', check_total)
+        print('dhi_negative', dhi_negative)
     return dhi_rounded
 
 
@@ -235,14 +235,14 @@ def getZenith(hour=0, lat=0, lon=0, zone=8, debug=False):
     zenith_angle = acos(cos(radians(dec)) * cos(radians(latitude)) * cos(radians(hour_angle)) +
           sin(radians(dec)) * sin(radians(latitude))) * (180. / 3.14159)
     if debug:
-        print 'hour', hour
-        print 'latitude', latitude
-        print 'longitude', longitude
-        print 'time_zone', time_zone
-        print 'day_angle', day_angle
-        print 'etr', etr
-        print 'dec', dec
-        print 'eqt', eqt
-        print 'hour_angle', hour_angle
-        print 'zenith_angle', zenith_angle
+        print('hour', hour)
+        print('latitude', latitude)
+        print('longitude', longitude)
+        print('time_zone', time_zone)
+        print('day_angle', day_angle)
+        print('etr', etr)
+        print('dec', dec)
+        print('eqt', eqt)
+        print('hour_angle', hour_angle)
+        print('zenith_angle', zenith_angle)
     return zenith_angle

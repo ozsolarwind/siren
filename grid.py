@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 #  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
 #
@@ -20,12 +20,12 @@
 #
 
 import os
-import StringIO
+import io
 import sys
 from math import sin, cos, radians, asin, acos, atan2, sqrt, degrees
 import zipfile
 
-import ConfigParser   # decode .ini file
+import configparser   # decode .ini file
 from xml.etree.ElementTree import ElementTree, fromstring
 
 from parents import getParents
@@ -187,7 +187,7 @@ class Grid:
         return new_lines
 
     def get_config(self):
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
         else:
@@ -368,7 +368,7 @@ class Grid:
                     break
             if inner_file == '':
                 return
-            memory_file = StringIO.StringIO()
+            memory_file = io.StringIO()
             memory_file.write(zf.open(inner_file).read())
             root = ElementTree(fromstring(memory_file.getvalue()))
         else:
@@ -382,11 +382,11 @@ class Grid:
         for element in iterat:
             elem = element.tag[element.tag.find('}') + 1:]
             if elem == 'Style':
-                for name, value in element.items():
+                for name, value in list(element.items()):
                     if name == 'id':
                         styl = value
             elif elem == 'StyleMap':
-                for name, value in element.items():
+                for name, value in list(element.items()):
                     if name == 'id':
                         stylm = value
             elif elem == 'color':
@@ -405,14 +405,14 @@ class Grid:
                     line_name += placemark_id
                     placemark_id = ''
             elif elem == 'Placemark' and grid2:
-                for key, value in element.items():
+                for key, value in list(element.items()):
                     if key == 'id':
                         if value[:4] == 'kml_':
                             placemark_id = value[3:]
                         else:
                             placemark_id = value
             elif elem == 'SimpleData' and grid2:
-                for key, value in element.items():
+                for key, value in list(element.items()):
                     if key == 'name' and (value == 'CAPACITY_kV' or value == 'CAPACITYKV'):
                         try:
                             styl = self.grid2_colors[element.text]
@@ -554,6 +554,8 @@ class Grid:
         return round(abs(dst) * RADIUS, 2)
 
     def Line_Cost(self, peak_load, peak_dispatchable):
+        if peak_load is None:
+            peak_load = 0
         if peak_dispatchable is None or peak_dispatchable == 0:
             s = 0
             while self.s_line_table[s][0] < peak_load and (s + 1) < len(self.s_line_table):
@@ -589,7 +591,7 @@ class Grid:
 
 class Grid_Boundary:
     def get_config(self):
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
         else:
@@ -666,7 +668,7 @@ class Grid_Boundary:
                     break
             if inner_file == '':
                 return
-            memory_file = StringIO.StringIO()
+            memory_file = io.StringIO()
             memory_file.write(zf.open(inner_file).read())
             root = ElementTree(fromstring(memory_file.getvalue()))
         else:
@@ -677,7 +679,7 @@ class Grid_Boundary:
         for element in iterat:
             elem = element.tag[element.tag.find('}') + 1:]
             if elem == 'Style':
-                for name, value in element.items():
+                for name, value in list(element.items()):
                     if name == 'id':
                         styl = value
             elif elem == 'color':

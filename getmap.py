@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 #  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
 #
@@ -19,12 +19,12 @@
 #  <http://www.gnu.org/licenses/>.
 #
 
-import httplib
+import http.client
 import math
 import os
 import sys
 import tempfile
-import ConfigParser   # decode .ini file
+import configparser   # decode .ini file
 from PyQt4 import QtGui, QtCore
 import displayobject
 from credits import fileVersion
@@ -98,23 +98,23 @@ class retrieveMap():
             url_tail = url_tail.replace('x=x', 'x=' + str(x))
             url_tail = url_tail.replace('y=y', 'y=' + str(y))
         if self.batch:
-            print url + url_tail
-        conn = httplib.HTTPConnection(url)
+            print(url + url_tail)
+        conn = http.client.HTTPConnection(url)
         if self.batch:
-            print 'Retrieving ' + url_tail
+            print('Retrieving ' + url_tail)
       #   conn.addheaders = [('User-agent', 'Mozilla/5.0')]
         conn.request('GET', url_tail)
         response = conn.getresponse()
         if response.status == 200 and response.reason == 'OK':
             if self.batch:
-                print url_tail + ' retrieved'
+                print(url_tail + ' retrieved')
             f = open(self.tmp_location + file_name, 'wb')
             f.write(response.read())
             f.close()
         else:
             if self.batch:
-                print url_tail + ' failed'
-                print str(response.status) + ' ' + response.reason
+                print(url_tail + ' failed')
+                print(str(response.status) + ' ' + response.reason)
         conn.close()
         return file_name
 
@@ -127,7 +127,7 @@ class retrieveMap():
         self.log = ''
         self.properties = ''
         config_file = 'getfiles.ini'
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         config.read(config_file)
         if width != None and height != None: # Mapquest map
             try:
@@ -145,15 +145,15 @@ class retrieveMap():
             except:
                 url_key = '&key=yWspjYHSK6FHtNLzZVcqP3WBxSWSwEo8'
             if self.batch:
-                print url + url_tail
-            conn = httplib.HTTPConnection(url)
+                print(url + url_tail)
+            conn = http.client.HTTPConnection(url)
             if self.batch:
-                print 'Requesting ' + url_tail
+                print('Requesting ' + url_tail)
             conn.request('GET', url_tail + url_key)
             response = conn.getresponse()
             if response.status == 200 and response.reason == 'OK':
                 if self.batch:
-                    print url_tail + ' retrieved'
+                    print(url_tail + ' retrieved')
                 f = open(output, 'wb')
                 f.write(response.read())
                 f.close()
@@ -164,8 +164,8 @@ class retrieveMap():
                 self.properties += '\nlower_right=%1.3f, %1.3f' % (lower_lat, lower_lon)
             else:
                 if self.batch:
-                    print url_tail + ' failed'
-                    print str(response.status) + ' ' + response.reason
+                    print(url_tail + ' failed')
+                    print(str(response.status) + ' ' + response.reason)
             conn.close()
             return
         if url is None:
@@ -182,16 +182,16 @@ class retrieveMap():
         st, wt, nt, et = self.tileEdges(top_left[0], top_left[1], zoom)
         sb, wb, nb, eb = self.tileEdges(bottom_right[0], bottom_right[1], zoom)
         if self.batch:
-            print '(185)', '%d: %d,%d --> %1.3f :: %1.3f, %1.3f :: %1.3f' % (zoom, top_left[0], top_left[1], st, nt, wt, et)
-            print '(186)', '%d: %d,%d --> %1.3f :: %1.3f, %1.3f :: %1.3f' % (zoom, bottom_right[0], bottom_right[1], sb, nb, wb, eb)
+            print('(185)', '%d: %d,%d --> %1.3f :: %1.3f, %1.3f :: %1.3f' % (zoom, top_left[0], top_left[1], st, nt, wt, et))
+            print('(186)', '%d: %d,%d --> %1.3f :: %1.3f, %1.3f :: %1.3f' % (zoom, bottom_right[0], bottom_right[1], sb, nb, wb, eb))
         w = bottom_right[0] - top_left[0] + 1
         h = bottom_right[1] - top_left[1] + 1
         if self.batch:
-            print w, h, '=', w * h, 'tiles.', w * 256, 'x', h * 256, 'pixels (approx.', w * 256 * h * 256, 'uncompressed bytes)'
-            print 'map_choice=%s' % (zoom)
-            print 'map%s=%s' % (zoom, output)
-            print 'upper_left%d=%1.3f, %1.3f' % (zoom, nt, wt)
-            print 'lower_right%d=%1.3f, %1.3f' % (zoom, sb, eb)
+            print(w, h, '=', w * h, 'tiles.', w * 256, 'x', h * 256, 'pixels (approx.', w * 256 * h * 256, 'uncompressed bytes)')
+            print('map_choice=%s' % (zoom))
+            print('map%s=%s' % (zoom, output))
+            print('upper_left%d=%1.3f, %1.3f' % (zoom, nt, wt))
+            print('lower_right%d=%1.3f, %1.3f' % (zoom, sb, eb))
             if output == '?' or output == '':
                 sys.exit()
         else:
@@ -231,7 +231,7 @@ class retrieveMap():
         outputimg = QtGui.QPixmap(width, height)
         painter = QtGui.QPainter(outputimg)
         if self.batch:
-            print 'Saving map to ' + fname
+            print('Saving map to ' + fname)
         else:
             self.log += '\nSaving map to ' + fname
             tl = 0
@@ -308,7 +308,7 @@ class getMap(QtGui.QWidget):
         self.eastSpin.setRange(-180, 180)
         if len(sys.argv) > 1:
             his_config_file = sys.argv[1]
-            his_config = ConfigParser.RawConfigParser()
+            his_config = configparser.RawConfigParser()
             his_config.read(his_config_file)
             try:
                 mapp = his_config.get('Map', 'map_choice')
@@ -357,7 +357,7 @@ class getMap(QtGui.QWidget):
         self.zoomSpin = QtGui.QSpinBox()
         self.zoomSpin.setValue(6)
         config_file = 'getfiles.ini'
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         config.read(config_file)
         try:
             maxz = int(config.get('getmap', 'max_zoom'))
@@ -372,7 +372,7 @@ class getMap(QtGui.QWidget):
         self.grid.addWidget(QtGui.QLabel('URL template:'), 6, 0)
         self.urltemplate = QtGui.QLineEdit()
         config_file = 'getfiles.ini'
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         config.read(config_file)
         try:
             url = his_config.get('getmap', 'url_template')

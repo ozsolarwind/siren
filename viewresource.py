@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 #  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
 #
@@ -23,7 +23,7 @@ import os
 import sys
 import time
 from PyQt4 import QtCore, QtGui
-import ConfigParser   # decode .ini file
+import configparser   # decode .ini file
 import xlrd
 
 import displayobject
@@ -77,7 +77,7 @@ class Resource(QtGui.QDialog):
         self.daily = False
         self.ignore = False
         self.detail = ['Daily By Month']
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
         else:

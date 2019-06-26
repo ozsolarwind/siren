@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 #  Copyright (C) 2017-2019 Sustainable Energy Now Inc., Angus King
 #
@@ -23,14 +23,14 @@ from math import asin, atan2, cos, degrees, pi, pow, radians, sin, sqrt
 import os
 import sys
 
-import ConfigParser   # decode getfiles.ini file
+import configparser   # decode getfiles.ini file
 from PyQt4 import QtCore, QtGui
 
-try:
-    from mpl_toolkits.basemap.pyproj import Proj  # Import the pyproj.Proj module
-except:
-    from mpl_toolkits.basemap import pyproj
-    from pyproj import Proj as Proj
+#try:
+#    from mpl_toolkits.basemap.pyproj import Proj  # Import the pyproj.Proj module
+#except:
+from mpl_toolkits.basemap import pyproj as pyproj
+from pyproj import Proj as Proj
 
 from colours import Colours
 from credits import fileVersion
@@ -56,14 +56,14 @@ def reproject(latitude, longitude):
     lat_dist = pi * earth_radius / 180.0
 
     y = [lat * lat_dist for lat in latitude]
-    x = [long * lat_dist * cos(radians(lat))
-                for lat, long in zip(latitude, longitude)]
+    x = [int * lat_dist * cos(radians(lat))
+                for lat, int in zip(latitude, longitude)]
     return x, y
 
 def area_of_polygon(x, y):
     """Calculates the area of an arbitrary polygon given its verticies"""
     area = 0.0
-    for i in xrange(-1, len(x)-1):
+    for i in range(-1, len(x)-1):
         area += x[i] * (y[i+1] - y[i-1])
     return abs(area) / 2.0
 
@@ -133,7 +133,7 @@ class GetMany(QtGui.QDialog):
 class WorldScene(QtGui.QGraphicsScene):
 
     def get_config(self):
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         config_file = 'getfiles.ini'
         config.read(config_file)
         parents = []
@@ -263,7 +263,7 @@ class WorldScene(QtGui.QGraphicsScene):
         """
         radius = RADIUS   # km is the radius of the Earth
      # convert decimal degrees to radians
-        ln1, lt1, baring = map(radians, [lon1, lat1, bearing])
+        ln1, lt1, baring = list(map(radians, [lon1, lat1, bearing]))
      # "reverse" haversine formula
         lat2 = asin(sin(lt1) * cos(distance / radius) +
                                 cos(lt1) * sin(distance / radius) * cos(baring))
@@ -416,7 +416,7 @@ class WorldView(QtGui.QGraphicsView):
         """
         radius = RADIUS  # km is the radius of the Earth
      # convert decimal degrees to radians
-        ln1, lt1, baring = map(radians, [lon1, lat1, bearing])
+        ln1, lt1, baring = list(map(radians, [lon1, lat1, bearing]))
      # "reverse" haversine formula
         lat2 = asin(sin(lt1) * cos(distance / radius) +
                cos(lt1) * sin(distance / radius) * cos(baring))
@@ -496,7 +496,7 @@ class WorldView(QtGui.QGraphicsView):
             self.verticalScrollBar().setValue(val.y())
         else:
             p = self.mapToScene(event.pos())
-            x, y = map(int, [p.x(), p.y()])
+            x, y = list(map(int, [p.x(), p.y()]))
         pl = self.mapToLonLat(event.pos())
       #  self.emit(QtCore.SIGNAL('statusmsg'), p2str(pl) + ' ' + p2str(event.pos()))
 
@@ -598,7 +598,7 @@ class WorldView(QtGui.QGraphicsView):
 
 class WorldWindow(QtGui.QMainWindow):
     def get_config(self):
-        self.config = ConfigParser.RawConfigParser()
+        self.config = configparser.RawConfigParser()
         self.config_file = 'getfiles.ini'
         self.config.read(self.config_file)
         try:
@@ -689,7 +689,7 @@ class WorldWindow(QtGui.QMainWindow):
         helpMenu.addAction(help)
         QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.exit)
         QtGui.QShortcut(QtGui.QKeySequence('x'), self, self.exit)
-        self.config = ConfigParser.RawConfigParser()
+        self.config = configparser.RawConfigParser()
         self.config_file = 'getfiles.ini'
         self.config.read(self.config_file)
         parents = []
@@ -715,8 +715,8 @@ class WorldWindow(QtGui.QMainWindow):
             pass
         self.setWindowTitle('SIREN - worldwindow (' + fileVersion() + ')')
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
-        note = QtCore.QString('Map data ' + unichr(169) + ' OpenStreetMap contributors CC-BY-SA ' +
-               '(http://www.openstreetmap.org/copyright)')
+        note = 'Map data ' + chr(169) + ' OpenStreetMap contributors CC-BY-SA ' + \
+               '(http://www.openstreetmap.org/copyright)'
         self.view.emit(QtCore.SIGNAL('statusmsg'), note)
         if not self.restorewindows:
             return
@@ -774,7 +774,7 @@ class WorldWindow(QtGui.QMainWindow):
         dialr = Colours(ini_file=self.config_file)
         dialr.exec_()
        # refresh some config values
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         self.config.read(self.config_file)
         try:
             map = self.config.get('Map', 'map_choice')
@@ -808,7 +808,7 @@ class WorldWindow(QtGui.QMainWindow):
         self.view.emit(QtCore.SIGNAL('statusmsg'), comment)
 
     def editSects(self):
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         config.read(self.config_file)
         sections = sorted(config.sections())
         menu = QtGui.QMenu()

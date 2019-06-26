@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 #  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
 #
@@ -21,7 +21,7 @@
 import os
 import sys
 from PyQt4 import QtGui
-import ConfigParser  # decode .ini file
+import configparser  # decode .ini file
 from senuser import techClean
 
 class Colours(QtGui.QDialog):
@@ -57,7 +57,7 @@ class Colours(QtGui.QDialog):
             if metrics.boundingRect(self.btn[-1].text()).width() > self.width:
                 self.width = metrics.boundingRect(self.btn[-1].text()).width()
 
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         if ini_file is not None:
             config_file = ini_file
         elif len(sys.argv) > 1:
@@ -121,7 +121,7 @@ class Colours(QtGui.QDialog):
         except:
             pass
         self.old_ruler = ''
-        for key, value in self.colours.iteritems():
+        for key, value in self.colours.items():
             if key in fossil_technologies:
                 colour_groups['Fossil Technologies'].append(key)
             elif key.find('grid') >= 0:
@@ -153,7 +153,7 @@ class Colours(QtGui.QDialog):
         if group_colours:
             bold = QtGui.QFont()
             bold.setBold(True)
-            for gkey, gvalue in iter(sorted(colour_groups.iteritems())):
+            for gkey, gvalue in iter(sorted(colour_groups.items())):
                 label = QtGui.QLabel(gkey)
                 label.setFont(bold)
                 self.grid.addWidget(label, i, 0)
@@ -163,7 +163,7 @@ class Colours(QtGui.QDialog):
                     add_item(key, value, i)
                     i += 1
         else:
-            for key, value in iter(sorted(self.colours.iteritems())):
+            for key, value in iter(sorted(self.colours.items())):
                 add_item(key, value, i)
                 i += 1
         quit = QtGui.QPushButton('Quit', self)
@@ -268,7 +268,7 @@ class Colours(QtGui.QDialog):
                                 lines[i] = bits[0] + '=' + str(self.colours[bits[0]][0].name()) + '\n'
                             del self.colours[bits[0]]
             more_lines = []
-            for key, value in self.colours.iteritems():
+            for key, value in self.colours.items():
                 if value[0] != '':
                     more_lines.append(key + '=' + str(value[0].name()) + '\n')
             if len(more_lines) > 0:

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 # #####################################################################
 #
@@ -13,7 +13,7 @@ import struct
 from ctypes import *
 
 import os
-import ConfigParser  # decode .ini file
+import configparser  # decode .ini file
 from parents import getParents
 from senuser import getUser
 
@@ -21,7 +21,7 @@ c_number = c_float  # must be c_double or c_float depending on how defined in ss
 
 
 class SSCAPI:
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
                 config_file = sys.argv[1]
         else:
@@ -56,12 +56,12 @@ class SSCAPI:
         elif sys.platform == 'darwin':
                 _dll = CDLL(sam_sdk + "/osx64/ssc.dylib")
 #               return _dll
-        elif sys.platform == 'linux2':
+        elif sys.platform == 'linux2' or sys.platform == 'linux':
          #       _dll = CDLL("../../linux64/ssc.so")
                 _dll = CDLL(sam_sdk + "/linux64/ssc.so")
 #               return _dll
         else:
-                print "Platform not supported ", sys.platform
+                print("Platform not supported ", sys.platform)
 
         @staticmethod
         def ssc_version():
@@ -370,7 +370,7 @@ class Data:
                 else:
                         return None
 
-        def next(self):
+        def __next__(self):
                 p = SSCAPI.ssc_data_next(self._data)
                 if (p is not None) and (len(p) > 0):
                         return p

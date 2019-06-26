@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 #  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
 #
@@ -25,7 +25,7 @@ import sys
 from math import radians, cos, sin, asin, sqrt, pow
 import xlrd
 
-import ConfigParser   # decode .ini file
+import configparser   # decode .ini file
 
 from parents import getParents
 from senuser import getUser, techClean
@@ -74,7 +74,7 @@ class Station:
 
 class Stations:
     def get_config(self):
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         config_file = 'SIREN.ini'
         if __name__ == '__main__':
             for i in range(1, len(sys.argv)):
@@ -186,7 +186,7 @@ class Stations:
         on the earth (specified in decimal degrees)
         """
      # convert decimal degrees to radians
-        lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
+        lon1, lat1, lon2, lat2 = list(map(radians, [lon1, lat1, lon2, lat2]))
 
      # haversine formula
         dlon = lon2 - lon1

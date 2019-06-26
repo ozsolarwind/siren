@@ -1,6 +1,6 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
-#  Copyright (C) 2015-2018 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
 #
 #  towns.py - This file is part of SIREN.
 #
@@ -19,7 +19,7 @@
 #  <http://www.gnu.org/licenses/>.
 #
 
-import ConfigParser    # decode .ini file
+import configparser    # decode .ini file
 import csv
 import os
 import sys
@@ -47,7 +47,7 @@ class Town:
 
 class Towns:
     def get_config(self):
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
         else:
@@ -85,7 +85,7 @@ class Towns:
         on the earth (specified in decimal degrees)
         """
      # convert decimal degrees to radians
-        lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
+        lon1, lat1, lon2, lat2 = list(map(radians, [lon1, lat1, lon2, lat2]))
 
      # haversine formula
         dlon = lon2 - lon1
