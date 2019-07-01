@@ -2590,9 +2590,16 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <li><em>Power - Load duration</em> option produces load duration curves which show how much generation is produced for a percentage of the year</li>
 <li><em>Power - Shortfall analysis</em> option produces a table and line plots that attempt to assist with analysing shortfalls on a daily basis. The analysis iterations option will produce average shortfalls for that number of days, for example, 3 iterations will produce average shortfall figures for one, two and three days. The figures are calculated by &ldquo;averaging&rdquo; the generation shortfall over the chosen number of days. This option will also produce cumulative shortfall graphs that add the average hourly shortfall to generation to attempt to flatten out the shortfall over the year</li>
 </ul>
+<p><u>Plot Navigation</u></p>
 <p>The tool used to produce the plots, matplotlib, has a navigation toolbar
 (<a href="http://matplotlib.org/users/navigation_toolbar.html" target="_blank">Interactive navigation</a>) to enable you to navigate and manipulate the plot (but doesn't allow you to change the plot data). It includes options to zoom into an area of the plot and to save the plot image (by default to the <em>scenarios</em> folder).
 By default the size of plots produced is determined by matplotlib, or by the <em>Maximise Plot windows</em> option (above). By using the <em>orientation</em>, <em>papersize</em>, and <em>save_format</em> Properties of the <em>[Power]</em> section it is possible to produce the plots in a number of formats, such as PDF format, and in a specific page size and layout. If you use these options you can save plots in a standardised format (these Properties can be added and removed by using the <em>Preferences -> Edit Section</em> menu option).</p>
+<p>For most plots the Pan/Zoom option (<img src="pan_zoom.png" alt="Pan/Zoom">) enables you to zoom in on the plot using the right mouse button and to pan across the plot using the left mouse button. For the two hourly plots (<em>Power by hour</em> and <em>Power by hour - augmented</em>) there is a modified pan and zoom feature to enhance visual examination of the plot...</p>
+<ul>
+<li>You can use the mouse scroll wheel to zoom in and out on the time (x) axis. The position of the mouse within the plot determines where the zoom will centre upon (that is, that point will remain fixed and the rest of the plot will move away from or towards that point)</li>
+<li>Moving the mouse while holding down the left button will allow you to plan across the plot</li>
+<li>Clicking the right mouse button will reset the plot to the original state. This will allow you to zoom out to the original state and then zoom in to another period on the plot</li>
+</ul>
 <h4>Tables</h4>
 <ul>
 <li><em>Save Hourly Data Output</em> option will save generation in MWh for each chosen station for each hour of the year (8,760 hours) as calculated by SAM. This can be used in detailed analysis or as an option to avoid having to reprocess the station in the future, by updating a Station's </em>Power File</em> field. The default file name can be set using the <em>data_file</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file; otherwise it will in the format of <em>Power_Table_yyyy-mm-dd_hhmm...</em></li>

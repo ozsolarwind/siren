@@ -33,6 +33,8 @@ from PyQt4 import QtGui, QtCore
 
 import displaytable
 from parents import getParents
+
+from powerclasses import ZoomPan
 from senuser import getUser
 from sammodels import getZenith
 
@@ -566,6 +568,11 @@ class PlotWeather():
                         mng.window.showMaximized()
                 else:
                     mng.resize(*mng.window.maxsize())
+            zp = ZoomPan()
+            if self.two_axes:
+                f = zp.zoom_pan(hx2, base_scale=1.2) # enable scrollable zoom
+            else:
+                f = zp.zoom_pan(hx, base_scale=1.2) # enable scrollable zoom
             if self.plots['block']:
                 plt.show(block=True)
             else:
