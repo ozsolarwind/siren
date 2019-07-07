@@ -20,51 +20,24 @@
 #
 import os
 import sys
-from PyQt4 import QtGui
+from PyQt4 import QtGui, QtCore
 import configparser  # decode .ini file
+from editini import SaveIni
 from senuser import techClean
 
 class Colours(QtGui.QDialog):
 
-    def __init__(self, ini_file=None):
+    def __init__(self, ini_file=None, section='Colors'):
         super(Colours, self).__init__()
-        self.initUI(ini_file)
-
-    def initUI(self, ini_file):
-        def add_item(key, value, i):
-            wht = techClean(key, full=True)
-            self.grid.addWidget(QtGui.QLabel(wht), i, 0)
-            if self.map != '':
-                self.btn.append(QtGui.QPushButton(key, self))
-                self.btn[-1].clicked.connect(self.showDialog)
-                if value[0] != '':
-                    self.btn[-1].setStyleSheet('QPushButton {background-color: %s; color: %s;}' %
-                                 (value[0].name(), value[0].name()))
-                self.grid.addWidget(self.btn[-1], i, 1)
-                metrics = self.btn[-1].fontMetrics()
-                if metrics.boundingRect(self.btn[-1].text()).width() > self.width:
-                    self.width = metrics.boundingRect(self.btn[-1].text()).width()
-            self.btn.append(QtGui.QPushButton(key + '_base', self))
-            metrics = self.btn[-1].fontMetrics()
-            if i < 2:
-                self.default_style = self.btn[-1].styleSheet()
-                height = metrics.boundingRect(self.btn[-1].text()).height()
-            self.btn[-1].clicked.connect(self.showDialog)
-            if value[1] != '':
-                self.btn[-1].setStyleSheet('QPushButton {background-color: %s; color: %s;}' %
-                             (value[1].name(), value[1].name()))
-            self.grid.addWidget(self.btn[-1], i, default_col)
-            if metrics.boundingRect(self.btn[-1].text()).width() > self.width:
-                self.width = metrics.boundingRect(self.btn[-1].text()).width()
-
         config = configparser.RawConfigParser()
         if ini_file is not None:
-            config_file = ini_file
+            self.config_file = ini_file
         elif len(sys.argv) > 1:
-            config_file = sys.argv[1]
+            self.config_file = sys.argv[1]
         else:
-            config_file = 'SIREN.ini'
-        config.read(config_file)
+            self.config_file = 'SIREN.ini'
+        self.section = section
+        config.read(self.config_file)
         groups = ['Fossil Technologies', 'Grid', 'Map', 'Plot', 'Resource', 'Technologies', 'The Rest']
         map_colours = ['background', 'border', 'fossil', 'fossil_name', 'station', 'station_name',
                        'town', 'town_name']
@@ -85,25 +58,26 @@ class Colours(QtGui.QDialog):
             fossil_technologies = fossil_technologies.split(' ')
         except:
             fossil_technologies = []
-
-        try:
-            self.map = config.get('Map', 'map_choice')
-        except:
-            self.map = ''
+        self.map = ''
+        if self.section == 'Colors':
+            try:
+                self.map = config.get('Map', 'map_choice')
+            except:
+                pass
         self.colours = {}
         try:
-            colours0 = config.items('Colors')
+            colours0 = config.items(self.section)
             for it, col in colours0:
                 if it == 'ruler':
                     continue
                 self.colours[it] = ['', col]
         except:
             pass
-        default_col = 1
+        self.default_col = 1
         if self.map != '':
-            default_col = 2
+            self.default_col = 2
             try:
-                colours1 = config.items('Colors' + self.map)
+                colours1 = config.items(self.section + self.map)
                 for it, col in colours1:
                     if it == 'ruler':
                         continue
@@ -140,15 +114,16 @@ class Colours(QtGui.QDialog):
                 if value[i] != '':
                     value[i] = QtGui.QColor(value[i])
             self.colours[key] = value
-        self.width = 0
-        height = 0
+        print(self.width(), self.height())
+        self.width = [0, 0]
+        self.height = [0, 0]
         self.item = []
         self.btn = []
         self.grid = QtGui.QGridLayout()
         self.grid.addWidget(QtGui.QLabel('Item'), 0, 0)
         if self.map != '':
             self.grid.addWidget(QtGui.QLabel('Colour for ' + self.map), 0, 1)
-        self.grid.addWidget(QtGui.QLabel('Default Colour'), 0, default_col)
+        self.grid.addWidget(QtGui.QLabel('Default Colour'), 0, self.default_col)
         i = 1
         if group_colours:
             bold = QtGui.QFont()
@@ -160,37 +135,95 @@ class Colours(QtGui.QDialog):
                 i += 1
                 for key in sorted(gvalue):
                     value = self.colours[key]
-                    add_item(key, value, i)
+                    self.add_item(key, value, i)
                     i += 1
         else:
             for key, value in iter(sorted(self.colours.items())):
-                add_item(key, value, i)
+                self.add_item(key, value, i)
                 i += 1
+        buttonLayout = QtGui.QHBoxLayout()
         quit = QtGui.QPushButton('Quit', self)
         quit.setMaximumWidth(70)
-        self.grid.addWidget(quit, i + 1, 0)
+        buttonLayout.addWidget(quit)
         quit.clicked.connect(self.quitClicked)
         save = QtGui.QPushButton('Save && Exit', self)
-        self.grid.addWidget(save, i + 1, 1)
+        buttonLayout.addWidget(save)
         save.clicked.connect(self.saveClicked)
-        self.setLayout(self.grid)
-        self.grid.setColumnMinimumWidth(0, self.width)
-        self.grid.setColumnMinimumWidth(1, self.width)
+        if self.section != 'Colors':
+            add = QtGui.QPushButton('Add', self)
+            buttonLayout.addWidget(add)
+            add.clicked.connect(self.addClicked)
+        buttons = QtGui.QFrame()
+        buttons.setLayout(buttonLayout)
+        layout = QtGui.QVBoxLayout()
+        layout.addLayout(self.grid)
+        layout.addWidget(buttons)
+        self.setLayout(layout)
+        self.grid.setColumnMinimumWidth(0, self.width[0])
+        self.grid.setColumnMinimumWidth(1, self.width[0])
         if self.map != '':
-            self.grid.setColumnMinimumWidth(2, self.width)
+            self.grid.setColumnMinimumWidth(2, self.width[0])
         frame = QtGui.QFrame()
-        frame.setLayout(self.grid)
+        frame.setLayout(layout)
         self.scroll = QtGui.QScrollArea()
         self.scroll.setWidgetResizable(True)
         self.scroll.setWidget(frame)
         self.layout = QtGui.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
         screen = QtGui.QDesktopWidget().availableGeometry()
-        if config_file != 'getfiles.ini':
-            self.resize(self.width * 3 + 80, int(screen.height() * .9))
+       # if self.height[0] == 0:
+        metrics = quit.fontMetrics()
+        self.height[0] = metrics.boundingRect(quit.text()).height() + self.grid.verticalSpacing() * 3
+        height = (self.height[0] + self.grid.verticalSpacing() * 2) * self.grid.rowCount() + buttons.sizeHint().height()
+        if height > int(screen.height() * .9):
+            self.height[1] = int(screen.height() * .9)
+        else:
+            self.height[1] = height
+        if self.width[0] == 0:
+            self.width[1] = buttons.sizeHint().width() + 80
+        else:
+            self.width[1] = self.width[0] * 3 + 80
+        self.resize(self.width[1], self.height[1])
+     #   self.resize(640, 480)
         self.setWindowTitle('SIREN - Color dialog')
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
+
+    def add_item(self, key, value, i):
+        if i < 0:
+            i = self.grid.rowCount() # could possibly use this always just not sure about colour groups
+            screen = QtGui.QDesktopWidget().availableGeometry()
+            if self.height[1] + self.height[0] < int(screen.height() * .9):
+                width = max(self.width[1], self.frameGeometry().width())
+                self.height[1] += self.height[0]
+                self.resize(width, self.height[1])
+        wht = techClean(key, full=True)
+        self.grid.addWidget(QtGui.QLabel(wht), i, 0)
+        if self.map != '':
+            self.btn.append(QtGui.QPushButton(key, self))
+            self.btn[-1].clicked.connect(self.showDialog)
+            if value[0] != '':
+                self.btn[-1].setStyleSheet('QPushButton {background-color: %s; color: %s;}' %
+                             (value[0].name(), value[0].name()))
+            self.grid.addWidget(self.btn[-1], i, 1)
+            metrics = self.btn[-1].fontMetrics()
+            if metrics.boundingRect(self.btn[-1].text()).width() > self.width[0]:
+                self.width[0] = metrics.boundingRect(self.btn[-1].text()).width()
+            if metrics.boundingRect(self.btn[-1].text()).height() > self.height[0]:
+                self.height[0] = metrics.boundingRect(self.btn[-1].text()).height() + self.grid.verticalSpacing() * 2
+        self.btn.append(QtGui.QPushButton(key + '_base', self))
+        metrics = self.btn[-1].fontMetrics()
+        if i < 2:
+            self.default_style = self.btn[-1].styleSheet()
+        self.btn[-1].clicked.connect(self.showDialog)
+        if value[1] != '':
+            self.btn[-1].setStyleSheet('QPushButton {background-color: %s; color: %s;}' %
+                         (value[1].name(), value[1].name()))
+        self.grid.addWidget(self.btn[-1], i, self.default_col)
+        if metrics.boundingRect(self.btn[-1].text()).width() > self.width[0]:
+            self.width[0] = metrics.boundingRect(self.btn[-1].text()).width()
+        if metrics.boundingRect(self.btn[-1].text()).height() > self.height[0]:
+            self.height[0] = metrics.boundingRect(self.btn[-1].text()).height() + self.grid.verticalSpacing() * 2
 
     def mousePressEvent(self, event):
         if QtCore.Qt.RightButton == event.button():
@@ -227,66 +260,24 @@ class Colours(QtGui.QDialog):
     def quitClicked(self):
         self.close()
 
-    def saveClicked(self):
-        if len(sys.argv) > 1:
-            ini_file = sys.argv[1]
-        else:
-            ini_file = 'SIREN.ini'
-        inf = open(ini_file, 'r')
-        lines = inf.readlines()
-        inf.close()
-        in_color = False
-        for i in range(len(lines)):
-            if lines[i][:8] == '[Colors]':
-                in_color = True
-            elif in_color:
-                if lines[i][0] == '[':
-                    in_color = False
-                    add_in_here = i
-                elif lines[i][0] != ';' and lines[i][0] != '#':
-                    bits = lines[i].split('=')
+    def addClicked(self):
+        text, ok = QtGui.QInputDialog.getText(self, 'Add Colour Item', 'Enter name for colour item:')
+        if ok:
+            key = text.lower().replace(' ', '_')
+            self.colours[key] = ['', '']
+            self.add_item(key, ['', ''], -1)
 
-                    if bits[0] in self.colours:
-                        lines[i] = bits[0] + '=' + self.colours[bits[0]][1].name() + '\n'
-        if self.map != '' or self.map == '':
-            got_him = False
-            del_lines = []
-            for i in range(len(lines)):
-                if lines[i][:8 + len(self.map)] == '[Colors' + self.map + ']':
-                    in_color = True
-                    got_him = True
-                elif in_color:
-                    if lines[i][0] == '[':
-                        in_color = False
-                        add_in_here = i
-                    elif lines[i][0] != ';' and lines[i][0] != '#':
-                        bits = lines[i].split('=')
-                        if bits[0] in self.colours:
-                            if self.colours[bits[0]][0] == '':
-                                del_lines.append(i)
-                            else:
-                                lines[i] = bits[0] + '=' + str(self.colours[bits[0]][0].name()) + '\n'
-                            del self.colours[bits[0]]
-            more_lines = []
-            for key, value in self.colours.items():
-                if value[0] != '':
-                    more_lines.append(key + '=' + str(value[0].name()) + '\n')
-            if len(more_lines) > 0:
-                if not got_him:
-                    more_lines.insert(0, '[Colors' + self.map + ']\n')
-        if os.path.exists(ini_file + '~'):
-            os.remove(ini_file + '~')
-        os.rename(ini_file, ini_file + '~')
-        sou = open(ini_file, 'w')
-        for i in range(len(lines)):
-            if i in del_lines:
-                pass
-            else:
-                sou.write(lines[i])
-            if add_in_here == (i + 1):
-                for j in range(len(more_lines)):
-                    sou.write(more_lines[j])
-        sou.close()
+    def saveClicked(self):
+        updates = {}
+        lines = [[], []]
+        for key, value in self.colours.items():
+            for i in range(2):
+                if value[i] != '':
+                    lines[i].append(key + '=' + str(value[i].name()))
+        if len(lines[0]) > 0:
+            updates[self.section + self.map] = lines[0]
+        updates[self.section] = lines[1]
+        SaveIni(updates, ini_file=self.config_file)
         self.close()
 
     def getValues(self):

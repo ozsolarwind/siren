@@ -24,7 +24,7 @@ import sys
 from PyQt4 import QtCore
 from PyQt4 import QtGui
 
-import credits
+from credits import fileVersion
 from turbine import Turbine
 
 
@@ -94,7 +94,7 @@ class AnObject(QtGui.QDialog):
                 if self.anobject[-5:].lower() == '.html' or \
                    self.anobject[-4:].lower() == '.htm' or \
                    html[:5] == '<html':
-                    html = html.replace('[VERSION]', credits.fileVersion())
+                    html = html.replace('[VERSION]', fileVersion())
                     if self.section is not None:
                         line = html.split('\n')
                         html = ''
@@ -125,7 +125,7 @@ class AnObject(QtGui.QDialog):
             else:
                 html = self.anobject
                 if self.anobject[:5] == '<html':
-                    self.anobject = self.anobject.replace('[VERSION]', credits.fileVersion())
+                    self.anobject = self.anobject.replace('[VERSION]', fileVersion())
                     self.web.setHtml(self.anobject)
                 else:
                     self.web.setPlainText(self.anobject)

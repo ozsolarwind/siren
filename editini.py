@@ -25,7 +25,7 @@ import configparser   # decode .ini file
 import os
 import sys
 
-import displaytable
+from displaytable import Table
 import inisyntax
 from senuser import techClean
 
@@ -118,7 +118,7 @@ class EditSect():
         section_dict = {}
         for key, value in section_items:
             section_dict[key] = value
-        dialog = displaytable.Table(section_dict, fields=['property', 'value'], title=self.section + ' Parameters',
+        dialog = Table(section_dict, fields=['property', 'value'], title=self.section + ' Parameters',
                  save_folder=save_folder, edit=True)
         dialog.exec_()
         values = dialog.getValues()
@@ -181,7 +181,7 @@ class EditTech():
             except:
                 pass
             tech_dict[technology] = [area, capital_cost, o_m_cost]
-        dialog = displaytable.Table(tech_dict, fields=['technology', 'area', 'capital_cost', 'o_m_cost'],
+        dialog = Table(tech_dict, fields=['technology', 'area', 'capital_cost', 'o_m_cost'],
                  save_folder=save_folder, title='Technologies', edit=True)
         dialog.exec_()
         values = dialog.getValues()
@@ -198,9 +198,12 @@ class SaveIni():
             ini_file = sys.argv[1]
         else:
             ini_file = 'SIREN.ini'
-        inf = open(ini_file, 'r')
-        lines = inf.readlines()
-        inf.close()
+        try:
+            inf = open(ini_file, 'r')
+            lines = inf.readlines()
+            inf.close()
+        except:
+            lines = []
         del_lines = []
         for section in values:
             in_section = False
@@ -234,7 +237,10 @@ class SaveIni():
                     i += 1
         if os.path.exists(ini_file + '~'):
             os.remove(ini_file + '~')
-        os.rename(ini_file, ini_file + '~')
+        try:
+            os.rename(ini_file, ini_file + '~')
+        except:
+            pass
         sou = open(ini_file, 'w')
         for i in range(len(lines)):
             if i in del_lines:

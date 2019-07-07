@@ -26,7 +26,8 @@ import configparser  # decode .ini file
 if sys.platform == 'win32' or sys.platform == 'cygwin':
     from win32api import GetFileVersionInfo, LOWORD, HIWORD
 
-from editini import SaveIni
+#from editini import SaveIni
+import editini
 
 def fileVersion(program=None, year=False):
     ver = '?'
@@ -216,7 +217,7 @@ class Credits(QtGui.QDialog):
             lines.append('credits_pos=%s,%s' % (str(self.pos().x() + add), str(self.pos().y() + add)))
             lines.append('credits_size=%s,%s' % (str(self.width()), str(self.height())))
             updates['Windows'] = lines
-            SaveIni(updates)
+            editini.SaveIni(updates)
         if self.be_open:
             self.procStart.emit('goodbye')
         event.accept()

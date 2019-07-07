@@ -576,7 +576,7 @@ class Table(QtGui.QDialog):
             textedit = False
         else:
             textedit = True
-        dialog = displayobject.AnObject(QtGui.QDialog(), addproperty, readonly=False,
+        dialog = AnObject(QtGui.QDialog(), addproperty, readonly=False,
                  textedit=textedit, title='Add ' + self.fields[0].title())
         dialog.exec_()
         if dialog.getValues()[self.fields[0]] != '' or 1 == 1:
@@ -610,7 +610,7 @@ class Table(QtGui.QDialog):
             try:
                 attr = getattr(thing, self.name)
                 if attr == self.entry[row][self.name]:
-                    dialog = displayobject.AnObject(QtGui.QDialog(), thing)
+                    dialog = AnObject(QtGui.QDialog(), thing)
                     dialog.exec_()
                     break
             except:
