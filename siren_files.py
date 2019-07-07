@@ -8,9 +8,10 @@ source_files = ['check_siren.py', 'colours', 'credits', 'dijkstra_4',
                 'powerclasses', 'powermodel', 'sammodels', 'samrun', 'senuser',
                 'siren', 'sirenicons', 'sirenm', 'sirenupd', 'ssc', 'station',
                 'superpower', 'towns', 'turbine', 'updateswis', 'viewresource',
-                'visualise', 'wascene', 'worldwindow', 'getfiles.ini', 'about.html',
-                'credits.html', 'help.html', 'makeweatherfiles.html', 'SIREN_notes.html',
-                'siren_versions.csv', 'siren_files.py', 'compare_to_siren.git.py']
+                'visualise', 'wascene', 'worldwindow', 'zoompan', 'getfiles.ini',
+                'about.html', 'credits.html', 'help.html', 'makeweatherfiles.html',
+                'SIREN_notes.html', 'siren_versions.csv', 'siren_files.py',
+                'compare_to_siren.git.py']
 version_files = ['getmap', 'getmerra2', 'indexweather', 'makegrid',
                  'makerainfall2', 'makeweatherfiles', 'makeweather2',
                  'powerbalance2', 'siren', 'sirenm', 'sirenupd', 'updateswis']

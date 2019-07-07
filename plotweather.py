@@ -34,7 +34,7 @@ from PyQt4 import QtGui, QtCore
 import displaytable
 from parents import getParents
 
-from powerclasses import ZoomPan
+from zoompan import ZoomPanX
 from senuser import getUser
 from sammodels import getZenith
 
@@ -568,7 +568,7 @@ class PlotWeather():
                         mng.window.showMaximized()
                 else:
                     mng.resize(*mng.window.maxsize())
-            zp = ZoomPan()
+            zp = ZoomPanX()
             if self.two_axes:
                 f = zp.zoom_pan(hx2, base_scale=1.2) # enable scrollable zoom
             else:
@@ -577,6 +577,7 @@ class PlotWeather():
                 plt.show(block=True)
             else:
                 plt.draw()
+            del zp
         if self.plots['total']:
             if self.plots['save_plot']:
                 vals = ['hour of the day']

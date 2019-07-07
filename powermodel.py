@@ -47,6 +47,7 @@ from sirenicons import Icons
 # import Station
 from turbine import Turbine
 from visualise import Visualise
+from zoompan import ZoomPanX
 
 the_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
@@ -1172,12 +1173,13 @@ class PowerModel():
                         mng.window.showMaximized()
                 else:
                     mng.resize(*mng.window.maxsize())
-            zp = ZoomPan()
+            zp = ZoomPanX()
             f = zp.zoom_pan(hx, base_scale=1.2) # enable scrollable zoom
             if self.plots['block']:
                 plt.show(block=True)
             else:
                 plt.draw()
+            del zp
         if self.plots['augment'] and self.do_load:
             hdr = self.hdrs['augment'].replace('Power - ', '')
             fig = plt.figure(hdr + self.suffix)
@@ -1332,7 +1334,7 @@ class PowerModel():
             hx.set_xticklabels(day_labels, rotation='vertical')
             hx.set_xlabel('Month of the year')
             hx.set_ylabel('Power (MW)')
-            zp = ZoomPan()
+            zp = ZoomPanX()
             f = zp.zoom_pan(hx, base_scale=1.2) # enable scrollable zoom
             if self.plots['show_pct']:
                 self.gen_pct = ' (%s%% of load)' % '{:0,.1f}'.format(gen_sum * 100. / load_sum)
@@ -1350,6 +1352,7 @@ class PowerModel():
                 plt.show(block=True)
             else:
                 plt.draw()
+            del zp
     #        shortstuff = []
     #        vals = ['load', 'renewable', 'storage', 'cumulative']
     #        for i in range(0, len(load)):
