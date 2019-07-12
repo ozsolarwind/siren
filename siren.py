@@ -28,11 +28,10 @@ import subprocess
 import sys
 import webbrowser
 
-from credits import fileVersion
 import displayobject
+from credits import fileVersion
 from editini import EdtDialog
 from senuser import getUser
-
 
 def commonprefix(args):
     arg2 = []
@@ -61,7 +60,8 @@ class TabDialog(QtGui.QDialog):
         self.about = ''
         self.weather_icon = 'weather.png'
         config = configparser.RawConfigParser()
-        ignore = ['getfiles.ini', 'siren_default.ini', 'siren_windows_default.ini']
+        ignore = ['getfiles.ini', 'powerplot.ini', 'siren_default.ini',
+                  'siren_windows_default.ini']
         for fil in sorted(fils):
             if fil[-4:] == '.ini':
                 if fil in ignore:
@@ -152,8 +152,8 @@ class TabDialog(QtGui.QDialog):
         layout.addWidget(self.table, 1, 0)
         layout.addWidget(buttons, 2, 0)
         menubar = QtGui.QMenuBar()
-        utilities = ['getmap', 'getmerra2', 'makeweather2', 'sirenupd']
-        utilicon = ['map.png', 'download.png', self.weather_icon, 'download.png']
+        utilities = ['getmap', 'getmerra2', 'makeweather2', 'powerplot', 'sirenupd']
+        utilicon = ['map.png', 'download.png', self.weather_icon, 'line.png', 'download.png']
         spawns = []
         icons = []
         if sys.platform == 'win32' or sys.platform == 'cygwin':
@@ -365,7 +365,7 @@ class makeNew(QtGui.QDialog):
                     self.fields[row][1] = 'dir'
                     self.fields[row][4] = ClickableQLabel()
                     self.fields[row][4].setText(self.fields[row][3])
-                    self.fields[row][4].setFrameStyle(6)
+                    self.fields[row][4].setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
                     self.grid.addWidget(self.fields[row][4], row, 2, 1, 3)
                     self.connect(self.fields[row][4], QtCore.SIGNAL('clicked()'), self.itemClicked)
         for section, props in iter(sections.items()):
@@ -382,7 +382,7 @@ class makeNew(QtGui.QDialog):
                         self.fields[row][3] = prop[1]
                         self.fields[row][1] = 'fil'
                         self.fields[row][4] = ClickableQLabel()
-                        self.fields[row][4].setFrameStyle(6)
+                        self.fields[row][4].setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
                         self.connect(self.fields[row][4], QtCore.SIGNAL('clicked()'), self.itemClicked)
                     else:
                         self.fields[row][1] = 'txt'
@@ -408,7 +408,7 @@ class makeNew(QtGui.QDialog):
                             self.fields[row][1] = 'fil'
                         self.fields[row][4] = ClickableQLabel()
                         self.fields[row][4].setText(self.fields[row][3])
-                        self.fields[row][4].setFrameStyle(6)
+                        self.fields[row][4].setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
                         self.connect(self.fields[row][4], QtCore.SIGNAL('clicked()'), self.itemClicked)
                     self.grid.addWidget(self.fields[row][4], row, 2, 1, 3)
             else:

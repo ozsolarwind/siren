@@ -27,7 +27,7 @@ from senuser import techClean
 
 class Colours(QtGui.QDialog):
 
-    def __init__(self, ini_file=None, section='Colors'):
+    def __init__(self, ini_file=None, section='Colors', add_colour=False):
         super(Colours, self).__init__()
         config = configparser.RawConfigParser()
         if ini_file is not None:
@@ -114,7 +114,6 @@ class Colours(QtGui.QDialog):
                 if value[i] != '':
                     value[i] = QtGui.QColor(value[i])
             self.colours[key] = value
-        print(self.width(), self.height())
         self.width = [0, 0]
         self.height = [0, 0]
         self.item = []
@@ -141,6 +140,11 @@ class Colours(QtGui.QDialog):
             for key, value in iter(sorted(self.colours.items())):
                 self.add_item(key, value, i)
                 i += 1
+        if add_colour:
+            key = add_colour.lower().replace(' ', '_')
+            self.colours[key] = ['', '']
+            self.add_item(key, ['', ''], -1)
+            self.showDialog(colour=key)
         buttonLayout = QtGui.QHBoxLayout()
         quit = QtGui.QPushButton('Quit', self)
         quit.setMaximumWidth(70)
@@ -231,31 +235,50 @@ class Colours(QtGui.QDialog):
                 if btn.hasFocus():
                     if btn.text()[-5:] != '_base':
                         key = str(btn.text())
-                        self.colours[key] = ['', self.colours[key][1]]
+                        if self.colours[key][0] != '':
+                            self.colours[key] = ['delete', self.colours[key][1]]
                         btn.setStyleSheet(self.default_style)
-                    break
+                    elif self.section != 'Colors':
+                        if btn.text()[-5:] == '_base':
+                            key = str(btn.text()[:-5])
+                        else:
+                            key = str(btn.text())
+                        self.colours[key] = ['', '']
+                        btn.setStyleSheet(self.default_style)
+                        break
 
-    def showDialog(self):
+    def showDialog(self, colour=False):
         sender = self.sender()
-        if sender.text()[-5:] == '_base':
-            key = str(sender.text())[:-5]
-            ndx = 1
-        else:
-            key = str(sender.text())
-            ndx = 0
-        if self.colours[key][ndx] != '':
-            col = QtGui.QColorDialog.getColor(self.colours[key][ndx])
-        else:
-            col = QtGui.QColorDialog.getColor(QtGui.QColor('white'))
-        if col.isValid():
-            if ndx == 0:
-                self.colours[key] = [col, self.colours[key][1]]
+        if not colour:
+            if sender.text()[-5:] == '_base':
+                key = str(sender.text())[:-5]
+                ndx = 1
             else:
-                self.colours[key] = [self.colours[key][0], col]
-            for i in range(len(self.btn)):
-                if self.btn[i] == sender:
-                    self.btn[i].setStyleSheet('QPushButton {background-color: %s; color: %s;}' % (col.name(), col.name()))
-                    break
+                key = str(sender.text())
+                ndx = 0
+        else:
+            key = colour
+            ndx = 1
+        if self.colours[key][ndx] != '' and self.colours[key][ndx] != 'delete':
+            col = QtGui.QColorDialog.getColor(self.colours[key][ndx], None, 'Select colour for ' + key.title())
+        else:
+            col = QtGui.QColorDialog.getColor(QtGui.QColor('white'), None, 'Select colour for ' + key.title())
+        if col.isValid():
+            if not colour:
+                if ndx == 0:
+                    self.colours[key] = [col, self.colours[key][1]]
+                else:
+                    self.colours[key] = [self.colours[key][0], col]
+                for i in range(len(self.btn)):
+                    if self.btn[i] == sender:
+                        self.btn[i].setStyleSheet('QPushButton {background-color: %s; color: %s;}' % (col.name(), col.name()))
+                        break
+            else:
+                for i in range(len(self.btn) -1, -1, -1):
+                    self.colours[key] = [self.colours[key][0], col]
+                    if self.btn[i].text() == key + '_base':
+                        self.btn[i].setStyleSheet('QPushButton {background-color: %s; color: %s;}' % (col.name(), col.name()))
+                        break
 
     def quitClicked(self):
         self.close()
@@ -272,8 +295,12 @@ class Colours(QtGui.QDialog):
         lines = [[], []]
         for key, value in self.colours.items():
             for i in range(2):
-                if value[i] != '':
+                if value[i] == 'delete':
+                    lines[i].append(key + '=')
+                elif value[i] != '':
                     lines[i].append(key + '=' + str(value[i].name()))
+                elif self.section != 'Colors':
+                    lines[i].append(key + '=')
         if len(lines[0]) > 0:
             updates[self.section + self.map] = lines[0]
         updates[self.section] = lines[1]

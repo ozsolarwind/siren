@@ -44,7 +44,13 @@ def getUser():
 
 def techClean(tech, full=False):
     cleantech = tech.replace('_', ' ').title()
+    cleantech = cleantech.replace('Bm', 'BM')
+    cleantech = cleantech.replace('Ccgt', 'CCGT')
+    cleantech = cleantech.replace('Ccg', 'CCG')
     cleantech = cleantech.replace('Cst', 'CST')
+    cleantech = cleantech.replace('Ocgt', 'OCGT')
+    cleantech = cleantech.replace('Ocg', 'OCG')
+    cleantech = cleantech.replace('Phs', 'PHS')
     cleantech = cleantech.replace('Pv', 'PV')
     if full:
         alll = [['Cf', 'CF'], ['hi ', 'HI '], ['Lcoe', 'LCOE'], ['Mw', 'MW'],

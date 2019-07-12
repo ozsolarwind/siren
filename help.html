@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
-#  Copyright (C) 2015-2018 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
 #
 #  help.html - This file is part of SIREN.
 #
@@ -26,6 +26,10 @@ code {
 }
 div.experiment {
     border: 1px solid red;
+    border-radius: 5px;
+}
+img {
+    vertical-align: text-top;
 }
 pre {
     font-size: 125%;
@@ -87,6 +91,11 @@ th {
     vertical-align: top;
 }
 th.none {
+    border: none;
+    padding: 3px;
+    vertical-align: top;
+}
+tr.none {
     border: none;
     padding: 3px;
     vertical-align: top;
@@ -244,6 +253,10 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 <tr class="none">
 <td class="none"><img src="weather_b.png" alt="makeweather2">&nbsp;&nbsp;makeweather2</td>
 <td class="none">Invoke <code>makeweather2</code> to create weather files for SAM (see <a href="#merra5">Produce wind and solar weather files</a>)</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="line.png" alt="powerplot">&nbsp;&nbsp;powerplot</td>
+<td class="none">Invoke <code>powerplot</code> to create plots from PowerModel and PowerBalance outputs (see <a href="#powerplot">PowerPlot</a>)</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="download.png" alt="sirenupd">&nbsp;&nbsp;sirenupd</td>
@@ -487,8 +500,8 @@ The format is similar to a Windows INI file. If you want to create a new Model y
 <a href="#p_files">Files</a>, <a href="#financial">Financial</a>, <a href="#p_fixed_pv">Fixed PV</a>,
 <a href="#p_fossil_coal">Fossil Coal</a>, <a href="#p_fossil_cogen">Fossil Cogen</a>, <a href="#p_fossil_gas">Fossil Gas</a>,
 <a href="#p_fossil_mixed">Fossil Mixed</a>, <a href="#p_geothermal">Geothermal</a>, <a href="#p_grid">Grid</a>,
-<a href="#p_hydro">Hydro</a>, <a href="#p_map">Map</a>, <a href="#p_offw">Offshore Wind</a>, <a href="#p_other">Other</a>, <a href="#p_parents">Parents</a>,
-<a href="#power">Power</a>, <a href="#p_pb">Powerbalance</a>, <a href="#p_pv">PV</a>, <a href="#p_rooftop_pv">Rooftop PV</a>,
+<a href="#p_hydro">Hydro</a>, <a href="#p_map">Map</a>, <a href="#p_offw">Offshore Wind</a>, <a href="#p_other">Other</a>, <a href="#p_parents">Parents</a>, <a href="#p_pc">Plot Colours</a>,
+<a href="#power">Power</a>, <a href="#p_pb">Powerbalance</a>, <a href="#p_pp">PowerPlot</a>, <a href="#p_pv">PV</a>, <a href="#p_rooftop_pv">Rooftop PV</a>,
 <a href="#p_sam_modules">SAM Modules</a>, <a href="#p_single_pv">Single Axis PV</a>, <a href="#p_solar_thermal">Solar Thermal</a>, <a href="#p_storage">Storage</a>,
 <a href="#p_tracking_pv">Tracking PV</a>, <a href="#p_view">View</a>, <a href="#p_wave">Wave</a>, <a href="#p_wind">Wind</a>,
 <a href="#p_windows">Windows</a>.</p>
@@ -1361,6 +1374,9 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 </table>
 </td></tr>
+<tr class="none" id="p_pc"><td><dfn><strong>[Plot Colors]</strong></dfn></td>
+<td>Colours for <a href="#powerplot">PowerPlot</a>. These may be populated from the other Colors Sections</td>
+</tr>
 <tr class="none" id="power"><td><dfn><strong>[Power]</strong></dfn></td>
 <td>What processing, output and plots to produce for power model processing. Properties are True or False. Power options can be changed and saved when the Power Models menu option is selected. Properties are:</p>
 <table border="0", class="none">
@@ -1561,6 +1577,66 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </table>
 </div>
 </td></tr>
+<tr class="none" id="p_pp"><td><dfn><strong>[PowerPlot]</strong></dfn></td>
+<td>Options for <a href="#powerplot">PowerPlot</a>. Properties are:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>alpha</dfn></td>
+<td class="none">Opacity of plot fill for values above target. Range is 1.0 (opaque) to 0.0 (translucent). Default value is 0.25</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>columns</dfn></td>
+<td class="none">List (and order) for columns to be plotted</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>cumulative</dfn></td>
+<td class="none">Indicator for cumulative plot (True or False)</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>file</dfn></td>
+<td class="none">Spreadsheet file name</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>period</dfn></td>
+<td class="none">Chosen period for diurnal plot</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>maximum</dfn></td>
+<td class="none">Maximum value for Power (y) axis</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>sheet</dfn></td>
+<td class="none">Worksheet name for plot</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>target</dfn></td>
+<td class="none">Target column (e.g. Load) or <em>none</em> if no target</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>title</dfn></td>
+<td class="none">Plot title</td>
+</tr>
+</table>
+</td></tr>
+<tr class="none" id="p_pv"><td><dfn><strong>[PV]</strong></dfn></td>
+<td>Specifics on PV characteristics. Properties are:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>dc_ac_ratio</dfn></td>
+<td class="none">DC to AC ratio. Default value is 1.1</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>icon</dfn></td>
+<td class="none">Icon to display for this technology. Default is solar_pv_g.png</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>losses</dfn></td>
+<td class="none">Percentage losses for SAM PV model (pvwattsv5). Default is 5. 5  is appropriate for solar weather files derived from the MERRA-2 swgnt variable while 14 or 15 is more appropriate for the swgdn variable</td>
+</tr>
+</table>
+</td></tr>
+
+
 <tr class="none" id="p_pb"><td><dfn><strong>[Powerbalance]</strong></dfn></td>
 <td>File names, worksheet names and other variables used by PowerBalance. Properties are:</p>
 <table border="0", class="none">
@@ -2265,7 +2341,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 </tr>
 <tr class="none">
 <td class="none"><img src="rainbow-icon.png" alt="Edit Colours">&nbsp;&nbsp;Edit Colours (Ctrl+U)</td>
-<td class="none">Edit colours for the current map. This will allow to change both the default colours and the colours for the current <em>map_choice</em></td>
+<td class="none">Edit colours for the current map. This will allow to change both the the colours for the current <em>map_choice</em> (left column) and the default colours (right column). You can delete colours for the current <em>map_choice</em> by right-clicking on the colour (it will be cleared and the item deleted when you Save & Exit)</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="arrow.png" alt="Edit Section">&nbsp;&nbsp;Edit Section</td>
@@ -2351,6 +2427,14 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <tr class="none">
 <td class="none"><img src="weather_b.png" alt="makeweather2">&nbsp;&nbsp;makeweather2</td>
 <td class="none">Invoke <code>makeweather2</code> to create weather files for SAM (see <a href="#merra5">Produce wind and solar weather files</a>)</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="power.png" alt="powerbalance2">&nbsp;&nbsp;powerbalance2</td>
+<td class="none">Invoke <code>powerbalance2</code> to quantify and cost dispatchable energy generation, storage and CO2-e emissions (see <a href="#powerbalance">PowerBalance</a>)</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="line.png" alt="powerplot">&nbsp;&nbsp;powerplot</td>
+<td class="none">Invoke <code>powerplot</code> to create plots from PowerModel and PowerBalance outputs (see <a href="#powerplot">PowerPlot</a>)</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="list.png" alt="updateswis">&nbsp;&nbsp;updateswis</td>
@@ -2476,7 +2560,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <h3 id="popts">Power Model Options</h3>
 <p>The Power Model options menu are as set out here. The default values are specified in the <a href="#power">[Power]</a> Section of the Preferences file. The associated property is indicated in brackets at the end of the description. If you hover over the window title bar or press F1 a help for the Options will be displayed.</p>
 <table border="0" class="none">
-<tr><td class="top" style="width: 30%;"><dfn>Check / Uncheck all</dfn></td>
+<tr><td style="width: 25%;" class="top"><dfn>Check / Uncheck all</dfn></td>
 <td class="none">A button to check or uncheck all option buttons</td></tr>
 <tr><td class="lr"><strong>Show in Plot</strong></td>
 <td class="none">Choose what to show in the plots</td></tr>
@@ -2590,16 +2674,62 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <li><em>Power - Load duration</em> option produces load duration curves which show how much generation is produced for a percentage of the year</li>
 <li><em>Power - Shortfall analysis</em> option produces a table and line plots that attempt to assist with analysing shortfalls on a daily basis. The analysis iterations option will produce average shortfalls for that number of days, for example, 3 iterations will produce average shortfall figures for one, two and three days. The figures are calculated by &ldquo;averaging&rdquo; the generation shortfall over the chosen number of days. This option will also produce cumulative shortfall graphs that add the average hourly shortfall to generation to attempt to flatten out the shortfall over the year</li>
 </ul>
-<p><u>Plot Navigation</u></p>
+<p><strong><u>Plot Navigation</u></strong></p>
 <p>The tool used to produce the plots, matplotlib, has a navigation toolbar
 (<a href="http://matplotlib.org/users/navigation_toolbar.html" target="_blank">Interactive navigation</a>) to enable you to navigate and manipulate the plot (but doesn't allow you to change the plot data). It includes options to zoom into an area of the plot and to save the plot image (by default to the <em>scenarios</em> folder).
 By default the size of plots produced is determined by matplotlib, or by the <em>Maximise Plot windows</em> option (above). By using the <em>orientation</em>, <em>papersize</em>, and <em>save_format</em> Properties of the <em>[Power]</em> section it is possible to produce the plots in a number of formats, such as PDF format, and in a specific page size and layout. If you use these options you can save plots in a standardised format (these Properties can be added and removed by using the <em>Preferences -> Edit Section</em> menu option).</p>
-<p>For most plots the Pan/Zoom option (<img src="pan_zoom.png" alt="Pan/Zoom">) enables you to zoom in on the plot using the right mouse button and to pan across the plot using the left mouse button. For the two hourly plots (<em>Power by hour</em> and <em>Power by hour - augmented</em>) there is a modified pan and zoom feature to enhance visual examination of the plot...</p>
+<p>For most plots the Pan/Zoom option (<img src="pan_zoom.png" alt="Pan/Zoom">) enables you to zoom in on the plot using the right mouse button and to pan across the plot using the left mouse button.</p>
+<p>For the two hourly plots (<em>Power by hour</em> and <em>Power by hour - augmented</em>) and plots produced by PowerPlot there is a modified pan and zoom feature to enhance visual examination of the plot...</p>
 <ul>
 <li>You can use the mouse scroll wheel to zoom in and out on the time (x) axis. The position of the mouse within the plot determines where the zoom will centre upon (that is, that point will remain fixed and the rest of the plot will move away from or towards that point)</li>
 <li>Moving the mouse while holding down the left button will allow you to plan across the plot</li>
-<li>Clicking the right mouse button will reset the plot to the original state. This will allow you to zoom out to the original state and then zoom in to another period on the plot</li>
+<li>Clicking the right mouse button or pressing the <em>r</em> key will reset the plot to the original state. This will allow you to zoom out to the original state and then zoom in to another period on the plot</li>
+<li>Pressing the <em>m</em> key will display a monthly plot. Each press will show the next month. You can also navigate to a chosen month by pressing the number for the month after the <em>m</em>. For example, pressing <em>m10</em> will display October</li>
+<li>Pressing the <em>w</em> key will display a weekly plot. Each press will show the next week. If the <em>m</em> key has been pressed the weeks for that month will be displayed</li>
+<li>Pressing <em>PageUp</em> or <em>PageDown</em> will display the previous or next week or month</li>
 </ul>
+<p><strong>Note:</strong> For cumulative plots produced by PowerPlot this feature may perform slowly so please be a little patient</p>
+<h4 id="powerplot"><u>PowerPlot</u></h4>
+<p><code>powerplot.exe</code> is a standalone program that will produce either hourly or diurnal plots from a spreadsheet that conforms to certain constraints. It is intended to be used to plot (detailed) results either from PowerBalance or some of the files produced by SIREN's PowerModels. The spreadsheet must have:</p>
+<ol>
+<li>A header row that defines the content of the underlying rows (this need not be the first row)</li>
+<li>The first (header) column should be <em>Hour</em> and the second should be <em>Period</em> with a cell format of <em>yyyy-mm-dd hh:mm</em>. The program uses the year in the first period row to determine if the data is for a leap year</li>
+<li>The rows immediately following the header row should contain data for each hour of the year (8,760 for a normal year and 8,784 for a leap; or a smaller number for an incomplete year)</li>
+</ol>
+The program displays a window of options:
+<table border="0" class="none">
+<tr><td class="top" style="width: 20%;"><dfn>File</dfn></td>
+<td class="none">Click on this field to choose the desired spreadsheet</td></tr>
+<tr><td class="lr"><dfn>Sheet</dfn></td>
+<td class="none">A pull-down list to enable you to choose the desired worksheet</td></tr>
+<tr><td class="lr"><dfn>Period</dfn></td>
+<td class="none">A pull-down list for a full year or a month. If an option other than <em>&lt;None&gt;</em> is chosen the resulting plot will present an average diurnal plot for the chosen period</td></tr>
+<tr><td class="lr"><dfn>Target</dfn></td>
+<td class="none">A pull-down list of column names. If the plot is intended to show how the chosen columns meet a target column, typically Load, this enables you to choose that column. Choosing <em>&lt;None&gt;</em> means no target field. If a target field is chosen the plot will show excess generation as lightly shaded areas above the target values</td></tr>
+<tr><td class="lr"><dfn>Title</dfn></td>
+<td class="none">Specify a title for the plot. There are two special strings which will be replaced in the title:
+<ul>
+<li><em>$YEAR$</em> will be replaced with the year (first Period value)</li>
+<li><em>$MTH$</em> or <em>$MONTH$</em> will be replaced with the chosen Period</li>
+</ul>
+</td></tr>
+<tr><td class="lr"><dfn>Maximum</dfn></td>
+<td class="none">You can specify a maximum value for the Power (y) axis. This allows you to produce a series of plots with the same scale</td></tr>
+<tr><td class="lr"><dfn>Cumulative</dfn></td>
+<td class="none">Checking this option will produce a cumulative curve. The cumulative plot will have filled areas. If a Target field is chosen area above the Target value will have a lightly shaded value (the degree of shading is chosen by the <em>alpha</em> property in the [PowerPlot] Section of the Preferences file)</td></tr>
+<tr><td class="lr"><dfn>Column Order</dfn></td>
+<td class="none">To produce the plot you select those columns to be included. This field consists of two tables (lists) of columns. Those in the left hand list will be included in the plot while those on the right will be excluded. The included columns will be plotted in the chosen order. You can drag individual or a number of columns between the two lists to get the desired configuration. The plot colour for the column will be displayed as the background color for the column</td></tr>
+<tr><td class="bottom"><strong>Done, Plot, Colours, Help</strong></td>
+<td class="none">At the bottom of the window are a number of buttons:
+<ul>
+<li><strong>Done</strong> Exit the program and save the input values. Input preferences and colours are either saved in a SIREN preferences file or in a specific file, <em>powerplot.ini</em>, if no Peferences file is passed to the program</li>
+<li><strong>Plot</strong> Produce the plot. If there are missing colours you will be taken to the Colours window to add the colour. You need to set a colour and press the Save &amp; Exit button</li>
+<li><strong>Colours</strong> Press this button to change the plot colours or to add new colours. You can remove a plot colour by right-clicking the colour (it will be cleared and the item deleted when you Save &amp; Exit). Colours are held in the [Plot Colors] Section of the Preferences file</li>
+<li><strong>Help</strong> Display the help for PowerPlot</li>
+</ul>
+</td></tr>
+</table>
+<!-- Back to top< -->
 <h4>Tables</h4>
 <ul>
 <li><em>Save Hourly Data Output</em> option will save generation in MWh for each chosen station for each hour of the year (8,760 hours) as calculated by SAM. This can be used in detailed analysis or as an option to avoid having to reprocess the station in the future, by updating a Station's </em>Power File</em> field. The default file name can be set using the <em>data_file</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file; otherwise it will in the format of <em>Power_Table_yyyy-mm-dd_hhmm...</em></li>
@@ -3277,7 +3407,7 @@ You can alternate between these approaches to choose the desired area. If you ha
 <ul>
 <li><em>check</em>. If this parameter is passed the program will interrogate MERRA-2 files in the target folder to provide the boundaries for the area of interest and set the starting date to download the next day in sequence and the end date to 42 days prior to the current date</li>
 <li><em>coll=</em> or <em>collection=</em>. The MERRA-2 collection, either <em>solar</em> or <em>wind</em>. Default value is <em>solar</em>. You can also specify just the collection value, i.e. <em>solar</em> or <em>wind</em></li>
-<li><em>config=</em> or <em>configuration=</em> or <em>ini=</em>. Alternative Preferences file. Default value is <code>getfiles.ini</code>. You can also specify just the filename</li>
+<li><em>config=</em> or <em>configuration=</em> or <em>ini=</em>. Alternative Preferences file. Default value is <em>getfiles.ini</em>. You can also specify just the filename</li>
 <li><em>date=</em> or <em>date1=</em> or <em>strtdate=</em> or <em>startdate=</em>. The first date to download. The format is <em>yyyy-mm-dd</em></li>
 <li><em>date2=</em> or <em>enddate=</em>. The last date to download. The format is <em>yyyy-mm-dd</em></li>
 <li><em>dir=</em> or <em>folder=</em> or <em>target=</em> or <em>tgt_dir=</em>. The target folder for the MERRA-2 files to be downloaded</li>
@@ -4162,7 +4292,7 @@ MERRA-2 Variable
 <h3 id="worldwindow">Select area on world map</h3>
 <p><code>worldwindow</code> can be used with <code>getmap</code> (see <a href="#map">Obtaining a Suitable Map Image</a>) and <code>getmerra2</code> (see <a href="#getmerra2">Get MERRA-2 Files</a>) to choose the Area of Interest for a map or for downloading MERRA-2 data. It presents a world map and allows you to choose the area of interest by clicking within the map and updating the area values in the two calling programs</p>
 <h4>Using worldwindow</h4>
-<p>To use <code>worldwindow</code>> you simply left click in the map the top left corner of the desired Area of Interest and then left click the bottom right corner. <code>worldwindow</code> will display a rectangle on the world map highlighting the desired area and update the Area of Interest in the calling program. To choose a different area just repeat the process.
+<p>To use <code>worldwindow</code> you simply left click in the map the top left corner of the desired Area of Interest and then left click the bottom right corner. <code>worldwindow</code> will display a rectangle on the world map highlighting the desired area and update the Area of Interest in the calling program. To choose a different area just repeat the process.
 <h4>worldwindow Menu Structure</h4>
 <table border="0", class="none">
 <tr class="none">
@@ -4201,7 +4331,7 @@ MERRA-2 Variable
 </tr>
 <tr class="none">
 <td class="none"><img src="rainbow-icon.png" alt="Edit Colours">&nbsp;&nbsp;Edit Colours (Ctrl+U)</td>
-<td class="none">Edit colours for the current map. This will allow to change both the default colours and the colours for the current <em>map_choice</em></td>
+<td class="none">Edit colours for the world map</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="arrow.png" alt="Edit Section">&nbsp;&nbsp;Edit Section</td>

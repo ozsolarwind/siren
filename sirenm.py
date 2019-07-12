@@ -1236,9 +1236,11 @@ class MainWindow(QtGui.QMainWindow):
         self.floatstatus = None
         self.progressbar = None
         self.power_signal = None
-        utilities = ['getmap', 'getmerra2', 'indexweather', 'makegrid', 'makerainfall2', 'makeweather2', 'powerbalance2', 'updateswis']
-        utilini = [True, False, True, True, False, False, True, True]
-        utilicon = ['map.png', 'download.png', 'list.png', 'grid.png', 'rain.png', self.weather_icon, 'power.png', 'list.png']
+        utilities = ['getmap', 'getmerra2', 'indexweather', 'makegrid', 'makerainfall2', 'makeweather2',
+                     'powerbalance2', 'powerplot', 'updateswis']
+        utilini = [True, False, True, True, False, False, True, True, True]
+        utilicon = ['map.png', 'download.png', 'list.png', 'grid.png', 'rain.png', self.weather_icon,
+                    'power.png', 'list.png', 'list.png']
         spawns = []
         icons = []
         if sys.platform == 'win32' or sys.platform == 'cygwin':

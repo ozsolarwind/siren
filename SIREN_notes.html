@@ -24,7 +24,7 @@ pre {
 <li>Python 3.?</li>
 <li>Some Python packages (see <a href="#libraries">Python Libraries</a>)</li>
 <li>The Python source programs for SIREN. These are available either from <a href="#github">github</a> or <a href="#forge">SourceForge</a>. Their purpose is briefly described in <a href="#source">SIREN Programs</a></li>
-<li>The SAM SDK. This included in a number of the SourceForge zip files (<em>siren_toolkit.exe</em> and <em>siren_application.exe</em>). It is also available from the SAM website - <a href="https://sam.nrel.gov/sdk" target="_blank">https://sam.nrel.gov/sdk</a>. SIREN currently uses <a href="https://sam.nrel.gov/system/tdf/content/sdk/sam-sdk-2016-3-14-r2.zip?file=1" target="_blank">Version 2016-3-14</a></li>
+<li>The SAM SDK. This included in a number of the SourceForge zip files (<em>siren_toolkit.exe</em> and <em>siren_application.exe</em>). It is also available from the SAM website - <a href="https://sam.nrel.gov/sdk" target="_blank">https://sam.nrel.gov/sdk</a>. SIREN currently uses <a href="https://github.com/NREL/ssc/releases/tag/2018.11.11.r2" target="_blank">Version 2019-02-09</a> (206)</li>
 <li>Other data files as indicated in <a href="help.html#setup" target="_blank">Setting Up</a>. These are found in some of the SIREN SourceForge downloads with a small number also available on github</li>
 <li>If required, the sample SIREN simulation of the SWIS - <em>siren_sample.exe</em>
 </ul>
@@ -105,6 +105,7 @@ pre {
 <tr><td>powerbalance2.py</td><td>PowerBalance implementation. Produce costed scenarios</td></tr>
 <tr><td>powerclasses.py</td><td>Classes used by PowerModel (powermodel.py)</td></tr>
 <tr><td>powermodel.py (*)</td><td>Process SAM models for stations to produce spreadsheets and plots</td></tr>
+<tr><td>powerplot.py (*)</td><td>A standalone program that will produce either hourly or diurnal plots from a spreadsheet that conforms to certain constraints</td></tr>
 <tr><td>sammodels.py</td><td>Routines for SAM/NREL models for DHI, DNI and Zenith angle</td></tr>
 <tr><td>samrun.py</td><td>Run a SAM model</td></tr>
 <tr><td>senuser.py (*)</td><td>Obtain current userid details</td></tr>
@@ -122,9 +123,10 @@ pre {
 <tr><td>visualise.py (*)</td><td>Visualise hourly generation on map</td></tr>
 <tr><td>wascene.py</td><td>Create and manage displayed map</td></tr>
 <tr><td>worldwindow.py</td><td>Display a world map for getmap and getmerra2</td></tr>
+<tr><td>zoompan.py</td><td>Implement a more dynamic zoom and pan for hourly plots</td></tr>
 </table>
 <h2>Packaging for Windows</h2>
-<p>I use PyInstaller (currently Version 3.4) to package SIREN for Windows. I use the multi-package facility to create executables for <code>siren.py, sirenm.py</code> and the tools (<code>getmap.py, getmerra2.py, indexweather.py, makegrid.py, makerainfall2.py, makeweather2.py, powerbalance2.py, sirenupd.py</code> and <code>updateswis.py</code>). <code>siren_application.spec</code> is the spec file (<code>pyinstaller.exe siren_application.spec</code> with options <code>--log-level ERROR</code> and/or <code>--noconfirm</code> ... <code>pyinstaller.exe --noconfirm --log-level ERROR siren_application.spec</code>). This enables all programs to be included in a single library for distribution. PyInstaller places them in individual directories - I use <code>package_siren.py</code> to copy all the executables into the <em>siren</em> directory and remove some unwanted files that are included as part of the packaging process.</p>
+<p>I use PyInstaller (currently Version 3.4) to package SIREN for Windows. I use the multi-package facility to create executables for <code>siren.py, sirenm.py</code> and the tools (<code>getmap.py, getmerra2.py, indexweather.py, makegrid.py, makerainfall2.py, makeweather2.py, powerbalance2.py, powerplot.py, sirenupd.py</code> and <code>updateswis.py</code>). <code>siren_application.spec</code> is the spec file (<code>pyinstaller.exe siren_application.spec</code> with options <code>--log-level ERROR</code> and/or <code>--noconfirm</code> ... <code>pyinstaller.exe --noconfirm --log-level ERROR siren_application.spec</code>). This enables all programs to be included in a single library for distribution. PyInstaller places them in individual directories - I use <code>package_siren.py</code> to copy all the executables into the <em>siren</em> directory and remove some unwanted files that are included as part of the packaging process.</p>
 <p>All these files have a version file where the version is <em>&lt;major&gt;,&lt;minor&gt;.&lt;yyyy&gt;.&lt;mmdd&gt;</em>. <em>&lt;major&gt;</em> and <em>&lt;minor&gt;</em> refer to the SIREN release. The date part is the date the program was last changed. The version numbering simulates Microsoft version numbers. <code>template_version</code> provides a template for the version files to enable new SIREN releases to be packaged.</p>
 <p>To enable the modules to be built correctly most require <em>hiddenimports</em>, as identified in <code>siren_application.spec</code>, as often PyInstaller will fail to identify all imports from libraries used by the SIREN program.</p>
 <p><code>makeweather_getmerra2.spec</code> and <code>package_makeweatherfiles.py</code> package <code>makeweatherfiles.py</code> and <code>getmerra2.py</code> to provide a standalone tool to create SAM weather files from MERRA-2 datasets.</p>
