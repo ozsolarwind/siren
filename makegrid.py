@@ -888,14 +888,14 @@ class getParms(QtGui.QWidget):
         self.grid.addWidget(QtGui.QLabel('Solar Folder:'), row, 0)
         self.source = ClickableQLabel()
         self.source.setText(self.solarfiles)
-        self.source.setFrameStyle(6)
+        self.source.setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
         self.connect(self.source, QtCore.SIGNAL('clicked()'), self.dirChanged)
         self.grid.addWidget(self.source, row, 1, 1, 3)
         row += 1
         self.grid.addWidget(QtGui.QLabel('Wind Folder:'), row, 0)
         self.wsource = ClickableQLabel()
         self.wsource.setText(self.windfiles)
-        self.wsource.setFrameStyle(6)
+        self.wsource.setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
         self.connect(self.wsource, QtCore.SIGNAL('clicked()'), self.wdirChanged)
         self.grid.addWidget(self.wsource, row, 1, 1, 3)
         if self.do_rain:
@@ -903,14 +903,14 @@ class getParms(QtGui.QWidget):
             self.grid.addWidget(QtGui.QLabel('Rain Folder:'), row, 0)
             self.rsource = ClickableQLabel()
             self.rsource.setText(self.rainfiles)
-            self.rsource.setFrameStyle(6)
+            self.rsource.setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
             self.connect(self.rsource, QtCore.SIGNAL('clicked()'), self.rdirChanged)
             self.grid.addWidget(self.rsource, row, 1, 1, 3)
         row += 1
         self.grid.addWidget(QtGui.QLabel('Resource File:'), row, 0)
         self.target = ClickableQLabel()
         self.target.setText(self.resource_grid)
-        self.target.setFrameStyle(6)
+        self.target.setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
         self.connect(self.target, QtCore.SIGNAL('clicked()'), self.tgtChanged)
         self.grid.addWidget(self.target, row, 1, 1, 3)
         row += 1

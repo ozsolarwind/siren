@@ -469,7 +469,7 @@ class getParms(QtGui.QWidget):
             self.grid.addWidget(QtGui.QLabel(self.dir_labels[i] + ' Folder:'), 5 + i, 0)
             self.dirs[i] = ClickableQLabel()
             self.dirs[i].setText(cur_dir)
-            self.dirs[i].setFrameStyle(6)
+            self.dirs[i].setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
             self.connect(self.dirs[i], QtCore.SIGNAL('clicked()'), self.dirChanged)
             self.grid.addWidget(self.dirs[i], 5 + i, 1, 1, 3)
         quit = QtGui.QPushButton('Quit', self)

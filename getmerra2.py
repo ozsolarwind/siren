@@ -28,9 +28,9 @@ from netCDF4 import Dataset
 import configparser   # decode .ini file
 from PyQt4 import QtCore, QtGui
 
-from credits import fileVersion
 import displayobject
 import worldwindow
+from credits import fileVersion
 
 def spawn(who, cwd, log):
     stdoutf = cwd + '/' + log
@@ -532,7 +532,7 @@ class getMERRA2(QtGui.QDialog):
             self.grid.addWidget(QtGui.QLabel('    Target Folder:'), 9 + i * 2, 0)
             self.dirs[i] = ClickableQLabel()
             self.dirs[i].setText(cur_dir)
-            self.dirs[i].setFrameStyle(6)
+            self.dirs[i].setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
             self.connect(self.dirs[i], QtCore.SIGNAL('clicked()'), self.dirChanged)
             self.grid.addWidget(self.dirs[i], 9 + i * 2, 1, 1, 4)
         self.log = QtGui.QLabel('')
@@ -800,7 +800,7 @@ class getMERRA2(QtGui.QDialog):
                 grid.addWidget(QtGui.QLabel('HOME directory:'), 1, 0)
                 self.home = ClickableQLabel()
                 self.home.setText(self.home_dir)
-                self.home.setFrameStyle(6)
+                self.home.setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
                 self.connect(self.home, QtCore.SIGNAL('clicked()'), self.ursdirChanged)
                 grid.addWidget(self.home, 1, 1, 1, 3)
                 r = 2

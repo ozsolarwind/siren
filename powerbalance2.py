@@ -319,7 +319,7 @@ class powerBalance(QtGui.QWidget):
         for i in range(4):
             self.grid.addWidget(QtGui.QLabel(self.file_labels[i] + ' File:'), r, 0)
             self.files[i] = ClickableQLabel()
-            self.files[i].setFrameStyle(6)
+            self.files[i].setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
             self.files[i].setText(self.ifiles[i])
             self.connect(self.files[i], QtCore.SIGNAL('clicked()'), self.fileChanged)
             self.grid.addWidget(self.files[i], r, 1, 1, 3)

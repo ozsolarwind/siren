@@ -229,8 +229,8 @@ class AnObject(QtGui.QDialog):
                     scencombo.setCurrentIndex(i)
         for i in range(len(self.field)):
             if self.field[i] == 'turbine':
-                self.label.append(ClickableQLabel(self.field[i].title() + ':'))
-                self.label[-1].setFrameStyle(6)
+                self.label.append(ClickableQLabel(self.field[i].title() + ': (Name order)'))
+                self.label[-1].setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
                 self.connect(self.label[-1], QtCore.SIGNAL('clicked()'), self.turbineSort)
             else:
                 self.label.append(QtGui.QLabel(self.field[i].title() + ':'))
@@ -446,9 +446,13 @@ class AnObject(QtGui.QDialog):
         if self.turbines_sorted:
             self.turbines_sorted = False
             self.turbines.sort(key=lambda x: x[3])
+            i = self.sender().text().find(':')
+            self.sender().setText(self.sender().text()[:i + 1] + ' (Capacity order)')
         else:
             self.turbines_sorted = True
             self.turbines.sort()
+            i = self.sender().text().find(':')
+            self.sender().setText(self.sender().text()[:i + 1] + ' (Name order)')
         for i in range(self.turbine.count() - 1, -1, -1):
             self.turbine.removeItem(i)
         j = -1
