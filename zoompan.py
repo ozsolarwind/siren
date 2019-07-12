@@ -98,7 +98,60 @@ class ZoomPanX():
             ax.figure.canvas.draw()
 
         def onKey(event):
-            if event.key.lower() == 'm':
+            if event.key.lower() == 'r':
+                self.keys = ''
+                self.month = None
+                self.week = None
+                if self.base_xlim is not None:
+                    ax.set_xlim(self.base_xlim)
+                    ax.figure.canvas.draw()
+                    return
+            if event.key == 'pageup':
+                if self.week is not None:
+                    self.week -= 1
+                    if self.month is None:
+                        if self.week < 0:
+                            self.week = 52
+                        strt = self.week * 168 # 24 * 7 hours per week
+                    else:
+                        if self.week < 0:
+                            if self.month == 1 and self.mth_xlim[2] == 1416:
+                                self.week = 3
+                            else:
+                                self.week = 4
+                        strt = self.mth_xlim[self.month] + self.week * 168
+                    ax.set_xlim([strt, strt + 168])
+                else:
+                    if self.month is None or self.month == 0:
+                        self.month = 11
+                    else:
+                        self.month -= 1
+                    ax.set_xlim([self.mth_xlim[self.month], self.mth_xlim[self.month + 1]])
+                ax.figure.canvas.draw()
+            elif event.key == 'pagedown':
+                if self.week is not None:
+                    self.week += 1
+                    if self.month is None:
+                        if self.week >= 52:
+                            self.week = 0
+                        strt = self.week * 168 # 24 * 7 hours per week
+                    else:
+                        if self.week >= 5 or \
+                          (self.month == 1 and self.week >= 4 and self.mth_xlim[2] == 1416):
+                            self.week = 0
+                        strt = self.mth_xlim[self.month] + self.week * 168
+                    ax.set_xlim([strt, strt + 168])
+                else:
+                    if self.month is None:
+                        self.month = 0
+                    else:
+                        if self.month >= 11:
+                            self.month = 0
+                        else:
+                            self.month += 1
+                    ax.set_xlim([self.mth_xlim[self.month], self.mth_xlim[self.month + 1]])
+                ax.figure.canvas.draw()
+            elif event.key.lower() == 'm':
                 self.keys = 'm'
                 self.week = None
                 if self.month is None:
@@ -116,7 +169,6 @@ class ZoomPanX():
                 else:
                     self.week += 1
                 if self.month is None:
-                    base = 0
                     if self.week >= 52:
                         self.week = 0
                     strt = self.week * 168 # 24 * 7 hours per week
@@ -127,14 +179,6 @@ class ZoomPanX():
                     strt = self.mth_xlim[self.month] + self.week * 168
                 ax.set_xlim([strt, strt + 168])
                 ax.figure.canvas.draw()
-            elif event.key.lower() == 'r':
-                self.keys = ''
-                self.month = None
-                self.week = None
-                if self.base_xlim is not None:
-                    ax.set_xlim(self.base_xlim)
-                    ax.figure.canvas.draw()
-                    return
             elif event.key >= '0' and event.key <= '9':
                 if self.keys[-2:] == 'm1':
                     self.keys = ''
