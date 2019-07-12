@@ -30,15 +30,69 @@
 #  getDHI is derived from the NREL DNI-GHI to DHI Calculator
 #  <https://sam.nrel.gov/sites/sam.nrel.gov/files/content/documents/xls/DNI-GHI_to_DHI_Calculator.xlsx>
 #
-import datetime
+from datetime import datetime
 import gzip
 import math
 import os
 import sys
 from netCDF4 import Dataset
 from PyQt4 import QtCore, QtGui
-from credits import fileVersion
+if sys.platform == 'win32' or sys.platform == 'cygwin':
+    from win32api import GetFileVersionInfo, LOWORD, HIWORD
 
+
+def fileVersion(program=None, year=False):
+    ver = '?'
+    ver_yr = '????'
+    if program == None:
+        check = sys.argv[0]
+    else:
+        s = program.rfind('.')
+        if s > 0 and program[s:] == '.html':
+            check = program
+        elif s < len(program) - 4:
+            check = program + sys.argv[0][sys.argv[0].rfind('.'):]
+        else:
+            check = program
+    if check[-3:] == '.py':
+        try:
+            modtime = datetime.fromtimestamp(os.path.getmtime(check))
+            ver = '2.0.%04d.%d%02d' % (modtime.year, modtime.month, modtime.day)
+            ver_yr = '%04d' % modtime.year
+        except:
+            pass
+    elif check[-5:] == '.html':
+        try:
+            modtime = datetime.fromtimestamp(os.path.getmtime(check))
+            ver = '2.0.%04d.%d%02d' % (modtime.year, modtime.month, modtime.day)
+            ver_yr = '%04d' % modtime.year
+        except:
+            pass
+    else:
+        if sys.platform == 'win32' or sys.platform == 'cygwin':
+            try:
+                if check.find('\\') >= 0:  # if full path
+                    info = GetFileVersionInfo(check, '\\')
+                else:
+                    info = GetFileVersionInfo(os.getcwd() + '\\' + check, '\\')
+                ms = info['ProductVersionMS']
+              #  ls = info['FileVersionLS']
+                ls = info['ProductVersionLS']
+                ver = str(HIWORD(ms)) + '.' + str(LOWORD(ms)) + '.' + str(HIWORD(ls)) + '.' + str(LOWORD(ls))
+                ver_yr = str(HIWORD(ls))
+            except:
+                try:
+                    info = os.path.getmtime(os.getcwd() + '\\' + check)
+                    ver = '2.0.' + datetime.fromtimestamp(info).strftime('%Y.%m%d')
+                    ver_yr = datetime.fromtimestamp(info).strftime('%Y')
+                    if ver[9] == '0':
+                        ver = ver[:9] + ver[10:]
+                except:
+                    pass
+    if year:
+        return ver_yr
+    else:
+        return ver
 
 class AnObject(QtGui.QDialog):
     procStart = QtCore.pyqtSignal(str)
@@ -98,7 +152,7 @@ class AnObject(QtGui.QDialog):
         else:
             html = self.anobject
             if self.anobject[:5] == '<html':
-                self.anobject = self.anobject.replace('[VERSION]', credits.fileVersion())
+                self.anobject = self.anobject.replace('[VERSION]', fileVersion())
                 self.web.setHtml(self.anobject)
             else:
                 self.web.setPlainText(self.anobject)
@@ -662,7 +716,7 @@ class makeWeather():
         return
 
     def __init__(self, caller, src_year, src_zone, src_dir_s, src_dir_w, tgt_dir, fmat, swg='swgnt', wrap=None, src_lat_lon=None, info=False):
-      #  self.last_time = datetime.datetime.now()
+      #  self.last_time = datetime.now()
         if caller is None:
             self.show_progress = False
         else:
@@ -1279,7 +1333,7 @@ class getParms(QtGui.QWidget):
         self.grid = QtGui.QGridLayout()
         self.grid.addWidget(QtGui.QLabel('Year:'), 0, 0)
         self.yearSpin = QtGui.QSpinBox()
-        now = datetime.datetime.now()
+        now = datetime.now()
         self.yearSpin.setRange(1979, now.year)
         self.yearSpin.setValue(now.year - 1)
         self.grid.addWidget(self.yearSpin, 0, 1)
@@ -1326,7 +1380,7 @@ class getParms(QtGui.QWidget):
             self.grid.addWidget(QtGui.QLabel(self.dir_labels[i] + ' Folder:'), 7 + i, 0)
             self.dirs[i] = ClickableQLabel()
             self.dirs[i].setText(cur_dir)
-            self.dirs[i].setFrameStyle(6)
+            self.dirs[i].setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
             self.connect(self.dirs[i], QtCore.SIGNAL('clicked()'), self.dirChanged)
             self.grid.addWidget(self.dirs[i], 7 + i, 1, 1, 4)
         self.daybar = QtGui.QProgressBar()
