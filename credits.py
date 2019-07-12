@@ -71,8 +71,8 @@ def fileVersion(program=None, year=False):
             except:
                 try:
                     info = os.path.getmtime(os.getcwd() + '\\' + check)
-                    ver = '2.0.' + datetime.datetime.fromtimestamp(info).strftime('%Y.%m%d')
-                    ver_yr = datetime.datetime.fromtimestamp(info).strftime('%Y')
+                    ver = '2.0.' + datetime.fromtimestamp(info).strftime('%Y.%m%d')
+                    ver_yr = datetime.fromtimestamp(info).strftime('%Y')
                     if ver[9] == '0':
                         ver = ver[:9] + ver[10:]
                 except:
