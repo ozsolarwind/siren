@@ -230,7 +230,7 @@ class PowerPlot(QtGui.QWidget):
         self.maxSpin.setValue(imax)
         self.grid.addWidget(self.maxSpin, rw, 1)
         self.maxSpin.valueChanged.connect(self.somethingChanged)
-        self.grid.addWidget(QtGui.QLabel('(handy if you want to produce a series of plots)'), rw, 3, 1, 3)
+        self.grid.addWidget(QtGui.QLabel('(Handy if you want to produce a series of plots)'), rw, 3, 1, 3)
         rw += 1
         self.grid.addWidget(QtGui.QLabel('Cumulative:'), rw, 0)
         self.cumulative = QtGui.QCheckBox()
@@ -238,7 +238,7 @@ class PowerPlot(QtGui.QWidget):
             self.cumulative.setCheckState(QtCore.Qt.Checked)
         self.cumulative.stateChanged.connect(self.somethingChanged)
         self.grid.addWidget(self.cumulative, rw, 1, 1, 2)
-        self.grid.addWidget(QtGui.QLabel('(Check for Ben-style plot)'), rw, 3, 1, 2)
+        self.grid.addWidget(QtGui.QLabel('(Check for hourly generation profile)'), rw, 3, 1, 3)
         rw += 1
         self.grid.addWidget(QtGui.QLabel('Column Order:\n(move to right\nto exclude)'), rw, 0)
         self.order = ThumbListWidget(self)
