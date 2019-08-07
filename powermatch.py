@@ -18,7 +18,6 @@
 #  Public License along with SIREN.  If not, see
 #  <http://www.gnu.org/licenses/>.
 #
-
 import os
 import sys
 import time
@@ -331,6 +330,7 @@ class powerMatch(QtGui.QWidget):
         self.adjust_re = False
         self.change_res = True
         self.details = True
+        self.carbon_price = 0.
         self.optimise_population = 50
         self.optimise_generations = 20
         self.optimise_stop = 0
@@ -340,6 +340,11 @@ class powerMatch(QtGui.QWidget):
                  if key == 'adjust_generators':
                      if value.lower() in ['true', 'on', 'yes']:
                          self.adjust_re = True
+                 elif key == 'carbon_price':
+                     try:
+                         self.carbon_price = float(value)
+                     except:
+                         pass
                  elif key == 'change_results':
                      if value.lower() in ['false', 'off', 'no']:
                          self.change_res = False
@@ -405,6 +410,18 @@ class powerMatch(QtGui.QWidget):
                 edit[i].clicked.connect(self.editClicked)
             r += 1
         wdth = edit[1].fontMetrics().boundingRect(edit[1].text()).width() + 9
+        self.grid.addWidget(QtGui.QLabel('Carbon Price:'), r, 0)
+        self.carbon = QtGui.QDoubleSpinBox()
+        self.carbon.setRange(0, 200)
+        self.carbon.setDecimals(2)
+        try:
+            self.carbon.setValue(self.carbon_price)
+        except:
+            self.carbon.setValue(0.)
+        self.grid.addWidget(self.carbon, r, 1)
+        self.carbon.valueChanged.connect(self.cpchanged)
+        self.grid.addWidget(QtGui.QLabel('($/tCO2e. Use only if LCOE excludes carbon price)'), r, 2, 1, 2)
+        r += 1
         self.grid.addWidget(QtGui.QLabel('Adjust Generators:'), r, 0)
         self.adjust = QtGui.QCheckBox('(check to adjust/multiply generators capacity data)', self)
         if self.adjust_re:
@@ -480,7 +497,7 @@ class powerMatch(QtGui.QWidget):
         self.setWindowTitle('SIREN - powermatch (' + fileVersion() + ') - Powermatch')
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         self.center()
-        self.resize(int(self.sizeHint().width()* 1.07), int(self.sizeHint().height() * 1.07))
+        self.resize(int(self.sizeHint().width()* 1.07), int(self.sizeHint().height() * 1.1))
         self.show()
 
     def center(self):
@@ -540,6 +557,10 @@ class powerMatch(QtGui.QWidget):
                  title='Help for powermatch (' + fileVersion() + ')', section='powermatch')
         dialog.exec_()
 
+    def cpchanged(self):
+        self.updated = True
+        self.carbon_price = self.carbon.value()
+
     def changes(self):
         self.updated = True
 
@@ -548,6 +569,7 @@ class powerMatch(QtGui.QWidget):
             updates = {}
             lines = []
             lines.append('adjust_generators=' + str(self.adjust.isChecked()))
+            lines.append('carbon_price=' + str(self.carbon_price))
             for i in range(len(self.file_labels)):
                 lines.append(str(self.file_labels[i].lower()) + '_file=' + str(self.files[i].text()))
             for i in range(D):
@@ -996,6 +1018,7 @@ class powerMatch(QtGui.QWidget):
             ns = ds.active
             ns.title = 'Detail'
             ss = ds.create_sheet('Summary', 0)
+            re_sum = '=('
             cap_row = 1
             ns.cell(row=cap_row, column=2).value = headers[1]
             ss.cell(row=3, column=1).value = headers[0]
@@ -1046,6 +1069,7 @@ class powerMatch(QtGui.QWidget):
                     ns.cell(row=sum_row, column=col).number_format = '#,##0'
                     ss.cell(row=ss_row, column=3).value = '=Detail!' + ss_col(col) + str(sum_row)
                     ss.cell(row=ss_row, column=3).number_format = '#,##0'
+                    re_sum += 'C' + str(ss_row) + '+'
                     ns.cell(row=cf_row, column=col).value = '=' + ss_col(col) + '3/' \
                             + ss_col(col) + '1/8760'
                     ns.cell(row=cf_row, column=col).number_format = '#,##0.00'
@@ -1254,6 +1278,7 @@ class powerMatch(QtGui.QWidget):
         if summ_only:
             cap_sum = 0.
             gen_sum = 0.
+            re_sum = 0.
             cost_sum = 0.
             co2_sum = 0.
             for sp in range(len(sp_data)):
@@ -1262,6 +1287,8 @@ class powerMatch(QtGui.QWidget):
                     sp_data[sp][3] = sp_data[sp][2] / sp_data[sp][1] / 8760
                 gen_sum += sp_data[sp][2]
                 gen = sp_data[sp][0]
+                if gen in tech_names:
+                    re_sum += sp_data[sp][2]
                 if gen not in generators:
                     continue
                 if generators[gen].lcoe > 0:
@@ -1281,6 +1308,15 @@ class powerMatch(QtGui.QWidget):
             else:
                 gs = ''
             sp_data.append(['Total', cap_sum, gen_sum, cs, cost_sum, gs, co2_sum])
+            if self.carbon_price > 0:
+                cc = co2_sum * self.carbon_price
+                cs = (cost_sum + cc) / gen_sum
+                if self.carbon_price == int(self.carbon_price):
+                   cp = str(int(self.carbon_price))
+                else:
+                   cp = '{:.2f}'.format(self.carbon_price)
+                sp_data.append(['Carbon Cost ($' + cp + ')', '', '', '', cc, cs])
+            sp_data.append(['RE %age', round(re_sum * 100. / gen_sum, 1)])
             sf_sums = [0., 0., 0.]
             for sf in range(len(shortfall)):
                 if shortfall[sf] > 0:
@@ -1423,6 +1459,25 @@ class powerMatch(QtGui.QWidget):
         ss.column_dimensions['D'].width = 7
         ss.column_dimensions['E'].width = 18
         last_col = ss_col(ns.max_column)
+        r = 1
+        if self.carbon_price > 0:
+            r = 2
+            ss_row += 1
+            if self.carbon_price == int(self.carbon_price):
+               cp = str(int(self.carbon_price))
+            else:
+               cp = '{:.2f}'.format(self.carbon_price)
+            ss.cell(row=ss_row, column=1).value = 'Carbon Cost ($' + cp + ')'
+            ss.cell(row=ss_row, column=5).value = '=G' + str(ss_row - 1) + '*' + \
+                    str(self.carbon_price)
+            ss.cell(row=ss_row, column= 5).number_format = '$#,##0'
+            ss.cell(row=ss_row, column=6).value = '=(E' + str(ss_row - 1) + \
+                    '+E'  + str(ss_row) + ')/C' + str(ss_row - 1)
+            ss.cell(row=ss_row, column=6).number_format = '$#,##0.00'
+        ss_row += 1
+        ss.cell(row=ss_row, column=1).value = 'RE %age'
+        ss.cell(row=ss_row, column=2).value = re_sum[:-1] + ')/C' + str(ss_row - r)
+        ss.cell(row=ss_row, column=2).number_format = '#,##0.0%'
         ss_row += 2
         ss.cell(row=ss_row, column=1).value = 'Load Analysis'
         ss.cell(row=ss_row, column=1).font = bold
@@ -1580,11 +1635,10 @@ class powerMatch(QtGui.QWidget):
                 shortfall = op_load[:]
                 # now get random amount of generation per technology (both RE and non-RE)
                 for gen, value in dict_order.items():
-                    capacity = 0
+                    capacity = dict_order[gen][3]
                     for c in range(value[1], value[2]):
                         if chromosome[c]:
                             capacity = capacity + capacities[c]
-                    dict_order[gen][3] = capacity
                     self.adjustby[gen] = capacity / dict_order[gen][0]
                     if gen in orig_tech.keys():
                         op_data.append([gen, capacity, 0., '', '', '', ''])
@@ -1668,6 +1722,7 @@ class powerMatch(QtGui.QWidget):
                         op_data.append([gen, capacity, gen_can, '', '', '', ''])
                 cap_sum = 0.
                 gen_sum = 0.
+                re_sum = 0.
                 cost_sum = 0.
                 co2_sum = 0.
                 for sp in range(len(op_data)):
@@ -1676,6 +1731,8 @@ class powerMatch(QtGui.QWidget):
                         op_data[sp][3] = op_data[sp][2] / op_data[sp][1] / 8760
                     gen_sum += op_data[sp][2]
                     gen = op_data[sp][0]
+                    if gen in orig_tech.keys():
+                        re_sum += op_data[sp][2]
                     if gen not in generators:
                         continue
                     if generators[gen].lcoe > 0:
@@ -1708,6 +1765,15 @@ class powerMatch(QtGui.QWidget):
                     fitness_scores.append(gs)
             if len(population) == 1:
                 op_data.append(['Total', cap_sum, gen_sum, cs, cost_sum, gs, co2_sum])
+                if self.carbon_price > 0:
+                    cc = co2_sum * self.carbon_price
+                    cs = (cost_sum + cc) / gen_sum
+                    if self.carbon_price == int(self.carbon_price):
+                       cp = str(int(self.carbon_price))
+                    else:
+                       cp = '{:.2f}'.format(self.carbon_price)
+                    op_data.append(['Carbon Cost ($' + cp + ')', '', '', '', cc, cs])
+                op_data.append(['RE %age', round(re_sum * 100. / gen_sum, 1)])
                 op_data.append(' ')
                 op_data.append('Load Analysis')
                 pct = '{:.1%})'.format((sf_sums[2] - sf_sums[0]) / op_load_tot)
@@ -1757,7 +1823,7 @@ class powerMatch(QtGui.QWidget):
             if str(self.files[O].text()).find('/') >= 0:
                 ts = xlrd.open_workbook(str(self.files[O].text()))
             else:
-                ts = xlrd.open_workbook(self.scenarios + str(self.files[G].text()))
+                ts = xlrd.open_workbook(self.scenarios + str(self.files[O].text()))
             ws = ts.sheet_by_name(self.sheets[O].currentText())
             optimisation = self.getoptimisation(ws, generators)
             ts.release_resources()
@@ -1876,15 +1942,16 @@ class powerMatch(QtGui.QWidget):
                 dict_order[tech] = [generators[tech].capacity, 0, 0, 0]
         capacities = []
         for tech in dict_order.keys():
-            dict_order[tech][1] = len(capacities)
+            dict_order[tech][1] = len(capacities) # first entry
             if optimisation[tech].approach == 'Discrete':
                 capacities.extend(optimisation[tech].capacities)
-                dict_order[tech][2] = len(capacities)
+                dict_order[tech][2] = len(capacities) # last entry
             elif optimisation[tech].approach == 'Range':
                 ctr = int((optimisation[tech].capacity_max - optimisation[tech].capacity_min) / \
                           optimisation[tech].capacity_step)
                 capacities.extend([optimisation[tech].capacity_step] * ctr)
                 dict_order[tech][2] = len(capacities)
+                dict_order[tech][3] = optimisation[tech].capacity_min
             else:
                 dict_order[tech][2] = len(capacities)
         # chromosome = [1] * int(len(capacities) / 2) + [0] * (len(capacities) - int(len(capacities) / 2))

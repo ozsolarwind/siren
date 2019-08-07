@@ -1390,7 +1390,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>augment</dfn></td>
-<td class="none">Display plots of hourly results showing renewable generation with shortfalls filled by storage and augmented generation (Ben's graph)</td>
+<td class="none">Display plots of hourly results showing renewable generation with shortfalls filled by storage and augmented generation</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>block</dfn></td>
@@ -1643,6 +1643,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <tr class="none">
 <td class="none"><dfn>adjust_generators</dfn></td>
 <td class="none">Indicates whether to adjust generators capacity inputs or not. Default is False</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>carbon_price</dfn></td>
+<td class="none">Carbon price. Only use if carbon price not included in LCOE. Default is 0</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>change_results</dfn></td>
@@ -2644,7 +2648,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <tr><td class="lr"><dfn>Power - Load duration</dfn></td>
 <td class="none">Display load duration curves (<em>duration</em>)</td></tr>
 <tr><td class="lr"><dfn>Power by hour - augmented</dfn></td>
-<td class="none">Display plots of hourly results showing renewable generation with shortfalls filled by storage and augmented generation (Ben's graph; <em>augment</em>)</td></tr>
+<td class="none">Display plots of hourly results showing renewable generation with shortfalls filled by storage and augmented generation (<em>augment</em>)</td></tr>
 <tr><td class="lr"><dfn>Power - Shortfall analysis</dfn></td>
 <td class="none">Display additional shortfall graphs and data to assist detailed analysis of generation shortfall. If this option is chosen with 0 analysis iterations it will display a table of shortfall and excess generation and, if storage is chosen, storage usage and balance (<em>shortfall_detail</em>)</td></tr>
 <tr><td class="lr"><strong>Choose tables</strong></td>
@@ -2737,7 +2741,7 @@ The program displays a window of options:
 <tr><td class="lr"><dfn>Maximum</dfn></td>
 <td class="none">You can specify a maximum value for the Power (y) axis. This allows you to produce a series of plots with the same scale</td></tr>
 <tr><td class="lr"><dfn>Cumulative</dfn></td>
-<td class="none">Checking this option will produce a cumulative curve. The cumulative plot will have filled areas. If a Target field is chosen area above the Target value will have a lightly shaded value (the degree of shading is chosen by the <em>alpha</em> property in the [PowerPlot] Section of the Preferences file)</td></tr>
+<td class="none">Checking this option will produce a cumulative curve. The cumulative plot will have filled areas showing the generation for each technology. If a Target field (e.g. Load) is chosen the area above the Target value (i.e. excess generation) will have a lightly shaded value (the degree of shading is chosen by the <em>alpha</em> property in the [PowerPlot] Section of the Preferences file)</td></tr>
 <tr><td class="lr"><dfn>Column Order</dfn></td>
 <td class="none">To produce the plot you select those columns to be included. This field consists of two tables (lists) of columns. Those in the left hand list will be included in the plot while those on the right will be excluded. The included columns will be plotted in the chosen order. You can drag individual or a number of columns between the two lists to get the desired configuration. The plot colour for the column will be displayed as the background color for the column</td></tr>
 <tr><td class="bottom"><strong>Done, Plot, Colours, Help</strong></td>
@@ -2846,7 +2850,8 @@ The program displays a window of options:
 <li>As mentioned previously, <em>Include full grid path in LCOE?</em> may over-inflate grid costs as each station path to the load centre is traced individually</li>
 </ul><p><a href="#help">Back to top</a></p>
 <h3 id="powermatch">Powermatch</h3>
-<p>Running the SIREN models will produce hourly generation figures which identify generation shortfalls and excesses against load (demand). One of the outputs from SIREN is a table of these generation shortfalls which can be met by dispatchable energy generation. The Powermatch component of SIREN can be used to match generation with demand (load) to quantify and cost dispatchable energy generation, storage and CO<sub>2</sub>-e emissions. This enables you to complete a costed renewable energy scenario. <strong>The SIREN Powermatch component has been derived from the Powerbalance worksheets developed by Ben Rose. The great work and inspiration by Ben is acknowledged.</strong></p>
+<p>Running the SIREN models will produce hourly generation figures which identify generation shortfalls and excesses against load (demand). One of the outputs from SIREN is a table of these generation shortfalls which can be met by dispatchable energy generation. The Powermatch component of SIREN can be used to match generation with demand (load) to quantify and cost dispatchable energy generation, storage and CO<sub>2</sub>-e emissions. This enables you to complete a costed renewable energy scenario.
+<br /><strong>Note:</strong>The SIREN Powermatch component has been derived from the Powerbalance worksheets developed by Ben Rose. The great work and inspiration by Ben is acknowledged</p>
 <p>The Powermatch options are as set out here. The options are specified in the <a href="#p_pm">[Powermatch]</a> Section of the Preferences file. The associated property is indicated in brackets at the end of the description. All files are located in the SIREN Scenarios folder.</p>
 <table border="0" class="none" cellpadding="2">
 <tr><td class="top" style="width: 15%;"><dfn>Constraints File</dfn></td>
@@ -2865,6 +2870,8 @@ The program displays a window of options:
 <td class="none">File name for Powermatch input (data) spreadsheet. Clicking on the field will allow you to choose another spreadsheet (<em>data_file</em>)</td></tr>
 <tr><td class="lr"><dfn>Results File</dfn></td>
 <td class="none">File name for Powermatch output (report) spreadsheet. Clicking on the field will allow you to choose the name for the report spreadsheet. <strong>Note:</strong> If the  <em>change_results</em> property of the <em>[Powermatch]</em> Section is set changes to the input spreadsheet name will cause this Results spreadsheet name to change (<em>results_file</em>)</td></tr>
+<tr><td class="lr"><dfn>Carbon Price</dfn></td>
+<td class="none">If a carbon price is not included in LCOE figures you can use this option to set a carbon price between $0 and $200 (<em>carbon_price</em>)</td></tr>
 <tr><td class="lr"><dfn>Adjust Generators</dfn></td>
 <td class="none">If this option is checked you will be presented with a table to enable you to adjust the input capacity data for each generator technology. You can specify a multiplier between 0 and 25. The original input values will be derived from the data sheet for renewables and the Generators table for dispatchable technologies (<em>adjust_generators</em>)</td></tr>
 <tr><td class="lr"><dfn>Dispatch Order</dfn></td>
