@@ -1022,9 +1022,12 @@ class MainWindow(QtGui.QMainWindow):
         listGrid.setStatusTip(tip)
         listGrid.setShortcut('Ctrl+W')
         listGrid.triggered.connect(self.list_Grid)
-        saveGrid = QtGui.QAction(QtGui.QIcon('save_as.png'), 'Save Grid', self)
+        saveGrid = QtGui.QAction(QtGui.QIcon('save_as.png'), 'Save Grid (as KML)', self)
         saveGrid.setStatusTip('Save Grid')
         saveGrid.triggered.connect(self.save_Grid)
+        saveStations = QtGui.QAction(QtGui.QIcon('save_as.png'), 'Save Stations (as KML)', self)
+        saveStations.setStatusTip('Save Stations')
+        saveStations.triggered.connect(self.save_Stations)
         powerMenu = menubar.addMenu('&Power')
         powerMenu.addAction(getPower)
         if self.years is not None:
@@ -1035,6 +1038,7 @@ class MainWindow(QtGui.QMainWindow):
                 subPowerMenu.addAction(subPower)
         powerMenu.addAction(listStations)
         powerMenu.addAction(listGrid)
+        powerMenu.addAction(saveStations)
         powerMenu.addAction(saveGrid)
         getLoad = QtGui.QAction(QtGui.QIcon('power.png'), 'Load for ' + self.base_year, self)
         getLoad.setStatusTip('Show Load for ' + self.base_year)
@@ -2614,7 +2618,7 @@ class MainWindow(QtGui.QMainWindow):
             if os.path.exists(kfile + '~'):
                 os.remove(kfile + '~')
             os.rename(kfile, kfile + '~')
-        k_file = open(kfile, 'wb')
+        k_file = open(kfile, 'w')
         for tline in pline:
             k_file.write(tline + '\n')
         for tline in sline:
@@ -2623,6 +2627,46 @@ class MainWindow(QtGui.QMainWindow):
             k_file.write(tline + '\n')
         k_file.close()
         comment = 'Grid saved to ' + kfile
+        self.view.emit(QtCore.SIGNAL('statusmsg'), comment)
+
+    def save_Stations(self):
+        kfile = self.view.scene().model_name + ' Stations.kml'
+        kfile = QtGui.QFileDialog.getSaveFileName(None, 'Save Stations File',
+                    self.scenarios + kfile, 'KML Files (*.kml);;All Files (*.*)')
+        if kfile == '':
+            comment = 'Save aborted'
+            self.view.emit(QtCore.SIGNAL('statusmsg'), comment)
+            return
+        pline = ['<?xml version="1.0" encoding="UTF-8"?>',
+                 '<kml xmlns="http://www.opengis.net/kml/2.2">',
+                 '<Document>']
+        kfile = str(kfile)
+        pline.append('<name>' + kfile[kfile.rfind('/') + 1:] + '</name>')
+        pline.append('<description><![CDATA[This KML file shows the stations for ' + \
+                     self.view.scene().model_name + ' at ' + \
+                     str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),
+                     'yyyy-MM-dd hh:mm')) + ']]></description>')
+        pline.append('<Folder>')
+        pline.append('<name>Stations</name>')
+        stns = []
+        for stn in self.view.scene()._stations.stations:
+            stns.append([stn.name, stn.technology, stn.capacity, stn.lat, stn.lon])
+        for stn in sorted(stns, key=lambda x: x[0]):
+            pline.append('\t<Placemark>\n\t\t<name>' + stn[0].replace('&', '&amp;') + \
+                         '</name>\n\t\t<description><![CDATA[' + stn[1] + ' (' + \
+                         str(stn[2]) + ' MW)]]></description>\n\t\t<Point>\n\t\t' + \
+                         '<coordinates>' + str(stn[4]) + ',' + str(stn[3]) + \
+                         ',0.000000</coordinates>\n\t\t</Point>\n\t</Placemark>')
+        pline.append('</Folder>\n</Document>\n</kml>')
+        if os.path.exists(kfile):
+            if os.path.exists(kfile + '~'):
+                os.remove(kfile + '~')
+            os.rename(kfile, kfile + '~')
+        k_file = open(kfile, 'w')
+        for tline in pline:
+            k_file.write(tline + '\n')
+        k_file.close()
+        comment = 'Stations saved to ' + kfile
         self.view.emit(QtCore.SIGNAL('statusmsg'), comment)
 
     def show_Capacity(self):
@@ -3010,7 +3054,7 @@ class MainWindow(QtGui.QMainWindow):
             except:
                 pass
         if the_scenario[-4:] == '.csv':
-            upd_file = open(self.scenarios + the_scenario, 'wb')
+            upd_file = open(self.scenarios + the_scenario, 'w')
             if description != '':
                 upd_file.write('Description:,"' + description + '"\n')
             upd_writer = csv.writer(upd_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
