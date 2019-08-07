@@ -501,7 +501,7 @@ class PowerModel():
                     style0db = xlwt.XFStyle()
                     style0db.num_format_str = '#,##0'
                     style0db.pattern = pattern
-                    ws = wb.add_sheet('Powerbalance')
+                    ws = wb.add_sheet('Powermatch')
                     xl_lens = {}
                     row = 0
                     col = 0
@@ -580,14 +580,14 @@ class PowerModel():
                     ws.set_remove_splits(True)
                     wb.save(data_file)
 
-        def saveBalance2(self, shortstuff):
+        def saveMatch(self, shortstuff):
             def cell_format(cell, new_cell):
                 if cell.has_style:
                     new_cell.number_format = cell.number_format
 
          #   for i in range(len(shortstuff)):
           #             ws.write(row, col, shortstuff[i].hour)
-            ts = oxl.load_workbook(self.pb_template)
+            ts = oxl.load_workbook(self.pm_template)
             ws = ts.active
             type_tags = ['name', 'tech', 'cap', 'cf', 'gen', 'tmit', 'hrly']
             tech_tags = ['load', 'wind', 'offw', 'roof', 'fixed', 'single', 'dual', 'biomass', 'geotherm', 'other1', 'cst']
@@ -662,9 +662,9 @@ class PowerModel():
                             ws.cell(row=row, column=col).value = None
                     except:
                         pass
-            data_file = 'Powerbalance_data_%s.xlsx' % (
+            data_file = 'Powermatch_data_%s.xlsx' % (
                     str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'yyyy-MM-dd_hhmm')))
-            data_file = str(QtGui.QFileDialog.getSaveFileName(None, 'Save Powerbalance data file',
+            data_file = str(QtGui.QFileDialog.getSaveFileName(None, 'Save Powermatch data file',
                         self.scenarios + data_file, 'Excel Files (*.xlsx)'))
             if data_file == '':
                 return
@@ -865,20 +865,20 @@ class PowerModel():
             else:
                 plt.rcParams['figure.figsize'] = papersize
         try:
-            self.pb_template = config.get('Power', 'pb_template')
+            self.pm_template = config.get('Power', 'pm_template')
         except:
             try:
-                self.pb_template = config.get('Files', 'pb_template')
+                self.pm_template = config.get('Files', 'pm_template')
             except:
-                self.pb_template = False
-        if self.pb_template:
+                self.pm_template = False
+        if self.pm_template:
             try:
                 parents = getParents(config.items('Parents'))
                 for key, value in parents:
-                    self.pb_template = self.pb_template.replace(key, value)
-                self.pb_template = self.pb_template.replace('$USER$', getUser())
-                if not os.path.exists(self.pb_template):
-                    self.pb_template = False
+                    self.pm_template = self.pm_template.replace(key, value)
+                self.pm_template = self.pm_template.replace('$USER$', getUser())
+                if not os.path.exists(self.pm_template):
+                    self.pm_template = False
             except:
                 pass
         mth_labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct',
@@ -1747,8 +1747,8 @@ class PowerModel():
                 dialog.exec_()
                 del dialog
             if self.plots['save_balance']:
-                if self.pb_template:
-                    saveBalance2(self, shortstuff)
+                if self.pm_template:
+                    saveMatch(self, shortstuff)
                 else:
                     saveBalance(self, shortstuff)
             del shortstuff
@@ -2106,7 +2106,7 @@ class PowerModel():
                 'save_data': 'Save initial Hourly Data Output',
                 'save_detail': 'Save Hourly Data Output by Station',
                 'save_tech': 'Save Hourly Data Output by Technology',
-                'save_balance': 'Save Powerbalance Inputs',
+                'save_balance': 'Save Powermatch Inputs',
                 'financials': 'Run Financial Models'}
         self.spacers = {'actual': 'Show in Plot',
                    'save_plot': 'Choose plots (all use a full year of data)',

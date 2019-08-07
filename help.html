@@ -150,7 +150,7 @@ ul {
 <ul class="none">
 <li><a href="#popts">Power Model Options</a></li>
 <li><a href="#fopts">Financial Model Options</a></li>
-<li><a href="#powerbalance">PowerBalance</a></li>
+<li><a href="#powermatch">Powermatch</a></li>
 <li><a href="#resourcegrid">Renewable Resource Grids</a></li>
 <li><a href="#tricks">Performance and Execution Tricks</a></li>
 </ul>
@@ -188,7 +188,7 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 <ul>
 <li><code>siren_toolkit.exe</code> contains the full SIREN toolkit, It contains the contents of three other files in this list</li>
 <li><code>siren_application.exe</code> contains the packaged Windows version of the SIREN application</li>
-<li><code>siren_powerbalance.exe</code> contains the SIREN PowerBalance files. These are a set of spreadsheets used to quantify and cost dispatchable energy generation, storage and CO<sub>2</sub>-e emissions. This enables you to complete a costed renewable energy scenario</li>
+<li><code>siren_powerbalance.exe</code> contains the SIREN Powerbalance files. These are a set of spreadsheets used to quantify and cost dispatchable energy generation, storage and CO<sub>2</sub>-e emissions. This enables you to complete a costed renewable energy scenario</li>
 <li><code>siren_sample.exe</code> contains the files and data for the sample SIREN simulation of the SWIS</li>
 <li>(<code>sen_makeweather_getmerra2.exe</code> is a package containing both <code>makeweatherfiles</code>, a standalone program to produce SAM weather files, and <code>getmerra2</code> which enables MERRA-2 files to be downloaded. This package allows you to create SAM weather files from MERRA-2 files without requiring any other parts of SIREN. See <a href="makeweatherfiles.html" target="_blank">makeweatherfiles.html</a>)</li>
 </ul>
@@ -256,7 +256,7 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 </tr>
 <tr class="none">
 <td class="none"><img src="line.png" alt="powerplot">&nbsp;&nbsp;powerplot</td>
-<td class="none">Invoke <code>powerplot</code> to create plots from PowerModel and PowerBalance outputs (see <a href="#powerplot">PowerPlot</a>)</td>
+<td class="none">Invoke <code>powerplot</code> to create plots from PowerModel and Powermatch outputs (see <a href="#powerplot">PowerPlot</a>)</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="download.png" alt="sirenupd">&nbsp;&nbsp;sirenupd</td>
@@ -501,7 +501,7 @@ The format is similar to a Windows INI file. If you want to create a new Model y
 <a href="#p_fossil_coal">Fossil Coal</a>, <a href="#p_fossil_cogen">Fossil Cogen</a>, <a href="#p_fossil_gas">Fossil Gas</a>,
 <a href="#p_fossil_mixed">Fossil Mixed</a>, <a href="#p_geothermal">Geothermal</a>, <a href="#p_grid">Grid</a>,
 <a href="#p_hydro">Hydro</a>, <a href="#p_map">Map</a>, <a href="#p_offw">Offshore Wind</a>, <a href="#p_other">Other</a>, <a href="#p_parents">Parents</a>, <a href="#p_pc">Plot Colours</a>,
-<a href="#power">Power</a>, <a href="#p_pb">Powerbalance</a>, <a href="#p_pp">PowerPlot</a>, <a href="#p_pv">PV</a>, <a href="#p_rooftop_pv">Rooftop PV</a>,
+<a href="#power">Power</a>, <a href="#p_pm">Powermatch</a>, <a href="#p_pp">PowerPlot</a>, <a href="#p_pv">PV</a>, <a href="#p_rooftop_pv">Rooftop PV</a>,
 <a href="#p_sam_modules">SAM Modules</a>, <a href="#p_single_pv">Single Axis PV</a>, <a href="#p_solar_thermal">Solar Thermal</a>, <a href="#p_storage">Storage</a>,
 <a href="#p_tracking_pv">Tracking PV</a>, <a href="#p_view">View</a>, <a href="#p_wave">Wave</a>, <a href="#p_wind">Wind</a>,
 <a href="#p_windows">Windows</a>.</p>
@@ -852,8 +852,8 @@ as embedded solar - Rooftop PV - installed on the grid but not registered with A
 <td class="none">Hourly load data for the grid. For the SWIS Grid these are obtained from AEMO Operational Load data (<a href="http://data.wa.aemo.com.au/#load-summary" target="_blank">http://data.wa.aemo.com.au/#load-summary</a>)</td>
 </tr>
 <tr class="none">
-<td class="none"><dfn>pb_template</dfn></td>
-<td class="none">Template file for PowerBalance inputs. If no value is specified inputs will be saved in the original PowerBalance format</td>
+<td class="none"><dfn>pm_template</dfn></td>
+<td class="none">Template file for Powermatch inputs. If no value is specified inputs will be saved in the original Powerbalance format</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>pow_files</dfn></td>
@@ -1483,7 +1483,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>save_balance</dfn></td>
-<td class="none">Save inputs for PowerBalance</td>
+<td class="none">Save inputs for Powermatch (or Powerbalance)</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>save_data</dfn></td>
@@ -1637,12 +1637,12 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </td></tr>
 
 
-<tr class="none" id="p_pb"><td><dfn><strong>[Powerbalance]</strong></dfn></td>
-<td>File names, worksheet names and other variables used by PowerBalance. Properties are:</p>
+<tr class="none" id="p_pm"><td><dfn><strong>[Powermatch]</strong></dfn></td>
+<td>File names, worksheet names and other variables used by Powermatch. Properties are:</p>
 <table border="0", class="none">
 <tr class="none">
-<td class="none"><dfn>adjust_renewables</dfn></td>
-<td class="none">Indicates whether to adjust renewable inputs or not. Default is False</td>
+<td class="none"><dfn>adjust_generators</dfn></td>
+<td class="none">Indicates whether to adjust generators capacity inputs or not. Default is False</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>change_results</dfn></td>
@@ -1658,7 +1658,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>data_file</dfn></td>
-<td class="none">File name for PowerBalance input (data) spreadsheet</td>
+<td class="none">File name for Powermatch input (data) spreadsheet</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>generators_file</dfn></td>
@@ -1668,13 +1668,34 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none"><dfn>generators_sheet</dfn></td>
 <td class="none">Worksheet name for generators (facilities) table</td>
 </tr>
+
 <tr class="none">
-<td class="none"><dfn>renewables_details</dfn></td>
-<td class="none">Either show details for each renewable technology (True) or just show a summary for renewables (False). Default is True</td>
+<td class="none"><dfn>optimisation_file</dfn></td>
+<td class="none">File name for optimisation spreadsheet</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>optimisation_sheet</dfn></td>
+<td class="none">Worksheet name for optimisation table</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>optimise_population</dfn></td>
+<td class="none">Population size for optimisation. The value can be between 10 and 500, with a default of 50</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>optimise_generations</dfn></td>
+<td class="none">Number of generations (iterations) for optimisation. The value can be between 10 and 200, with a default of 20</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>optimise_stop</dfn></td>
+<td class="none">Stop iterations for optimisation if the solution should remain the same. The value can be between 0 and 50, with a default of 0 (meaning there will be no check)</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>generators_details</dfn></td>
+<td class="none">Either show details for each generator technology (True) or just show a summary (False). This displays a summary on how generator capacity was adjusted from the base data inputs. Default is True</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>results_file</dfn></td>
-<td class="none">File name for PowerBalance output (report) spreadsheet</td>
+<td class="none">File name for Powermatch output (report) spreadsheet</td>
 </tr>
 </table>
 </td></tr>
@@ -2429,12 +2450,12 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <td class="none">Invoke <code>makeweather2</code> to create weather files for SAM (see <a href="#merra5">Produce wind and solar weather files</a>)</td>
 </tr>
 <tr class="none">
-<td class="none"><img src="power.png" alt="powerbalance2">&nbsp;&nbsp;powerbalance2</td>
-<td class="none">Invoke <code>powerbalance2</code> to quantify and cost dispatchable energy generation, storage and CO2-e emissions (see <a href="#powerbalance">PowerBalance</a>)</td>
+<td class="none"><img src="power.png" alt="powermatch">&nbsp;&nbsp;powermatch</td>
+<td class="none">Invoke <code>powermatch</code> to match generation to demand (load) and to quantify and cost dispatchable energy generation, storage and CO2-e emissions (see <a href="#powermatch">Powermatch</a>)</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="line.png" alt="powerplot">&nbsp;&nbsp;powerplot</td>
-<td class="none">Invoke <code>powerplot</code> to create plots from PowerModel and PowerBalance outputs (see <a href="#powerplot">PowerPlot</a>)</td>
+<td class="none">Invoke <code>powerplot</code> to create plots from PowerModel and Powermatch outputs (see <a href="#powerplot">PowerPlot</a>)</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="list.png" alt="updateswis">&nbsp;&nbsp;updateswis</td>
@@ -2555,7 +2576,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <p>To add a new station simply right-click on the map at the desired location and then update the details for the station (Name, Technology, Capacity and so forth) and press <em>Save &amp; Exit</em>. You can also copy an existing station and other options as specified above. </p>
 <p>As you build your scenario, the simulation adds additional infrastructure to connect the new generation plants to the grid. The colours for the majority of the items on the map are as you specify in the Preferences file. You navigate around the map using normal mouse movements to scroll, zoom, etc. and interact with it as described previously (<a href="#menus">Menus</a>). Using the various menu options you can model your whole scenario, or by right-clicking you can deal with an individual station. There are a number of additional windows, such as menu options, that can be opened to assist with using SIREN (see <a href="#windows">Windows</a>)</p>
 <p>You can save multiple scenarios and add them and remove them as you wish. When you exit the simulation normally or <em>Save</em> scenarios (Ctrl+S) any modified scenarios will be saved. When you add new stations to your model they will be added as a new scenario which includes the date and time in its name, for example, Scenario_2015-06-09_1000. You can save all open scenarios as a single new scenario by using the <em>Save As...</em> option.</p>
-<p>The strength of the simulation is in running the SAM Power Models (e.g. Ctrl+P). This will run the appropriate SAM model for each station you have chosen or for all renewable stations in your current simulation. SAM calculates a list of power outputs for each hour of the year (8,760 points). If the <em>show_menu</em> property is True you will be presented with a menu to specify what processing and plots to produce (see below). If you choose to run the Financial Models or PowerBalance you will be presented with an additional menu of options.</p>
+<p>The strength of the simulation is in running the SAM Power Models (e.g. Ctrl+P). This will run the appropriate SAM model for each station you have chosen or for all renewable stations in your current simulation. SAM calculates a list of power outputs for each hour of the year (8,760 points). If the <em>show_menu</em> property is True you will be presented with a menu to specify what processing and plots to produce (see below). If you choose to run the Financial Models or Powermatch you will be presented with an additional menu of options.</p>
 <p><a href="#help">Back to top</a></p>
 <h3 id="popts">Power Model Options</h3>
 <p>The Power Model options menu are as set out here. The default values are specified in the <a href="#power">[Power]</a> Section of the Preferences file. The associated property is indicated in brackets at the end of the description. If you hover over the window title bar or press F1 a help for the Options will be displayed.</p>
@@ -2636,8 +2657,8 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <td class="none">Save adjusted data outputs produced by the model for each station and other options (<em>save_detail</em>)</td></tr>
 <tr><td class="lr"><dfn>Save (adjusted) Hourly Data Output by Technology</dfn></td>
 <td class="none">Save adjusted data outputs produced by the model for each technology and other options (<em>save_tech</em>)</td></tr>
-<tr><td class="lr"><dfn>Save Powerbalance data</dfn></td>
-<td class="none">Save the input data for Powerbalance. If you check this option it will check two options that are required for Powerbalance (&lsquo;Generation - show Load&rsquo; and &lsquo;Generation - reduce generation by grid losses&rsquo;). (<em>save_balance</em>)</td></tr>
+<tr><td class="lr"><dfn>Save Powermatch data</dfn></td>
+<td class="none">Save the input data for Powermatch (or Powerbalance). If you check this option it will check two options that are required for Powermatch (&lsquo;Generation - show Load&rsquo; and &lsquo;Generation - reduce generation by grid losses&rsquo;). (<em>save_balance</em>)</td></tr>
 <tr><td class="lr"><dfn>Run Financial Models</dfn></td>
 <td class="none">Run SAM financial models on the power results for each station and produces a summary table showing additional financial outputs (<em>financials</em>)</td></tr>
 <tr><td class="bottom"><strong>Proceed, Save Options / Do Financials</strong></td>
@@ -2690,7 +2711,7 @@ By default the size of plots produced is determined by matplotlib, or by the <em
 </ul>
 <p><strong>Note:</strong> For cumulative plots produced by PowerPlot this feature may perform slowly so please be a little patient</p>
 <h4 id="powerplot"><u>PowerPlot</u></h4>
-<p><code>powerplot.exe</code> is a standalone program that will produce either hourly or diurnal plots from a spreadsheet that conforms to certain constraints. It is intended to be used to plot (detailed) results either from PowerBalance or some of the files produced by SIREN's PowerModels. The spreadsheet must have:</p>
+<p><code>powerplot.exe</code> is a standalone program that will produce either hourly or diurnal plots from a spreadsheet that conforms to certain constraints. It is intended to be used to plot (detailed) results either from Powermatch or some of the files produced by SIREN's PowerModels. The spreadsheet must have:</p>
 <ol>
 <li>A header row that defines the content of the underlying rows (this need not be the first row)</li>
 <li>The first (header) column should be <em>Hour</em> and the second should be <em>Period</em> with a cell format of <em>yyyy-mm-dd hh:mm</em>. The program uses the year in the first period row to determine if the data is for a leap year</li>
@@ -2735,10 +2756,10 @@ The program displays a window of options:
 <li><em>Save Hourly Data Output</em> option will save generation in MWh for each chosen station for each hour of the year (8,760 hours) as calculated by SAM. This can be used in detailed analysis or as an option to avoid having to reprocess the station in the future, by updating a Station's </em>Power File</em> field. The default file name can be set using the <em>data_file</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file; otherwise it will in the format of <em>Power_Table_yyyy-mm-dd_hhmm...</em></li>
 <li><em>Save (adjusted) Hourly Data Output by Station</em> option will save generation in MWh for each station and other options for each hour of the year (8,760 hours). This is the hourly output calculated by the SAM model multiplied by any adjustments. If appropriate Power Model options are chosen data for Generation, Excess, Load and Storage will also be saved. The default file name can be set using the <em>data_file</em> property of the [Files] Section of the Preferences file; otherwise it will in the format of <em>Power_Detail_yyyy-mm-dd_hhmm...</em></li>
 <li><em>Save (adjusted) Hourly Data Output by Technology</em> option will save generation in MWh for each technology and other options for each hour of the year (8,760 hours). This is the hourly output calculated by the SAM model multiplied by any adjustments. If appropriate Power Model options are chosen data for Generation, Excess, Load and Storage will also be saved. The default file name can be set using the <em>data_file</em> property of the [Files] Section of the Preferences file; otherwise it will in the format of <em>Power_Detail_Technology_yyyy-mm-dd_hhmm...</em></li>
-<li><em>Save Powerbalance data</em> option will save save the input data for Powerbalance. There are two possible output formats:
+<li><em>Save Powermatch data</em> option will save save the input data for Powermatch (or Powerbalance). There are two possible output formats:
 <ol>
+<li>Powermatch uses scenario worksheets. If the <em>pm_template</em> property of the <em>[Files]</em> Section is set, SIREN will save the inputs in this format. The file can (only) be saved as an <em>.xlsx</em> format file</li>
 <li>The original Powerbalance uses the hourly shortfalls and overall generation figures in its computations. This option saves this data in a spreadsheet to simplify copying it into a Powerbalance workbook. The cells required for Powerbalance are highlighted in colour. The worksheet contains the generation summary data followed by the shortfall data. The file can be saved as <em>.csv</em> for a CSV file or <em>.xls</em> for an Excel file</li>
-<li>The new version of PowerBalance use scenario worksheets. If the <em>pb_template</em> property of the <em>[Files]</em> Section is set, SIREN will save the inputs in this format. The file can (only) be saved as an <em>.xlsx</em> format file</li>
 </ol>
 <li><em>Show Summary/Other Tables</em> option will cause various tables to be presented:
 <ul>
@@ -2824,39 +2845,42 @@ The program displays a window of options:
 <li>Strictly speaking LCOE does not include grid costs. The grid options are provided to enable the impact of this cost to be included in the model</li>
 <li>As mentioned previously, <em>Include full grid path in LCOE?</em> may over-inflate grid costs as each station path to the load centre is traced individually</li>
 </ul><p><a href="#help">Back to top</a></p>
-<h3 id="powerbalance">PowerBalance</h3>
-<p>Running the SIREN models will produce hourly generation figures which identify generation shortfalls and excesses against load (demand). One of the outputs from SIREN is a table of these generation shortfalls which can be met by dispatchable energy generation. The PowerBalance component of SIREN can be used to quantify and cost dispatchable energy generation, storage and CO<sub>2</sub>-e emissions. This enables you to complete a costed renewable energy scenario. <strong>The SIREN PowerBalance component has been created from the PowerBalance worksheets developed by Ben Rose. The great work and inspiration by Ben is acknowledged.</strong></p>
-<p>The PowerBalance options are as set out here. The option are specified in the <a href="#p_pb">[Powerbalance]</a> Section of the Preferences file. The associated property is indicated in brackets at the end of the description. All files are located in the SIREN Scenarios folder.</p>
+<h3 id="powermatch">Powermatch</h3>
+<p>Running the SIREN models will produce hourly generation figures which identify generation shortfalls and excesses against load (demand). One of the outputs from SIREN is a table of these generation shortfalls which can be met by dispatchable energy generation. The Powermatch component of SIREN can be used to match generation with demand (load) to quantify and cost dispatchable energy generation, storage and CO<sub>2</sub>-e emissions. This enables you to complete a costed renewable energy scenario. <strong>The SIREN Powermatch component has been derived from the Powerbalance worksheets developed by Ben Rose. The great work and inspiration by Ben is acknowledged.</strong></p>
+<p>The Powermatch options are as set out here. The options are specified in the <a href="#p_pm">[Powermatch]</a> Section of the Preferences file. The associated property is indicated in brackets at the end of the description. All files are located in the SIREN Scenarios folder.</p>
 <table border="0" class="none" cellpadding="2">
 <tr><td class="top" style="width: 15%;"><dfn>Constraints File</dfn></td>
 <td class="none">File name for constraints spreadsheet. Clicking on the field will allow you to choose another spreadsheet from the SIREN Scenarios folder (<em>constraints_file</em>)</td></tr>
-<tr><td class="lr"><dfn>Constraints Sheet</dfn></td>
-<td class="none">Worksheet name for constraints table (<em>constraints_sheet</em>)</td></tr>
+<tr><td class="lr"><dfn>Constraints Sheet</dfn>&nbsp;&nbsp;<strong>Constraints</strong></td>
+<td class="none">Worksheet name for constraints table (<em>constraints_sheet</em>). Click on the <strong>Constraints</strong> button to display the Constraints table. Values can be changed and the table Saved or Exported as a new file</td></tr>
 <tr><td class="lr"><dfn>Generators file</dfn></td>
 <td class="none">File name for generators (facilities) spreadsheet Clicking on the field will allow you to choose another spreadsheet (<em>generators_file</em>)</td></tr>
-<tr><td class="lr"><dfn>Generators Sheet</dfn></td>
-<td class="none">Worksheet name for generators (facilities) table (<em>generators_sheet</em>)</td></tr>
+<tr><td class="lr"><dfn>Generators Sheet</dfn>&nbsp;&nbsp;<strong>Generators</strong></td>
+<td class="none">Worksheet name for generators (facilities) table (<em>generators_sheet</em>). Click on the <strong>Generators</strong> button to display the Generators (facilities) table. Values can be changed and the table Saved or Exported as a new file</td></tr>
+<tr><td class="lr"><dfn>Optimisation File</dfn></td>
+<td class="none">File name for optimisation spreadsheet. Clicking on the field will allow you to choose another spreadsheet from the SIREN Scenarios folder (<em>optimisation_file</em>)</td></tr>
+<tr><td class="lr"><dfn>Optimisation Sheet</dfn>&nbsp;&nbsp;<strong>Optimisation</strong></td>
+<td class="none">Worksheet name for optimisation table (<em>optimisation_sheet</em>). Click on the <strong>Optimisation</strong> button to display the Optimisation table. Values can be changed and the table Saved or Exported as a new file</td></tr>
 <tr><td class="lr"><dfn>Data File</dfn></td>
-<td class="none">File name for PowerBalance input (data) spreadsheet. Clicking on the field will allow you to choose another spreadsheet (<em>data_file</em>)</td></tr>
+<td class="none">File name for Powermatch input (data) spreadsheet. Clicking on the field will allow you to choose another spreadsheet (<em>data_file</em>)</td></tr>
 <tr><td class="lr"><dfn>Results File</dfn></td>
-<td class="none">File name for PowerBalance output (report) spreadsheet. Clicking on the field will allow you to choose the name for the report spreadsheet. <strong>Note:</strong> If the  <em>change_results</em> property of the <em>[Powerbalance]</em> Section is set changes to the input spreadsheet name will cause this Results spreadsheet name to change (<em>results_file</em>)</td></tr>
-<tr><td class="lr"><dfn>Adjust Renewables</dfn></td>
-<td class="none">If this option is checked you will be presented with a table to enable you to adjust the input data for each renewable technology. You can specify a multiplier between 0 and 25 (<em>adjust_renewables</em>)</td></tr>
+<td class="none">File name for Powermatch output (report) spreadsheet. Clicking on the field will allow you to choose the name for the report spreadsheet. <strong>Note:</strong> If the  <em>change_results</em> property of the <em>[Powermatch]</em> Section is set changes to the input spreadsheet name will cause this Results spreadsheet name to change (<em>results_file</em>)</td></tr>
+<tr><td class="lr"><dfn>Adjust Generators</dfn></td>
+<td class="none">If this option is checked you will be presented with a table to enable you to adjust the input capacity data for each generator technology. You can specify a multiplier between 0 and 25. The original input values will be derived from the data sheet for renewables and the Generators table for dispatchable technologies (<em>adjust_generators</em>)</td></tr>
 <tr><td class="lr"><dfn>Dispatch Order</dfn></td>
-<td class="none">The order in which the dispatchable technologies will be processed by PowerBalance. You can change the order by clicking on each value and moving it up and down the list. The initial order is derived from the generators (facilities) table. If you want to exclude a generator you can drag it to the right hand list (and drag it back to the left to re-include)</td></tr>
-<tr><td class="bottom"><strong>Done, Constraints, Generators,<br />Powerbalance, PB2 Summ,<br />Help</strong></td>
-<td class="none">At the bottom of the menu are a number of buttons as described below:</td></tr>
+<td class="none">The order in which the dispatchable technologies will be processed by Powermatch. You can change the order by clicking on each value and moving it up and down the list. The initial order is derived from the generators (facilities) table. If you want to exclude a generator you can drag it to the right hand list (and drag it back to the left to re-include)</td></tr>
+<tr><td class="bottom"><strong>Done, Constraints, Generators,<br />Powermatch, Summary,<br />Help</strong></td>
+<td class="none">As well as the buttons beside the sheet options there are a number of buttons at the bottom of the menu, as described below:</td></tr>
 </table>
 <ul>
-<li><strong>Done</strong>. Exit PowerBalance. Any changed options will be saved</li>
-<li><strong>Constraints</strong>. Display the Constraints table. Values can be changed and the table Saved or Exported as a new file</li>
-<li><strong>Generators</strong>. Display the Generators (facilities) table. Values can be changed and the table Saved or Exported as a new file</li>
-<li><strong>PowerBalance</strong>. Invoke PowerBalance. This option produces a spreadsheet of the Powerbalance outputs</li>
-<li><strong>PB2 Summ</strong>. Invoke PowerBalance with Summary Output. This option produces a summary table of the PowerBalance outputs allowing you to examine and adjust inputs without having to access the PowerBalance outputs spreadsheet</li>
-<li><strong>Help</strong>. Display the PowerBalance help</li>
+<li><strong>Done</strong>. Exit Powermatch. Any changed options will be saved</li>
+<li><strong>Powermatch</strong>. Invoke Powermatch. This option produces a spreadsheet of the Powermatch outputs. It provides detail on how demand was met for each hour of the year</li>
+<li><strong>Summary</strong>. Invoke Powermatch with (just) Summary Output. This option produces a summary table of the Powermatch outputs allowing you to examine and adjust inputs without having to access the Powermatch outputs spreadsheet. </li>
+<li><strong>Optimise</strong>. Invoke the Optimise function. This will use an iterative approach to optimise the input generator capacities to produce a solution with a lower overall LCOE. It will complete by displaying a plot of how the value for LCOE has converged to a minimum. Exiting the plot will then a summary table. It will also update the adjustment values for each generator to enable you to produce a Powermatch spreadsheet. See below for more details</li>
+<li><strong>Help</strong>. Display the Powermatch help</li>
 </ul>
 <h4>Constraints</h4>
-<p>Utilisation of each generator by PowerBalance can be constrained by specifying a number of constraints. All figures are expressed as a percentage. In the tables the values will be displayed as a decimal fraction (0.00 to 1.00). All figures are hourly except for Parasitic Loss which is daily. The constraints are:
+<p>Utilisation of each generator by Powermatch can be constrained by specifying a number of constraints. All figures are expressed as a percentage. In the tables the values will be displayed as a decimal fraction (0.00 to 1.00). All figures are hourly except for Parasitic Loss which is daily. The constraints are:
 <table border="0" class="none">
 <tr><td class="none"><dfn>Name</dfn></td><td class="none">Name of the Constraint</td></tr>
 <tr><td class="none"><dfn>Constraint</dfn></td><td class="none">Name of the Constraint (same as Name)</td></tr>
@@ -2880,9 +2904,50 @@ The program displays a window of options:
 <tr><td class="none"><dfn>Capacity</dfn></td><td class="none">The capacity for the facility in MW</td></tr>
 <tr><td class="none"><dfn>Initial</dfn></td><td class="none">For storage this species the initial level of storage</td></tr>
 <tr><td class="none"><dfn>LCOE</dfn></td><td class="none">The LCOE for the facility</td></tr>
-<tr><td class="none"><dfn>LCOE CF</dfn></td><td class="none">The capacity factor (CF) at which the LCOE was determined. A combination of <em>LCOE</em> and <em>LCOE CF</em> allows the cost of the generation or storage to be determined. In undertaking any calculations PowerBalance adjusts the resulting LCOE to reflect the difference between this CF and the calculated CF</td></tr>
+<tr><td class="none"><dfn>LCOE CF</dfn></td><td class="none">The capacity factor (CF) at which the LCOE was determined. A combination of <em>LCOE</em> and <em>LCOE CF</em> allows the cost of the generation or storage to be determined. In undertaking any calculations Powermatch adjusts the resulting LCOE to reflect the difference between this CF and the calculated CF</td></tr>
 <tr><td class="none"><dfn>Emissions</dfn></td><td class="none">Specifies the carbon dioxide equivalent emissions in tonnes per unit of electricity (t CO<sub>2</sub>-e / MWh)</td></tr>
 </table>
+<div class="experiment">
+<h4>Optimise and Optimisation</h4>
+<p>In an attempt to simplify the process of determining the optimal generation mix, Powermatch has an optimisation function. The function uses a genetic algorithm to identify an optimal solution with the lowest LCOE for the input renewable and dispatchable technologies. Genetic algorithms are inspired by the process of natural selection and simulate evolution of multiple generations that evolve to produce an optimal solution, in this case lowest LCOE. (<strong>Note:</strong> This is a different approach to optimisation than in Power Model). The approach has a number of inputs:</p>
+<ul>
+<li>A chromosome. This is a series of &ldquo;switches&rdquo; with each switch representing whether a unit of technology is to be included in this iteration of Powermatch. The format of the chromosome is defined by the Optimisation table. In creating the chromosome each technology will be assigned a number of switches representing either a discrete unit of technology or a proportion of the total capacity for that technology</li>
+<li>Population size. Each member of the population has a chromsome made up of switches that are randomly on or off. The greater the population size the greater the chance that the initial state of the population will contain a chromosome representing the optimal solution, but the longer the optimisation process will take (<em>optimisation_population</em>)</li>
+<li>Number of generations (iterations). For each generation a competition is held between (each of two) members to identify which has the preferred characteristics, in this case lowest LCOE. The winners are then used to generate the next generation. The greater the number of generations the better chance the solutions will converge to an optimum value, but the longer the optimisation process will take (<em>optimisation_generations</em>)</li>
+<li>A stop option. To reduce the number of iterations it is possible to terminate the optimisation if there appears to be no change to the solution after a specified number of generations. The downside is that the optimisation may not have evolved on the correct path (<em>optimisation_stop</em>)</li>
+</ul>
+<p>Powermatch optimisation approach:
+<ol>
+<li>Generate a chromosome from the Optimisation table</li>
+<li>Create an initial population, each with a random copy of the chromosome</li>
+<li>Calculate fitness of population. Select lowest LCOE that meets 100% of load (demand). For each member:
+<ol>
+<li>Using their chromosome and the Optimisation table determine the capacity for each technology</li>
+<li>Run Powermatch with this generation mix to calculate the LCOE (score)</li>
+</ol>
+<li>For each generation</li>
+<ol>
+<li>Select the best parents by competition</li>
+<li>Breed new population by random crossover of chromosomes for winners</li>
+<li>Calculate fitness of population. Select lowest LCOE that meets 100% of load (demand)</li>
+</ol>
+<li>Produce table for best candidate</li>
+</ol>
+<p>The Optimisation table defines the format for the chromsome. The fields are:
+<table border="0" class="none">
+<tr><td class="none"><dfn>Name</dfn></td><td class="none">Name of the Technology (matches either RE or generator)</td></tr>
+<tr><td class="none"><dfn>Approach</dfn></td><td class="none">Approach for how this generator will be treated. There are two options:
+<ul>
+<li>Discrete. A list of discrete Capacities representing individual generation units (facilties) for the technology</li>
+<li>Range. The (total) Capacity for the technology is divided into a number of equal steps. A minimum capacity can also be defined</li>
+<ul></td></tr>
+<tr><td class="none"><dfn>Capacities</dfn></td><td class="none">The capacities for a Discrete generator. This is a series of numbers separated by spaces</td></tr>
+<tr><td class="none"><dfn>Capacity Max</dfn></td><td class="none">The maximum (total) capacity for a Range</td></tr>
+<tr><td class="none"><dfn>Capacity Min</dfn></td><td class="none">The minimum capacity for a Range</td></tr>
+<tr><td class="none"><dfn>Capacity Step</dfn></td><td class="none">The size of each capacity step for a Range</td></tr>
+</table>
+<p>The capacity fields can be a single field, <dfn>Values</dfn>, as a string of numbers separated by spaces</p>
+</div>
 <p><a href="#help">Back to top</a></p>
 <h3 id="resourcegrid">Resource Grids</h3>
 <p>To assist with placement of renewable energy stations SIREN can display a grid of renewable resource attributes derived from the SAM weather files. The grid can be displayed by invoking the <em>Show Resource Grid</em> (Ctrl+B) menu option. The Resource Overlay menu presented has the following fields:</p>
@@ -2952,7 +3017,7 @@ The program displays a window of options:
 <p><a href="#help">Back to top</a></p>
 <h2 id="files">SIREN File Formats</h2>
 <p>SIREN accepts a number of file formats for each of the data files it uses. Due to the initial source for each data file the format for each is different. For Excel and CSV files the first cell for each column is usually taken as the column name.</p>
-<p><strong>Note:</strong> Other than the new format PowerBalance file, all Excel files output by SIREN are in XLS format (XLSX files require a different Python library to create them).</p>
+<p><strong>Note:</strong> Other than the Powermatch file, all Excel files output by SIREN are in XLS format (XLSX files require a different Python library to create them).</p>
 <p>The files and formats are:</p>
 <table border="0", class="none">
 <tr class="none">
@@ -2996,8 +3061,8 @@ The program displays a window of options:
 <td class="none">A simple CSV file of mirror/optical layout for CST. This is provided by SIREN (from SAM modelling)</td>
 </tr>
 <tr class="none">
-<td class="none"><dfn>pb_template</dfn></td>
-<td class="none">A template file defining the layout for a PowerBalance scenario file. This can only be an Excel (XLSX) file</td>
+<td class="none"><dfn>pm_template</dfn></td>
+<td class="none">A template file defining the layout for a Powermatch scenario file. This can only be an Excel (XLSX) file</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>pow_files</dfn></td>

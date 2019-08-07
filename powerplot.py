@@ -265,10 +265,10 @@ class PowerPlot(QtGui.QWidget):
         self.grid.addWidget(quit, rw, 0)
         quit.clicked.connect(self.quitClicked)
         QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
-        pb = QtGui.QPushButton('Plot', self)
-        self.grid.addWidget(pb, rw, 1)
-        pb.clicked.connect(self.pbClicked)
-        QtGui.QShortcut(QtGui.QKeySequence('p'), self, self.pbClicked)
+        pp = QtGui.QPushButton('Plot', self)
+        self.grid.addWidget(pp, rw, 1)
+        pp.clicked.connect(self.ppClicked)
+        QtGui.QShortcut(QtGui.QKeySequence('p'), self, self.ppClicked)
         cb = QtGui.QPushButton('Colours', self)
         self.grid.addWidget(cb, rw, 2)
         cb.clicked.connect(self.editColours)
@@ -543,7 +543,7 @@ class PowerPlot(QtGui.QWidget):
             return False
         return True
 
-    def pbClicked(self):
+    def ppClicked(self):
         if self.book is None:
             self.log.setText('Error accessing Workbook.')
             return
@@ -680,6 +680,11 @@ class PowerPlot(QtGui.QWidget):
                             data[c][h] = data[c][h] + data[c - 1][h]
                             maxy = max(maxy, data[c][h])
                         bx.fill_between(x, data[c - 1], data[c], label=label[c], color=self.colours[label[c].lower()])
+                    top = data[0][:]
+                    for d in range(1, len(data)):
+                        for h in range(len(top)):
+                            top[h] = max(top[h], data[d][h])
+                    bx.plot(x, top, color='white')
                 else:
                     pattern = ['-', '+', 'x', '\\', '*', 'o', 'O', '.']
                     pat = 0
@@ -704,7 +709,7 @@ class PowerPlot(QtGui.QWidget):
                     for d in range(1, len(data)):
                         for h in range(len(top)):
                             top[h] = max(top[h], data[d][h])
-                    bx.plot(x, top, color='gray')
+                    bx.plot(x, top, color='white')
                     short = []
                     for h in range(len(load)):
                         short.append(max(data[c][h], load[h]))
@@ -859,7 +864,7 @@ class PowerPlot(QtGui.QWidget):
                     for d in range(1, len(data)):
                         for h in range(len(top)):
                             top[h] = max(top[h], data[d][h])
-                    dx.plot(x, top, color='gray')
+                    dx.plot(x, top, color='white')
                     short = []
                     for h in range(len(load)):
                         short.append(max(data[c][h], load[h]))

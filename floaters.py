@@ -357,7 +357,7 @@ class FloatMenu(QtGui.QDialog):
 class ProgressBar(QtGui.QDialog):
     procStart = QtCore.pyqtSignal(str)
 
-    def __init__(self, minimum=0, maximum=100):
+    def __init__(self, minimum=0, maximum=100, msg=None, title=None):
         super(ProgressBar, self).__init__()
     #    self.mainwindow = mainwindow
         self.log_progress = True
@@ -369,13 +369,17 @@ class ProgressBar(QtGui.QDialog):
                                        + 'QProgressBar::chunk { background-color: #6891c6;}')
         self.button = QtGui.QPushButton('Stop')
         self.button.clicked.connect(self.stopit)
-        self.progress_msg = QtGui.QLabel('Note: Solar Thermal Stations take a while to process')
+        if msg == None:
+             msg = 'Note: Solar Thermal Stations take a while to process'
+        self.progress_msg = QtGui.QLabel(msg)
         main_layout = QtGui.QGridLayout()
         main_layout.addWidget(self.button, 0, 0)
         main_layout.addWidget(self.progressbar, 0, 1)
         main_layout.addWidget(self.progress_msg, 1, 1)
         self.setLayout(main_layout)
-        self.setWindowTitle('SIREN - Power Model Progress')
+        if title == None:
+            title = 'SIREN - Power Model Progress'
+        self.setWindowTitle(title)
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         self.resize(250, 30)
         self.setVisible(False)
@@ -387,14 +391,17 @@ class ProgressBar(QtGui.QDialog):
 
     @QtCore.pyqtSlot()
     def exit(self):
+        self.progress_msg.setText('Stop received')
         self.be_open = False
         self.close()
 
     @QtCore.pyqtSlot(int, int)
-    def range(self, minimum, maximum):
+    def range(self, minimum, maximum, msg=None):
         self.progressbar.setMinimum(minimum)
         self.progressbar.setMaximum(maximum)
-        self.progress_msg.setText('Note: Solar Thermal Stations take a while to process')
+        if msg == None:
+            msg = 'Note: Solar Thermal Stations take a while to process'
+        self.progress_msg.setText(msg)
         self.be_open = True
         self.setVisible(True)
 

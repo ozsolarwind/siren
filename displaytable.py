@@ -80,7 +80,15 @@ class Table(QtGui.QDialog):
                 for key, value in objects.items():
                      values = []
                      for field in fields:
-                         values.append(getattr(value, field))
+                         if isinstance(getattr(value, field), list):
+                             txt = ''
+                             fld = getattr(value, field)
+                             for fl in fld:
+                                 txt += str(fl) + ' '
+                             txt = txt[:-2]
+                             values.append(txt)
+                         else:
+                             values.append(getattr(value, field))
                      fakes.append(FakeObject(values, fields))
             else:
                 for key, value in objects.items():
@@ -706,8 +714,6 @@ class Table(QtGui.QDialog):
                     hdr_types.append(self.labels[txt.lower()])
                 except:
                     hdr_types.append(self.labels[txt])
-            #    print hdr_types
-            #    print line
             tf.write(line + '\n')
             for rw in range(self.table.rowCount()):
                 line = ''
@@ -756,7 +762,7 @@ class Table(QtGui.QDialog):
                 try:
                     if self.lens[txt][1] > 0:
                         style.num_format_str = '#,##0.' + '0' * self.lens[txt][1]
-                    elif self.labels[txt] == 'int':
+                    elif self.labels[txt] == 'int' or self.labels[txt] == 'float':
                         style.num_format_str = '#,##0'
                 except:
                     pass
