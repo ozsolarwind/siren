@@ -87,10 +87,10 @@ class PowerPlot(QtGui.QWidget):
         self.help = help
         config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
-            config_file = sys.argv[1]
+            self.config_file = sys.argv[1]
         else:
-            config_file = 'powerplot.ini'
-        config.read(config_file)
+            self.config_file = 'powerplot.ini'
+        config.read(self.config_file)
         parents = []
         self.colours = {}
         try:
@@ -133,6 +133,7 @@ class PowerPlot(QtGui.QWidget):
         ifile = ''
         isheet = ''
         columns = []
+        self.setup = [False, False]
         self.details = True
         self.book = None
         self.toprow = None
@@ -144,73 +145,55 @@ class PowerPlot(QtGui.QWidget):
         self.target = ''
         ititle = ''
         icum = True
-        try:
-             items = config.items('Powerplot')
-             for key, value in items:
-                 if key == 'alpha':
-                     try:
-                         self.alpha = float(value)
-                     except:
-                         pass
-                 elif key == 'columns':
-                     bits = value.split(',')
-                     columns = []
-                     for bit in bits:
-                         columns.append(bit)
-                 elif key == 'cumulative':
-                     if value.lower() in ['false', 'no', 'off']:
-                         icum = False
-                 elif key == 'file':
-                     ifile = value.replace('$USER$', getUser())
-                 elif key == 'period':
-                     iper = value
-                 elif key == 'maximum':
-                     try:
-                         imax = int(value)
-                     except:
-                         pass
-                 elif key == 'sheet':
-                     isheet = value
-                 elif key == 'target':
-                     try:
-                         self.target = value
-                     except:
-                         pass
-                 elif key == 'title':
-                     ititle = value
+        self.history = None
+        self.max_files = 10
+        ifiles = {}
+        try: # get alpha
+            self.alpha = float(config.get('Powerplot', 'alpha'))
         except:
             pass
-        for column in columns:
-            self.check_colour(column, config, add=False)
+        try: # get list of files if any
+            items = config.items('Powerplot')
+            for key, value in items:
+                if key == 'file_history':
+                    self.history = value.split(',')
+                if key == 'file_choices':
+                    self.max_files = int(value)
+                elif key[:4] == 'file':
+                    ifiles[key[4:]] = value.replace('$USER$', getUser())
+        except:
+            pass
+        if self.history is None:
+            self.history = sorted(ifiles.keys(), reverse=True)
+        ifile = ifiles[self.history[0]]
         matplotlib.rcParams['savefig.directory'] = os.getcwd()
         self.grid = QtGui.QGridLayout()
         self.updated = False
         self.colours_updated = False
         self.log = QtGui.QLabel('')
         rw = 0
+        self.grid.addWidget(QtGui.QLabel('Recent Files:'), rw, 0)
+        self.files = QtGui.QComboBox()
+        self.popfileslist(ifile, ifiles)
+        self.grid.addWidget(self.files, rw, 1, 1, 5)
+        rw += 1
         self.grid.addWidget(QtGui.QLabel('File:'), rw, 0)
         self.file = ClickableQLabel()
         self.file.setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
-        self.file.setText(ifile)
-        self.connect(self.file, QtCore.SIGNAL('clicked()'), self.fileChanged)
+        self.file.setText('')
         self.grid.addWidget(self.file, rw, 1, 1, 5)
         rw += 1
-        self.grid.addWidget(QtGui.QLabel('Sheet:'), 1, 0)
+        self.grid.addWidget(QtGui.QLabel('Sheet:'), rw, 0)
         self.sheet = QtGui.QComboBox()
         self.grid.addWidget(self.sheet, rw, 1, 1, 2)
         rw += 1
         self.grid.addWidget(QtGui.QLabel('Period:'), rw, 0)
         self.period = QtGui.QComboBox()
         self.period.addItem('<none>')
-    #    if iper == (self.period.currentText()))
         self.period.addItem('Year')
         for mth in mth_labels:
             self.period.addItem(mth)
-        i = self.period.findText(iper, QtCore.Qt.MatchExactly)
-        if i >=0 :
-            self.period.setCurrentIndex(i)
         self.grid.addWidget(self.period, rw, 1, 1, 2)
-        self.period.currentIndexChanged.connect(self.somethingChanged)
         self.grid.addWidget(QtGui.QLabel('(Diurnal profile for Period)'), rw, 3, 1, 2)
         rw += 1
         self.grid.addWidget(QtGui.QLabel('Target:'), rw, 0)
@@ -219,42 +202,40 @@ class PowerPlot(QtGui.QWidget):
         self.grid.addWidget(QtGui.QLabel('(e.g. Load)'), rw, 3, 1, 2)
         rw += 1
         self.grid.addWidget(QtGui.QLabel('Title:'), rw, 0)
-        self.title = QtGui.QLineEdit(ititle)
-        self.title.textChanged.connect(self.somethingChanged)
+        self.title = QtGui.QLineEdit('')
         self.grid.addWidget(self.title, rw, 1, 1, 2)
         rw += 1
         self.grid.addWidget(QtGui.QLabel('Maximum:'), rw, 0)
         self.maxSpin = QtGui.QSpinBox()
         self.maxSpin.setRange(0, 6000)
         self.maxSpin.setSingleStep(500)
-        self.maxSpin.setValue(imax)
         self.grid.addWidget(self.maxSpin, rw, 1)
-        self.maxSpin.valueChanged.connect(self.somethingChanged)
         self.grid.addWidget(QtGui.QLabel('(Handy if you want to produce a series of plots)'), rw, 3, 1, 3)
         rw += 1
         self.grid.addWidget(QtGui.QLabel('Cumulative:'), rw, 0)
         self.cumulative = QtGui.QCheckBox()
         if icum:
             self.cumulative.setCheckState(QtCore.Qt.Checked)
-        self.cumulative.stateChanged.connect(self.somethingChanged)
         self.grid.addWidget(self.cumulative, rw, 1, 1, 2)
         self.grid.addWidget(QtGui.QLabel('(Check for hourly generation profile)'), rw, 3, 1, 3)
         rw += 1
         self.grid.addWidget(QtGui.QLabel('Column Order:\n(move to right\nto exclude)'), rw, 0)
         self.order = ThumbListWidget(self)
-        self.order.itemSelectionChanged.connect(self.somethingChanged)
         self.grid.addWidget(self.order, rw, 1, 1, 2)
         self.ignore = ThumbListWidget(self)
         self.grid.addWidget(self.ignore, rw, 3, 1, 2)
         self.grid.addWidget(QtGui.QLabel(' '), rw, 5)
-        if ifile != '':
-            if os.path.exists(ifile):
-                self.setSheet(ifile, isheet)
-            else:
-                self.setSheet(self.scenarios + ifile, isheet)
-            self.setColumns(isheet, columns=columns)
+        self.get_file_config(self.history[0])
+        self.files.currentIndexChanged.connect(self.filesChanged)
+        self.connect(self.file, QtCore.SIGNAL('clicked()'), self.fileChanged)
+        self.period.currentIndexChanged.connect(self.somethingChanged)
+        self.files.currentIndexChanged.connect(self.targetChanged)
         self.sheet.currentIndexChanged.connect(self.sheetChanged)
         self.targets.currentIndexChanged.connect(self.targetChanged)
+        self.title.textChanged.connect(self.somethingChanged)
+        self.maxSpin.valueChanged.connect(self.somethingChanged)
+        self.cumulative.stateChanged.connect(self.somethingChanged)
+        self.order.itemSelectionChanged.connect(self.somethingChanged)
         rw += 1
         msg_palette = QtGui.QPalette()
         msg_palette.setColor(QtGui.QPalette.Foreground, QtCore.Qt.red)
@@ -296,6 +277,85 @@ class PowerPlot(QtGui.QWidget):
         frameGm.moveCenter(centerPoint)
         self.move(frameGm.topLeft())
 
+    def get_file_config(self, choice=''):
+        ifile = ''
+        ignore = True
+        config = configparser.RawConfigParser()
+        config.read(self.config_file)
+        try: # get list of files if any
+            items = config.items('Powerplot')
+            for key, value in items:
+                if key == 'columns' + choice:
+                    bits = value.split(',')
+                    columns = []
+                    for bit in bits:
+                        columns.append(bit)
+                elif key == 'cumulative' + choice:
+                    if value.lower() in ['false', 'no', 'off']:
+                        self.cumulative.setCheckState(QtCore.Qt.UnChecked)
+                    else:
+                        self.cumulative.setCheckState(QtCore.Qt.Checked)
+                elif key == 'file' + choice:
+                    ifile = value.replace('$USER$', getUser())
+                elif key == 'period' + choice:
+                    i = self.period.findText(value, QtCore.Qt.MatchExactly)
+                    if i >=0 :
+                        self.period.setCurrentIndex(i)
+                    else:
+                        self.period.setCurrentIndex(0)
+                elif key == 'maximum' + choice:
+                    try:
+                        self.maxSpin.setValue(int(value))
+                    except:
+                        self.maxSpin.setValue(0)
+                elif key == 'sheet' + choice:
+                    isheet = value
+                elif key == 'target' + choice:
+                    try:
+                        self.target = value
+                    except:
+                        pass
+                elif key == 'title' + choice:
+                    self.title.setText(value)
+        except:
+             pass
+        if ifile != '':
+            if self.book is not None:
+                self.book.release_resources()
+                self.book = None
+                self.toprow = None
+            self.file.setText(ifile)
+            if os.path.exists(ifile):
+                self.setSheet(ifile, isheet)
+            else:
+                self.setSheet(self.scenarios + ifile, isheet)
+            self.setColumns(isheet, columns=columns)
+            for column in columns:
+                self.check_colour(column, config, add=False)
+        ignore = False
+
+    def popfileslist(self, ifile, ifiles=None):
+        self.setup[1] = True
+        if ifiles is None:
+             ifiles = {}
+             for i in range(self.files.count()):
+                 ifiles[self.history[i]] = self.files.itemText(i)
+        for i in range(len(self.history)):
+            if ifile == ifiles[self.history[i]]:
+                self.history.insert(0, self.history.pop(i)) # make this entry first
+                break
+        else:
+            if len(self.history) >= self.max_files:
+                self.history.insert(0, self.history.pop(-1)) # make last entry first
+            else:
+                self.history.insert(0, str(len(self.history)))
+            ifiles[self.history[0]] = ifile
+        self.files.clear()
+        for i in range(len(self.history)):
+            self.files.addItem(ifiles[self.history[i]])
+        self.files.setCurrentIndex(0)
+        self.setup[1] = False
+
     def fileChanged(self):
         self.log.setText('')
         if os.path.exists(self.file.text()):
@@ -314,10 +374,24 @@ class PowerPlot(QtGui.QWidget):
                 self.file.setText(newfile[len(self.scenarios):])
             else:
                 self.file.setText(newfile)
+            self.popfileslist(self.file.text())
+            self.setup[1] = False
             self.updated = True
 
+    def filesChanged(self):
+        if self.setup[1]:
+            return
+        self.setup[0] = True
+        self.log.setText('')
+        self.saveConfig()
+        self.get_file_config(self.history[self.files.currentIndex()])
+        self.popfileslist(self.files.currentText())
+        self.log.setText('File "loaded"')
+        self.setup[0] = False
+
     def somethingChanged(self):
-        self.updated = True
+        if not self.setup[0]:
+            self.updated = True
 
     def setSheet(self, ifile, isheet):
         if self.book is None:
@@ -416,7 +490,8 @@ class PowerPlot(QtGui.QWidget):
                         if column != self.target:
                             self.ignore.addItem(column)
                             try:
-                                self.ignore.item(self.ignore.count() - 1).setBackground(QtGui.QColor(self.colours[column.lower()]))
+                                self.ignore.item(self.ignore.count() - \
+                                 1).setBackground(QtGui.QColor(self.colours[column.lower()]))
                             except:
                                 pass
                 for column in columns:
@@ -441,23 +516,44 @@ class PowerPlot(QtGui.QWidget):
             self.book.release_resources()
         if not self.updated and not self.colours_updated:
             self.close()
+        self.saveConfig()
+        self.close()
+
+    def saveConfig(self):
         updates = {}
         if self.updated:
+            config = configparser.RawConfigParser()
+            config.read(self.config_file)
+            items = config.items('Powerplot')
+            choice = self.history[0]
+            save_file = str(self.file.text()).replace(getUser(), '$USER$')
+            for key, value in items:
+                if key == 'file_choices':
+                    try:
+                        self.max_files = int(value)
+                    except:
+                        pass
             lines = []
-            lines.append('file=' + str(self.file.text()).replace(getUser(), '$USER$'))
-            lines.append('sheet=' + str(self.sheet.currentText()))
-            lines.append('period=')
+            if len(self.history) > 0:
+                line = ''
+                for itm in self.history:
+                    line += itm + ','
+                line = line[:-1]
+                lines.append('file_history=' + line)
+            lines.append('file' + choice + '=' + str(self.file.text()).replace(getUser(), '$USER$'))
+            lines.append('sheet' + choice + '=' + str(self.sheet.currentText()))
+            lines.append('period' + choice + '=')
             if str(self.period.currentText()) != '<none>':
                 lines[-1] = lines[-1] + str(self.period.currentText())
-            lines.append('target=' + self.target)
-            lines.append('title=' + self.title.text())
-            lines.append('maximum=')
+            lines.append('target' + choice + '=' + self.target)
+            lines.append('title' + choice + '=' + self.title.text())
+            lines.append('maximum' + choice + '=')
             if self.maxSpin.value() != 0:
                 lines[-1] = lines[-1] + str(self.maxSpin.value())
-            lines.append('cumulative=')
+            lines.append('cumulative' + choice + '=')
             if not self.cumulative.isChecked():
                 lines[-1] = lines[-1] + 'False'
-            cols = 'columns='
+            cols = 'columns' + choice + '='
             for col in range(self.order.count()):
                 cols += str(self.order.item(col).text()) + ','
             if cols[-1] != '=':
@@ -470,19 +566,12 @@ class PowerPlot(QtGui.QWidget):
                 if value != '':
                     lines.append(key.replace(' ', '_') + '=' + value)
             updates['Plot Colors'] = lines
-        if len(sys.argv) > 1:
-            config_file = sys.argv[1]
-        else:
-            config_file = 'powerplot.ini'
-        SaveIni(updates, ini_file=config_file)
-        self.close()
+        SaveIni(updates, ini_file=self.config_file)
+        self.updated = False
+        self.colours_updated = False
 
     def editColours(self, color=False):
-        if len(sys.argv) > 1:
-            config_file = sys.argv[1]
-        else:
-            config_file = 'powerplot.ini'
-        dialr = Colours(section='Plot Colors', ini_file=config_file, add_colour=color)
+        dialr = Colours(section='Plot Colors', ini_file=self.config_file, add_colour=color)
         dialr.exec_()
         self.colours = {}
         config = configparser.RawConfigParser()

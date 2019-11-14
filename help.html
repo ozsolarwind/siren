@@ -1578,7 +1578,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </div>
 </td></tr>
 <tr class="none" id="p_pp"><td><dfn><strong>[PowerPlot]</strong></dfn></td>
-<td>Options for <a href="#powerplot">PowerPlot</a>. Properties are:</p>
+<td>Options for <a href="#powerplot">PowerPlot</a>. Properties for individual files (columns, cumulative, file, period, maximum, sheet, target, and title) can be repeated a number of times to allow a history of recent files to be accessed. These are suffixed with a number. Properties are as follows:</p>
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><dfn>alpha</dfn></td>
@@ -1590,11 +1590,19 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>cumulative</dfn></td>
-<td class="none">Indicator for cumulative plot (True or False)</td>
+<td class="none">Indicator for cumulative plot (True or False). Default is True</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>file</dfn></td>
 <td class="none">Spreadsheet file name</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>file_choices</dfn></td>
+<td class="none">How many files to keep in a recent history list</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>file_history</dfn></td>
+<td class="none">The order of the recent history list</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>period</dfn></td>
@@ -1602,7 +1610,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>maximum</dfn></td>
-<td class="none">Maximum value for Power (y) axis</td>
+<td class="none">Maximum value for Power (y) axis. Default is 0 (meaning dynamic y axis)</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>sheet</dfn></td>
@@ -2723,7 +2731,9 @@ By default the size of plots produced is determined by matplotlib, or by the <em
 </ol>
 The program displays a window of options:
 <table border="0" class="none">
-<tr><td class="top" style="width: 20%;"><dfn>File</dfn></td>
+<tr><td class="top" style="width: 20%;"><dfn>Recent Files</dfn></td>
+<td class="none">A pull-down list of recent spreadsheets. Click on the desired spreadsheet to choose a different one from the list. The list will be ordered in terms of most recently accessed first</td></tr>
+<tr><td class="lr"><dfn>File</dfn></td>
 <td class="none">Click on this field to choose the desired spreadsheet</td></tr>
 <tr><td class="lr"><dfn>Sheet</dfn></td>
 <td class="none">A pull-down list to enable you to choose the desired worksheet</td></tr>
