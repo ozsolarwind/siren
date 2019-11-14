@@ -233,8 +233,10 @@ class SaveIni():
                     lines.append('[' + section + ']\n')
                     i += 1
                 for j in range(len(properties)):
-                    lines.insert(i + 1, properties[j] + '\n')
-                    i += 1
+                    k = properties[j].find('=')
+                    if k != len(properties[j]) - 1:
+                        lines.insert(i + 1, properties[j] + '\n')
+                        i += 1
         if os.path.exists(ini_file + '~'):
             os.remove(ini_file + '~')
         try:
