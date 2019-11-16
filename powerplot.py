@@ -804,14 +804,14 @@ class PowerPlot(QtGui.QWidget):
                         short.append(max(data[c][h], load[h]))
                     bx.fill_between(x, data[c], short, label='Shortfall', color=self.colours['shortfall'])
                     bx.plot(x, load, linewidth=2.0, label=self.target, color=self.colours[self.target.lower()])
-                    if self.maxSpin.value() > 0:
-                        maxy = self.maxSpin.value()
-                    else:
-                        try:
-                            rndup = pow(10, round(log10(maxy * 1.5) - 1)) / 2
-                            maxy = ceil(maxy / rndup) * rndup
-                        except:
-                            pass
+                if self.maxSpin.value() > 0:
+                    maxy = self.maxSpin.value()
+                else:
+                    try:
+                        rndup = pow(10, round(log10(maxy * 1.5) - 1)) / 2
+                        maxy = ceil(maxy / rndup) * rndup
+                    except:
+                        pass
                 miny = 0
                 lbl_font = FontProperties()
                 lbl_font.set_size('small')
