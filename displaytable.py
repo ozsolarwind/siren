@@ -52,6 +52,7 @@ class Table(QtGui.QDialog):
     def __init__(self, objects, parent=None, fields=None, fossil=True, sumby=None, sumfields=None, units='', title=None,
                  save_folder='', edit=False, sortby=None, decpts=None, totfields=None, abbr=True):
         super(Table, self).__init__(parent)
+        self.oclass = None
         if len(objects) == 0:
             buttonLayout = QtGui.QVBoxLayout()
             buttonLayout.addWidget(QtGui.QLabel('Nothing to display.'))
@@ -70,6 +71,7 @@ class Table(QtGui.QDialog):
         elif isinstance(objects, dict):
             fakes = []
             if fields is None: # assume we have some class objects
+                self.oclass = type(objects[list(objects.keys())[0]])
                 fields = []
                 if hasattr(objects[list(objects.keys())[0]], 'name'):
                     fields.append('name')
@@ -161,7 +163,7 @@ class Table(QtGui.QDialog):
             self.replaceButton = QtGui.QPushButton(self.tr('Save'))
             buttonLayout.addWidget(self.replaceButton)
             self.connect(self.replaceButton, QtCore.SIGNAL('clicked()'),
-                        self.replacetbl)
+                         self.replacetbl)
         self.saveButton = QtGui.QPushButton(self.tr(self.title_word[1]))
         buttonLayout.addWidget(self.saveButton)
         self.connect(self.saveButton, QtCore.SIGNAL('clicked()'),
@@ -584,13 +586,14 @@ class Table(QtGui.QDialog):
             textedit = False
         else:
             textedit = True
-        dialog = AnObject(QtGui.QDialog(), addproperty, readonly=False,
+        dialog = displayobject.AnObject(QtGui.QDialog(), addproperty, readonly=False,
                  textedit=textedit, title='Add ' + self.fields[0].title())
         dialog.exec_()
         if dialog.getValues()[self.fields[0]] != '' or 1 == 1:
             self.entry.append(addproperty)
             if self.fields[0] == 'property':
-                self.objects.append(FakeObject([dialog.getValues()[self.fields[0]], dialog.getValues()[self.fields[1]]], self.fields))
+                self.objects.append(FakeObject([dialog.getValues()[self.fields[0]],
+                                    dialog.getValues()[self.fields[1]]], self.fields))
             else:
                 fakes = []
                 for field in self.fields:
@@ -618,7 +621,7 @@ class Table(QtGui.QDialog):
             try:
                 attr = getattr(thing, self.name)
                 if attr == self.entry[row][self.name]:
-                    dialog = AnObject(QtGui.QDialog(), thing)
+                    dialog = displayobject.AnObject(QtGui.QDialog(), thing)
                     dialog.exec_()
                     break
             except:
@@ -644,7 +647,8 @@ class Table(QtGui.QDialog):
             if self.labels[self.fields[col]] == 'int':
                 try:
                     tst = int(tst) * mult
-                    fmat_str = '{: >' + str(self.lens[self.fields[col]][0] + self.lens[self.fields[col]][1] + 1) + ',.' \
+                    fmat_str = '{: >' + str(self.lens[self.fields[col]][0] \
+                               + self.lens[self.fields[col]][1] + 1) + ',.' \
                                + str(self.lens[self.fields[col]][1]) + 'f}'
                     self.table.setItem(row, col, QtGui.QTableWidgetItem(fmat_str.format(tst)))
                     self.table.item(row, col).setTextAlignment(130)  # x'82'
@@ -656,7 +660,8 @@ class Table(QtGui.QDialog):
             else:
                 try:
                     tst = float(tst) * mult
-                    fmat_str = '{: >' + str(self.lens[self.fields[col]][0] + self.lens[self.fields[col]][1] + 1) + ',.' \
+                    fmat_str = '{: >' + str(self.lens[self.fields[col]][0] \
+                               + self.lens[self.fields[col]][1] + 1) + ',.' \
                                + str(self.lens[self.fields[col]][1]) + 'f}'
                     self.table.setItem(row, col, QtGui.QTableWidgetItem(fmat_str.format(tst)))
                     self.table.item(row, col).setTextAlignment(130)  # x'82'
@@ -799,7 +804,30 @@ class Table(QtGui.QDialog):
         self.close()
 
     def replacetbl(self):
+    # https://stackoverflow.com/questions/2827623/how-can-i-create-an-object-and-add-attributes-to-it
         self.replaced = {}
+        if self.oclass is not None:
+            for rw in range(self.table.rowCount()):
+                newdict = {}
+                key = str(self.table.item(rw, 0).text())
+                for cl in range(1, self.table.columnCount()):
+                    if self.labels[self.fields[cl]] == 'int' or self.labels[self.fields[cl]] == 'float':
+                        tst = str(self.table.item(rw, cl).text()).strip().replace(',', '')
+                        if tst == '':
+                            tst = '0'
+                        if self.labels[self.fields[cl]] == 'int':
+                            valu = int(tst)
+                        else:
+                            valu = float(tst)
+                    else:
+                        valu = str(self.table.item(rw, cl).text())
+                    setattr(self.objects[rw], self.fields[cl], valu)
+                    newdict[self.fields[cl]] = valu
+                self.replaced[key] = self.objects[rw]
+           #     new = type(str(self.oclass), (self.oclass, ), newdict)
+            #    self.replaced[key] = new
+            self.close()
+            return
         for rw in range(self.table.rowCount()):
             key = str(self.table.item(rw, 0).text())
             values = []
@@ -872,7 +900,17 @@ class Table(QtGui.QDialog):
             self.replaced[key] = values
         self.close()
 
-    def getValues(self):
+    def getValues(self, dictionary=None):
         if self.edit_table:
-            return self.replaced
+            if dictionary is None:
+                return self.replaced
+            for key in dictionary.keys():
+                for prop in dir(dictionary[key]):
+                    if prop[:2] != '__' and prop[-2:] != '__':
+                        try:
+                            valu = getattr(self.replaced[key], prop)
+                            setattr(dictionary[key], prop, valu)
+                        except:
+                            pass
+            return
         return None
