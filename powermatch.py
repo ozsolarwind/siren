@@ -18,6 +18,7 @@
 #  Public License along with SIREN.  If not, see
 #  <http://www.gnu.org/licenses/>.
 #
+# Add in to check maximum capacity used by the technologies
 import os
 import sys
 import time
@@ -41,11 +42,12 @@ import configparser  # decode .ini file
 tech_names = ['Load', 'Onshore Wind', 'Offshore Wind', 'Rooftop PV', 'Fixed PV', 'Single Axis PV',
               'Dual Axis PV', 'Biomass', 'Geothermal', 'Other1', 'CST', 'Shortfall']
 col_letters = ' ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-C = 0 # same order as self.file_labels
-G = 1
-O = 2
-D = 3
-R = 4
+# same order as self.file_labels
+C = 0 # Constraints
+G = 1 # Generators
+O = 2 # Optimisation
+D = 3 # Data
+R = 4 # Results
 def ss_col(col, base=1):
     if base == 1:
         col -= 1
@@ -327,12 +329,16 @@ class powerMatch(QtGui.QWidget):
         self.ifiles = [''] * 5
         self.isheets = self.file_labels[:]
         del self.isheets[-2:]
+        self.constraints = None
+        self.generators = None
+        self.optimisation = None
         self.adjust_re = False
         self.change_res = True
         self.details = True
         self.carbon_price = 0.
-        self.optimise_population = 50
         self.optimise_generations = 20
+        self.optimise_mutation = 0.005
+        self.optimise_population = 50
         self.optimise_stop = 0
         try:
              items = config.items('Powermatch')
@@ -357,14 +363,19 @@ class powerMatch(QtGui.QWidget):
                  elif key == 'generators_details':
                      if value.lower() in ['false', 'off', 'no']:
                          self.details = False
-                 elif key == 'optimise_population':
-                     try:
-                         self.optimise_population = int(value)
-                     except:
-                         pass
                  elif key == 'optimise_generations':
                      try:
                          self.optimise_generations = int(value)
+                     except:
+                         pass
+                 elif key == 'optimise_mutation':
+                     try:
+                         self.optimise_mutation = float(value)
+                     except:
+                         pass
+                 elif key == 'optimise_population':
+                     try:
+                         self.optimise_population = int(value)
                      except:
                          pass
                  elif key == 'optimise_stop':
@@ -376,9 +387,6 @@ class powerMatch(QtGui.QWidget):
             pass
         self.opt_progressbar = None
         self.adjustby = None
-        self.initUI()
-
-    def initUI(self):
    #     self.tabs = QtGui.QTabWidget()    # Create tabs
    #     tab1 = QtGui.QWidget()
    #     tab2 = QtGui.QWidget()
@@ -474,9 +482,13 @@ class powerMatch(QtGui.QWidget):
         help.clicked.connect(self.helpClicked)
         QtGui.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
         try:
-            ts = xlrd.open_workbook(self.scenarios + str(self.files[G].text()))
+            if str(self.files[G].text()).find('/') >= 0:
+                ts = xlrd.open_workbook(str(self.files[G].text()))
+            else:
+                ts = xlrd.open_workbook(self.scenarios + str(self.files[G].text()))
             ws = ts.sheet_by_name('Generators')
-            self.setOrder(self.getGenerators(ws))
+            self.getGenerators(ws)
+            self.setOrder()
             ts.release_resources()
             del ts
         except:
@@ -525,6 +537,12 @@ class powerMatch(QtGui.QWidget):
                       curfile))
         if newfile != '':
             if i < D:
+                if i == C:
+                    self.constraints = None
+                elif i == G:
+                    self.generators = None
+                else:
+                    self.optimisation = None
                 ts = xlrd.open_workbook(newfile, on_demand = True)
                 ndx = 0
                 self.sheets[i].clear()
@@ -537,7 +555,8 @@ class powerMatch(QtGui.QWidget):
                 self.sheets[i].setCurrentIndex(ndx)
                 if i == 1:
                     ws = ts.sheet_by_index(ndx)
-                    self.setOrder(self.getGenerators(ws))
+                    self.getGenerators(ws)
+                    self.setOrder()
                 ts.release_resources()
                 del ts
             if newfile[: len(self.scenarios)] == self.scenarios:
@@ -574,8 +593,9 @@ class powerMatch(QtGui.QWidget):
                 lines.append(str(self.file_labels[i].lower()) + '_file=' + str(self.files[i].text()))
             for i in range(D):
                 lines.append(str(self.file_labels[i].lower()) + '_sheet=' + str(self.sheets[i].currentText()))
-            lines.append('optimise_population=' + str(self.optimise_population))
             lines.append('optimise_generations=' + str(self.optimise_generations))
+            lines.append('optimise_mutation=' + str(self.optimise_mutation))
+            lines.append('optimise_population=' + str(self.optimise_population))
             lines.append('optimise_stop=' + str(self.optimise_stop))
             updates['Powermatch'] = lines
             SaveIni(updates)
@@ -583,58 +603,83 @@ class powerMatch(QtGui.QWidget):
 
     def editClicked(self):
         self.log.setText('')
+        ts = None
         it = self.file_labels.index(self.sender().text())
-        try:
-            if str(self.files[it].text()).find('/') >= 0:
-                ts = xlrd.open_workbook(str(self.files[it].text()))
-            else:
-                ts = xlrd.open_workbook(self.scenarios + str(self.files[it].text()))
+        if it == C and self.constraints is not None:
+            pass
+        elif it == G and self.generators is not None:
+            pass
+        elif it == O and self.optimisation is not None:
+            pass
+        else:
             try:
-                sht = self.sheets[it].currentText()
+                if str(self.files[it].text()).find('/') >= 0:
+                    ts = xlrd.open_workbook(str(self.files[it].text()))
+                else:
+                    ts = xlrd.open_workbook(self.scenarios + str(self.files[it].text()))
+                try:
+                    sht = self.sheets[it].currentText()
+                except:
+                    self.log.setText(self.sheets[it].currentText() + ' not found in ' \
+                                     + self.file_labels[it] + ' spreadsheet.')
+                    return
+                ws = ts.sheet_by_name(sht)
             except:
-                self.log.setText(self.sheets[it].currentText() + ' not found in ' + self.file_labels[it] + ' spreadsheet.')
-                return
-            ws = ts.sheet_by_name(sht)
-        except:
-            ts = None
-            ws = None
-        if it == C: # constraints
-            try:
-                constraints = self.getConstraints(ws)
-            except:
-                return
+                ws = None
+        if it == C: # self.constraints
+            if self.constraints is None:
+                try:
+                    self.getConstraints(ws)
+                except:
+                    return
             sp_pts = [2] * 11
             sp_pts[4] = 3 # discharge loss
             sp_pts[6] = 3 # parasitic loss
             sp_pts[9] = 3 # recharge loss
-            dialog = displaytable.Table(constraints, title=self.sender().text(),
+            dialog = displaytable.Table(self.constraints, title=self.sender().text(),
                  save_folder=self.scenarios, edit=True, decpts=sp_pts, abbr=False)
             dialog.exec_()
             if dialog.getValues() is not None:
-                constraints = dialog.getValues()
+                dialog.getValues(dictionary=self.constraints)
         elif it == G: # generators
-            try:
-                generators = self.getGenerators(ws)
-            except:
-                return
+            if self.generators is None:
+                try:
+                    self.getGenerators(ws)
+                except:
+                    return
             sp_pts = [2] * 8
             sp_pts[7] = 0 # dispatch order column
-            dialog = displaytable.Table(generators, title=self.sender().text(),
+            dialog = displaytable.Table(self.generators, title=self.sender().text(),
                  save_folder=self.scenarios, edit=True, decpts=sp_pts, abbr=False)
             dialog.exec_()
             if dialog.getValues() is not None:
-                newgenerators = dialog.getValues()
-                self.setOrder(generators)
-        elif it == O: # optimisation
-            try:
-                optimisation = self.getoptimisation(ws, None)
-            except:
-                return
-            dialog = displaytable.Table(optimisation, title=self.sender().text(),
+                dialog.getValues(dictionary=self.generators)
+                self.setOrder()
+        elif it == O: # self.optimisation
+            if self.optimisation is None:
+                try:
+                    self.getoptimisation(ws)
+                except:
+                    return
+            dialog = displaytable.Table(self.optimisation, title=self.sender().text(),
                      save_folder=self.scenarios, edit=True)
             dialog.exec_()
             if dialog.getValues() is not None:
-                optimisation = dialog.getValues()
+                dialog.getValues(dictionary=self.optimisation)
+                for key in self.optimisation.keys():
+                    if self.optimisation[key].approach == 'Discrete':
+                        caps = self.optimisation[key].capacities.split(' ')
+                        self.optimisation[key].capacities = []
+                        cap_max = 0.
+                        for cap in caps:
+                            try:
+                                self.optimisation[key].capacities.append(float(cap))
+                                cap_max += float(cap)
+                            except:
+                                pass
+                        self.optimisation[key].capacity_min = 0
+                        self.optimisation[key].capacity_max = round(cap_max, 3)
+                        self.optimisation[key].capacity_step = None
         if ts is not None:
             ts.release_resources()
             del ts
@@ -648,10 +693,10 @@ class powerMatch(QtGui.QWidget):
 
     def getConstraints(self, ws):
         if ws is None:
-            constraints = {}
-            constraints['<name>'] = Constraint('<name>', '<category>', 0., 1.,
+            self.constraints = {}
+            self.constraints['<name>'] = Constraint('<name>', '<category>', 0., 1.,
                                               1., 1., 1., 0., 1., 0., 0.)
-            return constraints
+            return
         if ws.cell_value(1, 0) == 'Name' and ws.cell_value(1, 1) == 'Category':
             cat_col = 1
             for col in range(ws.ncols):
@@ -704,21 +749,22 @@ class powerMatch(QtGui.QWidget):
         except:
             self.log.setText('Not a ' + self.file_labels[it] + ' worksheet.')
             return
-        constraints = {}
+        self.constraints = {}
         for row in range(strt_row, ws.nrows):
-            constraints[str(ws.cell_value(row, 0))] = Constraint(str(ws.cell_value(row, 0)), str(ws.cell_value(row, cat_col)),
+            self.constraints[str(ws.cell_value(row, 0))] = Constraint(str(ws.cell_value(row, 0)),
+                                     str(ws.cell_value(row, cat_col)),
                                      ws.cell_value(row, cap_col[0]), ws.cell_value(row, cap_col[1]),
                                      ws.cell_value(row, ramp_col[0]), ws.cell_value(row, ramp_col[1]),
                                      ws.cell_value(row, rec_col[0]), ws.cell_value(row, rec_col[1]),
                                      ws.cell_value(row, dis_col[0]), ws.cell_value(row, dis_col[1]),
                                      ws.cell_value(row, par_col))
-        return constraints
+        return
 
     def getGenerators(self, ws):
         if ws is None:
-            generators = {}
-            generators['<name>'] = Facility('<name>', 0, '<constraint>', 0., 0., 0., 0.)
-            return generators
+            self.generators = {}
+            self.generators['<name>'] = Facility('<name>', 0, '<constraint>', 0., 0., 0., 0.)
+            return
         if ws.cell_value(0, 0) != 'Name':
             self.log.setText('Not a ' + self.file_labels[G] + ' worksheet.')
             return
@@ -742,20 +788,20 @@ class powerMatch(QtGui.QWidget):
         except:
             self.log.setText('Not a ' + self.file_labels[G] + ' worksheet.')
             return
-        generators = {}
+        self.generators = {}
         for row in range(1, ws.nrows):
-            generators[str(ws.cell_value(row, 0))] = Facility(str(ws.cell_value(row, 0)),
+            self.generators[str(ws.cell_value(row, 0))] = Facility(str(ws.cell_value(row, 0)),
                                      ws.cell_value(row, ord_col), str(ws.cell_value(row, con_col)),
                                      ws.cell_value(row, cap_col), ws.cell_value(row, lco_col),
                                      ws.cell_value(row, lcc_col), ws.cell_value(row, emi_col),
                                      initial=ws.cell_value(row, ini_col))
-        return generators
+        return
 
-    def getoptimisation(self, ws, generators):
+    def getoptimisation(self, ws):
         if ws is None:
-            optimisation = {}
-            optimisation['<name>'] = Optimisation('<name>', 'None', None)
-            return optimisation
+            self.optimisation = {}
+            self.optimisation['<name>'] = Optimisation('<name>', 'None', None)
+            return
         if ws.cell_value(0, 0) != 'Name':
             self.log.setText('Not an ' + self.file_labels[O] + ' worksheet.')
             return
@@ -771,42 +817,42 @@ class powerMatch(QtGui.QWidget):
         if coln[0] < 0:
             self.log.setText('Not an ' + self.file_labels[O] + ' worksheet.')
             return
-        optimisation = {}
+        self.optimisation = {}
         for row in range(1, ws.nrows):
             tech = str(ws.cell_value(row, 0))
             if coln[2] > 0: # values format
-                optimisation[tech] = Optimisation(tech,
+                self.optimisation[tech] = Optimisation(tech,
                                      ws.cell_value(row, coln[1]),
                                      ws.cell_value(row, coln[2]))
             else:
                 if ws.cell_value(row, coln[1]) == 'Discrete': # fudge values format
-                    optimisation[tech] = Optimisation(tech,
+                    self.optimisation[tech] = Optimisation(tech,
                                          ws.cell_value(row, coln[1]),
                                          ws.cell_value(row, coln[-1]))
                 else:
-                    optimisation[tech] = Optimisation(tech, '', '')
+                    self.optimisation[tech] = Optimisation(tech, '', '')
                     for col in range(1, len(coln)):
                         if coln[col] > 0:
                             attr = cols[col].lower().replace(' ', '_')
-                            setattr(optimisation[tech], attr,
+                            setattr(self.optimisation[tech], attr,
                                     ws.cell_value(row, coln[col]))
             try:
-                optimisation[tech].capacity = generators[tech].capacity
+                self.optimisation[tech].capacity = self.generators[tech].capacity
             except:
                 pass
-        return optimisation
+        return
 
-    def setOrder(self, generators=None):
+    def setOrder(self):
         self.order.clear()
         self.ignore.clear()
-        if generators is None:
+        if self.generators is None:
             order = ['Storage', 'Biomass', 'PHS', 'Gas', 'CCG1', 'Other', 'Coal']
             for stn in order:
                 self.order.addItem(stn)
         else:
             order = []
             zero = []
-            for key, value in generators.items():
+            for key, value in self.generators.items():
                 if value.capacity == 0:
                     continue
                 try:
@@ -840,7 +886,7 @@ class powerMatch(QtGui.QWidget):
             else:
                 ts = xlrd.open_workbook(self.scenarios + str(self.files[C].text()))
             ws = ts.sheet_by_name(self.sheets[C].currentText())
-            constraints = self.getConstraints(ws)
+            self.getConstraints(ws)
             ts.release_resources()
             del ts
         except:
@@ -853,7 +899,7 @@ class powerMatch(QtGui.QWidget):
             else:
                 ts = xlrd.open_workbook(self.scenarios + str(self.files[G].text()))
             ws = ts.sheet_by_name(self.sheets[G].currentText())
-            generators = self.getGenerators(ws)
+            self.getGenerators(ws)
             ts.release_resources()
             del ts
         except:
@@ -932,9 +978,9 @@ class powerMatch(QtGui.QWidget):
                         except:
                             pass
                 for i in range(self.order.count()):
-                    if generators[self.order.item(i).text()].capacity > 0:
+                    if self.generators[self.order.item(i).text()].capacity > 0:
                         adjustin.append([self.order.item(i).text(),
-                                        generators[self.order.item(i).text()].capacity])
+                                        self.generators[self.order.item(i).text()].capacity])
                 adjust = Adjustments(adjustin, self.adjustby)
                 adjust.exec_()
                 self.adjustby = adjust.getValues()
@@ -1075,11 +1121,11 @@ class powerMatch(QtGui.QWidget):
                     ns.cell(row=cf_row, column=col).number_format = '#,##0.00'
                     ss.cell(row=ss_row, column=4).value = '=Detail!' + ss_col(col) + str(cf_row)
                     ss.cell(row=ss_row, column=4).number_format = '#,##0.00'
-                    if tech_names[i] not in generators:
+                    if tech_names[i] not in self.generators:
                         continue
-                    if generators[tech_names[i]].lcoe > 0:
-                        ns.cell(row=cost_row, column=col).value = generators[tech_names[i]].lcoe * \
-                                generators[tech_names[i]].lcoe_cf * 8760 * re_capacities[i]
+                    if self.generators[tech_names[i]].lcoe > 0:
+                        ns.cell(row=cost_row, column=col).value = self.generators[tech_names[i]].lcoe * \
+                                self.generators[tech_names[i]].lcoe_cf * 8760 * re_capacities[i]
                         ns.cell(row=cost_row, column=col).number_format = '$#,##0'
                         ss.cell(row=ss_row, column=5).value = '=Detail!' + ss_col(col) + str(cost_row)
                         ss.cell(row=ss_row, column=5).number_format = '$#,##0'
@@ -1089,9 +1135,9 @@ class powerMatch(QtGui.QWidget):
                         ns.cell(row=lcoe_row, column=col).number_format = '$#,##0.00'
                         ss.cell(row=ss_row, column=6).value = '=Detail!' + ss_col(col) + str(lcoe_row)
                         ss.cell(row=ss_row, column=6).number_format = '$#,##0.00'
-                    if generators[tech_names[i]].emissions > 0:
+                    if self.generators[tech_names[i]].emissions > 0:
                         ns.cell(row=emi_row, column=col).value = '=' + ss_col(col) + str(sum_row) \
-                                + '*' + str(generators[tech_names[i]].emissions)
+                                + '*' + str(self.generators[tech_names[i]].emissions)
                         ns.cell(row=emi_row, column=col).number_format = '#,##0'
                         ss.cell(row=ss_row, column=7).value = '=Detail!' + ss_col(col) + str(emi_row)
                         ss.cell(row=ss_row, column=7).number_format = '#,##0'
@@ -1154,40 +1200,40 @@ class powerMatch(QtGui.QWidget):
         self.progressbar.setValue(3)
         for gen in order:
             try:
-                capacity = generators[gen].capacity * self.adjustby[gen]
+                capacity = self.generators[gen].capacity * self.adjustby[gen]
             except:
-                capacity = generators[gen].capacity
-            if generators[gen].constraint in constraints and \
-              constraints[generators[gen].constraint].category == 'Storage': # storage
+                capacity = self.generators[gen].capacity
+            if self.generators[gen].constraint in self.constraints and \
+              self.constraints[self.generators[gen].constraint].category == 'Storage': # storage
                 storage = [0., 0., 0., 0.] # capacity, initial, min level, max drain
                 storage[0] = capacity
                 if not summ_only:
                     ns.cell(row=cap_row, column=col).value = round(capacity, 2)
                     ns.cell(row=cap_row, column=col).number_format = '#,##0.00'
-                storage[1] = generators[gen].initial
-                if constraints[generators[gen].constraint].capacity_min > 0:
-                    storage[2] = capacity * constraints[generators[gen].constraint].capacity_min
-                if constraints[generators[gen].constraint].capacity_max > 0:
-                    storage[3] = capacity * constraints[generators[gen].constraint].capacity_max
+                storage[1] = self.generators[gen].initial
+                if self.constraints[self.generators[gen].constraint].capacity_min > 0:
+                    storage[2] = capacity * self.constraints[self.generators[gen].constraint].capacity_min
+                if self.constraints[self.generators[gen].constraint].capacity_max > 0:
+                    storage[3] = capacity * self.constraints[self.generators[gen].constraint].capacity_max
                 else:
                     storage[3] = capacity
                 recharge = [0., 0.] # cap, loss
-                if constraints[generators[gen].constraint].recharge_max > 0:
-                    recharge[0] = capacity * constraints[generators[gen].constraint].recharge_max
+                if self.constraints[self.generators[gen].constraint].recharge_max > 0:
+                    recharge[0] = capacity * self.constraints[self.generators[gen].constraint].recharge_max
                 else:
                     recharge[0] = capacity
-                if constraints[generators[gen].constraint].recharge_loss > 0:
-                    recharge[1] = constraints[generators[gen].constraint].recharge_loss
+                if self.constraints[self.generators[gen].constraint].recharge_loss > 0:
+                    recharge[1] = self.constraints[self.generators[gen].constraint].recharge_loss
                 discharge = [0., 0.] # cap, loss
-                if constraints[generators[gen].constraint].discharge_max > 0:
-                    discharge[0] = capacity * constraints[generators[gen].constraint].discharge_max
-                if constraints[generators[gen].constraint].discharge_loss > 0:
-                    discharge[1] = constraints[generators[gen].constraint].discharge_loss
-                if constraints[generators[gen].constraint].parasitic_loss > 0:
-                    parasite = constraints[generators[gen].constraint].parasitic_loss / 24.
+                if self.constraints[self.generators[gen].constraint].discharge_max > 0:
+                    discharge[0] = capacity * self.constraints[self.generators[gen].constraint].discharge_max
+                if self.constraints[self.generators[gen].constraint].discharge_loss > 0:
+                    discharge[1] = self.constraints[self.generators[gen].constraint].discharge_loss
+                if self.constraints[self.generators[gen].constraint].parasitic_loss > 0:
+                    parasite = self.constraints[self.generators[gen].constraint].parasitic_loss / 24.
                 else:
                     parasite = 0.
-                storage_carry = storage[1] # generators[gen].initial
+                storage_carry = storage[1] # self.generators[gen].initial
                 if not summ_only:
                     ns.cell(row=ini_row, column=col).value = round(storage_carry, 2)
                     ns.cell(row=ini_row, column=col).number_format = '#,##0.00'
@@ -1289,15 +1335,15 @@ class powerMatch(QtGui.QWidget):
                 gen = sp_data[sp][0]
                 if gen in tech_names:
                     re_sum += sp_data[sp][2]
-                if gen not in generators:
+                if gen not in self.generators:
                     continue
-                if generators[gen].lcoe > 0:
-                    sp_data[sp][4] = generators[gen].lcoe * generators[gen].lcoe_cf * 8760 * sp_data[sp][1]
+                if self.generators[gen].lcoe > 0:
+                    sp_data[sp][4] = self.generators[gen].lcoe * self.generators[gen].lcoe_cf * 8760 * sp_data[sp][1]
                     if sp_data[sp][1] > 0 and sp_data[sp][3] > 0:
                         sp_data[sp][5] = sp_data[sp][4] / 8760 / sp_data[sp][3] / sp_data[sp][1]
                     cost_sum += sp_data[sp][4]
-                if generators[gen].emissions > 0:
-                    sp_data[sp][6] = sp_data[sp][2] * generators[gen].emissions
+                if self.generators[gen].emissions > 0:
+                    sp_data[sp][6] = sp_data[sp][2] * self.generators[gen].emissions
                     co2_sum += sp_data[sp][6]
             if cap_sum > 0:
                 cs = gen_sum / cap_sum / 8760
@@ -1378,13 +1424,13 @@ class powerMatch(QtGui.QWidget):
             ss.cell(row=ss_row, column=3).number_format = '#,##0'
             ss.cell(row=ss_row, column=4).value = '=Detail!' + ss_col(col) + str(cf_row)
             ss.cell(row=ss_row, column=4).number_format = '#,##0.00'
-            if generators[gen].lcoe > 0:
+            if self.generators[gen].lcoe > 0:
                 try:
-                    capacity = generators[gen].capacity * self.adjustby[gen]
+                    capacity = self.generators[gen].capacity * self.adjustby[gen]
                 except:
-                   capacity = generators[gen].capacity
-                ns.cell(row=cost_row, column=col).value = generators[gen].lcoe * \
-                        generators[gen].lcoe_cf * 8760 * capacity
+                   capacity = self.generators[gen].capacity
+                ns.cell(row=cost_row, column=col).value = self.generators[gen].lcoe * \
+                        self.generators[gen].lcoe_cf * 8760 * capacity
                 ns.cell(row=cost_row, column=col).number_format = '$#,##0'
                 ss.cell(row=ss_row, column=5).value = '=Detail!' + ss_col(col) + str(cost_row)
                 ss.cell(row=ss_row, column=5).number_format = '$#,##0'
@@ -1394,9 +1440,9 @@ class powerMatch(QtGui.QWidget):
                 ns.cell(row=lcoe_row, column=col).number_format = '$#,##0.00'
                 ss.cell(row=ss_row, column=6).value = '=Detail!' + ss_col(col) + str(lcoe_row)
                 ss.cell(row=ss_row, column=6).number_format = '$#,##0.00'
-            if generators[gen].emissions > 0:
+            if self.generators[gen].emissions > 0:
                 ns.cell(row=emi_row, column=col).value = '=' + ss_col(col) + str(sum_row) \
-                        + '*' + str(generators[gen].emissions)
+                        + '*' + str(self.generators[gen].emissions)
                 ns.cell(row=emi_row, column=col).number_format = '#,##0'
                 ss.cell(row=ss_row, column=7).value = '=Detail!' + ss_col(col) + str(emi_row)
                 ss.cell(row=ss_row, column=7).number_format = '#,##0'
@@ -1404,7 +1450,7 @@ class powerMatch(QtGui.QWidget):
                     vertical='bottom', horizontal='center')
             ns.cell(row=what_row, column=col + 1).alignment = oxl.styles.Alignment(wrap_text=True,
                     vertical='bottom', horizontal='center')
-            if constraints[generators[gen].constraint].category == 'Storage':
+            if self.constraints[self.generators[gen].constraint].category == 'Storage':
                 ns.cell(row=what_row, column=col + 1).value = gen + '\nBalance'
                 ns.cell(row=what_row, column=col + 2).value = 'After\n' + gen
                 ns.cell(row=what_row, column=col + 2).alignment = oxl.styles.Alignment(wrap_text=True,
@@ -1611,22 +1657,37 @@ class powerMatch(QtGui.QWidget):
             # Return the chromsome of the winner
             return population[winner, :]
 
-        def breed_by_crossover(parent_1, parent_2):
+        def breed_by_crossover(parent_1, parent_2, points=2):
             # Get length of chromosome
             chromosome_length = len(parent_1)
 
             # Pick crossover point, avoding ends of chromsome
-            crossover_point = random.randint(1,chromosome_length-1)
-
+            if points == 1:
+                crossover_point = random.randint(1,chromosome_length-1)
             # Create children. np.hstack joins two arrays
-            child_1 = np.hstack((parent_1[0:crossover_point],
-                                parent_2[crossover_point:]))
-
-            child_2 = np.hstack((parent_2[0:crossover_point],
-                                parent_1[crossover_point:]))
-
+                child_1 = np.hstack((parent_1[0:crossover_point],
+                                     parent_2[crossover_point:]))
+                child_2 = np.hstack((parent_2[0:crossover_point],
+                                     parent_1[crossover_point:]))
+            else: # only do 2 at this    stage
+                crossover_point_1 = random.randint(1, chromosome_length - 2)
+                crossover_point_2 = random.randint(crossover_point_1 + 1, chromosome_length - 1)
+                child_1 = np.hstack((parent_1[0:crossover_point_1],
+                                     parent_2[crossover_point_1:crossover_point_2],
+                                     parent_1[crossover_point_2:]))
+                child_2 = np.hstack((parent_2[0:crossover_point_1],
+                                     parent_1[crossover_point_1:crossover_point_2],
+                                     parent_2[crossover_point_2:]))
             # Return children
             return child_1, child_2
+
+        def randomly_mutate_population(population, mutation_probability):
+            # Apply random mutation
+            random_mutation_array = np.random.random(size=(population.shape))
+            random_mutation_boolean = random_mutation_array <= mutation_probability
+            population[random_mutation_boolean] = np.logical_not(population[random_mutation_boolean])
+            # Return mutation population
+            return population
 
         def calculate_fitness(population):
             fitness_scores = []
@@ -1648,34 +1709,34 @@ class powerMatch(QtGui.QWidget):
                             op_data[-1][2] += g
                             shortfall[h] = shortfall[h] - g
                         continue
-                    if generators[gen].constraint in constraints and \
-                      constraints[generators[gen].constraint].category == 'Storage': # storage
+                    if self.generators[gen].constraint in self.constraints and \
+                      self.constraints[self.generators[gen].constraint].category == 'Storage': # storage
                         storage = [0., 0., 0., 0.] # capacity, initial, min level, max drain
                         storage[0] = capacity
-                        storage[1] = generators[gen].initial
-                        if constraints[generators[gen].constraint].capacity_min > 0:
-                            storage[2] = capacity * constraints[generators[gen].constraint].capacity_min
-                        if constraints[generators[gen].constraint].capacity_max > 0:
-                            storage[3] = capacity * constraints[generators[gen].constraint].capacity_max
+                        storage[1] = self.generators[gen].initial
+                        if self.constraints[self.generators[gen].constraint].capacity_min > 0:
+                            storage[2] = capacity * self.constraints[self.generators[gen].constraint].capacity_min
+                        if self.constraints[self.generators[gen].constraint].capacity_max > 0:
+                            storage[3] = capacity * self.constraints[self.generators[gen].constraint].capacity_max
                         else:
                             storage[3] = capacity
                         recharge = [0., 0.] # cap, loss
-                        if constraints[generators[gen].constraint].recharge_max > 0:
-                            recharge[0] = capacity * constraints[generators[gen].constraint].recharge_max
+                        if self.constraints[self.generators[gen].constraint].recharge_max > 0:
+                            recharge[0] = capacity * self.constraints[self.generators[gen].constraint].recharge_max
                         else:
                             recharge[0] = capacity
-                        if constraints[generators[gen].constraint].recharge_loss > 0:
-                            recharge[1] = constraints[generators[gen].constraint].recharge_loss
+                        if self.constraints[self.generators[gen].constraint].recharge_loss > 0:
+                            recharge[1] = self.constraints[self.generators[gen].constraint].recharge_loss
                         discharge = [0., 0.] # cap, loss
-                        if constraints[generators[gen].constraint].discharge_max > 0:
-                            discharge[0] = capacity * constraints[generators[gen].constraint].discharge_max
-                        if constraints[generators[gen].constraint].discharge_loss > 0:
-                            discharge[1] = constraints[generators[gen].constraint].discharge_loss
-                        if constraints[generators[gen].constraint].parasitic_loss > 0:
-                            parasite = constraints[generators[gen].constraint].parasitic_loss / 24.
+                        if self.constraints[self.generators[gen].constraint].discharge_max > 0:
+                            discharge[0] = capacity * self.constraints[self.generators[gen].constraint].discharge_max
+                        if self.constraints[self.generators[gen].constraint].discharge_loss > 0:
+                            discharge[1] = self.constraints[self.generators[gen].constraint].discharge_loss
+                        if self.constraints[self.generators[gen].constraint].parasitic_loss > 0:
+                            parasite = self.constraints[self.generators[gen].constraint].parasitic_loss / 24.
                         else:
                             parasite = 0.
-                        storage_carry = storage[1] # generators[gen].initial
+                        storage_carry = storage[1] # self.generators[gen].initial
                         storage_bal = []
                         storage_can = 0.
                         for row in range(8760):
@@ -1710,15 +1771,20 @@ class powerMatch(QtGui.QWidget):
                                 storage_can += can_use
                         op_data.append([gen, storage[0], storage_can, '', '', '', ''])
                     else:
+                        gen_max_cap = 0
                         gen_can = 0.
-                        for row in range(8760):
-                            if shortfall[row] >= 0: # shortfall?
-                                if shortfall[row] >= capacity:
-                                    shortfall[row] = shortfall[row] - capacity
-                                    gen_can += capacity
-                                else:
-                                    gen_can += shortfall[row]
-                                    shortfall[row] = 0
+                        if capacity > 0:
+                            for row in range(8760):
+                                if shortfall[row] >= 0: # shortfall?
+                                    if shortfall[row] >= capacity:
+                                        shortfall[row] = shortfall[row] - capacity
+                                        gen_can += capacity
+                                        gen_max_cap = capacity
+                                    else:
+                                        gen_can += shortfall[row]
+                                        if shortfall[row] > gen_max_cap:
+                                            gen_max_cap = shortfall[row]
+                                        shortfall[row] = 0
                         op_data.append([gen, capacity, gen_can, '', '', '', ''])
                 cap_sum = 0.
                 gen_sum = 0.
@@ -1733,15 +1799,15 @@ class powerMatch(QtGui.QWidget):
                     gen = op_data[sp][0]
                     if gen in orig_tech.keys():
                         re_sum += op_data[sp][2]
-                    if gen not in generators:
+                    if gen not in self.generators:
                         continue
-                    if generators[gen].lcoe > 0:
-                        op_data[sp][4] = generators[gen].lcoe * generators[gen].lcoe_cf * 8760 * op_data[sp][1]
+                    if self.generators[gen].lcoe > 0:
+                        op_data[sp][4] = self.generators[gen].lcoe * self.generators[gen].lcoe_cf * 8760 * op_data[sp][1]
                         if op_data[sp][1] > 0 and op_data[sp][3] > 0:
                             op_data[sp][5] = op_data[sp][4] / 8760 / op_data[sp][3] / op_data[sp][1]
                         cost_sum += op_data[sp][4]
-                    if generators[gen].emissions > 0:
-                        op_data[sp][6] = op_data[sp][2] * generators[gen].emissions
+                    if self.generators[gen].emissions > 0:
+                        op_data[sp][6] = op_data[sp][2] * self.generators[gen].emissions
                         co2_sum += op_data[sp][6]
                 if cap_sum > 0:
                     cs = gen_sum / cap_sum / 8760
@@ -1794,44 +1860,47 @@ class powerMatch(QtGui.QWidget):
         self.optExit = False
         self.log.setText('Optimise processing started')
         details = self.details
-        try:
-            if str(self.files[C].text()).find('/') >= 0:
-                ts = xlrd.open_workbook(str(self.files[C].text()))
-            else:
-                ts = xlrd.open_workbook(self.scenarios + str(self.files[C].text()))
-            ws = ts.sheet_by_name(self.sheets[C].currentText())
-            constraints = self.getConstraints(ws)
-            ts.release_resources()
-            del ts
-        except:
-            self.log.setText('Error accessing Constraints.')
-            return
-        try:
-            if str(self.files[G].text()).find('/') >= 0:
-                ts = xlrd.open_workbook(str(self.files[G].text()))
-            else:
-                ts = xlrd.open_workbook(self.scenarios + str(self.files[G].text()))
-            ws = ts.sheet_by_name(self.sheets[G].currentText())
-            generators = self.getGenerators(ws)
-            ts.release_resources()
-            del ts
-        except:
-            self.log.setText('Error accessing Generators.')
-            self.progressbar.setHidden(True)
-            return
-        try:
-            if str(self.files[O].text()).find('/') >= 0:
-                ts = xlrd.open_workbook(str(self.files[O].text()))
-            else:
-                ts = xlrd.open_workbook(self.scenarios + str(self.files[O].text()))
-            ws = ts.sheet_by_name(self.sheets[O].currentText())
-            optimisation = self.getoptimisation(ws, generators)
-            ts.release_resources()
-            del ts
-        except:
-            self.log.setText('Error accessing Optimisation.')
-            self.progressbar.setHidden(True)
-            return
+        if self.constraints is None:
+            try:
+                if str(self.files[C].text()).find('/') >= 0:
+                    ts = xlrd.open_workbook(str(self.files[C].text()))
+                else:
+                    ts = xlrd.open_workbook(self.scenarios + str(self.files[C].text()))
+                ws = ts.sheet_by_name(self.sheets[C].currentText())
+                self.getConstraints(ws)
+                ts.release_resources()
+                del ts
+            except:
+                self.log.setText('Error accessing Constraints.')
+                return
+        if self.generators is None:
+            try:
+                if str(self.files[G].text()).find('/') >= 0:
+                    ts = xlrd.open_workbook(str(self.files[G].text()))
+                else:
+                    ts = xlrd.open_workbook(self.scenarios + str(self.files[G].text()))
+                ws = ts.sheet_by_name(self.sheets[G].currentText())
+                self.getGenerators(ws)
+                ts.release_resources()
+                del ts
+            except:
+                self.log.setText('Error accessing Generators.')
+                self.progressbar.setHidden(True)
+                return
+        if self.optimisation is None:
+            try:
+                if str(self.files[O].text()).find('/') >= 0:
+                    ts = xlrd.open_workbook(str(self.files[O].text()))
+                else:
+                    ts = xlrd.open_workbook(self.scenarios + str(self.files[O].text()))
+                ws = ts.sheet_by_name(self.sheets[O].currentText())
+                self.getoptimisation(ws)
+                ts.release_resources()
+                del ts
+            except:
+                self.log.setText('Error accessing Optimisation.')
+                self.progressbar.setHidden(True)
+                return
         if str(self.files[D].text()).find('/') >= 0:
             pm_data_file = str(self.files[D].text())
         else:
@@ -1871,37 +1940,52 @@ class powerMatch(QtGui.QWidget):
         optLoad.setDecimals(3)
         optLoad.setSingleStep(.1)
         optLoad.setValue(1)
-        grid.addWidget(optLoad, 0, 1)
-        grid.addWidget(QtGui.QLabel('Multiplier for input Load'), 0, 2)
-        grid.addWidget(QtGui.QLabel('Population size'), 1, 0)
+        rw = 0
+        grid.addWidget(optLoad, rw, 1)
+        grid.addWidget(QtGui.QLabel('Multiplier for input Load'), rw, 2)
+        rw += 1
+        grid.addWidget(QtGui.QLabel('Population size'), rw, 0)
         optPopn = QtGui.QSpinBox()
         optPopn.setRange(10, 500)
         optPopn.setSingleStep(10)
         optPopn.setValue(self.optimise_population)
         optPopn.valueChanged.connect(self.changes)
-        grid.addWidget(optPopn, 1, 1)
-        grid.addWidget(QtGui.QLabel('Size of population'), 1, 2)
-        grid.addWidget(QtGui.QLabel('No. of generations'), 2, 0)
+        grid.addWidget(optPopn, rw, 1)
+        grid.addWidget(QtGui.QLabel('Size of population'), rw, 2)
+        rw += 1
+        grid.addWidget(QtGui.QLabel('No. of generations'), rw, 0)
         optGenn = QtGui.QSpinBox()
-        optGenn.setRange(10, 200)
+        optGenn.setRange(10, 500)
         optGenn.setSingleStep(10)
         optGenn.setValue(self.optimise_generations)
         optGenn.valueChanged.connect(self.changes)
-        grid.addWidget(optGenn, 2, 1)
-        grid.addWidget(QtGui.QLabel('Number of generations (iterations)'), 2, 2)
-        grid.addWidget(QtGui.QLabel('Exit if stable'), 3, 0)
+        grid.addWidget(optGenn, rw, 1)
+        grid.addWidget(QtGui.QLabel('Number of generations (iterations)'), rw, 2)
+        rw += 1
+        grid.addWidget(QtGui.QLabel('Mutation probability'), rw, 0)
+        optMutn = QtGui.QDoubleSpinBox()
+        optMutn.setRange(0, 1)
+        optMutn.setDecimals(4)
+        optMutn.setSingleStep(0.001)
+        optMutn.setValue(self.optimise_mutation)
+        optMutn.valueChanged.connect(self.changes)
+        grid.addWidget(optMutn, rw, 1)
+        grid.addWidget(QtGui.QLabel('Add in mutation'), rw, 2)
+        rw += 1
+        grid.addWidget(QtGui.QLabel('Exit if stable'), rw, 0)
         optStop = QtGui.QSpinBox()
         optStop.setRange(0, 50)
         optStop.setSingleStep(10)
         optStop.setValue(self.optimise_stop)
         optStop.valueChanged.connect(self.changes)
-        grid.addWidget(optStop, 3, 1)
-        grid.addWidget(QtGui.QLabel('Exit if LCOE remains the same after this many iterations'), 3, 2)
+        grid.addWidget(optStop, rw, 1)
+        grid.addWidget(QtGui.QLabel('Exit if LCOE remains the same after this many iterations'), rw, 2)
+        rw += 1
         quit = QtGui.QPushButton('Quit', self)
-        grid.addWidget(quit, 4, 0)
+        grid.addWidget(quit, rw, 0)
         quit.clicked.connect(optQuitClicked)
         show = QtGui.QPushButton('Proceed', self)
-        grid.addWidget(show, 4, 1)
+        grid.addWidget(show, rw, 1)
         show.clicked.connect(optDialog.close)
         optDialog.setLayout(grid)
         optDialog.setWindowTitle('Choose Optimisation Parameters')
@@ -1939,19 +2023,19 @@ class powerMatch(QtGui.QWidget):
         for itm in range(self.order.count()):
             tech = str(self.order.item(itm).text())
             if tech not in dict_order.keys():
-                dict_order[tech] = [generators[tech].capacity, 0, 0, 0]
+                dict_order[tech] = [self.generators[tech].capacity, 0, 0, 0]
         capacities = []
         for tech in dict_order.keys():
             dict_order[tech][1] = len(capacities) # first entry
-            if optimisation[tech].approach == 'Discrete':
-                capacities.extend(optimisation[tech].capacities)
+            if self.optimisation[tech].approach == 'Discrete':
+                capacities.extend(self.optimisation[tech].capacities)
                 dict_order[tech][2] = len(capacities) # last entry
-            elif optimisation[tech].approach == 'Range':
-                ctr = int((optimisation[tech].capacity_max - optimisation[tech].capacity_min) / \
-                          optimisation[tech].capacity_step)
-                capacities.extend([optimisation[tech].capacity_step] * ctr)
+            elif self.optimisation[tech].approach == 'Range':
+                ctr = int((self.optimisation[tech].capacity_max - self.optimisation[tech].capacity_min) / \
+                          self.optimisation[tech].capacity_step)
+                capacities.extend([self.optimisation[tech].capacity_step] * ctr)
                 dict_order[tech][2] = len(capacities)
-                dict_order[tech][3] = optimisation[tech].capacity_min
+                dict_order[tech][3] = self.optimisation[tech].capacity_min
             else:
                 dict_order[tech][2] = len(capacities)
         # chromosome = [1] * int(len(capacities) / 2) + [0] * (len(capacities) - int(len(capacities) / 2))
@@ -1968,10 +2052,12 @@ class powerMatch(QtGui.QWidget):
         op_load_tot = sum(op_load)
         # Set general parameters
         chromosome_length = len(capacities)
+        print(chromosome_length, pow(2, chromosome_length))
         self.optimise_population = optPopn.value()
         population_size = self.optimise_population
         self.optimise_generations = optGenn.value()
         maximum_generation = self.optimise_generations
+        self.optimise_mutation = optMutn.value()
         self.optimise_stop = optStop.value()
         best_score_progress = [] # Tracks progress
         target = 0. # aim for this LCOE
@@ -1992,13 +2078,14 @@ class powerMatch(QtGui.QWidget):
         lcoe_ctr = 1
         # Add starting best score to progress tracker
         best_score_progress.append(best_score)
+        ud = '='
         # Now we'll go through the generations of genetic algorithm
         for generation in range(maximum_generation):
             tim = (time.time() - start_time)
             if tim < 60:
-                tim = ' (%.1f secs)' % tim
+                tim = ' ( %s $%.2f ; %.1f secs)' % (ud, best_score, tim)
             else:
-                tim = ' (%.2f mins)' % (tim / 60.)
+                tim = ' ( %s $%.2f ; %.2f mins)' % (ud, best_score, tim / 60.)
             self.opt_progressbar.emit(QtCore.SIGNAL('progress'), generation,
                 'Processing generation ' + str(generation) + tim)
             QtGui.qApp.processEvents()
@@ -2016,7 +2103,8 @@ class powerMatch(QtGui.QWidget):
 
             # Replace the old population with the new one
             population = np.array(new_population)
-
+            if self.optimise_mutation > 0:
+                population = randomly_mutate_population(population, self.optimise_mutation)
             # Score best solution, and add to tracker
             scores = calculate_fitness(population)
             best_score = np.min(scores)
@@ -2033,6 +2121,12 @@ class powerMatch(QtGui.QWidget):
                 else:
                     lcoe_value = best_score
                     lcoe_ctr = 1
+            if best_score == best_score_progress[-2]:
+                ud = '='
+            elif best_score < best_score_progress[-2]:
+                ud = 'v'
+            else:
+                ud = '^'
         self.opt_progressbar.setVisible(False)
         self.opt_progressbar.close()
         tim = (time.time() - start_time)

@@ -1598,7 +1598,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>file_choices</dfn></td>
-<td class="none">How many files to keep in a recent history list</td>
+<td class="none">How many files to keep in a recent history list. The default is 10</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>file_history</dfn></td>
@@ -1673,6 +1673,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">File name for Powermatch input (data) spreadsheet</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>generators_details</dfn></td>
+<td class="none">Either show details for each generator technology (True) or just show a summary (False). This displays a summary on how generator capacity was adjusted from the base data inputs. Default is True</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>generators_file</dfn></td>
 <td class="none">File name for generators (facilities) spreadsheet</td>
 </tr>
@@ -1680,7 +1684,6 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none"><dfn>generators_sheet</dfn></td>
 <td class="none">Worksheet name for generators (facilities) table</td>
 </tr>
-
 <tr class="none">
 <td class="none"><dfn>optimisation_file</dfn></td>
 <td class="none">File name for optimisation spreadsheet</td>
@@ -1688,6 +1691,14 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <tr class="none">
 <td class="none"><dfn>optimisation_sheet</dfn></td>
 <td class="none">Worksheet name for optimisation table</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>optimise_generations</dfn></td>
+<td class="none">Number of generations (iterations) for optimisation. The value can be between 10 and 500, with a default of 20</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>optimise_mutation</dfn></td>
+<td class="none">Mutation probability. Introducing a level of mutation prevents the population being restricted to the initial population set. The value can be between 0 and 1, with a default of 0.005</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>optimise_population</dfn></td>
@@ -2896,6 +2907,7 @@ The program displays a window of options:
 <li><strong>Optimise</strong>. Invoke the Optimise function. This will use an iterative approach to optimise the input generator capacities to produce a solution with a lower overall LCOE. It will complete by displaying a plot of how the value for LCOE has converged to a minimum. Exiting the plot will then a summary table. It will also update the adjustment values for each generator to enable you to produce a Powermatch spreadsheet. See below for more details</li>
 <li><strong>Help</strong>. Display the Powermatch help</li>
 </ul>
+<p>The Constraints, Generators and Optimisation tables can be edited, updated and saved and the revised table(s) used as inputs for the <strong>Powermatch</strong>, <strong>Summary</strong> and <strong>Optimise</strong> options. During the edit process the revised values can be exported as a new spreadsheet. If the table(s) is saved but not exported the revised values will not be available once Powermatch is exited.</p>
 <h4>Constraints</h4>
 <p>Utilisation of each generator by Powermatch can be constrained by specifying a number of constraints. All figures are expressed as a percentage. In the tables the values will be displayed as a decimal fraction (0.00 to 1.00). All figures are hourly except for Parasitic Loss which is daily. The constraints are:
 <table border="0" class="none">
@@ -2931,6 +2943,7 @@ The program displays a window of options:
 <li>A chromosome. This is a series of &ldquo;switches&rdquo; with each switch representing whether a unit of technology is to be included in this iteration of Powermatch. The format of the chromosome is defined by the Optimisation table. In creating the chromosome each technology will be assigned a number of switches representing either a discrete unit of technology or a proportion of the total capacity for that technology</li>
 <li>Population size. Each member of the population has a chromsome made up of switches that are randomly on or off. The greater the population size the greater the chance that the initial state of the population will contain a chromosome representing the optimal solution, but the longer the optimisation process will take (<em>optimisation_population</em>)</li>
 <li>Number of generations (iterations). For each generation a competition is held between (each of two) members to identify which has the preferred characteristics, in this case lowest LCOE. The winners are then used to generate the next generation. The greater the number of generations the better chance the solutions will converge to an optimum value, but the longer the optimisation process will take (<em>optimisation_generations</em>)</li>
+<li>A probability of mutation. This is a genetic operator used to maintain genetic diversity from one generation of a population to the next. The solution may change entirely from the previous solution and come to a better solution. This probability should be set low. If it is set too high, the search will turn into a primitive random search.(<em>optimisation_mutation)</em>)</li>
 <li>A stop option. To reduce the number of iterations it is possible to terminate the optimisation if there appears to be no change to the solution after a specified number of generations. The downside is that the optimisation may not have evolved on the correct path (<em>optimisation_stop</em>)</li>
 </ul>
 <p>Powermatch optimisation approach:
@@ -2946,6 +2959,7 @@ The program displays a window of options:
 <ol>
 <li>Select the best parents by competition</li>
 <li>Breed new population by random crossover of chromosomes for winners</li>
+<li>Randomly mutate the population</li>
 <li>Calculate fitness of population. Select lowest LCOE that meets 100% of load (demand)</li>
 </ol>
 <li>Produce table for best candidate</li>
