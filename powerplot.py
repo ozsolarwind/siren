@@ -143,8 +143,6 @@ class PowerPlot(QtGui.QWidget):
         imax = 0
         self.alpha = 0.25
         self.target = ''
-        ititle = ''
-        icum = True
         self.history = None
         self.max_files = 10
         ifiles = {}
@@ -157,15 +155,16 @@ class PowerPlot(QtGui.QWidget):
             for key, value in items:
                 if key == 'file_history':
                     self.history = value.split(',')
-                if key == 'file_choices':
+                elif key == 'file_choices':
                     self.max_files = int(value)
                 elif key[:4] == 'file':
                     ifiles[key[4:]] = value.replace('$USER$', getUser())
         except:
             pass
-        if self.history is None:
-            self.history = sorted(ifiles.keys(), reverse=True)
-        ifile = ifiles[self.history[0]]
+        if len(ifiles) > 0:
+            if self.history is None:
+                self.history = sorted(ifiles.keys(), reverse=True)
+            ifile = ifiles[self.history[0]]
         matplotlib.rcParams['savefig.directory'] = os.getcwd()
         self.grid = QtGui.QGridLayout()
         self.updated = False
@@ -174,7 +173,8 @@ class PowerPlot(QtGui.QWidget):
         rw = 0
         self.grid.addWidget(QtGui.QLabel('Recent Files:'), rw, 0)
         self.files = QtGui.QComboBox()
-        self.popfileslist(ifile, ifiles)
+        if ifile != '':
+            self.popfileslist(ifile, ifiles)
         self.grid.addWidget(self.files, rw, 1, 1, 5)
         rw += 1
         self.grid.addWidget(QtGui.QLabel('File:'), rw, 0)
@@ -214,8 +214,7 @@ class PowerPlot(QtGui.QWidget):
         rw += 1
         self.grid.addWidget(QtGui.QLabel('Cumulative:'), rw, 0)
         self.cumulative = QtGui.QCheckBox()
-        if icum:
-            self.cumulative.setCheckState(QtCore.Qt.Checked)
+        self.cumulative.setCheckState(QtCore.Qt.Checked)
         self.grid.addWidget(self.cumulative, rw, 1, 1, 2)
         self.grid.addWidget(QtGui.QLabel('(Check for hourly generation profile)'), rw, 3, 1, 3)
         rw += 1
@@ -225,7 +224,8 @@ class PowerPlot(QtGui.QWidget):
         self.ignore = ThumbListWidget(self)
         self.grid.addWidget(self.ignore, rw, 3, 1, 2)
         self.grid.addWidget(QtGui.QLabel(' '), rw, 5)
-        self.get_file_config(self.history[0])
+        if ifile != '':
+            self.get_file_config(self.history[0])
         self.files.currentIndexChanged.connect(self.filesChanged)
         self.connect(self.file, QtCore.SIGNAL('clicked()'), self.fileChanged)
         self.period.currentIndexChanged.connect(self.somethingChanged)
@@ -292,7 +292,7 @@ class PowerPlot(QtGui.QWidget):
                         columns.append(bit)
                 elif key == 'cumulative' + choice:
                     if value.lower() in ['false', 'no', 'off']:
-                        self.cumulative.setCheckState(QtCore.Qt.UnChecked)
+                        self.cumulative.setCheckState(QtCore.Qt.Unchecked)
                     else:
                         self.cumulative.setCheckState(QtCore.Qt.Checked)
                 elif key == 'file' + choice:
@@ -340,16 +340,20 @@ class PowerPlot(QtGui.QWidget):
              ifiles = {}
              for i in range(self.files.count()):
                  ifiles[self.history[i]] = self.files.itemText(i)
-        for i in range(len(self.history)):
-            if ifile == ifiles[self.history[i]]:
-                self.history.insert(0, self.history.pop(i)) # make this entry first
-                break
+        if self.history is None:
+            self.history = ['']
+            ifiles = {'': ifile}
         else:
-            if len(self.history) >= self.max_files:
-                self.history.insert(0, self.history.pop(-1)) # make last entry first
+            for i in range(len(self.history)):
+                if ifile == ifiles[self.history[i]]:
+                    self.history.insert(0, self.history.pop(i)) # make this entry first
+                    break
             else:
-                self.history.insert(0, str(len(self.history)))
-            ifiles[self.history[0]] = ifile
+                if len(self.history) >= self.max_files:
+                    self.history.insert(0, self.history.pop(-1)) # make last entry first
+                else:
+                    self.history.insert(0, str(len(self.history)))
+                ifiles[self.history[0]] = ifile
         self.files.clear()
         for i in range(len(self.history)):
             self.files.addItem(ifiles[self.history[i]])
@@ -524,15 +528,12 @@ class PowerPlot(QtGui.QWidget):
         if self.updated:
             config = configparser.RawConfigParser()
             config.read(self.config_file)
-            items = config.items('Powerplot')
             choice = self.history[0]
             save_file = str(self.file.text()).replace(getUser(), '$USER$')
-            for key, value in items:
-                if key == 'file_choices':
-                    try:
-                        self.max_files = int(value)
-                    except:
-                        pass
+            try:
+                self.max_files = int(config.get('Powerplot', 'file_choices'))
+            except:
+                pass
             lines = []
             if len(self.history) > 0:
                 line = ''
@@ -575,7 +576,7 @@ class PowerPlot(QtGui.QWidget):
         dialr.exec_()
         self.colours = {}
         config = configparser.RawConfigParser()
-        config.read(config_file)
+        config.read(self.config_file)
         try:
             colours = config.items('Plot Colors')
             for item, colour in colours:
@@ -646,7 +647,7 @@ class PowerPlot(QtGui.QWidget):
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
             config = configparser.RawConfigParser()
-            config.read(config_file)
+            config.read(self.config_file)
         else:
             config = None
         for c in range(self.order.count()):
@@ -708,6 +709,9 @@ class PowerPlot(QtGui.QWidget):
             label = []
             maxy = 0
             titl = self.title.text().replace('$YEAR$', str(year))
+            titl = titl.replace('$MTH$', '')
+            titl = titl.replace('$MONTH$', '')
+            titl = titl.replace('  ', '')
             for c in range(self.order.count()):
                 col = str(self.order.item(c).text())
                 for c2 in range(2, ws.ncols):
@@ -832,6 +836,9 @@ class PowerPlot(QtGui.QWidget):
             ticks.append(23)
             titl = self.title.text().replace('$YEAR$', str(year))
             if self.period.currentText() == 'Year':
+                titl = titl.replace('$MTH$', '')
+                titl = titl.replace('$MONTH$', '')
+                titl = titl.replace('  ', '')
                 strt_row = self.toprow
                 todo_rows = self.rows
             else:
