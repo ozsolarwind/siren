@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2020 Sustainable Energy Now Inc., Angus King
 #
 #  displaytable.py - This file is part of SIREN.
 #
@@ -504,24 +504,24 @@ class Table(QtGui.QDialog):
                 self.table.horizontalHeaderItem(self.sort_col).setIcon(QtGui.QIcon('blank.png'))
                 self.sort_asc = False
             self.sort_col = col
+            # a quirk here is that reverse order will have the name field in reverse order for equal
+            # sort column values. A might look at fixing it someday
             if self.sort_asc:   # swap order
                 for key, value in iter(sorted(iter(orderd.items()), reverse=True)):
                     torder.append(value)
                 for key, value in iter(sorted(norderd.items())):
                     torder.append(value)
-                self.sort_asc = False
                 self.table.horizontalHeaderItem(col).setIcon(QtGui.QIcon('arrowd.png'))
+                self.sort_asc = False
             else:
-                self.sort_asc = True
                 for key, value in iter(sorted(iter(norderd.items()), reverse=True)):
                     torder.append(value)
                 for key, value in iter(sorted(orderd.items())):
                     torder.append(value)
                 self.table.horizontalHeaderItem(col).setIcon(QtGui.QIcon('arrowu.png'))
+                self.sort_asc = True
         self.entry = [self.entry[i] for i in torder]
         for rw in range(len(self.entry)):
-            for cl in range(self.table.columnCount()):
-                self.table.setItem(rw, cl, QtGui.QTableWidgetItem(''))
             for key, value in sorted(list(self.entry[rw].items()), key=lambda i: self.fields.index(i[0])):
                 cl = self.fields.index(key)
                 if key == 'technology':
@@ -548,6 +548,8 @@ class Table(QtGui.QDialog):
                             self.table.setItem(rw, cl, QtGui.QTableWidgetItem(value))
                             if self.labels[key] != 'str':
                                 self.table.item(rw, cl).setTextAlignment(130)   # x'82'
+                    else:
+                        self.table.setItem(rw, cl, QtGui.QTableWidgetItem(''))
          #       if key == self.name or not self.edit_table:
                 if not self.edit_table:
                     self.table.item(rw, cl).setFlags(QtCore.Qt.ItemIsEnabled)
@@ -812,20 +814,21 @@ class Table(QtGui.QDialog):
                 key = str(self.table.item(rw, 0).text())
                 for cl in range(1, self.table.columnCount()):
                     if self.labels[self.fields[cl]] == 'int' or self.labels[self.fields[cl]] == 'float':
-                        tst = str(self.table.item(rw, cl).text()).strip().replace(',', '')
-                        if tst == '':
-                            tst = '0'
-                        if self.labels[self.fields[cl]] == 'int':
-                            valu = int(tst)
-                        else:
-                            valu = float(tst)
+                        try:
+                            tst = str(self.table.item(rw, cl).text()).strip().replace(',', '')
+                            if tst == '':
+                                tst = '0'
+                            if self.labels[self.fields[cl]] == 'int':
+                                valu = int(tst)
+                            else:
+                                valu = float(tst)
+                        except:
+                            valu = ''
                     else:
                         valu = str(self.table.item(rw, cl).text())
                     setattr(self.objects[rw], self.fields[cl], valu)
                     newdict[self.fields[cl]] = valu
-                self.replaced[key] = self.objects[rw]
-           #     new = type(str(self.oclass), (self.oclass, ), newdict)
-            #    self.replaced[key] = new
+                self.replaced[key] = newdict
             self.close()
             return
         for rw in range(self.table.rowCount()):
@@ -900,17 +903,7 @@ class Table(QtGui.QDialog):
             self.replaced[key] = values
         self.close()
 
-    def getValues(self, dictionary=None):
+    def getValues(self):
         if self.edit_table:
-            if dictionary is None:
-                return self.replaced
-            for key in dictionary.keys():
-                for prop in dir(dictionary[key]):
-                    if prop[:2] != '__' and prop[-2:] != '__':
-                        try:
-                            valu = getattr(self.replaced[key], prop)
-                            setattr(dictionary[key], prop, valu)
-                        except:
-                            pass
-            return
+            return self.replaced
         return None
