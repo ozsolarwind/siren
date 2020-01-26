@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2016-2019 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2016-2020 Sustainable Energy Now Inc., Angus King
 #
 #  floaters.py - This file is part of SIREN.
 #
@@ -428,11 +428,16 @@ class ProgressBar(QtGui.QDialog):
 class FloatStatus(QtGui.QDialog):
     procStart = QtCore.pyqtSignal(str)
 
-    def __init__(self, mainwindow, scenarios_folder, scenarios):
+    def __init__(self, mainwindow, scenarios_folder, scenarios, program='SIREN'):
         super(FloatStatus, self).__init__()
         self.mainwindow = mainwindow
         self.scenarios_folder = scenarios_folder
         self.scenarios = scenarios
+        self.program = program
+        if scenarios is None:
+            self.full_log = False
+        else:
+            self.full_log = True
         config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
             self.config_file = sys.argv[1]
@@ -457,24 +462,36 @@ class FloatStatus(QtGui.QDialog):
         self.be_open = True
         max_line = 0
         lines1 = ''
+        lines2 = ''
         max_line = 0
         line_cnt1 = 1
-        for line in self.scenarios:
-            lines1 += line[0] + '\n'
-            line_cnt1 += 1
-            if len(line[0]) > max_line:
-                max_line = len(line[0])
-        if self.log_status or not self.log_status:
-            ssc_api = ssc.API()
-            comment = 'SAM SDK Core: Version = %s. Build info = %s.' % (ssc_api.version(), ssc_api.build_info().decode())
-            lines2 = '%s. SIREN log started\n          Preference File: %s\n          Working directory: %s\n          %s' \
-                      % (str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'hh:mm:ss')), \
-                      self.config_file, os.getcwd(), comment)
-            line_cnt2 = 1
-            if len(lines2) > max_line:
-                max_line = len(lines2)
+        line_cnt2 = 0
+        if self.full_log:
+            try:
+                for line in self.scenarios:
+                    lines1 += line[0] + '\n'
+                    line_cnt1 += 1
+                    if len(line[0]) > max_line:
+                        max_line = len(line[0])
+                if self.log_status or not self.log_status:
+                    ssc_api = ssc.API()
+                    comment = 'SAM SDK Core: Version = %s. Build info = %s.' % (ssc_api.version(), ssc_api.build_info().decode())
+                    lines2 = '%s. SIREN log started\n          Preference File: %s\n          Working directory: %s\n          %s' \
+                              % (str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'hh:mm:ss')), \
+                              self.config_file, os.getcwd(), comment)
+                    line_cnt2 = 1
+                    if len(lines2) > max_line:
+                        max_line = len(lines2)
+                else:
+                    line_cnt2 = 0
+            except:
+                pass
         else:
-            line_cnt2 = 0
+            lines2 = '%s. %s log started\n          Preference File: %s\n          Working directory: %s' \
+                     % (str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'hh:mm:ss')), \
+                    self.program, self.config_file, os.getcwd())
+            line_cnt2 = 1
+            max_line = len(lines2)
         self.saveButton = QtGui.QPushButton(self.tr('Save Log'))
         self.saveButton.clicked.connect(self.save)
         self.quitButton = QtGui.QPushButton('Quit')
@@ -511,14 +528,15 @@ class FloatStatus(QtGui.QDialog):
         self.scenarios.resize(ln, h1)
         self.scenarios.setFixedHeight(h1)
         layout = QtGui.QVBoxLayout()
-        layout.addWidget(QtGui.QLabel('Open scenarios'))
-        layout.addWidget(self.scenarios)
+        if self.full_log:
+            layout.addWidget(QtGui.QLabel('Open scenarios'))
+            layout.addWidget(self.scenarios)
         if self.log_status:
             layout.addWidget(QtGui.QLabel('Session log'))
             layout.addWidget(self.loglines)
         layout.addLayout(buttonLayout)
         self.setLayout(layout)
-        self.setWindowTitle('SIREN - Status - ' + self.config_file)
+        self.setWindowTitle(self.program + ' - Status - ' + self.config_file)
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         if self.restorewindows:
             try:
@@ -531,20 +549,23 @@ class FloatStatus(QtGui.QDialog):
         self.show()
 
     def save(self):
-        save_filename = self.scenarios_folder + 'SIREN_Log_' + self.config_file[:-4]
+        save_filename = self.scenarios_folder + self.program + '_Log_' + self.config_file[:-4]
         save_filename += '_' + str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'yyyy-MM-dd_hhmm'))
         save_filename += '.txt'
         fileName = QtGui.QFileDialog.getSaveFileName(self, self.tr("QFileDialog.getSaveFileName()"),
                    save_filename, self.tr("All Files (*);;Text Files (*.txt)"))
          # save scenarios list and log
         if fileName != '':
+            if not self.full_log and not self.log_status:
+                return
             s = open(fileName, 'w')
-            s.write('Scenarios:\n')
-            t = str(self.scenarios.toPlainText())
-            bits = t.split('\n')
-            for lin in bits:
-                if len(lin) > 0:
-                    s.write(' ' * 10 + lin + '\n')
+            if self.full_log:
+                s.write('Scenarios:\n')
+                t = str(self.scenarios.toPlainText())
+                bits = t.split('\n')
+                for lin in bits:
+                    if len(lin) > 0:
+                        s.write(' ' * 10 + lin + '\n')
             if self.log_status:
                 s.write('\nSession log:\n\n')
                 t = str(self.loglines.toPlainText())
@@ -558,7 +579,7 @@ class FloatStatus(QtGui.QDialog):
     @QtCore.pyqtSlot()
     def exit(self):
         if self.log_status:
-            self.log('SIREN log stopped')
+            self.log(self.program + ' log stopped')
         self.be_open = False
         self.close()
 
@@ -582,7 +603,7 @@ class FloatStatus(QtGui.QDialog):
 
     def closeEvent(self, event):
         if self.logged:
-            reply = QtGui.QMessageBox.question(self, 'SIREN Status',
+            reply = QtGui.QMessageBox.question(self, self.program + ' Status',
                     'Do you want to save Session log?', QtGui.QMessageBox.Yes |
                     QtGui.QMessageBox.No, QtGui.QMessageBox.No)
             if reply == QtGui.QMessageBox.Yes:
