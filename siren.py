@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2016-2019 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2016-2020 Sustainable Energy Now Inc., Angus King
 #
-#  sirens.py - This file is part of SIREN.
+#  siren.py - This file is part of SIREN.
 #
 #  SIREN is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Affero General Public License as
@@ -26,6 +26,7 @@ import os
 from PyQt4 import QtCore, QtGui
 import subprocess
 import sys
+import time
 import webbrowser
 
 import displayobject
@@ -62,22 +63,27 @@ class TabDialog(QtGui.QDialog):
         config = configparser.RawConfigParser()
         ignore = ['getfiles.ini', 'powerplot.ini', 'siren_default.ini',
                   'siren_windows_default.ini']
+        errors = ''
         for fil in sorted(fils):
             if fil[-4:] == '.ini':
                 if fil in ignore:
                     continue
+                mod_time = time.strftime('%Y-%m-%d %H:%M:%S',
+                           time.localtime(os.path.getmtime(self.siren_dir + fil)))
                 try:
                     config.read(self.siren_dir + fil)
                 except configparser.DuplicateOptionError as err:
-                    print('DuplicateOptionError ' + str(err))
+                    errors += 'DuplicateOptionError ' + str(err) + '\n'
                     continue
                 except:
+                    err = sys.exc_info()[0]
+                    errors += 'Error: ' + str(err) + ' While reading from ' + self.siren_dir + fil + '\n'
                     continue
                 try:
                     model_name = config.get('Base', 'name')
                 except:
                     model_name = ''
-                self.entries.append([fil, model_name])
+                self.entries.append([fil, model_name, mod_time])
                 if self.about == '':
                     try:
                         self.about = config.get('Files', 'about')
@@ -98,6 +104,10 @@ class TabDialog(QtGui.QDialog):
                         self.weather_icon = 'weather_b.png'
                 except:
                     pass
+        if len(errors) > 0:
+            dialog = displayobject.AnObject(QtGui.QDialog(), errors,
+                     title='SIREN (' + fileVersion() + ') - Preferences file errors')
+            dialog.exec_()
         if len(self.entries) == 0:
             self.new()
      #    if len(entries) == 1:
@@ -118,8 +128,8 @@ class TabDialog(QtGui.QDialog):
         layout = QtGui.QGridLayout()
         self.table = QtGui.QTableWidget()
         self.table.setRowCount(len(self.entries))
-        self.table.setColumnCount(2)
-        hdr_labels = ['Preference File', 'SIREN Model']
+        self.table.setColumnCount(3)
+        hdr_labels = ['Preference File', 'SIREN Model', 'Date modified']
         self.table.setHorizontalHeaderLabels(hdr_labels)
         self.headers = self.table.horizontalHeader()
         self.headers.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
@@ -131,7 +141,7 @@ class TabDialog(QtGui.QDialog):
         max_row = 30
         for rw in range(len(self.entries)):
             ln = 0
-            for cl in range(2):
+            for cl in range(3):
                 self.table.setItem(rw, cl, QtGui.QTableWidgetItem(self.entries[rw][cl]))
                 ln += len(self.entries[rw][cl])
             if ln > max_row:
@@ -264,7 +274,7 @@ class TabDialog(QtGui.QDialog):
             self.sort_asc = True
             self.sort_col = col
         for item in sorted(self.entries, key=lambda x: x[col]):
-            for cl in range(2):
+            for cl in range(3):
                 self.table.setItem(rw, cl, QtGui.QTableWidgetItem(item[cl]))
             rw += step
 
