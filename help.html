@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
-#  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2020 Sustainable Energy Now Inc., Angus King
 #
 #  help.html - This file is part of SIREN.
 #
@@ -162,6 +162,9 @@ ul {
 <li><a href="#swisupd">Obtaining Current SWIS Facilities</a></li>
 <li><a href="#corr">Validation of NASA MERRA-2 Data and the SAM Models</a></li>
 <li><a href="#merra">Obtaining and Using NASA MERRA-2 Data for SAM weather files</a></li>
+<ul class="none">
+<li><a href="#makeweather">Produce wind and solar weather files</a></li>
+</ul>
 <li><a href="#index">Using other Weather Files</a></li>
 <li><a href="#resource">Visualising Renewable Resource Attributes</a></li>
 <li><a href="#sam">SAM Models used by SIREN</a></li>
@@ -227,7 +230,7 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 <li><em>sam-sdk</em> contains a Windows version of the SAM SDK, <em>sam-sdk-2016-03-14</em></li>
 <li><em>source</em> contains the Python source programs for SIREN</li>
 </ul>
-<p>When you open SIREN you will be presented with a list of SIREN Models (Preferences files). Choose the SIREN Model you want by clicking on your choice. You can sort the list presented in order of either Preference File or SIREN Model by right-clicking the appropriate column header. If want to use a specific Preferences file you can open the simulation passing the alternate file name, or a folder, as a parameter, as in these examples:</p>
+<p>When you open SIREN you will be presented with a list of SIREN Models (Preferences files). Choose the SIREN Model you want by clicking on your choice. You can sort the list presented in order of either Preferences File, SIREN Model or Date modified (last time the Preferences file was saved) by right-clicking the appropriate column header. If want to use a specific Preferences file you can open the simulation passing the alternate file name, or a folder, as a parameter, as in these examples:</p>
 <pre>
       siren.exe SIREN_NWIS.ini
       siren.exe ../&lt;folder&gt;/SIREN_NWIS.ini
@@ -252,7 +255,7 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 </tr>
 <tr class="none">
 <td class="none"><img src="weather_b.png" alt="makeweather2">&nbsp;&nbsp;makeweather2</td>
-<td class="none">Invoke <code>makeweather2</code> to create weather files for SAM (see <a href="#merra5">Produce wind and solar weather files</a>)</td>
+<td class="none">Invoke <code>makeweather2</code> to create weather files for SAM (see <a href="#makeweather">Produce wind and solar weather files</a>)</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="line.png" alt="powerplot">&nbsp;&nbsp;powerplot</td>
@@ -1590,7 +1593,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>cumulative</dfn></td>
-<td class="none">Indicator for cumulative plot (True or False). Default is True</td>
+<td class="none">Indicator for cumulative (stacked) plot (True or False). Default is True</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>file</dfn></td>
@@ -1603,6 +1606,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <tr class="none">
 <td class="none"><dfn>file_history</dfn></td>
 <td class="none">The order of the recent history list</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>percentage</dfn></td>
+<td class="none">Produce a percentages plot</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>period</dfn></td>
@@ -1766,7 +1773,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </td></tr>
 <tr class="none" id="p_sam_modules"><td><dfn><strong>[SAM_Modules]</strong></dfn></td>
 <td>SAM models (modules) and default variables for each technology currently implemented. The variables files can be either CSV or Excel files. Properties are as follows.</p>
-<p><strong>Note:</strong> SIREN is using SSC Version 206 which has created some changes to the default variables for <em>ippppa</em>, <em>geothermal</em>, <em>tcsgeneric_solar</em> and <em>tcsmolten_salt</em>. The variable files for these models provided by SIREN have a suffix of <em>_206</em>. You may need to adjust these variables in older SIREN Preference files</p>
+<p><strong>Note:</strong> SIREN is using SSC Version 206 which has created some changes to the default variables for <em>ippppa</em>, <em>geothermal</em>, <em>tcsgeneric_solar</em> and <em>tcsmolten_salt</em>. The variable files for these models provided by SIREN have a suffix of <em>_206</em>. You may need to adjust these variables in older SIREN Preferences files</p>
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><dfn>annualoutput_variables</dfn></td>
@@ -2272,11 +2279,19 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <td class="none">List all stations in the current model. By right-clicking a column header you can sort by that column in ascending and then descending order. By left or right-clicking a station you can display the details for that station</td>
 </tr>
 <tr class="none">
-<td class="none"><img src="network_b.png" alt="List New Grid">&nbsp;&nbsp;List New Grid (Wires; Ctrl+W)</td>
-<td class="none">List all new grid network lines in the current model. By right-clicking a column header you can sort by that column in ascending and then descending order. If <em>[Grid]</em> <em>trace_existing</em> is set existing grid lines will also be displayed</td>
+<td class="none"><img src="network_b.png" alt="List Grid">&nbsp;&nbsp;List Grid (Wires; Ctrl+W)</td>
+<td class="none">List grid network lines in the current model. By right-clicking a column header you can sort by that column in ascending and then descending order. If <em>[Grid]</em> <em>trace_existing</em> is set existing grid lines will also be displayed</td>
 </tr>
 <tr class="none">
-<td class="none"><img src="power.png" alt="Show Load">&nbsp;&nbsp;Load for 9999</td>
+<td class="none"><img src="blank.png">&nbsp;&nbsp;Save Stations (as KML)</td>
+<td class="none">Save the current stations as a KML file which can be displayed in Google Earth. The stations will display as a small pin; hovering over a station will display it's name</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="blank.png">&nbsp;&nbsp;Save Grid (as KML)</td>
+<td class="none">Save the current grid as a KML file which can be displayed in Google Earth</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="power.png" alt="Show Load">&nbsp;&nbsp;Load for <em>yyyy</em></td>
 <td class="none">Display load curves for the base year. An options menu is displayed to enable you to choose which plots you want. The options are as described in <strong>Choose plots</strong> in <a href="#popts">Power Model Options</a>.</td>
 </tr>
 <tr class="none">
@@ -2334,7 +2349,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 </tr>
 <tr class="none">
 <td class="none"><img src="check-mark_b.png" alt="Show Existing Grid">&nbsp;&nbsp;Show Existing Grid (Ctrl+2)</td>
-<td class="none">Display the existing grid network (True)</td>
+<td class="none">Display the existing detailed grid network if one is available (this grid is not utilised by SIREN; True)</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="blank.png" alt="Clear Grid Trace">&nbsp;&nbsp;Clear Grid Trace</td>
@@ -2349,7 +2364,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <td class="none">This is a temporary option to refresh the Grid if the grid tracing and shortest path algorithms misbehave</td>
 </tr>
 <tr class="none">
-<td class="none"><img src="check-mark_b.png" alt="Show Coordinates Grid">&nbsp;&nbsp;Coordinates Grid</td>
+<td class="none"><img src="check-mark_b.png" alt="Show Coordinates Grid">&nbsp;&nbsp;Show Coordinates Grid</td>
 <td class="none">Display a grid of latitude and longitude. The spacing of the grid is based upon the geographic size of the map.</td>
 </tr>
 <tr class="none">
@@ -2470,7 +2485,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 </tr>
 <tr class="none">
 <td class="none"><img src="weather_b.png" alt="makeweather2">&nbsp;&nbsp;makeweather2</td>
-<td class="none">Invoke <code>makeweather2</code> to create weather files for SAM (see <a href="#merra5">Produce wind and solar weather files</a>)</td>
+<td class="none">Invoke <code>makeweather2</code> to create weather files for SAM (see <a href="#makeweather">Produce wind and solar weather files</a>)</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="power.png" alt="powermatch">&nbsp;&nbsp;powermatch</td>
@@ -2600,6 +2615,11 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <p>As you build your scenario, the simulation adds additional infrastructure to connect the new generation plants to the grid. The colours for the majority of the items on the map are as you specify in the Preferences file. You navigate around the map using normal mouse movements to scroll, zoom, etc. and interact with it as described previously (<a href="#menus">Menus</a>). Using the various menu options you can model your whole scenario, or by right-clicking you can deal with an individual station. There are a number of additional windows, such as menu options, that can be opened to assist with using SIREN (see <a href="#windows">Windows</a>)</p>
 <p>You can save multiple scenarios and add them and remove them as you wish. When you exit the simulation normally or <em>Save</em> scenarios (Ctrl+S) any modified scenarios will be saved. When you add new stations to your model they will be added as a new scenario which includes the date and time in its name, for example, Scenario_2015-06-09_1000. You can save all open scenarios as a single new scenario by using the <em>Save As...</em> option.</p>
 <p>The strength of the simulation is in running the SAM Power Models (e.g. Ctrl+P). This will run the appropriate SAM model for each station you have chosen or for all renewable stations in your current simulation. SAM calculates a list of power outputs for each hour of the year (8,760 points). If the <em>show_menu</em> property is True you will be presented with a menu to specify what processing and plots to produce (see below). If you choose to run the Financial Models or Powermatch you will be presented with an additional menu of options.</p>
+<ul>
+<li>The various plotting features allow you to visualise the renewable energy output and how it compares to demand</li>
+<li>The Financial Models option will invoke SAM Annual Output and Utility IPP/Commercial PPA Finance models. These enable a LCOE to be determined for the scenario</li>
+<li>Powermatch allows you to complete a costed renewable energy scenario. It will use dispatchable generation to meet shortfalls in the renewable energy generation mix to match generation with demand (load) to quantify and cost dispatchable energy generation, storage and CO2-e emissions</li>
+</ul>
 <p><a href="#help">Back to top</a></p>
 <h3 id="popts">Power Model Options</h3>
 <p>The Power Model options menu are as set out here. The default values are specified in the <a href="#power">[Power]</a> Section of the Preferences file. The associated property is indicated in brackets at the end of the description. If you hover over the window title bar or press F1 a help for the Options will be displayed.</p>
@@ -2732,7 +2752,7 @@ By default the size of plots produced is determined by matplotlib, or by the <em
 <li>Pressing the <em>w</em> key will display a weekly plot. Each press will show the next week. If the <em>m</em> key has been pressed the weeks for that month will be displayed</li>
 <li>Pressing <em>PageUp</em> or <em>PageDown</em> will display the previous or next week or month</li>
 </ul>
-<p><strong>Note:</strong> For cumulative plots produced by PowerPlot this feature may perform slowly so please be a little patient</p>
+<p><strong>Note:</strong> For cumulative (stacked) plots produced by PowerPlot this feature may perform slowly so please be a little patient</p>
 <h4 id="powerplot"><u>PowerPlot</u></h4>
 <p><code>powerplot.exe</code> is a standalone program that will produce either hourly or diurnal plots from a spreadsheet that conforms to certain constraints. It is intended to be used to plot (detailed) results either from Powermatch or some of the files produced by SIREN's PowerModels. The spreadsheet must have:</p>
 <ol>
@@ -2740,31 +2760,34 @@ By default the size of plots produced is determined by matplotlib, or by the <em
 <li>The first (header) column should be <em>Hour</em> and the second should be <em>Period</em> with a cell format of <em>yyyy-mm-dd hh:mm</em>. The program uses the year in the first period row to determine if the data is for a leap year</li>
 <li>The rows immediately following the header row should contain data for each hour of the year (8,760 for a normal year and 8,784 for a leap; or a smaller number for an incomplete year)</li>
 </ol>
-The program displays a window of options:
+The program displays a window of options. The default values are specified in the <a href="#p_pp">[PowerPlot]</a> Section of the Preferences file. It is possible to have a number of entries for files (<em>file_choices</em>) listed in recent order (<em>file_history</em>).
 <table border="0" class="none">
 <tr><td class="top" style="width: 20%;"><dfn>Recent Files</dfn></td>
-<td class="none">A pull-down list of recent spreadsheets. Click on the desired spreadsheet to choose a different one from the list. The list will be ordered in terms of most recently accessed first</td></tr>
+<td class="none">A pull-down list of recent spreadsheets. Click on the desired spreadsheet to choose a different one from the list. The list will be ordered in terms of most recently accessed first (<em>file_history</em>)</td></tr>
 <tr><td class="lr"><dfn>File</dfn></td>
-<td class="none">Click on this field to choose the desired spreadsheet</td></tr>
+<td class="none">Click on this field to choose the desired spreadsheet (<em>file</em>)</td></tr>
 <tr><td class="lr"><dfn>Sheet</dfn></td>
-<td class="none">A pull-down list to enable you to choose the desired worksheet</td></tr>
+<td class="none">A pull-down list to enable you to choose the desired worksheet (<em>sheet</em>)</td></tr>
 <tr><td class="lr"><dfn>Period</dfn></td>
-<td class="none">A pull-down list for a full year or a month. If an option other than <em>&lt;None&gt;</em> is chosen the resulting plot will present an average diurnal plot for the chosen period</td></tr>
+<td class="none">A pull-down list for a full year or a month. If an option other than <em>&lt;None&gt;</em> is chosen the resulting plot will present an average diurnal plot for the chosen period (<em>period</em>)</td></tr>
 <tr><td class="lr"><dfn>Target</dfn></td>
-<td class="none">A pull-down list of column names. If the plot is intended to show how the chosen columns meet a target column, typically Load, this enables you to choose that column. Choosing <em>&lt;None&gt;</em> means no target field. If a target field is chosen the plot will show excess generation as lightly shaded areas above the target values</td></tr>
+<td class="none">A pull-down list of column names. If the plot is intended to show how the chosen columns meet a target column, typically Load, this enables you to choose that column. Choosing <em>&lt;None&gt;</em> means no target field. If a target field is chosen the plot will show excess generation as lightly shaded areas above the target values (<em>target</em>)</td></tr>
 <tr><td class="lr"><dfn>Title</dfn></td>
 <td class="none">Specify a title for the plot. There are two special strings which will be replaced in the title:
 <ul>
 <li><em>$YEAR$</em> will be replaced with the year (first Period value)</li>
 <li><em>$MTH$</em> or <em>$MONTH$</em> will be replaced with the chosen Period</li>
 </ul>
+If it's not a diurnal plot (i.e. Period is <em>&lt;None&gt;</em>) any occurence of &rsquo;Diurnal&lsquo; in the title wil be removed (<em>title</em>)
 </td></tr>
 <tr><td class="lr"><dfn>Maximum</dfn></td>
-<td class="none">You can specify a maximum value for the Power (y) axis. This allows you to produce a series of plots with the same scale</td></tr>
+<td class="none">You can specify a maximum value for the Power (y) axis. This allows you to produce a series of plots with the same scale (<em>maximum</em>)</td></tr>
 <tr><td class="lr"><dfn>Cumulative</dfn></td>
-<td class="none">Checking this option will produce a cumulative curve. The cumulative plot will have filled areas showing the generation for each technology. If a Target field (e.g. Load) is chosen the area above the Target value (i.e. excess generation) will have a lightly shaded value (the degree of shading is chosen by the <em>alpha</em> property in the [PowerPlot] Section of the Preferences file)</td></tr>
+<td class="none">Checking this option will produce a cumulative (stacked) curve. The cumulative plot will have filled areas showing the generation for each technology. If a Target field (e.g. Load) is chosen the area above the Target value (i.e. excess generation) will have a lightly shaded value (the degree of shading is chosen by the <em>alpha</em> property in the [PowerPlot] Section of the Preferences file) (<em>cumulative</em>)</td></tr>
+<tr><td class="lr"><dfn>Percentage</dfn></td>
+<td class="none">Checking this option will produce a percentage (stacked) curve. The plot will have filled areas showing the percentage of generation for each technology. It is recommended to not set a Target field (i.e. set it to <em>&lt;None&gt;</em>) as this will merely remove the Target field (and it's data) from the plot (<em>percentage</em>)</td></tr>
 <tr><td class="lr"><dfn>Column Order</dfn></td>
-<td class="none">To produce the plot you select those columns to be included. This field consists of two tables (lists) of columns. Those in the left hand list will be included in the plot while those on the right will be excluded. The included columns will be plotted in the chosen order. You can drag individual or a number of columns between the two lists to get the desired configuration. The plot colour for the column will be displayed as the background color for the column</td></tr>
+<td class="none">To produce the plot you select those columns to be included. This field consists of two tables (lists) of columns. Those in the left hand list will be included in the plot while those on the right will be excluded. The included columns will be plotted in the chosen order. You can drag individual or a number of columns between the two lists to get the desired configuration. The plot colour for the column will be displayed as the background color for the column (<em>columns</em>)</td></tr>
 <tr><td class="bottom"><strong>Done, Plot, Colours, Help</strong></td>
 <td class="none">At the bottom of the window are a number of buttons:
 <ul>
@@ -2872,7 +2895,7 @@ The program displays a window of options:
 </ul><p><a href="#help">Back to top</a></p>
 <h3 id="powermatch">Powermatch</h3>
 <p>Running the SIREN models will produce hourly generation figures which identify generation shortfalls and excesses against load (demand). One of the outputs from SIREN is a table of these generation shortfalls which can be met by dispatchable energy generation. The Powermatch component of SIREN can be used to match generation with demand (load) to quantify and cost dispatchable energy generation, storage and CO<sub>2</sub>-e emissions. This enables you to complete a costed renewable energy scenario.
-<br /><strong>Note:</strong>The SIREN Powermatch component has been derived from the Powerbalance worksheets developed by Ben Rose. The great work and inspiration by Ben is acknowledged</p>
+<br /><strong>Note:</strong> The SIREN Powermatch component has been derived from the Powerbalance worksheets developed by Ben Rose. The great work and inspiration by Ben is acknowledged</p>
 <p>The Powermatch options are as set out here. The options are specified in the <a href="#p_pm">[Powermatch]</a> Section of the Preferences file. The associated property is indicated in brackets at the end of the description. All files are located in the SIREN Scenarios folder.</p>
 <table border="0" class="none" cellpadding="2">
 <tr><td class="top" style="width: 15%;"><dfn>Constraints File</dfn></td>
@@ -2880,7 +2903,7 @@ The program displays a window of options:
 <tr><td class="lr"><dfn>Constraints Sheet</dfn>&nbsp;&nbsp;<strong>Constraints</strong></td>
 <td class="none">Worksheet name for constraints table (<em>constraints_sheet</em>). Click on the <strong>Constraints</strong> button to display the Constraints table. Values can be changed and the table Saved or Exported as a new file</td></tr>
 <tr><td class="lr"><dfn>Generators file</dfn></td>
-<td class="none">File name for generators (facilities) spreadsheet Clicking on the field will allow you to choose another spreadsheet (<em>generators_file</em>)</td></tr>
+<td class="none">File name for generators (facilities) spreadsheet. Clicking on the field will allow you to choose another spreadsheet (<em>generators_file</em>)</td></tr>
 <tr><td class="lr"><dfn>Generators Sheet</dfn>&nbsp;&nbsp;<strong>Generators</strong></td>
 <td class="none">Worksheet name for generators (facilities) table (<em>generators_sheet</em>). Click on the <strong>Generators</strong> button to display the Generators (facilities) table. Values can be changed and the table Saved or Exported as a new file</td></tr>
 <tr><td class="lr"><dfn>Optimisation File</dfn></td>
@@ -2897,19 +2920,31 @@ The program displays a window of options:
 <td class="none">If this option is checked you will be presented with a table to enable you to adjust the input capacity data for each generator technology. You can specify a multiplier between 0 and 25. The original input values will be derived from the data sheet for renewables and the Generators table for dispatchable technologies (<em>adjust_generators</em>)</td></tr>
 <tr><td class="lr"><dfn>Dispatch Order</dfn></td>
 <td class="none">The order in which the dispatchable technologies will be processed by Powermatch. You can change the order by clicking on each value and moving it up and down the list. The initial order is derived from the generators (facilities) table. If you want to exclude a generator you can drag it to the right hand list (and drag it back to the left to re-include)</td></tr>
-<tr><td class="bottom"><strong>Done, Constraints, Generators,<br />Powermatch, Summary,<br />Help</strong></td>
+<tr><td class="bottom"><strong>Done, Constraints, Generators,<br />Summary, Powermatch,<br />Help</strong></td>
 <td class="none">As well as the buttons beside the sheet options there are a number of buttons at the bottom of the menu, as described below:</td></tr>
 </table>
 <ul>
 <li><strong>Done</strong>. Exit Powermatch. Any changed options will be saved</li>
-<li><strong>Powermatch</strong>. Invoke Powermatch. This option produces a spreadsheet of the Powermatch outputs. It provides detail on how demand was met for each hour of the year</li>
 <li><strong>Summary</strong>. Invoke Powermatch with (just) Summary Output. This option produces a summary table of the Powermatch outputs allowing you to examine and adjust inputs without having to access the Powermatch outputs spreadsheet. </li>
+<li><strong>Powermatch</strong>. Invoke Powermatch. This option produces a spreadsheet of the Powermatch outputs. It provides detail on how demand was met for each hour of the year</li>
 <li><strong>Optimise</strong>. Invoke the Optimise function. This will use an iterative approach to optimise the input generator capacities to produce a solution with a lower overall LCOE. It will complete by displaying a plot of how the value for LCOE has converged to a minimum. Exiting the plot will then a summary table. It will also update the adjustment values for each generator to enable you to produce a Powermatch spreadsheet. See below for more details</li>
 <li><strong>Help</strong>. Display the Powermatch help</li>
 </ul>
-<p>The Constraints, Generators and Optimisation tables can be edited, updated and saved and the revised table(s) used as inputs for the <strong>Powermatch</strong>, <strong>Summary</strong> and <strong>Optimise</strong> options. During the edit process the revised values can be exported as a new spreadsheet. If the table(s) is saved but not exported the revised values will not be available once Powermatch is exited.</p>
+<p>The Constraints, Generators and Optimisation tables can be edited, updated and saved and the revised table(s) used as inputs for the <strong>Summary</strong>, <strong>Powermatch</strong> and <strong>Optimise</strong> options. During the edit process the revised values can be exported as a new spreadsheet. If the table(s) is saved but not exported the revised values will not be available once Powermatch is exited.</p>
+<h4>Generators</h4>
+<p>To address the shortfall in generation encountered by a renewable scenario other dispatchable generation and storage facilities can be used. These are defined in a Generators table. The Generators table can also be used to define the <em>LCOE</em> and <em>LCOE CF</em> figures for Renewable technologies. The fields are:
+<table border="0" class="none">
+<tr><td class="none"><dfn>Name</dfn></td><td class="none">Name of the Facility</td></tr>
+<tr><td class="none"><dfn>(Dispatch) Order</dfn></td><td class="none">Specifies the order in which the dispatchable facilities are used, with a value of 1 being the first in the order. Zero values are placed after those with a positive number</td></tr>
+<tr><td class="none"><dfn>Constraint</dfn></td><td class="none">Name of the Constraint that applies to this facility</td></tr>
+<tr><td class="none"><dfn>Capacity</dfn></td><td class="none">The capacity for the facility in MW</td></tr>
+<tr><td class="none"><dfn>Initial</dfn></td><td class="none">For storage this species the initial level of storage</td></tr>
+<tr><td class="none"><dfn>LCOE</dfn></td><td class="none">The LCOE for the facility</td></tr>
+<tr><td class="none"><dfn>LCOE CF</dfn></td><td class="none">The capacity factor (CF) at which the LCOE was determined. A combination of <em>LCOE</em> and <em>LCOE CF</em> allows the cost of the generation or storage to be determined. In undertaking any calculations Powermatch adjusts the resulting LCOE to reflect the difference between this CF and the calculated CF</td></tr>
+<tr><td class="none"><dfn>Emissions</dfn></td><td class="none">Specifies the carbon dioxide equivalent emissions in tonnes per unit of electricity (t CO<sub>2</sub>-e / MWh)</td></tr>
+</table>
 <h4>Constraints</h4>
-<p>Utilisation of each generator by Powermatch can be constrained by specifying a number of constraints. All figures are expressed as a percentage. In the tables the values will be displayed as a decimal fraction (0.00 to 1.00). All figures are hourly except for Parasitic Loss which is daily. The constraints are:
+<p>Utilisation of each dispatchable generator and storage facility can be constrained by Powermatch in a number of ways. All figures are expressed as a percentage. In the tables the values will be displayed as a decimal fraction (0.00 to 1.00). All figures are hourly except for Parasitic Loss which is daily. The constraints are:
 <table border="0" class="none">
 <tr><td class="none"><dfn>Name</dfn></td><td class="none">Name of the Constraint</td></tr>
 <tr><td class="none"><dfn>Constraint</dfn></td><td class="none">Name of the Constraint (same as Name)</td></tr>
@@ -2924,47 +2959,48 @@ The program displays a window of options:
 <tr><td class="none"><dfn>Recharge Loss</dfn></td><td class="none">Losses when storage is increased</td></tr>
 <tr><td class="none"><dfn>Recharge Max</dfn></td><td class="none">For Storage the maximum rate at which the storage can be increased</td></tr>
 </table>
-<h4>Generators</h4>
-<p>To address the shortfall in generation encountered by a renewable scenario other generation and storage facilities can be used. These are defined in a Generators table. The fields are:
-<table border="0" class="none">
-<tr><td class="none"><dfn>Name</dfn></td><td class="none">Name of the Facility</td></tr>
-<tr><td class="none"><dfn>(Dispatch) Order</dfn></td><td class="none">Specifies the order in which the dispatchable facilities are used, with a value of 1 being the first in the order. Zero values are placed after those with a positive number</td></tr>
-<tr><td class="none"><dfn>Constraint</dfn></td><td class="none">Name of the Constraint that applies to this facility</td></tr>
-<tr><td class="none"><dfn>Capacity</dfn></td><td class="none">The capacity for the facility in MW</td></tr>
-<tr><td class="none"><dfn>Initial</dfn></td><td class="none">For storage this species the initial level of storage</td></tr>
-<tr><td class="none"><dfn>LCOE</dfn></td><td class="none">The LCOE for the facility</td></tr>
-<tr><td class="none"><dfn>LCOE CF</dfn></td><td class="none">The capacity factor (CF) at which the LCOE was determined. A combination of <em>LCOE</em> and <em>LCOE CF</em> allows the cost of the generation or storage to be determined. In undertaking any calculations Powermatch adjusts the resulting LCOE to reflect the difference between this CF and the calculated CF</td></tr>
-<tr><td class="none"><dfn>Emissions</dfn></td><td class="none">Specifies the carbon dioxide equivalent emissions in tonnes per unit of electricity (t CO<sub>2</sub>-e / MWh)</td></tr>
-</table>
 <div class="experiment">
 <h4>Optimise and Optimisation</h4>
-<p>In an attempt to simplify the process of determining the optimal generation mix, Powermatch has an optimisation function. The function uses a genetic algorithm to identify an optimal solution with the lowest LCOE for the input renewable and dispatchable technologies. Genetic algorithms are inspired by the process of natural selection and simulate evolution of multiple generations that evolve to produce an optimal solution, in this case lowest LCOE. (<strong>Note:</strong> This is a different approach to optimisation than in Power Model). The approach has a number of inputs:</p>
+<p>In an attempt to simplify the process of determining the optimal generation mix, Powermatch has an optimisation function. The function uses a genetic algorithm to identify two optimal solutions:
+<ol>
+<li>a solution with the lowest LCOE for the input renewable and dispatchable technologies</li>
+<li>a solution that produces the best (lowest) weighting for six variables - lowest LCOE, lowest CO2 emissions, lowest Overall Cost, lowest surplus generation, highest RE percentage and maximising percentage of load met</li>
+</ol>
+Genetic algorithms are inspired by the process of natural selection and simulate evolution of multiple generations that evolve to produce an optimal solution, in this case (1.) lowest LCOE and (2.) best weighted solution (<strong>Note:</strong> This is a different approach to optimisation than in Power Model). The approach has a number of inputs:</p>
 <ul>
-<li>A chromosome. This is a series of &ldquo;switches&rdquo; with each switch representing whether a unit of technology is to be included in this iteration of Powermatch. The format of the chromosome is defined by the Optimisation table. In creating the chromosome each technology will be assigned a number of switches representing either a discrete unit of technology or a proportion of the total capacity for that technology</li>
-<li>Population size. Each member of the population has a chromsome made up of switches that are randomly on or off. The greater the population size the greater the chance that the initial state of the population will contain a chromosome representing the optimal solution, but the longer the optimisation process will take (<em>optimisation_population</em>)</li>
-<li>Number of generations (iterations). For each generation a competition is held between (each of two) members to identify which has the preferred characteristics, in this case lowest LCOE. The winners are then used to generate the next generation. The greater the number of generations the better chance the solutions will converge to an optimum value, but the longer the optimisation process will take (<em>optimisation_generations</em>)</li>
-<li>A probability of mutation. This is a genetic operator used to maintain genetic diversity from one generation of a population to the next. The solution may change entirely from the previous solution and come to a better solution. This probability should be set low. If it is set too high, the search will turn into a primitive random search.(<em>optimisation_mutation)</em>)</li>
-<li>A stop option. To reduce the number of iterations it is possible to terminate the optimisation if there appears to be no change to the solution after a specified number of generations. The downside is that the optimisation may not have evolved on the correct path (<em>optimisation_stop</em>)</li>
+<li>A chromosome. This is a series of &ldquo;switches&rdquo; with each switch representing whether a unit of technology is to be included in this iteration of Powermatch. The format of the chromosome is defined by the Optimisation table. In creating the chromosome each technology will be assigned a number of switches representing either a discrete unit of technology or a proportion of the total capacity for that technology (as defined by the Optimisation entry)</li>
+<li>Population size. Each member of the population has a chromsome made up of switches that are randomly on or off. The greater the population size the greater the chance that the initial state of the population will contain a chromosome representing the optimal solution, but the longer the optimisation process will take (<em>optimise_population</em>)</li>
+<li>Number of generations (iterations). For each generation a competition is held between (each of two) members to identify which has the preferred characteristics, in this case lowest LCOE. The winners are then used to generate the next generation. The greater the number of generations the better chance the solutions will converge to an optimum value, but the longer the optimisation process will take (<em>optimise_generations</em>)</li>
+<li>A probability of mutation. This is a genetic operator used to maintain genetic diversity from one generation of a population to the next. The solution may change entirely from the previous solution and come to a better solution. This probability should be set low. If it is set too high, the search will turn into a primitive random search.(<em>optimise_mutation)</em>)</li>
+<li>A stop option. To reduce the number of iterations it is possible to terminate the optimisation if there appears to be no change to the solution after a specified number of generations. At present this only examines the LCOE solution. The downside is that the optimisation may not have evolved on the correct path (<em>optimise_stop</em>)</li>
+<li>Some values for each of the six optimisation variables (<em>optimise_lcoe</em>, <em>optimise_surplus_pct</em>, <em>optimise_load_pct</em>, <em>optimise_re_pct</em>, <em>optimise_cost</em>, and <em>optimise_co2</em>) for the multi-variable solution:
+<ol>
+<li>The Weight, a value between 0 and 1, to be applied to this variable</li>
+<li>The best target value (Better). A value less than zero indicates the maximum or minimum value. For percentage targets it can be between 0 (i.e 0%) and 1 (i.e 100%). If Better is (positive and) less than Worse we want the lowest value; if Better is greater than Worse we want the highest value</li>
+<li>The worst target value (Worse). A value less than zero indicates the maximum or minimum value</li>
+</ol>
 </ul>
 <p>Powermatch optimisation approach:
 <ol>
 <li>Generate a chromosome from the Optimisation table</li>
 <li>Create an initial population, each with a random copy of the chromosome</li>
-<li>Calculate fitness of population. Select lowest LCOE that meets 100% of load (demand). For each member:
+<li>Calculate fitness of population. Select (1.) lowest LCOE that meets 100% of load (demand) and (2.) lowest weighting. For each member:
 <ol>
 <li>Using their chromosome and the Optimisation table determine the capacity for each technology</li>
-<li>Run Powermatch with this generation mix to calculate the LCOE (score)</li>
+<li>Run Powermatch with this generation mix to calculate (1.) the LCOE (score) and (2.) weighting</li>
 </ol>
 <li>For each generation</li>
 <ol>
 <li>Select the best parents by competition</li>
 <li>Breed new population by random crossover of chromosomes for winners</li>
 <li>Randomly mutate the population</li>
-<li>Calculate fitness of population. Select lowest LCOE that meets 100% of load (demand)</li>
+<li>Calculate fitness of population. Select (1.) lowest LCOE that meets 100% of load (demand) and (2.) lowest weighting</li>
+<li>Exit loop if LCOE has remained the same for the specified number of generations</li>
+<li>Include (1.) lowest LCOE and (2.) lowest weighting in the next generation
 </ol>
-<li>Produce table for best candidate</li>
+<li>Produce tables for best candidate (1.) with lowest LCOE and (2.) lowest weighting</li>
 </ol>
-<p>The Optimisation table defines the format for the chromsome. The fields are:
+ <p>The Optimisation table defines the format for the chromsome. Entries are required for all Renewable technologies and dispatchable and storage facilities. The fields are:
 <table border="0" class="none">
 <tr><td class="none"><dfn>Name</dfn></td><td class="none">Name of the Technology (matches either RE or generator)</td></tr>
 <tr><td class="none"><dfn>Approach</dfn></td><td class="none">Approach for how this generator will be treated. There are two options:
@@ -3528,7 +3564,7 @@ You can alternate between these approaches to choose the desired area. If you ha
 <ul>
 <li><em>Year</em>. Year of interest. The naming conventions for MERRA-2 files include the date so this defines the date range. The tool processes dates from the last day of the prior year through to the first day of the next year (ignoring 29 February)</li>
 <li><em>Wrap to prior year</em>. To enable you to use (more) recent weather data this option will indicate that weather data should wrap to the prior year. As an example, if you have downloaded MERRA-2 data up until April for the current year <code>makeweather2</code> will use weather data from the prior year for May onwards to give a full year of data. The MERRA data for both years must reside in the same folder (or the next sub-folder if yearly folders are used)</li>
-<li><em>Time Zone</em>. The (solar) time zone for the area of interest. This is used to create suitable weather files where the first hour in the file is the first hour of the year in the local time zone. A value of <em>auto</em> will cause the program to use the (first) longitude in the MERRA-2 data files to calculate the time zone</li>
+<li><em>Time Zone</em>. The (solar) time zone for the area of interest. This is used to create suitable weather files where the first hour in the file is the first hour of the year in the local time zone. A value of <em>auto</em> will cause the program to use the (first) longitude and a value of <em>best</em> will cause the program to use the time zone with the most longitude values in the MERRA-2 data files to calculate the time zone</li>
 <li><em>Solar Format</em>. The solar option can produce weather files in either of two formats - SMW or CSV format. This option allows you to choose your preferred one. SMW format is suitable for SAM while it may have trouble with the CSV format</li>
 <li><em>Solar Variable</em>. There are two MERRA-2 solar variables to use to create weather files - swgdn or swgnt. </li>
 <li><em>Coordinates</em>. Rather than producing weather files for each grid cell in the chosen area you can restrict it by passing a string of comma-separated latitude and longitude values. The tool will then generate files for just these coordinates</li>
@@ -3548,7 +3584,7 @@ You can alternate between these approaches to choose the desired area. If you ha
 <p>Creation of weather files may take some time so please be patient. There are two progress bars that will display to indicate how far along the process the program is. The tool will produce an output report which will include the list of weather files produced. The report will include a return code as follows:</p>
 <ol class="none">
 <li value="0">Successful execution</li>
-<li value="1">Successful execution, however, the time zone chosen does not match the time zone(s) suggested by the MERRA-2 data files. If you chose <em>auto</em> this indicates more than one time zone is suggested by the MERRA-2 data files</li>
+<li value="1">Successful execution, however, the time zone chosen does not match the time zone(s) suggested by the MERRA-2 data files. If you chose <em>auto</em> or <em>best</em> this indicates more than one time zone is suggested by the MERRA-2 data files</li>
 <li value="4">Error with coordinates field</li>
 <li value="8">Invalid output file format specified. It must be one of <em>csv</em>, <em>smw</em>, <em>srw</em>, or <em>wind</em></li>
 <li value="12">MERRA-2 data file not found. The program requires file name(s) to be in a specific format so either the file name doesn't match that format or the source folder is incorrect</li>
