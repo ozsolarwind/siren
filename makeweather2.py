@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2020 Sustainable Energy Now Inc., Angus King
 #
 #  makeweather2.py - This file is part of SIREN.
 #
@@ -374,10 +374,22 @@ class makeWeather():
         longitude = cdf_file.variables[self.vars['longitude']][:]
         self.log += ' Longitudes:\n    '
         vals = ''
+        zones = {}
         longi = longitude[:]
         for val in longi:
             vals += '{:0.4f}'.format(val) + ', '
+            zone = int(round(val / 15))
+            try:
+                zones[zone] = zones[zone] + 1
+            except:
+                zones[zone] = 1
+   #     print(zones, max(zones, key=lambda k: zones[k]))
         self.log += vals[:-2] + '\n'
+        if len(zones) > 1:
+            self.log += ' Timezones:\n    '
+            for key, value in zones.items():
+                self.log += str(key) + ' (' + str(value) + ')  '
+            self.log += '\n'
         cdf_file.close()
         return
 
@@ -469,8 +481,8 @@ class makeWeather():
              # get variables from "solar" file
             self.getInfo(self.findFile(inp_strt, False))
             return
-        if str(self.src_zone).lower() == 'auto':
-            self.auto_zone = True
+        if str(self.src_zone).lower() in ['auto', 'best']:
+           # self.auto_zone = True
             inp_strt = '{0:04d}'.format(self.src_year) + '0101'
              # get longitude from "wind" file
             unzip_file = self.unZip(self.findFile(inp_strt, True))
@@ -479,12 +491,23 @@ class makeWeather():
             cdf_file = Dataset(unzip_file, 'r')
             longitude = cdf_file.variables[self.vars['longitude']][:]
             self.src_zone = int(round(longitude[0] / 15))
+            if str(self.src_zone).lower() == 'best':
+                if self.src_zone != int(round(longitude[-1] / 15)):
+                    zones = {}
+                    longi = longitude[:]
+                    for val in longi:
+                        zone = int(round(val / 15))
+                        try:
+                            zones[zone] = zones[zone] + 1
+                        except:
+                            zones[zone] = 1
+                    self.src_zone = max(zones, key=lambda k: zones[k])
             self.log += 'Time zone: %s based on MERRA (west) longitude (%s to %s)\n' % (str(self.src_zone),
                         '{:0.4f}'.format(longitude[0]), '{:0.4f}'.format(longitude[-1]))
             cdf_file.close()
         else:
             self.src_zone = int(self.src_zone)
-            self.auto_zone = False
+          #  self.auto_zone = False
         if self.src_lat_lon != '':
             self.src_lat = []
             self.src_lon = []
@@ -1011,6 +1034,7 @@ class getParms(QtGui.QWidget):
         self.grid.addWidget(QtGui.QLabel('Time Zone:'), 2, 0)
         self.zoneCombo = QtGui.QComboBox()
         self.zoneCombo.addItem('Auto')
+        self.zoneCombo.addItem('Best')
         for i in range(-12, 13):
             self.zoneCombo.addItem(str(i))
         self.zoneCombo.currentIndexChanged[str].connect(self.zoneChanged)
@@ -1113,11 +1137,11 @@ class getParms(QtGui.QWidget):
         self.move(frameGm.topLeft())
 
     def zoneChanged(self, val):
-        if self.zoneCombo.currentIndex() == 0:
+        if self.zoneCombo.currentIndex() <= 1:
             lon = '(Time zone calculated from MERRA data)'
         else:
-            lw = int(self.zoneCombo.currentIndex() - 13) * 15 - 7.5
-            le = int(self.zoneCombo.currentIndex() - 13) * 15 + 7.5
+            lw = int(self.zoneCombo.currentIndex() - 14) * 15 - 7.5
+            le = int(self.zoneCombo.currentIndex() - 14) * 15 + 7.5
             if lw < -180:
                 lw = lw + 360
             if le > 180:
@@ -1168,8 +1192,10 @@ class getParms(QtGui.QWidget):
             wrap = ''
         if self.zoneCombo.currentIndex() == 0:
             zone = 'auto'
+        elif self.zoneCombo.currentIndex() == 1:
+            zone = 'best'
         else:
-            zone = str(self.zoneCombo.currentIndex() - 13)
+            zone = str(self.zoneCombo.currentIndex() - 14)
         solar = makeWeather(self, str(self.yearSpin.value()), zone, str(self.dirs[0].text()), \
                             str(self.dirs[1].text()), str(self.dirs[2].text()), str(self.fmatcombo.currentText()), \
                             str(self.swgcombo.currentText()), wrap, coords)
@@ -1203,8 +1229,10 @@ class getParms(QtGui.QWidget):
             wrap = ''
         if self.zoneCombo.currentIndex() == 0:
             zone = 'auto'
+        elif self.zoneCombo.currentIndex() == 1:
+            zone = 'best'
         else:
-            zone = str(self.zoneCombo.currentIndex() - 13)
+            zone = str(self.zoneCombo.currentIndex() - 14)
         wind = makeWeather(self, str(self.yearSpin.value()), zone, str(self.dirs[0].text()), \
                             str(self.dirs[1].text()), str(self.dirs[2].text()), \
                             'wind', '', wrap, coords)
@@ -1235,8 +1263,10 @@ class getParms(QtGui.QWidget):
             wrap = ''
         if self.zoneCombo.currentIndex() == 0:
             zone = 'auto'
+        elif self.zoneCombo.currentIndex() == 1:
+            zone = 'best'
         else:
-            zone = str(self.zoneCombo.currentIndex() - 13)
+            zone = str(self.zoneCombo.currentIndex() - 14)
         wind = makeWeather(self, str(self.yearSpin.value()), zone, str(self.dirs[0].text()), \
                             str(self.dirs[1].text()), str(self.dirs[2].text()), \
                             'both', str(self.swgcombo.currentText()), wrap, coords, info=True)
