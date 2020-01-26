@@ -28,6 +28,9 @@ import displaytable
 from credits import fileVersion
 from matplotlib import rcParams
 import matplotlib.pyplot as plt
+# This import registers the 3D projection, but is otherwise unused.
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib.ticker import LinearLocator, FormatStrFormatter
 import numpy as np
 import openpyxl as oxl
 import random
@@ -35,9 +38,10 @@ import random
 from parents import getParents
 from senuser import getUser
 from editini import SaveIni
-from floaters import ProgressBar
+from floaters import ProgressBar, FloatStatus
 import xlrd
 import configparser  # decode .ini file
+from zoompan import ZoomPanX
 
 tech_names = ['Load', 'Onshore Wind', 'Offshore Wind', 'Rooftop PV', 'Fixed PV', 'Single Axis PV',
               'Dual Axis PV', 'Biomass', 'Geothermal', 'Other1', 'CST', 'Shortfall']
@@ -325,6 +329,13 @@ class powerMatch(QtGui.QWidget):
                 self.scenarios = '/'.join(me)
         except:
             self.scenarios = ''
+        self.log_status = True
+        try:
+            rw = config.get('Windows', 'log_status')
+            if rw.lower() in ['false', 'no', 'off']:
+                self.log_status = False
+        except:
+            pass
         self.file_labels = ['Constraints', 'Generators', 'Optimisation', 'Data', 'Results']
         self.ifiles = [''] * 5
         self.isheets = self.file_labels[:]
@@ -340,6 +351,14 @@ class powerMatch(QtGui.QWidget):
         self.optimise_mutation = 0.005
         self.optimise_population = 50
         self.optimise_stop = 0
+        target_keys = ['lcoe', 'load_pct', 'surplus_pct', 're_pct', 'cost', 'co2']
+        target_names = ['LCOE', 'Load%', 'Surplus%', 'RE%', 'Cost', 'CO2']
+        self.targets = {}
+        for t in range(len(target_keys)):
+             if target_keys[t] in ['re_pct', 'surplus_pct']:
+                 self.targets[target_keys[t]] = [target_names[t], 0., -1, 0., 0]
+             else:
+                 self.targets[target_keys[t]] = [target_names[t], 0., 0., -1, 0]
         try:
              items = config.items('Powermatch')
              for key, value in items:
@@ -363,6 +382,9 @@ class powerMatch(QtGui.QWidget):
                  elif key == 'generators_details':
                      if value.lower() in ['false', 'off', 'no']:
                          self.details = False
+                 elif key == 'log_status':
+                     if value.lower() in ['false', 'no', 'off']:
+                         self.log_status = False
                  elif key == 'optimise_generations':
                      try:
                          self.optimise_generations = int(value)
@@ -383,9 +405,19 @@ class powerMatch(QtGui.QWidget):
                          self.optimise_stop = int(value)
                      except:
                          pass
+                 elif key[:9] == 'optimise_':
+                     try:
+                         bits = value.split(',')
+                         t = target_keys.index(key[9:])
+                         # name, weight, minimum, maximum, widget index
+                         self.targets[key[9:]] = [target_names[t], float(bits[0]),
+                                                 float(bits[1]), float(bits[2]), 0]
+                     except:
+                         pass
         except:
             pass
         self.opt_progressbar = None
+        self.floatstatus = None # status window
         self.adjustby = None
    #     self.tabs = QtGui.QTabWidget()    # Create tabs
    #     tab1 = QtGui.QWidget()
@@ -464,14 +496,13 @@ class powerMatch(QtGui.QWidget):
         self.grid.addWidget(quit, r, 0)
         quit.clicked.connect(self.quitClicked)
         QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
+        pms = QtGui.QPushButton('Summary', self)
+        self.grid.addWidget(pms, r, 1)
+        pms.clicked.connect(self.pmClicked)
         pm = QtGui.QPushButton('Powermatch', self)
      #   pm.setMaximumWidth(wdth)
-        self.grid.addWidget(pm, r, 1)
+        self.grid.addWidget(pm, r, 2)
         pm.clicked.connect(self.pmClicked)
-        pms = QtGui.QPushButton('Summary', self)
-     #   pm.setMaximumWidth(wdth)
-        self.grid.addWidget(pms, r, 2)
-        pms.clicked.connect(self.pmClicked)
         opt = QtGui.QPushButton('Optimise', self)
         self.grid.addWidget(opt, r, 3)
         opt.clicked.connect(self.optClicked)
@@ -510,6 +541,7 @@ class powerMatch(QtGui.QWidget):
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         self.center()
         self.resize(int(self.sizeHint().width()* 1.07), int(self.sizeHint().height() * 1.1))
+        self.show_FloatStatus() # status window
         self.show()
 
     def center(self):
@@ -520,7 +552,7 @@ class powerMatch(QtGui.QWidget):
         self.move(frameGm.topLeft())
 
     def fileChanged(self):
-        self.log.setText('')
+        self.setStatus('')
         for i in range(5):
             if self.files[i].hasFocus():
                 break
@@ -597,12 +629,64 @@ class powerMatch(QtGui.QWidget):
             lines.append('optimise_mutation=' + str(self.optimise_mutation))
             lines.append('optimise_population=' + str(self.optimise_population))
             lines.append('optimise_stop=' + str(self.optimise_stop))
+            for key, value in self.targets.items():
+                line = 'optimise_{}={:.2f},{:.2f},{:.2f}'.format(key, value[1], value[2], value[3])
+                lines.append(line)
             updates['Powermatch'] = lines
             SaveIni(updates)
         self.close()
 
+    def closeEvent(self, event):
+        if self.floatstatus is not None:
+            self.floatstatus.exit()
+        event.accept()
+
     def editClicked(self):
-        self.log.setText('')
+
+        def update_dictionary(it, source):
+            new_keys = list(source.keys())
+            # first we delete and add keys to match updated dictionary
+            if it == C:
+                old_keys = list(self.constraints.keys())
+                for key in old_keys:
+                    if key in new_keys:
+                        del new_keys[new_keys.index(key)]
+                    else:
+                        del self.constraints[key]
+                for key in new_keys:
+                    self.constraints[key] = Constraint(key, '<category>', 0., 1.,
+                                                       1., 1., 1., 0., 1., 0., 0.)
+                target = self.constraints
+            elif it == G:
+                old_keys = list(self.generators.keys())
+                for key in old_keys:
+                    if key in new_keys:
+                        del new_keys[new_keys.index(key)]
+                    else:
+                        del self.generators[key]
+                for key in new_keys:
+                    self.generators[key] = Facility(key, 0, '<constraint>', 0., 0., 0., 0.)
+                target = self.generators
+            elif it == O:
+                old_keys = list(self.optimisation.keys())
+                for key in old_keys:
+                    if key in new_keys:
+                        del new_keys[new_keys.index(key)]
+                    else:
+                        del self.optimisation[key]
+                for key in new_keys:
+                    self.optimisation[key] = Optimisation(key, 'None', None)
+                target = self.optimisation
+            # now update the data
+            for key in list(target.keys()):
+                for prop in dir(target[key]):
+                    if prop[:2] != '__' and prop[-2:] != '__':
+                        try:
+                            setattr(target[key], prop, source[key][prop])
+                        except:
+                            pass
+
+        self.setStatus('')
         ts = None
         it = self.file_labels.index(self.sender().text())
         if it == C and self.constraints is not None:
@@ -620,7 +704,7 @@ class powerMatch(QtGui.QWidget):
                 try:
                     sht = self.sheets[it].currentText()
                 except:
-                    self.log.setText(self.sheets[it].currentText() + ' not found in ' \
+                    self.setStatus(self.sheets[it].currentText() + ' not found in ' \
                                      + self.file_labels[it] + ' spreadsheet.')
                     return
                 ws = ts.sheet_by_name(sht)
@@ -640,7 +724,7 @@ class powerMatch(QtGui.QWidget):
                  save_folder=self.scenarios, edit=True, decpts=sp_pts, abbr=False)
             dialog.exec_()
             if dialog.getValues() is not None:
-                dialog.getValues(dictionary=self.constraints)
+                update_dictionary(it, dialog.getValues())
         elif it == G: # generators
             if self.generators is None:
                 try:
@@ -653,7 +737,7 @@ class powerMatch(QtGui.QWidget):
                  save_folder=self.scenarios, edit=True, decpts=sp_pts, abbr=False)
             dialog.exec_()
             if dialog.getValues() is not None:
-                dialog.getValues(dictionary=self.generators)
+                update_dictionary(it, dialog.getValues())
                 self.setOrder()
         elif it == O: # self.optimisation
             if self.optimisation is None:
@@ -665,7 +749,7 @@ class powerMatch(QtGui.QWidget):
                      save_folder=self.scenarios, edit=True)
             dialog.exec_()
             if dialog.getValues() is not None:
-                dialog.getValues(dictionary=self.optimisation)
+                update_dictionary(it, dialog.getValues())
                 for key in self.optimisation.keys():
                     if self.optimisation[key].approach == 'Discrete':
                         caps = self.optimisation[key].capacities.split(' ')
@@ -689,7 +773,7 @@ class powerMatch(QtGui.QWidget):
                 self.files[it].setText(newfile[len(self.scenarios):])
             else:
                 self.files[it].setText(newfile)
-            self.log.setText(self.file_labels[it] + ' spreadsheet changed.')
+            self.setStatus(self.file_labels[it] + ' spreadsheet changed.')
 
     def getConstraints(self, ws):
         if ws is None:
@@ -742,12 +826,12 @@ class powerMatch(QtGui.QWidget):
                     par_col = col
             strt_row = 1
         else:
-            self.log.setText('Not a ' + self.file_labels[it] + ' worksheet.')
+            self.setStatus('Not a ' + self.file_labels[it] + ' worksheet.')
             return
         try:
             cat_col = cat_col
         except:
-            self.log.setText('Not a ' + self.file_labels[it] + ' worksheet.')
+            self.setStatus('Not a ' + self.file_labels[it] + ' worksheet.')
             return
         self.constraints = {}
         for row in range(strt_row, ws.nrows):
@@ -766,7 +850,7 @@ class powerMatch(QtGui.QWidget):
             self.generators['<name>'] = Facility('<name>', 0, '<constraint>', 0., 0., 0., 0.)
             return
         if ws.cell_value(0, 0) != 'Name':
-            self.log.setText('Not a ' + self.file_labels[G] + ' worksheet.')
+            self.setStatus('Not a ' + self.file_labels[G] + ' worksheet.')
             return
         for col in range(ws.ncols):
             if ws.cell_value(0, col)[:8] == 'Dispatch' or ws.cell_value(0, col) == 'Order':
@@ -786,7 +870,7 @@ class powerMatch(QtGui.QWidget):
         try:
             lco_col = lco_col
         except:
-            self.log.setText('Not a ' + self.file_labels[G] + ' worksheet.')
+            self.setStatus('Not a ' + self.file_labels[G] + ' worksheet.')
             return
         self.generators = {}
         for row in range(1, ws.nrows):
@@ -803,7 +887,7 @@ class powerMatch(QtGui.QWidget):
             self.optimisation['<name>'] = Optimisation('<name>', 'None', None)
             return
         if ws.cell_value(0, 0) != 'Name':
-            self.log.setText('Not an ' + self.file_labels[O] + ' worksheet.')
+            self.setStatus('Not an ' + self.file_labels[O] + ' worksheet.')
             return
         cols = ['Name', 'Approach', 'Values', 'Capacity Max', 'Capacity Min',
                 'Capacity Step', 'Capacities']
@@ -815,7 +899,7 @@ class powerMatch(QtGui.QWidget):
             except:
                 pass
         if coln[0] < 0:
-            self.log.setText('Not an ' + self.file_labels[O] + ' worksheet.')
+            self.setStatus('Not an ' + self.file_labels[O] + ' worksheet.')
             return
         self.optimisation = {}
         for row in range(1, ws.nrows):
@@ -871,7 +955,7 @@ class powerMatch(QtGui.QWidget):
                     self.order.addItem(stn)
 
     def pmClicked(self):
-        self.log.setText(self.sender().text() + ' processing started')
+        self.setStatus(self.sender().text() + ' processing started')
         if self.sender().text() == 'Summary': # summary only?
             summ_only = True
         else:
@@ -880,6 +964,7 @@ class powerMatch(QtGui.QWidget):
         self.progressbar.setMaximum(10)
         self.progressbar.setHidden(False)
         details = self.details
+        err_msg = ''
         try:
             if str(self.files[C].text()).find('/') >= 0:
                 ts = xlrd.open_workbook(str(self.files[C].text()))
@@ -890,9 +975,8 @@ class powerMatch(QtGui.QWidget):
             ts.release_resources()
             del ts
         except:
-            self.log.setText('Error accessing Constraints.')
-            self.progressbar.setHidden(True)
-            return
+            err_msg = 'Error accessing Constraints'
+            self.getConstraints(None)
         try:
             if str(self.files[G].text()).find('/') >= 0:
                 ts = xlrd.open_workbook(str(self.files[G].text()))
@@ -903,9 +987,13 @@ class powerMatch(QtGui.QWidget):
             ts.release_resources()
             del ts
         except:
-            self.log.setText('Error accessing Generators.')
-            self.progressbar.setHidden(True)
-            return
+            if err_msg != '':
+                err_msg += ' and Generators'
+            else:
+                err_msg = 'Error accessing Generators.'
+            self.getGenerators(None)
+        if err_msg != '':
+            self.setStatus(err_msg)
         start_time = time.time()
         re_capacities = [0.] * len(tech_names)
         if str(self.files[D].text()).find('/') >= 0:
@@ -923,7 +1011,7 @@ class powerMatch(QtGui.QWidget):
             ws = ts.sheet_by_index(0)
             if ws.cell_value(0, 0) != 'Hourly Shortfall Table' \
               or ws.cell_value(0, 4) != 'Generation Summary Table':
-                self.log.setText('not a Powerbalance spreadsheet')
+                self.setStatus('not a Powerbalance spreadsheet')
                 self.progressbar.setHidden(True)
                 return
             for row in range(20):
@@ -942,7 +1030,7 @@ class powerMatch(QtGui.QWidget):
             ws = ts.active
             top_row = ws.max_row - 8760
             if ws.cell(row=top_row, column=1).value != 'Hour' or ws.cell(row=top_row, column=2).value != 'Period':
-                self.log.setText('not a Powermatch data spreadsheet')
+                self.setStatus('not a Powermatch data spreadsheet')
                 self.progressbar.setHidden(True)
                 return
             typ_row = top_row - 1
@@ -951,7 +1039,7 @@ class powerMatch(QtGui.QWidget):
                     break
                 typ_row -= 1
             else:
-                self.log.setText('no suitable data')
+                self.setStatus('no suitable data')
                 return
             icap_row = typ_row + 1
             while icap_row < top_row:
@@ -959,7 +1047,7 @@ class powerMatch(QtGui.QWidget):
                     break
                 icap_row += 1
             else:
-                self.log.setText('no capacity data')
+                self.setStatus('no capacity data')
                 return
        #     adjustby = None
             if self.adjust.isChecked():
@@ -985,7 +1073,7 @@ class powerMatch(QtGui.QWidget):
                 adjust.exec_()
                 self.adjustby = adjust.getValues()
                 if self.adjustby is None:
-                    self.log.setText('Execution aborted.')
+                    self.setStatus('Execution aborted.')
                     self.progressbar.setHidden(True)
                     return
             load_col = -1
@@ -1094,6 +1182,8 @@ class powerMatch(QtGui.QWidget):
             ns.cell(row=what_row, column=1).value = 'Hour'
             ns.cell(row=what_row, column=2).value = 'Period'
             ns.cell(row=what_row, column=3).value = 'Load'
+            ns.cell(row=sum_row, column=3).value = '=SUM(' + ss_col(3) + str(hrows) + \
+                                                   ':' + ss_col(3) + str(hrows + 8759) + ')'
             o = 4
             col = 3
             if details:
@@ -1116,8 +1206,8 @@ class powerMatch(QtGui.QWidget):
                     ss.cell(row=ss_row, column=3).value = '=Detail!' + ss_col(col) + str(sum_row)
                     ss.cell(row=ss_row, column=3).number_format = '#,##0'
                     re_sum += 'C' + str(ss_row) + '+'
-                    ns.cell(row=cf_row, column=col).value = '=' + ss_col(col) + '3/' \
-                            + ss_col(col) + '1/8760'
+                    ns.cell(row=cf_row, column=col).value = '=IF(' + ss_col(col) + '1>0,' + \
+                            ss_col(col) + '3/' + ss_col(col) + '1/8760,"")'
                     ns.cell(row=cf_row, column=col).number_format = '#,##0.00'
                     ss.cell(row=ss_row, column=4).value = '=Detail!' + ss_col(col) + str(cf_row)
                     ss.cell(row=ss_row, column=4).number_format = '#,##0.00'
@@ -1154,7 +1244,7 @@ class powerMatch(QtGui.QWidget):
                 else:
                     ns.cell(row=sum_row, column=4).value = re_generation
                 ns.cell(row=sum_row, column=4).number_format = '#,##0'
-                ns.cell(row=cf_row, column=4).value = '=D3/D1/8760'
+                ns.cell(row=cf_row, column=4).value = '=IF(D1>0,D3/D1/8760."")'
                 ns.cell(row=cf_row, column=4).number_format = '#,##0.00'
                 ss_row += 1
                 ss.cell(row=ss_row, column=1).value = '=Detail!D' + str(what_row)
@@ -1281,7 +1371,8 @@ class powerMatch(QtGui.QWidget):
                     ns.cell(row=sum_row, column=col).value = '=SUMIF(' + ss_col(col) + \
                             str(hrows) + ':' + ss_col(col) + str(hrows + 8759) + ',">0")'
                     ns.cell(row=sum_row, column=col).number_format = '#,##0'
-                    ns.cell(row=cf_row, column=col).value = '=' + ss_col(col) + '3/' + ss_col(col) + '1/8760'
+                    ns.cell(row=cf_row, column=col).value = '=IF(' + ss_col(col) + '1>0,' + \
+                                                    ss_col(col) + '3/' + ss_col(col) + '1/8760,"")'
                     ns.cell(row=cf_row, column=col).number_format = '#,##0.00'
                     col += 3
                 else:
@@ -1306,7 +1397,8 @@ class powerMatch(QtGui.QWidget):
                     ns.cell(row=sum_row, column=col).value = '=SUM(' + ss_col(col) + str(hrows) + \
                             ':' + ss_col(col) + str(hrows + 8759) + ')'
                     ns.cell(row=sum_row, column=col).number_format = '#,##0'
-                    ns.cell(row=cf_row, column=col).value = '=' + ss_col(col) + '3/' + ss_col(col) + '1/8760'
+                    ns.cell(row=cf_row, column=col).value = '=IF(' + ss_col(col) + '1>0,' + \
+                                                ss_col(col) + '3/' + ss_col(col) + '1/8760,"")'
                     ns.cell(row=cf_row, column=col).number_format = '#,##0.00'
                     col += 2
                 else:
@@ -1390,11 +1482,11 @@ class powerMatch(QtGui.QWidget):
                         sp_data.append([key, value])
             list(map(list, list(zip(*sp_data))))
             sp_pts = [0, 2, 0, 2, 0, 2, 0]
+            self.setStatus(self.sender().text() + ' completed')
             dialog = displaytable.Table(sp_data, title=self.sender().text(), fields=headers,
                      save_folder=self.scenarios, sortby='', decpts=sp_pts)
             dialog.exec_()
             self.progressbar.setValue(10)
-            self.log.setText(self.sender().text() + ' completed')
             self.progressbar.setHidden(True)
             self.progressbar.setValue(0)
             return
@@ -1603,7 +1695,7 @@ class powerMatch(QtGui.QWidget):
         data_file = data_file[j + 1:]
         msg = '%s created (%.2f seconds)' % (data_file, time.time() - start_time)
         msg = '%s created.' % data_file
-        self.log.setText(msg)
+        self.setStatus(msg)
         self.progressbar.setHidden(True)
         self.progressbar.setValue(0)
 
@@ -1618,6 +1710,40 @@ class powerMatch(QtGui.QWidget):
             self.activateWindow()
         else:
             self.opt_progressbar.range(0, maximum, msg=msg)
+
+    def show_FloatStatus(self):
+        if not self.log_status:
+            return
+        if self.floatstatus is None:
+            self.floatstatus = FloatStatus(self, self.scenarios, None, program='Powermatch')
+            self.floatstatus.setWindowModality(QtCore.Qt.WindowModal)
+            self.floatstatus.setWindowFlags(self.floatstatus.windowFlags() |
+                         QtCore.Qt.WindowSystemMenuHint |
+                         QtCore.Qt.WindowMinMaxButtonsHint)
+            self.floatstatus.procStart.connect(self.getStatus)
+            self.connect(self.floatstatus, QtCore.SIGNAL('log'), self.floatstatus.log)
+            self.floatstatus.show()
+            self.activateWindow()
+
+    def setStatus(self, text):
+        if self.log.text == text:
+            return
+        self.log.setText(text)
+        if text == '':
+            return
+        if self.floatstatus and self.log_status:
+            self.floatstatus.emit(QtCore.SIGNAL('log'), text)
+
+    @QtCore.pyqtSlot(str)
+    def getStatus(self, text):
+        if text == 'goodbye':
+            self.floatstatus = None
+
+    def exit(self):
+        self.updated = False
+        if self.floatstatus is not None:
+            self.floatstatus.exit()
+        self.close()
 
     def optClicked(self):
 
@@ -1661,7 +1787,7 @@ class powerMatch(QtGui.QWidget):
             # Get length of chromosome
             chromosome_length = len(parent_1)
 
-            # Pick crossover point, avoding ends of chromsome
+            # Pick crossover point, avoiding ends of chromsome
             if points == 1:
                 crossover_point = random.randint(1,chromosome_length-1)
             # Create children. np.hstack joins two arrays
@@ -1691,6 +1817,7 @@ class powerMatch(QtGui.QWidget):
 
         def calculate_fitness(population):
             fitness_scores = []
+            multi_fitness_scores = []
             for chromosome in population:
                 op_data = []
                 shortfall = op_load[:]
@@ -1829,6 +1956,14 @@ class powerMatch(QtGui.QWidget):
                     fitness_scores.append(200)
                 else:
                     fitness_scores.append(gs)
+                # multi_fitness_scores = [lcoe, load_met, surplus, cost, RE%, CO2]
+                multi_fitness_scores.append({'lcoe': fitness_scores[-1], #lcoe. lower better
+                    'load_pct': (sf_sums[2] - sf_sums[0]) / op_load_tot, #load met. 100% better
+                    'surplus_pct': -sf_sums[1] / op_load_tot, #surplus. lower better
+                    're_pct': re_sum / gen_sum, # RE pct. higher better
+                    'cost': cost_sum, # cost. lower better
+                    'co2': co2_sum, # CO2. lower better
+                    'shortfall': sf_sums[0] / op_load_tot}) # shortfall. lower the better
             if len(population) == 1:
                 op_data.append(['Total', cap_sum, gen_sum, cs, cost_sum, gs, co2_sum])
                 if self.carbon_price > 0:
@@ -1851,15 +1986,43 @@ class powerMatch(QtGui.QWidget):
                 op_data.append(['Surplus (' + pct, '', -sf_sums[1]])
                 return op_data
             else:
-                return fitness_scores
+                return fitness_scores, multi_fitness_scores
 
         def optQuitClicked(event):
             self.optExit = True
             optDialog.close()
 
+        def calc_multi_best(multi_scores):
+            best_weight = [0, 99]
+            for m in range(len(multi_scores)):
+                weight = 0
+                for key, value in self.targets.items():
+                    if value[1] <= 0:
+                        continue
+                    if value[2] > value[3]: # wants higher target
+                        if multi_scores[m][key] > value[2]: # high no weight
+                            w = 0.
+                        elif multi_scores[m][key] < value[3]: # low maximum weight
+                            w = 1.
+                        else:
+                            w = 1 - (multi_scores[m][key] - value[3]) / (value[2] - value[3])
+                    else: # lower target
+                        if multi_scores[m][key] > value[3]: # high maximum weight
+                            w = 1.
+                        elif multi_scores[m][key] < value[2]: # low no weight
+                            w = 0.
+                        else:
+                            w = multi_scores[m][key] / (value[3] - value[2])
+                    weight += w * value[1]
+              #      weight = weight + w * value[1]
+                if weight > 0 and weight < best_weight[1]:
+                    best_weight = [m, weight]
+            return best_weight
+
         self.optExit = False
-        self.log.setText('Optimise processing started')
+        self.setStatus('Optimise processing started')
         details = self.details
+        err_msg = ''
         if self.constraints is None:
             try:
                 if str(self.files[C].text()).find('/') >= 0:
@@ -1871,8 +2034,8 @@ class powerMatch(QtGui.QWidget):
                 ts.release_resources()
                 del ts
             except:
-                self.log.setText('Error accessing Constraints.')
-                return
+                err_msg = 'Error accessing Constraints'
+                self.getConstraints(None)
         if self.generators is None:
             try:
                 if str(self.files[G].text()).find('/') >= 0:
@@ -1884,9 +2047,11 @@ class powerMatch(QtGui.QWidget):
                 ts.release_resources()
                 del ts
             except:
-                self.log.setText('Error accessing Generators.')
-                self.progressbar.setHidden(True)
-                return
+                if err_msg != '':
+                    err_msg += ' and Generators'
+                else:
+                    err_msg = 'Error accessing Generators'
+            self.getGenerators(None)
         if self.optimisation is None:
             try:
                 if str(self.files[O].text()).find('/') >= 0:
@@ -1898,21 +2063,25 @@ class powerMatch(QtGui.QWidget):
                 ts.release_resources()
                 del ts
             except:
-                self.log.setText('Error accessing Optimisation.')
-                self.progressbar.setHidden(True)
-                return
+                if err_msg != '':
+                    err_msg += ' and Optimisation'
+                else:
+                    err_msg = 'Error accessing Optimisation'
+                self.getoptimisation(None)
+        if err_msg != '':
+            self.setStatus(err_msg)
         if str(self.files[D].text()).find('/') >= 0:
             pm_data_file = str(self.files[D].text())
         else:
             pm_data_file = self.scenarios + str(self.files[D].text())
         if pm_data_file[-4:] == '.xls': #xls format
-            self.log.setText('Not an option for Powerbalance')
+            self.setStatus('Not an option for Powerbalance')
             return
         ts = oxl.load_workbook(pm_data_file)
         ws = ts.active
         top_row = ws.max_row - 8760
         if ws.cell(row=top_row, column=1).value != 'Hour' or ws.cell(row=top_row, column=2).value != 'Period':
-            self.log.setText('not a Powermatch data spreadsheet')
+            self.setStatus('not a Powermatch data spreadsheet')
             self.progressbar.setHidden(True)
             return
         typ_row = top_row - 1
@@ -1921,7 +2090,7 @@ class powerMatch(QtGui.QWidget):
                 break
             typ_row -= 1
         else:
-            self.log.setText('no suitable data')
+            self.setStatus('no suitable data')
             return
         icap_row = typ_row + 1
         while icap_row < top_row:
@@ -1929,7 +2098,7 @@ class powerMatch(QtGui.QWidget):
                 break
             icap_row += 1
         else:
-            self.log.setText('no capacity data')
+            self.setStatus('no capacity data')
             return
         optExit = False
         optDialog = QtGui.QDialog()
@@ -1942,7 +2111,7 @@ class powerMatch(QtGui.QWidget):
         optLoad.setValue(1)
         rw = 0
         grid.addWidget(optLoad, rw, 1)
-        grid.addWidget(QtGui.QLabel('Multiplier for input Load'), rw, 2)
+        grid.addWidget(QtGui.QLabel('Multiplier for input Load'), rw, 2, 1, 3)
         rw += 1
         grid.addWidget(QtGui.QLabel('Population size'), rw, 0)
         optPopn = QtGui.QSpinBox()
@@ -1951,16 +2120,16 @@ class powerMatch(QtGui.QWidget):
         optPopn.setValue(self.optimise_population)
         optPopn.valueChanged.connect(self.changes)
         grid.addWidget(optPopn, rw, 1)
-        grid.addWidget(QtGui.QLabel('Size of population'), rw, 2)
+        grid.addWidget(QtGui.QLabel('Size of population'), rw, 2, 1, 3)
         rw += 1
-        grid.addWidget(QtGui.QLabel('No. of generations'), rw, 0)
+        grid.addWidget(QtGui.QLabel('No. of generations'), rw, 0, 1, 3)
         optGenn = QtGui.QSpinBox()
         optGenn.setRange(10, 500)
         optGenn.setSingleStep(10)
         optGenn.setValue(self.optimise_generations)
         optGenn.valueChanged.connect(self.changes)
         grid.addWidget(optGenn, rw, 1)
-        grid.addWidget(QtGui.QLabel('Number of generations (iterations)'), rw, 2)
+        grid.addWidget(QtGui.QLabel('Number of generations (iterations)'), rw, 2, 1, 3)
         rw += 1
         grid.addWidget(QtGui.QLabel('Mutation probability'), rw, 0)
         optMutn = QtGui.QDoubleSpinBox()
@@ -1970,7 +2139,7 @@ class powerMatch(QtGui.QWidget):
         optMutn.setValue(self.optimise_mutation)
         optMutn.valueChanged.connect(self.changes)
         grid.addWidget(optMutn, rw, 1)
-        grid.addWidget(QtGui.QLabel('Add in mutation'), rw, 2)
+        grid.addWidget(QtGui.QLabel('Add in mutation'), rw, 2, 1, 3)
         rw += 1
         grid.addWidget(QtGui.QLabel('Exit if stable'), rw, 0)
         optStop = QtGui.QSpinBox()
@@ -1979,8 +2148,58 @@ class powerMatch(QtGui.QWidget):
         optStop.setValue(self.optimise_stop)
         optStop.valueChanged.connect(self.changes)
         grid.addWidget(optStop, rw, 1)
-        grid.addWidget(QtGui.QLabel('Exit if LCOE remains the same after this many iterations'), rw, 2)
+        grid.addWidget(QtGui.QLabel('Exit if LCOE remains the same after this many iterations'),
+                       rw, 2, 1, 3)
         rw += 1
+        # for each variable name
+        grid.addWidget(QtGui.QLabel('Variable'), rw, 0)
+        grid.addWidget(QtGui.QLabel('Weight'), rw, 1)
+        grid.addWidget(QtGui.QLabel('Better'), rw, 2)
+        grid.addWidget(QtGui.QLabel('Worse'), rw, 3)
+        rw += 1
+        ndx = grid.count()
+        for key in self.targets.keys():
+            self.targets[key][-1] = ndx
+            ndx += 4
+        for key, value in self.targets.items():
+            if value[2] < 0:
+                ud = ' (<html>&uarr;</html>)'
+            elif value[3] < 0 or value[3] > value[2]:
+                ud = ' (<html>&darr;</html>)'
+            else:
+                ud = ' (<html>&uarr;</html>)'
+            grid.addWidget(QtGui.QLabel(value[0] + ':' + ud), rw, 0)
+            weight = QtGui.QDoubleSpinBox()
+            weight.setRange(0, 1)
+            weight.setDecimals(2)
+            weight.setSingleStep(0.1)
+            weight.setValue(value[1])
+            grid.addWidget(weight, rw, 1)
+            if key[-4:] == '_pct':
+                minim = QtGui.QDoubleSpinBox()
+                minim.setRange(-.1, 1.)
+                minim.setDecimals(2)
+                minim.setSingleStep(0.1)
+                minim.setValue(value[2])
+                grid.addWidget(minim, rw, 2)
+                maxim = QtGui.QDoubleSpinBox()
+                maxim.setRange(-.1, 1.)
+                maxim.setDecimals(2)
+                maxim.setSingleStep(0.1)
+                maxim.setValue(value[3])
+                grid.addWidget(maxim, rw, 3)
+            else:
+                minim = QtGui.QLineEdit()
+                minim.setValidator(QtGui.QDoubleValidator())
+                minim.validator().setDecimals(2)
+                minim.setText(str(value[2]))
+                grid.addWidget(minim, rw, 2)
+                maxim = QtGui.QLineEdit()
+                maxim.setValidator(QtGui.QDoubleValidator())
+                maxim.validator().setDecimals(2)
+                maxim.setText(str(value[3]))
+                grid.addWidget(maxim, rw, 3)
+            rw += 1
         quit = QtGui.QPushButton('Quit', self)
         grid.addWidget(quit, rw, 0)
         quit.clicked.connect(optQuitClicked)
@@ -1992,15 +2211,41 @@ class powerMatch(QtGui.QWidget):
         optDialog.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         optDialog.exec_()
         if self.optExit: # a fudge to exit
-            self.log.setText('Execution aborted.')
+            self.setStatus('Execution aborted.')
             return
+        # update any changes to targets
+        for key in self.targets.keys():
+            weight = grid.itemAt(self.targets[key][-1] + 1).widget()
+            self.targets[key][1] = weight.value()
+            minim = grid.itemAt(self.targets[key][-1] + 2).widget()
+            try:
+                self.targets[key][2] = minim.value()
+            except:
+                self.targets[key][2] = float(minim.text())
+            maxim = grid.itemAt(self.targets[key][-1] + 3).widget()
+            try:
+                self.targets[key][3] = maxim.value()
+            except:
+                self.targets[key][3] = float(maxim.text())
+        updates = {}
+        lines = []
+        lines.append('optimise_generations=' + str(self.optimise_generations))
+        lines.append('optimise_mutation=' + str(self.optimise_mutation))
+        lines.append('optimise_population=' + str(self.optimise_population))
+        lines.append('optimise_stop=' + str(self.optimise_stop))
+        for key, value in self.targets.items():
+            line = 'optimise_{}={:.2f},{:.2f},{:.2f}'.format(key, value[1], value[2], value[3])
+            lines.append(line)
+        updates['Powermatch'] = lines
+        SaveIni(updates)
         self.adjust_re = True
         re_capacities = []
         re_capacity = 0.
         orig_load = []
         load_col = -1
         orig_tech = {}
-        dict_order = {} # rely on will be processed in added order
+        orig_capacity = {}
+        dict_order = {} # rely on it being processed in added order
         # first get original renewables generation from data sheet
         for col in range(3, ws.max_column + 1):
             try:
@@ -2012,6 +2257,7 @@ class powerMatch(QtGui.QWidget):
                 try:
                     if ws.cell(row=icap_row, column=col).value <= 0:
                         continue
+                    orig_capacity[tech_names[i]] = ws.cell(row=icap_row, column=col).value # in case no optimisation
                 except:
                     continue
                 dict_order[tech_names[i]] = [ws.cell(row=icap_row, column=col).value, 0, 0, 0]
@@ -2027,17 +2273,32 @@ class powerMatch(QtGui.QWidget):
         capacities = []
         for tech in dict_order.keys():
             dict_order[tech][1] = len(capacities) # first entry
-            if self.optimisation[tech].approach == 'Discrete':
-                capacities.extend(self.optimisation[tech].capacities)
-                dict_order[tech][2] = len(capacities) # last entry
-            elif self.optimisation[tech].approach == 'Range':
-                ctr = int((self.optimisation[tech].capacity_max - self.optimisation[tech].capacity_min) / \
-                          self.optimisation[tech].capacity_step)
-                capacities.extend([self.optimisation[tech].capacity_step] * ctr)
-                dict_order[tech][2] = len(capacities)
-                dict_order[tech][3] = self.optimisation[tech].capacity_min
-            else:
-                dict_order[tech][2] = len(capacities)
+            try:
+                if self.optimisation[tech].approach == 'Discrete':
+                    capacities.extend(self.optimisation[tech].capacities)
+                    dict_order[tech][2] = len(capacities) # last entry
+                elif self.optimisation[tech].approach == 'Range':
+                    ctr = int((self.optimisation[tech].capacity_max - self.optimisation[tech].capacity_min) / \
+                              self.optimisation[tech].capacity_step)
+                    if ctr < 1:
+                        self.setStatus("Error with Optimisation table entry for '" + tech + "'")
+                        return
+                    capacities.extend([self.optimisation[tech].capacity_step] * ctr)
+                    tot = self.optimisation[tech].capacity_step * ctr + self.optimisation[tech].capacity_min
+                    if tot < self.optimisation[tech].capacity_max:
+                        capacities.append(self.optimisation[tech].capacity_max - tot)
+                    dict_order[tech][2] = len(capacities)
+                    dict_order[tech][3] = self.optimisation[tech].capacity_min
+                else:
+                    dict_order[tech][2] = len(capacities)
+            except KeyError as err:
+                self.setStatus('Key Error: No Optimisation entry for ' + str(err))
+                dict_order[tech] = [orig_capacity[tech], len(capacities), len(capacities) + 5, 0]
+                capacities.extend([orig_capacity[tech] / 5.] * 5)
+            except:
+                err = str(sys.exc_info()[0]) + ',' + str(sys.exc_info()[1])
+                self.setStatus('Error: ' + str(err))
+                return
         # chromosome = [1] * int(len(capacities) / 2) + [0] * (len(capacities) - int(len(capacities) / 2))
         # we have the original data - from here down we can do our multiple optimisations
         self.adjustby = {'Load': optLoad.value()}
@@ -2052,47 +2313,100 @@ class powerMatch(QtGui.QWidget):
         op_load_tot = sum(op_load)
         # Set general parameters
         chromosome_length = len(capacities)
-        print(chromosome_length, pow(2, chromosome_length))
+        self.setStatus(f'Chromosome length: {chromosome_length}; {pow(2, chromosome_length):,} permutations')
         self.optimise_population = optPopn.value()
         population_size = self.optimise_population
         self.optimise_generations = optGenn.value()
         maximum_generation = self.optimise_generations
         self.optimise_mutation = optMutn.value()
         self.optimise_stop = optStop.value()
-        best_score_progress = [] # Tracks progress
         target = 0. # aim for this LCOE
         scores = []
+        multi_scores = []
+        multi_best = []
         self.show_ProgressBar(maximum=optGenn.value(), msg='Process generations', title='SIREN - Powermatch Progress')
         self.opt_progressbar.setVisible(True)
         start_time = time.time()
         # Create starting population
+        self.opt_progressbar.emit(QtCore.SIGNAL('progress'), 1, 'Processing generation 1')
         population = create_starting_population(population_size, chromosome_length)
         # Display best score in starting population
-        scores = calculate_fitness(population)
+        scores, multi_scores = calculate_fitness(population)
+        if 1 == 2: # display starting population ?
+            x = []
+            y = []
+            z = []
+            max_cost = 0
+            for multi in multi_scores:
+                max_cost = max(max_cost, multi['cost'])
+            pwr_chr = ''
+            divisor = 1.
+            pwr_chrs = ' KMBTPEZY'
+            for pwr in range(len(pwr_chrs) - 1, -1, -1):
+                if max_cost > pow(10, pwr * 3):
+                    pwr_chr = pwr_chrs[pwr]
+                    divisor = 1. * pow(10, pwr * 3)
+                    break
+            for multi in multi_scores:
+                x.append(multi['surplus_pct'] * 100.) # surplus
+                y.append(multi['cost'] / divisor) # cost
+                z.append(multi['lcoe']) # lcoe
+            fig = plt.figure('starting population')
+            mx = fig.gca(projection='3d')
+            plt.title('\nStarting population\n')
+            surf = mx.scatter(x, y, z)
+            mx.zaxis.set_major_formatter(FormatStrFormatter('$%.02f'))
+            mx.yaxis.set_major_formatter(FormatStrFormatter('$%.01f' + pwr_chr))
+            mx.xaxis.set_major_formatter(FormatStrFormatter('%d%%'))
+            mx.set_xlabel('Surplus %')
+            mx.set_ylabel('Total Cost ($' + pwr_chr + ')')
+            mx.set_zlabel('LCOE')
+            zp = ZoomPanX()
+            f = zp.zoom_pan(lx, base_scale=1.2, annotate=True)
+            plt.show()
         best_score = np.min(scores)
         lowest_score = best_score
         best = scores.index(best_score)
         lowest_chrom = population[best]
-        print ('Starting LCOE: ',best_score)
+        for key in self.targets.keys():
+            if self.targets[key][2] < 0: # want a maximum from first round
+                setit = 0
+                for multi in multi_scores:
+                    setit = max(multi[key], setit)
+                self.targets[key][2] = setit
+            if self.targets[key][3] < 0: # want a maximum from first round
+                setit = 0
+                for multi in multi_scores:
+                    setit = max(multi[key], setit)
+                self.targets[key][3] = setit
+        # now we can find the best weighted result - lowest is best
+        best_weight = calc_multi_best(multi_scores)
+        multi_best_weight = best_weight[1]
+        multi_lowest_chrom = population[best_weight[0]]
+        multi_best.append(multi_scores[best_weight[0]]) #best])
+        self.setStatus('Starting LCOE: $%.2f' % best_score)
         lcoe_value = best_score
         lcoe_ctr = 1
         # Add starting best score to progress tracker
-        best_score_progress.append(best_score)
+        best_score_progress = [best_score]
         ud = '='
         # Now we'll go through the generations of genetic algorithm
-        for generation in range(maximum_generation):
+        for generation in range(1, maximum_generation):
             tim = (time.time() - start_time)
             if tim < 60:
                 tim = ' ( %s $%.2f ; %.1f secs)' % (ud, best_score, tim)
             else:
                 tim = ' ( %s $%.2f ; %.2f mins)' % (ud, best_score, tim / 60.)
-            self.opt_progressbar.emit(QtCore.SIGNAL('progress'), generation,
-                'Processing generation ' + str(generation) + tim)
+            self.opt_progressbar.emit(QtCore.SIGNAL('progress'), generation + 1,
+                'Processing generation ' + str(generation + 1) + tim)
             QtGui.qApp.processEvents()
             if not self.opt_progressbar.be_open:
                 break
         # Create an empty list for new population
             new_population = []
+        # Using elitism approach include best individual
+            new_population.append(lowest_chrom)
+            new_population.append(multi_lowest_chrom)
             # Create new population generating two children at a time
             for i in range(int(population_size/2)):
                 parent_1 = select_individual_by_tournament(population, scores)
@@ -2100,17 +2414,24 @@ class powerMatch(QtGui.QWidget):
                 child_1, child_2 = breed_by_crossover(parent_1, parent_2)
                 new_population.append(child_1)
                 new_population.append(child_2)
-
+            new_population.pop() # get back to original size
+            new_population.pop() # get back to original size
             # Replace the old population with the new one
             population = np.array(new_population)
             if self.optimise_mutation > 0:
                 population = randomly_mutate_population(population, self.optimise_mutation)
             # Score best solution, and add to tracker
-            scores = calculate_fitness(population)
+            scores, multi_scores = calculate_fitness(population)
             best_score = np.min(scores)
             best_score_progress.append(best_score)
+            best = scores.index(best_score)
+            # now we can find the best weighted result - lowest is best`
+            best_weight = calc_multi_best(multi_scores)
+            if best_weight[1] < multi_best_weight:
+                multi_best_weight = best_weight[1]
+                multi_lowest_chrom = population[best_weight[0]]
+            multi_best.append(multi_scores[best_weight[0]]) #best])
             if best_score < lowest_score:
-                best = scores.index(best_score)
                 lowest_score = best_score
                 lowest_chrom = population[best]
             if self.optimise_stop > 0:
@@ -2124,39 +2445,87 @@ class powerMatch(QtGui.QWidget):
             if best_score == best_score_progress[-2]:
                 ud = '='
             elif best_score < best_score_progress[-2]:
-                ud = 'v'
+                ud = '<html>&darr;</html>'
             else:
-                ud = '^'
+                ud = '<html>&uarr;</html>'
         self.opt_progressbar.setVisible(False)
         self.opt_progressbar.close()
         tim = (time.time() - start_time)
         if tim < 60:
-            tim = ' (%.1f secs)' % tim
+            tim = '%.1f secs)' % tim
         else:
-            tim = ' (%.2f mins)' % (tim / 60.)
-        msg = 'Optimise completed' + tim
+            tim = '%.2f mins)' % (tim / 60.)
+        msg = 'Optimise completed (%0d generations; %s' % (generation + 1, tim)
         best = scores.index(best_score)
         if best_score > lowest_score:
             msg += ' Try more generations.'
             op_data = calculate_fitness([lowest_chrom])
         else:
             op_data = calculate_fitness([population[best]])
-        self.log.setText(msg)
+        self.setStatus(msg)
+        QtGui.QApplication.processEvents()
         self.progressbar.setHidden(True)
         self.progressbar.setValue(0)
         # GA has completed required generation
-        print ('End LCOE: ', best_score)
+        self.setStatus('Final LCOE: $%.2f' % best_score)
         # Plot progress
+        x = list(range(1, len(best_score_progress)+ 1))
         rcParams['savefig.directory'] = self.scenarios
         plt.figure('optimise_lcoe')
+        lx = plt.subplot(111)
         plt.title('Optimise LCOE using Genetic Algorithm')
-        plt.plot(best_score_progress)
-        plt.xlabel('Optimise Cycle (' + str(len(best_score_progress)) + ' generations)')
-        plt.ylabel('Best LCOE ($/MWh)')
+        lx.plot(x, best_score_progress)
+        lx.set_xlabel('Optimise Cycle (' + str(len(best_score_progress)) + ' generations)')
+        lx.set_ylabel('Best LCOE ($/MWh)')
+        zp = ZoomPanX()
+        f = zp.zoom_pan(lx, base_scale=1.2, annotate=True)
         plt.show()
+        x = []
+        y = []
+        z = []
+        max_cost = 0
+        for multi in multi_best:
+            max_cost = max(max_cost, multi['cost'])
+        pwr_chr = ''
+        divisor = 1.
+        pwr_chrs = ' KMBTPEZY'
+        for pwr in range(len(pwr_chrs) - 1, -1, -1):
+            if max_cost > pow(10, pwr * 3):
+                pwr_chr = pwr_chrs[pwr]
+                divisor = 1. * pow(10, pwr * 3)
+                break
+        for multi in multi_best:
+            x.append(multi['surplus_pct'] * 100.) # surplus
+            y.append(multi['cost'] / divisor) # cost
+            z.append(multi['lcoe']) # lcoe
+        fig = plt.figure('best of each generation')
+        mx = fig.gca(projection='3d')
+        plt.title('\nBest of each Generation\n')
+        surf = mx.scatter(x, y, z, picker=1) # enable picking a point
+        fmat = {'x': '%.1f%%', 'y': '$%.2f' + pwr_chr, 'z': '$%.2f'}
+        mx.zaxis.set_major_formatter(FormatStrFormatter(fmat['z']))
+        mx.yaxis.set_major_formatter(FormatStrFormatter(fmat['y']))
+        mx.xaxis.set_major_formatter(FormatStrFormatter(fmat['x']))
+        mx.set_xlabel('Surplus %')
+        mx.set_ylabel('Total Cost ($' + pwr_chr + ')')
+        mx.set_zlabel('LCOE')
+        zp = ZoomPanX()
+        f = zp.zoom_pan(mx, base_scale=1.2, annotate=True)
+        plt.show()
+        if zp.datapoint is not None: # user picked a point
+            for p in zp.datapoint:
+                msg = 'Generation {:d}: LCOE: ${:.2f}; Total Cost: ${:.1f}{}; Surplus: {:.1f}%'
+                self.setStatus(msg.format(p[0], p[3], p[2], pwr_chr, p[1]))
+            self.setStatus('Need to capture this chromosome and redo calculate_fitness')
+        del zp
         list(map(list, list(zip(*op_data))))
         op_pts = [0, 3, 0, 2, 0, 2, 0]
         dialog = displaytable.Table(op_data, title=self.sender().text(), fields=headers,
+                 save_folder=self.scenarios, sortby='', decpts=op_pts)
+        dialog.exec_()
+        op_data = calculate_fitness([multi_lowest_chrom])
+        list(map(list, list(zip(*op_data))))
+        dialog = displaytable.Table(op_data, title='Multi_' + self.sender().text(), fields=headers,
                  save_folder=self.scenarios, sortby='', decpts=op_pts)
         dialog.exec_()
         return
