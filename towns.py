@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2020 Sustainable Energy Now Inc., Angus King
 #
 #  towns.py - This file is part of SIREN.
 #
@@ -122,6 +122,8 @@ class Towns:
             twns = csv.DictReader(townfile)
             if 'Town' in twns.fieldnames:
                 name_field = 'Town'
+            elif 'Name' in twns.fieldnames:
+                name_field = 'Name'
             else:
                 name_field = 'Site name'
             if remove_duplicates:
