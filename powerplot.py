@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2019 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2019-2020 Sustainable Energy Now Inc., Angus King
 #
 #  powerplot.py - This file is possibly part of SIREN.
 #
@@ -215,8 +215,14 @@ class PowerPlot(QtGui.QWidget):
         self.grid.addWidget(QtGui.QLabel('Cumulative:'), rw, 0)
         self.cumulative = QtGui.QCheckBox()
         self.cumulative.setCheckState(QtCore.Qt.Checked)
-        self.grid.addWidget(self.cumulative, rw, 1, 1, 2)
+        self.grid.addWidget(self.cumulative, rw, 1) #, 1, 2)
         self.grid.addWidget(QtGui.QLabel('(Check for hourly generation profile)'), rw, 3, 1, 3)
+        rw += 1
+        self.grid.addWidget(QtGui.QLabel('Percentage:'), rw, 0)
+        self.percentage = QtGui.QCheckBox()
+        self.percentage.setCheckState(QtCore.Qt.Unchecked)
+        self.grid.addWidget(self.percentage, rw, 1) #, 1, 2)
+        self.grid.addWidget(QtGui.QLabel('(Check for percentage distribution)'), rw, 3, 1, 3)
         rw += 1
         self.grid.addWidget(QtGui.QLabel('Column Order:\n(move to right\nto exclude)'), rw, 0)
         self.order = ThumbListWidget(self)
@@ -235,6 +241,7 @@ class PowerPlot(QtGui.QWidget):
         self.title.textChanged.connect(self.somethingChanged)
         self.maxSpin.valueChanged.connect(self.somethingChanged)
         self.cumulative.stateChanged.connect(self.somethingChanged)
+        self.percentage.stateChanged.connect(self.somethingChanged)
         self.order.itemSelectionChanged.connect(self.somethingChanged)
         rw += 1
         msg_palette = QtGui.QPalette()
@@ -267,7 +274,7 @@ class PowerPlot(QtGui.QWidget):
         self.setWindowTitle('SIREN - powerplot (' + fileVersion() + ') - PowerPlot')
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         self.center()
-        self.resize(int(self.sizeHint().width()* 1.07), int(self.sizeHint().height() * 1.07))
+        self.resize(int(self.sizeHint().width() * 1.07), int(self.sizeHint().height() * 1.07))
         self.show()
 
     def center(self):
@@ -297,6 +304,11 @@ class PowerPlot(QtGui.QWidget):
                         self.cumulative.setCheckState(QtCore.Qt.Checked)
                 elif key == 'file' + choice:
                     ifile = value.replace('$USER$', getUser())
+                elif key == 'percentage' + choice:
+                    if value.lower() in ['true', 'yes', 'on']:
+                        self.percentage.setCheckState(QtCore.Qt.Checked)
+                    else:
+                        self.percentage.setCheckState(QtCore.Qt.Unchecked)
                 elif key == 'period' + choice:
                     i = self.period.findText(value, QtCore.Qt.MatchExactly)
                     if i >=0 :
@@ -554,6 +566,9 @@ class PowerPlot(QtGui.QWidget):
             lines.append('cumulative' + choice + '=')
             if not self.cumulative.isChecked():
                 lines[-1] = lines[-1] + 'False'
+            lines.append('percentage' + choice + '=')
+            if self.percentage.isChecked():
+                lines[-1] = lines[-1] + 'True'
             cols = 'columns' + choice + '='
             for col in range(self.order.count()):
                 cols += str(self.order.item(col).text()) + ','
@@ -712,6 +727,8 @@ class PowerPlot(QtGui.QWidget):
             titl = titl.replace('$MTH$', '')
             titl = titl.replace('$MONTH$', '')
             titl = titl.replace('  ', '')
+            titl = titl.replace('Diurnal ', '')
+            titl = titl.replace('Diurnal', '')
             for c in range(self.order.count()):
                 col = str(self.order.item(c).text())
                 for c2 in range(2, ws.ncols):
@@ -766,56 +783,75 @@ class PowerPlot(QtGui.QWidget):
                 plt.grid(True)
                 bx = fig.add_subplot(111)
                 plt.title(titl)
-                if self.target == '<none>':
-                    bx.fill_between(x, 0, data[0], label=label[0], color=self.colours[label[0].lower()])
+                if self.percentage.isChecked():
+                    totals = [0.] * len(x)
+                    bottoms = [0.] * len(x)
+                    values = [0.] * len(x)
+                    for c in range(len(data)):
+                        for h in range(len(data[c])):
+                            totals[h] = totals[h] + data[c][h]
+                    for h in range(len(data[0])):
+                        values[h] = data[0][h] / totals[h] * 100.
+                    bx.fill_between(x, 0, values, label=label[0], color=self.colours[label[0].lower()])
                     for c in range(1, len(data)):
                         for h in range(len(data[c])):
-                            data[c][h] = data[c][h] + data[c - 1][h]
-                            maxy = max(maxy, data[c][h])
-                        bx.fill_between(x, data[c - 1], data[c], label=label[c], color=self.colours[label[c].lower()])
-                    top = data[0][:]
-                    for d in range(1, len(data)):
-                        for h in range(len(top)):
-                            top[h] = max(top[h], data[d][h])
-                    bx.plot(x, top, color='white')
+                            bottoms[h] = values[h]
+                            values[h] = values[h] + data[c][h] / totals[h] * 100.
+                        bx.fill_between(x, bottoms, values, label=label[c], color=self.colours[label[c].lower()])
+                    maxy = 100
+                    bx.set_ylabel('Power (%)')
                 else:
-                    pattern = ['-', '+', 'x', '\\', '*', 'o', 'O', '.']
-                    pat = 0
-                    full = []
-                    for h in range(len(load)):
-                       full.append(min(load[h], data[0][h]))
-                    bx.fill_between(x, 0, full, label=label[0], color=self.colours[label[0].lower()])
-                    bx.fill_between(x, full, data[0], alpha=self.alpha, color=self.colours[label[0].lower()]) #, hatch=pattern[0])
-                    for c in range(1, len(data)):
+                    if self.target == '<none>':
+                        bx.fill_between(x, 0, data[0], label=label[0], color=self.colours[label[0].lower()])
+                        for c in range(1, len(data)):
+                            for h in range(len(data[c])):
+                                data[c][h] = data[c][h] + data[c - 1][h]
+                                maxy = max(maxy, data[c][h])
+                            bx.fill_between(x, data[c - 1], data[c], label=label[c], color=self.colours[label[c].lower()])
+                        top = data[0][:]
+                        for d in range(1, len(data)):
+                            for h in range(len(top)):
+                                top[h] = max(top[h], data[d][h])
+                        bx.plot(x, top, color='white')
+                    else:
+                        pattern = ['-', '+', 'x', '\\', '*', 'o', 'O', '.']
+                        pat = 0
                         full = []
-                        for h in range(len(data[c])):
-                            data[c][h] = data[c][h] + data[c - 1][h]
-                            maxy = max(maxy, data[c][h])
-                            full.append(max(min(load[h], data[c][h]), data[c - 1][h]))
-                        bx.fill_between(x, data[c - 1], full, label=label[c], color=self.colours[label[c].lower()])
-                        pat += 1
-                        if pat >= len(pattern):
-                            pat = 0
-                        bx.fill_between(x, full, data[c], alpha=self.alpha, color=self.colours[label[c].lower()]) #,
-                                     #   hatch=pattern[pat])
-                    top = data[0][:]
-                    for d in range(1, len(data)):
-                        for h in range(len(top)):
-                            top[h] = max(top[h], data[d][h])
-                    bx.plot(x, top, color='white')
-                    short = []
-                    for h in range(len(load)):
-                        short.append(max(data[c][h], load[h]))
-                    bx.fill_between(x, data[c], short, label='Shortfall', color=self.colours['shortfall'])
-                    bx.plot(x, load, linewidth=2.0, label=self.target, color=self.colours[self.target.lower()])
-                if self.maxSpin.value() > 0:
-                    maxy = self.maxSpin.value()
-                else:
-                    try:
-                        rndup = pow(10, round(log10(maxy * 1.5) - 1)) / 2
-                        maxy = ceil(maxy / rndup) * rndup
-                    except:
-                        pass
+                        for h in range(len(load)):
+                           full.append(min(load[h], data[0][h]))
+                        bx.fill_between(x, 0, full, label=label[0], color=self.colours[label[0].lower()])
+                        bx.fill_between(x, full, data[0], alpha=self.alpha, color=self.colours[label[0].lower()]) #, hatch=pattern[0])
+                        for c in range(1, len(data)):
+                            full = []
+                            for h in range(len(data[c])):
+                                data[c][h] = data[c][h] + data[c - 1][h]
+                                maxy = max(maxy, data[c][h])
+                                full.append(max(min(load[h], data[c][h]), data[c - 1][h]))
+                            bx.fill_between(x, data[c - 1], full, label=label[c], color=self.colours[label[c].lower()])
+                            pat += 1
+                            if pat >= len(pattern):
+                                pat = 0
+                            bx.fill_between(x, full, data[c], alpha=self.alpha, color=self.colours[label[c].lower()]) #,
+                                         #   hatch=pattern[pat])
+                        top = data[0][:]
+                        for d in range(1, len(data)):
+                            for h in range(len(top)):
+                                top[h] = max(top[h], data[d][h])
+                        bx.plot(x, top, color='white')
+                        short = []
+                        for h in range(len(load)):
+                            short.append(max(data[c][h], load[h]))
+                        bx.fill_between(x, data[c], short, label='Shortfall', color=self.colours['shortfall'])
+                        bx.plot(x, load, linewidth=2.0, label=self.target, color=self.colours[self.target.lower()])
+                    if self.maxSpin.value() > 0:
+                        maxy = self.maxSpin.value()
+                    else:
+                        try:
+                            rndup = pow(10, round(log10(maxy * 1.5) - 1)) / 2
+                            maxy = ceil(maxy / rndup) * rndup
+                        except:
+                            pass
+                    bx.set_ylabel('Power (MW)')
                 miny = 0
                 lbl_font = FontProperties()
                 lbl_font.set_size('small')
@@ -825,7 +861,6 @@ class PowerPlot(QtGui.QWidget):
                 plt.xticks(list(range(12, len(x), 168)))
                 bx.set_xticklabels(day_labels, rotation='vertical')
                 bx.set_xlabel('Month of the year')
-                bx.set_ylabel('Power (MW)')
                 zp = ZoomPanX()
                 f = zp.zoom_pan(bx, base_scale=1.2) # enable scrollable zoom
                 plt.show()
@@ -929,51 +964,70 @@ class PowerPlot(QtGui.QWidget):
                 plt.grid(True)
                 dx = fig.add_subplot(111)
                 plt.title(titl)
-                if self.target == '<none>':
-                    dx.fill_between(x, 0, data[0], label=label[0], color=self.colours[label[0].lower()])
+                if self.percentage.isChecked():
+                    totals = [0.] * len(x)
+                    bottoms = [0.] * len(x)
+                    values = [0.] * len(x)
+                    for c in range(len(data)):
+                        for h in range(len(data[c])):
+                            totals[h] = totals[h] + data[c][h]
+                    for h in range(len(data[0])):
+                        values[h] = data[0][h] / totals[h] * 100.
+                    dx.fill_between(x, 0, values, label=label[0], color=self.colours[label[0].lower()])
                     for c in range(1, len(data)):
                         for h in range(len(data[c])):
-                            data[c][h] = data[c][h] + data[c - 1][h]
-                            maxy = max(maxy, data[c][h])
-                        dx.fill_between(x, data[c - 1], data[c], label=label[c], color=self.colours[label[c].lower()])
+                            bottoms[h] = values[h]
+                            values[h] = values[h] + data[c][h] / totals[h] * 100.
+                        dx.fill_between(x, bottoms, values, label=label[c], color=self.colours[label[c].lower()])
+                    maxy = 100
+                    dx.set_ylabel('Power (%)')
                 else:
-                    pattern = ['-', '+', 'x', '\\', '*', 'o', 'O', '.']
-                    pat = 0
-                    full = []
-                    for h in range(len(load)):
-                       full.append(min(load[h], data[0][h]))
-                    dx.fill_between(x, 0, full, label=label[0], color=self.colours[label[0].lower()])
-                    dx.fill_between(x, full, data[0], alpha=self.alpha, color=self.colours[label[0].lower()]) #, hatch=pattern[0])
-                    for c in range(1, len(data)):
+                    if self.target == '<none>':
+                        dx.fill_between(x, 0, data[0], label=label[0], color=self.colours[label[0].lower()])
+                        for c in range(1, len(data)):
+                            for h in range(len(data[c])):
+                                data[c][h] = data[c][h] + data[c - 1][h]
+                                maxy = max(maxy, data[c][h])
+                            dx.fill_between(x, data[c - 1], data[c], label=label[c], color=self.colours[label[c].lower()])
+                    else:
+                        pattern = ['-', '+', 'x', '\\', '*', 'o', 'O', '.']
+                        pat = 0
                         full = []
-                        for h in range(len(data[c])):
-                            data[c][h] = data[c][h] + data[c - 1][h]
-                            maxy = max(maxy, data[c][h])
-                            full.append(max(min(load[h], data[c][h]), data[c - 1][h]))
-                        dx.fill_between(x, data[c - 1], full, label=label[c], color=self.colours[label[c].lower()])
-                        pat += 1
-                        if pat >= len(pattern):
-                            pat = 0
-                        dx.fill_between(x, full, data[c], alpha=self.alpha, color=self.colours[label[c].lower()]) #,
-                                     #   hatch=pattern[pat])
-                    top = data[0][:]
-                    for d in range(1, len(data)):
-                        for h in range(len(top)):
-                            top[h] = max(top[h], data[d][h])
-                    dx.plot(x, top, color='white')
-                    short = []
-                    for h in range(len(load)):
-                        short.append(max(data[c][h], load[h]))
-                    dx.fill_between(x, data[c], short, label='Shortfall', color=self.colours['shortfall'])
-                    dx.plot(x, load, linewidth=2.0, label=self.target, color=self.colours[self.target.lower()])
-                if self.maxSpin.value() > 0:
-                    maxy = self.maxSpin.value()
-                else:
-                    try:
-                        rndup = pow(10, round(log10(maxy * 1.5) - 1)) / 2
-                        maxy = ceil(maxy / rndup) * rndup
-                    except:
-                        pass
+                        for h in range(len(load)):
+                           full.append(min(load[h], data[0][h]))
+                        dx.fill_between(x, 0, full, label=label[0], color=self.colours[label[0].lower()])
+                        dx.fill_between(x, full, data[0], alpha=self.alpha, color=self.colours[label[0].lower()]) #, hatch=pattern[0])
+                        for c in range(1, len(data)):
+                            full = []
+                            for h in range(len(data[c])):
+                                data[c][h] = data[c][h] + data[c - 1][h]
+                                maxy = max(maxy, data[c][h])
+                                full.append(max(min(load[h], data[c][h]), data[c - 1][h]))
+                            dx.fill_between(x, data[c - 1], full, label=label[c], color=self.colours[label[c].lower()])
+                            pat += 1
+                            if pat >= len(pattern):
+                                pat = 0
+                            dx.fill_between(x, full, data[c], alpha=self.alpha, color=self.colours[label[c].lower()]) #,
+                                         #   hatch=pattern[pat])
+                        top = data[0][:]
+                        for d in range(1, len(data)):
+                            for h in range(len(top)):
+                                top[h] = max(top[h], data[d][h])
+                        dx.plot(x, top, color='white')
+                        short = []
+                        for h in range(len(load)):
+                            short.append(max(data[c][h], load[h]))
+                        dx.fill_between(x, data[c], short, label='Shortfall', color=self.colours['shortfall'])
+                        dx.plot(x, load, linewidth=2.0, label=self.target, color=self.colours[self.target.lower()])
+                    if self.maxSpin.value() > 0:
+                        maxy = self.maxSpin.value()
+                    else:
+                        try:
+                            rndup = pow(10, round(log10(maxy * 1.5) - 1)) / 2
+                            maxy = ceil(maxy / rndup) * rndup
+                        except:
+                            pass
+                    dx.set_ylabel('Power (MW)')
                 miny = 0
                 lbl_font = FontProperties()
                 lbl_font.set_size('small')
@@ -983,7 +1037,6 @@ class PowerPlot(QtGui.QWidget):
                 plt.xticks(ticks)
                 dx.set_xticklabels(hr_labels)
                 dx.set_xlabel('Hour of the Day')
-                dx.set_ylabel('Power (MW)')
                 zp = ZoomPanX()
                 f = zp.zoom_pan(dx, base_scale=1.2) # enable scrollable zoom
                 plt.show()
