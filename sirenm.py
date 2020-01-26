@@ -2630,6 +2630,7 @@ class MainWindow(QtGui.QMainWindow):
         self.view.emit(QtCore.SIGNAL('statusmsg'), comment)
 
     def save_Stations(self):
+        hover = True
         kfile = self.view.scene().model_name + ' Stations.kml'
         kfile = QtGui.QFileDialog.getSaveFileName(None, 'Save Stations File',
                     self.scenarios + kfile, 'KML Files (*.kml);;All Files (*.*)')
@@ -2640,6 +2641,14 @@ class MainWindow(QtGui.QMainWindow):
         pline = ['<?xml version="1.0" encoding="UTF-8"?>',
                  '<kml xmlns="http://www.opengis.net/kml/2.2">',
                  '<Document>']
+        if hover:
+            pline.append('<Style id="style0n"><LabelStyle><scale>0.0</scale></LabelStyle>' + \
+                         '<IconStyle><scale>0.5</scale></IconStyle></Style>\n' + \
+                         '<Style id="style0h"><LabelStyle><scale>1.0</scale></LabelStyle>' + \
+                         '<IconStyle><scale>1.1</scale></IconStyle></Style>\n' + \
+                         '<StyleMap id="0"><Pair><key>normal</key><styleUrl>#style0n</styleUrl>' + \
+                         '</Pair><Pair><key>highlight</key><styleUrl>#style0h</styleUrl>' + \
+                         '</Pair></StyleMap>')
         kfile = str(kfile)
         pline.append('<name>' + kfile[kfile.rfind('/') + 1:] + '</name>')
         pline.append('<description><![CDATA[This KML file shows the stations for ' + \
@@ -2652,7 +2661,10 @@ class MainWindow(QtGui.QMainWindow):
         for stn in self.view.scene()._stations.stations:
             stns.append([stn.name, stn.technology, stn.capacity, stn.lat, stn.lon])
         for stn in sorted(stns, key=lambda x: x[0]):
-            pline.append('\t<Placemark>\n\t\t<name>' + stn[0].replace('&', '&amp;') + \
+            pline.append('\t<Placemark>')
+            if hover:
+                pline.append('\t\t<styleUrl>#0</styleUrl>')
+            pline.append('\t\t<name>' + stn[0].replace('&', '&amp;') + \
                          '</name>\n\t\t<description><![CDATA[' + stn[1] + ' (' + \
                          str(stn[2]) + ' MW)]]></description>\n\t\t<Point>\n\t\t' + \
                          '<coordinates>' + str(stn[4]) + ',' + str(stn[3]) + \
