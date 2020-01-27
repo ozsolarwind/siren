@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2018-2019 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2018-2020 Sustainable Energy Now Inc., Angus King
 #
 #  powermatch.py - This file is possibly part of SIREN.
 #
@@ -290,6 +290,15 @@ class Adjustments(QtGui.QDialog):
 
 class powerMatch(QtGui.QWidget):
 
+    def get_filename(self, filename):
+        if str(filename).find('/') == 0: # full directory in non-Windows
+            return filename
+        elif (sys.platform == 'win32' or sys.platform == 'cygwin') \
+          and str(filename)[1] == ':': # full directory for Windows
+            return filename
+        else: # subdirectory of scenarios
+            return self.scenarios + filename
+
     def __init__(self, help='help.html'):
         super(powerMatch, self).__init__()
         self.help = help
@@ -340,6 +349,7 @@ class powerMatch(QtGui.QWidget):
         self.ifiles = [''] * 5
         self.isheets = self.file_labels[:]
         del self.isheets[-2:]
+        self.more_details = False
         self.constraints = None
         self.generators = None
         self.optimisation = None
@@ -353,12 +363,17 @@ class powerMatch(QtGui.QWidget):
         self.optimise_stop = 0
         target_keys = ['lcoe', 'load_pct', 'surplus_pct', 're_pct', 'cost', 'co2']
         target_names = ['LCOE', 'Load%', 'Surplus%', 'RE%', 'Cost', 'CO2']
+        target_fmats = ['$%.2f', '%d%%', '%d%%', '%d%%', '$%.1fpwr_chr', '%.1f']
+        target_titles = ['LCOE ($)', '% Load met', 'Surplus %', 'RE %',
+                         'Total Cost ($)', 'tCO2e']
         self.targets = {}
         for t in range(len(target_keys)):
              if target_keys[t] in ['re_pct', 'surplus_pct']:
-                 self.targets[target_keys[t]] = [target_names[t], 0., -1, 0., 0]
+                 self.targets[target_keys[t]] = [target_names[t], 0., -1, 0., 0, target_fmats[t],
+                                                 target_titles[t]]
              else:
-                 self.targets[target_keys[t]] = [target_names[t], 0., 0., -1, 0]
+                 self.targets[target_keys[t]] = [target_names[t], 0., 0., -1, 0, target_fmats[t],
+                                                 target_titles[t]]
         try:
              items = config.items('Powermatch')
              for key, value in items:
@@ -385,6 +400,9 @@ class powerMatch(QtGui.QWidget):
                  elif key == 'log_status':
                      if value.lower() in ['false', 'no', 'off']:
                          self.log_status = False
+                 elif key == 'more_details':
+                     if value.lower() in ['true', 'yes', 'on']:
+                         self.more_details = True
                  elif key == 'optimise_generations':
                      try:
                          self.optimise_generations = int(value)
@@ -410,8 +428,9 @@ class powerMatch(QtGui.QWidget):
                          bits = value.split(',')
                          t = target_keys.index(key[9:])
                          # name, weight, minimum, maximum, widget index
-                         self.targets[key[9:]] = [target_names[t], float(bits[0]),
-                                                 float(bits[1]), float(bits[2]), 0]
+                         self.targets[key[9:]] = [target_names[t], float(bits[0]), float(bits[1]),
+                                                  float(bits[2]), 0, target_fmats[t],
+                                                  target_titles[t]]
                      except:
                          pass
         except:
@@ -513,10 +532,7 @@ class powerMatch(QtGui.QWidget):
         help.clicked.connect(self.helpClicked)
         QtGui.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
         try:
-            if str(self.files[G].text()).find('/') >= 0:
-                ts = xlrd.open_workbook(str(self.files[G].text()))
-            else:
-                ts = xlrd.open_workbook(self.scenarios + str(self.files[G].text()))
+            ts = xlrd.open_workbook(self.get_filename(str(self.files[G].text())))
             ws = ts.sheet_by_name('Generators')
             self.getGenerators(ws)
             self.setOrder()
@@ -697,10 +713,7 @@ class powerMatch(QtGui.QWidget):
             pass
         else:
             try:
-                if str(self.files[it].text()).find('/') >= 0:
-                    ts = xlrd.open_workbook(str(self.files[it].text()))
-                else:
-                    ts = xlrd.open_workbook(self.scenarios + str(self.files[it].text()))
+                ts = xlrd.open_workbook(self.get_filename(str(self.files[it].text())))
                 try:
                     sht = self.sheets[it].currentText()
                 except:
@@ -966,10 +979,7 @@ class powerMatch(QtGui.QWidget):
         details = self.details
         err_msg = ''
         try:
-            if str(self.files[C].text()).find('/') >= 0:
-                ts = xlrd.open_workbook(str(self.files[C].text()))
-            else:
-                ts = xlrd.open_workbook(self.scenarios + str(self.files[C].text()))
+            ts = xlrd.open_workbook(self.get_filename(str(self.files[C].text())))
             ws = ts.sheet_by_name(self.sheets[C].currentText())
             self.getConstraints(ws)
             ts.release_resources()
@@ -978,10 +988,7 @@ class powerMatch(QtGui.QWidget):
             err_msg = 'Error accessing Constraints'
             self.getConstraints(None)
         try:
-            if str(self.files[G].text()).find('/') >= 0:
-                ts = xlrd.open_workbook(str(self.files[G].text()))
-            else:
-                ts = xlrd.open_workbook(self.scenarios + str(self.files[G].text()))
+            ts = xlrd.open_workbook(self.get_filename(str(self.files[G].text())))
             ws = ts.sheet_by_name(self.sheets[G].currentText())
             self.getGenerators(ws)
             ts.release_resources()
@@ -996,10 +1003,7 @@ class powerMatch(QtGui.QWidget):
             self.setStatus(err_msg)
         start_time = time.time()
         re_capacities = [0.] * len(tech_names)
-        if str(self.files[D].text()).find('/') >= 0:
-            pm_data_file = str(self.files[D].text())
-        else:
-            pm_data_file = self.scenarios + str(self.files[D].text())
+        pm_data_file = self.get_filename(str(self.files[D].text()))
         re_capacity = 0.
         data = []
         load = []
@@ -1125,10 +1129,7 @@ class powerMatch(QtGui.QWidget):
                 data_file = pm_data_file
             data_file = data_file.replace('data', 'results')
         else:
-            if str(self.files[R].text()).find('/') >= 0:
-                data_file = str(self.files[R].text())
-            else:
-                data_file = self.scenarios + str(self.files[R].text())
+            data_file = self.get_filename(str(self.files[R].text()))
         if not xlsx:
             data_file += 'x'
         self.progressbar.setValue(2)
@@ -1466,7 +1467,7 @@ class powerMatch(QtGui.QWidget):
             sp_data.append(' ')
             sp_data.append('Load Analysis')
             pct = '{:.1%})'.format((sf_sums[2] - sf_sums[0]) / sp_load)
-            sp_data.append(['Load met (' + pct, '', sf_sums[2] - sf_sums[0],])
+            sp_data.append(['Load met (' + pct, '', sf_sums[2] - sf_sums[0]])
             pct = '{:.1%})'.format(sf_sums[0] / sp_load)
             sp_data.append(['Shortfall (' + pct, '', sf_sums[0]])
             sp_data.append(['Total Load', '', sp_load])
@@ -1962,8 +1963,8 @@ class powerMatch(QtGui.QWidget):
                     'surplus_pct': -sf_sums[1] / op_load_tot, #surplus. lower better
                     're_pct': re_sum / gen_sum, # RE pct. higher better
                     'cost': cost_sum, # cost. lower better
-                    'co2': co2_sum, # CO2. lower better
-                    'shortfall': sf_sums[0] / op_load_tot}) # shortfall. lower the better
+                    'co2': co2_sum}) # CO2. lower better
+                #    'shortfall': sf_sums[0] / op_load_tot}) # shortfall. lower the better
             if len(population) == 1:
                 op_data.append(['Total', cap_sum, gen_sum, cs, cost_sum, gs, co2_sum])
                 if self.carbon_price > 0:
@@ -1992,6 +1993,10 @@ class powerMatch(QtGui.QWidget):
             self.optExit = True
             optDialog.close()
 
+        def chooseClicked(event):
+            self.opt_choice = self.sender().text()
+            chooseDialog.close()
+
         def calc_multi_best(multi_scores):
             best_weight = [0, 99]
             for m in range(len(multi_scores)):
@@ -2019,16 +2024,68 @@ class powerMatch(QtGui.QWidget):
                     best_weight = [m, weight]
             return best_weight
 
+        def plot_multi(multi_best, multi_order, title):
+            data = [[], [], []]
+            if 'cost' in multi_order:
+                max_cost = 0
+                for multi in multi_best:
+                    max_cost = max(max_cost, multi['cost'])
+                pwr_chr = ''
+                divisor = 1.
+                pwr_chrs = ' KMBTPEZY'
+                for pwr in range(len(pwr_chrs) - 1, -1, -1):
+                    if max_cost > pow(10, pwr * 3):
+                        pwr_chr = pwr_chrs[pwr]
+                        divisor = 1. * pow(10, pwr * 3)
+                        break
+                self.targets['cost'][5] = self.targets['cost'][5].replace('pwr_chr', pwr_chr)
+           #     self.targets['cost'][6] = self.targets['cost'][6].replace('pwr_chr', pwr_chr)
+            for multi in multi_best:
+                for axis in range(len(multi_order)):
+                    if multi_order[axis] == 'cost':
+                        data[axis].append(multi[multi_order[axis]] / divisor) # cost
+                    elif multi_order[axis][-4:] == '_pct': # percentage
+                        data[axis].append(multi[multi_order[axis]] * 100.)
+                    else:
+                        data[axis].append(multi[multi_order[axis]])
+            fig = plt.figure(title)
+            mx = fig.gca(projection='3d')
+            plt.title('\n' + title.title() + '\n')
+            surf = mx.scatter(data[0], data[1], data[2], picker=1) # enable picking a point
+            mx.xaxis.set_major_formatter(FormatStrFormatter(self.targets[multi_order[0]][5]))
+            mx.yaxis.set_major_formatter(FormatStrFormatter(self.targets[multi_order[1]][5]))
+            mx.zaxis.set_major_formatter(FormatStrFormatter(self.targets[multi_order[2]][5]))
+            mx.set_xlabel(self.targets[multi_order[0]][6])
+            mx.set_ylabel(self.targets[multi_order[1]][6])
+            mx.set_zlabel(self.targets[multi_order[2]][6])
+            zp = ZoomPanX()
+            f = zp.zoom_pan(mx, base_scale=1.2, annotate=True)
+            plt.show()
+            pick = -1
+            if zp.datapoint is not None: # user picked a point
+                for p in zp.datapoint:
+                    pick = p[0]
+           #     msg = 'Generation {:d}: LCOE: ${:.2f}; Total Cost: ${:.1f}{}; Surplus: {:.1f}%'
+            #    self.setStatus(msg.format(p[0], p[3], p[2], pwr_chr, p[1]))
+                    msg = 'Generation ' + str(p[0]) + ': ' + \
+                          self.targets[multi_order[0]][6].replace('%', '%%') + ': ' + \
+                          self.targets[multi_order[0]][5] + '; ' + \
+                          self.targets[multi_order[1]][6].replace('%', '%%') + ': ' + \
+                          ': ' + self.targets[multi_order[1]][5] + '; ' + \
+                          self.targets[multi_order[2]][6].replace('%', '%%') + ': ' + \
+                          self.targets[multi_order[2]][5]
+                    msg = msg % (p[1], p[2], p[3])
+                    self.setStatus(msg)
+            del zp
+            return pick
+
         self.optExit = False
         self.setStatus('Optimise processing started')
         details = self.details
         err_msg = ''
         if self.constraints is None:
             try:
-                if str(self.files[C].text()).find('/') >= 0:
-                    ts = xlrd.open_workbook(str(self.files[C].text()))
-                else:
-                    ts = xlrd.open_workbook(self.scenarios + str(self.files[C].text()))
+                ts = xlrd.open_workbook(self.get_filename(str(self.files[C].text())))
                 ws = ts.sheet_by_name(self.sheets[C].currentText())
                 self.getConstraints(ws)
                 ts.release_resources()
@@ -2038,10 +2095,7 @@ class powerMatch(QtGui.QWidget):
                 self.getConstraints(None)
         if self.generators is None:
             try:
-                if str(self.files[G].text()).find('/') >= 0:
-                    ts = xlrd.open_workbook(str(self.files[G].text()))
-                else:
-                    ts = xlrd.open_workbook(self.scenarios + str(self.files[G].text()))
+                ts = xlrd.open_workbook(self.get_filename(str(self.files[G].text())))
                 ws = ts.sheet_by_name(self.sheets[G].currentText())
                 self.getGenerators(ws)
                 ts.release_resources()
@@ -2054,10 +2108,7 @@ class powerMatch(QtGui.QWidget):
             self.getGenerators(None)
         if self.optimisation is None:
             try:
-                if str(self.files[O].text()).find('/') >= 0:
-                    ts = xlrd.open_workbook(str(self.files[O].text()))
-                else:
-                    ts = xlrd.open_workbook(self.scenarios + str(self.files[O].text()))
+                ts = xlrd.open_workbook(self.get_filename(str(self.files[O].text())))
                 ws = ts.sheet_by_name(self.sheets[O].currentText())
                 self.getoptimisation(ws)
                 ts.release_resources()
@@ -2070,12 +2121,9 @@ class powerMatch(QtGui.QWidget):
                 self.getoptimisation(None)
         if err_msg != '':
             self.setStatus(err_msg)
-        if str(self.files[D].text()).find('/') >= 0:
-            pm_data_file = str(self.files[D].text())
-        else:
-            pm_data_file = self.scenarios + str(self.files[D].text())
+        pm_data_file = self.get_filename(str(self.files[D].text()))
         if pm_data_file[-4:] == '.xls': #xls format
-            self.setStatus('Not an option for Powerbalance')
+            self.setStatus('Not an option for Powermatch')
             return
         ts = oxl.load_workbook(pm_data_file)
         ws = ts.active
@@ -2159,7 +2207,7 @@ class powerMatch(QtGui.QWidget):
         rw += 1
         ndx = grid.count()
         for key in self.targets.keys():
-            self.targets[key][-1] = ndx
+            self.targets[key][4] = ndx
             ndx += 4
         for key, value in self.targets.items():
             if value[2] < 0:
@@ -2172,7 +2220,7 @@ class powerMatch(QtGui.QWidget):
             weight = QtGui.QDoubleSpinBox()
             weight.setRange(0, 1)
             weight.setDecimals(2)
-            weight.setSingleStep(0.1)
+            weight.setSingleStep(0.05)
             weight.setValue(value[1])
             grid.addWidget(weight, rw, 1)
             if key[-4:] == '_pct':
@@ -2215,14 +2263,14 @@ class powerMatch(QtGui.QWidget):
             return
         # update any changes to targets
         for key in self.targets.keys():
-            weight = grid.itemAt(self.targets[key][-1] + 1).widget()
+            weight = grid.itemAt(self.targets[key][4] + 1).widget()
             self.targets[key][1] = weight.value()
-            minim = grid.itemAt(self.targets[key][-1] + 2).widget()
+            minim = grid.itemAt(self.targets[key][4] + 2).widget()
             try:
                 self.targets[key][2] = minim.value()
             except:
                 self.targets[key][2] = float(minim.text())
-            maxim = grid.itemAt(self.targets[key][-1] + 3).widget()
+            maxim = grid.itemAt(self.targets[key][4] + 3).widget()
             try:
                 self.targets[key][3] = maxim.value()
             except:
@@ -2233,11 +2281,16 @@ class powerMatch(QtGui.QWidget):
         lines.append('optimise_mutation=' + str(self.optimise_mutation))
         lines.append('optimise_population=' + str(self.optimise_population))
         lines.append('optimise_stop=' + str(self.optimise_stop))
+        multi_order = []
         for key, value in self.targets.items():
             line = 'optimise_{}={:.2f},{:.2f},{:.2f}'.format(key, value[1], value[2], value[3])
             lines.append(line)
+            multi_order.append('{:.2f}{}'.format(value[1], key))
         updates['Powermatch'] = lines
         SaveIni(updates)
+        multi_order.sort(reverse=True) # get top three weighted variables
+        multi_order = multi_order[:3]
+        multi_order = [o[4:] for o in multi_order]
         self.adjust_re = True
         re_capacities = []
         re_capacity = 0.
@@ -2324,6 +2377,7 @@ class powerMatch(QtGui.QWidget):
         scores = []
         multi_scores = []
         multi_best = []
+        multi_best_popn = []
         self.show_ProgressBar(maximum=optGenn.value(), msg='Process generations', title='SIREN - Powermatch Progress')
         self.opt_progressbar.setVisible(True)
         start_time = time.time()
@@ -2332,38 +2386,8 @@ class powerMatch(QtGui.QWidget):
         population = create_starting_population(population_size, chromosome_length)
         # Display best score in starting population
         scores, multi_scores = calculate_fitness(population)
-        if 1 == 2: # display starting population ?
-            x = []
-            y = []
-            z = []
-            max_cost = 0
-            for multi in multi_scores:
-                max_cost = max(max_cost, multi['cost'])
-            pwr_chr = ''
-            divisor = 1.
-            pwr_chrs = ' KMBTPEZY'
-            for pwr in range(len(pwr_chrs) - 1, -1, -1):
-                if max_cost > pow(10, pwr * 3):
-                    pwr_chr = pwr_chrs[pwr]
-                    divisor = 1. * pow(10, pwr * 3)
-                    break
-            for multi in multi_scores:
-                x.append(multi['surplus_pct'] * 100.) # surplus
-                y.append(multi['cost'] / divisor) # cost
-                z.append(multi['lcoe']) # lcoe
-            fig = plt.figure('starting population')
-            mx = fig.gca(projection='3d')
-            plt.title('\nStarting population\n')
-            surf = mx.scatter(x, y, z)
-            mx.zaxis.set_major_formatter(FormatStrFormatter('$%.02f'))
-            mx.yaxis.set_major_formatter(FormatStrFormatter('$%.01f' + pwr_chr))
-            mx.xaxis.set_major_formatter(FormatStrFormatter('%d%%'))
-            mx.set_xlabel('Surplus %')
-            mx.set_ylabel('Total Cost ($' + pwr_chr + ')')
-            mx.set_zlabel('LCOE')
-            zp = ZoomPanX()
-            f = zp.zoom_pan(lx, base_scale=1.2, annotate=True)
-            plt.show()
+        if self.more_details: # display starting population ?
+            pick = plot_multi(multi_scores, multi_order, 'starting population')
         best_score = np.min(scores)
         lowest_score = best_score
         best = scores.index(best_score)
@@ -2383,6 +2407,7 @@ class powerMatch(QtGui.QWidget):
         best_weight = calc_multi_best(multi_scores)
         multi_best_weight = best_weight[1]
         multi_lowest_chrom = population[best_weight[0]]
+        multi_best_popn.append(multi_lowest_chrom)
         multi_best.append(multi_scores[best_weight[0]]) #best])
         self.setStatus('Starting LCOE: $%.2f' % best_score)
         lcoe_value = best_score
@@ -2430,6 +2455,7 @@ class powerMatch(QtGui.QWidget):
             if best_weight[1] < multi_best_weight:
                 multi_best_weight = best_weight[1]
                 multi_lowest_chrom = population[best_weight[0]]
+            multi_best_popn.append(multi_lowest_chrom)
             multi_best.append(multi_scores[best_weight[0]]) #best])
             if best_score < lowest_score:
                 lowest_score = best_score
@@ -2459,9 +2485,7 @@ class powerMatch(QtGui.QWidget):
         best = scores.index(best_score)
         if best_score > lowest_score:
             msg += ' Try more generations.'
-            op_data = calculate_fitness([lowest_chrom])
-        else:
-            op_data = calculate_fitness([population[best]])
+        op_data = calculate_fitness([lowest_chrom])
         self.setStatus(msg)
         QtGui.QApplication.processEvents()
         self.progressbar.setHidden(True)
@@ -2480,54 +2504,89 @@ class powerMatch(QtGui.QWidget):
         zp = ZoomPanX()
         f = zp.zoom_pan(lx, base_scale=1.2, annotate=True)
         plt.show()
-        x = []
-        y = []
-        z = []
-        max_cost = 0
-        for multi in multi_best:
-            max_cost = max(max_cost, multi['cost'])
-        pwr_chr = ''
-        divisor = 1.
-        pwr_chrs = ' KMBTPEZY'
-        for pwr in range(len(pwr_chrs) - 1, -1, -1):
-            if max_cost > pow(10, pwr * 3):
-                pwr_chr = pwr_chrs[pwr]
-                divisor = 1. * pow(10, pwr * 3)
-                break
-        for multi in multi_best:
-            x.append(multi['surplus_pct'] * 100.) # surplus
-            y.append(multi['cost'] / divisor) # cost
-            z.append(multi['lcoe']) # lcoe
-        fig = plt.figure('best of each generation')
-        mx = fig.gca(projection='3d')
-        plt.title('\nBest of each Generation\n')
-        surf = mx.scatter(x, y, z, picker=1) # enable picking a point
-        fmat = {'x': '%.1f%%', 'y': '$%.2f' + pwr_chr, 'z': '$%.2f'}
-        mx.zaxis.set_major_formatter(FormatStrFormatter(fmat['z']))
-        mx.yaxis.set_major_formatter(FormatStrFormatter(fmat['y']))
-        mx.xaxis.set_major_formatter(FormatStrFormatter(fmat['x']))
-        mx.set_xlabel('Surplus %')
-        mx.set_ylabel('Total Cost ($' + pwr_chr + ')')
-        mx.set_zlabel('LCOE')
-        zp = ZoomPanX()
-        f = zp.zoom_pan(mx, base_scale=1.2, annotate=True)
-        plt.show()
-        if zp.datapoint is not None: # user picked a point
-            for p in zp.datapoint:
-                msg = 'Generation {:d}: LCOE: ${:.2f}; Total Cost: ${:.1f}{}; Surplus: {:.1f}%'
-                self.setStatus(msg.format(p[0], p[3], p[2], pwr_chr, p[1]))
-            self.setStatus('Need to capture this chromosome and redo calculate_fitness')
-        del zp
+        pick = plot_multi(multi_best, multi_order, 'best of each generation')
+        if self.more_details:
+            list(map(list, list(zip(*op_data))))
+            op_pts = [0, 3, 0, 2, 0, 2, 0]
+            dialog = displaytable.Table(op_data, title=self.sender().text(), fields=headers,
+                     save_folder=self.scenarios, sortby='', decpts=op_pts)
+            dialog.exec_()
+            del dialog
+            op_data = calculate_fitness([multi_lowest_chrom])
+            list(map(list, list(zip(*op_data))))
+            dialog = displaytable.Table(op_data, title='Multi_' + self.sender().text(), fields=headers,
+                     save_folder=self.scenarios, sortby='', decpts=op_pts)
+            dialog.exec_()
+            del dialog
+        # now I'll display the resulting capacities for LCOE, lowest weight, picked
+        # now get random amount of generation per technology (both RE and non-RE)
+        its = {}
+        for gen, value in dict_order.items():
+            its[gen] = []
+        chrom_hdrs = ['Lowest LCOE', 'Lowest Weight']
+        chroms = [lowest_chrom, multi_lowest_chrom]
+        if pick >= 0:
+            chroms.append(multi_best_popn[pick])
+            chrom_hdrs.append('Your pick')
+        for chromosome in chroms:
+            for gen, value in dict_order.items():
+                capacity = dict_order[gen][3]
+                for c in range(value[1], value[2]):
+                    if chromosome[c]:
+                        capacity = capacity + capacities[c]
+                its[gen].append(capacity / dict_order[gen][0])
+        chooseDialog = QtGui.QDialog()
+        hbox = QtGui.QHBoxLayout()
+        grid = [QtGui.QGridLayout()]
+        grid[0].addWidget(QtGui.QLabel('Facility'), 0, 0)
+        for h in range(len(chrom_hdrs)):
+            grid.append(QtGui.QGridLayout())
+            label = QtGui.QLabel(chrom_hdrs[h])
+            label.setAlignment(QtCore.Qt.AlignCenter)
+            grid[-1].addWidget(label, 0, 0, 1, 2)
+        rw = 1
+        for key, value in its.items():
+            grid[0].addWidget(QtGui.QLabel(key), rw, 0)
+            for h in range(len(chrom_hdrs)):
+                label = QtGui.QLabel('{:.2f}'.format(value[h]))
+                label.setAlignment(QtCore.Qt.AlignRight)
+                grid[h + 1].addWidget(label, rw, 0)
+                label = QtGui.QLabel('({:,.2f})'.format(value[h] * dict_order[key][0]))
+                label.setAlignment(QtCore.Qt.AlignRight)
+                grid[h + 1].addWidget(label, rw, 1)
+            rw += 1
+        cshow = QtGui.QPushButton('Quit', self)
+        grid[0].addWidget(cshow)
+        cshow.clicked.connect(chooseDialog.close)
+        for h in range(len(chrom_hdrs)):
+            button = QtGui.QPushButton(chrom_hdrs[h], self)
+            grid[h + 1].addWidget(button, rw, 0, 1, 2)
+            button.clicked.connect(chooseClicked) #(chrom_hdrs[h]))
+        for gri in grid:
+            frame = QtGui.QFrame()
+            frame.setFrameStyle(QtGui.QFrame.Box)
+            frame.setLineWidth(1)
+            frame.setLayout(gri)
+            hbox.addWidget(frame)
+   #     grid.addWidget(show, rw, 1)
+    #    show.clicked.connect(optDialog.close)
+        chooseDialog.setLayout(hbox)
+        chooseDialog.setWindowTitle('Choose Optimal Generator Mix')
+        chooseDialog.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
+     #  this is a big of a kluge but I couldn't get it to behave
+        self.opt_choice = ''
+        chooseDialog.exec_()
+        del chooseDialog
+        try:
+            h = chrom_hdrs.index(self.opt_choice)
+        except:
+            return
+        op_data = calculate_fitness([chroms[int(h)]])
         list(map(list, list(zip(*op_data))))
-        op_pts = [0, 3, 0, 2, 0, 2, 0]
-        dialog = displaytable.Table(op_data, title=self.sender().text(), fields=headers,
+        dialog = displaytable.Table(op_data, title='Chosen_' + self.sender().text(), fields=headers,
                  save_folder=self.scenarios, sortby='', decpts=op_pts)
         dialog.exec_()
-        op_data = calculate_fitness([multi_lowest_chrom])
-        list(map(list, list(zip(*op_data))))
-        dialog = displaytable.Table(op_data, title='Multi_' + self.sender().text(), fields=headers,
-                 save_folder=self.scenarios, sortby='', decpts=op_pts)
-        dialog.exec_()
+        del dialog
         return
 
 if "__main__" == __name__:

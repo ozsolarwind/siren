@@ -1633,25 +1633,6 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 </table>
 </td></tr>
-<tr class="none" id="p_pv"><td><dfn><strong>[PV]</strong></dfn></td>
-<td>Specifics on PV characteristics. Properties are:</p>
-<table border="0", class="none">
-<tr class="none">
-<td class="none"><dfn>dc_ac_ratio</dfn></td>
-<td class="none">DC to AC ratio. Default value is 1.1</td>
-</tr>
-<tr class="none">
-<td class="none"><dfn>icon</dfn></td>
-<td class="none">Icon to display for this technology. Default is solar_pv_g.png</td>
-</tr>
-<tr class="none">
-<td class="none"><dfn>losses</dfn></td>
-<td class="none">Percentage losses for SAM PV model (pvwattsv5). Default is 5. 5  is appropriate for solar weather files derived from the MERRA-2 swgnt variable while 14 or 15 is more appropriate for the swgdn variable</td>
-</tr>
-</table>
-</td></tr>
-
-
 <tr class="none" id="p_pm"><td><dfn><strong>[Powermatch]</strong></dfn></td>
 <td>File names, worksheet names and other variables used by Powermatch. Properties are:</p>
 <table border="0", class="none">
@@ -1692,6 +1673,14 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">Worksheet name for generators (facilities) table</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>log_status</dfn></td>
+<td class="none">Override the [Windows] <em>log_status</em> property. If set to False the status messages will not be logged in the status window</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>more_details</dfn></td>
+<td class="none">If set to True a number of additional tables and an additional plot will produced during Powermatch optimisation. Default is False</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>optimisation_file</dfn></td>
 <td class="none">File name for optimisation spreadsheet</td>
 </tr>
@@ -1712,16 +1701,16 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">Population size for optimisation. The value can be between 10 and 500, with a default of 50</td>
 </tr>
 <tr class="none">
-<td class="none"><dfn>optimise_generations</dfn></td>
-<td class="none">Number of generations (iterations) for optimisation. The value can be between 10 and 200, with a default of 20</td>
-</tr>
-<tr class="none">
 <td class="none"><dfn>optimise_stop</dfn></td>
 <td class="none">Stop iterations for optimisation if the solution should remain the same. The value can be between 0 and 50, with a default of 0 (meaning there will be no check)</td>
 </tr>
 <tr class="none">
-<td class="none"><dfn>generators_details</dfn></td>
-<td class="none">Either show details for each generator technology (True) or just show a summary (False). This displays a summary on how generator capacity was adjusted from the base data inputs. Default is True</td>
+<td class="none"><dfn>optimise_&lt;details&gt;</dfn></td>
+<td class="none">These properties describe the optimisation weight and target range for each of the six variables used in the multi-variable optimisation approach</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>renewables_details</dfn></td>
+<td class="none">Either show details for each renewable generator technology (True) or just show a summary (False). This displays a summary on how generator capacity was adjusted from the base data inputs. Default is True</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>results_file</dfn></td>
@@ -2927,7 +2916,7 @@ If it's not a diurnal plot (i.e. Period is <em>&lt;None&gt;</em>) any occurence 
 <li><strong>Done</strong>. Exit Powermatch. Any changed options will be saved</li>
 <li><strong>Summary</strong>. Invoke Powermatch with (just) Summary Output. This option produces a summary table of the Powermatch outputs allowing you to examine and adjust inputs without having to access the Powermatch outputs spreadsheet. </li>
 <li><strong>Powermatch</strong>. Invoke Powermatch. This option produces a spreadsheet of the Powermatch outputs. It provides detail on how demand was met for each hour of the year</li>
-<li><strong>Optimise</strong>. Invoke the Optimise function. This will use an iterative approach to optimise the input generator capacities to produce a solution with a lower overall LCOE. It will complete by displaying a plot of how the value for LCOE has converged to a minimum. Exiting the plot will then a summary table. It will also update the adjustment values for each generator to enable you to produce a Powermatch spreadsheet. See below for more details</li>
+<li><strong>Optimise</strong>. Invoke the Optimise function. This will use an iterative approach to optimise the input generator capacities to produce a solution with a lower overall LCOE and the lowest weight for six variables. It will complete by displaying a plot of how the value for LCOE has converged to a minimum, and a three dimensional plot showing the three variables with the highest weightings for the multi-variable approach. Exiting the plot will then a summary table. It will also update the adjustment values for each generator to enable you to produce a Powermatch spreadsheet. See below for more details</li>
 <li><strong>Help</strong>. Display the Powermatch help</li>
 </ul>
 <p>The Constraints, Generators and Optimisation tables can be edited, updated and saved and the revised table(s) used as inputs for the <strong>Summary</strong>, <strong>Powermatch</strong> and <strong>Optimise</strong> options. During the edit process the revised values can be exported as a new spreadsheet. If the table(s) is saved but not exported the revised values will not be available once Powermatch is exited.</p>
@@ -2963,8 +2952,8 @@ If it's not a diurnal plot (i.e. Period is <em>&lt;None&gt;</em>) any occurence 
 <h4>Optimise and Optimisation</h4>
 <p>In an attempt to simplify the process of determining the optimal generation mix, Powermatch has an optimisation function. The function uses a genetic algorithm to identify two optimal solutions:
 <ol>
-<li>a solution with the lowest LCOE for the input renewable and dispatchable technologies</li>
-<li>a solution that produces the best (lowest) weighting for six variables - lowest LCOE, lowest CO2 emissions, lowest Overall Cost, lowest surplus generation, highest RE percentage and maximising percentage of load met</li>
+<li>A solution with the lowest LCOE for the input renewable and dispatchable technologies</li>
+<li>A solution that produces the best (lowest) weighting for six variables - lowest LCOE, lowest CO2 emissions, lowest Overall Cost, lowest surplus generation, highest RE percentage and maximising percentage of load met</li>
 </ol>
 Genetic algorithms are inspired by the process of natural selection and simulate evolution of multiple generations that evolve to produce an optimal solution, in this case (1.) lowest LCOE and (2.) best weighted solution (<strong>Note:</strong> This is a different approach to optimisation than in Power Model). The approach has a number of inputs:</p>
 <ul>
@@ -2987,7 +2976,7 @@ Genetic algorithms are inspired by the process of natural selection and simulate
 <li>Calculate fitness of population. Select (1.) lowest LCOE that meets 100% of load (demand) and (2.) lowest weighting. For each member:
 <ol>
 <li>Using their chromosome and the Optimisation table determine the capacity for each technology</li>
-<li>Run Powermatch with this generation mix to calculate (1.) the LCOE (score) and (2.) weighting</li>
+<li>Run Powermatch with this generation mix to calculate (1.) the LCOE (score) and (2.) the weighting</li>
 </ol>
 <li>For each generation</li>
 <ol>
@@ -2998,7 +2987,13 @@ Genetic algorithms are inspired by the process of natural selection and simulate
 <li>Exit loop if LCOE has remained the same for the specified number of generations</li>
 <li>Include (1.) lowest LCOE and (2.) lowest weighting in the next generation
 </ol>
-<li>Produce tables for best candidate (1.) with lowest LCOE and (2.) lowest weighting</li>
+<li>Produce
+<ol>
+<li>A plot showing the progression of LCOE over each generation</li>
+<li>A three dimensional plot showing the best individual for each generation. The three variables with the highest weighting are chosen for the plot. It is also possible to pick one of the solutions by clicking the mouse on that point - a small box showing the values for each of the three variables will be displayed</li>
+</ol>
+<li>Optionally, produce tables for best candidate (1.) with lowest LCOE and (2.) lowest weighting if the <em>more_details</em> property is set to True</li>
+<li>Present a table for two optimal solutions; or three if a solution has been picked from the multi-variable plot. By pressing the appropriate button the adjustment values for the chosen solution will be made available for <strong>Summary</strong> and <strong>Powermatch</strong></li>
 </ol>
  <p>The Optimisation table defines the format for the chromsome. Entries are required for all Renewable technologies and dispatchable and storage facilities. The fields are:
 <table border="0" class="none">
@@ -3220,9 +3215,9 @@ Genetic algorithms are inspired by the process of natural selection and simulate
 <h4>getmap</h4>
 <p><code>getmap.py</code> is a Python program that can be used to create a map image for any area of the globe. Using this program you can obtain a map from one of the two sources above. You specify:
 <ul>
-<li>for both, the bounding coordinates for the chosen area, and a name for the file to create a suitable map image</li>
-<li>for OpenStreetMap, a zoom level and a URL template (Internet address) for the map tiles. The default value (<code>http://[abc].tile.openstreetmap.org/zoom/x/y.png</code>) represents the normal OpenStreetMap tiles</li>
-<li>for MapQuest, the width and height for the image file you wish to create. The ratio of these values will affect the area the map represents</li>
+<li>For both, the bounding coordinates for the chosen area, and a name for the file to create a suitable map image</li>
+<li>For OpenStreetMap, a zoom level and a URL template (Internet address) for the map tiles. The default value (<code>http://[abc].tile.openstreetmap.org/zoom/x/y.png</code>) represents the normal OpenStreetMap tiles</li>
+<li>For MapQuest, the width and height for the image file you wish to create. The ratio of these values will affect the area the map represents</li>
 </ul>
 <p>You can invoke the program either by choosing <code>getmap</code> from the SIREN Tools menu or in Windows by running <code>getmap.exe</code> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to allow you to define the map/image desired. <code>getmap</code> displays a map of the world to visualise the chosen are of interest at a global scale. The window fields are:</p>
 <ul>
