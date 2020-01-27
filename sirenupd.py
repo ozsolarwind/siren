@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2017-2019 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2017-2020 Sustainable Energy Now Inc., Angus King
 #
 #  sirenupd.py - This file is part of SIREN.
 #
@@ -25,7 +25,7 @@ from PyQt4 import QtCore, QtGui
 import subprocess
 import sys
 
-from credits import fileVersion
+import credits
 
 def get_response(outputs):
     chk_str = 'HTTP request sent, awaiting response... '
@@ -44,7 +44,7 @@ class UpdDialog(QtGui.QDialog):
     def __init__(self, parent=None):
         self.debug = False
         QtGui.QDialog.__init__(self, parent)
-        self.setWindowTitle('SIREN Update (' + fileVersion() + ') - Check for new versions')
+        self.setWindowTitle('SIREN Update (' + credits.fileVersion() + ') - Check for new versions')
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         row = 0
         newgrid = QtGui.QGridLayout()
@@ -70,7 +70,7 @@ class UpdDialog(QtGui.QDialog):
             versions = open(versions_file)
             programs = csv.DictReader(versions)
             for program in programs:
-                version = fileVersion(program=program['Program'])
+                version = credits.fileVersion(program=program['Program'])
                 if version != '?' and version != program['Version']:
                     cur = version.split('.')
                     new = program['Version'].split('.')
@@ -82,7 +82,7 @@ class UpdDialog(QtGui.QDialog):
                                 new_versions.append([program['Program'], version, program['Version']])
                                 break
                     elif new[0] > cur[0]:
-                        new_versions.append([program['Program'], version, 'New Release'])                        
+                        new_versions.append([program['Program'], version, 'New Release'])
             versions.close()
             if len(new_versions) > 0:
                 newgrid.addWidget(QtGui.QLabel('New versions are available for the following programs.' + \
@@ -154,7 +154,7 @@ class UpdDialog(QtGui.QDialog):
                         continue
                 if suffix == '.exe' or suffix == '.py':
                     if os.path.exists(self.newprog[p] + 'new' + suffix):
-                        version = fileVersion(program=self.newprog[p] + 'new')
+                        version = credits.fileVersion(program=self.newprog[p] + 'new')
                         if version != '?':
                             if version < str(self.table.item(p, 3).text()):
                                 if not self.debug:
