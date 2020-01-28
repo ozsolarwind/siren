@@ -2624,7 +2624,10 @@ class powerMatch(QtGui.QWidget):
             h = chrom_hdrs.index(self.opt_choice)
         except:
             return
+<<<<<<< HEAD
         op_data[h], score_data[h] = calculate_fitness([chroms[h]]) # make it current
+=======
+>>>>>>> ee57b56595c5d30bf0830b3d00686030e66086b7
         list(map(list, list(zip(*op_data[h]))))
         dialog = displaytable.Table(op_data[h], title='Chosen_' + self.sender().text(), fields=headers,
                  save_folder=self.scenarios, sortby='', decpts=op_pts)
