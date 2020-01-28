@@ -363,7 +363,7 @@ class powerMatch(QtGui.QWidget):
         self.optimise_stop = 0
         target_keys = ['lcoe', 'load_pct', 'surplus_pct', 're_pct', 'cost', 'co2']
         target_names = ['LCOE', 'Load%', 'Surplus%', 'RE%', 'Cost', 'CO2']
-        target_fmats = ['$%.2f', '%d%%', '%d%%', '%d%%', '$%.1fpwr_chr', '%.1f']
+        target_fmats = ['$%.2f', '%d%%', '%d%%', '%d%%', '$%.1fpwr_chr', '%.1fpwr_chr']
         target_titles = ['LCOE ($)', '% Load met', 'Surplus %', 'RE %',
                          'Total Cost ($)', 'tCO2e']
         self.targets = {}
@@ -556,7 +556,7 @@ class powerMatch(QtGui.QWidget):
         self.setWindowTitle('SIREN - powermatch (' + fileVersion() + ') - Powermatch')
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         self.center()
-        self.resize(int(self.sizeHint().width()* 1.07), int(self.sizeHint().height() * 1.1))
+        self.resize(int(self.sizeHint().width()* 1.2), int(self.sizeHint().height() * 1.2))
         self.show_FloatStatus() # status window
         self.show()
 
@@ -1985,7 +1985,7 @@ class powerMatch(QtGui.QWidget):
                 op_data.append(['Total Load', '', op_load_tot])
                 pct = '{:.1%})'.format( -sf_sums[1] / op_load_tot)
                 op_data.append(['Surplus (' + pct, '', -sf_sums[1]])
-                return op_data
+                return op_data, multi_fitness_scores
             else:
                 return fitness_scores, multi_fitness_scores
 
@@ -2026,24 +2026,27 @@ class powerMatch(QtGui.QWidget):
 
         def plot_multi(multi_best, multi_order, title):
             data = [[], [], []]
-            if 'cost' in multi_order:
-                max_cost = 0
-                for multi in multi_best:
-                    max_cost = max(max_cost, multi['cost'])
-                pwr_chr = ''
-                divisor = 1.
-                pwr_chrs = ' KMBTPEZY'
-                for pwr in range(len(pwr_chrs) - 1, -1, -1):
-                    if max_cost > pow(10, pwr * 3):
-                        pwr_chr = pwr_chrs[pwr]
-                        divisor = 1. * pow(10, pwr * 3)
-                        break
-                self.targets['cost'][5] = self.targets['cost'][5].replace('pwr_chr', pwr_chr)
-           #     self.targets['cost'][6] = self.targets['cost'][6].replace('pwr_chr', pwr_chr)
+            max_amt = [0., 0.]
             for multi in multi_best:
-                for axis in range(len(multi_order)):
+                max_amt[0] = max(max_amt[0], multi['cost'])
+                max_amt[1] = max(max_amt[1], multi['co2'])
+            pwr_chr = ['', '']
+            divisor = [1., 1.]
+            pwr_chrs = ' KMBTPEZY'
+            for m in range(2):
+                for pwr in range(len(pwr_chrs) - 1, -1, -1):
+                    if max_amt[m] > pow(10, pwr * 3):
+                        pwr_chr[m] = pwr_chrs[pwr]
+                        divisor[m] = 1. * pow(10, pwr * 3)
+                        break
+            self.targets['cost'][5] = self.targets['cost'][5].replace('pwr_chr', pwr_chr[0])
+            self.targets['co2'][5] = self.targets['co2'][5].replace('pwr_chr', pwr_chr[1])
+            for multi in multi_best:
+                for axis in range(3): # only three axes in plot
                     if multi_order[axis] == 'cost':
-                        data[axis].append(multi[multi_order[axis]] / divisor) # cost
+                        data[axis].append(multi[multi_order[axis]] / divisor[0]) # cost
+                    elif multi_order[axis] == 'co2':
+                        data[axis].append(multi[multi_order[axis]] / divisor[1]) # co2
                     elif multi_order[axis][-4:] == '_pct': # percentage
                         data[axis].append(multi[multi_order[axis]] * 100.)
                     else:
@@ -2071,11 +2074,12 @@ class powerMatch(QtGui.QWidget):
                           self.targets[multi_order[0]][6].replace('%', '%%') + ': ' + \
                           self.targets[multi_order[0]][5] + '; ' + \
                           self.targets[multi_order[1]][6].replace('%', '%%') + ': ' + \
-                          ': ' + self.targets[multi_order[1]][5] + '; ' + \
+                          self.targets[multi_order[1]][5] + '; ' + \
                           self.targets[multi_order[2]][6].replace('%', '%%') + ': ' + \
                           self.targets[multi_order[2]][5]
                     msg = msg % (p[1], p[2], p[3])
                     self.setStatus(msg)
+                    #break # get out after first one
             del zp
             return pick
 
@@ -2288,8 +2292,8 @@ class powerMatch(QtGui.QWidget):
             multi_order.append('{:.2f}{}'.format(value[1], key))
         updates['Powermatch'] = lines
         SaveIni(updates)
-        multi_order.sort(reverse=True) # get top three weighted variables
-        multi_order = multi_order[:3]
+        multi_order.sort(reverse=True)
+    #    multi_order = multi_order[:3] # get top three weighted variables - but I want them all
         multi_order = [o[4:] for o in multi_order]
         self.adjust_re = True
         re_capacities = []
@@ -2485,7 +2489,11 @@ class powerMatch(QtGui.QWidget):
         best = scores.index(best_score)
         if best_score > lowest_score:
             msg += ' Try more generations.'
-        op_data = calculate_fitness([lowest_chrom])
+        # we'll keep two or three to save re-calculating_fitness
+        op_data = [[], [], []]
+        score_data = [None, None, None]
+        op_data[0], score_data[0] = calculate_fitness([lowest_chrom])
+        op_data[1], score_data[1] = calculate_fitness([multi_lowest_chrom])
         self.setStatus(msg)
         QtGui.QApplication.processEvents()
         self.progressbar.setHidden(True)
@@ -2505,16 +2513,15 @@ class powerMatch(QtGui.QWidget):
         f = zp.zoom_pan(lx, base_scale=1.2, annotate=True)
         plt.show()
         pick = plot_multi(multi_best, multi_order, 'best of each generation')
+        op_pts = [0, 3, 0, 2, 0, 2, 0]
         if self.more_details:
-            list(map(list, list(zip(*op_data))))
-            op_pts = [0, 3, 0, 2, 0, 2, 0]
-            dialog = displaytable.Table(op_data, title=self.sender().text(), fields=headers,
+            list(map(list, list(zip(*op_data[0]))))
+            dialog = displaytable.Table(op_data[0], title=self.sender().text(), fields=headers,
                      save_folder=self.scenarios, sortby='', decpts=op_pts)
             dialog.exec_()
             del dialog
-            op_data = calculate_fitness([multi_lowest_chrom])
-            list(map(list, list(zip(*op_data))))
-            dialog = displaytable.Table(op_data, title='Multi_' + self.sender().text(), fields=headers,
+            list(map(list, list(zip(*op_data[1]))))
+            dialog = displaytable.Table(op_data[1], title='Multi_' + self.sender().text(), fields=headers,
                      save_folder=self.scenarios, sortby='', decpts=op_pts)
             dialog.exec_()
             del dialog
@@ -2526,6 +2533,7 @@ class powerMatch(QtGui.QWidget):
         chrom_hdrs = ['Lowest LCOE', 'Lowest Weight']
         chroms = [lowest_chrom, multi_lowest_chrom]
         if pick >= 0:
+            op_data[2], score_data[2] = calculate_fitness([multi_best_popn[pick]])
             chroms.append(multi_best_popn[pick])
             chrom_hdrs.append('Your pick')
         for chromosome in chroms:
@@ -2538,10 +2546,12 @@ class powerMatch(QtGui.QWidget):
         chooseDialog = QtGui.QDialog()
         hbox = QtGui.QHBoxLayout()
         grid = [QtGui.QGridLayout()]
-        grid[0].addWidget(QtGui.QLabel('Facility'), 0, 0)
+        label = QtGui.QLabel('<b>Facility</b>')
+        label.setAlignment(QtCore.Qt.AlignCenter)
+        grid[0].addWidget(label, 0, 0)
         for h in range(len(chrom_hdrs)):
             grid.append(QtGui.QGridLayout())
-            label = QtGui.QLabel(chrom_hdrs[h])
+            label = QtGui.QLabel('<b>' + chrom_hdrs[h] + '</b>')
             label.setAlignment(QtCore.Qt.AlignCenter)
             grid[-1].addWidget(label, 0, 0, 1, 2)
         rw = 1
@@ -2554,6 +2564,39 @@ class powerMatch(QtGui.QWidget):
                 label = QtGui.QLabel('({:,.2f})'.format(value[h] * dict_order[key][0]))
                 label.setAlignment(QtCore.Qt.AlignRight)
                 grid[h + 1].addWidget(label, rw, 1)
+            rw += 1
+        max_amt = [0., 0.]
+        for multi in multi_best:
+            max_amt[0] = max(max_amt[0], multi['cost'])
+            max_amt[1] = max(max_amt[1], multi['co2'])
+        pwr_chr = ['', '']
+        divisor = [1., 1.]
+        pwr_chrs = ' KMBTPEZY'
+        for m in range(2):
+            for pwr in range(len(pwr_chrs) - 1, -1, -1):
+                if max_amt[m] > pow(10, pwr * 3):
+                    pwr_chr[m] = pwr_chrs[pwr]
+                    divisor[m] = 1. * pow(10, pwr * 3)
+                    break
+        self.targets['cost'][5] = self.targets['cost'][5].replace('pwr_chr', pwr_chr[0])
+        self.targets['co2'][5] = self.targets['co2'][5].replace('pwr_chr', pwr_chr[1])
+        for key in multi_order:
+            lbl = QtGui.QLabel('<i>' + self.targets[key][0] + '</i>')
+            lbl.setAlignment(QtCore.Qt.AlignCenter)
+            grid[0].addWidget(lbl, rw, 0)
+            for h in range(len(chrom_hdrs)):
+                if key == 'cost':
+                    amt = score_data[h][0][key] / divisor[0] # cost
+                elif key == 'co2':
+                    amt = score_data[h][0][key] / divisor[1] # co2
+                elif key[-4:] == '_pct': # percentage
+                    amt = score_data[h][0][key] * 100.
+                else:
+                    amt = score_data[h][0][key]
+                txt = '<i>' + self.targets[key][5] + '</i>'
+                label = QtGui.QLabel(txt % amt)
+                label.setAlignment(QtCore.Qt.AlignCenter)
+                grid[h + 1].addWidget(label, rw, 0, 1, 2)
             rw += 1
         cshow = QtGui.QPushButton('Quit', self)
         grid[0].addWidget(cshow)
@@ -2581,9 +2624,9 @@ class powerMatch(QtGui.QWidget):
             h = chrom_hdrs.index(self.opt_choice)
         except:
             return
-        op_data = calculate_fitness([chroms[int(h)]])
-        list(map(list, list(zip(*op_data))))
-        dialog = displaytable.Table(op_data, title='Chosen_' + self.sender().text(), fields=headers,
+        op_data[h], score_data[h] = calculate_fitness([chroms[h]]) # make it current
+        list(map(list, list(zip(*op_data[h]))))
+        dialog = displaytable.Table(op_data[h], title='Chosen_' + self.sender().text(), fields=headers,
                  save_folder=self.scenarios, sortby='', decpts=op_pts)
         dialog.exec_()
         del dialog
