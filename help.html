@@ -3510,7 +3510,7 @@ You can alternate between these approaches to choose the desired area. If you ha
 <strong>Note:</strong> The behaviour of the bounding coordinates fields are a little quirky in that they will adjust themselves so the west (left) value is always west of the east value and the north (upper) value is always higher than the south value
 </li>
 <li><em>Start date</em>. The first date to be downloaded</li>
-<li><em>End date</em>. The first date to be downloaded</li>
+<li><em>End date</em>. The last date to be downloaded</li>
 <li><em>Copy folder down</em>. This is an ease of use field. If this is checked any changes to the Solar target Folder field will be propagated to the Wind Folder field</li>
 <li><em>Solar Target Folder</em>. Use this to specify the location for the MERRA-2 solar (<em>tavg1_2d_rad_Nx</em>) files. To change the location you need to click on the field and navigate to the correct folder (you can't type into the field)</li>
 <li><em>Wind Target Folder</em>. Use this to specify the location for the MERRA-2 wind (<em>tavg1_2d_slv_Nx</em>) files. To change the location you need to click on the field and navigate to the correct folder (you can't type into the field)</li>
@@ -4555,6 +4555,10 @@ MERRA-2 Variable
 <tr class="none">
 <td class="none"><dfn>url_parms</dfn></td>
 <td class="none">Parameters passed to the URL server</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>wait_days</dfn></td>
+<td class="none">MERRA-2 datasets are usually available about 42 days (i.e. 6 weeks) after the actual date. You can use this property to override the default number of 42 days</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>wget</dfn></td>

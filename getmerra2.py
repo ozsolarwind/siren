@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2017-2019 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2017-2020 Sustainable Energy Now Inc., Angus King
 #
 #  getmerra2.py - This file is part of SIREN.
 #
@@ -356,6 +356,11 @@ class getMERRA2(QtGui.QDialog):
                 self.zoom = 0.75
         except:
             pass
+        self.wait_days = 42
+        try:
+            self.wait_days = int(self.config.get('getmerra2', 'wait_days'))
+        except:
+            pass
 
     def __init__(self, help='help.html', ini_file='getfiles.ini', parent=None):
         super(getMERRA2, self).__init__(parent)
@@ -500,17 +505,17 @@ class getMERRA2(QtGui.QDialog):
         self.grid.addWidget(self.merra_cells, 4, 3)
         self.grid.addWidget(QtGui.QLabel('Start date:'), 5, 0)
         self.strt_date = QtGui.QDateEdit(self)
-        self.strt_date.setDate(QtCore.QDate.currentDate().addMonths(-1))
+        self.strt_date.setDate(QtCore.QDate.currentDate().addDays(-self.wait_days))
         self.strt_date.setCalendarPopup(True)
         self.strt_date.setMinimumDate(QtCore.QDate(1980, 1, 1))
-        self.strt_date.setMaximumDate(QtCore.QDate.currentDate().addMonths(-1))
+        self.strt_date.setMaximumDate(QtCore.QDate.currentDate().addDays(-self.wait_days))
         self.grid.addWidget(self.strt_date, 5, 1)
         self.grid.addWidget(QtGui.QLabel('End date:'), 6, 0)
         self.end_date = QtGui.QDateEdit(self)
-        self.end_date.setDate(QtCore.QDate.currentDate().addMonths(-1))
+        self.end_date.setDate(QtCore.QDate.currentDate().addDays(-self.wait_days))
         self.end_date.setCalendarPopup(True)
         self.end_date.setMinimumDate(QtCore.QDate(1980,1,1))
-        self.end_date.setMaximumDate(QtCore.QDate.currentDate().addMonths(-1))
+        self.end_date.setMaximumDate(QtCore.QDate.currentDate())
         self.grid.addWidget(self.end_date, 6, 1)
         self.grid.addWidget(QtGui.QLabel('Copy folder down:'), 7, 0)
         self.checkbox = QtGui.QCheckBox()
@@ -751,7 +756,7 @@ class getMERRA2(QtGui.QDialog):
             self.lonwSpin.setValue(self.eastSpin.value() - self.westSpin.value())
             self.lonSpin.setValue(self.eastSpin.value() - (self.eastSpin.value() - self.westSpin.value()) / 2.)
             self.strt_date.setDate(check[1])
-            self.end_date.setDate(datetime.datetime.now() - datetime.timedelta(days=42))
+            self.end_date.setDate(datetime.datetime.now() - datetime.timedelta(days=self.wait_days))
             if self.end_date.date() < self.strt_date.date():
                 self.end_date.setDate(self.strt_date.date())
             self.ignore = False
@@ -968,7 +973,7 @@ if '__main__' == __name__:
             if len(check) > 1: # ok
                 date1 = check[1]
                 if date2 == '':
-                    date2 = datetime.datetime.now() - datetime.timedelta(days=42)
+                    date2 = datetime.datetime.now() - datetime.timedelta(days=self.wait_days)
                     if date2 < date1:
                         date2 = date1
                 lat1 = check[3]
