@@ -1716,6 +1716,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none"><dfn>results_file</dfn></td>
 <td class="none">File name for Powermatch output (report) spreadsheet</td>
 </tr>
+<tr class="none">
+<td class="none"><dfn>weighted_lcoe</dfn></td>
+<td class="none">In producing the reports and optimisation use the weighted LCOE or not. The default is True</td>
+</tr>
 </table>
 </td></tr>
 <tr class="none" id="p_pv"><td><dfn><strong>[PV]</strong></dfn></td>
@@ -2886,6 +2890,7 @@ If it's not a diurnal plot (i.e. Period is <em>&lt;None&gt;</em>) any occurence 
 <p>Running the SIREN models will produce hourly generation figures which identify generation shortfalls and excesses against load (demand). One of the outputs from SIREN is a table of these generation shortfalls which can be met by dispatchable energy generation. The Powermatch component of SIREN can be used to match generation with demand (load) to quantify and cost dispatchable energy generation, storage and CO<sub>2</sub>-e emissions. This enables you to complete a costed renewable energy scenario.
 <br /><strong>Note:</strong> The SIREN Powermatch component has been derived from the Powerbalance worksheets developed by Ben Rose. The great work and inspiration by Ben is acknowledged</p>
 <p>The Powermatch options are as set out here. The options are specified in the <a href="#p_pm">[Powermatch]</a> Section of the Preferences file. The associated property is indicated in brackets at the end of the description. All files are located in the SIREN Scenarios folder.</p>
+<p>In producing the LCOE figures you can choose to use LCOE figures that ignore any surplus generation or produce a weighted LCOE figure which adjusts the LCOE figure upwards to take into account the surplus generation (that is, the weighted LCOE figure includes the cost of surplus - spilled - generation). The default is to produce a weighted LCOE (<em>weighted_lcoe</em>)
 <table border="0" class="none" cellpadding="2">
 <tr><td class="top" style="width: 15%;"><dfn>Constraints File</dfn></td>
 <td class="none">File name for constraints spreadsheet. Clicking on the field will allow you to choose another spreadsheet from the SIREN Scenarios folder (<em>constraints_file</em>)</td></tr>

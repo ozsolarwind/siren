@@ -356,6 +356,7 @@ class powerMatch(QtGui.QWidget):
         self.adjust_re = False
         self.change_res = True
         self.details = True
+        self.weighted_lcoe = True
         self.carbon_price = 0.
         self.optimise_generations = 20
         self.optimise_mutation = 0.005
@@ -433,6 +434,9 @@ class powerMatch(QtGui.QWidget):
                                                   target_titles[t]]
                      except:
                          pass
+                 elif key == 'weighted_lcoe':
+                     if value.lower() in ['false', 'no', 'off']:
+                         self.weighted_lcoe = False
         except:
             pass
         self.opt_progressbar = None
@@ -1444,12 +1448,19 @@ class powerMatch(QtGui.QWidget):
                 cs = ''
             if gen_sum > 0:
                 gs = cost_sum / gen_sum
+                gsw = cost_sum / sp_load # weighted LCOE
             else:
                 gs = ''
+                gsw = ''
             sp_data.append(['Total', cap_sum, gen_sum, cs, cost_sum, gs, co2_sum])
+            if self.weighted_lcoe:
+                sp_data.append(['Weighted LCOE', '', '', '', '', gsw, ''])
             if self.carbon_price > 0:
                 cc = co2_sum * self.carbon_price
-                cs = (cost_sum + cc) / gen_sum
+                if self.weighted_lcoe:
+                    cs = (cost_sum + cc) / sp_load
+                else:
+                    cs = (cost_sum + cc) / gen_sum
                 if self.carbon_price == int(self.carbon_price):
                    cp = str(int(self.carbon_price))
                 else:
@@ -1582,6 +1593,11 @@ class powerMatch(QtGui.QWidget):
         ss.cell(row=ss_row, column=7).value = '=SUM(G4:G' + str(ss_row - 1) + ')'
         ss.cell(row=ss_row, column=7).number_format = '#,##0'
         ss.cell(row=ss_row, column=1).value = 'Total'
+        if self.weighted_lcoe:
+            ss_row +=1
+            ss.cell(row=ss_row, column=1).value = 'Weighted LCOE)'
+            ss.cell(row=ss_row, column=1).font = bold
+        lcoe_row = ss_row
         for column_cells in ss.columns:
             length = 0
             value = ''
@@ -1599,20 +1615,23 @@ class powerMatch(QtGui.QWidget):
         ss.column_dimensions['E'].width = 18
         last_col = ss_col(ns.max_column)
         r = 1
+        if self.weighted_lcoe:
+            r += 1
         if self.carbon_price > 0:
-            r = 2
             ss_row += 1
             if self.carbon_price == int(self.carbon_price):
                cp = str(int(self.carbon_price))
             else:
                cp = '{:.2f}'.format(self.carbon_price)
             ss.cell(row=ss_row, column=1).value = 'Carbon Cost ($' + cp + ')'
-            ss.cell(row=ss_row, column=5).value = '=G' + str(ss_row - 1) + '*' + \
+            ss.cell(row=ss_row, column=5).value = '=G' + str(ss_row - r) + '*' + \
                     str(self.carbon_price)
             ss.cell(row=ss_row, column= 5).number_format = '$#,##0'
-            ss.cell(row=ss_row, column=6).value = '=(E' + str(ss_row - 1) + \
-                    '+E'  + str(ss_row) + ')/C' + str(ss_row - 1)
-            ss.cell(row=ss_row, column=6).number_format = '$#,##0.00'
+            if not self.weighted_lcoe:
+                ss.cell(row=ss_row, column=6).value = '=(E' + str(ss_row - r) + \
+                        '+E'  + str(ss_row) + ')/C' + str(ss_row - r)
+                ss.cell(row=ss_row, column=6).number_format = '$#,##0.00'
+            r += 1
         ss_row += 1
         ss.cell(row=ss_row, column=1).value = 'RE %age'
         ss.cell(row=ss_row, column=2).value = re_sum[:-1] + ')/C' + str(ss_row - r)
@@ -1644,6 +1663,15 @@ class powerMatch(QtGui.QWidget):
         ss.cell(row=ss_row, column=3).value = '=SUM(C' + str(ss_row - 2) + ':C' + str(ss_row - 1) + ')'
         ss.cell(row=ss_row, column=3).number_format = '#,##0'
         ss.cell(row=ss_row, column=3).font = bold
+        # values for weighted LCOE and Carbon Cost LCOE
+        if self.weighted_lcoe:
+            ss.cell(row=lcoe_row, column=6).value = '=F' + str(lcoe_row-1) + '*C' + str(lcoe_row-1) + \
+                    '/C' + str(ss_row)
+            ss.cell(row=lcoe_row, column=6).number_format = '$#,##0.00'
+            ss.cell(row=lcoe_row, column=6).font = bold
+            ss.cell(row=lcoe_row + 1, column=6).value = '=(E' + str(lcoe_row - 1) + \
+                    '+E'  + str(lcoe_row + 1) + ')/C' + str(ss_row)
+            ss.cell(row=lcoe_row + 1, column=6).number_format = '$#,##0.00'
         ss_row += 1
         ss.cell(row=ss_row, column=1).value = 'Surplus'
         ss.cell(row=ss_row, column=3).value = '=-SUMIF(Detail!' + last_col + str(hrows) + ':Detail!' \
@@ -1734,6 +1762,7 @@ class powerMatch(QtGui.QWidget):
             return
         if self.floatstatus and self.log_status:
             self.floatstatus.emit(QtCore.SIGNAL('log'), text)
+            QtGui.QApplication.processEvents()
 
     @QtCore.pyqtSlot(str)
     def getStatus(self, text):
@@ -1943,8 +1972,10 @@ class powerMatch(QtGui.QWidget):
                     cs = ''
                 if gen_sum > 0:
                     gs = cost_sum / gen_sum
+                    gsw = cost_sum / op_load_tot # weighted LCOE
                 else:
                     gs = ''
+                    gsw = ''
                 sf_sums = [0., 0., 0.]
                 for sf in range(len(shortfall)):
                     if shortfall[sf] > 0:
@@ -1955,6 +1986,8 @@ class powerMatch(QtGui.QWidget):
                         sf_sums[2] += op_load[sf]
                 if (sf_sums[2] - sf_sums[0]) / op_load_tot < 1:
                     fitness_scores.append(200)
+                elif self.weighted_lcoe:
+                    fitness_scores.append(gsw) # target is weighted lcoe
                 else:
                     fitness_scores.append(gs)
                 # multi_fitness_scores = [lcoe, load_met, surplus, cost, RE%, CO2]
@@ -1967,9 +2000,14 @@ class powerMatch(QtGui.QWidget):
                 #    'shortfall': sf_sums[0] / op_load_tot}) # shortfall. lower the better
             if len(population) == 1:
                 op_data.append(['Total', cap_sum, gen_sum, cs, cost_sum, gs, co2_sum])
+                if self.weighted_lcoe:
+                    op_data.append(['Weighted LCOE', '', '', '', '', gsw, ''])
                 if self.carbon_price > 0:
                     cc = co2_sum * self.carbon_price
-                    cs = (cost_sum + cc) / gen_sum
+                    if self.weighted_lcoe:
+                        cs = (cost_sum + cc) / op_load_tot
+                    else:
+                        cs = (cost_sum + cc) / gen_sum
                     if self.carbon_price == int(self.carbon_price):
                        cp = str(int(self.carbon_price))
                     else:
@@ -2428,7 +2466,7 @@ class powerMatch(QtGui.QWidget):
                 tim = ' ( %s $%.2f ; %.2f mins)' % (ud, best_score, tim / 60.)
             self.opt_progressbar.emit(QtCore.SIGNAL('progress'), generation + 1,
                 'Processing generation ' + str(generation + 1) + tim)
-            QtGui.qApp.processEvents()
+            QtGui.QApplication.processEvents()
             if not self.opt_progressbar.be_open:
                 break
         # Create an empty list for new population
@@ -2625,6 +2663,21 @@ class powerMatch(QtGui.QWidget):
         except:
             return
         op_data[h], score_data[h] = calculate_fitness([chroms[h]]) # make it current
+        msg = chrom_hdrs[h] + ': '
+        for key in multi_order[:3]:
+            msg += self.targets[key][0] + ': '
+            if key == 'cost':
+                amt = score_data[h][0][key] / divisor[0] # cost
+            elif key == 'co2':
+                amt = score_data[h][0][key] / divisor[1] # co2
+            elif key[-4:] == '_pct': # percentage
+                amt = score_data[h][0][key] * 100.
+            else:
+                amt = score_data[h][0][key]
+            txt = self.targets[key][5]
+            txt = txt % amt
+            msg += txt + '; '
+        self.setStatus(msg)
         list(map(list, list(zip(*op_data[h]))))
         dialog = displaytable.Table(op_data[h], title='Chosen_' + self.sender().text(), fields=headers,
                  save_folder=self.scenarios, sortby='', decpts=op_pts)
