@@ -1657,6 +1657,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">Worksheet name for constraints table</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>corrected_lcoe</dfn></td>
+<td class="none">In producing the reports and optimisation use the corrected LCOE or not. The default is True</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>data_file</dfn></td>
 <td class="none">File name for Powermatch input (data) spreadsheet</td>
 </tr>
@@ -1715,10 +1719,6 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <tr class="none">
 <td class="none"><dfn>results_file</dfn></td>
 <td class="none">File name for Powermatch output (report) spreadsheet</td>
-</tr>
-<tr class="none">
-<td class="none"><dfn>weighted_lcoe</dfn></td>
-<td class="none">In producing the reports and optimisation use the weighted LCOE or not. The default is True</td>
 </tr>
 </table>
 </td></tr>
@@ -2890,7 +2890,7 @@ If it's not a diurnal plot (i.e. Period is <em>&lt;None&gt;</em>) any occurence 
 <p>Running the SIREN models will produce hourly generation figures which identify generation shortfalls and excesses against load (demand). One of the outputs from SIREN is a table of these generation shortfalls which can be met by dispatchable energy generation. The Powermatch component of SIREN can be used to match generation with demand (load) to quantify and cost dispatchable energy generation, storage and CO<sub>2</sub>-e emissions. This enables you to complete a costed renewable energy scenario.
 <br /><strong>Note:</strong> The SIREN Powermatch component has been derived from the Powerbalance worksheets developed by Ben Rose. The great work and inspiration by Ben is acknowledged</p>
 <p>The Powermatch options are as set out here. The options are specified in the <a href="#p_pm">[Powermatch]</a> Section of the Preferences file. The associated property is indicated in brackets at the end of the description. All files are located in the SIREN Scenarios folder.</p>
-<p>In producing the LCOE figures you can choose to use LCOE figures that ignore any surplus generation or produce a weighted LCOE figure which adjusts the LCOE figure upwards to take into account the surplus generation (that is, the weighted LCOE figure includes the cost of surplus - spilled - generation). The default is to produce a weighted LCOE (<em>weighted_lcoe</em>)
+<p>In producing the LCOE figures you can choose to use LCOE figures that ignore any surplus generation or produce a corrected LCOE figure which adjusts the LCOE figure upwards to take into account the surplus generation (that is, the corrected LCOE figure includes the cost of surplus - spilled - generation). The default is to produce a corrected LCOE (<em>corrected_lcoe</em>)
 <table border="0" class="none" cellpadding="2">
 <tr><td class="top" style="width: 15%;"><dfn>Constraints File</dfn></td>
 <td class="none">File name for constraints spreadsheet. Clicking on the field will allow you to choose another spreadsheet from the SIREN Scenarios folder (<em>constraints_file</em>)</td></tr>
@@ -2921,7 +2921,7 @@ If it's not a diurnal plot (i.e. Period is <em>&lt;None&gt;</em>) any occurence 
 <li><strong>Done</strong>. Exit Powermatch. Any changed options will be saved</li>
 <li><strong>Summary</strong>. Invoke Powermatch with (just) Summary Output. This option produces a summary table of the Powermatch outputs allowing you to examine and adjust inputs without having to access the Powermatch outputs spreadsheet. </li>
 <li><strong>Powermatch</strong>. Invoke Powermatch. This option produces a spreadsheet of the Powermatch outputs. It provides detail on how demand was met for each hour of the year</li>
-<li><strong>Optimise</strong>. Invoke the Optimise function. This will use an iterative approach to optimise the input generator capacities to produce a solution with a lower overall LCOE and the lowest weight for six variables. It will complete by displaying a plot of how the value for LCOE has converged to a minimum, and a three dimensional plot showing the three variables with the highest weightings for the multi-variable approach. Exiting the plot will then a summary table. It will also update the adjustment values for each generator to enable you to produce a Powermatch spreadsheet. See below for more details</li>
+<li><strong>Optimise</strong>. Invoke the Optimise function. This will use an iterative approach to optimise the input generator capacities to produce a solution with (a) either a lower overall LCOE, or (b) the lowest weight for six variables, or (c) both. It will complete by displaying a plot of how the value for LCOE has converged to a minimum, and a three dimensional plot showing the three variables with the highest weightings for the multi-variable approach. Exiting the plot will then produce a summary table. It will also update the adjustment values for each generator to enable you to produce a Powermatch spreadsheet. See below for more details</li>
 <li><strong>Help</strong>. Display the Powermatch help</li>
 </ul>
 <p>The Constraints, Generators and Optimisation tables can be edited, updated and saved and the revised table(s) used as inputs for the <strong>Summary</strong>, <strong>Powermatch</strong> and <strong>Optimise</strong> options. During the edit process the revised values can be exported as a new spreadsheet. If the table(s) is saved but not exported the revised values will not be available once Powermatch is exited.</p>
@@ -2955,7 +2955,7 @@ If it's not a diurnal plot (i.e. Period is <em>&lt;None&gt;</em>) any occurence 
 </table>
 <div class="experiment">
 <h4>Optimise and Optimisation</h4>
-<p>In an attempt to simplify the process of determining the optimal generation mix, Powermatch has an optimisation function. The function uses a genetic algorithm to identify two optimal solutions:
+<p>In an attempt to simplify the process of determining the optimal generation mix, Powermatch has an optimisation function. The function uses a genetic algorithm to identify two possible optimal solutions:
 <ol>
 <li>A solution with the lowest LCOE for the input renewable and dispatchable technologies</li>
 <li>A solution that produces the best (lowest) weighting for six variables - lowest LCOE, lowest CO2 emissions, lowest Overall Cost, lowest surplus generation, highest RE percentage and maximising percentage of load met</li>
@@ -2967,6 +2967,7 @@ Genetic algorithms are inspired by the process of natural selection and simulate
 <li>Number of generations (iterations). For each generation a competition is held between (each of two) members to identify which has the preferred characteristics, in this case lowest LCOE. The winners are then used to generate the next generation. The greater the number of generations the better chance the solutions will converge to an optimum value, but the longer the optimisation process will take (<em>optimise_generations</em>)</li>
 <li>A probability of mutation. This is a genetic operator used to maintain genetic diversity from one generation of a population to the next. The solution may change entirely from the previous solution and come to a better solution. This probability should be set low. If it is set too high, the search will turn into a primitive random search.(<em>optimise_mutation)</em>)</li>
 <li>A stop option. To reduce the number of iterations it is possible to terminate the optimisation if there appears to be no change to the solution after a specified number of generations. At present this only examines the LCOE solution. The downside is that the optimisation may not have evolved on the correct path (<em>optimise_stop</em>)</li>
+<li>A choice as whether to run the lowest LCOE option, the multi-variable option, or both options together. Running both does use a single population and so there is some &ldquo;interaction&rdquo; between the the which may distort the result</li>
 <li>Some values for each of the six optimisation variables (<em>optimise_lcoe</em>, <em>optimise_surplus_pct</em>, <em>optimise_load_pct</em>, <em>optimise_re_pct</em>, <em>optimise_cost</em>, and <em>optimise_co2</em>) for the multi-variable solution:
 <ol>
 <li>The Weight, a value between 0 and 1, to be applied to this variable</li>
@@ -2978,7 +2979,7 @@ Genetic algorithms are inspired by the process of natural selection and simulate
 <ol>
 <li>Generate a chromosome from the Optimisation table</li>
 <li>Create an initial population, each with a random copy of the chromosome</li>
-<li>Calculate fitness of population. Select (1.) lowest LCOE that meets 100% of load (demand) and (2.) lowest weighting. For each member:
+<li>Calculate fitness of population. Select either (1.) lowest LCOE that meets 100% of load (demand), (2.) lowest weighting, or the lowest of both. For each member:
 <ol>
 <li>Using their chromosome and the Optimisation table determine the capacity for each technology</li>
 <li>Run Powermatch with this generation mix to calculate (1.) the LCOE (score) and (2.) the weighting</li>
@@ -2988,9 +2989,9 @@ Genetic algorithms are inspired by the process of natural selection and simulate
 <li>Select the best parents by competition</li>
 <li>Breed new population by random crossover of chromosomes for winners</li>
 <li>Randomly mutate the population</li>
-<li>Calculate fitness of population. Select (1.) lowest LCOE that meets 100% of load (demand) and (2.) lowest weighting</li>
+<li>Calculate fitness of population. Select either (1.) lowest LCOE that meets 100% of load (demand), (2.) lowest weighting, or both</li>
 <li>Exit loop if LCOE has remained the same for the specified number of generations</li>
-<li>Include (1.) lowest LCOE and (2.) lowest weighting in the next generation
+<li>Include either (1.) lowest LCOE, (2.) lowest weighting or both in the next generation
 </ol>
 <li>Produce
 <ol>
@@ -2998,7 +2999,7 @@ Genetic algorithms are inspired by the process of natural selection and simulate
 <li>A three dimensional plot showing the best individual for each generation. The three variables with the highest weighting are chosen for the plot. It is also possible to pick one of the solutions by clicking the mouse on that point - a small box showing the values for each of the three variables will be displayed</li>
 </ol>
 <li>Optionally, produce tables for best candidate (1.) with lowest LCOE and (2.) lowest weighting if the <em>more_details</em> property is set to True</li>
-<li>Present a table for two optimal solutions; or three if a solution has been picked from the multi-variable plot. The table shows the adjustment values and capacity for each generator followed by the estimated value for each of the six multi-variables prioritised by Weight. By pressing the appropriate button the adjustment values for the chosen solution will be made available for <strong>Summary</strong> and <strong>Powermatch</strong></li>
+<li>Present a table for the optimal solutions. The table shows the adjustment values and capacity for each generator followed by the estimated value for each of the six multi-variables prioritised by Weight. By pressing the appropriate button the adjustment values for the chosen solution will be made available for <strong>Summary</strong> and <strong>Powermatch</strong></li>
 </ol>
  <p>The Optimisation table defines the format for the chromsome. Entries are required for all Renewable technologies and dispatchable and storage facilities. The fields are:
 <table border="0" class="none">

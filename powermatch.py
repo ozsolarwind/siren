@@ -356,8 +356,10 @@ class powerMatch(QtGui.QWidget):
         self.adjust_re = False
         self.change_res = True
         self.details = True
-        self.weighted_lcoe = True
+        self.corrected_lcoe = True
         self.carbon_price = 0.
+        self.optimise_choice = 'LCOE'
+        choices = ['LCOE', 'Multi', 'Both']
         self.optimise_generations = 20
         self.optimise_mutation = 0.005
         self.optimise_population = 50
@@ -378,7 +380,13 @@ class powerMatch(QtGui.QWidget):
         try:
              items = config.items('Powermatch')
              for key, value in items:
-                 if key == 'adjust_generators':
+                 if key[-5:] == '_file':
+                     ndx = self.file_labels.index(key[:-5].title())
+                     self.ifiles[ndx] = value
+                 elif key[-6:] == '_sheet':
+                     ndx = self.file_labels.index(key[:-6].title())
+                     self.isheets[ndx] = value
+                 elif key == 'adjust_generators':
                      if value.lower() in ['true', 'on', 'yes']:
                          self.adjust_re = True
                  elif key == 'carbon_price':
@@ -389,12 +397,9 @@ class powerMatch(QtGui.QWidget):
                  elif key == 'change_results':
                      if value.lower() in ['false', 'off', 'no']:
                          self.change_res = False
-                 elif key[-5:] == '_file':
-                     ndx = self.file_labels.index(key[:-5].title())
-                     self.ifiles[ndx] = value
-                 elif key[-6:] == '_sheet':
-                     ndx = self.file_labels.index(key[:-6].title())
-                     self.isheets[ndx] = value
+                 elif key == 'corrected_lcoe':
+                     if value.lower() in ['false', 'no', 'off']:
+                         self.corrected_lcoe = False
                  elif key == 'generators_details':
                      if value.lower() in ['false', 'off', 'no']:
                          self.details = False
@@ -404,6 +409,8 @@ class powerMatch(QtGui.QWidget):
                  elif key == 'more_details':
                      if value.lower() in ['true', 'yes', 'on']:
                          self.more_details = True
+                 elif key == 'optimise_choice':
+                     self.optimise_choice = value
                  elif key == 'optimise_generations':
                      try:
                          self.optimise_generations = int(value)
@@ -434,9 +441,6 @@ class powerMatch(QtGui.QWidget):
                                                   target_titles[t]]
                      except:
                          pass
-                 elif key == 'weighted_lcoe':
-                     if value.lower() in ['false', 'no', 'off']:
-                         self.weighted_lcoe = False
         except:
             pass
         self.opt_progressbar = None
@@ -645,6 +649,7 @@ class powerMatch(QtGui.QWidget):
                 lines.append(str(self.file_labels[i].lower()) + '_file=' + str(self.files[i].text()))
             for i in range(D):
                 lines.append(str(self.file_labels[i].lower()) + '_sheet=' + str(self.sheets[i].currentText()))
+            lines.append('optimise_choice=' + self.optimise_choice)
             lines.append('optimise_generations=' + str(self.optimise_generations))
             lines.append('optimise_mutation=' + str(self.optimise_mutation))
             lines.append('optimise_population=' + str(self.optimise_population))
@@ -1448,16 +1453,16 @@ class powerMatch(QtGui.QWidget):
                 cs = ''
             if gen_sum > 0:
                 gs = cost_sum / gen_sum
-                gsw = cost_sum / sp_load # weighted LCOE
+                gsw = cost_sum / sp_load # corrected LCOE
             else:
                 gs = ''
                 gsw = ''
             sp_data.append(['Total', cap_sum, gen_sum, cs, cost_sum, gs, co2_sum])
-            if self.weighted_lcoe:
-                sp_data.append(['Weighted LCOE', '', '', '', '', gsw, ''])
+            if self.corrected_lcoe:
+                sp_data.append(['Corrected LCOE', '', '', '', '', gsw, ''])
             if self.carbon_price > 0:
                 cc = co2_sum * self.carbon_price
-                if self.weighted_lcoe:
+                if self.corrected_lcoe:
                     cs = (cost_sum + cc) / sp_load
                 else:
                     cs = (cost_sum + cc) / gen_sum
@@ -1593,9 +1598,9 @@ class powerMatch(QtGui.QWidget):
         ss.cell(row=ss_row, column=7).value = '=SUM(G4:G' + str(ss_row - 1) + ')'
         ss.cell(row=ss_row, column=7).number_format = '#,##0'
         ss.cell(row=ss_row, column=1).value = 'Total'
-        if self.weighted_lcoe:
+        if self.corrected_lcoe:
             ss_row +=1
-            ss.cell(row=ss_row, column=1).value = 'Weighted LCOE)'
+            ss.cell(row=ss_row, column=1).value = 'Corrected LCOE)'
             ss.cell(row=ss_row, column=1).font = bold
         lcoe_row = ss_row
         for column_cells in ss.columns:
@@ -1615,7 +1620,7 @@ class powerMatch(QtGui.QWidget):
         ss.column_dimensions['E'].width = 18
         last_col = ss_col(ns.max_column)
         r = 1
-        if self.weighted_lcoe:
+        if self.corrected_lcoe:
             r += 1
         if self.carbon_price > 0:
             ss_row += 1
@@ -1627,7 +1632,7 @@ class powerMatch(QtGui.QWidget):
             ss.cell(row=ss_row, column=5).value = '=G' + str(ss_row - r) + '*' + \
                     str(self.carbon_price)
             ss.cell(row=ss_row, column= 5).number_format = '$#,##0'
-            if not self.weighted_lcoe:
+            if not self.corrected_lcoe:
                 ss.cell(row=ss_row, column=6).value = '=(E' + str(ss_row - r) + \
                         '+E'  + str(ss_row) + ')/C' + str(ss_row - r)
                 ss.cell(row=ss_row, column=6).number_format = '$#,##0.00'
@@ -1663,8 +1668,8 @@ class powerMatch(QtGui.QWidget):
         ss.cell(row=ss_row, column=3).value = '=SUM(C' + str(ss_row - 2) + ':C' + str(ss_row - 1) + ')'
         ss.cell(row=ss_row, column=3).number_format = '#,##0'
         ss.cell(row=ss_row, column=3).font = bold
-        # values for weighted LCOE and Carbon Cost LCOE
-        if self.weighted_lcoe:
+        # values for corrected LCOE and Carbon Cost LCOE
+        if self.corrected_lcoe:
             ss.cell(row=lcoe_row, column=6).value = '=F' + str(lcoe_row-1) + '*C' + str(lcoe_row-1) + \
                     '/C' + str(ss_row)
             ss.cell(row=lcoe_row, column=6).number_format = '$#,##0.00'
@@ -1791,24 +1796,32 @@ class powerMatch(QtGui.QWidget):
 
             return population
 
-        def select_individual_by_tournament(population, scores):
+        def select_individual_by_tournament(population, *argv):
             # Get population size
-            population_size = len(scores)
+            population_size = len(population)
 
             # Pick individuals for tournament
-            fighter_1 = random.randint(0, population_size-1)
-            fighter_2 = random.randint(0, population_size-1)
+            fighter = [0, 0]
+            fighter_fitness = [0, 0]
+            fighter[0] = random.randint(0, population_size-1)
+            fighter[1] = random.randint(0, population_size-1)
 
             # Get fitness score for each
-            fighter_1_fitness = scores[fighter_1]
-            fighter_2_fitness = scores[fighter_2]
-
-            # Identify undividual with lowest LCOE
-            # Fighter 1 will win if score are equal
-            if fighter_1_fitness <= fighter_2_fitness:
-                winner = fighter_1
+            if len(argv) == 1:
+                fighter_fitness[0] = argv[0][fighter[0]]
+                fighter_fitness[1] = argv[0][fighter[1]]
             else:
-                winner = fighter_2
+                for arg in argv:
+                    min1 = min(arg)
+                    max1 = max(arg)
+                    for f in range(len(fighter)):
+                        fighter_fitness[f] += (arg[f] - min1) / (max1 - min1)
+            # Identify individual with lowest score
+            # Fighter 1 will win if score are equal
+            if fighter_fitness[0] <= fighter_fitness[1]:
+                winner = fighter[0]
+            else:
+                winner = fighter[1]
 
             # Return the chromsome of the winner
             return population[winner, :]
@@ -1846,8 +1859,9 @@ class powerMatch(QtGui.QWidget):
             return population
 
         def calculate_fitness(population):
-            fitness_scores = []
-            multi_fitness_scores = []
+            lcoe_fitness_scores = [] # scores = LCOE values
+            multi_fitness_scores = [] # scores = multi-variable weight
+            multi_values = [] # values for each of the six variables
             for chromosome in population:
                 op_data = []
                 shortfall = op_load[:]
@@ -1972,7 +1986,7 @@ class powerMatch(QtGui.QWidget):
                     cs = ''
                 if gen_sum > 0:
                     gs = cost_sum / gen_sum
-                    gsw = cost_sum / op_load_tot # weighted LCOE
+                    gsw = cost_sum / op_load_tot # corrected LCOE
                 else:
                     gs = ''
                     gsw = ''
@@ -1985,26 +1999,25 @@ class powerMatch(QtGui.QWidget):
                         sf_sums[1] += shortfall[sf]
                         sf_sums[2] += op_load[sf]
                 if (sf_sums[2] - sf_sums[0]) / op_load_tot < 1:
-                    fitness_scores.append(200)
-                elif self.weighted_lcoe:
-                    fitness_scores.append(gsw) # target is weighted lcoe
+                    lcoe_fitness_scores.append(200)
+                elif self.corrected_lcoe:
+                    lcoe_fitness_scores.append(gsw) # target is corrected lcoe
                 else:
-                    fitness_scores.append(gs)
-                # multi_fitness_scores = [lcoe, load_met, surplus, cost, RE%, CO2]
-                multi_fitness_scores.append({'lcoe': fitness_scores[-1], #lcoe. lower better
+                    lcoe_fitness_scores.append(gs)
+                multi_values.append({'lcoe': lcoe_fitness_scores[-1], #lcoe. lower better
                     'load_pct': (sf_sums[2] - sf_sums[0]) / op_load_tot, #load met. 100% better
                     'surplus_pct': -sf_sums[1] / op_load_tot, #surplus. lower better
                     're_pct': re_sum / gen_sum, # RE pct. higher better
                     'cost': cost_sum, # cost. lower better
                     'co2': co2_sum}) # CO2. lower better
-                #    'shortfall': sf_sums[0] / op_load_tot}) # shortfall. lower the better
-            if len(population) == 1:
+                multi_fitness_scores.append(calc_weight(multi_values[-1]))
+            if len(population) == 1: # return the table for best chromosome
                 op_data.append(['Total', cap_sum, gen_sum, cs, cost_sum, gs, co2_sum])
-                if self.weighted_lcoe:
-                    op_data.append(['Weighted LCOE', '', '', '', '', gsw, ''])
+                if self.corrected_lcoe:
+                    op_data.append(['Corrected LCOE', '', '', '', '', gsw, ''])
                 if self.carbon_price > 0:
                     cc = co2_sum * self.carbon_price
-                    if self.weighted_lcoe:
+                    if self.corrected_lcoe:
                         cs = (cost_sum + cc) / op_load_tot
                     else:
                         cs = (cost_sum + cc) / gen_sum
@@ -2023,9 +2036,9 @@ class powerMatch(QtGui.QWidget):
                 op_data.append(['Total Load', '', op_load_tot])
                 pct = '{:.1%})'.format( -sf_sums[1] / op_load_tot)
                 op_data.append(['Surplus (' + pct, '', -sf_sums[1]])
-                return op_data, multi_fitness_scores
+                return op_data, multi_values
             else:
-                return fitness_scores, multi_fitness_scores
+                return lcoe_fitness_scores, multi_fitness_scores, multi_values
 
         def optQuitClicked(event):
             self.optExit = True
@@ -2035,32 +2048,32 @@ class powerMatch(QtGui.QWidget):
             self.opt_choice = self.sender().text()
             chooseDialog.close()
 
-        def calc_multi_best(multi_scores):
-            best_weight = [0, 99]
-            for m in range(len(multi_scores)):
-                weight = 0
-                for key, value in self.targets.items():
-                    if value[1] <= 0:
-                        continue
-                    if value[2] > value[3]: # wants higher target
-                        if multi_scores[m][key] > value[2]: # high no weight
-                            w = 0.
-                        elif multi_scores[m][key] < value[3]: # low maximum weight
-                            w = 1.
-                        else:
-                            w = 1 - (multi_scores[m][key] - value[3]) / (value[2] - value[3])
-                    else: # lower target
-                        if multi_scores[m][key] > value[3]: # high maximum weight
-                            w = 1.
-                        elif multi_scores[m][key] < value[2]: # low no weight
-                            w = 0.
-                        else:
-                            w = multi_scores[m][key] / (value[3] - value[2])
-                    weight += w * value[1]
-              #      weight = weight + w * value[1]
-                if weight > 0 and weight < best_weight[1]:
-                    best_weight = [m, weight]
-            return best_weight
+        def calc_weight(multi_value):
+            weight = 0.
+            for key, value in self.targets.items():
+                if value[1] <= 0:
+                    continue
+                if value[2] == value[3]: # wants specific target
+                    if multi_value[key] == value[2]:
+                        w = 0
+                    else:
+                        w = 1
+                elif value[2] > value[3]: # wants higher target
+                    if multi_value[key] > value[2]: # high no weight
+                        w = 0.
+                    elif multi_value[key] < value[3]: # low maximum weight
+                        w = 1.
+                    else:
+                        w = 1 - (multi_value[key] - value[3]) / (value[2] - value[3])
+                else: # lower target
+                    if multi_value[key] > value[3]: # high maximum weight
+                        w = 1.
+                    elif multi_value[key] < value[2]: # low no weight
+                        w = 0.
+                    else:
+                        w = multi_value[key] / (value[3] - value[2])
+                weight += w * value[1]
+            return weight
 
         def plot_multi(multi_best, multi_order, title):
             data = [[], [], []]
@@ -2102,24 +2115,19 @@ class powerMatch(QtGui.QWidget):
             zp = ZoomPanX()
             f = zp.zoom_pan(mx, base_scale=1.2, annotate=True)
             plt.show()
-            pick = -1
             if zp.datapoint is not None: # user picked a point
-                for p in zp.datapoint:
-                    pick = p[0]
-           #     msg = 'Generation {:d}: LCOE: ${:.2f}; Total Cost: ${:.1f}{}; Surplus: {:.1f}%'
-            #    self.setStatus(msg.format(p[0], p[3], p[2], pwr_chr, p[1]))
-                    msg = 'Generation ' + str(p[0]) + ': ' + \
-                          self.targets[multi_order[0]][6].replace('%', '%%') + ': ' + \
-                          self.targets[multi_order[0]][5] + '; ' + \
-                          self.targets[multi_order[1]][6].replace('%', '%%') + ': ' + \
-                          self.targets[multi_order[1]][5] + '; ' + \
-                          self.targets[multi_order[2]][6].replace('%', '%%') + ': ' + \
-                          self.targets[multi_order[2]][5]
-                    msg = msg % (p[1], p[2], p[3])
-                    self.setStatus(msg)
-                    #break # get out after first one
-            del zp
-            return pick
+                if self.more_details:
+                    for p in zp.datapoint:
+                        msg = 'Generation ' + str(p[0]) + ': ' + \
+                              self.targets[multi_order[0]][6].replace('%', '%%') + ': ' + \
+                              self.targets[multi_order[0]][5] + '; ' + \
+                              self.targets[multi_order[1]][6].replace('%', '%%') + ': ' + \
+                              self.targets[multi_order[1]][5] + '; ' + \
+                              self.targets[multi_order[2]][6].replace('%', '%%') + ': ' + \
+                              self.targets[multi_order[2]][5]
+                        msg = msg % (p[1], p[2], p[3])
+                        self.setStatus(msg)
+            return zp.datapoint
 
         self.optExit = False
         self.setStatus('Optimise processing started')
@@ -2238,7 +2246,18 @@ class powerMatch(QtGui.QWidget):
         optStop.setValue(self.optimise_stop)
         optStop.valueChanged.connect(self.changes)
         grid.addWidget(optStop, rw, 1)
-        grid.addWidget(QtGui.QLabel('Exit if LCOE remains the same after this many iterations'),
+        grid.addWidget(QtGui.QLabel('Exit if LCOE/weight remains the same after this many iterations'),
+                       rw, 2, 1, 3)
+        rw += 1
+        grid.addWidget(QtGui.QLabel('Optimisation choice'), rw, 0)
+        optCombo = QtGui.QComboBox()
+        choices = ['LCOE', 'Multi', 'Both']
+        for choice in choices:
+            optCombo.addItem(choice)
+            if choice == self.optimise_choice:
+                optCombo.setCurrentIndex(optCombo.count() - 1)
+        grid.addWidget(optCombo, rw, 1)
+        grid.addWidget(QtGui.QLabel('Choose type of optimisation'),
                        rw, 2, 1, 3)
         rw += 1
         # for each variable name
@@ -2304,6 +2323,7 @@ class powerMatch(QtGui.QWidget):
             self.setStatus('Execution aborted.')
             return
         # update any changes to targets
+        self.optimise_choice = optCombo.currentText()
         for key in self.targets.keys():
             weight = grid.itemAt(self.targets[key][4] + 1).widget()
             self.targets[key][1] = weight.value()
@@ -2319,10 +2339,20 @@ class powerMatch(QtGui.QWidget):
                 self.targets[key][3] = float(maxim.text())
         updates = {}
         lines = []
+        lines.append('optimise_choice=' + self.optimise_choice)
         lines.append('optimise_generations=' + str(self.optimise_generations))
         lines.append('optimise_mutation=' + str(self.optimise_mutation))
         lines.append('optimise_population=' + str(self.optimise_population))
         lines.append('optimise_stop=' + str(self.optimise_stop))
+        if self.optimise_choice == 'LCOE':
+            do_lcoe = True
+            do_multi = False
+        elif self.optimise_choice == 'Multi':
+            do_lcoe = False
+            do_multi = True
+        else:
+            do_lcoe = True
+            do_multi = True
         multi_order = []
         for key, value in self.targets.items():
             line = 'optimise_{}={:.2f},{:.2f},{:.2f}'.format(key, value[1], value[2], value[3])
@@ -2407,6 +2437,7 @@ class powerMatch(QtGui.QWidget):
                 op_load.append(load * self.adjustby['Load'])
         op_load_tot = sum(op_load)
         # Set general parameters
+        self.setStatus('Optimisation choice is ' + self.optimise_choice)
         chromosome_length = len(capacities)
         self.setStatus(f'Chromosome length: {chromosome_length}; {pow(2, chromosome_length):,} permutations')
         self.optimise_population = optPopn.value()
@@ -2415,55 +2446,71 @@ class powerMatch(QtGui.QWidget):
         maximum_generation = self.optimise_generations
         self.optimise_mutation = optMutn.value()
         self.optimise_stop = optStop.value()
-        target = 0. # aim for this LCOE
-        scores = []
+        lcoe_scores = []
         multi_scores = []
-        multi_best = []
-        multi_best_popn = []
+        multi_values = []
+     #   if do_lcoe:
+      #      lcoe_target = 0. # aim for this LCOE
+        if do_multi:
+            multi_best = [] # list of six variables for best weight
+            multi_best_popn = [] # list of chromosomes for best weight
         self.show_ProgressBar(maximum=optGenn.value(), msg='Process generations', title='SIREN - Powermatch Progress')
         self.opt_progressbar.setVisible(True)
         start_time = time.time()
         # Create starting population
         self.opt_progressbar.emit(QtCore.SIGNAL('progress'), 1, 'Processing generation 1')
         population = create_starting_population(population_size, chromosome_length)
-        # Display best score in starting population
-        scores, multi_scores = calculate_fitness(population)
-        if self.more_details: # display starting population ?
-            pick = plot_multi(multi_scores, multi_order, 'starting population')
-        best_score = np.min(scores)
-        lowest_score = best_score
-        best = scores.index(best_score)
-        lowest_chrom = population[best]
-        for key in self.targets.keys():
-            if self.targets[key][2] < 0: # want a maximum from first round
-                setit = 0
-                for multi in multi_scores:
-                    setit = max(multi[key], setit)
-                self.targets[key][2] = setit
-            if self.targets[key][3] < 0: # want a maximum from first round
-                setit = 0
-                for multi in multi_scores:
-                    setit = max(multi[key], setit)
-                self.targets[key][3] = setit
-        # now we can find the best weighted result - lowest is best
-        best_weight = calc_multi_best(multi_scores)
-        multi_best_weight = best_weight[1]
-        multi_lowest_chrom = population[best_weight[0]]
-        multi_best_popn.append(multi_lowest_chrom)
-        multi_best.append(multi_scores[best_weight[0]]) #best])
-        self.setStatus('Starting LCOE: $%.2f' % best_score)
-        lcoe_value = best_score
-        lcoe_ctr = 1
+        # calculate best score(s) in starting population
+        # if do_lcoe best_score = lowest lcoe
+        # if do_multi best_multi = lowest weight and if not do_lcoe best_score also = best_weight
+        lcoe_scores, multi_scores, multi_values = calculate_fitness(population)
+        if do_lcoe:
+            best_score = np.min(lcoe_scores)
+            best_ndx = lcoe_scores.index(best_score)
+            lowest_chrom = population[best_ndx]
+            self.setStatus('Starting LCOE: $%.2f' % best_score)
+        if do_multi:
+            if self.more_details: # display starting population ?
+                pick = plot_multi(multi_values, multi_order, 'starting population')
+            # want maximum from first round to set base upper limit
+            for key in self.targets.keys():
+                if self.targets[key][2] < 0: # want a maximum from first round
+                    setit = 0
+                    for multi in multi_values:
+                        setit = max(multi[key], setit)
+                    self.targets[key][2] = setit
+                if self.targets[key][3] < 0: # want a maximum from first round
+                    setit = 0
+                    for multi in multi_values:
+                        setit = max(multi[key], setit)
+                    self.targets[key][3] = setit
+            # now we can find the best weighted result - lowest is best
+            best_multi = np.min(multi_scores)
+            best_mndx = multi_scores.index(best_multi)
+            multi_lowest_chrom = population[best_mndx]
+            multi_best_popn.append(multi_lowest_chrom)
+            multi_best.append(multi_values[best_mndx])
+            self.setStatus('Starting Weight: %.2f' % best_multi)
+            multi_best_weight = best_multi
+            if not do_lcoe:
+                best_score = best_multi
         # Add starting best score to progress tracker
         best_score_progress = [best_score]
+        best_ctr = 1
+        last_score = best_score
+        lowest_score = best_score
         ud = '='
+        if do_lcoe:
+            d_sign = '$'
+        else:
+            d_sign = ''
         # Now we'll go through the generations of genetic algorithm
         for generation in range(1, maximum_generation):
             tim = (time.time() - start_time)
             if tim < 60:
-                tim = ' ( %s $%.2f ; %.1f secs)' % (ud, best_score, tim)
+                tim = ' ( %s %s%.2f ; %.1f secs)' % (ud, d_sign, best_score, tim)
             else:
-                tim = ' ( %s $%.2f ; %.2f mins)' % (ud, best_score, tim / 60.)
+                tim = ' ( %s %s%.2f ; %.2f mins)' % (ud, d_sign, best_score, tim / 60.)
             self.opt_progressbar.emit(QtCore.SIGNAL('progress'), generation + 1,
                 'Processing generation ' + str(generation + 1) + tim)
             QtGui.QApplication.processEvents()
@@ -2472,44 +2519,77 @@ class powerMatch(QtGui.QWidget):
         # Create an empty list for new population
             new_population = []
         # Using elitism approach include best individual
-            new_population.append(lowest_chrom)
-            new_population.append(multi_lowest_chrom)
+            if do_lcoe:
+                new_population.append(lowest_chrom)
+            if do_multi:
+                new_population.append(multi_lowest_chrom)
             # Create new population generating two children at a time
-            for i in range(int(population_size/2)):
-                parent_1 = select_individual_by_tournament(population, scores)
-                parent_2 = select_individual_by_tournament(population, scores)
-                child_1, child_2 = breed_by_crossover(parent_1, parent_2)
-                new_population.append(child_1)
-                new_population.append(child_2)
-            new_population.pop() # get back to original size
-            new_population.pop() # get back to original size
+            if do_lcoe:
+                if do_multi:
+                    for i in range(int(population_size/2)):
+                        parent_1 = select_individual_by_tournament(population, lcoe_scores,
+                                                                   multi_scores)
+                        parent_2 = select_individual_by_tournament(population, lcoe_scores,
+                                                                   multi_scores)
+                        child_1, child_2 = breed_by_crossover(parent_1, parent_2)
+                        new_population.append(child_1)
+                        new_population.append(child_2)
+                else:
+                    for i in range(int(population_size/2)):
+                        parent_1 = select_individual_by_tournament(population, lcoe_scores)
+                        parent_2 = select_individual_by_tournament(population, lcoe_scores)
+                        child_1, child_2 = breed_by_crossover(parent_1, parent_2)
+                        new_population.append(child_1)
+                        new_population.append(child_2)
+            else:
+                for i in range(int(population_size/2)):
+                    parent_1 = select_individual_by_tournament(population, multi_scores)
+                    parent_2 = select_individual_by_tournament(population, multi_scores)
+                    child_1, child_2 = breed_by_crossover(parent_1, parent_2)
+                    new_population.append(child_1)
+                    new_population.append(child_2)
+            # get back to original size
+            if do_lcoe:
+                new_population.pop()
+            if do_multi:
+                new_population.pop()
             # Replace the old population with the new one
             population = np.array(new_population)
             if self.optimise_mutation > 0:
                 population = randomly_mutate_population(population, self.optimise_mutation)
             # Score best solution, and add to tracker
-            scores, multi_scores = calculate_fitness(population)
-            best_score = np.min(scores)
+            lcoe_scores, multi_scores, multi_values = calculate_fitness(population)
+            if do_lcoe:
+                best_lcoe = np.min(lcoe_scores)
+                best_ndx = lcoe_scores.index(best_lcoe)
+                best_score = best_lcoe
+            # now we can find the best weighted result - lowest is best
+            if do_multi:
+                best_multi = np.min(multi_scores)
+                best_mndx = multi_scores.index(best_multi)
+                multi_lowest_chrom = population[best_mndx]
+                multi_best_popn.append(multi_lowest_chrom)
+                multi_best.append(multi_values[best_mndx])
+                if multi_best_weight > best_multi:
+                    multi_best_weight = best_multi
+                if not do_lcoe:
+                    best_score = best_multi
             best_score_progress.append(best_score)
-            best = scores.index(best_score)
-            # now we can find the best weighted result - lowest is best`
-            best_weight = calc_multi_best(multi_scores)
-            if best_weight[1] < multi_best_weight:
-                multi_best_weight = best_weight[1]
-                multi_lowest_chrom = population[best_weight[0]]
-            multi_best_popn.append(multi_lowest_chrom)
-            multi_best.append(multi_scores[best_weight[0]]) #best])
+            last_score = best_score
             if best_score < lowest_score:
                 lowest_score = best_score
-                lowest_chrom = population[best]
+                if do_lcoe:
+                    lowest_chrom = population[best_ndx]
+                else: #(do_multi only)
+                    multi_lowest_chrom = population[best_mndx]
             if self.optimise_stop > 0:
-                if best_score == lcoe_value:
-                    lcoe_ctr += 1
-                    if lcoe_ctr >= self.optimise_stop:
+                if best_score == last_score:
+                    best_ctr += 1
+                    if best_ctr >= self.optimise_stop:
                         break
                 else:
-                    lcoe_value = best_score
-                    lcoe_ctr = 1
+                    last_score = best_score
+                    best_ctr = 1
             if best_score == best_score_progress[-2]:
                 ud = '='
             elif best_score < best_score_progress[-2]:
@@ -2524,56 +2604,99 @@ class powerMatch(QtGui.QWidget):
         else:
             tim = '%.2f mins)' % (tim / 60.)
         msg = 'Optimise completed (%0d generations; %s' % (generation + 1, tim)
-        best = scores.index(best_score)
         if best_score > lowest_score:
             msg += ' Try more generations.'
         # we'll keep two or three to save re-calculating_fitness
         op_data = [[], [], []]
         score_data = [None, None, None]
-        op_data[0], score_data[0] = calculate_fitness([lowest_chrom])
-        op_data[1], score_data[1] = calculate_fitness([multi_lowest_chrom])
+        if do_lcoe:
+            op_data[0], score_data[0] = calculate_fitness([lowest_chrom])
+        if do_multi:
+            op_data[1], score_data[1] = calculate_fitness([multi_lowest_chrom])
         self.setStatus(msg)
         QtGui.QApplication.processEvents()
         self.progressbar.setHidden(True)
         self.progressbar.setValue(0)
         # GA has completed required generation
-        self.setStatus('Final LCOE: $%.2f' % best_score)
+        if do_lcoe:
+            self.setStatus('Final LCOE: $%.2f' % best_score)
+            fig = 'optimise_lcoe'
+            titl = 'Optimise LCOE using Genetic Algorithm'
+            ylbl = 'Best LCOE ($/MWh)'
+        else:
+            fig = 'optimise_multi'
+            titl = 'Optimise Muti using Genetic Algorithm'
+            ylbl = 'Best Weight'
+        if do_multi:
+            self.setStatus('Final Weight: %.2f' % multi_best_weight)
         # Plot progress
         x = list(range(1, len(best_score_progress)+ 1))
         rcParams['savefig.directory'] = self.scenarios
-        plt.figure('optimise_lcoe')
+        plt.figure(fig)
         lx = plt.subplot(111)
-        plt.title('Optimise LCOE using Genetic Algorithm')
+        plt.title(titl)
         lx.plot(x, best_score_progress)
         lx.set_xlabel('Optimise Cycle (' + str(len(best_score_progress)) + ' generations)')
-        lx.set_ylabel('Best LCOE ($/MWh)')
+        lx.set_ylabel(ylbl)
         zp = ZoomPanX()
         f = zp.zoom_pan(lx, base_scale=1.2, annotate=True)
         plt.show()
-        pick = plot_multi(multi_best, multi_order, 'best of each generation')
+        if do_multi:
+            pick = plot_multi(multi_best, multi_order, 'best of each generation')
+        else:
+            pick = None
         op_pts = [0, 3, 0, 2, 0, 2, 0]
         if self.more_details:
-            list(map(list, list(zip(*op_data[0]))))
-            dialog = displaytable.Table(op_data[0], title=self.sender().text(), fields=headers,
-                     save_folder=self.scenarios, sortby='', decpts=op_pts)
-            dialog.exec_()
-            del dialog
-            list(map(list, list(zip(*op_data[1]))))
-            dialog = displaytable.Table(op_data[1], title='Multi_' + self.sender().text(), fields=headers,
-                     save_folder=self.scenarios, sortby='', decpts=op_pts)
-            dialog.exec_()
-            del dialog
+            if do_lcoe:
+                list(map(list, list(zip(*op_data[0]))))
+                dialog = displaytable.Table(op_data[0], title=self.sender().text(), fields=headers,
+                         save_folder=self.scenarios, sortby='', decpts=op_pts)
+                dialog.exec_()
+                del dialog
+            if do_multi:
+                list(map(list, list(zip(*op_data[1]))))
+                dialog = displaytable.Table(op_data[1], title='Multi_' + self.sender().text(), fields=headers,
+                         save_folder=self.scenarios, sortby='', decpts=op_pts)
+                dialog.exec_()
+                del dialog
         # now I'll display the resulting capacities for LCOE, lowest weight, picked
         # now get random amount of generation per technology (both RE and non-RE)
         its = {}
         for gen, value in dict_order.items():
             its[gen] = []
-        chrom_hdrs = ['Lowest LCOE', 'Lowest Weight']
-        chroms = [lowest_chrom, multi_lowest_chrom]
-        if pick >= 0:
-            op_data[2], score_data[2] = calculate_fitness([multi_best_popn[pick]])
-            chroms.append(multi_best_popn[pick])
+        chrom_hdrs = []
+        chroms = []
+        ndxes = []
+        if do_lcoe:
+            chrom_hdrs = ['Lowest LCOE']
+            chroms = [lowest_chrom]
+            ndxes = [0]
+        if do_multi:
+            chrom_hdrs.append('Lowest Weight')
+            chroms.append(multi_lowest_chrom)
+            ndxes.append(1)
+        if pick is not None:
+            # at present I'll calculate the best weight for the chosen picks. Could actually present all for user choice
+            picks = []
+            if len(pick) == 1:
+                multi_lowest_chrom = multi_best_popn[pick[0][0]]
+            else:
+                for pck in pick:
+                    picks.append(multi_best_popn[pck[0]])
+                a, b, c = calculate_fitness(picks)
+                best_multi = np.min(b)
+                best_mndx = b.index(best_multi)
+                multi_lowest_chrom = picks[best_mndx]
+            op_data[2], score_data[2] = calculate_fitness([multi_lowest_chrom])
+            if self.more_details:
+                list(map(list, list(zip(*op_data[2]))))
+                dialog = displaytable.Table(op_data[2], title='Pick_' + self.sender().text(), fields=headers,
+                         save_folder=self.scenarios, sortby='', decpts=op_pts)
+                dialog.exec_()
+                del dialog
             chrom_hdrs.append('Your pick')
+            chroms.append(multi_lowest_chrom)
+            ndxes.append(2)
         for chromosome in chroms:
             for gen, value in dict_order.items():
                 capacity = dict_order[gen][3]
@@ -2604,9 +2727,13 @@ class powerMatch(QtGui.QWidget):
                 grid[h + 1].addWidget(label, rw, 1)
             rw += 1
         max_amt = [0., 0.]
-        for multi in multi_best:
-            max_amt[0] = max(max_amt[0], multi['cost'])
-            max_amt[1] = max(max_amt[1], multi['co2'])
+        if do_lcoe:
+            max_amt[0] = score_data[0][0]['cost']
+            max_amt[1] = score_data[0][0]['co2']
+        if do_multi:
+            for multi in multi_best:
+                max_amt[0] = max(max_amt[0], multi['cost'])
+                max_amt[1] = max(max_amt[1], multi['co2'])
         pwr_chr = ['', '']
         divisor = [1., 1.]
         pwr_chrs = ' KMBTPEZY'
@@ -2624,13 +2751,13 @@ class powerMatch(QtGui.QWidget):
             grid[0].addWidget(lbl, rw, 0)
             for h in range(len(chrom_hdrs)):
                 if key == 'cost':
-                    amt = score_data[h][0][key] / divisor[0] # cost
+                    amt = score_data[ndxes[h]][0][key] / divisor[0] # cost
                 elif key == 'co2':
-                    amt = score_data[h][0][key] / divisor[1] # co2
+                    amt = score_data[ndxes[h]][0][key] / divisor[1] # co2
                 elif key[-4:] == '_pct': # percentage
-                    amt = score_data[h][0][key] * 100.
+                    amt = score_data[ndxes[h]][0][key] * 100.
                 else:
-                    amt = score_data[h][0][key]
+                    amt = score_data[ndxes[h]][0][key]
                 txt = '<i>' + self.targets[key][5] + '</i>'
                 label = QtGui.QLabel(txt % amt)
                 label.setAlignment(QtCore.Qt.AlignCenter)
