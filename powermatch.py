@@ -993,6 +993,9 @@ class powerMatch(QtGui.QWidget):
             self.getConstraints(ws)
             ts.release_resources()
             del ts
+        except FileNotFoundError:
+            err_msg = 'Constraints file not found - ' + str(self.files[C].text())
+            self.getConstraints(None)
         except:
             err_msg = 'Error accessing Constraints'
             self.getConstraints(None)
@@ -1002,14 +1005,21 @@ class powerMatch(QtGui.QWidget):
             self.getGenerators(ws)
             ts.release_resources()
             del ts
+        except FileNotFoundError:
+            if err_msg != '':
+                err_msg += ' nor Generators - ' + str(self.files[G].text())
+            else:
+                err_msg = 'Generators file not found - ' + str(self.files[G].text())
+            self.getGenerators(None)
         except:
             if err_msg != '':
                 err_msg += ' and Generators'
             else:
-                err_msg = 'Error accessing Generators.'
+                err_msg = 'Error accessing Generators'
             self.getGenerators(None)
         if err_msg != '':
             self.setStatus(err_msg)
+            return
         start_time = time.time()
         re_capacities = [0.] * len(tech_names)
         pm_data_file = self.get_filename(str(self.files[D].text()))
@@ -1039,7 +1049,14 @@ class powerMatch(QtGui.QWidget):
             shortfall = [0.] * 8760
             if details:
                 cols = []
-            ts = oxl.load_workbook(pm_data_file)
+            try:
+                ts = oxl.load_workbook(pm_data_file)
+            except FileNotFoundError:
+                self.setStatus('Data file not found - ' + str(self.files[D].text()))
+                return
+            except:
+                self.setStatus('Error accessing Data file - ' + str(self.files[D].text()))
+                return
             ws = ts.active
             top_row = ws.max_row - 8760
             if ws.cell(row=top_row, column=1).value != 'Hour' or ws.cell(row=top_row, column=2).value != 'Period':
@@ -1815,7 +1832,10 @@ class powerMatch(QtGui.QWidget):
                     min1 = min(arg)
                     max1 = max(arg)
                     for f in range(len(fighter)):
-                        fighter_fitness[f] += (arg[f] - min1) / (max1 - min1)
+                        try:
+                            fighter_fitness[f] += (arg[f] - min1) / (max1 - min1)
+                        except:
+                            pass
             # Identify individual with lowest score
             # Fighter 1 will win if score are equal
             if fighter_fitness[0] <= fighter_fitness[1]:
@@ -2102,7 +2122,7 @@ class powerMatch(QtGui.QWidget):
                         data[axis].append(multi[multi_order[axis]] * 100.)
                     else:
                         data[axis].append(multi[multi_order[axis]])
-            fig = plt.figure(title)
+            fig = plt.figure(title + str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), '_yyyy-MM-dd_hhmm')))
             mx = fig.gca(projection='3d')
             plt.title('\n' + title.title() + '\n')
             surf = mx.scatter(data[0], data[1], data[2], picker=1) # enable picking a point
@@ -2140,6 +2160,9 @@ class powerMatch(QtGui.QWidget):
                 self.getConstraints(ws)
                 ts.release_resources()
                 del ts
+            except FileNotFoundError:
+                err_msg = 'Constraints file not found - ' + str(self.files[C].text())
+                self.getConstraints(None)
             except:
                 err_msg = 'Error accessing Constraints'
                 self.getConstraints(None)
@@ -2150,12 +2173,18 @@ class powerMatch(QtGui.QWidget):
                 self.getGenerators(ws)
                 ts.release_resources()
                 del ts
+            except FileNotFoundError:
+                if err_msg != '':
+                    err_msg += ' nor Generators - ' + str(self.files[G].text())
+                else:
+                    err_msg = 'Generators file not found - ' + str(self.files[G].text())
+                self.getGenerators(None)
             except:
                 if err_msg != '':
                     err_msg += ' and Generators'
                 else:
                     err_msg = 'Error accessing Generators'
-            self.getGenerators(None)
+                self.getGenerators(None)
         if self.optimisation is None:
             try:
                 ts = xlrd.open_workbook(self.get_filename(str(self.files[O].text())))
@@ -2163,6 +2192,12 @@ class powerMatch(QtGui.QWidget):
                 self.getoptimisation(ws)
                 ts.release_resources()
                 del ts
+            except FileNotFoundError:
+                if err_msg != '':
+                    err_msg += ' nor Optimisation - ' + str(self.files[O].text())
+                else:
+                    err_msg = 'Optimisation file not found - ' + str(self.files[O].text())
+                self.getoptimisation(None)
             except:
                 if err_msg != '':
                     err_msg += ' and Optimisation'
@@ -2171,11 +2206,19 @@ class powerMatch(QtGui.QWidget):
                 self.getoptimisation(None)
         if err_msg != '':
             self.setStatus(err_msg)
+            return
         pm_data_file = self.get_filename(str(self.files[D].text()))
         if pm_data_file[-4:] == '.xls': #xls format
             self.setStatus('Not an option for Powermatch')
             return
-        ts = oxl.load_workbook(pm_data_file)
+        try:
+            ts = oxl.load_workbook(pm_data_file)
+        except FileNotFoundError:
+            self.setStatus('Data file not found - ' + str(self.files[D].text()))
+            return
+        except:
+            self.setStatus('Error accessing Data file - ' + str(self.files[D].text()))
+            return
         ws = ts.active
         top_row = ws.max_row - 8760
         if ws.cell(row=top_row, column=1).value != 'Hour' or ws.cell(row=top_row, column=2).value != 'Period':
@@ -2632,7 +2675,7 @@ class powerMatch(QtGui.QWidget):
         # Plot progress
         x = list(range(1, len(best_score_progress)+ 1))
         rcParams['savefig.directory'] = self.scenarios
-        plt.figure(fig)
+        plt.figure(fig + str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), '_yyyy-MM-dd_hhmm')))
         lx = plt.subplot(111)
         plt.title(titl)
         lx.plot(x, best_score_progress)
