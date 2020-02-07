@@ -149,7 +149,7 @@ class ZoomPanX():
             ax.figure.canvas.draw()
 
         def onKey(event):
-            if event.key.lower() == 'r':
+            if event.key.lower() == 'r': # reset
                 self.keys = ''
                 self.month = None
                 self.week = None
@@ -157,6 +157,12 @@ class ZoomPanX():
                     ax.set_xlim(self.base_xlim)
                     ax.set_ylim(self.base_ylim)
                     if self.d3:
+                        if hasattr(ax, 'label'):
+                            try:
+                                ax.label.remove()
+                            except:
+                                pass
+                            self.datapoint = None
                         ax.set_zlim(self.base_zlim)
                     ax.figure.canvas.draw()
                     return
@@ -208,6 +214,9 @@ class ZoomPanX():
                         else:
                             self.month += 1
                     ax.set_xlim([self.mth_xlim[self.month], self.mth_xlim[self.month + 1]])
+                ax.figure.canvas.draw()
+            elif event.key.lower() == 'l':
+                ax.legend().set_draggable(True)
                 ax.figure.canvas.draw()
             elif event.key.lower() == 'm':
                 if self.axis != 'x':
@@ -285,7 +294,10 @@ class ZoomPanX():
                           self.datapoint[0][1], self.datapoint[0][2], self.datapoint[0][3])
                     # If we have previously displayed another label, remove it first
                     if hasattr(ax, 'label'):
-                        ax.label.remove()
+                        try:
+                            ax.label.remove()
+                        except:
+                            pass
                     x2, y2, _ = proj3d.proj_transform(self.datapoint[0][1], self.datapoint[0][2],
                                 self.datapoint[0][3], ax.get_proj())
                     ax.label = ax.annotate(msg, xy = (x2, y2), xytext = (0, 20),
