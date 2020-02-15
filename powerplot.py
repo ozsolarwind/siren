@@ -36,6 +36,30 @@ from parents import getParents
 from senuser import getUser, techClean
 from zoompan import ZoomPanX
 
+def charSplit(string, char=',', dropquote=True):
+    last = 0
+    splits = []
+    inQuote = None
+    for i, letter in enumerate(string):
+        if inQuote:
+            if (letter == inQuote):
+                inQuote = None
+                if dropquote:
+                    splits.append(string[last:i])
+                    last = i + 1
+                    continue
+        elif (letter == '"' or letter == "'"):
+            inQuote = letter
+            if dropquote:
+                last += 1
+        elif letter == char:
+            if last != i:
+                splits.append(string[last:i])
+            last = i + 1
+    if last < len(string):
+        splits.append(string[last:])
+    return splits
+
 
 class ThumbListWidget(QtGui.QListWidget):
     def __init__(self, type, parent=None):
@@ -65,7 +89,7 @@ class ThumbListWidget(QtGui.QListWidget):
             links = []
             for url in event.mimeData().urls():
                 links.append(str(url.toLocalFile()))
-            self.emit(QtCore.SIGNAL("dropped"), links)
+            self.emit(QtCore.SIGNAL('dropped'), links)
         else:
             event.setDropAction(QtCore.Qt.MoveAction)
             super(ThumbListWidget, self).dropEvent(event)
@@ -143,6 +167,7 @@ class PowerPlot(QtGui.QWidget):
         imax = 0
         self.alpha = 0.25
         self.target = ''
+        self.palette = False
         self.history = None
         self.max_files = 10
         ifiles = {}
@@ -159,6 +184,9 @@ class PowerPlot(QtGui.QWidget):
                     self.max_files = int(value)
                 elif key[:4] == 'file':
                     ifiles[key[4:]] = value.replace('$USER$', getUser())
+                elif key == 'palette':
+                    if value.lower() in ['true', 'yes', 'on']:
+                        self.palette = True
         except:
             pass
         if len(ifiles) > 0:
@@ -293,10 +321,7 @@ class PowerPlot(QtGui.QWidget):
             items = config.items('Powerplot')
             for key, value in items:
                 if key == 'columns' + choice:
-                    bits = value.split(',')
-                    columns = []
-                    for bit in bits:
-                        columns.append(bit)
+                    columns = charSplit(value)
                 elif key == 'cumulative' + choice:
                     if value.lower() in ['false', 'no', 'off']:
                         self.cumulative.setCheckState(QtCore.Qt.Unchecked)
@@ -571,7 +596,16 @@ class PowerPlot(QtGui.QWidget):
                 lines[-1] = lines[-1] + 'True'
             cols = 'columns' + choice + '='
             for col in range(self.order.count()):
-                cols += str(self.order.item(col).text()) + ','
+                try:
+                    if str(self.order.item(col).text()).index(',') >= 0:
+                        try:
+                            if str(self.order.item(col).text()).index("'") >= 0:
+                                qte = '"'
+                        except:
+                            qte = "'"
+                except:
+                    qte = ''
+                cols += qte + str(self.order.item(col).text()) + qte + ','
             if cols[-1] != '=':
                 cols = cols[:-1]
             lines.append(cols)
@@ -587,7 +621,15 @@ class PowerPlot(QtGui.QWidget):
         self.colours_updated = False
 
     def editColours(self, color=False):
-        dialr = Colours(section='Plot Colors', ini_file=self.config_file, add_colour=color)
+        # if they've selected some items I'll create a palette of colours for them
+        palette = []
+        if self.palette:
+            for item in self.order.selectedItems():
+                palette.append(item.text())
+            for item in self.ignore.selectedItems():
+                palette.append(item.text())
+        dialr = Colours(section='Plot Colors', ini_file=self.config_file, add_colour=color,
+                        palette=palette)
         dialr.exec_()
         self.colours = {}
         config = configparser.RawConfigParser()
@@ -729,7 +771,8 @@ class PowerPlot(QtGui.QWidget):
             titl = titl.replace('  ', '')
             titl = titl.replace('Diurnal ', '')
             titl = titl.replace('Diurnal', '')
-            for c in range(self.order.count()):
+            titl = titl.replace('$SHEET$', isheet)
+            for c in range(self.order.count() -1, -1, -1):
                 col = str(self.order.item(c).text())
                 for c2 in range(2, ws.ncols):
                     column = str(ws.cell_value(self.toprow, c2)).replace('\n',' ')
@@ -870,6 +913,7 @@ class PowerPlot(QtGui.QWidget):
             ticks = list(range(0, 21, 4))
             ticks.append(23)
             titl = self.title.text().replace('$YEAR$', str(year))
+            titl = titl.replace('$SHEET$', isheet)
             if self.period.currentText() == 'Year':
                 titl = titl.replace('$MTH$', '')
                 titl = titl.replace('$MONTH$', '')
@@ -896,7 +940,7 @@ class PowerPlot(QtGui.QWidget):
             for h in range(24):
                 hs.append(h)
             x = hs[:]
-            for c in range(self.order.count()):
+            for c in range(self.order.count() -1, -1, -1):
                 col = str(self.order.item(c).text())
                 for c2 in range(2, ws.ncols):
                     column = str(ws.cell_value(self.toprow, c2)).replace('\n',' ')
