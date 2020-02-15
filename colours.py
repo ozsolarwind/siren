@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2020 Sustainable Energy Now Inc., Angus King
 #
 #  colours.py - This file is part of SIREN.
 #
@@ -27,7 +27,7 @@ from senuser import techClean
 
 class Colours(QtGui.QDialog):
 
-    def __init__(self, ini_file=None, section='Colors', add_colour=False):
+    def __init__(self, ini_file=None, section='Colors', add_colour=False, palette=None):
         super(Colours, self).__init__()
         config = configparser.RawConfigParser()
         if ini_file is not None:
@@ -87,6 +87,19 @@ class Colours(QtGui.QDialog):
                         self.colours[it] = [col, '']
             except:
                 pass
+        if palette is not None and len(palette) > 0: # set palette of colours
+            col = ['', '']
+            col[0] = QtGui.QColorDialog.getColor(QtCore.Qt.white, None, 'Select colour for item 1')
+            col[1] = QtGui.QColorDialog.getColor(QtCore.Qt.white, None, 'Select colour for item ' + str(len(palette)))
+            inc = []
+            for c in range(3):
+                inc.append((col[1].getRgb()[c] - col[0].getRgb()[c]) / (len(palette) - 1))
+            for i in range(len(palette)):
+                colr = []
+                for c in range(3):
+                    colr.append(int(col[0].getRgb()[c] + inc[c] * i))
+                QtGui.QColor.setRgb(col[1], colr[0], colr[1], colr[2])
+                self.colours[palette[i].lower().replace(' ', '_')] = ['', col[1].name()]
         group_colours = False
         try:
             gc = config.get('View', 'group_colours')
