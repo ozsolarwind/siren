@@ -90,16 +90,20 @@ class Colours(QtGui.QDialog):
         if palette is not None and len(palette) > 0: # set palette of colours
             col = ['', '']
             col[0] = QtGui.QColorDialog.getColor(QtCore.Qt.white, None, 'Select colour for item 1')
-            col[1] = QtGui.QColorDialog.getColor(QtCore.Qt.white, None, 'Select colour for item ' + str(len(palette)))
-            inc = []
-            for c in range(3):
-                inc.append((col[1].getRgb()[c] - col[0].getRgb()[c]) / (len(palette) - 1))
-            for i in range(len(palette)):
-                colr = []
+            if len(palette) > 1:
+                col[1] = QtGui.QColorDialog.getColor(QtCore.Qt.white, None,
+                         'Select colour for item ' + str(len(palette)))
+                inc = []
                 for c in range(3):
-                    colr.append(int(col[0].getRgb()[c] + inc[c] * i))
-                QtGui.QColor.setRgb(col[1], colr[0], colr[1], colr[2])
-                self.colours[palette[i].lower().replace(' ', '_')] = ['', col[1].name()]
+                    inc.append((col[1].getRgb()[c] - col[0].getRgb()[c]) / (len(palette) - 1))
+                for i in range(len(palette)):
+                    colr = []
+                    for c in range(3):
+                        colr.append(int(col[0].getRgb()[c] + inc[c] * i))
+                    QtGui.QColor.setRgb(col[1], colr[0], colr[1], colr[2])
+                    self.colours[palette[i].lower().replace(' ', '_')] = ['', col[1].name()]
+            else:
+                self.colours[palette[0].lower().replace(' ', '_')] = ['', col[0].name()]
         group_colours = False
         try:
             gc = config.get('View', 'group_colours')
