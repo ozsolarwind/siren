@@ -167,7 +167,7 @@ class PowerPlot(QtGui.QWidget):
         imax = 0
         self.alpha = 0.25
         self.target = ''
-        self.palette = False
+        self.palette = True
         self.history = None
         self.max_files = 10
         ifiles = {}
@@ -185,8 +185,8 @@ class PowerPlot(QtGui.QWidget):
                 elif key[:4] == 'file':
                     ifiles[key[4:]] = value.replace('$USER$', getUser())
                 elif key == 'palette':
-                    if value.lower() in ['true', 'yes', 'on']:
-                        self.palette = True
+                    if value.lower() in ['false', 'no', 'off']:
+                        self.palette = False
         except:
             pass
         if len(ifiles) > 0:
@@ -393,7 +393,10 @@ class PowerPlot(QtGui.QWidget):
                 ifiles[self.history[0]] = ifile
         self.files.clear()
         for i in range(len(self.history)):
-            self.files.addItem(ifiles[self.history[i]])
+            try:
+                self.files.addItem(ifiles[self.history[i]])
+            except:
+                pass
         self.files.setCurrentIndex(0)
         self.setup[1] = False
 
