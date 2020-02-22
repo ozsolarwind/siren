@@ -24,6 +24,7 @@ import sys
 import configparser   # decode .ini file
 from PyQt4 import QtGui, QtCore
 from editini import SaveIni
+from getmodels import getModelFile
 
 
 class FloatLegend(QtGui.QDialog):
@@ -41,7 +42,7 @@ class FloatLegend(QtGui.QDialog):
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
         else:
-            config_file = 'SIREN.ini'
+            config_file = getModelFile('SIREN.ini')
         config.read(config_file)
         self.restorewindows = False
         try:
@@ -201,7 +202,7 @@ class FloatMenu(QtGui.QDialog):
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
         else:
-            config_file = 'SIREN.ini'
+            config_file = getModelFile('SIREN.ini')
         config.read(config_file)
         self.restorewindows = False
         try:
@@ -442,7 +443,7 @@ class FloatStatus(QtGui.QDialog):
         if len(sys.argv) > 1:
             self.config_file = sys.argv[1]
         else:
-            self.config_file = 'SIREN.ini'
+            self.config_file = getModelFile('SIREN.ini')
         config.read(self.config_file)
         self.restorewindows = False
         self.logged = False

@@ -39,6 +39,7 @@ from parents import getParents
 from senuser import getUser
 from editini import SaveIni
 from floaters import ProgressBar, FloatStatus
+from getmodels import getModelFile
 import xlrd
 import configparser  # decode .ini file
 from zoompan import ZoomPanX
@@ -306,7 +307,7 @@ class powerMatch(QtGui.QWidget):
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
         else:
-            config_file = 'SIREN.ini'
+            config_file = getModelFile('SIREN.ini')
         config.read(config_file)
         parents = []
         try:

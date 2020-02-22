@@ -33,6 +33,7 @@ from PyQt4 import QtCore, QtGui
 #except:
 from mpl_toolkits.basemap import pyproj as pyproj
 from towns import Towns
+from getmodels import getModelFile
 from grid import Grid, Grid_Boundary, Line
 from parents import getParents
 from senuser import getUser, techClean
@@ -47,7 +48,7 @@ class WAScene(QtGui.QGraphicsScene):
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
         else:
-            config_file = 'SIREN.ini'
+            config_file = getModelFile('SIREN.ini')
         config.read(config_file)
         try:
             self.base_year = config.get('Base', 'year')

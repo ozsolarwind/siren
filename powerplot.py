@@ -32,6 +32,7 @@ import displayobject
 from colours import Colours
 from credits import fileVersion
 from editini import SaveIni
+from getmodels import getModelFile
 from parents import getParents
 from senuser import getUser, techClean
 from zoompan import ZoomPanX
@@ -113,7 +114,7 @@ class PowerPlot(QtGui.QWidget):
         if len(sys.argv) > 1:
             self.config_file = sys.argv[1]
         else:
-            self.config_file = 'powerplot.ini'
+            self.config_file = getModelFile('powerplot.ini')
         config.read(self.config_file)
         parents = []
         self.colours = {}

@@ -23,6 +23,7 @@ import sys
 from PyQt4 import QtGui, QtCore
 import configparser  # decode .ini file
 from editini import SaveIni
+from getmodels import getModelFile
 from senuser import techClean
 
 class Colours(QtGui.QDialog):
@@ -35,7 +36,7 @@ class Colours(QtGui.QDialog):
         elif len(sys.argv) > 1:
             self.config_file = sys.argv[1]
         else:
-            self.config_file = 'SIREN.ini'
+            self.config_file = getModelFile('SIREN.ini')
         self.section = section
         config.read(self.config_file)
         groups = ['Fossil Technologies', 'Grid', 'Map', 'Plot', 'Resource', 'Technologies', 'The Rest']

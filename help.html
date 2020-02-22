@@ -210,11 +210,20 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 <tr class="none"><td class="none">&nbsp;</td><td class="none" style="text-align: right">...</td><td style="border: 1px solid black;">scenarios</td><td class="none">&nbsp;</td><td class="none">Scenarios, save files, ...</td></tr>
 <tr class="none"><td class="none">&nbsp;</td><td class="none">&nbsp;</td><td style="border: 1px solid black;">weather files</td><td class="none">&nbsp;</td><td class="none">SIREN weather files</td></tr>
 </table>
-<p>You can then set up a (Desktop) Shortcut with the following Target to invoke SIREN:
+<p>You can indicate the location of your SIREN Models in one of two ways.
+<ol>
+<li>Set up a (Desktop) Shortcut with the following Target to invoke SIREN (see below for further details):
+<pre>
+      "C:\..Your Folder\siren\siren.exe"
+</pre>
+</li>
+<li>Using the folder structure above as an example, set up a (Desktop) Shortcut with the following Target to invoke SIREN:
 <pre>
       "C:\..Your Folder\siren\siren.exe" "..\models"
 </pre>
-<p>When setting up files and folders in your Preferences file (documented in <a href="#prefs">Preferences</a>) you can use relative addresses to point to the correct location. For example:
+</li>
+</ol>
+<p>When setting up files and folders in your Preferences file (documented in <a href="#prefs">Preferences</a>) you can use relative addresses to point to the correct location. The addresses are relative to the <em>siren</em> folder. For example:
 <pre>
       [Parents]
       $user1=../Your model
@@ -227,11 +236,13 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 <p>To execute the simulation open <code>siren.exe</code> in the upper folder, <em>siren</em>. You can easily set up a Desktop shortcut to point to the model. The package contains a number of folders with default files, some that can be replaced with your own. The location of these files are defined in a Preferences file as documented in <a href="#prefs">Preferences</a>. The default files are located in the following folders:</p>
 <ul class="none">
 <li><em>siren_files</em> contains a range of files to enable operation of the simulation</li>
-<li><em>sam-sdk</em> contains a Windows version of the SAM SDK, <em>sam-sdk-2016-03-14</em></li>
+<li><em>sam-sdk</em> contains a Windows version of the SAM SDK, <em>sam-sdk-206_2018.11.11_r2</em></li>
 <li><em>source</em> contains the Python source programs for SIREN</li>
 </ul>
+<p>The first time you open SIREN (without passing a target file or folder) it will present a window titled &lsquo;Choose location for SIREN model (preferences) files&rsquo; to allow you to choose the location for your SIREN Models. SIREN stores this location (in <em>siren_models_location.txt</em> in the <em>siren</em> folder) and uses this as the location of the SIREN Models whenever you invoke SIREN without a target file or location.</p>
 <p>When you open SIREN you will be presented with a list of SIREN Models (Preferences files). Choose the SIREN Model you want by clicking on your choice. You can sort the list presented in order of either Preferences File, SIREN Model or Date modified (last time the Preferences file was saved) by right-clicking the appropriate column header. If want to use a specific Preferences file you can open the simulation passing the alternate file name, or a folder, as a parameter, as in these examples:</p>
 <pre>
+      siren.exe
       siren.exe SIREN_NWIS.ini
       siren.exe ../&lt;folder&gt;/SIREN_NWIS.ini
       siren.exe ../&lt;folder with preferences files&gt;/

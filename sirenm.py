@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2020 Sustainable Energy Now Inc., Angus King
 #
 #  siren.py - This file is part of SIREN.
 #
@@ -49,6 +49,7 @@ from wascene import WAScene
 from editini import EdtDialog, EditTech, EditSect, SaveIni
 from dijkstra_4 import Shortest
 from credits import Credits, fileVersion
+from getmodels import getModelFile
 from grid import dust
 from parents import getParents
 from viewresource import Resource
@@ -762,7 +763,7 @@ class MainWindow(QtGui.QMainWindow):
         if len(sys.argv) > 1:
             self.config_file = sys.argv[1]
         else:
-            self.config_file = 'SIREN.ini'
+            self.config_file = getModelFile('SIREN.ini')
         config.read(self.config_file)
         try:
             self.base_year = config.get('Base', 'year')
@@ -1304,7 +1305,7 @@ class MainWindow(QtGui.QMainWindow):
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
         else:
-            config_file = 'SIREN.ini'
+            config_file = getModelFile('SIREN.ini')
         config.read(config_file)
         try:
             check = config.get('Files', 'check')
@@ -3203,7 +3204,9 @@ class MainWindow(QtGui.QMainWindow):
 
 
 def main():
-    app = QtGui.QApplication(sys.argv)
+    app = QtGui.QApplication.instance()
+    if app is None:
+        app = QtGui.QApplication(sys.argv)
     scene = WAScene()
     mw = MainWindow(scene)
     QtGui.QShortcut(QtGui.QKeySequence('q'), mw, mw.close)
@@ -3288,7 +3291,6 @@ def main():
     app.exec_()
     app.deleteLater()
     sys.exit()
-
 
 if '__main__' == __name__:
     main()

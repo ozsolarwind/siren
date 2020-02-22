@@ -26,6 +26,7 @@ import sys
 import xlrd
 from math import radians, cos, sin, asin, sqrt
 
+from getmodels import getModelFile
 from parents import getParents
 from senuser import getUser
 
@@ -51,7 +52,7 @@ class Towns:
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
         else:
-            config_file = 'SIREN.ini'
+            config_file = getModelFile('SIREN.ini')
         config.read(config_file)
         try:
             self.base_year = config.get('Base', 'year')

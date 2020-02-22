@@ -23,6 +23,7 @@ import os
 import sys
 from PyQt4 import QtGui, QtCore
 import configparser  # decode .ini file
+from getmodels import getModelFile
 if sys.platform == 'win32' or sys.platform == 'cygwin':
     from win32api import GetFileVersionInfo, LOWORD, HIWORD
 
@@ -96,7 +97,7 @@ class Credits(QtGui.QDialog):
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
         else:
-            config_file = 'SIREN.ini'
+            config_file = getModelFile('SIREN.ini')
         config.read(config_file)
         self.restorewindows = False
         try:

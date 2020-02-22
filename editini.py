@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2020 Sustainable Energy Now Inc., Angus King
 #
 #  Editini.py - This file is part of SIREN.
 #
@@ -26,6 +26,7 @@ import os
 import sys
 
 from displaytable import Table
+from getmodels import getModelFile
 import inisyntax
 from senuser import techClean
 
@@ -112,7 +113,7 @@ class EditSect():
         elif len(sys.argv) > 1:
             config_file = sys.argv[1]
         else:
-            config_file = 'SIREN.ini'
+            config_file = getModelFile('SIREN.ini')
         config.read(config_file)
         section_items = config.items(self.section)
         section_dict = {}
@@ -143,7 +144,7 @@ class EditTech():
         elif len(sys.argv) > 1:
             config_file = sys.argv[1]
         else:
-            config_file = 'SIREN.ini'
+            config_file = getModelFile('SIREN.ini')
         config.read(config_file)
         technologies = config.get('Power', 'technologies')
         technologies += ' ' + config.get('Power', 'fossil_technologies')
@@ -195,11 +196,11 @@ class SaveIni():
         if ini_file is not None:
             config_file = ini_file
         elif len(sys.argv) > 1:
-            ini_file = sys.argv[1]
+            config_file = sys.argv[1]
         else:
-            ini_file = 'SIREN.ini'
+            config_file = getModelFile('SIREN.ini')
         try:
-            inf = open(ini_file, 'r')
+            inf = open(config_file, 'r')
             lines = inf.readlines()
             inf.close()
         except:
@@ -237,13 +238,13 @@ class SaveIni():
                     if k != len(properties[j]) - 1:
                         lines.insert(i + 1, properties[j] + '\n')
                         i += 1
-        if os.path.exists(ini_file + '~'):
-            os.remove(ini_file + '~')
+        if os.path.exists(config_file + '~'):
+            os.remove(config_file + '~')
         try:
-            os.rename(ini_file, ini_file + '~')
+            os.rename(config_file, config_file + '~')
         except:
             pass
-        sou = open(ini_file, 'w')
+        sou = open(config_file, 'w')
         for i in range(len(lines)):
             if i in del_lines:
                 pass

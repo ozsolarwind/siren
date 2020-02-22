@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2016-2019 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2016-2020 Sustainable Energy Now Inc., Angus King
 #
 #  sirenicons.py - This file is part of SIREN.
 #
@@ -21,6 +21,7 @@
 
 import configparser   # decode .ini file
 import sys
+from getmodels import getModelFile
 from senuser import techClean
 
 
@@ -30,7 +31,7 @@ class Icons:
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
         else:
-            config_file = 'SIREN.ini'
+            config_file = getModelFile('SIREN.ini')
         config.read(config_file)
         self.icons = {'Biomass': 'biomass_g.png', 'CST': 'solar_g.png', 'Fossil': 'fossil_g.png',
                       'Geothermal': 'hot_rocks_g.png', 'Hydro': 'hydro_g.png',

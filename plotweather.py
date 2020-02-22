@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2020 Sustainable Energy Now Inc., Angus King
 #
 #  plotweather.py - This file is part of SIREN.
 #
@@ -32,8 +32,8 @@ import configparser  # decode .ini file
 from PyQt4 import QtGui, QtCore
 
 import displaytable
+from getmodels import getModelFile
 from parents import getParents
-
 from zoompan import ZoomPanX
 from senuser import getUser
 from sammodels import getZenith
@@ -329,7 +329,7 @@ class PlotWeather():
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
         else:
-            config_file = 'SIREN.ini'
+            config_file = getModelFile('SIREN.ini')
         config.read(config_file)
         self.maximise = False
         seasons = []
@@ -800,7 +800,7 @@ class PlotWeather():
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
         else:
-            config_file = 'SIREN.ini'
+            config_file = getModelFile('SIREN.ini')
         config.read(config_file)
         if year is None:
             try:

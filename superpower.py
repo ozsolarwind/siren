@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2020 Sustainable Energy Now Inc., Angus King
 #
 #  superpower.py - This file is part of SIREN.
 #
@@ -30,6 +30,7 @@ import xlrd
 import configparser  # decode .ini file
 from PyQt4 import Qt, QtGui, QtCore
 
+from getmodels import getModelFile
 from senuser import getUser, techClean
 from parents import getParents
 from powerclasses import *
@@ -275,7 +276,7 @@ class SuperPower():
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
         else:
-            config_file = 'SIREN.ini'
+            config_file = getModelFile('SIREN.ini')
         config.read(config_file)
         self.expert = False
         try:
@@ -1062,7 +1063,7 @@ class SuperPower():
             if len(sys.argv) > 1:
                 config_file = sys.argv[1]
             else:
-                config_file = 'SIREN.ini'
+                config_file = getModelFile('SIREN.ini')
             config.read(config_file)
             props = []
             propty = {}

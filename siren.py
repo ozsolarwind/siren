@@ -24,6 +24,7 @@ import datetime
 from functools import partial
 import os
 from PyQt4 import QtCore, QtGui
+from shutil import copy
 import subprocess
 import sys
 import time
@@ -32,18 +33,12 @@ import webbrowser
 import displayobject
 from credits import fileVersion
 from editini import EdtDialog
+from getmodels import getModelFile, commonprefix
 from senuser import getUser
-
-def commonprefix(args):
-    arg2 = []
-    for arg in args:
-        arg2.append(arg)
-        if arg[-1] != '/':
-            arg2[-1] += '/'
-    return os.path.commonprefix(arg2).rpartition('/')[0]
 
 
 class TabDialog(QtGui.QDialog):
+
     def __init__(self, parent=None):
         QtGui.QDialog.__init__(self, parent)
         self.siren_dir = '.'
@@ -53,15 +48,15 @@ class TabDialog(QtGui.QDialog):
                 sys.exit()
             elif os.path.isdir(sys.argv[1]):
                 self.siren_dir = sys.argv[1]
-        if self.siren_dir[-1] != '/':
-            self.siren_dir += '/'
+        else:
+            self.siren_dir = getModelFile()
         self.entries = []
         fils = os.listdir(self.siren_dir)
         self.help = ''
         self.about = ''
         self.weather_icon = 'weather.png'
         config = configparser.RawConfigParser()
-        ignore = ['getfiles.ini', 'powerplot.ini', 'siren_default.ini',
+        ignore = ['flexiplot.ini', 'getfiles.ini', 'powerplot.ini', 'siren_default.ini',
                   'siren_windows_default.ini']
         errors = ''
         for fil in sorted(fils):

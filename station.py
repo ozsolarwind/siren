@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2020 Sustainable Energy Now Inc., Angus King
 #
 #  station.py - This file is part of SIREN.
 #
@@ -27,6 +27,7 @@ import xlrd
 
 import configparser   # decode .ini file
 
+from getmodels import getModelFile
 from parents import getParents
 from senuser import getUser, techClean
 
@@ -75,7 +76,6 @@ class Station:
 class Stations:
     def get_config(self):
         config = configparser.RawConfigParser()
-        config_file = 'SIREN.ini'
         if __name__ == '__main__':
             for i in range(1, len(sys.argv)):
                 if sys.argv[i][-4:] == '.ini':
@@ -84,6 +84,8 @@ class Stations:
         else:
             if len(sys.argv) > 1:
                 config_file = sys.argv[1]
+            else:
+                config_file = getModelFile('SIREN.ini')
         config.read(config_file)
         try:
             self.base_year = config.get('Base', 'year')

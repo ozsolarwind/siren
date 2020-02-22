@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2016-2019 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2016-2020 Sustainable Energy Now Inc., Angus King
 #
 #  visualise.py - This file is part of SIREN.
 #
@@ -26,6 +26,7 @@ import time
 from PyQt4 import QtCore, QtGui
 import configparser   # decode .ini file
 
+from getmodels import getModelFile
 
 class Visualise(QtGui.QDialog):
     def destinationxy(self, lon1, lat1, bearing, distance):
@@ -68,7 +69,7 @@ class Visualise(QtGui.QDialog):
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
         else:
-            config_file = 'SIREN.ini'
+            config_file = getModelFile('SIREN.ini')
         config.read(config_file)
         if self.year is None:
             try:

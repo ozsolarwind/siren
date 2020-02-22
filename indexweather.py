@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2016-2019 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2016-2020 Sustainable Energy Now Inc., Angus King
 #
 #  indexweather.py - This file is part of SIREN.
 #
@@ -27,6 +27,7 @@ import xlwt
 
 import displayobject
 from credits import fileVersion
+from getmodels import getModelFile
 from parents import getParents
 from senuser import getUser
 
@@ -44,7 +45,7 @@ class makeIndex():
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
         else:
-            config_file = 'SIREN.ini'
+            config_file = getModelFile('SIREN.ini')
         self.log = ''
         files = []
         fils = os.listdir(src_dir)
@@ -134,7 +135,7 @@ class getParms(QtGui.QWidget):
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
         else:
-            config_file = 'SIREN.ini'
+            config_file = getModelFile('SIREN.ini')
         config.read(config_file)
         try:
             self.base_year = config.get('Base', 'year')

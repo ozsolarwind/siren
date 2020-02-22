@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2020 Sustainable Energy Now Inc., Angus King
 #
 #  grid.py - This file is part of SIREN.
 #
@@ -28,6 +28,7 @@ import zipfile
 import configparser   # decode .ini file
 from xml.etree.ElementTree import ElementTree, fromstring
 
+from getmodels import getModelFile
 from parents import getParents
 from senuser import getUser
 
@@ -191,7 +192,7 @@ class Grid:
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
         else:
-            config_file = 'SIREN.ini'
+            config_file = getModelFile('SIREN.ini')
         config.read(config_file)
         try:
             self.base_year = config.get('Base', 'year')
@@ -595,7 +596,7 @@ class Grid_Boundary:
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
         else:
-            config_file = 'SIREN.ini'
+            config_file = getModelFile('SIREN.ini')
         config.read(config_file)
         try:
             self.base_year = config.get('Base', 'year')
