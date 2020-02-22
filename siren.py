@@ -157,8 +157,8 @@ class TabDialog(QtGui.QDialog):
         layout.addWidget(self.table, 1, 0)
         layout.addWidget(buttons, 2, 0)
         menubar = QtGui.QMenuBar()
-        utilities = ['getmap', 'getmerra2', 'makeweather2', 'powerplot', 'sirenupd']
-        utilicon = ['map.png', 'download.png', self.weather_icon, 'line.png', 'download.png']
+        utilities = ['flexiplot', 'getmap', 'getmerra2', 'makeweather2', 'powerplot', 'sirenupd']
+        utilicon = ['line.png', 'map.png', 'download.png', self.weather_icon, 'line.png', 'download.png']
         spawns = []
         icons = []
         if sys.platform == 'win32' or sys.platform == 'cygwin':

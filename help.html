@@ -149,6 +149,10 @@ ul {
 <li><a href="#usage">Using the Simulation</a></li>
 <ul class="none">
 <li><a href="#popts">Power Model Options</a></li>
+<ul class="none">
+<li><a href="#plots">Plots</a></li>
+<li><a href="#tables">Tables</a></li>
+</ul>
 <li><a href="#fopts">Financial Model Options</a></li>
 <li><a href="#powermatch">Powermatch</a></li>
 <li><a href="#resourcegrid">Renewable Resource Grids</a></li>
@@ -2716,7 +2720,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <td class="none">At the bottom of the menu is the <strong>Proceed</strong> button. If the button is not visible use the scroll bar to navigate down the table. You can invoke the menu multiple times to specify different growth options, storage options and plots. The first display of the menu gives the option to <strong>Save</strong> the options for future sessions; this writes the updated options to the Preferences file. To exit this phase of processing press the <strong>All Done</strong> or <strong>Do Financials</strong> button</td></tr>
 </table>
 <p>The plots and tables are intended to assist with analysing the chosen scenario.</p>
-<h4>Plots</h4>
+<h3 id="plots">Plots</h3>
 <ul>
 <li><em>Save plot data</em> will enable most of the data inputs to plots to be saved to a spreadsheet. These values are usually an aggregation of the hourly outputs produced by Power Model
 <br /><strong>Note:</strong> If you choose the <em>Power by hour - augmented</em> you can estimate how much non-renewable generation is required to meet the Load (see <a href="#augment">Augmented (non-renewable) Generation</a>)</li>
@@ -2809,8 +2813,22 @@ If it's not a diurnal plot (i.e. Period is <em>&lt;None&gt;</em>) any occurence 
 </ul>
 </td></tr>
 </table>
+<p>&nbsp;</p>
+<div class="experiment">
+<h4><u>Flexiplot</u></h4>
+<p><code>flexiplot.exe</code> is a standalone program that can be used for &ldquo;prototyping&rdquo; a more conventional Excel spreadsheet where data is arranged in rows or columns. The program is very much experimental. If it proves useful it may be included as part of <code>powerplot.exe</code> in the future. The program has a similar window of options to <code>powerplot</code> with the exception of <em>Period</em> and <em>Target</em>. Instead it has two different options.
+<table border="0" class="none">
+<tr><td class="top" style="width: 20%;"><dfn>Series</dfn></td>
+<td class="none">The location of the data series to be plotted. The range is specified as either Excel columns and rows, e.g. <em>B1:H1</em>, or as four numbers defining the row and columns range, e.g. <em>1,2,1,7</em>. The series can either be in rows or columns but is expected to be a single row (as in the examples) or column. You then choose which series you want plotted by moving them in the Column Order lists (<em>series</em>)</td></tr>
+<tr><td class="lr"><dfn>Series label</dfn></td>
+<td class="none">Not yet set up as a parameter (<em>ylabel</em>)</td></tr>
+<tr><td class="bottom"><dfn>X Values</dfn></td>
+<td class="none">The data values to be plotted. The range is specified as either Excel columns and rows, e.g. <em>A2:A29</em> or as four numbers defining the row and columns range, e.g. <em>2,1,2,29</em>. The series can either be in rows or columns but is expected to be a single row or column (as in the examples). The first column (A) is taken as the X labels and the data series chosen will be plotted (<em>xlabels</em>)</td></tr>
+</table>
+<p>&nbsp;</p>
+</div>
 <!-- Back to top< -->
-<h4>Tables</h4>
+<h3 id="tables">Tables</h3>
 <ul>
 <li><em>Save Hourly Data Output</em> option will save generation in MWh for each chosen station for each hour of the year (8,760 hours) as calculated by SAM. This can be used in detailed analysis or as an option to avoid having to reprocess the station in the future, by updating a Station's </em>Power File</em> field. The default file name can be set using the <em>data_file</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file; otherwise it will in the format of <em>Power_Table_yyyy-mm-dd_hhmm...</em></li>
 <li><em>Save (adjusted) Hourly Data Output by Station</em> option will save generation in MWh for each station and other options for each hour of the year (8,760 hours). This is the hourly output calculated by the SAM model multiplied by any adjustments. If appropriate Power Model options are chosen data for Generation, Excess, Load and Storage will also be saved. The default file name can be set using the <em>data_file</em> property of the [Files] Section of the Preferences file; otherwise it will in the format of <em>Power_Detail_yyyy-mm-dd_hhmm...</em></li>
