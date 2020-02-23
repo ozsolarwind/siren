@@ -259,6 +259,14 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 <tr class="none">
 <td class="none"><dfn><strong>Tools</strong></dfn></td>
 <td class="none">Invoke SIREN tools. This will launch the chosen tool as a new task</p>
+<div class="experiment">
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><img src="line.png" alt="flexiplot">&nbsp;&nbsp;flexiplot&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td class="none">Invoke <code>flexiplot</code> to create plots from Excel columns or rows (see <a href="#flexiplot">Flexiplot</a>)</td>
+</tr>
+</table>
+</div>
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><img src="map.png" alt="getmap">&nbsp;&nbsp;getmap</td>
@@ -310,7 +318,6 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 <h3>Experimental features</h3>
 <p>There are some experimental features in SIREN which may or may not be further developed. These are identified within this help by a red bounding box.</p>
 </div>
-
 <p><a href="#help">Back to top</a></p>
 <h2 id="setup">Setting Up</h2>
 <p>The simulation uses external data files to model the potential for renewable energy generation for a geographic region. The approach is to model the data on an hourly basis for a desired year (ignoring leap days, that is, 8,760 hours). The following data files are required / desirable. Due to the initial source for each data file the format for each is different (see <a href="#files">SIREN File Formats</a> for further details). Please <a href="#feedback">feedback</a> any desired formats as it's relatively easy to accommodate standard file formats.</p>
@@ -2815,7 +2822,7 @@ If it's not a diurnal plot (i.e. Period is <em>&lt;None&gt;</em>) any occurence 
 </table>
 <p>&nbsp;</p>
 <div class="experiment">
-<h4><u>Flexiplot</u></h4>
+<h4 id="flexiplot"><u>Flexiplot</u></h4>
 <p><code>flexiplot.exe</code> is a standalone program that can be used for &ldquo;prototyping&rdquo; a more conventional Excel spreadsheet where data is arranged in rows or columns. The program is very much experimental. If it proves useful it may be included as part of <code>powerplot.exe</code> in the future. The program has a similar window of options to <code>powerplot</code> with the exception of <em>Period</em> and <em>Target</em>. Instead it has two different options.
 <table border="0" class="none">
 <tr><td class="top" style="width: 20%;"><dfn>Series</dfn></td>
