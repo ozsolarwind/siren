@@ -48,6 +48,11 @@ class TabDialog(QtGui.QDialog):
                 sys.exit()
             elif os.path.isdir(sys.argv[1]):
                 self.siren_dir = sys.argv[1]
+            if sys.platform == 'win32' or sys.platform == 'cygwin':
+                if self.siren_dir[-1] != '\\' and self.siren_dir[-1] != '/':
+                    self.siren_dir += '\\'
+            elif self.siren_dir[-1] != '/':
+                self.siren_dir += '/'
         else:
             self.siren_dir = getModelFile()
         self.entries = []
