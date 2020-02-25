@@ -199,26 +199,26 @@ class Optimisation:
             try:
                 self.capacity_min = float(caps[0])
             except:
-                self.capacity_min = 0
+                self.capacity_min = 0.
             try:
                 self.capacity_max = float(caps[1])
             except:
-                self.capacity_max = None
+                self.capacity_max = 0.
             try:
                 self.capacity_step = float(caps[2])
             except:
-                self.capacity_step = None
+                self.capacity_step = 0.
             self.capacities = None
         else:
-            self.capacity_min = 0
-            self.capacity_max = None
-            self.capacity_step = None
+            self.capacity_min = 0.
+            self.capacity_max = 0.
+            self.capacity_step = 0.
             self.capacities = None
-        self.capacity = None
+        self.capacity = 0.
 
 
 class Adjustments(QtGui.QDialog):
-    def __init__(self, data, adjustin):
+    def __init__(self, data, adjustin, adjust_cap):
         super(Adjustments, self).__init__()
         self.adjusts = {}
         self.checkbox = {}
@@ -231,7 +231,7 @@ class Adjustments(QtGui.QDialog):
             if key != 'Load' and capacity is None:
                 continue
             self.adjusts[key] = QtGui.QDoubleSpinBox()
-            self.adjusts[key].setRange(0, 25)
+            self.adjusts[key].setRange(0, adjust_cap)
             self.adjusts[key].setDecimals(3)
             try:
                 self.adjusts[key].setValue(adjustin[key])
@@ -354,6 +354,7 @@ class powerMatch(QtGui.QWidget):
         self.constraints = None
         self.generators = None
         self.optimisation = None
+        self.adjust_cap = 25
         self.adjust_re = False
         self.change_res = True
         self.details = True
@@ -365,6 +366,9 @@ class powerMatch(QtGui.QWidget):
         self.optimise_mutation = 0.005
         self.optimise_population = 50
         self.optimise_stop = 0
+        self.remove_cost = True
+        self.surplus_sign = 1 # Note: Preferences file has it called shortfall_sign
+        # it's easier for the user to understand while for the program logic surplus is easier
         target_keys = ['lcoe', 'load_pct', 'surplus_pct', 're_pct', 'cost', 'co2']
         target_names = ['LCOE', 'Load%', 'Surplus%', 'RE%', 'Cost', 'CO2']
         target_fmats = ['$%.2f', '%d%%', '%d%%', '%d%%', '$%.1fpwr_chr', '%.1fpwr_chr']
@@ -442,6 +446,16 @@ class powerMatch(QtGui.QWidget):
                                                   target_titles[t]]
                      except:
                          pass
+                 elif key == 'remove_cost':
+                     if value.lower() in ['false', 'off', 'no']:
+                         self.remove_cost = False
+                 elif key == 'shortfall_sign':
+                     if value[0] == '+' or value[0].lower() == 'p':
+                         self.surplus_sign = -1
+        except:
+            pass
+        try:
+            self.adjust_cap =  float(config.get('Power', 'adjust_cap'))
         except:
             pass
         self.opt_progressbar = None
@@ -888,7 +902,7 @@ class powerMatch(QtGui.QWidget):
                 lcc_col = col
             elif ws.cell_value(0, col)[:4] == 'LCOE':
                 lco_col = col
-            elif ws.cell_value(0, col) == 'Emissions':
+            elif ws.cell_value(0, col)[:9] == 'Emissions':
                 emi_col = col
         try:
             lco_col = lco_col
@@ -1028,6 +1042,10 @@ class powerMatch(QtGui.QWidget):
         data = []
         load = []
         shortfall = []
+        if self.surplus_sign < 0:
+            sf_test = ['>', '<']
+        else:
+            sf_test = ['<', '>']
         if pm_data_file[-4:] == '.xls': #xls format
             xlsx = False
             details = False
@@ -1100,7 +1118,7 @@ class powerMatch(QtGui.QWidget):
                     if self.generators[self.order.item(i).text()].capacity > 0:
                         adjustin.append([self.order.item(i).text(),
                                         self.generators[self.order.item(i).text()].capacity])
-                adjust = Adjustments(adjustin, self.adjustby)
+                adjust = Adjustments(adjustin, self.adjustby, self.adjust_cap)
                 adjust.exec_()
                 self.adjustby = adjust.getValues()
                 if self.adjustby is None:
@@ -1127,6 +1145,8 @@ class powerMatch(QtGui.QWidget):
                     multiplier = self.adjustby[tech_names[i]]
                 except:
                     multiplier = 1.
+                if multiplier == 0:
+                    continue
                 if details:
                     cols.append(i)
                     try:
@@ -1212,12 +1232,16 @@ class powerMatch(QtGui.QWidget):
             ns.cell(row=what_row, column=3).value = 'Load'
             ns.cell(row=sum_row, column=3).value = '=SUM(' + ss_col(3) + str(hrows) + \
                                                    ':' + ss_col(3) + str(hrows + 8759) + ')'
+            ns.cell(row=sum_row, column=3).number_format = '#,##0'
             o = 4
             col = 3
             if details:
                 for i in cols:
                     if tech_names[i] == 'Load':
                         continue
+                    if self.adjust.isChecked():
+                        if self.adjustby[tech_names[i]] <= 0:
+                            continue
                     col += 1
                     sp_cols.append(tech_names[i])
                     sp_cap.append(re_capacities[i])
@@ -1245,7 +1269,11 @@ class powerMatch(QtGui.QWidget):
                         ns.cell(row=cost_row, column=col).value = self.generators[tech_names[i]].lcoe * \
                                 self.generators[tech_names[i]].lcoe_cf * 8760 * re_capacities[i]
                         ns.cell(row=cost_row, column=col).number_format = '$#,##0'
-                        ss.cell(row=ss_row, column=5).value = '=Detail!' + ss_col(col) + str(cost_row)
+                        if self.remove_cost:
+                            ss.cell(row=ss_row, column=5).value = '=IF(Detail!' + ss_col(col) + str(sum_row) \
+                                    + '>0,Detail!' + ss_col(col) + str(cost_row) + ',"")'
+                        else:
+                            ss.cell(row=ss_row, column=5).value = '=Detail!' + ss_col(col) + str(cost_row)
                         ss.cell(row=ss_row, column=5).number_format = '$#,##0'
                         ns.cell(row=lcoe_row, column=col).value = '=IF(AND(' + ss_col(col) + str(cf_row) + '>0,' \
                                 + ss_col(col) + str(cap_row) + '>0),' + ss_col(col) + str(cost_row) + '/8760/' \
@@ -1257,7 +1285,11 @@ class powerMatch(QtGui.QWidget):
                         ns.cell(row=emi_row, column=col).value = '=' + ss_col(col) + str(sum_row) \
                                 + '*' + str(self.generators[tech_names[i]].emissions)
                         ns.cell(row=emi_row, column=col).number_format = '#,##0'
-                        ss.cell(row=ss_row, column=7).value = '=Detail!' + ss_col(col) + str(emi_row)
+                        if self.remove_cost:
+                            ss.cell(row=ss_row, column=7).value = '=IF(Detail!' + ss_col(col) + str(sum_row) \
+                                    + '>0,Detail!' + ss_col(col) + str(emi_row) + ',"")'
+                        else:
+                            ss.cell(row=ss_row, column=7).value = '=Detail!' + ss_col(col) + str(emi_row)
                         ss.cell(row=ss_row, column=7).number_format = '#,##0'
                 shrt_col = col + 1
             else:
@@ -1283,7 +1315,8 @@ class powerMatch(QtGui.QWidget):
                 ss.cell(row=ss_row, column=4).value = '=Detail!D' + str(cf_row)
                 ss.cell(row=ss_row, column=4).number_format = '#,##0.00'
             ns.cell(row=fall_row, column=shrt_col).value = '=COUNTIF(' + ss_col(shrt_col) \
-                            + str(hrows) + ':' + ss_col(shrt_col) + str(hrows + 8759) + ',">0")'
+                            + str(hrows) + ':' + ss_col(shrt_col) + str(hrows + 8759) + \
+                            ',"' + sf_test[0] + '0")'
             ns.cell(row=fall_row, column=shrt_col).number_format = '#,##0'
             ns.cell(row=what_row, column=shrt_col).value = 'Shortfall'
             for col in range(3, shrt_col + 1):
@@ -1299,7 +1332,7 @@ class powerMatch(QtGui.QWidget):
                 else:
                     ns.cell(row=row, column=1).value = ws.cell_value(row - hrows + 2, 0)
                     ns.cell(row=row, column=2).value = ws.cell_value(row - hrows + 2, 1)
-                ns.cell(row=row, column=shrt_col).value = round(shortfall[row - hrows], 2)
+                ns.cell(row=row, column=shrt_col).value = round(shortfall[row - hrows] * -self.surplus_sign, 2)
                 for col in range(3, shrt_col + 1):
                     ns.cell(row=row, column=col).number_format = '#,##0.00'
             if details:
@@ -1313,7 +1346,8 @@ class powerMatch(QtGui.QWidget):
             col = shrt_col + 1
         order = [] #'Storage', 'Biomass', 'PHS', 'Gas', 'CCG1', 'Other', 'Coal']
         for itm in range(self.order.count()):
-            order.append(str(self.order.item(itm).text()))
+            if self.adjustby[str(self.order.item(itm).text())] > 0:
+                order.append(str(self.order.item(itm).text()))
         #storage? = []
         self.progressbar.setValue(3)
         for gen in order:
@@ -1386,9 +1420,9 @@ class powerMatch(QtGui.QWidget):
                             can_use = 0.
                     storage_bal.append(storage_carry)
                     if not summ_only:
-                        ns.cell(row=row + hrows, column=col).value = round(can_use, 2)
+                        ns.cell(row=row + hrows, column=col).value = round(can_use * -self.surplus_sign, 2)
                         ns.cell(row=row + hrows, column=col + 1).value = round(storage_carry, 2)
-                        ns.cell(row=row + hrows, column=col + 2).value = round(shortfall[row], 2)
+                        ns.cell(row=row + hrows, column=col + 2).value = round(shortfall[row] * -self.surplus_sign, 2)
                         ns.cell(row=row + hrows, column=col).number_format = '#,##0.00'
                         ns.cell(row=row + hrows, column=col + 1).number_format = '#,##0.00'
                         ns.cell(row=row + hrows, column=col + 2).number_format = '#,##0.00'
@@ -1419,7 +1453,7 @@ class powerMatch(QtGui.QWidget):
                                 shortfall[row] = 0
                         else:
                             ns.cell(row=row + hrows, column=col).value = 0
-                        ns.cell(row=row + hrows, column=col + 1).value = round(shortfall[row], 2)
+                        ns.cell(row=row + hrows, column=col + 1).value = round(shortfall[row] * -self.surplus_sign, 2)
                         ns.cell(row=row + hrows, column=col).number_format = '#,##0.00'
                         ns.cell(row=row + hrows, column=col + 1).number_format = '#,##0.00'
                     ns.cell(row=sum_row, column=col).value = '=SUM(' + ss_col(col) + str(hrows) + \
@@ -1458,6 +1492,9 @@ class powerMatch(QtGui.QWidget):
                 if gen not in self.generators:
                     continue
                 if self.generators[gen].lcoe > 0:
+                    if self.remove_cost and sp_data[sp][2] == 0:
+                        sp_data[sp][4] = 0
+                        continue
                     sp_data[sp][4] = self.generators[gen].lcoe * self.generators[gen].lcoe_cf * 8760 * sp_data[sp][1]
                     if sp_data[sp][1] > 0 and sp_data[sp][3] > 0:
                         sp_data[sp][5] = sp_data[sp][4] / 8760 / sp_data[sp][3] / sp_data[sp][1]
@@ -1559,7 +1596,11 @@ class powerMatch(QtGui.QWidget):
                 ns.cell(row=cost_row, column=col).value = self.generators[gen].lcoe * \
                         self.generators[gen].lcoe_cf * 8760 * capacity
                 ns.cell(row=cost_row, column=col).number_format = '$#,##0'
-                ss.cell(row=ss_row, column=5).value = '=Detail!' + ss_col(col) + str(cost_row)
+                if self.remove_cost:
+                    ss.cell(row=ss_row, column=5).value = '=IF(Detail!' + ss_col(col) + str(sum_row) \
+                            + '>0,Detail!' + ss_col(col) + str(cost_row) + ',"")'
+                else:
+                    ss.cell(row=ss_row, column=5).value = '=Detail!' + ss_col(col) + str(cost_row)
                 ss.cell(row=ss_row, column=5).number_format = '$#,##0'
                 ns.cell(row=lcoe_row, column=col).value = '=IF(AND(' + ss_col(col) + str(cf_row) + '>0,' \
                             + ss_col(col) + str(cap_row) + '>0),' + ss_col(col) + str(cost_row) + '/8760/' \
@@ -1571,7 +1612,11 @@ class powerMatch(QtGui.QWidget):
                 ns.cell(row=emi_row, column=col).value = '=' + ss_col(col) + str(sum_row) \
                         + '*' + str(self.generators[gen].emissions)
                 ns.cell(row=emi_row, column=col).number_format = '#,##0'
-                ss.cell(row=ss_row, column=7).value = '=Detail!' + ss_col(col) + str(emi_row)
+                if self.remove_cost:
+                    ss.cell(row=ss_row, column=7).value = '=IF(Detail!' + ss_col(col) + str(sum_row) \
+                            + '>0,Detail!' + ss_col(col) + str(emi_row) + ',"")'
+                else:
+                    ss.cell(row=ss_row, column=7).value = '=Detail!' + ss_col(col) + str(emi_row)
                 ss.cell(row=ss_row, column=7).number_format = '#,##0'
             ns.cell(row=what_row, column=col).alignment = oxl.styles.Alignment(wrap_text=True,
                     vertical='bottom', horizontal='center')
@@ -1583,13 +1628,15 @@ class powerMatch(QtGui.QWidget):
                 ns.cell(row=what_row, column=col + 2).alignment = oxl.styles.Alignment(wrap_text=True,
                         vertical='bottom', horizontal='center')
                 ns.cell(row=fall_row, column=col + 2).value = '=COUNTIF(' + ss_col(col + 2) \
-                        + str(hrows) + ':' + ss_col(col + 2) + str(hrows + 8759) + ',">0")'
+                        + str(hrows) + ':' + ss_col(col + 2) + str(hrows + 8759) + \
+                        ',"' + sf_test[0] + '0")'
                 ns.cell(row=fall_row, column=col + 2).number_format = '#,##0'
                 col += 3
             else:
                 ns.cell(row=what_row, column=col + 1).value = 'After\n' + gen
                 ns.cell(row=fall_row, column=col + 1).value = '=COUNTIF(' + ss_col(col + 1) \
-                        + str(hrows) + ':' + ss_col(col + 1) + str(hrows + 8759) + ',">0")'
+                        + str(hrows) + ':' + ss_col(col + 1) + str(hrows + 8759) + \
+                        ',"' + sf_test[0] + '0")'
                 ns.cell(row=fall_row, column=col + 1).number_format = '#,##0'
                 col += 2
         self.progressbar.setValue(6)
@@ -1657,26 +1704,34 @@ class powerMatch(QtGui.QWidget):
             r += 1
         ss_row += 1
         ss.cell(row=ss_row, column=1).value = 'RE %age'
-        ss.cell(row=ss_row, column=2).value = re_sum[:-1] + ')/C' + str(ss_row - r)
-        ss.cell(row=ss_row, column=2).number_format = '#,##0.0%'
+        ss.cell(row=ss_row, column=3).value = re_sum[:-1] + ')/C' + str(ss_row - r)
+        ss.cell(row=ss_row, column=3).number_format = '#,##0.0%'
         ss_row += 2
         ss.cell(row=ss_row, column=1).value = 'Load Analysis'
         ss.cell(row=ss_row, column=1).font = bold
         ss_row += 1
         ss.cell(row=ss_row, column=1).value = 'Load met'
+        if self.surplus_sign < 0:
+            addsub = ')+C'
+        else:
+            addsub = ')-C'
         ss.cell(row=ss_row, column=3).value = '=SUMIF(Detail!' + last_col + str(hrows) + ':Detail!' \
-            + last_col + str(hrows + 8759) + ',"<=0",Detail!C' + str(hrows) + ':Detail!C' \
-            + str(hrows + 8759) + ')+SUMIF(Detail!' + last_col + str(hrows) + ':Detail!' \
-            + last_col + str(hrows + 8759) + ',">0",Detail!C' + str(hrows) + ':Detail!C' \
-            + str(hrows + 8759) + ')-C' + str(ss_row + 1)
+            + last_col + str(hrows + 8759) + ',"' + sf_test[0] + '=0",Detail!C' + str(hrows) \
+            + ':Detail!C' + str(hrows + 8759) + ')+SUMIF(Detail!' + last_col + str(hrows) + ':Detail!' \
+            + last_col + str(hrows + 8759) + ',"' + sf_test[1] + '0",Detail!C' + str(hrows) + ':Detail!C' \
+            + str(hrows + 8759) + addsub + str(ss_row + 1)
         ss.cell(row=ss_row, column=3).number_format = '#,##0'
         ss.cell(row=ss_row, column=4).value = '=C' + str(ss_row) + '/C' + str(ss_row + 2)
         ss.cell(row=ss_row, column=4).number_format = '#,##0.0%'
         ss_row += 1
         ss.cell(row=ss_row, column=1).value = 'Shortfall'
-        ss.cell(row=ss_row, column=3).value = '=SUMIF(Detail!' + last_col + str(hrows) + ':Detail!' \
-            + last_col + str(hrows + 8759) + ',">0",Detail!' + last_col + str(hrows) + ':Detail!' \
-            + last_col + str(hrows + 8759) + ')'
+        sf_text = 'SUMIF(Detail!' + last_col + str(hrows) + ':Detail!' + last_col \
+                  + str(hrows + 8759) + ',"' + sf_test[0] + '0",Detail!' + last_col \
+                  + str(hrows) + ':Detail!' + last_col + str(hrows + 8759) + ')'
+        if self.surplus_sign > 0:
+            ss.cell(row=ss_row, column=3).value = '=-' + sf_text
+        else:
+            ss.cell(row=ss_row, column=3).value = '=' + sf_text
         ss.cell(row=ss_row, column=3).number_format = '#,##0'
         ss.cell(row=ss_row, column=4).value = '=C' + str(ss_row) + '/C' + str(ss_row + 1)
         ss.cell(row=ss_row, column=4).number_format = '#,##0.0%'
@@ -1697,9 +1752,13 @@ class powerMatch(QtGui.QWidget):
             ss.cell(row=lcoe_row + 1, column=6).number_format = '$#,##0.00'
         ss_row += 1
         ss.cell(row=ss_row, column=1).value = 'Surplus'
-        ss.cell(row=ss_row, column=3).value = '=-SUMIF(Detail!' + last_col + str(hrows) + ':Detail!' \
-            + last_col + str(hrows + 8759) + ',"<0",Detail!' + last_col + str(hrows) \
-            + ':Detail!' + last_col + str(hrows + 8759) + ')'
+        sf_text = 'SUMIF(Detail!' + last_col + str(hrows) + ':Detail!' + last_col \
+                  + str(hrows + 8759) + ',"' + sf_test[1] + '0",Detail!' + last_col + str(hrows) \
+                  + ':Detail!' + last_col + str(hrows + 8759) + ')'
+        if self.surplus_sign < 0:
+            ss.cell(row=ss_row, column=3).value = '=-' + sf_text
+        else:
+            ss.cell(row=ss_row, column=3).value = '=' + sf_text
         ss.cell(row=ss_row, column=3).number_format = '#,##0'
         ss.cell(row=ss_row, column=4).value = '=C' + str(ss_row) + '/C' + str(ss_row - 1)
         ss.cell(row=ss_row, column=4).number_format = '#,##0.0%'
@@ -1993,6 +2052,9 @@ class powerMatch(QtGui.QWidget):
                         re_sum += op_data[sp][2]
                     if gen not in self.generators:
                         continue
+                    if self.remove_cost and op_data[sp][2] == 0:
+                        op_data[sp][4] = 0
+                        continue
                     if self.generators[gen].lcoe > 0:
                         op_data[sp][4] = self.generators[gen].lcoe * self.generators[gen].lcoe_cf * 8760 * op_data[sp][1]
                         if op_data[sp][1] > 0 and op_data[sp][3] > 0:
@@ -2247,7 +2309,7 @@ class powerMatch(QtGui.QWidget):
         grid = QtGui.QGridLayout()
         grid.addWidget(QtGui.QLabel('Adjust load'), 0, 0)
         optLoad = QtGui.QDoubleSpinBox()
-        optLoad.setRange(-1, 25)
+        optLoad.setRange(-1, self.adjust_cap)
         optLoad.setDecimals(3)
         optLoad.setSingleStep(.1)
         optLoad.setValue(1)
@@ -2366,6 +2428,7 @@ class powerMatch(QtGui.QWidget):
         if self.optExit: # a fudge to exit
             self.setStatus('Execution aborted.')
             return
+        # check we have optimisation entries for generators and storage
         # update any changes to targets
         self.optimise_choice = optCombo.currentText()
         for key in self.targets.keys():
@@ -2440,6 +2503,14 @@ class powerMatch(QtGui.QWidget):
             if tech not in dict_order.keys():
                 dict_order[tech] = [self.generators[tech].capacity, 0, 0, 0]
         capacities = []
+        check = ''
+        for tech in dict_order.keys():
+            if tech not in self.optimisation.keys():
+                check += tech + ', '
+        if check != '':
+            check = check[:-2]
+            self.setStatus('Key Error: Missing Optimisation enties for: ' + check)
+            return
         for tech in dict_order.keys():
             dict_order[tech][1] = len(capacities) # first entry
             try:
