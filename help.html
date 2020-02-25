@@ -1743,8 +1743,16 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">Either show details for each renewable generator technology (True) or just show a summary (False). This displays a summary on how generator capacity was adjusted from the base data inputs. Default is True</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>remove_cost</dfn></td>
+<td class="none">In producing the Summary table this option indicates to remove the costs for generators that were not used in the calculation; leading to a lower overall LCOE. The default is True</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>results_file</dfn></td>
 <td class="none">File name for Powermatch output (report) spreadsheet</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>shortfall_sign</dfn></td>
+<td class="none">An indicator as to whether shortfall values should be negative or positive. Surplus values will have the opposite sign. The default is negative, <em>-</em></td>
 </tr>
 </table>
 </td></tr>
@@ -2930,10 +2938,11 @@ If it's not a diurnal plot (i.e. Period is <em>&lt;None&gt;</em>) any occurence 
 <li>As mentioned previously, <em>Include full grid path in LCOE?</em> may over-inflate grid costs as each station path to the load centre is traced individually</li>
 </ul><p><a href="#help">Back to top</a></p>
 <h3 id="powermatch">Powermatch</h3>
-<p>Running the SIREN models will produce hourly generation figures which identify generation shortfalls and excesses against load (demand). One of the outputs from SIREN is a table of these generation shortfalls which can be met by dispatchable energy generation. The Powermatch component of SIREN can be used to match generation with demand (load) to quantify and cost dispatchable energy generation, storage and CO<sub>2</sub>-e emissions. This enables you to complete a costed renewable energy scenario.
-<br /><strong>Note:</strong> The SIREN Powermatch component has been derived from the Powerbalance worksheets developed by Ben Rose. The great work and inspiration by Ben is acknowledged</p>
+<p>Running the SIREN models will produce hourly generation figures which identify generation shortfalls and excesses against load (demand). One of the outputs from SIREN is a table of these generation shortfalls which can be met by dispatchable energy generation. The Powermatch component of SIREN can be used to match generation with demand (load) to quantify and cost dispatchable energy generation, storage and CO<sub>2</sub>-e emissions. This enables you to complete a costed renewable energy scenario.</p>
+<p>One of the outputs from Powermatch is calculated LCOE figures, Overall and for each Generator.
+In producing the LCOE figures you can choose to use LCOE figures that ignore any surplus generation or produce a corrected LCOE figure which adjusts the LCOE figure upwards to take into account the surplus generation (that is, the corrected LCOE figure includes the cost of surplus - spilled - generation). The default is to produce a corrected LCOE (<em>corrected_lcoe</em>)
+<p><strong>Note:</strong> The SIREN Powermatch component has been derived from the Powerbalance worksheets developed by Ben Rose. The great work and inspiration by Ben is acknowledged.</p>
 <p>The Powermatch options are as set out here. The options are specified in the <a href="#p_pm">[Powermatch]</a> Section of the Preferences file. The associated property is indicated in brackets at the end of the description. All files are located in the SIREN Scenarios folder.</p>
-<p>In producing the LCOE figures you can choose to use LCOE figures that ignore any surplus generation or produce a corrected LCOE figure which adjusts the LCOE figure upwards to take into account the surplus generation (that is, the corrected LCOE figure includes the cost of surplus - spilled - generation). The default is to produce a corrected LCOE (<em>corrected_lcoe</em>)
 <table border="0" class="none" cellpadding="2">
 <tr><td class="top" style="width: 15%;"><dfn>Constraints File</dfn></td>
 <td class="none">File name for constraints spreadsheet. Clicking on the field will allow you to choose another spreadsheet from the SIREN Scenarios folder (<em>constraints_file</em>)</td></tr>
@@ -2954,7 +2963,7 @@ If it's not a diurnal plot (i.e. Period is <em>&lt;None&gt;</em>) any occurence 
 <tr><td class="lr"><dfn>Carbon Price</dfn></td>
 <td class="none">If a carbon price is not included in LCOE figures you can use this option to set a carbon price between $0 and $200 (<em>carbon_price</em>)</td></tr>
 <tr><td class="lr"><dfn>Adjust Generators</dfn></td>
-<td class="none">If this option is checked you will be presented with a table to enable you to adjust the input capacity data for each generator technology. You can specify a multiplier between 0 and 25. The original input values will be derived from the data sheet for renewables and the Generators table for dispatchable technologies (<em>adjust_generators</em>)</td></tr>
+<td class="none">If this option is checked you will be presented with a table to enable you to adjust the input capacity data for each generator technology. You can specify a multiplier between 0 and the cap set by the <em>adjust_cap</em> property in the <a href="#power">[Power]</a> Section of the Preferences file; the default is 25. The original input values will be derived from the data sheet for renewables and the Generators table for dispatchable technologies (<em>adjust_generators</em>)</td></tr>
 <tr><td class="lr"><dfn>Dispatch Order</dfn></td>
 <td class="none">The order in which the dispatchable technologies will be processed by Powermatch. You can change the order by clicking on each value and moving it up and down the list. The initial order is derived from the generators (facilities) table. If you want to exclude a generator you can drag it to the right hand list (and drag it back to the left to re-include)</td></tr>
 <tr><td class="bottom"><strong>Done, Constraints, Generators,<br />Summary, Powermatch,<br />Help</strong></td>
@@ -2998,25 +3007,52 @@ If it's not a diurnal plot (i.e. Period is <em>&lt;None&gt;</em>) any occurence 
 </table>
 <div class="experiment">
 <h4>Optimise and Optimisation</h4>
-<p>In an attempt to simplify the process of determining the optimal generation mix, Powermatch has an optimisation function. The function uses a genetic algorithm to identify two possible optimal solutions:
+<p>In an attempt to simplify the process of determining the optimal generation mix, Powermatch has an optimisation function. The function uses a genetic algorithm to identify three possible optimal solutions:
 <ol>
 <li>A solution with the lowest LCOE for the input renewable and dispatchable technologies</li>
-<li>A solution that produces the best (lowest) weighting for six variables - lowest LCOE, lowest CO2 emissions, lowest Overall Cost, lowest surplus generation, highest RE percentage and maximising percentage of load met</li>
+<li>A solution with the best (lowest) weighting for six variables - lowest LCOE, lowest CO2 emissions, lowest Overall Cost, lowest surplus generation, highest RE percentage and maximising percentage of load met</li>
+<li>A solution with the the lowest LCOE and weighting for six variables. Running both does use a single population and so there is some “interaction” between the the which may distort the result</li>
 </ol>
-Genetic algorithms are inspired by the process of natural selection and simulate evolution of multiple generations that evolve to produce an optimal solution, in this case (1.) lowest LCOE and (2.) best weighted solution (<strong>Note:</strong> This is a different approach to optimisation than in Power Model). The approach has a number of inputs:</p>
+Genetic algorithms are inspired by the process of natural selection and simulate evolution of multiple generations that evolve to produce an optimal solution, in this case 1. lowest LCOE 2. lowest weighted solution, or 3. lowest in both (<strong>Note:</strong> This is a different approach to optimisation than in Power Model). The approach has a number of inputs:</p>
 <ul>
 <li>A chromosome. This is a series of &ldquo;switches&rdquo; with each switch representing whether a unit of technology is to be included in this iteration of Powermatch. The format of the chromosome is defined by the Optimisation table. In creating the chromosome each technology will be assigned a number of switches representing either a discrete unit of technology or a proportion of the total capacity for that technology (as defined by the Optimisation entry)</li>
-<li>Population size. Each member of the population has a chromsome made up of switches that are randomly on or off. The greater the population size the greater the chance that the initial state of the population will contain a chromosome representing the optimal solution, but the longer the optimisation process will take (<em>optimise_population</em>)</li>
-<li>Number of generations (iterations). For each generation a competition is held between (each of two) members to identify which has the preferred characteristics, in this case lowest LCOE. The winners are then used to generate the next generation. The greater the number of generations the better chance the solutions will converge to an optimum value, but the longer the optimisation process will take (<em>optimise_generations</em>)</li>
-<li>A probability of mutation. This is a genetic operator used to maintain genetic diversity from one generation of a population to the next. The solution may change entirely from the previous solution and come to a better solution. This probability should be set low. If it is set too high, the search will turn into a primitive random search.(<em>optimise_mutation)</em>)</li>
-<li>A stop option. To reduce the number of iterations it is possible to terminate the optimisation if there appears to be no change to the solution after a specified number of generations. At present this only examines the LCOE solution. The downside is that the optimisation may not have evolved on the correct path (<em>optimise_stop</em>)</li>
-<li>A choice as whether to run the lowest LCOE option, the multi-variable option, or both options together. Running both does use a single population and so there is some &ldquo;interaction&rdquo; between the the which may distort the result</li>
-<li>Some values for each of the six optimisation variables (<em>optimise_lcoe</em>, <em>optimise_surplus_pct</em>, <em>optimise_load_pct</em>, <em>optimise_re_pct</em>, <em>optimise_cost</em>, and <em>optimise_co2</em>) for the multi-variable solution:
+<li>The remaining inputs options are as set out here. The options are specified in the <a href="#p_pm">[Powermatch]</a> Section of the Preferences file. The associated property is indicated in brackets at the end of the description.</p>
+<table border="0" class="none" cellpadding="2">
+<tr><td class="top" style="width: 15%;"><dfn>Adjust Load</dfn></td>
+<td class="none">Adjust the load. You can specify a multiplier for Load, between 0 and the cap set by the <em>adjust_cap</em> property in the <a href="#power">[Power]</a> Section of the Preferences file; the default is 25. This variable is not saved</td></tr>
+<tr><td class="lr"><dfn>Population size</dfn></td>
+<td class="none">Size of population. Each member of the population has a chromsome made up of switches that are randomly on or off. The greater the population size the greater the chance that the initial state of the population will contain a chromosome representing the optimal solution, but the longer the optimisation process will take (<em>optimise_population</em>)</td></tr>
+<tr><td class="lr"><dfn>Number of generations</dfn></td>
+<td class="none">Number of generations (iterations); not to be confused with (electrical) generation. For each generation a competition is held between (each of two) members to identify which has the preferred characteristics, in this case lowest LCOE and/or weight. The winners are then used to generate the next generation. The greater the number of generations the better chance the solutions will converge to an optimum value, but the longer the optimisation process will take (<em>optimise_generations</em>)</td></tr>
+<tr><td class="lr"><dfn>Mutation probability</dfn></td>
+<td class="none">A probability of mutation. This is a genetic operator used to maintain genetic diversity from one generation of a population to the next. The solution may change entirely from the previous solution and come to a better solution. This probability should be set low. If it is set too high, the search will turn into a primitive random search.(<em>optimise_mutation)</em>)</td></tr>
+<tr><td class="lr"><dfn>Exit if stable</dfn></td>
+<td class="none">A stop option. To reduce the number of iterations it is possible to terminate the optimisation if there appears to be no change to the solution after a specified number of generations. The downside is that the optimisation may not have evolved on the correct path (i.e. moved towards a local minimum rather than true minimum) (<em>optimise_stop</em>)</td></tr>
+<tr><td class="lr"><dfn>Optimisation choice</dfn></td>
+<td class="none">A choice as whether to run the lowest LCOE option, the multi-variable option, or both options together. Running both does use a single population and so there is some &ldquo;interaction&rdquo; between the the which may distort the result (<em>optimise_choice</em>)</td></tr>
+<tr><td class="lr"><dfn>Multi-variable inputs</dfn></td>
+<td class="none">Some values for each of the six optimisation variables for the multi-variable solution:
 <ol>
 <li>The Weight, a value between 0 and 1, to be applied to this variable</li>
 <li>The best target value (Better). A value less than zero indicates the maximum or minimum value. For percentage targets it can be between 0 (i.e 0%) and 1 (i.e 100%). If Better is (positive and) less than Worse we want the lowest value; if Better is greater than Worse we want the highest value</li>
 <li>The worst target value (Worse). A value less than zero indicates the maximum or minimum value</li>
-</ol>
+</ol></td></tr>
+<tr><td class="lr"><dfn>LCOE</dfn></td>
+<td class="none">A lower value is better (<em>optimise_lcoe</em>)</td></tr>
+<tr><td class="lr"><dfn>Load%</dfn></td>
+<td class="none">The percentage of Load met. A higher value, up to 100%, is better (<em>optimise_load_pct</em>)</td></tr>
+<tr><td class="lr"><dfn>Surplus %</dfn></td>
+<td class="none">The percentage of surplus generation. A lower value is better (<em>optimise_surplus_pct</em>)</td></tr>
+<tr><td class="lr"><dfn>RE%</dfn></td>
+<td class="none">The percentage of generation from renewables. A higher value is better (<em>optimise_re_pct</em>)</td></tr>
+<tr><td class="lr"><dfn>Cost</dfn></td>
+<td class="none">Overall cost. A lower value is better. This may just be a &ldquo;proxy&rdquo; for LCOE (<em>optimise_cost</em>)</td></tr>
+<tr><td class="lr"><dfn>CO2</dfn></td>
+<td class="none">The estimated CO2 emissions. A lower value is better (<em>optimise_co2</em>)</td></tr>
+<tr><td class="bottom"><strong>Quit, Proceed</strong></td>
+<td class="none">Either quit or proceed with the optimisation</td></tr>
+</table>
+</li>
 </ul>
 <p>Powermatch optimisation approach:
 <ol>
