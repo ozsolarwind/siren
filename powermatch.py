@@ -1345,9 +1345,10 @@ class powerMatch(QtGui.QWidget):
                         ns.cell(row=row, column=col).value = data[i][row - hrows]
             col = shrt_col + 1
         order = [] #'Storage', 'Biomass', 'PHS', 'Gas', 'CCG1', 'Other', 'Coal']
-        for itm in range(self.order.count()):
-            if self.adjustby[str(self.order.item(itm).text())] > 0:
-                order.append(str(self.order.item(itm).text()))
+        if self.adjustby is not None:
+            for itm in range(self.order.count()):
+                if self.adjustby[str(self.order.item(itm).text())] > 0:
+                    order.append(str(self.order.item(itm).text()))
         #storage? = []
         self.progressbar.setValue(3)
         for gen in order:
