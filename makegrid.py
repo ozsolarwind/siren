@@ -135,6 +135,16 @@ class makeFile():
         fils = os.listdir(self.src_dir)
         for fil in fils:
             if fil[-4:] == '.csv' or fil[-4:] == '.smw':
+                tf = open(self.src_dir + '/' + fil, 'r')
+                line = tf.readline()
+                if line.find('Latitude') < 0 or line.find('Longitude') < 0 \
+                  or line.find('Time Zone') < 0:
+                    tf.close()
+                    continue
+                tf.seek(0)
+                tf = open(self.src_dir + '/' + fil, 'r')
+                lines = tf.readlines()
+                tf.close()
                 valu = []
                 cell = []
                 for j in range(len(the_cols)):
@@ -157,9 +167,6 @@ class makeFile():
                             vald[-1].append([])
                             for k in range(len(the_cols)):
                                 vald[-1][-1].append(0.)
-                tf = open(self.src_dir + '/' + fil, 'r')
-                lines = tf.readlines()
-                tf.close()
                 fst_row = len(lines) - 8760
                 if fst_row < 0: # probably not for us
                     continue
@@ -219,8 +226,11 @@ class makeFile():
                     continue
                 for i in range(fst_row, len(lines)):
                     bits = lines[i].split(',')
-                    if src_yr < 0:
-                        src_yr = bits[yr_col]
+                    try:
+                        if src_yr < 0:
+                            src_yr = bits[yr_col]
+                    except:
+                        pass
                     if calc_mth:
                         mth = 11
                         hr = i - fst_row
