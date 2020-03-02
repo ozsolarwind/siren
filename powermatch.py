@@ -257,6 +257,9 @@ class Adjustments(QtGui.QDialog):
         show = QtGui.QPushButton('Proceed', self)
         self.grid.addWidget(show, ctr, 1)
         show.clicked.connect(self.showClicked)
+        reset = QtGui.QPushButton('Reset', self)
+        self.grid.addWidget(reset, ctr, 2)
+        reset.clicked.connect(self.resetClicked)
         frame = QtGui.QFrame()
         frame.setLayout(self.grid)
         self.scroll = QtGui.QScrollArea()
@@ -279,6 +282,10 @@ class Adjustments(QtGui.QDialog):
 
     def quitClicked(self):
         self.close()
+
+    def resetClicked(self):
+        for key in self.adjusts.keys():
+            self.adjusts[key].setValue(1)
 
     def showClicked(self):
         self.results = {}
@@ -1044,8 +1051,10 @@ class powerMatch(QtGui.QWidget):
         shortfall = []
         if self.surplus_sign < 0:
             sf_test = ['>', '<']
+            sf_sign = ['+', '-']
         else:
             sf_test = ['<', '>']
+            sf_sign = ['-', '+']
         if pm_data_file[-4:] == '.xls': #xls format
             xlsx = False
             details = False
@@ -1092,7 +1101,7 @@ class powerMatch(QtGui.QWidget):
                 return
             icap_row = typ_row + 1
             while icap_row < top_row:
-                if ws.cell(row=icap_row, column=1).value == 'Capacity (MW)':
+                if ws.cell(row=icap_row, column=1).value[:8] == 'Capacity':
                     break
                 icap_row += 1
             else:
@@ -1120,11 +1129,11 @@ class powerMatch(QtGui.QWidget):
                                         self.generators[self.order.item(i).text()].capacity])
                 adjust = Adjustments(adjustin, self.adjustby, self.adjust_cap)
                 adjust.exec_()
-                self.adjustby = adjust.getValues()
-                if self.adjustby is None:
+                if adjust.getValues() is None:
                     self.setStatus('Execution aborted.')
                     self.progressbar.setHidden(True)
                     return
+                self.adjustby = adjust.getValues()
             load_col = -1
             det_col = 3
             self.progressbar.setValue(1)
@@ -1141,10 +1150,12 @@ class powerMatch(QtGui.QWidget):
                     except:
                         continue
                 data.append([])
-                try:
-                    multiplier = self.adjustby[tech_names[i]]
-                except:
-                    multiplier = 1.
+                multiplier = 1.
+                if self.adjust.isChecked() and self.adjustby is not None:
+                    try:
+                        multiplier = self.adjustby[tech_names[i]]
+                    except:
+                        pass
                 if multiplier == 0:
                     continue
                 if details:
@@ -1239,7 +1250,7 @@ class powerMatch(QtGui.QWidget):
                 for i in cols:
                     if tech_names[i] == 'Load':
                         continue
-                    if self.adjust.isChecked():
+                    if self.adjust.isChecked() and self.adjustby is not None:
                         if self.adjustby[tech_names[i]] <= 0:
                             continue
                     col += 1
@@ -1318,7 +1329,8 @@ class powerMatch(QtGui.QWidget):
                             + str(hrows) + ':' + ss_col(shrt_col) + str(hrows + 8759) + \
                             ',"' + sf_test[0] + '0")'
             ns.cell(row=fall_row, column=shrt_col).number_format = '#,##0'
-            ns.cell(row=what_row, column=shrt_col).value = 'Shortfall'
+            ns.cell(row=what_row, column=shrt_col).value = 'Shortfall (' + sf_sign[0] \
+                    + ') /\nSurplus (' + sf_sign[1] + ')'
             for col in range(3, shrt_col + 1):
                 ns.cell(row=what_row, column=col).alignment = oxl.styles.Alignment(wrap_text=True,
                         vertical='bottom', horizontal='center')
@@ -1345,10 +1357,13 @@ class powerMatch(QtGui.QWidget):
                         ns.cell(row=row, column=col).value = data[i][row - hrows]
             col = shrt_col + 1
         order = [] #'Storage', 'Biomass', 'PHS', 'Gas', 'CCG1', 'Other', 'Coal']
-        if self.adjustby is not None:
-            for itm in range(self.order.count()):
+     #   if self.adjustby is not None:
+        for itm in range(self.order.count()):
+            try:
                 if self.adjustby[str(self.order.item(itm).text())] > 0:
                     order.append(str(self.order.item(itm).text()))
+            except:
+                order.append(str(self.order.item(itm).text()))
         #storage? = []
         self.progressbar.setValue(3)
         for gen in order:
@@ -1546,7 +1561,7 @@ class powerMatch(QtGui.QWidget):
             pct = '{:.1%})'.format( -sf_sums[1] / sp_load)
             sp_data.append(['Surplus (' + pct, '', -sf_sums[1]])
             adjusted = False
-            if self.adjustby is not None:
+            if self.adjust.isChecked() and self.adjustby is not None:
                 for key, value in iter(sorted(self.adjustby.items())):
                     if value != 1:
                         if not adjusted:
@@ -1590,10 +1605,12 @@ class powerMatch(QtGui.QWidget):
             ss.cell(row=ss_row, column=4).value = '=Detail!' + ss_col(col) + str(cf_row)
             ss.cell(row=ss_row, column=4).number_format = '#,##0.00'
             if self.generators[gen].lcoe > 0:
-                try:
-                    capacity = self.generators[gen].capacity * self.adjustby[gen]
-                except:
-                   capacity = self.generators[gen].capacity
+                capacity = self.generators[gen].capacity
+                if self.adjust.isChecked() and self.adjustby is not None:
+                    try:
+                        capacity = self.generators[gen].capacity * self.adjustby[gen]
+                    except:
+                        pass
                 ns.cell(row=cost_row, column=col).value = self.generators[gen].lcoe * \
                         self.generators[gen].lcoe_cf * 8760 * capacity
                 ns.cell(row=cost_row, column=col).number_format = '$#,##0'
@@ -1721,6 +1738,7 @@ class powerMatch(QtGui.QWidget):
             + ':Detail!C' + str(hrows + 8759) + ')+SUMIF(Detail!' + last_col + str(hrows) + ':Detail!' \
             + last_col + str(hrows + 8759) + ',"' + sf_test[1] + '0",Detail!C' + str(hrows) + ':Detail!C' \
             + str(hrows + 8759) + addsub + str(ss_row + 1)
+        ss.cell(row=ss_row, column=3).value = '=Detail!C' + str(sum_row) + '-C' + str(ss_row + 1)
         ss.cell(row=ss_row, column=3).number_format = '#,##0'
         ss.cell(row=ss_row, column=4).value = '=C' + str(ss_row) + '/C' + str(ss_row + 2)
         ss.cell(row=ss_row, column=4).number_format = '#,##0.0%'
@@ -1788,7 +1806,7 @@ class powerMatch(QtGui.QWidget):
         ss.merge_cells('B' + str(ss_row) + ':G' + str(ss_row))
         self.progressbar.setValue(7)
         try:
-            if self.adjustby is not None:
+            if self.adjust.isChecked() and self.adjustby is not None:
                 adjusted = ''
                 for key, value in iter(sorted(self.adjustby.items())):
                     if value != 1:
@@ -2088,10 +2106,14 @@ class powerMatch(QtGui.QWidget):
                     lcoe_fitness_scores.append(gsw) # target is corrected lcoe
                 else:
                     lcoe_fitness_scores.append(gs)
+                try:
+                    re_pct = re_sum / gen_sum
+                except:
+                    re_pct = 0
                 multi_values.append({'lcoe': lcoe_fitness_scores[-1], #lcoe. lower better
                     'load_pct': (sf_sums[2] - sf_sums[0]) / op_load_tot, #load met. 100% better
                     'surplus_pct': -sf_sums[1] / op_load_tot, #surplus. lower better
-                    're_pct': re_sum / gen_sum, # RE pct. higher better
+                    're_pct': re_pct, # RE pct. higher better
                     'cost': cost_sum, # cost. lower better
                     'co2': co2_sum}) # CO2. lower better
                 multi_fitness_scores.append(calc_weight(multi_values[-1]))
@@ -2299,7 +2321,7 @@ class powerMatch(QtGui.QWidget):
             return
         icap_row = typ_row + 1
         while icap_row < top_row:
-            if ws.cell(row=icap_row, column=1).value == 'Capacity (MW)':
+            if ws.cell(row=icap_row, column=1).value[:8] == 'Capacity':
                 break
             icap_row += 1
         else:
