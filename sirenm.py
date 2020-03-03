@@ -1973,7 +1973,7 @@ class MainWindow(QtGui.QMainWindow):
             targetrect = QtCore.QRectF(0, 0, outputimg.width(), outputimg.height())
             sourcerect = QtCore.QRect(bottom.x(), bottom.y(), outputimg.width(), outputimg.height())
             self.view.render(painter, targetrect, sourcerect)
-        if filename is None:
+        if not filename or filename is None:
             fname = self.new_scenario[:self.new_scenario.rfind('.')] + '.png'
             fname = QtGui.QFileDialog.getSaveFileName(self, 'Save image file',
                     self.scenarios + fname, 'Image Files (*.png *.jpg *.bmp)')

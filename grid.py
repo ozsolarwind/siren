@@ -369,7 +369,7 @@ class Grid:
                     break
             if inner_file == '':
                 return
-            memory_file = io.StringIO()
+            memory_file = io.BytesIO()
             memory_file.write(zf.open(inner_file).read())
             root = ElementTree(fromstring(memory_file.getvalue()))
         else:
@@ -669,7 +669,7 @@ class Grid_Boundary:
                     break
             if inner_file == '':
                 return
-            memory_file = io.StringIO()
+            memory_file = io.BytesIO()
             memory_file.write(zf.open(inner_file).read())
             root = ElementTree(fromstring(memory_file.getvalue()))
         else:
