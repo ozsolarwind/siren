@@ -522,7 +522,7 @@ The format is similar to a Windows INI file. If you want to create a new Model y
 <p><strong>Note:</strong> There is a quirk with the references to technologies in the <em>[Colors]</em> Section and <em>[Grid] dispatchable</em>, <em>[Power] fossil_technologies</em>, and <em>[Power] technologies</em> variables. The technology names are changed to all lower case and spaces are replaced by underscores. Thus, <em>Fixed PV</em> will appear as <em>fixed_pv</em>.</p>
 <p>(Skip to <a href="#menus">Menus</a>)</p>
 <p>Shortcut to Sections:- <a href="#p_backtrack_pv">Backtrack PV</a>, <a href="#p_base">Base</a>, <a href="#p_biomass">Biomass</a>, <a href="#p_colors">Colors</a>, <a href="#p_cst">CST</a>,
-<a href="#p_files">Files</a>, <a href="#financial">Financial</a>, <a href="#p_fixed_pv">Fixed PV</a>,
+<a href="#p_files">Files</a>, <a href="#financial">Financial</a>, <a href="#p_fixed_pv">Fixed PV</a>, <a href="#p_flexiplot">Flexiplot</a>,
 <a href="#p_fossil_coal">Fossil Coal</a>, <a href="#p_fossil_cogen">Fossil Cogen</a>, <a href="#p_fossil_gas">Fossil Gas</a>,
 <a href="#p_fossil_mixed">Fossil Mixed</a>, <a href="#p_geothermal">Geothermal</a>, <a href="#p_grid">Grid</a>,
 <a href="#p_hydro">Hydro</a>, <a href="#p_map">Map</a>, <a href="#p_offw">Offshore Wind</a>, <a href="#p_other">Other</a>, <a href="#p_parents">Parents</a>, <a href="#p_pc">Plot Colours</a>,
@@ -1075,6 +1075,96 @@ as embedded solar - Rooftop PV - installed on the grid but not registered with A
 </tr>
 </table>
 </td></tr>
+<tr class="none" id="p_flexiplot"><td><div class="experiment"><dfn><strong>[Flexiplot]</strong></dfn><br />(experimental)</div></td>
+<td><div class="experiment">
+Options for <a href="#flexiplot">Flexiplot</a>. Properties for individual files (columns, file, grid, maximum, percentage, period, plot, series, sheet, title, xlabel, xvalues, and ylabel) can be repeated a number of times to allow a history of recent files to be accessed. These are suffixed with a number. Properties are as follows:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>alpha</dfn></td>
+<td class="none">Opacity of plot fill for values above target. Range is 1.0 (opaque) to 0.0 (translucent). Default value is 0.25</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>columns</dfn></td>
+<td class="none">List (and order) for columns to be plotted</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>constrained_layout</dfn></td>
+<td class="none">Produce a plot layout with no whitespace around the graph. Default is False</td>
+<tr class="none">
+<td class="none"><dfn>file</dfn></td>
+<td class="none">Spreadsheet file name</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>file_choices</dfn></td>
+<td class="none">How many files to keep in a recent history list. The default is 10</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>file_history</dfn></td>
+<td class="none">The order of the recent history list</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>grid</dfn></td>
+<td class="none">The gridlines to be included on the plot. Options are Both, Horizontal, Vertical and None. The default is None</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>label_font</dfn></td>
+<td class="none">Font properties for plot labels</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>legend_font</dfn></td>
+<td class="none">Font properties for plot legend</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>palette</dfn></td>
+<td class="none">Invoke the Colours editor to create a palette of colours for selected columns. Default is True</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>percentage</dfn></td>
+<td class="none">Produce a percentages plot</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>plot</dfn></td>
+<td class="none">The type of plot. Options are Bar Graph, Cumulative, or Linegraph. The default is Bar Graph</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>maximum</dfn></td>
+<td class="none">Maximum value for Series (y) axis. Default is 0 (meaning dynamic y axis)</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>series</dfn></td>
+<td class="none">The series to be included in the plot defined as a set of Excel cells. A number of ranges can be defined</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>sheet</dfn></td>
+<td class="none">Worksheet name for plot</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>ticks_font/dfn></td>
+<td class="none">Font properties for label tick marks</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>title</dfn></td>
+<td class="none">Plot title</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>title_font</dfn></td>
+<td class="none">Font properties for plot title. Default fontsize is x-large</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>xlabel</dfn></td>
+<td class="none">The label for the series (X) axis</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>xvalues</dfn></td>
+<td class="none">The list of values to be included in the plot defined as a set of Excel cells. A number of ranges can be defined. The values specify the row or column that defines the column or row headings</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>ylabel</dfn></td>
+<td class="none">The label for the Y axis</td>
+</tr>
+</table>
+</td></tr>
+</div>
 <tr class="none" id="p_fossil_coal"><td><dfn><strong>[Fossil Coal]</strong></dfn></td>
 <td>Specifics on Fossil Coal characteristics. Properties are:</p>
 <table border="0", class="none">
@@ -1288,6 +1378,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">Operations and Maintenance cost per peak MW. A suffix of K indicates thousands and M millions</td>
 </tr>
 </table>
+</div>
 </td></tr>
 <tr class="none" id="p_map"><td><dfn><strong>[Map]</strong></dfn></td>
 <td>Details on the map including geographic boundaries. Properties are:</p>
@@ -1603,7 +1694,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </div>
 </td></tr>
 <tr class="none" id="p_pp"><td><dfn><strong>[Powerplot]</strong></dfn></td>
-<td>Options for <a href="#powerplot">Powerplot</a>. Properties for individual files (columns, cumulative, file, period, maximum, sheet, target, and title) can be repeated a number of times to allow a history of recent files to be accessed. These are suffixed with a number. Properties are as follows:</p>
+<td>Options for <a href="#powerplot">Powerplot</a>. Properties for individual files (columns, file, grid, maximum, percentage, period, plot, sheet, target, and title) can be repeated a number of times to allow a history of recent files to be accessed. These are suffixed with a number. Properties are as follows:</p>
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><dfn>alpha</dfn></td>
@@ -1612,10 +1703,6 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <tr class="none">
 <td class="none"><dfn>columns</dfn></td>
 <td class="none">List (and order) for columns to be plotted</td>
-</tr>
-<tr class="none">
-<td class="none"><dfn>cumulative</dfn></td>
-<td class="none">Indicator for cumulative (stacked) plot (True or False). Default is True</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>file</dfn></td>
@@ -1630,6 +1717,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">The order of the recent history list</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>grid</dfn></td>
+<td class="none">The gridlines to be included on the plot. Options are Both, Horizontal, Vertical and None. The default is None</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>palette</dfn></td>
 <td class="none">Invoke the Colours editor to create a palette of colours for selected columns. Default is True</td>
 </tr>
@@ -1640,6 +1731,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <tr class="none">
 <td class="none"><dfn>period</dfn></td>
 <td class="none">Chosen period for diurnal plot</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>plot</dfn></td>
+<td class="none">The type of plot. Options are Bar Graph, Cumulative, or Linegraph. The default is Bar Graph</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>maximum</dfn></td>
@@ -2780,6 +2875,8 @@ By default the size of plots produced is determined by matplotlib, or by the <em
 <li>Pressing the <em>m</em> key will display a monthly plot. Each press will show the next month. You can also navigate to a chosen month by pressing the number for the month after the <em>m</em>. For example, pressing <em>m10</em> will display October</li>
 <li>Pressing the <em>w</em> key will display a weekly plot. Each press will show the next week. If the <em>m</em> key has been pressed the weeks for that month will be displayed</li>
 <li>Pressing <em>PageUp</em> or <em>PageDown</em> will display the previous or next week or month</li>
+<li>Pressing the <em>left</em> or <em>right</em> arrow will scroll the display to the left or right</li>
+<li>Pressing the <em>up</em> or <em>down</em> arrow will scroll the display up or down</li>
 </ul>
 <p><strong>Note:</strong> For cumulative (stacked) plots produced by Powerplot this feature may perform slowly so please be a little patient</p>
 <h4 id="powerplot"><u>Powerplot</u></h4>
@@ -2811,10 +2908,12 @@ If it's not a diurnal plot (i.e. Period is <em>&lt;None&gt;</em>) any occurence 
 </td></tr>
 <tr><td class="lr"><dfn>Maximum</dfn></td>
 <td class="none">You can specify a maximum value for the Power (y) axis. This allows you to produce a series of plots with the same scale (<em>maximum</em>)</td></tr>
-<tr><td class="lr"><dfn>Cumulative</dfn></td>
-<td class="none">Checking this option will produce a cumulative (stacked) curve. The cumulative plot will have filled areas showing the generation for each technology. If a Target field (e.g. Load) is chosen the area above the Target value (i.e. excess generation) will have a lightly shaded value (the degree of shading is chosen by the <em>alpha</em> property in the [Powerplot] Section of the Preferences file) (<em>cumulative</em>)</td></tr>
+<tr><td class="lr"><dfn>Type of Plot</dfn></td>
+<td class="none">The type of plot to be produced. Options are <em>Bar Graph</em>, <em>Cumulative</em> and <e,>Linegraph</em>. <em>Bar Graph</em> and <em>Cumulative</em> produce cumulative (stacked) plots and have filled areas by technology (or Columns). If a Target field (e.g. Load) is chosen the area above the Target value (i.e. excess generation) in the Cumulative plot have a lightly shaded value (the degree of shading is chosen by the <em>alpha</em> property in the [Powerplot] Section of the Preferences file) (<em>plot</em>)</td></tr>
 <tr><td class="lr"><dfn>Percentage</dfn></td>
 <td class="none">Checking this option will produce a percentage (stacked) curve. The plot will have filled areas showing the percentage of generation for each technology. It is recommended to not set a Target field (i.e. set it to <em>&lt;None&gt;</em>) as this will merely remove the Target field (and it's data) from the plot (<em>percentage</em>)</td></tr>
+<tr><td class="lr"><dfn>Show Grid</dfn></td>
+<td class="none">The gridlines to be included on the plot. Options are <em>Both</em>, <em>Horizontal</em>, <em>Vertical</em> and <em>None</em>. The default is <em>None</em> (<em>grid</em>)</td></tr>
 <tr><td class="lr"><dfn>Column Order</dfn></td>
 <td class="none">To produce the plot you select those columns to be included. This field consists of two tables (lists) of columns. Those in the left hand list will be included in the plot while those on the right will be excluded. The included columns will be plotted in the chosen order. You can drag individual or a number of columns between the two lists to get the desired configuration. The plot colour for the column will be displayed as the background color for the column (<em>columns</em>)</td></tr>
 <tr><td class="bottom"><strong>Done, Plot, Colours, Help</strong></td>
@@ -2831,16 +2930,21 @@ If it's not a diurnal plot (i.e. Period is <em>&lt;None&gt;</em>) any occurence 
 <p>&nbsp;</p>
 <div class="experiment">
 <h4 id="flexiplot"><u>Flexiplot</u></h4>
-<p><code>flexiplot.exe</code> is a standalone program that can be used for &ldquo;prototyping&rdquo; a more conventional Excel spreadsheet where data is arranged in rows or columns. The program is very much experimental. If it proves useful it may be included as part of <code>powerplot.exe</code> in the future. The program has a similar window of options to <code>powerplot</code> with the exception of <em>Period</em> and <em>Target</em>. Instead it has two different options.
+<p><code>flexiplot.exe</code> is a standalone program that can be used for &ldquo;prototyping&rdquo; a more conventional Excel spreadsheet where data is arranged in rows or columns. The program is very much experimental. If it proves useful it may be included as part of <code>powerplot.exe</code> in the future. The program has a similar window of options to <code>powerplot</code> with the exception of <em>Period</em> and <em>Target</em>. The default values are specified in the <a href="#p_flexiplot">[Flexiplot]</a> Section of the Preferences file. It has a number of options that differ to <code>powerplot</code>.
 <table border="0" class="none">
 <tr><td class="top" style="width: 20%;"><dfn>Series</dfn></td>
 <td class="none">The location of the data series to be plotted. The range is specified as either Excel columns and rows, e.g. <em>B1:H1</em>, or as four numbers defining the row and columns range, e.g. <em>1,2,1,7</em>. The series can either be in rows or columns but is expected to be a single row (as in the examples) or column. You then choose which series you want plotted by moving them in the Column Order lists (<em>series</em>)</td></tr>
-<tr><td class="lr"><dfn>Series label</dfn></td>
-<td class="none">Not yet set up as a parameter (<em>ylabel</em>)</td></tr>
-<tr><td class="bottom"><dfn>X Values</dfn></td>
+<tr><td class="lr"><dfn>Series Label</dfn></td>
+<td class="none">The label for the Series (y values) (<em>ylabel</em>)</td></tr>
+<tr><td class="lr"><dfn>X Values</dfn></td>
 <td class="none">The data values to be plotted. The range is specified as either Excel columns and rows, e.g. <em>A2:A29</em> or as four numbers defining the row and columns range, e.g. <em>2,1,2,29</em>. The series can either be in rows or columns but is expected to be a single row or column (as in the examples). The first column (A) is taken as the X labels and the data series chosen will be plotted (<em>xlabels</em>)</td></tr>
+<tr><td class="lr"><dfn>X Label</dfn></td>
+<td class="none">The label for the X Axis (x values) (<em>xlabel</em>)</td></tr>
+<tr><td class="bottom"><strong>Preferences</strong></td>
+<td class="none">In addition to the buttons in <code>powerplot</code>, <code>flexiplot</code> has a <strong>Preferences</strong> button to allow you to update the Flexiplot preferences. This allows you to adjust text sizes and the like, however, some values, such as details for an individual file, may be ignored for the active file.
+</td></tr>
 </table>
-<p>&nbsp;</p>
+<p><code>flexiplot</code> has a number of options to adjust the font properties of the various text items on the plot. The properties are as described in <a href="https://matplotlib.org/3.1.1/api/font_manager_api.html#matplotlib.font_manager.FontProperties">FontProperties</a> but may be restricted by the matplotlib environment. To specify a property use the format as described in the link, e.g. <em>family=sans-serif,size=xxlarge</em>. The only non-default value is the plot title fontsize which is set to 'x-large'.</p>
 </div>
 <!-- Back to top< -->
 <h3 id="tables">Tables</h3>
@@ -2949,7 +3053,7 @@ In producing the LCOE figures you can choose to use LCOE figures that ignore any
 <tr><td class="lr"><dfn>Constraints Sheet</dfn>&nbsp;&nbsp;<strong>Constraints</strong></td>
 <td class="none">Worksheet name for constraints table (<em>constraints_sheet</em>). Click on the <strong>Constraints</strong> button to display the Constraints table. Values can be changed and the table Saved or Exported as a new file</td></tr>
 <tr><td class="lr"><dfn>Generators file</dfn></td>
-<td class="none">File name for generators (facilities) spreadsheet. Clicking on the field will allow you to choose another spreadsheet (<em>generators_file</em>)</td></tr>
+<td class="none">File name for generators (facilities; includes generators and storage) spreadsheet. Clicking on the field will allow you to choose another spreadsheet (<em>generators_file</em>)</td></tr>
 <tr><td class="lr"><dfn>Generators Sheet</dfn>&nbsp;&nbsp;<strong>Generators</strong></td>
 <td class="none">Worksheet name for generators (facilities) table (<em>generators_sheet</em>). Click on the <strong>Generators</strong> button to display the Generators (facilities) table. Values can be changed and the table Saved or Exported as a new file</td></tr>
 <tr><td class="lr"><dfn>Optimisation File</dfn></td>
@@ -2983,26 +3087,26 @@ In producing the LCOE figures you can choose to use LCOE figures that ignore any
 <tr><td class="none"><dfn>Name</dfn></td><td class="none">Name of the Facility</td></tr>
 <tr><td class="none"><dfn>(Dispatch) Order</dfn></td><td class="none">Specifies the order in which the dispatchable facilities are used, with a value of 1 being the first in the order. Zero values are placed after those with a positive number</td></tr>
 <tr><td class="none"><dfn>Constraint</dfn></td><td class="none">Name of the Constraint that applies to this facility</td></tr>
-<tr><td class="none"><dfn>Capacity</dfn></td><td class="none">The capacity for the facility in MW</td></tr>
-<tr><td class="none"><dfn>Initial</dfn></td><td class="none">For storage this species the initial level of storage</td></tr>
+<tr><td class="none"><dfn>Capacity</dfn></td><td class="none">The capacity for the facility in MW for generators and MWh for storage</td></tr>
+<tr><td class="none"><dfn>Initial</dfn></td><td class="none">For storage this species the initial level of storage as a percentage of total capacity</td></tr>
 <tr><td class="none"><dfn>LCOE</dfn></td><td class="none">The LCOE for the facility</td></tr>
 <tr><td class="none"><dfn>LCOE CF</dfn></td><td class="none">The capacity factor (CF) at which the LCOE was determined. A combination of <em>LCOE</em> and <em>LCOE CF</em> allows the cost of the generation or storage to be determined. In undertaking any calculations Powermatch adjusts the resulting LCOE to reflect the difference between this CF and the calculated CF</td></tr>
 <tr><td class="none"><dfn>Emissions</dfn></td><td class="none">Specifies the carbon dioxide equivalent emissions in tonnes per unit of electricity (t CO<sub>2</sub>-e / MWh)</td></tr>
 </table>
 <h4>Constraints</h4>
-<p>Utilisation of each dispatchable generator and storage facility can be constrained by Powermatch in a number of ways. All figures are expressed as a percentage. In the tables the values will be displayed as a decimal fraction (0.00 to 1.00). All figures are hourly except for Parasitic Loss which is daily. The constraints are:
+<p>Utilisation of each dispatchable generator and storage facility can be constrained by Powermatch in a number of ways. All figures are expressed as a percentage. In the tables the values will be displayed as a decimal fraction (0.00 to 1.00). All figures are hourly except for Parasitic Loss which is daily. The approach Powermatch uses is rather simplistic in that any losses need to cater for any loss of efficiency in storing energy or retrieving energy. The constraints are:
 <table border="0" class="none">
 <tr><td class="none"><dfn>Name</dfn></td><td class="none">Name of the Constraint</td></tr>
 <tr><td class="none"><dfn>Constraint</dfn></td><td class="none">Name of the Constraint (same as Name)</td></tr>
 <tr><td class="none"><dfn>Category</dfn></td><td class="none">The category of the constraint. Values are either Storage or Generator</td></tr>
 <tr><td class="none"><dfn>Capacity Max</dfn></td><td class="none">For a Generator the maximum rate the plant can run at. For Storage the maximum amount of storage that can be used</td></tr>
 <tr><td class="none"><dfn>Capacity Min</dfn></td><td class="none">For a Generator the minimum rate (other than zero) the plant can run at. For Storage the facility should not be drained below this value</td></tr>
-<tr><td class="none"><dfn>Discharge Loss</dfn></td><td class="none">Losses when storage is used</td></tr>
+<tr><td class="none"><dfn>Discharge Loss</dfn></td><td class="none">Losses when storage is used (discharged)</td></tr>
 <tr><td class="none"><dfn>Discharge Max</dfn></td><td class="none">For Storage the maximum rate at which the storage can be used</td></tr>
-<tr><td class="none"><dfn>Parasitic Losses</dfn></td><td class="none">Storage may lose capacity over time (e.g. batteries discharging). This constraint enables those losses to be catered for</td></tr>
+<tr><td class="none"><dfn>Parasitic Losses</dfn></td><td class="none">Storage may lose capacity over time (e.g. batteries discharging, water evaporating). This constraint enables those losses to be catered for</td></tr>
 <tr><td class="none"><dfn>Rampdown Max</dfn></td><td class="none">The maximum rate that a generator can be ramped down (not fully implemented)</td></tr>
 <tr><td class="none"><dfn>Rampup Max</dfn></td><td class="none">The maximum rate that a generator can be ramped up (not fully implemented)</td></tr>
-<tr><td class="none"><dfn>Recharge Loss</dfn></td><td class="none">Losses when storage is increased</td></tr>
+<tr><td class="none"><dfn>Recharge Loss</dfn></td><td class="none">Losses when storage is increased (recharged)</td></tr>
 <tr><td class="none"><dfn>Recharge Max</dfn></td><td class="none">For Storage the maximum rate at which the storage can be increased</td></tr>
 </table>
 <div class="experiment">
@@ -3010,12 +3114,12 @@ In producing the LCOE figures you can choose to use LCOE figures that ignore any
 <p>In an attempt to simplify the process of determining the optimal generation mix, Powermatch has an optimisation function. The function uses a genetic algorithm to identify three possible optimal solutions:
 <ol>
 <li>A solution with the lowest LCOE for the input renewable and dispatchable technologies</li>
-<li>A solution with the best (lowest) weighting for six variables - lowest LCOE, lowest CO2 emissions, lowest Overall Cost, lowest surplus generation, highest RE percentage and maximising percentage of load met</li>
+<li>A solution with the best (lowest) weighting for six variables - lowest LCOE, lowest CO2 emissions, lowest Overall Cost, lowest surplus generation, highest RE percentage and maximising the percentage of load met</li>
 <li>A solution with the the lowest LCOE and weighting for six variables. Running both does use a single population and so there is some &ldquo;interaction&rdquo; between the the which may distort the result</li>
 </ol>
 Genetic algorithms are inspired by the process of natural selection and simulate evolution of multiple generations that evolve to produce an optimal solution, in this case 1. lowest LCOE 2. lowest weighted solution, or 3. lowest in both (<strong>Note:</strong> This is a different approach to optimisation than in Power Model). The approach has a number of inputs:</p>
 <ul>
-<li>A chromosome. This is a series of &ldquo;switches&rdquo; with each switch representing whether a unit of technology is to be included in this iteration of Powermatch. The format of the chromosome is defined by the Optimisation table. In creating the chromosome each technology will be assigned a number of switches representing either a discrete unit of technology or a proportion of the total capacity for that technology (as defined by the Optimisation entry)</li>
+<li>A chromosome. This is a series of &ldquo;switches&rdquo; with each switch representing whether a unit of technology is or is not to be included in this iteration of Powermatch. The format of the chromosome is defined by the Optimisation table. In creating the chromosome each technology will be assigned a number of switches representing either a discrete unit of technology or a proportion of the total capacity for that technology (as defined by the Optimisation entry)</li>
 <li>The remaining inputs options are as set out here. The options are specified in the <a href="#p_pm">[Powermatch]</a> Section of the Preferences file. The associated property is indicated in brackets at the end of the description.</p>
 <table border="0" class="none" cellpadding="2">
 <tr><td class="top" style="width: 15%;"><dfn>Adjust Load</dfn></td>
@@ -3054,11 +3158,25 @@ Genetic algorithms are inspired by the process of natural selection and simulate
 </table>
 </li>
 </ul>
-<p>Powermatch optimisation approach:
+<p>The Powermatch optimisation approach uses the Optimisation table to define the range of possible values for each of the renewable technologies and dispatchable and storage facilities. Entries are required for all Renewable technologies and dispatchable and storage facilities. The fields are:
+<table border="0" class="none">
+<tr><td class="none"><dfn>Name</dfn></td><td class="none">Name of the Technology (matches either RE or generator)</td></tr>
+<tr><td class="none"><dfn>Approach</dfn></td><td class="none">Approach for how this generator will be treated. There are two options:
+<ul>
+<li>Discrete. A list of discrete Capacities representing individual generation units (facilties) for the technology, e.g. individual generators</li>
+<li>Range. The (total) Capacity for the technology is divided into a number of equal steps. A minimum capacity can also be defined</li>
+<ul></td></tr>
+<tr><td class="none"><dfn>Capacities</dfn></td><td class="none">The capacities for a Discrete generator. This is a series of numbers separated by spaces</td></tr>
+<tr><td class="none"><dfn>Capacity Max</dfn></td><td class="none">The maximum (total) capacity for a Range</td></tr>
+<tr><td class="none"><dfn>Capacity Min</dfn></td><td class="none">The minimum capacity for a Range</td></tr>
+<tr><td class="none"><dfn>Capacity Step</dfn></td><td class="none">The size of each capacity step for a Range</td></tr>
+</table>
+<p>The capacity fields can be a single field, <dfn>Values</dfn>, as a string of numbers separated by spaces.</p>
+<p>Powermatch optimisation approach is as follows:
 <ol>
-<li>Generate a chromosome from the Optimisation table</li>
-<li>Create an initial population, each with a random copy of the chromosome</li>
-<li>Calculate fitness of population. Select either (1.) lowest LCOE that meets 100% of load (demand), (2.) lowest weighting, or the lowest of both. For each member:
+<li>Generate a chromosome as defined by the Optimisation table</li>
+<li>Create an initial population, each member with a random copy of the chromosome</li>
+<li>Calculate fitness of population. Select either (1.) lowest LCOE that meets 100% of load (demand), (2.) lowest weighting, or (3.) the lowest of both. For each member:
 <ol>
 <li>Using their chromosome and the Optimisation table determine the capacity for each technology</li>
 <li>Run Powermatch with this generation mix to calculate (1.) the LCOE (score) and (2.) the weighting</li>
@@ -3068,32 +3186,18 @@ Genetic algorithms are inspired by the process of natural selection and simulate
 <li>Select the best parents by competition</li>
 <li>Breed new population by random crossover of chromosomes for winners</li>
 <li>Randomly mutate the population</li>
-<li>Calculate fitness of population. Select either (1.) lowest LCOE that meets 100% of load (demand), (2.) lowest weighting, or both</li>
+<li>Calculate fitness of population. Select either (1.) lowest LCOE that meets 100% of load (demand), (2.) lowest weighting, or (3.) lowest of both</li>
 <li>Exit loop if LCOE has remained the same for the specified number of generations</li>
-<li>Include either (1.) lowest LCOE, (2.) lowest weighting or both in the next generation
+<li>Include either (1.) lowest LCOE, (2.) lowest weighting or (3.) lowest of both in the next generation
 </ol>
 <li>Produce
 <ol>
 <li>A plot showing the progression of LCOE over each generation</li>
-<li>A three dimensional plot showing the best individual for each generation. The three variables with the highest weighting are chosen for the plot. It is also possible to pick one of the solutions by clicking the mouse on that point - a small box showing the values for each of the three variables will be displayed</li>
+<li>A three dimensional plot showing the best individual for each generation. The three variables with the highest weighting are chosen for the plot. It is also possible to pick one of the solutions by clicking the mouse on that point - a small box showing the values for each of the three variables will be displayed. You can &ldquo;rotate<&rdquo; the plot around by holding down the left mouse button and then moving the mouse</li>
 </ol>
 <li>Optionally, produce tables for best candidate (1.) with lowest LCOE and (2.) lowest weighting if the <em>more_details</em> property is set to True</li>
 <li>Present a table for the optimal solutions. The table shows the adjustment values and capacity for each generator followed by the estimated value for each of the six multi-variables prioritised by Weight. By pressing the appropriate button the adjustment values for the chosen solution will be made available for <strong>Summary</strong> and <strong>Powermatch</strong></li>
 </ol>
- <p>The Optimisation table defines the format for the chromsome. Entries are required for all Renewable technologies and dispatchable and storage facilities. The fields are:
-<table border="0" class="none">
-<tr><td class="none"><dfn>Name</dfn></td><td class="none">Name of the Technology (matches either RE or generator)</td></tr>
-<tr><td class="none"><dfn>Approach</dfn></td><td class="none">Approach for how this generator will be treated. There are two options:
-<ul>
-<li>Discrete. A list of discrete Capacities representing individual generation units (facilties) for the technology</li>
-<li>Range. The (total) Capacity for the technology is divided into a number of equal steps. A minimum capacity can also be defined</li>
-<ul></td></tr>
-<tr><td class="none"><dfn>Capacities</dfn></td><td class="none">The capacities for a Discrete generator. This is a series of numbers separated by spaces</td></tr>
-<tr><td class="none"><dfn>Capacity Max</dfn></td><td class="none">The maximum (total) capacity for a Range</td></tr>
-<tr><td class="none"><dfn>Capacity Min</dfn></td><td class="none">The minimum capacity for a Range</td></tr>
-<tr><td class="none"><dfn>Capacity Step</dfn></td><td class="none">The size of each capacity step for a Range</td></tr>
-</table>
-<p>The capacity fields can be a single field, <dfn>Values</dfn>, as a string of numbers separated by spaces</p>
 </div>
 <p><a href="#help">Back to top</a></p>
 <h3 id="resourcegrid">Resource Grids</h3>
