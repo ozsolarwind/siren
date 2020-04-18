@@ -27,7 +27,7 @@ from mpl_toolkits.mplot3d.art3d import Path3DCollection
 
 
 class ZoomPanX():
-    def __init__(self):
+    def __init__(self, yformat=None):
         self.base_xlim = None
         self.base_ylim = None
         self.base_zlim = None
@@ -41,9 +41,9 @@ class ZoomPanX():
         self.month = None
         self.week = None
         self.keys = ''
+        self.yformat = yformat
 
-
-    def zoom_pan(self, ax, base_scale=2., annotate=False):
+    def zoom_pan(self, ax, base_scale=2., annotate=False, dropone=False):
         def zoom(event):
             if event.inaxes != ax:
                 return
@@ -85,7 +85,8 @@ class ZoomPanX():
             elif self.axis == 'z':
                 ax.set_zlim([ydata - (ydata - cur_zlim[0]) * scale_factor,
                             ydata + (cur_zlim[1] - ydata) * scale_factor])
-            ax.figure.canvas.draw() # force re-draw
+       #     ax.figure.canvas.draw() # force re-draw
+            ax.figure.canvas.draw_idle() # force re-draw
 
         def onPress(event):
             if self.base_xlim is None:
@@ -149,7 +150,13 @@ class ZoomPanX():
             ax.figure.canvas.draw()
 
         def onKey(event):
-            if event.key.lower() == 'r': # reset
+            if event.key is None:
+                return
+            try:
+                event_key = event.key.lower()
+            except:
+                event_key = event.key
+            if event_key == 'r': # reset
                 self.keys = ''
                 self.month = None
                 self.week = None
@@ -166,7 +173,7 @@ class ZoomPanX():
                         ax.set_zlim(self.base_zlim)
                     ax.figure.canvas.draw()
                     return
-            if event.key == 'pageup':
+            if event_key == 'pageup':
                 if self.axis != 'x':
                     return
                 if self.week is not None:
@@ -190,7 +197,7 @@ class ZoomPanX():
                         self.month -= 1
                     ax.set_xlim([self.mth_xlim[self.month], self.mth_xlim[self.month + 1]])
                 ax.figure.canvas.draw()
-            elif event.key == 'pagedown':
+            elif event_key == 'pagedown':
                 if self.axis != 'x':
                     return
                 if self.week is not None:
@@ -215,10 +222,17 @@ class ZoomPanX():
                             self.month += 1
                     ax.set_xlim([self.mth_xlim[self.month], self.mth_xlim[self.month + 1]])
                 ax.figure.canvas.draw()
-            elif event.key.lower() == 'l':
-                ax.legend().set_draggable(True)
+            elif event_key == 'l':
+                font = ax.get_legend().prop
+                handles, labels = ax.get_legend_handles_labels()
+                # reverse the order
+                ax.legend(handles[::-1], labels[::-1], prop=font).set_draggable(True)
+                if self.yformat is not None:
+                    ax.yaxis.set_major_formatter(self.yformat)
                 ax.figure.canvas.draw()
-            elif event.key.lower() == 'm':
+           #     if self.yformat is not None:
+             #       ax.yaxis.set_major_formatter(self.yformat)
+            elif event_key == 'm':
                 if self.axis != 'x':
                     return
                 self.keys = 'm'
@@ -231,10 +245,10 @@ class ZoomPanX():
                     self.month += 1
                 ax.set_xlim([self.mth_xlim[self.month], self.mth_xlim[self.month + 1]])
                 ax.figure.canvas.draw()
-            elif event.key.lower() == 'w':
+            elif event_key == 'w':
                 if self.axis != 'x':
                     return
-                self.keys = ''
+                self.keys = 'w'
                 if self.week is None:
                     self.week = 0
                 else:
@@ -265,20 +279,73 @@ class ZoomPanX():
                     else:
                         self.month = int(event.key) - 1
                     self.keys += event.key
+                elif self.keys[-1] == 'w' or self.keys[-2] == 'w':
+                    if self.keys[-1] == 'w':
+                        wk = event_key
+                    else:
+                        wk = self.keys[-1] + event_key
+                    if wk == '0':
+                        self.week = 0
+                    else:
+                        self.week = int(wk) - 1
+                    if self.month is None:
+                        if self.week >= 52:
+                            self.week = 0
+                        strt = self.week * 168 # 24 * 7 hours per week
+                    else:
+                        if self.week >= 5 or \
+                          (self.month == 1 and self.week >= 4 and self.mth_xlim[2] == 1416):
+                            self.week = 0
+                        strt = self.mth_xlim[self.month] + self.week * 168
+                    self.keys += event.key
+                    ax.set_xlim([strt, strt + 168])
+                    ax.figure.canvas.draw()
+                    return
                 ax.set_xlim([self.mth_xlim[self.month], self.mth_xlim[self.month + 1]])
                 ax.figure.canvas.draw()
-            elif event.key.lower() == 'x':
+            elif event_key == 'x':
                 if self.axis != 'x':
                     self.press = None
                 self.axis = 'x'
-            elif event.key.lower() == 'y':
+            elif event_key == 'y':
                 if self.axis != 'y':
                     self.press = None
                 self.axis = 'y'
-            elif event.key.lower() == 'z' and self.d3:
+            elif event_key == 'z' and self.d3:
                 if self.axis != 'z':
                     self.press = None
                 self.axis = 'z'
+            elif event.key == 'right':
+                xlim = ax.get_xlim()
+                if xlim[1] >= self.base_xlim[1]:
+                    ax.set_xlim([0, xlim[1] - xlim[0]])
+                else:
+                    ax.set_xlim([xlim[1], xlim[1] + (xlim[1] - xlim[0])])
+                ax.figure.canvas.draw()
+            elif event.key == 'left':
+                xlim = ax.get_xlim()
+                if xlim[0] <= self.base_xlim[0]:
+                    ax.set_xlim([self.base_xlim[1] - (xlim[1] - xlim[0]), self.base_xlim[1]])
+                else:
+                    ax.set_xlim([xlim[0] - (xlim[1] - xlim[0]), xlim[0]])
+                ax.figure.canvas.draw()
+            elif event.key == 'up':
+                ylim = ax.get_ylim()
+                if ylim[1] >= self.base_ylim[1]:
+                    ax.set_ylim([0, ylim[1] - ylim[0]])
+                else:
+                    ax.set_ylim([ylim[1], ylim[1] + (ylim[1] - ylim[0])])
+                ax.figure.canvas.draw()
+            elif event.key == 'down':
+                ylim = ax.get_ylim()
+                if ylim[0] <= self.base_ylim[0]:
+                    ax.set_ylim([self.base_ylim[1] - (ylim[1] - ylim[0]), self.base_ylim[1]])
+                else:
+                    if ylim[0] - (ylim[1] - ylim[0]) < self.base_ylim[0]:
+                        ax.set_ylim([self.base_ylim[0], self.base_ylim[0] + (ylim[1] - ylim[0])])
+                    else:
+                        ax.set_ylim([ylim[0] - (ylim[1] - ylim[0]), ylim[0]])
+                ax.figure.canvas.draw()
 
         def onPick(event):
             if not isinstance(event.artist, Path3DCollection): # just 3D picking for the moment
@@ -307,7 +374,6 @@ class ZoomPanX():
                                                   connectionstyle = 'arc3,rad=0'))
                 ax.figure.canvas.draw()
 
-
         the_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
         self.xlabel = ax.get_xlabel()
         self.title = ax.get_title()
@@ -322,8 +388,17 @@ class ZoomPanX():
             the_days[1] = 29
         x = 0
         self.mth_xlim = [x]
+        mult = 24
+        if dropone:
+            no_of_days = 364
+        else:
+            no_of_days = 365
+        if self.base_xlim[1] == no_of_days or self.base_xlim[1] == no_of_days + 1: # daily data
+            if self.base_xlim[1] == no_of_days + 1: # leap year
+                the_days[1] = 29
+            mult = 1
         for days in the_days:
-            x += days * 24
+            x += days * mult
             self.mth_xlim.append(x)
         fig = ax.get_figure() # get the figure of interest
         self.tbar = fig.canvas.toolbar # get toolbar
