@@ -26,6 +26,7 @@ from PyQt4 import QtCore, QtGui
 import displayobject
 import displaytable
 from credits import fileVersion
+from math import log10
 from matplotlib import rcParams
 import matplotlib.pyplot as plt
 # This import registers the 3D projection, but is otherwise unused.
@@ -218,38 +219,97 @@ class Optimisation:
 
 
 class Adjustments(QtGui.QDialog):
+    def setAdjValue(self, key, typ, capacity):
+        if key != 'Load':
+            mw = capacity * self.adjustm[key]
+            if typ == 'Storage':
+                unit = 'MWh'
+            else:
+                unit = 'MW'
+            fmtstr = self.fmtstr
+            dp = self.decpts
+        else:
+            if self.adjusts[key].value() <= 0:
+                return 0, '0 MW', '0'
+            dimen = log10(capacity * self.adjusts[key].value())
+            unit = 'MWh'
+            if dimen > 11:
+                unit = 'PWh'
+                div = 9
+            elif dimen > 8:
+                unit = 'TWh'
+                div = 6
+            elif dimen > 5:
+                unit = 'GWh'
+                div = 3
+            else:
+                div = 0
+            mw = (capacity * self.adjusts[key].value()) / pow(10, div)
+            fmtstr = '{:,.0f}'
+            dp = None
+        mwtxt = fmtstr.format(mw) + ' ' + unit
+        mwstr = str(round(mw, dp))
+        return mw, mwtxt, mwstr
+
     def __init__(self, data, adjustin, adjust_cap):
         super(Adjustments, self).__init__()
-        self.adjusts = {}
-        self.checkbox = {}
-        self.labels = {}
+        self.adjustt = {}
+        self.adjustm = {} # (actual) adjust multiplier
+        self.adjusts = {} # multiplier widget (rounded to 4 digits)
+        self.labels = {} # string with calculated capacity
+        self.adjustval = {} # adjust capacity input
+        self.ignore = False
         self.results = None
         self.grid = QtGui.QGridLayout()
         self.data = {}
         ctr = 0
-        for key, capacity in data:
+        self.decpts = None
+        for key, typ, capacity in data:
+            if key == 'Load' or capacity is None:
+                continue
+            dimen = log10(capacity)
+            if dimen < 2.:
+                if dimen < 1.:
+                    self.decpts = 2
+                elif self.decpts != 2:
+                    self.decpts = 1
+        if self.decpts is None:
+            self.fmtstr = '{:,.0f}'
+        else:
+            self.fmtstr = '{:,.' + str(self.decpts) + 'f}'
+        for key, typ, capacity in data:
+            self.adjustt[key] = typ
             if key != 'Load' and capacity is None:
                 continue
             self.adjusts[key] = QtGui.QDoubleSpinBox()
             self.adjusts[key].setRange(0, adjust_cap)
-            self.adjusts[key].setDecimals(3)
+            self.adjusts[key].setDecimals(4)
             try:
-                self.adjusts[key].setValue(adjustin[key])
+                self.adjustm[key] = adjustin[key]
+                self.adjusts[key].setValue(round(adjustin[key], 4))
             except:
+                self.adjustm[key] = 1.
                 self.adjusts[key].setValue(1.)
             self.data[key] = capacity
             self.adjusts[key].setSingleStep(.1)
             self.adjusts[key].setObjectName(key)
             self.grid.addWidget(QtGui.QLabel(key), ctr, 0)
             self.grid.addWidget(self.adjusts[key], ctr, 1)
-            if key != 'Load' or key == 'Load':
-                self.adjusts[key].valueChanged.connect(self.adjust)
-                self.labels[key] = QtGui.QLabel('')
-                self.labels[key].setObjectName(key + 'label')
-                if key != 'Load':
-                    mw = '{:.0f} MW'.format(capacity * self.adjusts[key].value())
-                    self.labels[key].setText(mw)
-                self.grid.addWidget(self.labels[key], ctr, 2)
+            self.adjusts[key].valueChanged.connect(self.adjust)
+            self.labels[key] = QtGui.QLabel('')
+            self.labels[key].setObjectName(key + 'label')
+            mw, mwtxt, mwstr = self.setAdjValue(key, typ, capacity)
+            self.labels[key].setText(mwtxt)
+            self.grid.addWidget(self.labels[key], ctr, 2)
+            self.adjustval[key] = QtGui.QLineEdit()
+            self.adjustval[key].setObjectName(key)
+            self.adjustval[key].setText(mwstr)
+            if self.decpts is None:
+                self.adjustval[key].setValidator(QtGui.QIntValidator())
+            else:
+                self.adjustval[key].setValidator(QtGui.QDoubleValidator())
+            self.grid.addWidget(self.adjustval[key], ctr, 3)
+            self.adjustval[key].textChanged.connect(self.adjustst)
             ctr += 1
         quit = QtGui.QPushButton('Quit', self)
         self.grid.addWidget(quit, ctr, 0)
@@ -274,8 +334,44 @@ class Adjustments(QtGui.QDialog):
 
     def adjust(self):
         key = str(self.sender().objectName())
-        mw = '{:.0f} MW'.format(self.data[key] * self.sender().value())
-        self.labels[key].setText(mw)
+        if not self.ignore:
+            self.adjustm[key] = self.adjusts[key].value()
+        mw, mwtxt, mwstr = self.setAdjValue(key, self.adjustt[key], self.data[key])
+        self.labels[key].setText(mwtxt)
+        if not self.ignore:
+            self.adjustval[key].setText(mwstr)
+        self.ignore = False
+
+    def adjustst(self):
+        if self.ignore:
+            return
+        key = str(self.sender().objectName())
+        if self.decpts is None:
+            value = int(self.sender().text())
+        else:
+            try:
+                value = float(self.sender().text())
+                value = round(value, self.decpts)
+            except:
+                value = 0
+        if key != 'Load':
+            adj = value / self.data[key]
+         #   self.adjusts[key].setValue(adj)
+        else:
+            dimen = log10(self.data[key])
+            if dimen > 11:
+                mul = 9
+            elif dimen > 8:
+                mul = 6
+            elif dimen > 5:
+                mul = 3
+            else:
+                mul = 0
+            adj = (value * pow(10, mul)) / self.data[key]
+        self.adjustm[key] = adj
+        self.ignore = True
+        self.adjusts[key].setValue(round(adj, 4))
+        self.ignore = False
 
     def closeEvent(self, event):
         event.accept()
@@ -290,7 +386,7 @@ class Adjustments(QtGui.QDialog):
     def showClicked(self):
         self.results = {}
         for key in list(self.adjusts.keys()):
-            self.results[key] = round(self.adjusts[key].value(), 3)
+            self.results[key] = self.adjustm[key]
         self.close()
 
     def getValues(self):
@@ -361,6 +457,7 @@ class powerMatch(QtGui.QWidget):
         self.constraints = None
         self.generators = None
         self.optimisation = None
+        self.adjustby = None
         self.adjust_cap = 25
         self.adjust_re = False
         self.change_res = True
@@ -401,6 +498,12 @@ class powerMatch(QtGui.QWidget):
                  elif key == 'adjust_generators':
                      if value.lower() in ['true', 'on', 'yes']:
                          self.adjust_re = True
+                 elif key == 'adjustments':
+                     self.adjustby = {}
+                     bits = value.split(',')
+                     for bit in bits:
+                         bi = bit.split('=')
+                         self.adjustby[bi[0]] = float(bi[1])
                  elif key == 'carbon_price':
                      try:
                          self.carbon_price = float(value)
@@ -467,7 +570,6 @@ class powerMatch(QtGui.QWidget):
             pass
         self.opt_progressbar = None
         self.floatstatus = None # status window
-        self.adjustby = None
    #     self.tabs = QtGui.QTabWidget()    # Create tabs
    #     tab1 = QtGui.QWidget()
    #     tab2 = QtGui.QWidget()
@@ -666,6 +768,13 @@ class powerMatch(QtGui.QWidget):
             updates = {}
             lines = []
             lines.append('adjust_generators=' + str(self.adjust.isChecked()))
+            if self.adjustby is not None:
+                line = ''
+                for key, value in self.adjustby.items():
+                    if value != 1:
+                        line += key + '=' + str(value) + ','
+                if line != '':
+                    lines.append('adjustments=' + line[:-1])
             lines.append('carbon_price=' + str(self.carbon_price))
             for i in range(len(self.file_labels)):
                 lines.append(str(self.file_labels[i].lower()) + '_file=' + str(self.files[i].text()))
@@ -1009,36 +1118,38 @@ class powerMatch(QtGui.QWidget):
         self.progressbar.setHidden(False)
         details = self.details
         err_msg = ''
-        try:
-            ts = xlrd.open_workbook(self.get_filename(str(self.files[C].text())))
-            ws = ts.sheet_by_name(self.sheets[C].currentText())
-            self.getConstraints(ws)
-            ts.release_resources()
-            del ts
-        except FileNotFoundError:
-            err_msg = 'Constraints file not found - ' + str(self.files[C].text())
-            self.getConstraints(None)
-        except:
-            err_msg = 'Error accessing Constraints'
-            self.getConstraints(None)
-        try:
-            ts = xlrd.open_workbook(self.get_filename(str(self.files[G].text())))
-            ws = ts.sheet_by_name(self.sheets[G].currentText())
-            self.getGenerators(ws)
-            ts.release_resources()
-            del ts
-        except FileNotFoundError:
-            if err_msg != '':
-                err_msg += ' nor Generators - ' + str(self.files[G].text())
-            else:
-                err_msg = 'Generators file not found - ' + str(self.files[G].text())
-            self.getGenerators(None)
-        except:
-            if err_msg != '':
-                err_msg += ' and Generators'
-            else:
-                err_msg = 'Error accessing Generators'
-            self.getGenerators(None)
+        if self.constraints is None:
+            try:
+                ts = xlrd.open_workbook(self.get_filename(str(self.files[C].text())))
+                ws = ts.sheet_by_name(self.sheets[C].currentText())
+                self.getConstraints(ws)
+                ts.release_resources()
+                del ts
+            except FileNotFoundError:
+                err_msg = 'Constraints file not found - ' + str(self.files[C].text())
+                self.getConstraints(None)
+            except:
+                err_msg = 'Error accessing Constraints'
+                self.getConstraints(None)
+        if self.generators is None:
+            try:
+                ts = xlrd.open_workbook(self.get_filename(str(self.files[G].text())))
+                ws = ts.sheet_by_name(self.sheets[G].currentText())
+                self.getGenerators(ws)
+                ts.release_resources()
+                del ts
+            except FileNotFoundError:
+                if err_msg != '':
+                    err_msg += ' nor Generators - ' + str(self.files[G].text())
+                else:
+                    err_msg = 'Generators file not found - ' + str(self.files[G].text())
+                self.getGenerators(None)
+            except:
+                if err_msg != '':
+                    err_msg += ' and Generators'
+                else:
+                    err_msg = 'Error accessing Generators'
+                self.getGenerators(None)
         if err_msg != '':
             self.setStatus(err_msg)
             return
@@ -1092,7 +1203,10 @@ class powerMatch(QtGui.QWidget):
                 self.progressbar.setHidden(True)
                 return
             typ_row = top_row - 1
+            gen_row = typ_row
             while typ_row > 0:
+                if ws.cell(row=typ_row, column=1).value[:9] == 'Generated':
+                    gen_row = typ_row
                 if ws.cell(row=typ_row, column=3).value in tech_names:
                     break
                 typ_row -= 1
@@ -1109,6 +1223,9 @@ class powerMatch(QtGui.QWidget):
                 return
        #     adjustby = None
             if self.adjust.isChecked():
+                generated = 0
+                for row in range(top_row + 1, ws.max_row + 1):
+                    generated = generated + ws.cell(row=row, column=3).value
                 adjustin = []
                 for col in range(3, ws.max_column + 1):
                     try:
@@ -1117,16 +1234,26 @@ class powerMatch(QtGui.QWidget):
                     except:
                         break
                     if valu == 'Load':
-                        adjustin.append([tech_names[i], 0])
+                        adjustin.append([tech_names[i], '', generated])
                     else:
                         try:
-                            adjustin.append([tech_names[i], float(ws.cell(row=icap_row, column=col).value)])
+                            typ = self.constraints[tech_names[i]].category
+                            adjustin.append([tech_names[i], typ,
+                                            float(ws.cell(row=icap_row, column=col).value)])
                         except:
-                            pass
+                            try:
+                                adjustin.append([tech_names[i], '',
+                                                float(ws.cell(row=icap_row, column=col).value)])
+                            except:
+                                pass
                 for i in range(self.order.count()):
                     if self.generators[self.order.item(i).text()].capacity > 0:
-                        adjustin.append([self.order.item(i).text(),
-                                        self.generators[self.order.item(i).text()].capacity])
+                        who = self.order.item(i).text()
+                        try:
+                            typ = self.constraints[who].category
+                        except:
+                            typ = ''
+                        adjustin.append([who, typ, self.generators[who].capacity])
                 adjust = Adjustments(adjustin, self.adjustby, self.adjust_cap)
                 adjust.exec_()
                 if adjust.getValues() is None:
@@ -1134,6 +1261,7 @@ class powerMatch(QtGui.QWidget):
                     self.progressbar.setHidden(True)
                     return
                 self.adjustby = adjust.getValues()
+                self.updated = True
             load_col = -1
             det_col = 3
             self.progressbar.setValue(1)
@@ -1149,7 +1277,6 @@ class powerMatch(QtGui.QWidget):
                             continue
                     except:
                         continue
-                data.append([])
                 multiplier = 1.
                 if self.adjust.isChecked() and self.adjustby is not None:
                     try:
@@ -1158,6 +1285,7 @@ class powerMatch(QtGui.QWidget):
                         pass
                 if multiplier == 0:
                     continue
+                data.append([])
                 if details:
                     cols.append(i)
                     try:
@@ -1191,13 +1319,14 @@ class powerMatch(QtGui.QWidget):
         if not xlsx:
             data_file += 'x'
         self.progressbar.setValue(2)
-        headers = ['Facility', 'Capacity (MW)', 'Subtotal (MWh)', 'CF', 'Cost ($)', 'LCOE ($/MWh)', 'Emissions (tCO2e)']
+        headers = ['Facility', 'Capacity (MW/MWh)', 'Subtotal (MWh)', 'CF', 'Cost ($)', 'LCOE ($/MWh)', 'Emissions (tCO2e)']
         sp_cols = []
         sp_cap = []
         if summ_only: # summary only?
             sp_data = []
             sp_gen = []
             sp_load = 0.
+            hrows = 10
             for i in cols:
                 if tech_names[i] == 'Load':
                     sp_load = sum(data[load_col])
@@ -1210,8 +1339,12 @@ class powerMatch(QtGui.QWidget):
             ds = oxl.Workbook()
             ns = ds.active
             ns.title = 'Detail'
+            normal = oxl.styles.Font(name='Arial')
+            bold = oxl.styles.Font(name='Arial', bold=True)
             ss = ds.create_sheet('Summary', 0)
             re_sum = '=('
+            sto_sum = ''
+            not_sum = ''
             cap_row = 1
             ns.cell(row=cap_row, column=2).value = headers[1]
             ss.cell(row=3, column=1).value = headers[0]
@@ -1247,6 +1380,7 @@ class powerMatch(QtGui.QWidget):
             o = 4
             col = 3
             if details:
+                # here we're processing renewables (so no storage)
                 for i in cols:
                     if tech_names[i] == 'Load':
                         continue
@@ -1338,13 +1472,13 @@ class powerMatch(QtGui.QWidget):
                 if xlsx:
                     ns.cell(row=row, column=1).value = ws.cell(row=top_row + row - hrows + 1, column=1).value
                     ns.cell(row=row, column=2).value = ws.cell(row=top_row + row - hrows + 1, column=2).value
-                    ns.cell(row=row, column=3).value = round(data[load_col][row - hrows], 2)
+                    ns.cell(row=row, column=3).value = data[load_col][row - hrows]
                     if not details:
-                        ns.cell(row=row, column=4).value = round(data[load_col][row - hrows] - shortfall[row - hrows], 2)
+                        ns.cell(row=row, column=4).value = data[load_col][row - hrows] - shortfall[row - hrows]
                 else:
                     ns.cell(row=row, column=1).value = ws.cell_value(row - hrows + 2, 0)
                     ns.cell(row=row, column=2).value = ws.cell_value(row - hrows + 2, 1)
-                ns.cell(row=row, column=shrt_col).value = round(shortfall[row - hrows] * -self.surplus_sign, 2)
+                ns.cell(row=row, column=shrt_col).value = shortfall[row - hrows] * -self.surplus_sign
                 for col in range(3, shrt_col + 1):
                     ns.cell(row=row, column=col).number_format = '#,##0.00'
             if details:
@@ -1366,19 +1500,28 @@ class powerMatch(QtGui.QWidget):
                 order.append(str(self.order.item(itm).text()))
         #storage? = []
         self.progressbar.setValue(3)
+        storage_names = []
         for gen in order:
+            min_after = [0, 0, -1, 0, 0, 0] # initial, low balance, period, final, low after, period
             try:
                 capacity = self.generators[gen].capacity * self.adjustby[gen]
             except:
                 capacity = self.generators[gen].capacity
             if self.generators[gen].constraint in self.constraints and \
               self.constraints[self.generators[gen].constraint].category == 'Storage': # storage
+                storage_names.append(gen)
                 storage = [0., 0., 0., 0.] # capacity, initial, min level, max drain
                 storage[0] = capacity
                 if not summ_only:
-                    ns.cell(row=cap_row, column=col).value = round(capacity, 2)
-                    ns.cell(row=cap_row, column=col).number_format = '#,##0.00'
-                storage[1] = self.generators[gen].initial
+                    ns.cell(row=cap_row, column=col + 1).value = capacity
+                    ns.cell(row=cap_row, column=col + 1).number_format = '#,##0.00'
+                try:
+                    storage[1] = self.generators[gen].initial * self.adjustby[gen]
+                except:
+                    storage[1] = self.generators[gen].initial
+                min_after[0] = storage[1]
+                min_after[1] = storage[1]
+                min_after[2] = 0
                 if self.constraints[self.generators[gen].constraint].capacity_min > 0:
                     storage[2] = capacity * self.constraints[self.generators[gen].constraint].capacity_min
                 if self.constraints[self.generators[gen].constraint].capacity_max > 0:
@@ -1403,8 +1546,8 @@ class powerMatch(QtGui.QWidget):
                     parasite = 0.
                 storage_carry = storage[1] # self.generators[gen].initial
                 if not summ_only:
-                    ns.cell(row=ini_row, column=col).value = round(storage_carry, 2)
-                    ns.cell(row=ini_row, column=col).number_format = '#,##0.00'
+                    ns.cell(row=ini_row, column=col + 1).value = storage_carry
+                    ns.cell(row=ini_row, column=col + 1).number_format = '#,##0.00'
                 storage_bal = []
                 storage_can = 0.
                 for row in range(8760):
@@ -1434,14 +1577,27 @@ class powerMatch(QtGui.QWidget):
                                 storage_carry = 0
                         else:
                             can_use = 0.
+                        if storage_carry < min_after[1]:
+                            min_after[1] = storage_carry
+                            min_after[2] = row
+                        if shortfall[row] > min_after[4]:
+                            min_after[4] = shortfall[row]
+                            min_after[5] = row
+                        min_after[3] = storage_carry
                     storage_bal.append(storage_carry)
                     if not summ_only:
-                        ns.cell(row=row + hrows, column=col).value = round(can_use * -self.surplus_sign, 2)
-                        ns.cell(row=row + hrows, column=col + 1).value = round(storage_carry, 2)
-                        ns.cell(row=row + hrows, column=col + 2).value = round(shortfall[row] * -self.surplus_sign, 2)
+                        if can_use > 0:
+                            ns.cell(row=row + hrows, column=col).value = 0
+                            ns.cell(row=row + hrows, column=col + 1).value = can_use * self.surplus_sign
+                        else:
+                            ns.cell(row=row + hrows, column=col).value = can_use * -self.surplus_sign
+                            ns.cell(row=row + hrows, column=col + 1).value = 0
+                        ns.cell(row=row + hrows, column=col + 2).value = storage_carry
+                        ns.cell(row=row + hrows, column=col + 3).value = shortfall[row] * -self.surplus_sign
                         ns.cell(row=row + hrows, column=col).number_format = '#,##0.00'
                         ns.cell(row=row + hrows, column=col + 1).number_format = '#,##0.00'
                         ns.cell(row=row + hrows, column=col + 2).number_format = '#,##0.00'
+                        ns.cell(row=row + hrows, column=col + 3).number_format = '#,##0.00'
                     else:
                         if can_use > 0:
                             storage_can += can_use
@@ -1449,27 +1605,35 @@ class powerMatch(QtGui.QWidget):
                     ns.cell(row=sum_row, column=col).value = '=SUMIF(' + ss_col(col) + \
                             str(hrows) + ':' + ss_col(col) + str(hrows + 8759) + ',">0")'
                     ns.cell(row=sum_row, column=col).number_format = '#,##0'
-                    ns.cell(row=cf_row, column=col).value = '=IF(' + ss_col(col) + '1>0,' + \
-                                                    ss_col(col) + '3/' + ss_col(col) + '1/8760,"")'
-                    ns.cell(row=cf_row, column=col).number_format = '#,##0.00'
-                    col += 3
+                    ns.cell(row=sum_row, column=col + 1).value = '=SUMIF(' + ss_col(col + 1) + \
+                            str(hrows) + ':' + ss_col(col + 1) + str(hrows + 8759) + ',">0")'
+                    ns.cell(row=sum_row, column=col + 1).number_format = '#,##0'
+                    ns.cell(row=cf_row, column=col + 1).value = '=IF(' + ss_col(col + 1) + '1>0,' + \
+                                                    ss_col(col + 1) + '3/' + ss_col(col + 1) + '1/8760,"")'
+                    ns.cell(row=cf_row, column=col + 1).number_format = '#,##0.00'
+                    col += 4
                 else:
                     sp_data.append([gen, storage[0], storage_can, '', '', '', ''])
             else:
                 if not summ_only:
-                    ns.cell(row=cap_row, column=col).value = round(capacity, 2)
+                    ns.cell(row=cap_row, column=col).value = capacity
                     ns.cell(row=cap_row, column=col).number_format = '#,##0.00'
+                    min_after[4] = shortfall[0]
+                    min_after[5] = 0
                     for row in range(8760):
                         if shortfall[row] >= 0: # shortfall?
                             if shortfall[row] >= capacity:
                                 shortfall[row] = shortfall[row] - capacity
-                                ns.cell(row=row + hrows, column=col).value = round(capacity, 2)
+                                ns.cell(row=row + hrows, column=col).value = capacity
                             else:
-                                ns.cell(row=row + hrows, column=col).value = round(shortfall[row], 2)
+                                ns.cell(row=row + hrows, column=col).value = shortfall[row]
                                 shortfall[row] = 0
+                            if shortfall[row] > min_after[4]:
+                                min_after[4] = shortfall[row]
+                                min_after[5] = row
                         else:
                             ns.cell(row=row + hrows, column=col).value = 0
-                        ns.cell(row=row + hrows, column=col + 1).value = round(shortfall[row] * -self.surplus_sign, 2)
+                        ns.cell(row=row + hrows, column=col + 1).value = shortfall[row] * -self.surplus_sign
                         ns.cell(row=row + hrows, column=col).number_format = '#,##0.00'
                         ns.cell(row=row + hrows, column=col + 1).number_format = '#,##0.00'
                     ns.cell(row=sum_row, column=col).value = '=SUM(' + ss_col(col) + str(hrows) + \
@@ -1481,6 +1645,8 @@ class powerMatch(QtGui.QWidget):
                     col += 2
                 else:
                     gen_can = 0.
+                    min_after[4] = shortfall[0]
+                    min_after[5] = 0
                     for row in range(8760):
                         if shortfall[row] >= 0: # shortfall?
                             if shortfall[row] >= capacity:
@@ -1489,12 +1655,28 @@ class powerMatch(QtGui.QWidget):
                             else:
                                 gen_can += shortfall[row]
                                 shortfall[row] = 0
+                            if shortfall[row] > min_after[4]:
+                                min_after[4] = shortfall[row]
+                                min_after[5] = row
                     sp_data.append([gen, capacity, gen_can, '', '', '', ''])
         self.progressbar.setValue(4)
         if summ_only:
+            if xlsx:
+                if min_after[2] >= 0:
+                    min_after[2] = ws.cell(row=top_row + min_after[2] + 1, column=2).value
+                else:
+                    min_after[3] = ''
+                min_after[5] = ws.cell(row=top_row + min_after[5] + 1, column=2).value
+            else:
+                if min_after[2] > 0:
+                    min_after[2] = ws.cell_value(min_after[2] + 3, 1)
+                else:
+                    min_after[2] = ''
+                min_after[5] = ws.cell_value(min_after[5] + 3, 1)
             cap_sum = 0.
             gen_sum = 0.
             re_sum = 0.
+            sto_sum = 0.
             cost_sum = 0.
             co2_sum = 0.
             for sp in range(len(sp_data)):
@@ -1507,6 +1689,8 @@ class powerMatch(QtGui.QWidget):
                     re_sum += sp_data[sp][2]
                 if gen not in self.generators:
                     continue
+                if gen in storage_names:
+                    sto_sum += sp_data[sp][2]
                 if self.generators[gen].lcoe > 0:
                     if self.remove_cost and sp_data[sp][2] == 0:
                         sp_data[sp][4] = 0
@@ -1543,6 +1727,8 @@ class powerMatch(QtGui.QWidget):
                    cp = '{:.2f}'.format(self.carbon_price)
                 sp_data.append(['Carbon Cost ($' + cp + ')', '', '', '', cc, cs])
             sp_data.append(['RE %age', round(re_sum * 100. / gen_sum, 1)])
+            if sto_sum > 0:
+                sp_data.append(['RE %age with Storage', round((re_sum + sto_sum) * 100. / gen_sum, 1)])
             sf_sums = [0., 0., 0.]
             for sf in range(len(shortfall)):
                 if shortfall[sf] > 0:
@@ -1560,6 +1746,17 @@ class powerMatch(QtGui.QWidget):
             sp_data.append(['Total Load', '', sp_load])
             pct = '{:.1%})'.format( -sf_sums[1] / sp_load)
             sp_data.append(['Surplus (' + pct, '', -sf_sums[1]])
+            sp_data.append(['RE %age of load', round((re_sum + sf_sums[1]) * 100. / sp_load, 1)])
+            sp_data.append(' ')
+            if min_after[2] >= 0:
+                sp_data.append(['Storage Initial', round(min_after[0], 2)])
+                sp_data.append(['Storage Minimum ' + min_after[2], round(min_after[1], 2)])
+                sp_data.append(['Storage Final', round(min_after[3], 2)])
+            try:
+                sp_data.append(['Shortfall Minimum ' + min_after[5], round(-min_after[4], 2)])
+            except:
+                pass
+            sp_data.append(' ')
             adjusted = False
             if self.adjust.isChecked() and self.adjustby is not None:
                 for key, value in iter(sorted(self.adjustby.items())):
@@ -1578,24 +1775,17 @@ class powerMatch(QtGui.QWidget):
             self.progressbar.setHidden(True)
             self.progressbar.setValue(0)
             return
-        for column_cells in ns.columns:
-            length = 0
-            value = ''
-            row = 0
-            for cell in column_cells:
-                if cell.row >= 0:
-                    if len(str(cell.value)) > length:
-                        length = len(str(cell.value))
-                        value = cell.value
-                        row = cell.row
-            try:
-                ns.column_dimensions[column_cells[0].column].width = max(length, 10)
-            except:
-                ns.column_dimensions[ss_col(column_cells[0].column)].width = max(length, 10)
-        ns.column_dimensions['A'].width = 6
         col = shrt_col + 1
         for gen in order:
             ss_row += 1
+            if self.constraints[self.generators[gen].constraint].category == 'Storage':
+                ns.cell(row=what_row, column=col).value = 'Charge\n' + gen
+                col += 1
+                is_storage = True
+                sto_sum += '+C' + str(ss_row)
+            else:
+                is_storage = False
+                not_sum += '-C' + str(ss_row)
             ns.cell(row=what_row, column=col).value = gen
             ss.cell(row=ss_row, column=1).value = '=Detail!' + ss_col(col) + str(what_row)
             ss.cell(row=ss_row, column=2).value = '=Detail!' + ss_col(col) + str(cap_row)
@@ -1636,20 +1826,25 @@ class powerMatch(QtGui.QWidget):
                 else:
                     ss.cell(row=ss_row, column=7).value = '=Detail!' + ss_col(col) + str(emi_row)
                 ss.cell(row=ss_row, column=7).number_format = '#,##0'
+            if is_storage:
+                col -= 1
             ns.cell(row=what_row, column=col).alignment = oxl.styles.Alignment(wrap_text=True,
                     vertical='bottom', horizontal='center')
             ns.cell(row=what_row, column=col + 1).alignment = oxl.styles.Alignment(wrap_text=True,
                     vertical='bottom', horizontal='center')
-            if self.constraints[self.generators[gen].constraint].category == 'Storage':
-                ns.cell(row=what_row, column=col + 1).value = gen + '\nBalance'
-                ns.cell(row=what_row, column=col + 2).value = 'After\n' + gen
+            if is_storage:
+                ns.cell(row=what_row, column=col + 1).value = gen
+                ns.cell(row=what_row, column=col + 2).value = gen + '\nBalance'
                 ns.cell(row=what_row, column=col + 2).alignment = oxl.styles.Alignment(wrap_text=True,
                         vertical='bottom', horizontal='center')
-                ns.cell(row=fall_row, column=col + 2).value = '=COUNTIF(' + ss_col(col + 2) \
-                        + str(hrows) + ':' + ss_col(col + 2) + str(hrows + 8759) + \
+                ns.cell(row=what_row, column=col + 3).value = 'After\n' + gen
+                ns.cell(row=what_row, column=col + 3).alignment = oxl.styles.Alignment(wrap_text=True,
+                        vertical='bottom', horizontal='center')
+                ns.cell(row=fall_row, column=col + 3).value = '=COUNTIF(' + ss_col(col + 3) \
+                        + str(hrows) + ':' + ss_col(col + 3) + str(hrows + 8759) + \
                         ',"' + sf_test[0] + '0")'
-                ns.cell(row=fall_row, column=col + 2).number_format = '#,##0'
-                col += 3
+                ns.cell(row=fall_row, column=col + 3).number_format = '#,##0'
+                col += 4
             else:
                 ns.cell(row=what_row, column=col + 1).value = 'After\n' + gen
                 ns.cell(row=fall_row, column=col + 1).value = '=COUNTIF(' + ss_col(col + 1) \
@@ -1657,12 +1852,51 @@ class powerMatch(QtGui.QWidget):
                         ',"' + sf_test[0] + '0")'
                 ns.cell(row=fall_row, column=col + 1).number_format = '#,##0'
                 col += 2
+        if is_storage:
+            ns.cell(row=emi_row, column=col - 2).value = '=MIN(' + ss_col(col - 2) + str(hrows) + \
+                    ':' + ss_col(col -2 ) + str(hrows + 8759) + ')'
+            ns.cell(row=emi_row, column=col - 2).number_format = '#,##0.00'
+        ns.cell(row=emi_row, column=col - 1).value = '=MIN(' + ss_col(col - 1) + str(hrows) + \
+                ':' + ss_col(col -2 ) + str(hrows + 8759) + ')'
+        ns.cell(row=emi_row, column=col - 1).number_format = '#,##0.00'
+        for column_cells in ns.columns:
+            length = 0
+            value = ''
+            row = 0
+            for cell in column_cells:
+                if cell.row >= hrows:
+                    try:
+                        value = str(round(cell.value, 2))
+                        if len(value) > length:
+                            length = len(value)
+                    except:
+                        pass
+                elif cell.row > 0:
+                    if str(cell.value)[0] != '=':
+                        values = str(cell.value).split('\n')
+                        for value in values:
+                            if cell.row == cost_row:
+                                valf = value.split('.')
+                                alen = int(len(valf[0]) * 1.3)
+                            else:
+                                alen = len(value) + 1
+                            if alen > length:
+                                length = alen
+            ns.column_dimensions[column_cells[0].column].width = max(length, 10)
+        ns.column_dimensions['A'].width = 6
+        st_row = hrows + 8760
+        st_col = col
+        for row in range(1, st_row):
+            for col in range(1, st_col):
+                try:
+                    ns.cell(row=row, column=col).font = normal
+                except:
+                    pass
         self.progressbar.setValue(6)
         ns.row_dimensions[what_row].height = 30
         ns.freeze_panes = 'C' + str(hrows)
         ns.activeCell = 'C' + str(hrows)
         ss.cell(row=1, column=1).value = 'Powermatch - Summary'
-        bold = oxl.styles.Font(bold=True, name=ss.cell(row=1, column=1).font.name)
         ss.cell(row=1, column=1).font = bold
         ss_row +=1
         for col in range(1, 8):
@@ -1689,18 +1923,13 @@ class powerMatch(QtGui.QWidget):
         for column_cells in ss.columns:
             length = 0
             value = ''
-            row = 0
             for cell in column_cells:
-                if len(str(cell.value)) > length:
-                    length = len(str(cell.value))
-                    value = cell.value
-                    row = cell.row
-            try:
-                ss.column_dimensions[column_cells[0].column].width = length * 1.15
-            except:
-                ss.column_dimensions[ss_col(column_cells[0].column)].width = length * 1.15
-        ss.column_dimensions['D'].width = 7
-        ss.column_dimensions['E'].width = 18
+                if str(cell.value)[0] != '=':
+                    values = str(cell.value).split('\n')
+                    for value in values:
+                        if len(value) + 1 > length:
+                            length = len(value) + 1
+            ss.column_dimensions[column_cells[0].column].width = max(length, 10) * 1.2
         last_col = ss_col(ns.max_column)
         r = 1
         if self.corrected_lcoe:
@@ -1724,6 +1953,12 @@ class powerMatch(QtGui.QWidget):
         ss.cell(row=ss_row, column=1).value = 'RE %age'
         ss.cell(row=ss_row, column=3).value = re_sum[:-1] + ')/C' + str(ss_row - r)
         ss.cell(row=ss_row, column=3).number_format = '#,##0.0%'
+        # if storage
+        if sto_sum != '':
+            ss_row += 1
+            ss.cell(row=ss_row, column=1).value = 'RE %age with storage'
+            ss.cell(row=ss_row, column=3).value = re_sum[:-1] + sto_sum + ')/C' + str(ss_row - r - 1)
+            ss.cell(row=ss_row, column=3).number_format = '#,##0.0%'
         ss_row += 2
         ss.cell(row=ss_row, column=1).value = 'Load Analysis'
         ss.cell(row=ss_row, column=1).font = bold
@@ -1781,6 +2016,21 @@ class powerMatch(QtGui.QWidget):
         ss.cell(row=ss_row, column=3).number_format = '#,##0'
         ss.cell(row=ss_row, column=4).value = '=C' + str(ss_row) + '/C' + str(ss_row - 1)
         ss.cell(row=ss_row, column=4).number_format = '#,##0.0%'
+        ss_row += 1
+        ss.cell(row=ss_row, column=1).value = 'RE %age of Load'
+        if not_sum == '':
+            ss.cell(row=ss_row, column=3).value = re_sum[:-1] + '-C' + str(ss_row - 1) + ')/C' + \
+                                                  str(ss_row - 2)
+        else:
+            ss.cell(row=ss_row, column=3).value = '=(C' + str(ss_row - 2) + not_sum + ')/C' + \
+                                                  str(ss_row - 2)
+        ss.cell(row=ss_row, column=3).number_format = '#,##0.0%'
+        if min_after[4] > 0:
+            ss_row += 1
+            ss.cell(row=ss_row, column=1).value = 'Shortfall Minimum:'
+            ss.cell(row=ss_row, column=2).value = '=Detail!B' + str(hrows + min_after[5])
+            ss.cell(row=ss_row, column=3).value = '=Detail!' + last_col + str(hrows + min_after[5])
+            ss.cell(row=ss_row, column=3).number_format = '#,##0.00'
         ss_row += 2
         ss.cell(row=ss_row, column=1).value = 'Data sources:'
         ss.cell(row=ss_row, column=1).font = bold
@@ -1810,13 +2060,21 @@ class powerMatch(QtGui.QWidget):
                 adjusted = ''
                 for key, value in iter(sorted(self.adjustby.items())):
                     if value != 1:
-                        adjusted += key + ': ' + str(value) + '; '
+                        adjusted += key + ': {:.4f}'.format(value).rstrip('0') + '; '
                 if len(adjusted) > 0:
                     ss_row += 1
-                    ss.cell(row=ss_row, column=1).value = 'Renewable inputs adjusted'
+                    ss.cell(row=ss_row, column=1).value = 'Inputs adjusted'
                     ss.cell(row=ss_row, column=2).value = adjusted[:-2]
+                    ss.merge_cells('B' + str(ss_row) + ':G' + str(ss_row))
         except:
             pass
+        for row in range(1, ss_row + 1):
+            for col in range(1, 9):
+                try:
+                    if ss.cell(row=row, column=col).font.name != 'Arial':
+                        ss.cell(row=row, column=col).font = normal
+                except:
+                    pass
         ss.freeze_panes = 'B4'
         ss.activeCell = 'B4'
         ds.save(data_file)
@@ -1983,7 +2241,10 @@ class powerMatch(QtGui.QWidget):
                       self.constraints[self.generators[gen].constraint].category == 'Storage': # storage
                         storage = [0., 0., 0., 0.] # capacity, initial, min level, max drain
                         storage[0] = capacity
-                        storage[1] = self.generators[gen].initial
+                        try:
+                            storage[1] = self.generators[gen].initial * self.adjustby[gen]
+                        except:
+                            storage[1] = self.generators[gen].initial
                         if self.constraints[self.generators[gen].constraint].capacity_min > 0:
                             storage[2] = capacity * self.constraints[self.generators[gen].constraint].capacity_min
                         if self.constraints[self.generators[gen].constraint].capacity_max > 0:
@@ -2059,6 +2320,7 @@ class powerMatch(QtGui.QWidget):
                 cap_sum = 0.
                 gen_sum = 0.
                 re_sum = 0.
+                sto_sum = 0.
                 cost_sum = 0.
                 co2_sum = 0.
                 for sp in range(len(op_data)):
@@ -2071,6 +2333,8 @@ class powerMatch(QtGui.QWidget):
                         re_sum += op_data[sp][2]
                     if gen not in self.generators:
                         continue
+                    if dict_order[gen][4] == 'ST':
+                        sto_sum += op_data[sp][2]
                     if self.remove_cost and op_data[sp][2] == 0:
                         op_data[sp][4] = 0
                         continue
@@ -2107,7 +2371,9 @@ class powerMatch(QtGui.QWidget):
                 else:
                     lcoe_fitness_scores.append(gs)
                 try:
-                    re_pct = re_sum / gen_sum
+                    non_re = gen_sum - re_sum - sto_sum
+                    re_pct = (op_load_tot - non_re) / op_load_tot
+                  #  re_pct = re_sum / gen_sum
                 except:
                     re_pct = 0
                 multi_values.append({'lcoe': lcoe_fitness_scores[-1], #lcoe. lower better
@@ -2133,6 +2399,8 @@ class powerMatch(QtGui.QWidget):
                        cp = '{:.2f}'.format(self.carbon_price)
                     op_data.append(['Carbon Cost ($' + cp + ')', '', '', '', cc, cs])
                 op_data.append(['RE %age', round(re_sum * 100. / gen_sum, 1)])
+                if sto_sum > 0:
+                    op_data.append(['RE %age with Storage', round((re_sum + sto_sum) * 100. / gen_sum, 1)])
                 op_data.append(' ')
                 op_data.append('Load Analysis')
                 pct = '{:.1%})'.format((sf_sums[2] - sf_sums[0]) / op_load_tot)
@@ -2142,6 +2410,7 @@ class powerMatch(QtGui.QWidget):
                 op_data.append(['Total Load', '', op_load_tot])
                 pct = '{:.1%})'.format( -sf_sums[1] / op_load_tot)
                 op_data.append(['Surplus (' + pct, '', -sf_sums[1]])
+                op_data.append(['RE %age of load', round(re_pct * 100., 2)])
                 return op_data, multi_values
             else:
                 return lcoe_fitness_scores, multi_fitness_scores, multi_values
@@ -2235,6 +2504,7 @@ class powerMatch(QtGui.QWidget):
                         self.setStatus(msg)
             return zp.datapoint
 
+#       optClicked mainline starts here
         self.optExit = False
         self.setStatus('Optimise processing started')
         details = self.details
@@ -2328,6 +2598,7 @@ class powerMatch(QtGui.QWidget):
             self.setStatus('no capacity data')
             return
         optExit = False
+    #    if
         optDialog = QtGui.QDialog()
         grid = QtGui.QGridLayout()
         grid.addWidget(QtGui.QLabel('Adjust load'), 0, 0)
@@ -2501,13 +2772,16 @@ class powerMatch(QtGui.QWidget):
         orig_tech = {}
         orig_capacity = {}
         dict_order = {} # rely on it being processed in added order
+        # each entry = [capacity, first entry in chrom, last entry, minimum capacity, type - RE,ST or GE
         # first get original renewables generation from data sheet
         for col in range(3, ws.max_column + 1):
             try:
                 valu = ws.cell(row=typ_row, column=col).value.replace('-','')
+                if valu == '':
+                    break
                 i = tech_names.index(valu)
             except:
-                break # ?? or continue??
+                continue
             if tech_names[i] != 'Load':
                 try:
                     if ws.cell(row=icap_row, column=col).value <= 0:
@@ -2515,7 +2789,7 @@ class powerMatch(QtGui.QWidget):
                     orig_capacity[tech_names[i]] = ws.cell(row=icap_row, column=col).value # in case no optimisation
                 except:
                     continue
-                dict_order[tech_names[i]] = [ws.cell(row=icap_row, column=col).value, 0, 0, 0]
+                dict_order[tech_names[i]] = [ws.cell(row=icap_row, column=col).value, 0, 0, 0, 'RE']
             orig_tech[tech_names[i]] = []
             for row in range(top_row + 1, ws.max_row + 1):
                 orig_tech[tech_names[i]].append(ws.cell(row=row, column=col).value)
@@ -2524,7 +2798,12 @@ class powerMatch(QtGui.QWidget):
         for itm in range(self.order.count()):
             tech = str(self.order.item(itm).text())
             if tech not in dict_order.keys():
-                dict_order[tech] = [self.generators[tech].capacity, 0, 0, 0]
+                if self.generators[tech].constraint in self.constraints and \
+                   self.constraints[self.generators[tech].constraint].category == 'Storage': # storage
+                       cat = 'ST'
+                else:
+                    cat = 'GE'
+                dict_order[tech] = [self.generators[tech].capacity, 0, 0, 0, cat]
         capacities = []
         check = ''
         for tech in dict_order.keys():
@@ -2541,6 +2820,11 @@ class powerMatch(QtGui.QWidget):
                     capacities.extend(self.optimisation[tech].capacities)
                     dict_order[tech][2] = len(capacities) # last entry
                 elif self.optimisation[tech].approach == 'Range':
+                    if self.optimisation[tech].capacity_max == self.optimisation[tech].capacity_min:
+                        capacities.extend([0])
+                        dict_order[tech][2] = len(capacities)
+                        dict_order[tech][3] = self.optimisation[tech].capacity_min
+                        continue
                     ctr = int((self.optimisation[tech].capacity_max - self.optimisation[tech].capacity_min) / \
                               self.optimisation[tech].capacity_step)
                     if ctr < 1:
@@ -2556,16 +2840,27 @@ class powerMatch(QtGui.QWidget):
                     dict_order[tech][2] = len(capacities)
             except KeyError as err:
                 self.setStatus('Key Error: No Optimisation entry for ' + str(err))
-                dict_order[tech] = [orig_capacity[tech], len(capacities), len(capacities) + 5, 0]
+                if self.generators[tech].constraint in self.constraints and \
+                   self.constraints[self.generators[tech].constraint].category == 'Storage': # storage
+                       cat = 'ST'
+                else:
+                    cat = 'GE'
+                dict_order[tech] = [orig_capacity[tech], len(capacities), len(capacities) + 5, 0, cat]
                 capacities.extend([orig_capacity[tech] / 5.] * 5)
+            except ZeroDivisionError as err:
+           #     err = str(sys.exc_info()[0]) + ',' + str(sys.exc_info()[1]) +','+ tech+','+ str(dict_order[tech])
+                self.setStatus('Zero capacity: ' + tech + ' ignored')
             except:
-                err = str(sys.exc_info()[0]) + ',' + str(sys.exc_info()[1])
+                err = str(sys.exc_info()[0]) + ',' + str(sys.exc_info()[1]) +','+ tech+','+ str(dict_order[tech])
                 self.setStatus('Error: ' + str(err))
                 return
         # chromosome = [1] * int(len(capacities) / 2) + [0] * (len(capacities) - int(len(capacities) / 2))
         # we have the original data - from here down we can do our multiple optimisations
-        self.adjustby = {'Load': optLoad.value()}
-        headers = ['Facility', 'Capacity (MW)', 'Subtotal (MWh)', 'CF', 'Cost ($)', 'LCOE ($/MWh)', 'Emissions (tCO2e)']
+        if self.adjustby is None:
+            self.adjustby = {'Load': optLoad.value()}
+        else:
+            self.adjustby['Load'] = optLoad.value()
+        headers = ['Facility', 'Capacity (MW/MWh)', 'Subtotal (MWh)', 'CF', 'Cost ($)', 'LCOE ($/MWh)', 'Emissions (tCO2e)']
         op_data = []
         if self.adjustby['Load'] == 1:
             op_load = orig_tech['Load'][:]
@@ -2948,6 +3243,7 @@ class powerMatch(QtGui.QWidget):
                  save_folder=self.scenarios, sortby='', decpts=op_pts)
         dialog.exec_()
         del dialog
+        # get adjusts
         return
 
 if "__main__" == __name__:
