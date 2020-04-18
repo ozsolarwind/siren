@@ -241,17 +241,27 @@ class PowerPlot(QtGui.QWidget):
         self.grid.addWidget(self.maxSpin, rw, 1)
         self.grid.addWidget(QtGui.QLabel('(Handy if you want to produce a series of plots)'), rw, 3, 1, 3)
         rw += 1
-        self.grid.addWidget(QtGui.QLabel('Cumulative:'), rw, 0)
-        self.cumulative = QtGui.QCheckBox()
-        self.cumulative.setCheckState(QtCore.Qt.Checked)
-        self.grid.addWidget(self.cumulative, rw, 1) #, 1, 2)
-        self.grid.addWidget(QtGui.QLabel('(Check for hourly generation profile)'), rw, 3, 1, 3)
+        self.grid.addWidget(QtGui.QLabel('Type of Plot:'), rw, 0)
+        plots = ['Bar Chart', 'Cumulative', 'Linegraph']
+        self.plottype = QtGui.QComboBox()
+        for plot in plots:
+             self.plottype.addItem(plot)
+        self.grid.addWidget(self.plottype, rw, 1) #, 1, 2)
+        self.grid.addWidget(QtGui.QLabel('(Type of plot - stacked except for Linegraph)'), rw, 3, 1, 3)
         rw += 1
         self.grid.addWidget(QtGui.QLabel('Percentage:'), rw, 0)
         self.percentage = QtGui.QCheckBox()
         self.percentage.setCheckState(QtCore.Qt.Unchecked)
         self.grid.addWidget(self.percentage, rw, 1) #, 1, 2)
         self.grid.addWidget(QtGui.QLabel('(Check for percentage distribution)'), rw, 3, 1, 3)
+        rw += 1
+        self.grid.addWidget(QtGui.QLabel('Show Grid:'), rw, 0)
+        grids = ['Both', 'Horizontal', 'Vertical', 'None']
+        self.gridtype = QtGui.QComboBox()
+        for grid in grids:
+             self.gridtype.addItem(grid)
+        self.grid.addWidget(self.gridtype, rw, 1) #, 1, 2)
+        self.grid.addWidget(QtGui.QLabel('(Choose gridlines)'), rw, 3, 1, 3)
         rw += 1
         self.grid.addWidget(QtGui.QLabel('Column Order:\n(move to right\nto exclude)'), rw, 0)
         self.order = ThumbListWidget(self)
@@ -269,7 +279,8 @@ class PowerPlot(QtGui.QWidget):
         self.targets.currentIndexChanged.connect(self.targetChanged)
         self.title.textChanged.connect(self.somethingChanged)
         self.maxSpin.valueChanged.connect(self.somethingChanged)
-        self.cumulative.stateChanged.connect(self.somethingChanged)
+        self.plottype.currentIndexChanged.connect(self.somethingChanged)
+        self.gridtype.currentIndexChanged.connect(self.somethingChanged)
         self.percentage.stateChanged.connect(self.somethingChanged)
         self.order.itemSelectionChanged.connect(self.somethingChanged)
         rw += 1
@@ -330,6 +341,8 @@ class PowerPlot(QtGui.QWidget):
                         self.cumulative.setCheckState(QtCore.Qt.Checked)
                 elif key == 'file' + choice:
                     ifile = value.replace('$USER$', getUser())
+                elif key == 'grid' + choice:
+                    self.gridtype.setCurrentIndex(self.gridtype.findText(value))
                 elif key == 'percentage' + choice:
                     if value.lower() in ['true', 'yes', 'on']:
                         self.percentage.setCheckState(QtCore.Qt.Checked)
@@ -341,6 +354,8 @@ class PowerPlot(QtGui.QWidget):
                         self.period.setCurrentIndex(i)
                     else:
                         self.period.setCurrentIndex(0)
+                elif key == 'plot' + choice:
+                    self.plottype.setCurrentIndex(self.plottype.findText(value))
                 elif key == 'maximum' + choice:
                     try:
                         self.maxSpin.setValue(int(value))
@@ -435,6 +450,10 @@ class PowerPlot(QtGui.QWidget):
         self.setup[0] = False
 
     def somethingChanged(self):
+        if self.plottype.currentText() == 'Bar Chart' and self.period.currentText() == '<none>':
+            self.plottype.setCurrentIndex(self.plottype.currentIndex() + 1) # set to something else
+        elif self.plottype.currentText() == 'Linegraph' and self.percentage.isChecked():
+            self.percentage.setCheckState(QtCore.Qt.Unchecked)
         if not self.setup[0]:
             self.updated = True
 
@@ -583,6 +602,7 @@ class PowerPlot(QtGui.QWidget):
                 line = line[:-1]
                 lines.append('file_history=' + line)
             lines.append('file' + choice + '=' + str(self.file.text()).replace(getUser(), '$USER$'))
+            lines.append('grid' + choice + '=' + self.gridtype.currentText())
             lines.append('sheet' + choice + '=' + str(self.sheet.currentText()))
             lines.append('period' + choice + '=')
             if str(self.period.currentText()) != '<none>':
@@ -592,12 +612,10 @@ class PowerPlot(QtGui.QWidget):
             lines.append('maximum' + choice + '=')
             if self.maxSpin.value() != 0:
                 lines[-1] = lines[-1] + str(self.maxSpin.value())
-            lines.append('cumulative' + choice + '=')
-            if not self.cumulative.isChecked():
-                lines[-1] = lines[-1] + 'False'
             lines.append('percentage' + choice + '=')
             if self.percentage.isChecked():
                 lines[-1] = lines[-1] + 'True'
+            lines.append('plot' + choice + '=' + self.plottype.currentText())
             cols = 'columns' + choice + '='
             for col in range(self.order.count()):
                 try:
@@ -726,6 +744,14 @@ class PowerPlot(QtGui.QWidget):
             matplotlib.rcParams['savefig.directory'] = self.file.text()[:i + 1]
         else:
             matplotlib.rcParams['savefig.directory'] = self.scenarios
+        if self.gridtype.currentText() == 'Both':
+            gridtype = 'both'
+        elif self.gridtype.currentText() == 'Horizontal':
+            gridtype = 'y'
+        elif self.gridtype.currentText() == 'Vertical':
+            gridtype = 'x'
+        else:
+            gridtype = ''
         ws = self.book.sheet_by_name(isheet)
         if self.toprow is None:
             row = 0
@@ -769,6 +795,7 @@ class PowerPlot(QtGui.QWidget):
             data = []
             label = []
             maxy = 0
+            miny = 0
             titl = self.title.text().replace('$YEAR$', str(year))
             titl = titl.replace('$MTH$', '')
             titl = titl.replace('$MONTH$', '')
@@ -786,6 +813,7 @@ class PowerPlot(QtGui.QWidget):
                         for row in range(self.toprow + 1, self.toprow + self.rows + 1):
                             data[-1].append(ws.cell_value(row, c2))
                             maxy = max(maxy, data[-1][-1])
+                            miny = min(miny, data[-1][-1])
                         break
                     elif column == self.target:
                         tgt_col = c2
@@ -793,15 +821,16 @@ class PowerPlot(QtGui.QWidget):
                 for row in range(self.toprow + 1, self.toprow + self.rows + 1):
                     load.append(ws.cell_value(row, tgt_col))
                     maxy = max(maxy, load[-1])
-            if not self.cumulative.isChecked():
+            if self.plottype.currentText() == 'Linegraph':
                 fig = plt.figure('linegraph_' + str(year))
-                plt.grid(True)
+                if gridtype != '':
+                    plt.grid(axis=gridtype)
                 ax = fig.add_subplot(111)
                 plt.title(titl)
                 for c in range(len(data)):
-                    ax.plot(x, data[c], linewidth=1.0, label=label[c], color=self.colours[label[c].lower()])
+                    ax.plot(x, data[c], linewidth=1.5, label=label[c], color=self.colours[label[c].lower()])
                 if len(load) > 0:
-                    ax.plot(x, load, linewidth=2.0, label=self.target, color=self.colours[self.target.lower()])
+                    ax.plot(x, load, linewidth=2.5, label=self.target, color=self.colours[self.target.lower()])
                 if self.maxSpin.value() > 0:
                     maxy = self.maxSpin.value()
                 else:
@@ -810,11 +839,11 @@ class PowerPlot(QtGui.QWidget):
                         maxy = ceil(maxy / rndup) * rndup
                     except:
                         pass
-                miny = 0
+             #   miny = 0
                 lbl_font = FontProperties()
                 lbl_font.set_size('small')
                 ax.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 1),
-                              prop=lbl_font)
+                          prop=lbl_font)
                 plt.ylim([miny, maxy])
                 plt.xlim([0, len(x)])
                 plt.xticks(list(range(12, len(x), 168)))
@@ -825,9 +854,10 @@ class PowerPlot(QtGui.QWidget):
                 f = zp.zoom_pan(ax, base_scale=1.2) # enable scrollable zoom
                 plt.show()
                 del zp
-            else:
+            elif self.plottype.currentText() == 'Cumulative':
                 fig = plt.figure('cumulative_' + str(year))
-                plt.grid(True)
+                if gridtype != '':
+                    plt.grid(axis=gridtype)
                 bx = fig.add_subplot(111)
                 plt.title(titl)
                 if self.percentage.isChecked():
@@ -886,9 +916,13 @@ class PowerPlot(QtGui.QWidget):
                                 top[h] = max(top[h], data[d][h])
                         bx.plot(x, top, color='white')
                         short = []
+                        do_short = False
                         for h in range(len(load)):
+                            if load[h] > round(data[c][h], 2):
+                                do_short = True
                             short.append(max(data[c][h], load[h]))
-                        bx.fill_between(x, data[c], short, label='Shortfall', color=self.colours['shortfall'])
+                        if do_short:
+                            bx.fill_between(x, data[c], short, label='Shortfall', color=self.colours['shortfall'])
                         bx.plot(x, load, linewidth=2.0, label=self.target, color=self.colours[self.target.lower()])
                     if self.maxSpin.value() > 0:
                         maxy = self.maxSpin.value()
@@ -899,7 +933,7 @@ class PowerPlot(QtGui.QWidget):
                         except:
                             pass
                     bx.set_ylabel('Power (MW)')
-                miny = 0
+        #        miny = 0
                 lbl_font = FontProperties()
                 lbl_font.set_size('small')
                 bx.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 2), prop=lbl_font)
@@ -939,6 +973,7 @@ class PowerPlot(QtGui.QWidget):
             tgt_col = -1
             data = []
             label = []
+            miny = 0
             maxy = 0
             hs = []
             for h in range(24):
@@ -961,6 +996,7 @@ class PowerPlot(QtGui.QWidget):
                         for h in range(24):
                             data[-1][h] = data[-1][h] / (todo_rows / 24)
                             maxy = max(maxy, data[-1][h])
+                            miny = min(miny, data[-1][h])
                         break
                     elif column == self.target:
                         tgt_col = c2
@@ -975,15 +1011,16 @@ class PowerPlot(QtGui.QWidget):
                 for h in range(24):
                     load[h] = load[h] / (todo_rows / 24)
                     maxy = max(maxy, load[h])
-            if not self.cumulative.isChecked():
+            if self.plottype.currentText() == 'Linegraph':
                 fig = plt.figure('linegraph_' + str(year) + '_' + self.period.currentText())
-                plt.grid(True)
+                if gridtype != '':
+                    plt.grid(axis=gridtype)
                 cx = fig.add_subplot(111)
                 plt.title(titl)
                 for c in range(len(data)):
-                    cx.plot(x, data[c], linewidth=1.0, label=label[c], color=self.colours[label[c].lower()])
+                    cx.plot(x, data[c], linewidth=1.5, label=label[c], color=self.colours[label[c].lower()])
                 if len(load) > 0:
-                    cx.plot(x, load, linewidth=2.0, label=self.target, color=self.colours[self.target.lower()])
+                    cx.plot(x, load, linewidth=2.5, label=self.target, color=self.colours[self.target.lower()])
                 if self.maxSpin.value() > 0:
                     maxy = self.maxSpin.value()
                 else:
@@ -992,7 +1029,7 @@ class PowerPlot(QtGui.QWidget):
                         maxy = ceil(maxy / rndup) * rndup
                     except:
                         pass
-                miny = 0
+           #     miny = 0
                 lbl_font = FontProperties()
                 lbl_font.set_size('small')
                 cx.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 1),
@@ -1007,9 +1044,10 @@ class PowerPlot(QtGui.QWidget):
                 f = zp.zoom_pan(cx, base_scale=1.2) # enable scrollable zoom
                 plt.show()
                 del zp
-            else:
+            elif self.plottype.currentText() == 'Cumulative':
                 fig = plt.figure('cumulative_' + str(year))
-                plt.grid(True)
+                if gridtype != '':
+                    plt.grid(axis=gridtype)
                 dx = fig.add_subplot(111)
                 plt.title(titl)
                 if self.percentage.isChecked():
@@ -1063,9 +1101,13 @@ class PowerPlot(QtGui.QWidget):
                                 top[h] = max(top[h], data[d][h])
                         dx.plot(x, top, color='white')
                         short = []
+                        do_short = False
                         for h in range(len(load)):
+                            if load[h] > data[c][h]:
+                                do_short = True
                             short.append(max(data[c][h], load[h]))
-                        dx.fill_between(x, data[c], short, label='Shortfall', color=self.colours['shortfall'])
+                        if do_short:
+                            dx.fill_between(x, data[c], short, label='Shortfall', color=self.colours['shortfall'])
                         dx.plot(x, load, linewidth=2.0, label=self.target, color=self.colours[self.target.lower()])
                     if self.maxSpin.value() > 0:
                         maxy = self.maxSpin.value()
@@ -1076,7 +1118,7 @@ class PowerPlot(QtGui.QWidget):
                         except:
                             pass
                     dx.set_ylabel('Power (MW)')
-                miny = 0
+         #       miny = 0
                 lbl_font = FontProperties()
                 lbl_font.set_size('small')
                 dx.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 2), prop=lbl_font)
@@ -1089,6 +1131,71 @@ class PowerPlot(QtGui.QWidget):
                 f = zp.zoom_pan(dx, base_scale=1.2) # enable scrollable zoom
                 plt.show()
                 del zp
+            elif self.plottype.currentText() == 'Bar Chart':
+                fig = plt.figure('barchart_' + str(year))
+                if gridtype != '':
+                    plt.grid(axis=gridtype)
+                ex = fig.add_subplot(111)
+                plt.title(titl)
+                if self.percentage.isChecked():
+                    miny = 0
+                    totals = [0.] * len(x)
+                    bottoms = [0.] * len(x)
+                    values = [0.] * len(x)
+                    for c in range(len(data)):
+                        for h in range(len(data[c])):
+                            totals[h] = totals[h] + data[c][h]
+                    for h in range(len(data[0])):
+                        values[h] = data[0][h] / totals[h] * 100.
+                    ex.bar(x, values, label=label[0], color=self.colours[label[0].lower()])
+                    for c in range(1, len(data)):
+                        for h in range(len(data[c])):
+                            bottoms[h] = bottoms[h] + values[h]
+                            values[h] = data[c][h] / totals[h] * 100.
+                        ex.bar(x, values, bottom=bottoms, label=label[c], color=self.colours[label[c].lower()])
+                    maxy = 100
+                    ex.set_ylabel('Power (%)')
+                else:
+                    if self.target == '<none>':
+                        ex.bar(x, data[0], label=label[0], color=self.colours[label[0].lower()])
+                        bottoms = [0.] * len(x)
+                        for c in range(1, len(data)):
+                            for h in range(len(data[c])):
+                                bottoms[h] = bottoms[h] + data[c - 1][h]
+                                maxy = max(maxy, data[c][h])
+                            ex.bar(x, data[c], bottom=bottoms, label=label[c], color=self.colours[label[c].lower()])
+                    else:
+                        ex.bar(x, data[0], label=label[0], color=self.colours[label[0].lower()])
+                        bottoms = [0.] * len(x)
+                        for c in range(1, len(data)):
+                            for h in range(len(data[c])):
+                                bottoms[h] = bottoms[h] + data[c - 1][h]
+                                maxy = max(maxy, data[c][h])
+                            ex.bar(x, data[c], bottom=bottoms, label=label[c], color=self.colours[label[c].lower()])
+                        ex.plot(x, load, linewidth=2.0, label=self.target, color=self.colours[self.target.lower()])
+                    if self.maxSpin.value() > 0:
+                        maxy = self.maxSpin.value()
+                    else:
+                        try:
+                            rndup = pow(10, round(log10(maxy * 1.5) - 1)) / 2
+                            maxy = ceil(maxy / rndup) * rndup
+                        except:
+                            pass
+                    ex.set_ylabel('Power (MW)')
+        #        miny = 0
+                lbl_font = FontProperties()
+                lbl_font.set_size('small')
+                ex.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 2), prop=lbl_font)
+            #    plt.ylim([miny, maxy])
+                plt.xlim([0, 23])
+                plt.xticks(ticks)
+                ex.set_xticklabels(hr_labels)
+                ex.set_xlabel('Hour of the Day')
+                zp = ZoomPanX()
+                f = zp.zoom_pan(ex, base_scale=1.2) # enable scrollable zoom
+                plt.show()
+                del zp
+
 
 
 if "__main__" == __name__:
