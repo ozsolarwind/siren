@@ -803,7 +803,8 @@ class Table(QtGui.QDialog):
             ws.set_remove_splits(True)   # if user does unfreeze, don't leave a split there
             wb.save(data_file)
             self.savedfile = data_file
-        self.close()
+        if not self.edit_table:
+            self.close()
 
     def replacetbl(self):
     # https://stackoverflow.com/questions/2827623/how-can-i-create-an-object-and-add-attributes-to-it
