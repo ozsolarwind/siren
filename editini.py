@@ -223,7 +223,8 @@ class SaveIni():
                         bits = lines[i].split('=')
                         for j in range(len(properties) - 1, -1, -1):
                             if bits[0] == props[j]:
-                                if properties[j] == props[j] + '=': # delete empty values
+                                if properties[j] == props[j] + '=' \
+                                  or properties[j] == props[j]: # delete empty values
                                     del_lines.append(i)
                                 else:
                                     lines[i] = properties[j] + '\n'
@@ -235,7 +236,7 @@ class SaveIni():
                     i += 1
                 for j in range(len(properties)):
                     k = properties[j].find('=')
-                    if k != len(properties[j]) - 1:
+                    if k > 0 and k != len(properties[j]) - 1:
                         lines.insert(i + 1, properties[j] + '\n')
                         i += 1
         if os.path.exists(config_file + '~'):
