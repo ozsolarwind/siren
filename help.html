@@ -1139,7 +1139,11 @@ Options for <a href="#flexiplot">Flexiplot</a>. Properties for individual files 
 <td class="none">Worksheet name for plot</td>
 </tr>
 <tr class="none">
-<td class="none"><dfn>ticks_font/dfn></td>
+<td class="none"><dfn>sparse_ticks</dfn></td>
+<td class="none">You can specify how often X Axis ticks appear. The default is all</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>ticks_font</dfn></td>
 <td class="none">Font properties for label tick marks</td>
 </tr>
 <tr class="none">
@@ -2944,7 +2948,11 @@ If it's not a diurnal plot (i.e. Period is <em>&lt;None&gt;</em>) any occurence 
 <td class="none">In addition to the buttons in <code>powerplot</code>, <code>flexiplot</code> has a <strong>Preferences</strong> button to allow you to update the Flexiplot preferences. This allows you to adjust text sizes and the like, however, some values, such as details for an individual file, may be ignored for the active file.
 </td></tr>
 </table>
-<p><code>flexiplot</code> has a number of options to adjust the font properties of the various text items on the plot. The properties are as described in <a href="https://matplotlib.org/3.1.1/api/font_manager_api.html#matplotlib.font_manager.FontProperties">FontProperties</a> but may be restricted by the matplotlib environment. To specify a property use the format as described in the link, e.g. <em>family=sans-serif,size=xxlarge</em>. The only non-default value is the plot title fontsize which is set to 'x-large'.</p>
+<p><code>flexiplot</code> has a number of options to:
+<ul>
+<li>adjust the font properties of the various text items on the plot. The properties are as described in <a href="https://matplotlib.org/3.1.1/api/font_manager_api.html#matplotlib.font_manager.FontProperties">FontProperties</a> but may be restricted by the matplotlib environment. To specify a property use the format as described in the link, e.g. <em>family=sans-serif,size=xxlarge</em>. The only non-default value is the plot title fontsize which is set to 'x-large'</li>
+<li>You can specify how often X Axis ticks appear, either by setting <em>sparse_xticks</em> to a single number ,&lsquo;n&rsquo;, for every &lsquo;n&rsquo;th tick to appear, or by setting a test for a change in the label value by specifying the start and end characters to examine, separated by a comma. For example, <em>1,3</em> could be used where you have labels in the form of <em>Jan, Feb</em></li>
+</ul>
 </div>
 <!-- Back to top< -->
 <h3 id="tables">Tables</h3>
