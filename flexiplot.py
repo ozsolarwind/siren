@@ -416,6 +416,7 @@ class FlexiPlot(QtGui.QWidget):
         ifiles = {}
         self.constrained_layout = False
         self.palette = True
+        self.sparse_ticks = []
         config = configparser.RawConfigParser()
         config.read(self.config_file)
         try: # get defaults and list of files if any
@@ -442,6 +443,14 @@ class FlexiPlot(QtGui.QWidget):
                 elif key == 'palette':
                     if value.lower() in ['false', 'no', 'off']:
                         self.palette = False
+                elif key == 'sparse_ticks':
+                    try:
+                        self.sparse_ticks = [int(value)]
+                    except:
+                        if value.find(':') > 0:
+                            self.sparse_ticks = value.split(':')
+                        else:
+                            self.sparse_ticks = value.split(',')
                 elif key == 'ticks_font':
                     self.ticks_font = value
                 elif key == 'title_font':
@@ -456,7 +465,11 @@ class FlexiPlot(QtGui.QWidget):
         config = configparser.RawConfigParser()
         config.read(self.config_file)
         columns = []
+        isheet = ''
         try: # get list of files if any
+            self.maxSpin.setValue(0)
+            self.gridtype.setCurrentIndex(0)
+            self.percentage.setCheckState(QtCore.Qt.Unchecked)
             items = config.items('Flexiplot')
             for key, value in items:
                 if key == 'columns' + choice:
@@ -497,6 +510,7 @@ class FlexiPlot(QtGui.QWidget):
                     self.ylabel.setText(value)
         except:
              pass
+        self.columns = []
         if ifile != '':
             if self.book is not None:
                 pxl.free_resources()
@@ -507,7 +521,7 @@ class FlexiPlot(QtGui.QWidget):
             else:
                 self.setSheet(self.scenarios + ifile, isheet)
             self.setColumns(isheet, columns=columns)
-            for column in columns:
+            for column in self.columns:
                 self.check_colour(column, config, add=False)
         ignore = False
 
@@ -526,10 +540,21 @@ class FlexiPlot(QtGui.QWidget):
                     self.history.insert(0, self.history.pop(i)) # make this entry first
                     break
             else:
+            # find new entry
                 if len(self.history) >= self.max_files:
                     self.history.insert(0, self.history.pop(-1)) # make last entry first
                 else:
-                    self.history.insert(0, str(len(self.history)))
+                    hist = sorted(self.history)
+                    if hist[0] != '':
+                        ent = ''
+                    else:
+                        for i in range(1, len(hist)):
+                            if str(i) != hist[i]:
+                                ent = str(i)
+                                break
+                        else:
+                            ent = str(i + 1)
+                    self.history.insert(0, ent)
                 ifiles[self.history[0]] = ifile
         self.files.clear()
         for i in range(len(self.history)):
@@ -657,12 +682,13 @@ class FlexiPlot(QtGui.QWidget):
                     except:
                         pass
         for column in columns:
-            self.order.addItem(column)
-            try:
-                self.order.item(self.order.count() - 1) \
-                    .setBackground(QtGui.QColor(self.colours[column.lower()]))
-            except:
-                pass
+            if column in self.columns:
+                self.order.addItem(column)
+                try:
+                    self.order.item(self.order.count() - 1) \
+                        .setBackground(QtGui.QColor(self.colours[column.lower()]))
+                except:
+                    pass
         self.updated = True
 
     def helpClicked(self):
@@ -750,8 +776,8 @@ class FlexiPlot(QtGui.QWidget):
                     line += xvalues + ','
             lines.append(line[:-1])
             lines.append('ylabel' + choice + '=' + self.ylabel.text())
-            props = ['file', 'grid', 'maximum', 'percentage', 'plot', 'sheet', 'series', 'title',
-                     'xlabel', 'xvalues', 'ylabel']
+            props = ['columns', 'file', 'grid', 'maximum', 'percentage', 'plot', 'sheet', 'series',
+                     'title', 'xlabel', 'xvalues', 'ylabel']
             for i in range(len(fix_history) -1, -1, -1):
                 self.files.removeItem(fix_history[i][0])
                 self.history.pop(fix_history[i][0])
@@ -896,7 +922,7 @@ class FlexiPlot(QtGui.QWidget):
                 try:
                     xlabels.append(str(int(ws[rocox[0], col])))
                 except:
-                    xlabels.append(ws[row, rocox[1]])
+                    xlabels.append(ws[rocox[0], col])
         data = []
         label = []
         miny = 0
@@ -1013,7 +1039,7 @@ class FlexiPlot(QtGui.QWidget):
                 for c in range(1, len(data)):
                     for h in range(len(data[c])):
                         bottoms[h] = bottoms[h] + data[c - 1][h]
-                        maxy = max(maxy, data[c][h])
+                        maxy = max(maxy, data[c][h] + bottoms[h])
                     graph.bar(x, data[c], bottom=bottoms, label=label[c], color=self.colours[label[c].lower()])
                 if self.maxSpin.value() > 0:
                     maxy = self.maxSpin.value()
@@ -1023,8 +1049,10 @@ class FlexiPlot(QtGui.QWidget):
                         maxy = ceil(maxy / rndup) * rndup
                     except:
                         pass
-        else:
+        else: #Linegraph
             for c in range(len(data)):
+                mx = max(data[c])
+                maxy = max(maxy, mx)
                 graph.plot(x, data[c], linewidth=2.0, label=label[c], color=self.colours[label[c].lower()])
             if self.maxSpin.value() > 0:
                 maxy = self.maxSpin.value()
@@ -1038,14 +1066,26 @@ class FlexiPlot(QtGui.QWidget):
         graph.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 2), prop=leg_font)
         plt.ylim([miny, maxy])
         plt.xlim([0, len(x) - 1])
-        if self.plottype.currentText() == 'Linegraph' and len(x) > 24:
-            tick_labels = [xlabels[0]]
+        if len(self.sparse_ticks) > 0:
+            # if self.plottype.currentText() == 'Linegraph' and len(x) > 24:
+            tick_labels = [str(xlabels[0])]
             xticks = [0]
-            for l in range(1, len(xlabels)):
-                if str(xlabels[l])[:3] != tick_labels[-1][:3]:
+            if len(self.sparse_ticks) == 1:
+                for l in range(self.sparse_ticks[0] + 1, len(xlabels), self.sparse_ticks[0]):
                     xticks.append(l)
                     tick_labels.append(xlabels[l])
-            xticks.append(l - 1)
+            else:
+                try:
+                    fr = int(self.sparse_ticks[0]) - 1
+                    to = int(self.sparse_ticks[1])
+                except:
+                    fr = 0
+                    to = 3
+                for l in range(1, len(xlabels)):
+                    if str(xlabels[l])[fr : to] != tick_labels[-1][fr : to]:
+                        xticks.append(l)
+                        tick_labels.append(xlabels[l])
+            xticks.append(len(xlabels) - 1)
             tick_labels.append(xlabels[-1])
             plt.xticks(xticks)
             graph.set_xticklabels(tick_labels, rotation='vertical', fontdict=font_props(self.ticks_font))
