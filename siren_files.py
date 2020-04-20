@@ -2,7 +2,7 @@
 #
 source_files = ['check_siren.py', 'colours', 'credits', 'dijkstra_4',
                 'displayobject', 'displaytable', 'editini', 'flexiplot', 'floaters',
-                'getmap', 'getmodels', 'getmerra2', 'grid', 'indexweather', 'inisyntax',
+                'getmap', 'getmerra2', 'getmodels', 'grid', 'indexweather', 'inisyntax',
                 'makegrid', 'makerainfall2', 'makeweatherfiles', 'makeweather2',
                 'newstation', 'parents', 'plotweather', 'powerclasses',
                 'powermatch', 'powermodel', 'powerplot', 'sammodels', 'samrun',
