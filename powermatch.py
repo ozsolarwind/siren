@@ -2598,7 +2598,6 @@ class powerMatch(QtGui.QWidget):
             self.setStatus('no capacity data')
             return
         optExit = False
-    #    if
         optDialog = QtGui.QDialog()
         grid = QtGui.QGridLayout()
         grid.addWidget(QtGui.QLabel('Adjust load'), 0, 0)
@@ -3243,7 +3242,6 @@ class powerMatch(QtGui.QWidget):
                  save_folder=self.scenarios, sortby='', decpts=op_pts)
         dialog.exec_()
         del dialog
-        # get adjusts
         return
 
 if "__main__" == __name__:
