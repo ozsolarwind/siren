@@ -405,7 +405,17 @@ class PowerPlot(QtGui.QWidget):
                 if len(self.history) >= self.max_files:
                     self.history.insert(0, self.history.pop(-1)) # make last entry first
                 else:
-                    self.history.insert(0, str(len(self.history)))
+                    hist = sorted(self.history)
+                    if hist[0] != '':
+                        ent = ''
+                    else:
+                        for i in range(1, len(hist)):
+                            if str(i) != hist[i]:
+                                ent = str(i)
+                                break
+                        else:
+                            ent = str(i + 1)
+                    self.history.insert(0, ent)
                 ifiles[self.history[0]] = ifile
         self.files.clear()
         for i in range(len(self.history)):
