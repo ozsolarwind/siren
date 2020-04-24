@@ -476,10 +476,13 @@ class FloatStatus(QtGui.QDialog):
                         max_line = len(line[0])
                 if self.log_status or not self.log_status:
                     ssc_api = ssc.API()
-                    comment = 'SAM SDK Core: Version = %s. Build info = %s.' % (ssc_api.version(), ssc_api.build_info().decode())
-                    lines2 = '%s. SIREN log started\n          Preference File: %s\n          Working directory: %s\n          %s' \
-                              % (str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'hh:mm:ss')), \
-                              self.config_file, os.getcwd(), comment)
+                    comment = 'SAM SDK Core: Version = %s. Build info = %s.' \
+                              % (ssc_api.version(), ssc_api.build_info().decode())
+                    line = '%s. SIREN log started\n          Preference File: %s' + \
+                           '\n          Working directory: %s' + \
+                           '\n          Scenarios folder: %s\n          %s'
+                    lines2 = line % (str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'hh:mm:ss')), \
+                             self.config_file, os.getcwd(), self.scenarios_folder, comment)
                     line_cnt2 = 1
                     if len(lines2) > max_line:
                         max_line = len(lines2)
@@ -488,9 +491,11 @@ class FloatStatus(QtGui.QDialog):
             except:
                 pass
         else:
-            lines2 = '%s. %s log started\n          Preference File: %s\n          Working directory: %s' \
-                     % (str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'hh:mm:ss')), \
-                    self.program, self.config_file, os.getcwd())
+            line = '%s. %s log started\n          Preference File: %s' + \
+                   '\n          Working directory: %s' + \
+                   '\n          Scenarios folder: %s'
+            lines2 = line % (str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'hh:mm:ss')), \
+                     self.program, self.config_file, os.getcwd(), self.scenarios_folder)
             line_cnt2 = 1
             max_line = len(lines2)
         self.saveButton = QtGui.QPushButton(self.tr('Save Log'))
