@@ -924,7 +924,10 @@ class PowerPlot(QtGui.QWidget):
                         for d in range(1, len(data)):
                             for h in range(len(top)):
                                 top[h] = max(top[h], data[d][h])
-                        bx.plot(x, top, color='white')
+                        if self.alpha == 0:
+                            bx.plot(x, top, color='gray', linestyle='dashed')
+                        else:
+                            bx.plot(x, top, color='gray')
                         short = []
                         do_short = False
                         for h in range(len(load)):
@@ -933,7 +936,7 @@ class PowerPlot(QtGui.QWidget):
                             short.append(max(data[c][h], load[h]))
                         if do_short:
                             bx.fill_between(x, data[c], short, label='Shortfall', color=self.colours['shortfall'])
-                        bx.plot(x, load, linewidth=2.0, label=self.target, color=self.colours[self.target.lower()])
+                        bx.plot(x, load, linewidth=2.5, label=self.target, color=self.colours[self.target.lower()])
                     if self.maxSpin.value() > 0:
                         maxy = self.maxSpin.value()
                     else:
@@ -1109,7 +1112,10 @@ class PowerPlot(QtGui.QWidget):
                         for d in range(1, len(data)):
                             for h in range(len(top)):
                                 top[h] = max(top[h], data[d][h])
-                        dx.plot(x, top, color='white')
+                        if self.alpha == 0:
+                            dx.plot(x, top, color='gray', linestyle='dashed')
+                        else:
+                            dx.plot(x, top, color='gray')
                         short = []
                         do_short = False
                         for h in range(len(load)):
