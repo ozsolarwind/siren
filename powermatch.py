@@ -107,7 +107,8 @@ class ClickableQLabel(QtGui.QLabel):
 
 class Constraint:
     def __init__(self, name, category, capacity_min, capacity_max, rampup_max, rampdown_max,
-                 recharge_max, recharge_loss, discharge_max, discharge_loss, parasitic_loss):
+                 recharge_max, recharge_loss, discharge_max, discharge_loss, parasitic_loss,
+                 wait_time, warm_time):
         self.name = name
         self.category = category
         try:
@@ -146,6 +147,21 @@ class Constraint:
             self.rampdown_max = float(rampdown_max)
         except:
             self.rampdown_max = 1.
+        try:
+            self.wait_time = int(wait_time)
+        except:
+            self.wait_time = 0
+        try:
+            self.warm_time = float(warm_time)
+            if self.warm_time >= 1:
+                self.warm_time = self.warm_time / 60
+                if self.warm_time > 1:
+                    self.warm_time = 1
+            elif self.warm_time > 0:
+                if self.warm_time <= 1 / 24.:
+                    self.warm_time = self.warm_time * 24
+        except:
+            self.warm_time = 0
 
 
 class Facility:
@@ -810,8 +826,8 @@ class powerMatch(QtGui.QWidget):
                     else:
                         del self.constraints[key]
                 for key in new_keys:
-                    self.constraints[key] = Constraint(key, '<category>', 0., 1.,
-                                                       1., 1., 1., 0., 1., 0., 0.)
+                    self.constraints[key] = Constraint(key, '<category>', 0., 1., 1., 1., 1., 0.,
+                                                       1., 0., 0., 0, 0)
                 target = self.constraints
             elif it == G:
                 old_keys = list(self.generators.keys())
@@ -869,7 +885,7 @@ class powerMatch(QtGui.QWidget):
                     self.getConstraints(ws)
                 except:
                     return
-            sp_pts = [2] * 11
+            sp_pts = [2] * 13
             sp_pts[4] = 3 # discharge loss
             sp_pts[6] = 3 # parasitic loss
             sp_pts[9] = 3 # recharge loss
@@ -932,8 +948,12 @@ class powerMatch(QtGui.QWidget):
         if ws is None:
             self.constraints = {}
             self.constraints['<name>'] = Constraint('<name>', '<category>', 0., 1.,
-                                              1., 1., 1., 0., 1., 0., 0.)
+                                              1., 1., 1., 0., 1., 0., 0., 0, 0)
             return
+        wait_col = -1
+        warm_col = -1
+        wait_time = 0
+        warm_time = 0
         if ws.cell_value(1, 0) == 'Name' and ws.cell_value(1, 1) == 'Category':
             cat_col = 1
             for col in range(ws.ncols):
@@ -947,6 +967,10 @@ class powerMatch(QtGui.QWidget):
                     dis_col = [col, col + 1]
                 elif ws.cell_value(1, col)[:9] == 'Parasitic':
                     par_col = col
+                elif ws.cell_value(1, col)[:9] == 'Wait Time':
+                    wait_col = col
+                elif ws.cell_value(1, col)[:11] == 'Warmup Time':
+                    warm_col = col
             strt_row = 2
         elif ws.cell_value(0, 0) == 'Name': # saved file
             cap_col = [-1, -1]
@@ -977,6 +1001,10 @@ class powerMatch(QtGui.QWidget):
                         dis_col[1] = col
                 elif ws.cell_value(0, col)[:9] == 'Parasitic':
                     par_col = col
+                elif ws.cell_value(0, col)[:9] == 'Wait Time':
+                    wait_col = col
+                elif ws.cell_value(0, col)[:11] == 'Warmup Time':
+                    warm_col = col
             strt_row = 1
         else:
             self.setStatus('Not a ' + self.file_labels[it] + ' worksheet.')
@@ -988,13 +1016,17 @@ class powerMatch(QtGui.QWidget):
             return
         self.constraints = {}
         for row in range(strt_row, ws.nrows):
+            if wait_col >= 0:
+                wait_time = ws.cell_value(row, wait_col)
+            if warm_col >= 0:
+                warm_time = ws.cell_value(row, warm_col)
             self.constraints[str(ws.cell_value(row, 0))] = Constraint(str(ws.cell_value(row, 0)),
                                      str(ws.cell_value(row, cat_col)),
                                      ws.cell_value(row, cap_col[0]), ws.cell_value(row, cap_col[1]),
                                      ws.cell_value(row, ramp_col[0]), ws.cell_value(row, ramp_col[1]),
                                      ws.cell_value(row, rec_col[0]), ws.cell_value(row, rec_col[1]),
                                      ws.cell_value(row, dis_col[0]), ws.cell_value(row, dis_col[1]),
-                                     ws.cell_value(row, par_col))
+                                     ws.cell_value(row, par_col), wait_time, warm_time)
         return
 
     def getGenerators(self, ws):
@@ -1319,7 +1351,8 @@ class powerMatch(QtGui.QWidget):
         if not xlsx:
             data_file += 'x'
         self.progressbar.setValue(2)
-        headers = ['Facility', 'Capacity (MW/MWh)', 'Subtotal (MWh)', 'CF', 'Cost ($)', 'LCOE ($/MWh)', 'Emissions (tCO2e)']
+        headers = ['Facility', 'Capacity (MW/MWh)', 'Subtotal (MWh)', 'CF', 'Cost ($)',
+                   'LCOE ($/MWh)', 'Emissions (tCO2e)']
         sp_cols = []
         sp_cap = []
         if summ_only: # summary only?
@@ -1544,6 +1577,11 @@ class powerMatch(QtGui.QWidget):
                     parasite = self.constraints[self.generators[gen].constraint].parasitic_loss / 24.
                 else:
                     parasite = 0.
+                in_run = [False, False]
+                wait_time = self.constraints[self.generators[gen].constraint].wait_time
+                if wait_time == 0:
+                    in_run[0] = True
+                warm_time = self.constraints[self.generators[gen].constraint].warm_time
                 storage_carry = storage[1] # self.generators[gen].initial
                 if not summ_only:
                     ns.cell(row=ini_row, column=col + 1).value = storage_carry
@@ -1555,6 +1593,10 @@ class powerMatch(QtGui.QWidget):
                         storage_carry = storage_carry * (1 - parasite)
                     storage_loss = 0.
                     if shortfall[row] < 0:  # excess generation
+                        if wait_time > 0:
+                            in_run[0] = False
+                        if warm_time > 0:
+                            in_run[1] = False
                         can_use = - (storage[0] - storage_carry) * (1 / (1 - recharge[1]))
                         if can_use < 0: # can use some
                             if shortfall[row] > can_use:
@@ -1566,9 +1608,24 @@ class powerMatch(QtGui.QWidget):
                         storage_carry -= (can_use * (1 - recharge[1]))
                         shortfall[row] -= can_use
                     else: # shortfall
-                        can_use = shortfall[row] * (1 / (1 - discharge[1]))
-                        if can_use > storage_carry - storage[2]:
-                            can_use = storage_carry - storage[2]
+                        if wait_time > 0 and shortfall[row] > 0:
+                            if not in_run[0]:
+                                if row + wait_time <= 8759:
+                                    for i in range(row + 1, row + wait_time + 1):
+                                        if shortfall[i] <= 0:
+                                            break
+                                    else:
+                                        in_run[0] = True
+                        if in_run[0]:
+                            can_use = shortfall[row] * (1 / (1 - discharge[1]))
+                            can_use = min(can_use, discharge[0])
+                            if can_use > storage_carry - storage[2]:
+                                can_use = storage_carry - storage[2]
+                            if warm_time > 0 and not in_run[1]:
+                                in_run[1] = True
+                                can_use = can_use * (1 - warm_time)
+                        else:
+                            can_use = 0
                         if can_use > 0:
                             storage_loss = can_use * discharge[1]
                             storage_carry -= can_use
@@ -1615,6 +1672,10 @@ class powerMatch(QtGui.QWidget):
                 else:
                     sp_data.append([gen, storage[0], storage_can, '', '', '', ''])
             else:
+                if self.constraints[self.generators[gen].constraint].capacity_max > 0:
+                    cap_capacity = capacity * self.constraints[self.generators[gen].constraint].capacity_max
+                else:
+                    cap_capacity = capacity
                 if not summ_only:
                     ns.cell(row=cap_row, column=col).value = capacity
                     ns.cell(row=cap_row, column=col).number_format = '#,##0.00'
@@ -1622,9 +1683,9 @@ class powerMatch(QtGui.QWidget):
                     min_after[5] = 0
                     for row in range(8760):
                         if shortfall[row] >= 0: # shortfall?
-                            if shortfall[row] >= capacity:
-                                shortfall[row] = shortfall[row] - capacity
-                                ns.cell(row=row + hrows, column=col).value = capacity
+                            if shortfall[row] >= cap_capacity:
+                                shortfall[row] = shortfall[row] - cap_capacity
+                                ns.cell(row=row + hrows, column=col).value = cap_capacity
                             else:
                                 ns.cell(row=row + hrows, column=col).value = shortfall[row]
                                 shortfall[row] = 0
@@ -1649,9 +1710,9 @@ class powerMatch(QtGui.QWidget):
                     min_after[5] = 0
                     for row in range(8760):
                         if shortfall[row] >= 0: # shortfall?
-                            if shortfall[row] >= capacity:
-                                shortfall[row] = shortfall[row] - capacity
-                                gen_can += capacity
+                            if shortfall[row] >= cap_capacity:
+                                shortfall[row] = shortfall[row] - cap_capacity
+                                gen_can += cap_capacity
                             else:
                                 gen_can += shortfall[row]
                                 shortfall[row] = 0
@@ -1676,6 +1737,7 @@ class powerMatch(QtGui.QWidget):
             cap_sum = 0.
             gen_sum = 0.
             re_sum = 0.
+            ff_sum = 0.
             sto_sum = 0.
             cost_sum = 0.
             co2_sum = 0.
@@ -1691,6 +1753,8 @@ class powerMatch(QtGui.QWidget):
                     continue
                 if gen in storage_names:
                     sto_sum += sp_data[sp][2]
+                elif gen not in tech_names:
+                    ff_sum += sp_data[sp][2]
                 if self.generators[gen].lcoe > 0:
                     if self.remove_cost and sp_data[sp][2] == 0:
                         sp_data[sp][4] = 0
@@ -1746,12 +1810,15 @@ class powerMatch(QtGui.QWidget):
             sp_data.append(['Total Load', '', sp_load])
             pct = '{:.1%})'.format( -sf_sums[1] / sp_load)
             sp_data.append(['Surplus (' + pct, '', -sf_sums[1]])
-            sp_data.append(['RE %age of load', round((re_sum + sf_sums[1]) * 100. / sp_load, 1)])
+            sp_data.append(['RE %age of load', round((sp_load - ff_sum) * 100. / sp_load, 1)])
             sp_data.append(' ')
-            if min_after[2] >= 0:
-                sp_data.append(['Storage Initial', round(min_after[0], 2)])
-                sp_data.append(['Storage Minimum ' + min_after[2], round(min_after[1], 2)])
-                sp_data.append(['Storage Final', round(min_after[3], 2)])
+            try:
+                if min_after[2] >= 0:
+                    sp_data.append(['Storage Initial', round(min_after[0], 2)])
+                    sp_data.append(['Storage Minimum ' + min_after[2], round(min_after[1], 2)])
+                    sp_data.append(['Storage Final', round(min_after[3], 2)])
+            except:
+                pass
             try:
                 sp_data.append(['Shortfall Minimum ' + min_after[5], round(-min_after[4], 2)])
             except:
@@ -2287,6 +2354,7 @@ class powerMatch(QtGui.QWidget):
                                 shortfall[row] -= can_use
                             else: # shortfall
                                 can_use = shortfall[row] * (1 / (1 - discharge[1]))
+                                can_use = min(can_use, discharge[0])
                                 if can_use > storage_carry - storage[2]:
                                     can_use = storage_carry - storage[2]
                                 if can_use > 0:
@@ -2398,7 +2466,10 @@ class powerMatch(QtGui.QWidget):
                     else:
                        cp = '{:.2f}'.format(self.carbon_price)
                     op_data.append(['Carbon Cost ($' + cp + ')', '', '', '', cc, cs])
-                op_data.append(['RE %age', round(re_sum * 100. / gen_sum, 1)])
+                try:
+                    op_data.append(['RE %age', round(re_sum * 100. / gen_sum, 1)])
+                except:
+                    pass
                 if sto_sum > 0:
                     op_data.append(['RE %age with Storage', round((re_sum + sto_sum) * 100. / gen_sum, 1)])
                 op_data.append(' ')
