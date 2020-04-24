@@ -833,13 +833,13 @@ class getMERRA2(QtGui.QDialog):
         if sys.platform == 'win32' or sys.platform == 'cygwin':
             env_var = 'HOME'
             os.system('SETX {0} "{1}"'.format(env_var, self.home_dir))
-            netrc = self.home_dir + '\\.netrc'
+            netrc = str(self.home_dir) + '\\.netrc'
         else:
             netrc = '~/.netrc'.replace('~', os.path.expanduser('~'))
         netrc_string = 'machine urs.earthdata.nasa.gov login %s password %s' % (str(self.urs_id.text()),
                        str(self.urs_pwd.text()))
         fou = open(netrc, 'wb')
-        fou.write(netrc_string)
+        fou.write(netrc_string.encode())
         fou.close()
         self.mySubwindow.close()
         if sys.platform == 'win32' or sys.platform == 'cygwin':
