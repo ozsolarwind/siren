@@ -1394,7 +1394,6 @@ class powerMatch(QtGui.QWidget):
         sp_cap = []
         if summ_only: # summary only?
             sp_data = []
-            sp_gen = []
             sp_load = 0.
             hrows = 10
             for i in cols:
@@ -1441,14 +1440,21 @@ class powerMatch(QtGui.QWidget):
             ss_row = 3
             fall_row = 8
             ns.cell(row=fall_row, column=2).value = 'Shortfall periods'
-            what_row = 9
-            hrows = 10
+            max_row = 9
+            ns.cell(row=max_row, column=2).value = 'Maximum (MW/MWh)'
+            hrs_row = 10
+            ns.cell(row=hrs_row, column=2).value = 'Hours of usage'
+            what_row = 11
+            hrows = 12
             ns.cell(row=what_row, column=1).value = 'Hour'
             ns.cell(row=what_row, column=2).value = 'Period'
             ns.cell(row=what_row, column=3).value = 'Load'
             ns.cell(row=sum_row, column=3).value = '=SUM(' + ss_col(3) + str(hrows) + \
                                                    ':' + ss_col(3) + str(hrows + 8759) + ')'
             ns.cell(row=sum_row, column=3).number_format = '#,##0'
+            ns.cell(row=max_row, column=3).value = '=MAX(' + ss_col(3) + str(hrows) + \
+                                                   ':' + ss_col(3) + str(hrows + 8759) + ')'
+            ns.cell(row=max_row, column=3).number_format = '#,##0.00'
             o = 4
             col = 3
             if details:
@@ -1512,6 +1518,12 @@ class powerMatch(QtGui.QWidget):
                     ss.cell(row=ss_row, column=8).number_format = '$#,##0.00'
                     ss.cell(row=ss_row, column=9).value = self.generators[tech_names[i]].lcoe_cf
                     ss.cell(row=ss_row, column=9).number_format = '#,##0.00'
+                    ns.cell(row=max_row, column=col).value = '=MAX(' + ss_col(col) + str(hrows) + \
+                                                   ':' + ss_col(col) + str(hrows + 8759) + ')'
+                    ns.cell(row=max_row, column=col).number_format = '#,##0.00'
+                    ns.cell(row=hrs_row, column=col).value = '=COUNTIF(' + ss_col(col) + str(hrows) + \
+                                                   ':' + ss_col(col) + str(hrows + 8759) + ',">0")'
+                    ns.cell(row=hrs_row, column=col).number_format = '#,##0'
                 shrt_col = col + 1
             else:
                 shrt_col = 5
@@ -1541,6 +1553,9 @@ class powerMatch(QtGui.QWidget):
             ns.cell(row=fall_row, column=shrt_col).number_format = '#,##0'
             ns.cell(row=what_row, column=shrt_col).value = 'Shortfall (' + sf_sign[0] \
                     + ') /\nSurplus (' + sf_sign[1] + ')'
+            ns.cell(row=max_row, column=shrt_col).value = '=MAX(' + ss_col(shrt_col) + str(hrows) + \
+                                           ':' + ss_col(shrt_col) + str(hrows + 8759) + ')'
+            ns.cell(row=max_row, column=shrt_col).number_format = '#,##0.00'
             for col in range(3, shrt_col + 1):
                 ns.cell(row=what_row, column=col).alignment = oxl.styles.Alignment(wrap_text=True,
                         vertical='bottom', horizontal='center')
@@ -1694,10 +1709,17 @@ class powerMatch(QtGui.QWidget):
                             ns.cell(row=row + hrows, column=col + 1).value = 0
                         ns.cell(row=row + hrows, column=col + 2).value = storage_carry
                         ns.cell(row=row + hrows, column=col + 3).value = shortfall[row] * -self.surplus_sign
-                        ns.cell(row=row + hrows, column=col).number_format = '#,##0.00'
-                        ns.cell(row=row + hrows, column=col + 1).number_format = '#,##0.00'
-                        ns.cell(row=row + hrows, column=col + 2).number_format = '#,##0.00'
-                        ns.cell(row=row + hrows, column=col + 3).number_format = '#,##0.00'
+                        for ac in range(4):
+                            ns.cell(row=row + hrows, column=col + ac).number_format = '#,##0.00'
+                            ns.cell(row=max_row, column=col + ac).value = '=MAX(' + ss_col(col + ac) + \
+                                    str(hrows) + ':' + ss_col(col + ac) + str(hrows + 8759) + ')'
+                            ns.cell(row=max_row, column=col + ac).number_format = '#,##0.00'
+                        ns.cell(row=hrs_row, column=col + 1).value = '=COUNTIF(' + ss_col(col + 1) + \
+                                str(hrows) + ':' + ss_col(col + 1) + str(hrows + 8759) + ',">0")'
+                        ns.cell(row=hrs_row, column=col + 1).number_format = '#,##0'
+                        ns.cell(row=hrs_row, column=col + 2).value = '=' + ss_col(col + 1) + \
+                                str(hrs_row) + '/8760'
+                        ns.cell(row=hrs_row, column=col + 2).number_format = '#,##0.0%'
                     else:
                         if can_use > 0:
                             storage_can += can_use
@@ -1711,6 +1733,15 @@ class powerMatch(QtGui.QWidget):
                     ns.cell(row=cf_row, column=col + 1).value = '=IF(' + ss_col(col + 1) + '1>0,' + \
                                                     ss_col(col + 1) + '3/' + ss_col(col + 1) + '1/8760,"")'
                     ns.cell(row=cf_row, column=col + 1).number_format = '#,##0.00'
+                    ns.cell(row=max_row, column=col).value = '=MAX(' + ss_col(col) + \
+                            str(hrows) + ':' + ss_col(col) + str(hrows + 8759) + ')'
+                    ns.cell(row=max_row, column=col).number_format = '#,##0.00'
+                    ns.cell(row=hrs_row, column=col + 1).value = '=COUNTIF(' + ss_col(col + 1) + \
+                            str(hrows) + ':' + ss_col(col + 1) + str(hrows + 8759) + ',">0")'
+                    ns.cell(row=hrs_row, column=col + 1).number_format = '#,##0'
+                    ns.cell(row=hrs_row, column=col + 2).value = '=' + ss_col(col + 1) + \
+                            str(hrs_row) + '/8760'
+                    ns.cell(row=hrs_row, column=col + 2).number_format = '#,##0.0%'
                     col += 4
                 else:
                     sp_data.append([gen, storage[0], storage_can, '', '', '', '', '', ''])
@@ -1746,6 +1777,15 @@ class powerMatch(QtGui.QWidget):
                     ns.cell(row=cf_row, column=col).value = '=IF(' + ss_col(col) + '1>0,' + \
                                                 ss_col(col) + '3/' + ss_col(col) + '1/8760,"")'
                     ns.cell(row=cf_row, column=col).number_format = '#,##0.00'
+                    ns.cell(row=max_row, column=col).value = '=MAX(' + ss_col(col) + \
+                            str(hrows) + ':' + ss_col(col) + str(hrows + 8759) + ')'
+                    ns.cell(row=max_row, column=col).number_format = '#,##0.00'
+                    ns.cell(row=hrs_row, column=col).value = '=COUNTIF(' + ss_col(col) + \
+                            str(hrows) + ':' + ss_col(col) + str(hrows + 8759) + ',">0")'
+                    ns.cell(row=hrs_row, column=col).number_format = '#,##0'
+                    ns.cell(row=hrs_row, column=col + 1).value = '=' + ss_col(col) + \
+                            str(hrs_row) + '/8760'
+                    ns.cell(row=hrs_row, column=col + 1).number_format = '#,##0.0%'
                     col += 2
                 else:
                     gen_can = 0.
@@ -2015,6 +2055,7 @@ class powerMatch(QtGui.QWidget):
                     length = alen
             ns.column_dimensions[column_cells[0].column].width = max(length, 10)
         ns.column_dimensions['A'].width = 6
+        ns.column_dimensions['B'].width = 21
         st_row = hrows + 8760
         st_col = col
         for row in range(1, st_row):
@@ -2048,7 +2089,7 @@ class powerMatch(QtGui.QWidget):
         ss.cell(row=ss_row, column=1).value = 'Total'
         if self.corrected_lcoe:
             ss_row +=1
-            ss.cell(row=ss_row, column=1).value = 'Corrected LCOE)'
+            ss.cell(row=ss_row, column=1).value = 'Corrected LCOE'
             ss.cell(row=ss_row, column=1).font = bold
         lcoe_row = ss_row
         for column_cells in ss.columns:
@@ -2135,9 +2176,10 @@ class powerMatch(QtGui.QWidget):
                     '/C' + str(ss_row)
             ss.cell(row=lcoe_row, column=6).number_format = '$#,##0.00'
             ss.cell(row=lcoe_row, column=6).font = bold
-            ss.cell(row=lcoe_row + 1, column=6).value = '=(E' + str(lcoe_row - 1) + \
-                    '+E'  + str(lcoe_row + 1) + ')/C' + str(ss_row)
-            ss.cell(row=lcoe_row + 1, column=6).number_format = '$#,##0.00'
+            if self.carbon_price > 0:
+                ss.cell(row=lcoe_row + 1, column=6).value = '=(E' + str(lcoe_row - 1) + \
+                        '+E'  + str(lcoe_row + 1) + ')/C' + str(ss_row)
+                ss.cell(row=lcoe_row + 1, column=6).number_format = '$#,##0.00'
         ss_row += 1
         ss.cell(row=ss_row, column=1).value = 'Surplus'
         sf_text = 'SUMIF(Detail!' + last_col + str(hrows) + ':Detail!' + last_col \
