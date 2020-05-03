@@ -167,19 +167,24 @@ class PowerPlot(QtGui.QWidget):
         iper = '<none>'
         imax = 0
         self.alpha = 0.25
+        self.constrained_layout = False
         self.target = ''
         self.palette = True
         self.history = None
         self.max_files = 10
         ifiles = {}
-        try: # get alpha
-            self.alpha = float(config.get('Powerplot', 'alpha'))
-        except:
-            pass
-        try: # get list of files if any
-            items = config.items('Powerplot')
+        items = config.items('Powerplot')
+        try:
             for key, value in items:
-                if key == 'file_history':
+                if key == 'alpha':
+                    try:
+                        self.alpha = float(value)
+                    except:
+                        pass
+                elif key == 'constrained_layout':
+                    if value.lower() in ['true', 'yes', 'on']:
+                        self.constrained_layout = True
+                elif key == 'file_history':
                     self.history = value.split(',')
                 elif key == 'file_choices':
                     self.max_files = int(value)
@@ -832,7 +837,7 @@ class PowerPlot(QtGui.QWidget):
                     load.append(ws.cell_value(row, tgt_col))
                     maxy = max(maxy, load[-1])
             if self.plottype.currentText() == 'Linegraph':
-                fig = plt.figure('linegraph_' + str(year))
+                fig = plt.figure('linegraph_' + str(year), constrained_layout=self.constrained_layout)
                 if gridtype != '':
                     plt.grid(axis=gridtype)
                 ax = fig.add_subplot(111)
@@ -858,14 +863,14 @@ class PowerPlot(QtGui.QWidget):
                 plt.xlim([0, len(x)])
                 plt.xticks(list(range(12, len(x), 168)))
                 ax.set_xticklabels(day_labels, rotation='vertical')
-                ax.set_xlabel('Month of the year')
+                ax.set_xlabel('Period')
                 ax.set_ylabel('Power (MW)')
                 zp = ZoomPanX()
                 f = zp.zoom_pan(ax, base_scale=1.2) # enable scrollable zoom
                 plt.show()
                 del zp
             elif self.plottype.currentText() == 'Cumulative':
-                fig = plt.figure('cumulative_' + str(year))
+                fig = plt.figure('cumulative_' + str(year), constrained_layout=self.constrained_layout)
                 if gridtype != '':
                     plt.grid(axis=gridtype)
                 bx = fig.add_subplot(111)
@@ -954,7 +959,7 @@ class PowerPlot(QtGui.QWidget):
                 plt.xlim([0, len(x)])
                 plt.xticks(list(range(12, len(x), 168)))
                 bx.set_xticklabels(day_labels, rotation='vertical')
-                bx.set_xlabel('Month of the year')
+                bx.set_xlabel('Period')
                 zp = ZoomPanX()
                 f = zp.zoom_pan(bx, base_scale=1.2) # enable scrollable zoom
                 plt.show()
@@ -1025,7 +1030,8 @@ class PowerPlot(QtGui.QWidget):
                     load[h] = load[h] / (todo_rows / 24)
                     maxy = max(maxy, load[h])
             if self.plottype.currentText() == 'Linegraph':
-                fig = plt.figure('linegraph_' + str(year) + '_' + self.period.currentText())
+                fig = plt.figure('linegraph_' + str(year) + '_' + self.period.currentText(),
+                                 constrained_layout=self.constrained_layout)
                 if gridtype != '':
                     plt.grid(axis=gridtype)
                 cx = fig.add_subplot(111)
@@ -1058,7 +1064,8 @@ class PowerPlot(QtGui.QWidget):
                 plt.show()
                 del zp
             elif self.plottype.currentText() == 'Cumulative':
-                fig = plt.figure('cumulative_' + str(year))
+                fig = plt.figure('cumulative_' + str(year),
+                                 constrained_layout=self.constrained_layout)
                 if gridtype != '':
                     plt.grid(axis=gridtype)
                 dx = fig.add_subplot(111)
@@ -1148,7 +1155,7 @@ class PowerPlot(QtGui.QWidget):
                 plt.show()
                 del zp
             elif self.plottype.currentText() == 'Bar Chart':
-                fig = plt.figure('barchart_' + str(year))
+                fig = plt.figure('barchart_' + str(year), constrained_layout=self.constrained_layout)
                 if gridtype != '':
                     plt.grid(axis=gridtype)
                 ex = fig.add_subplot(111)
