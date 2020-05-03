@@ -447,10 +447,13 @@ class FlexiPlot(QtGui.QWidget):
                     try:
                         self.sparse_ticks = [int(value)]
                     except:
-                        if value.find(':') > 0:
-                            self.sparse_ticks = value.split(':')
+                        if value.lower() in ['true', 'yes', 'on']:
+                            self.sparse_ticks = True
                         else:
-                            self.sparse_ticks = value.split(',')
+                            if value.find(':') > 0:
+                                self.sparse_ticks = value.split(':')
+                            else:
+                                self.sparse_ticks = value.split(',')
                 elif key == 'ticks_font':
                     self.ticks_font = value
                 elif key == 'title_font':
@@ -1066,11 +1069,16 @@ class FlexiPlot(QtGui.QWidget):
         graph.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 2), prop=leg_font)
         plt.ylim([miny, maxy])
         plt.xlim([0, len(x) - 1])
-        if len(self.sparse_ticks) > 0:
+        if self.sparse_ticks or len(self.sparse_ticks) > 0:
             # if self.plottype.currentText() == 'Linegraph' and len(x) > 24:
             tick_labels = [str(xlabels[0])]
             xticks = [0]
-            if len(self.sparse_ticks) == 1:
+            if self.sparse_ticks and isinstance(self.sparse_ticks, bool):
+                for l in range(1, len(xlabels)):
+                    if xlabels[l] != tick_labels[-1]:
+                        xticks.append(l)
+                        tick_labels.append(xlabels[l])
+            elif len(self.sparse_ticks) == 1:
                 for l in range(self.sparse_ticks[0] + 1, len(xlabels), self.sparse_ticks[0]):
                     xticks.append(l)
                     tick_labels.append(xlabels[l])
