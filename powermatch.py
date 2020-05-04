@@ -411,6 +411,7 @@ class Adjustments(QtGui.QDialog):
         ini_file = str(QtGui.QFileDialog.getOpenFileName(self, 'Open Adjustments file',
                    self.save_folder, 'Preferences Files (*.ini)'))
         if ini_file != '':
+            reshow = False
             config = configparser.RawConfigParser()
             config.read(ini_file)
             try:
@@ -420,7 +421,10 @@ class Adjustments(QtGui.QDialog):
             bits = adjustin.split(',')
             for bit in bits:
                 bi = bit.split('=')
-                self.adjusts[bi[0]].setValue(float(bi[1]))
+                try:
+                    self.adjusts[bi[0]].setValue(float(bi[1]))
+                except:
+                    pass
 
     def saveClicked(self):
         line = ''
@@ -433,6 +437,8 @@ class Adjustments(QtGui.QDialog):
             inifile = str(QtGui.QFileDialog.getSaveFileName(None, 'Save Adjustments to file',
                           self.save_folder, 'Preferences Files (*.ini)'))
             if inifile != '':
+                if inifile[-4:] != '.ini':
+                    inifile = inifile + '.ini'
                 SaveIni(updates, ini_file=inifile)
 
     def showClicked(self):
@@ -513,7 +519,6 @@ class powerMatch(QtGui.QWidget):
         self.adjust_cap = 25
         self.adjust_re = False
         self.change_res = True
-        self.details = True
         self.corrected_lcoe = True
         self.carbon_price = 0.
         self.optimise_choice = 'LCOE'
@@ -567,9 +572,6 @@ class powerMatch(QtGui.QWidget):
                  elif key == 'corrected_lcoe':
                      if value.lower() in ['false', 'no', 'off']:
                          self.corrected_lcoe = False
-                 elif key == 'generators_details':
-                     if value.lower() in ['false', 'off', 'no']:
-                         self.details = False
                  elif key == 'log_status':
                      if value.lower() in ['false', 'no', 'off']:
                          self.log_status = False
@@ -1175,16 +1177,17 @@ class powerMatch(QtGui.QWidget):
                 for stn in cat:
                     self.order.addItem(stn)
 
+ #   def doDispatch(self):
+        # the "guts" of Powermatch
     def pmClicked(self):
         self.setStatus(self.sender().text() + ' processing started')
-        if self.sender().text() == 'Summary': # summary only?
-            summ_only = True
+        if self.sender().text() == 'Powermatch': # detailed spreadsheet?
+            detailed = True
         else:
-            summ_only = False
+            detailed = False
         self.progressbar.setMinimum(0)
         self.progressbar.setMaximum(10)
         self.progressbar.setHidden(False)
-        details = self.details
         err_msg = ''
         if self.constraints is None:
             try:
@@ -1234,148 +1237,131 @@ class powerMatch(QtGui.QWidget):
         else:
             sf_test = ['<', '>']
             sf_sign = ['-', '+']
-        if pm_data_file[-4:] == '.xls': #xls format
-            xlsx = False
-            details = False
-            ts = xlrd.open_workbook(pm_data_file)
-            ws = ts.sheet_by_index(0)
-            if ws.cell_value(0, 0) != 'Hourly Shortfall Table' \
-              or ws.cell_value(0, 4) != 'Generation Summary Table':
-                self.setStatus('not a Powerbalance spreadsheet')
-                self.progressbar.setHidden(True)
-                return
-            for row in range(20):
-                if ws.cell_value(row, 5) == 'Total':
-                    re_capacity = ws.cell_value(row, 6)
-                    re_generation = ws.cell_value(row, 8)
-                    break
-            for row in range(2, ws.nrows):
-                shortfall.append(ws.cell_value(row, 2))
-        else: # xlsx format
-            xlsx = True
-            shortfall = [0.] * 8760
-            if details:
-                cols = []
-            try:
-                ts = oxl.load_workbook(pm_data_file)
-            except FileNotFoundError:
-                self.setStatus('Data file not found - ' + str(self.files[D].text()))
-                return
-            except:
-                self.setStatus('Error accessing Data file - ' + str(self.files[D].text()))
-                return
-            ws = ts.active
-            top_row = ws.max_row - 8760
-            if ws.cell(row=top_row, column=1).value != 'Hour' or ws.cell(row=top_row, column=2).value != 'Period':
-                self.setStatus('not a Powermatch data spreadsheet')
-                self.progressbar.setHidden(True)
-                return
-            typ_row = top_row - 1
-            gen_row = typ_row
-            while typ_row > 0:
-                if ws.cell(row=typ_row, column=1).value[:9] == 'Generated':
-                    gen_row = typ_row
-                if ws.cell(row=typ_row, column=3).value in tech_names:
-                    break
-                typ_row -= 1
-            else:
-                self.setStatus('no suitable data')
-                return
-            icap_row = typ_row + 1
-            while icap_row < top_row:
-                if ws.cell(row=icap_row, column=1).value[:8] == 'Capacity':
-                    break
-                icap_row += 1
-            else:
-                self.setStatus('no capacity data')
-                return
-       #     adjustby = None
-            if self.adjust.isChecked():
-                generated = 0
-                for row in range(top_row + 1, ws.max_row + 1):
-                    generated = generated + ws.cell(row=row, column=3).value
-                adjustin = []
-                for col in range(3, ws.max_column + 1):
-                    try:
-                        valu = ws.cell(row=typ_row, column=col).value.replace('-','')
-                        i = tech_names.index(valu)
-                    except:
-                        break
-                    if valu == 'Load':
-                        adjustin.append([tech_names[i], '', generated])
-                    else:
-                        try:
-                            typ = self.constraints[tech_names[i]].category
-                            adjustin.append([tech_names[i], typ,
-                                            float(ws.cell(row=icap_row, column=col).value)])
-                        except:
-                            try:
-                                adjustin.append([tech_names[i], '',
-                                                float(ws.cell(row=icap_row, column=col).value)])
-                            except:
-                                pass
-                for i in range(self.order.count()):
-                    if self.generators[self.order.item(i).text()].capacity > 0:
-                        who = self.order.item(i).text()
-                        try:
-                            typ = self.constraints[who].category
-                        except:
-                            typ = ''
-                        adjustin.append([who, typ, self.generators[who].capacity])
-                adjust = Adjustments(adjustin, self.adjustby, self.adjust_cap,
-                                     save_folder=self.scenarios)
-                adjust.exec_()
-                if adjust.getValues() is None:
-                    self.setStatus('Execution aborted.')
-                    self.progressbar.setHidden(True)
-                    return
-                self.adjustby = adjust.getValues()
-                self.updated = True
-            load_col = -1
-            det_col = 3
-            self.progressbar.setValue(1)
+        if pm_data_file[-5:] != '.xlsx': #xlsx format only
+            self.setStatus('Not a Powermatch data spreadsheet')
+            self.progressbar.setHidden(True)
+            return
+        shortfall = [0.] * 8760
+        cols = []
+        try:
+            ts = oxl.load_workbook(pm_data_file)
+        except FileNotFoundError:
+            self.setStatus('Data file not found - ' + str(self.files[D].text()))
+            return
+        except:
+            self.setStatus('Error accessing Data file - ' + str(self.files[D].text()))
+            return
+        ws = ts.active
+        top_row = ws.max_row - 8760
+        if ws.cell(row=top_row, column=1).value != 'Hour' or ws.cell(row=top_row, column=2).value != 'Period':
+            self.setStatus('Not a Powermatch data spreadsheet')
+            self.progressbar.setHidden(True)
+            return
+        typ_row = top_row - 1
+        gen_row = typ_row
+        while typ_row > 0:
+            if ws.cell(row=typ_row, column=1).value[:9] == 'Generated':
+                gen_row = typ_row
+            if ws.cell(row=typ_row, column=3).value in tech_names:
+                break
+            typ_row -= 1
+        else:
+            self.setStatus('no suitable data')
+            return
+        icap_row = typ_row + 1
+        while icap_row < top_row:
+            if ws.cell(row=icap_row, column=1).value[:8] == 'Capacity':
+                break
+            icap_row += 1
+        else:
+            self.setStatus('no capacity data')
+            return
+   #     adjustby = None
+        if self.adjust.isChecked():
+            generated = 0
+            for row in range(top_row + 1, ws.max_row + 1):
+                generated = generated + ws.cell(row=row, column=3).value
+            adjustin = []
             for col in range(3, ws.max_column + 1):
                 try:
                     valu = ws.cell(row=typ_row, column=col).value.replace('-','')
                     i = tech_names.index(valu)
                 except:
-                    break # ?? or continue??
-                if tech_names[i] != 'Load':
+                    break
+                if valu == 'Load':
+                    adjustin.append([tech_names[i], '', generated])
+                else:
                     try:
-                        if ws.cell(row=icap_row, column=col).value <= 0:
-                            continue
+                        typ = self.constraints[tech_names[i]].category
+                        adjustin.append([tech_names[i], typ,
+                                        float(ws.cell(row=icap_row, column=col).value)])
                     except:
-                        continue
-                multiplier = 1.
-                if self.adjust.isChecked() and self.adjustby is not None:
+                        try:
+                            adjustin.append([tech_names[i], '',
+                                            float(ws.cell(row=icap_row, column=col).value)])
+                        except:
+                            pass
+            for i in range(self.order.count()):
+                if self.generators[self.order.item(i).text()].capacity > 0:
+                    who = self.order.item(i).text()
                     try:
-                        multiplier = self.adjustby[tech_names[i]]
+                        typ = self.constraints[who].category
                     except:
-                        pass
-                if multiplier == 0:
-                    continue
-                data.append([])
-                if details:
-                    cols.append(i)
-                    try:
-                        re_capacities[i] = ws.cell(row=icap_row, column=col).value * multiplier
-                    except:
-                        pass
+                        typ = ''
+                    adjustin.append([who, typ, self.generators[who].capacity])
+            adjust = Adjustments(adjustin, self.adjustby, self.adjust_cap,
+                                 save_folder=self.scenarios)
+            adjust.exec_()
+            if adjust.getValues() is None:
+                self.setStatus('Execution aborted.')
+                self.progressbar.setHidden(True)
+                return
+            self.adjustby = adjust.getValues()
+            self.updated = True
+        load_col = -1
+        det_col = 3
+        self.progressbar.setValue(1)
+        for col in range(3, ws.max_column + 1):
+            try:
+                valu = ws.cell(row=typ_row, column=col).value.replace('-','')
+                i = tech_names.index(valu)
+            except:
+                break # ?? or continue??
+            if tech_names[i] != 'Load':
                 try:
-                    re_capacity += ws.cell(row=icap_row, column=col).value * multiplier
+                    if ws.cell(row=icap_row, column=col).value <= 0:
+                        continue
+                except:
+                    continue
+            multiplier = 1.
+            if self.adjust.isChecked() and self.adjustby is not None:
+                try:
+                    multiplier = self.adjustby[tech_names[i]]
                 except:
                     pass
-                for row in range(top_row + 1, ws.max_row + 1):
-                    data[-1].append(ws.cell(row=row, column=col).value * multiplier)
-                    try:
-                        if tech_names[i] == 'Load':
-                            load_col = len(data) - 1
-                            shortfall[row - top_row - 1] += ws.cell(row=row, column=col).value * multiplier
-                        else:
-                            shortfall[row - top_row - 1] -= ws.cell(row=row, column=col).value * multiplier
-                    except:
-                        pass
-            ts.close()
+            if multiplier == 0:
+                continue
+            data.append([])
+            cols.append(i)
+            try:
+                re_capacities[i] = ws.cell(row=icap_row, column=col).value * multiplier
+            except:
+                pass
+            try:
+                re_capacity += ws.cell(row=icap_row, column=col).value * multiplier
+            except:
+                pass
+            for row in range(top_row + 1, ws.max_row + 1):
+                data[-1].append(ws.cell(row=row, column=col).value * multiplier)
+                try:
+                    if tech_names[i] == 'Load':
+                        load_col = len(data) - 1
+                        shortfall[row - top_row - 1] += ws.cell(row=row, column=col).value * multiplier
+                    else:
+                        shortfall[row - top_row - 1] -= ws.cell(row=row, column=col).value * multiplier
+                except:
+                    pass
+        ts.close()
         if str(self.files[R].text()) == '':
             i = pm_data_file.find('/')
             if i >= 0:
@@ -1385,26 +1371,12 @@ class powerMatch(QtGui.QWidget):
             data_file = data_file.replace('data', 'results')
         else:
             data_file = self.get_filename(str(self.files[R].text()))
-        if not xlsx:
-            data_file += 'x'
         self.progressbar.setValue(2)
         headers = ['Facility', 'Capacity (MW/MWh)', 'Subtotal (MWh)', 'CF', 'Cost ($)',
                    'LCOE ($/MWh)', 'Emissions (tCO2e)','Reference LCOE','Reference CF']
         sp_cols = []
         sp_cap = []
-        if summ_only: # summary only?
-            sp_data = []
-            sp_load = 0.
-            hrows = 10
-            for i in cols:
-                if tech_names[i] == 'Load':
-                    sp_load = sum(data[load_col])
-                    continue
-                sp_data.append([tech_names[i], re_capacities[i], 0., '', '', '', '', '', ''])
-                for g in data[len(sp_data)]:
-                    sp_data[-1][2] += g
-                # if ignore not used
-        else: # normal
+        if detailed:
             ds = oxl.Workbook()
             ns = ds.active
             ns.title = 'Detail'
@@ -1457,96 +1429,74 @@ class powerMatch(QtGui.QWidget):
             ns.cell(row=max_row, column=3).number_format = '#,##0.00'
             o = 4
             col = 3
-            if details:
-                # here we're processing renewables (so no storage)
-                for i in cols:
-                    if tech_names[i] == 'Load':
+            # here we're processing renewables (so no storage)
+            for i in cols:
+                if tech_names[i] == 'Load':
+                    continue
+                if self.adjust.isChecked() and self.adjustby is not None:
+                    if self.adjustby[tech_names[i]] <= 0:
                         continue
-                    if self.adjust.isChecked() and self.adjustby is not None:
-                        if self.adjustby[tech_names[i]] <= 0:
-                            continue
-                    col += 1
-                    sp_cols.append(tech_names[i])
-                    sp_cap.append(re_capacities[i])
-                    ss_row += 1
-                    ns.cell(row=what_row, column=col).value = tech_names[i]
-                    ss.cell(row=ss_row, column=1).value = '=Detail!' + ss_col(col) + str(what_row)
-                    ns.cell(row=cap_row, column=col).value = re_capacities[i]
-                    ns.cell(row=cap_row, column=col).number_format = '#,##0.00'
-                    ss.cell(row=ss_row, column=2).value = '=Detail!' + ss_col(col) + str(cap_row)
-                    ss.cell(row=ss_row, column=2).number_format = '#,##0.00'
-                    ns.cell(row=sum_row, column=col).value = '=SUM(' + ss_col(col) \
-                            + str(hrows) + ':' + ss_col(col) + str(hrows + 8759) + ')'
-                    ns.cell(row=sum_row, column=col).number_format = '#,##0'
-                    ss.cell(row=ss_row, column=3).value = '=Detail!' + ss_col(col) + str(sum_row)
-                    ss.cell(row=ss_row, column=3).number_format = '#,##0'
-                    re_sum += 'C' + str(ss_row) + '+'
-                    ns.cell(row=cf_row, column=col).value = '=IF(' + ss_col(col) + '1>0,' + \
-                            ss_col(col) + '3/' + ss_col(col) + '1/8760,"")'
-                    ns.cell(row=cf_row, column=col).number_format = '#,##0.00'
-                    ss.cell(row=ss_row, column=4).value = '=Detail!' + ss_col(col) + str(cf_row)
-                    ss.cell(row=ss_row, column=4).number_format = '#,##0.00'
-                    if tech_names[i] not in self.generators:
-                        continue
-                    if self.generators[tech_names[i]].lcoe > 0:
-                        ns.cell(row=cost_row, column=col).value = self.generators[tech_names[i]].lcoe * \
-                                self.generators[tech_names[i]].lcoe_cf * 8760 * re_capacities[i]
-                        ns.cell(row=cost_row, column=col).number_format = '$#,##0'
-                        if self.remove_cost:
-                            ss.cell(row=ss_row, column=5).value = '=IF(Detail!' + ss_col(col) + str(sum_row) \
-                                    + '>0,Detail!' + ss_col(col) + str(cost_row) + ',"")'
-                        else:
-                            ss.cell(row=ss_row, column=5).value = '=Detail!' + ss_col(col) + str(cost_row)
-                        ss.cell(row=ss_row, column=5).number_format = '$#,##0'
-                        ns.cell(row=lcoe_row, column=col).value = '=IF(AND(' + ss_col(col) + str(cf_row) + '>0,' \
-                                + ss_col(col) + str(cap_row) + '>0),' + ss_col(col) + str(cost_row) + '/8760/' \
-                                + ss_col(col) + str(cf_row) +'/' + ss_col(col) + str(cap_row) + ',"")'
-                        ns.cell(row=lcoe_row, column=col).number_format = '$#,##0.00'
-                        ss.cell(row=ss_row, column=6).value = '=Detail!' + ss_col(col) + str(lcoe_row)
-                        ss.cell(row=ss_row, column=6).number_format = '$#,##0.00'
-                    if self.generators[tech_names[i]].emissions > 0:
-                        ns.cell(row=emi_row, column=col).value = '=' + ss_col(col) + str(sum_row) \
-                                + '*' + str(self.generators[tech_names[i]].emissions)
-                        ns.cell(row=emi_row, column=col).number_format = '#,##0'
-                        if self.remove_cost:
-                            ss.cell(row=ss_row, column=7).value = '=IF(Detail!' + ss_col(col) + str(sum_row) \
-                                    + '>0,Detail!' + ss_col(col) + str(emi_row) + ',"")'
-                        else:
-                            ss.cell(row=ss_row, column=7).value = '=Detail!' + ss_col(col) + str(emi_row)
-                        ss.cell(row=ss_row, column=7).number_format = '#,##0'
-                    ss.cell(row=ss_row, column=8).value = self.generators[tech_names[i]].lcoe
-                    ss.cell(row=ss_row, column=8).number_format = '$#,##0.00'
-                    ss.cell(row=ss_row, column=9).value = self.generators[tech_names[i]].lcoe_cf
-                    ss.cell(row=ss_row, column=9).number_format = '#,##0.00'
-                    ns.cell(row=max_row, column=col).value = '=MAX(' + ss_col(col) + str(hrows) + \
-                                                   ':' + ss_col(col) + str(hrows + 8759) + ')'
-                    ns.cell(row=max_row, column=col).number_format = '#,##0.00'
-                    ns.cell(row=hrs_row, column=col).value = '=COUNTIF(' + ss_col(col) + str(hrows) + \
-                                                   ':' + ss_col(col) + str(hrows + 8759) + ',">0")'
-                    ns.cell(row=hrs_row, column=col).number_format = '#,##0'
-                shrt_col = col + 1
-            else:
-                shrt_col = 5
-                sp_cols.append('Renewable')
-                sp_cap.append(re_capacity)
-                ns.cell(row=what_row, column=4).value = 'Renewable'
-                ns.cell(row=cap_row, column=4).value = re_capacity
-                ns.cell(row=cap_row, column=4).number_format = '#,##0.00'
-                if xlsx:
-                    ns.cell(row=sum_row, column=4).value = '=SUM(D' + str(hrows) + ':D' + str(hrows + 8759) + ')'
-                else:
-                    ns.cell(row=sum_row, column=4).value = re_generation
-                ns.cell(row=sum_row, column=4).number_format = '#,##0'
-                ns.cell(row=cf_row, column=4).value = '=IF(D1>0,D3/D1/8760."")'
-                ns.cell(row=cf_row, column=4).number_format = '#,##0.00'
+                col += 1
+                sp_cols.append(tech_names[i])
+                sp_cap.append(re_capacities[i])
                 ss_row += 1
-                ss.cell(row=ss_row, column=1).value = '=Detail!D' + str(what_row)
-                ss.cell(row=ss_row, column=2).value = '=Detail!D' + str(cap_row)
+                ns.cell(row=what_row, column=col).value = tech_names[i]
+                ss.cell(row=ss_row, column=1).value = '=Detail!' + ss_col(col) + str(what_row)
+                ns.cell(row=cap_row, column=col).value = re_capacities[i]
+                ns.cell(row=cap_row, column=col).number_format = '#,##0.00'
+                ss.cell(row=ss_row, column=2).value = '=Detail!' + ss_col(col) + str(cap_row)
                 ss.cell(row=ss_row, column=2).number_format = '#,##0.00'
-                ss.cell(row=ss_row, column=3).value = '=Detail!D' + str(sum_row)
+                ns.cell(row=sum_row, column=col).value = '=SUM(' + ss_col(col) \
+                        + str(hrows) + ':' + ss_col(col) + str(hrows + 8759) + ')'
+                ns.cell(row=sum_row, column=col).number_format = '#,##0'
+                ss.cell(row=ss_row, column=3).value = '=Detail!' + ss_col(col) + str(sum_row)
                 ss.cell(row=ss_row, column=3).number_format = '#,##0'
-                ss.cell(row=ss_row, column=4).value = '=Detail!D' + str(cf_row)
+                re_sum += 'C' + str(ss_row) + '+'
+                ns.cell(row=cf_row, column=col).value = '=IF(' + ss_col(col) + '1>0,' + \
+                        ss_col(col) + '3/' + ss_col(col) + '1/8760,"")'
+                ns.cell(row=cf_row, column=col).number_format = '#,##0.00'
+                ss.cell(row=ss_row, column=4).value = '=Detail!' + ss_col(col) + str(cf_row)
                 ss.cell(row=ss_row, column=4).number_format = '#,##0.00'
+                if tech_names[i] not in self.generators:
+                    continue
+                if self.generators[tech_names[i]].lcoe > 0:
+                    ns.cell(row=cost_row, column=col).value = '=IF(' + ss_col(col) + str(cf_row) + \
+                            '>0,' + ss_col(col) + str(sum_row) + '*Summary!H' + str(ss_row) + \
+                            '*Summary!I' + str(ss_row) + '/' + ss_col(col) + str(cf_row) + ',0)'
+                    ns.cell(row=cost_row, column=col).number_format = '$#,##0'
+                    if self.remove_cost:
+                        ss.cell(row=ss_row, column=5).value = '=IF(Detail!' + ss_col(col) + str(sum_row) \
+                                + '>0,Detail!' + ss_col(col) + str(cost_row) + ',"")'
+                    else:
+                        ss.cell(row=ss_row, column=5).value = '=Detail!' + ss_col(col) + str(cost_row)
+                    ss.cell(row=ss_row, column=5).number_format = '$#,##0'
+                    ns.cell(row=lcoe_row, column=col).value = '=IF(AND(' + ss_col(col) + str(cf_row) + '>0,' \
+                            + ss_col(col) + str(cap_row) + '>0),' + ss_col(col) + str(cost_row) + '/8760/' \
+                            + ss_col(col) + str(cf_row) +'/' + ss_col(col) + str(cap_row) + ',"")'
+                    ns.cell(row=lcoe_row, column=col).number_format = '$#,##0.00'
+                    ss.cell(row=ss_row, column=6).value = '=Detail!' + ss_col(col) + str(lcoe_row)
+                    ss.cell(row=ss_row, column=6).number_format = '$#,##0.00'
+                if self.generators[tech_names[i]].emissions > 0:
+                    ns.cell(row=emi_row, column=col).value = '=' + ss_col(col) + str(sum_row) \
+                            + '*' + str(self.generators[tech_names[i]].emissions)
+                    ns.cell(row=emi_row, column=col).number_format = '#,##0'
+                    if self.remove_cost:
+                        ss.cell(row=ss_row, column=7).value = '=IF(Detail!' + ss_col(col) + str(sum_row) \
+                                + '>0,Detail!' + ss_col(col) + str(emi_row) + ',"")'
+                    else:
+                        ss.cell(row=ss_row, column=7).value = '=Detail!' + ss_col(col) + str(emi_row)
+                    ss.cell(row=ss_row, column=7).number_format = '#,##0'
+                ss.cell(row=ss_row, column=8).value = self.generators[tech_names[i]].lcoe
+                ss.cell(row=ss_row, column=8).number_format = '$#,##0.00'
+                ss.cell(row=ss_row, column=9).value = self.generators[tech_names[i]].lcoe_cf
+                ss.cell(row=ss_row, column=9).number_format = '#,##0.00'
+                ns.cell(row=max_row, column=col).value = '=MAX(' + ss_col(col) + str(hrows) + \
+                                               ':' + ss_col(col) + str(hrows + 8759) + ')'
+                ns.cell(row=max_row, column=col).number_format = '#,##0.00'
+                ns.cell(row=hrs_row, column=col).value = '=COUNTIF(' + ss_col(col) + str(hrows) + \
+                                               ':' + ss_col(col) + str(hrows + 8759) + ',">0")'
+                ns.cell(row=hrs_row, column=col).number_format = '#,##0'
+                shrt_col = col + 1
             ns.cell(row=fall_row, column=shrt_col).value = '=COUNTIF(' + ss_col(shrt_col) \
                             + str(hrows) + ':' + ss_col(shrt_col) + str(hrows + 8759) + \
                             ',"' + sf_test[0] + '0")'
@@ -1560,27 +1510,32 @@ class powerMatch(QtGui.QWidget):
                 ns.cell(row=what_row, column=col).alignment = oxl.styles.Alignment(wrap_text=True,
                         vertical='bottom', horizontal='center')
             for row in range(hrows, 8760 + hrows):
-                if xlsx:
-                    ns.cell(row=row, column=1).value = ws.cell(row=top_row + row - hrows + 1, column=1).value
-                    ns.cell(row=row, column=2).value = ws.cell(row=top_row + row - hrows + 1, column=2).value
-                    ns.cell(row=row, column=3).value = data[load_col][row - hrows]
-                    if not details:
-                        ns.cell(row=row, column=4).value = data[load_col][row - hrows] - shortfall[row - hrows]
-                else:
-                    ns.cell(row=row, column=1).value = ws.cell_value(row - hrows + 2, 0)
-                    ns.cell(row=row, column=2).value = ws.cell_value(row - hrows + 2, 1)
+                ns.cell(row=row, column=1).value = ws.cell(row=top_row + row - hrows + 1, column=1).value
+                ns.cell(row=row, column=2).value = ws.cell(row=top_row + row - hrows + 1, column=2).value
+                ns.cell(row=row, column=3).value = data[load_col][row - hrows]
                 ns.cell(row=row, column=shrt_col).value = shortfall[row - hrows] * -self.surplus_sign
                 for col in range(3, shrt_col + 1):
                     ns.cell(row=row, column=col).number_format = '#,##0.00'
-            if details:
-                col = 3
-                for i in range(len(data)):
-                    if cols[i] == load_col:
-                        continue
-                    col += 1
-                    for row in range(hrows, 8760 + hrows):
-                        ns.cell(row=row, column=col).value = data[i][row - hrows]
+            col = 3
+            for i in range(len(data)):
+                if cols[i] == load_col:
+                    continue
+                col += 1
+                for row in range(hrows, 8760 + hrows):
+                    ns.cell(row=row, column=col).value = data[i][row - hrows]
             col = shrt_col + 1
+        else:
+            sp_data = []
+            sp_load = 0.
+            hrows = 10
+            for i in cols:
+                if tech_names[i] == 'Load':
+                    sp_load = sum(data[load_col])
+                    continue
+                sp_data.append([tech_names[i], re_capacities[i], 0., '', '', '', '', '', ''])
+                for g in data[len(sp_data)]:
+                    sp_data[-1][2] += g
+                # if ignore not used
         order = [] #'Storage', 'Biomass', 'PHS', 'Gas', 'CCG1', 'Other', 'Coal']
      #   if self.adjustby is not None:
         for itm in range(self.order.count()):
@@ -1603,7 +1558,7 @@ class powerMatch(QtGui.QWidget):
                 storage_names.append(gen)
                 storage = [0., 0., 0., 0.] # capacity, initial, min level, max drain
                 storage[0] = capacity
-                if not summ_only:
+                if detailed:
                     ns.cell(row=cap_row, column=col + 1).value = capacity
                     ns.cell(row=cap_row, column=col + 1).number_format = '#,##0.00'
                 try:
@@ -1641,7 +1596,7 @@ class powerMatch(QtGui.QWidget):
                     in_run[0] = True
                 warm_time = self.constraints[self.generators[gen].constraint].warm_time
                 storage_carry = storage[1] # self.generators[gen].initial
-                if not summ_only:
+                if detailed:
                     ns.cell(row=ini_row, column=col + 1).value = storage_carry
                     ns.cell(row=ini_row, column=col + 1).number_format = '#,##0.00'
                 storage_bal = []
@@ -1700,7 +1655,7 @@ class powerMatch(QtGui.QWidget):
                             min_after[5] = row
                         min_after[3] = storage_carry
                     storage_bal.append(storage_carry)
-                    if not summ_only:
+                    if detailed:
                         if can_use > 0:
                             ns.cell(row=row + hrows, column=col).value = 0
                             ns.cell(row=row + hrows, column=col + 1).value = can_use * self.surplus_sign
@@ -1723,7 +1678,7 @@ class powerMatch(QtGui.QWidget):
                     else:
                         if can_use > 0:
                             storage_can += can_use
-                if not summ_only:
+                if detailed:
                     ns.cell(row=sum_row, column=col).value = '=SUMIF(' + ss_col(col) + \
                             str(hrows) + ':' + ss_col(col) + str(hrows + 8759) + ',">0")'
                     ns.cell(row=sum_row, column=col).number_format = '#,##0'
@@ -1750,7 +1705,7 @@ class powerMatch(QtGui.QWidget):
                     cap_capacity = capacity * self.constraints[self.generators[gen].constraint].capacity_max
                 else:
                     cap_capacity = capacity
-                if not summ_only:
+                if detailed:
                     ns.cell(row=cap_row, column=col).value = capacity
                     ns.cell(row=cap_row, column=col).number_format = '#,##0.00'
                     min_after[4] = shortfall[0]
@@ -1804,19 +1759,12 @@ class powerMatch(QtGui.QWidget):
                                 min_after[5] = row
                     sp_data.append([gen, capacity, gen_can, '', '', '', '', '', ''])
         self.progressbar.setValue(4)
-        if summ_only:
-            if xlsx:
-                if min_after[2] >= 0:
-                    min_after[2] = ws.cell(row=top_row + min_after[2] + 1, column=2).value
-                else:
-                    min_after[3] = ''
-                min_after[5] = ws.cell(row=top_row + min_after[5] + 1, column=2).value
+        if not detailed:
+            if min_after[2] >= 0:
+                min_after[2] = ws.cell(row=top_row + min_after[2] + 1, column=2).value
             else:
-                if min_after[2] > 0:
-                    min_after[2] = ws.cell_value(min_after[2] + 3, 1)
-                else:
-                    min_after[2] = ''
-                min_after[5] = ws.cell_value(min_after[5] + 3, 1)
+                min_after[3] = ''
+            min_after[5] = ws.cell(row=top_row + min_after[5] + 1, column=2).value
             cap_sum = 0.
             gen_sum = 0.
             re_sum = 0.
@@ -1926,7 +1874,7 @@ class powerMatch(QtGui.QWidget):
             self.progressbar.setValue(10)
             self.progressbar.setHidden(True)
             self.progressbar.setValue(0)
-            return
+            return # finish if not detailed spreadsheet
         col = shrt_col + 1
         for gen in order:
             ss_row += 1
@@ -1953,8 +1901,9 @@ class powerMatch(QtGui.QWidget):
                         capacity = self.generators[gen].capacity * self.adjustby[gen]
                     except:
                         pass
-                ns.cell(row=cost_row, column=col).value = self.generators[gen].lcoe * \
-                        self.generators[gen].lcoe_cf * 8760 * capacity
+                ns.cell(row=cost_row, column=col).value = '=IF(' + ss_col(col) + str(cf_row) + \
+                        '>0,' + ss_col(col) + str(sum_row) + '*Summary!H' + str(ss_row) + \
+                        '*Summary!I' + str(ss_row) + '/' + ss_col(col) + str(cf_row) + ',0)'
                 ns.cell(row=cost_row, column=col).number_format = '$#,##0'
                 if self.remove_cost:
                     ss.cell(row=ss_row, column=5).value = '=IF(Detail!' + ss_col(col) + str(sum_row) \
@@ -2115,9 +2064,10 @@ class powerMatch(QtGui.QWidget):
                cp = str(int(self.carbon_price))
             else:
                cp = '{:.2f}'.format(self.carbon_price)
-            ss.cell(row=ss_row, column=1).value = 'Carbon Cost ($' + cp + ')'
-            ss.cell(row=ss_row, column=5).value = '=G' + str(ss_row - r) + '*' + \
-                    str(self.carbon_price)
+            ss.cell(row=ss_row, column=1).value = 'Carbon Cost ($/tCO2e)'
+            ss.cell(row=ss_row, column=2).value = self.carbon_price
+            ss.cell(row=ss_row, column=2).number_format = '$#,##0.00'
+            ss.cell(row=ss_row, column=5).value = '=G' + str(ss_row - r) + '*B' + str(ss_row)
             ss.cell(row=ss_row, column= 5).number_format = '$#,##0'
             if not self.corrected_lcoe:
                 ss.cell(row=ss_row, column=6).value = '=(E' + str(ss_row - r) + \
@@ -2689,7 +2639,6 @@ class powerMatch(QtGui.QWidget):
 #       optClicked mainline starts here
         self.optExit = False
         self.setStatus('Optimise processing started')
-        details = self.details
         err_msg = ''
         if self.constraints is None:
             try:
