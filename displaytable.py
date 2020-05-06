@@ -346,7 +346,7 @@ class Table(QtGui.QDialog):
                         else:
                             self.lens[prop] = [len(str(attr)), 0]
                     elif isinstance(attr, float):
-                        if self.labels[prop] == 'str':
+                        if self.labels[prop] == 'str' or  self.labels[prop] == 'int':
                             self.labels[prop] = 'float'
                         a = str(attr)
                         bits = a.split('.')
