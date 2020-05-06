@@ -172,9 +172,10 @@ class PowerPlot(QtGui.QWidget):
         self.palette = True
         self.history = None
         self.max_files = 10
+        self.seasons = {}
         ifiles = {}
-        items = config.items('Powerplot')
         try:
+            items = config.items('Powerplot')
             for key, value in items:
                 if key == 'alpha':
                     try:
@@ -193,6 +194,28 @@ class PowerPlot(QtGui.QWidget):
                 elif key == 'palette':
                     if value.lower() in ['false', 'no', 'off']:
                         self.palette = False
+        except:
+            pass
+        try:
+            items = config.items('Power')
+            for item, values in items:
+                if item[:6] == 'season':
+                    if item == 'season':
+                        continue
+                    mths = values.split(',')
+                    if mths[0] in self.seasons.keys():
+                        per = mths[0] + ' Period'
+                        self.seasons[per] = self.seasons[mths[0]]
+                    self.seasons[mths[0]] = list(map(lambda x: int(x) - 1, mths[1:]))
+                elif item[:6] == 'period':
+                    if item == 'period':
+                        continue
+                    mths = values.split(',')
+                    if mths[0] in self.seasons.keys():
+                        per = mths[0] + ' Period'
+                    else:
+                        per = mths[0]
+                    self.seasons[per] = list(map(lambda x: int(x) - 1, mths[1:]))
         except:
             pass
         if len(ifiles) > 0:
@@ -227,6 +250,8 @@ class PowerPlot(QtGui.QWidget):
         self.period.addItem('Year')
         for mth in mth_labels:
             self.period.addItem(mth)
+        for per in sorted(self.seasons.keys()):
+            self.period.addItem(per)
         self.grid.addWidget(self.period, rw, 1, 1, 2)
         self.grid.addWidget(QtGui.QLabel('(Diurnal profile for Period)'), rw, 3, 1, 2)
         rw += 1
@@ -552,7 +577,7 @@ class PowerPlot(QtGui.QWidget):
                 self.targets.clear()
                 self.targets.addItem('<none>')
                 self.targets.setCurrentIndex(0)
-                for col in range(2, ws.ncols):
+                for col in range(ws.ncols -1, 1, -1):
                     column = str(ws.cell_value(row, col)).replace('\n',' ')
                     if column in oldcolumns:
                         columns.append(column)
@@ -974,19 +999,31 @@ class PowerPlot(QtGui.QWidget):
                 titl = titl.replace('$MTH$', '')
                 titl = titl.replace('$MONTH$', '')
                 titl = titl.replace('  ', '')
-                strt_row = self.toprow
-                todo_rows = self.rows
+                strt_row = [self.toprow]
+                todo_rows = [self.rows]
             else:
                 titl = titl.replace('$MTH$', self.period.currentText())
                 titl = titl.replace('$MONTH$', self.period.currentText())
-                i = mth_labels.index(self.period.currentText())
-                m = 0
-                strt_row = 0
-                while m < i:
-                    strt_row = strt_row + the_days[m] * 24
-                    m += 1
-                strt_row = self.toprow + strt_row
-                todo_rows = the_days[i] * 24
+                if self.period.currentText() in self.seasons.keys():
+                    strt_row = []
+                    todo_rows = []
+                    for s in self.seasons[self.period.currentText()]:
+                        m = 0
+                        strt_row.append(0)
+                        while m < s:
+                            strt_row[-1] = strt_row[-1] + the_days[m] * 24
+                            m += 1
+                        strt_row[-1] = strt_row[-1] + self.toprow
+                        todo_rows.append(the_days[s] * 24)
+                else:
+                    i = mth_labels.index(self.period.currentText())
+                    m = 0
+                    strt_row = 0
+                    while m < i:
+                        strt_row = strt_row + the_days[m] * 24
+                        m += 1
+                    strt_row = [self.toprow + strt_row]
+                    todo_rows = [the_days[i] * 24]
             load = []
             tgt_col = -1
             data = []
@@ -1005,14 +1042,17 @@ class PowerPlot(QtGui.QWidget):
                         data.append([])
                         data[-1] = hs[:]
                         label.append(column)
-                        h = 0
-                        for row in range(strt_row + 1, strt_row + todo_rows + 1):
-                            data[-1][h] = data[-1][h] + ws.cell_value(row, c2)
-                            h += 1
-                            if h >= 24:
-                                h = 0
+                        tot_rows = 0
+                        for s in range(len(strt_row)):
+                            h = 0
+                            for row in range(strt_row[s] + 1, strt_row[s] + todo_rows[s] + 1):
+                                data[-1][h] = data[-1][h] + ws.cell_value(row, c2)
+                                h += 1
+                                if h >= 24:
+                                    h = 0
+                            tot_rows += todo_rows[s]
                         for h in range(24):
-                            data[-1][h] = data[-1][h] / (todo_rows / 24)
+                            data[-1][h] = data[-1][h] / (tot_rows / 24)
                             maxy = max(maxy, data[-1][h])
                             miny = min(miny, data[-1][h])
                         break
@@ -1020,14 +1060,17 @@ class PowerPlot(QtGui.QWidget):
                         tgt_col = c2
             if tgt_col >= 0:
                 load = hs[:]
-                h = 0
-                for row in range(strt_row + 1, strt_row + todo_rows + 1):
-                    load[h] = load[h] + ws.cell_value(row, tgt_col)
-                    h += 1
-                    if h >= 24:
-                        h = 0
+                tot_rows = 0
+                for s in range(len(strt_row)):
+                    h = 0
+                    for row in range(strt_row[s] + 1, strt_row[s] + todo_rows[s] + 1):
+                        load[h] = load[h] + ws.cell_value(row, tgt_col)
+                        h += 1
+                        if h >= 24:
+                           h = 0
+                    tot_rows += todo_rows[s]
                 for h in range(24):
-                    load[h] = load[h] / (todo_rows / 24)
+                    load[h] = load[h] / (tot_rows / 24)
                     maxy = max(maxy, load[h])
             if self.plottype.currentText() == 'Linegraph':
                 fig = plt.figure('linegraph_' + str(year) + '_' + self.period.currentText(),
