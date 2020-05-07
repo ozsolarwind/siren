@@ -1557,8 +1557,8 @@ class powerMatch(QtGui.QWidget):
                 storage = [0., 0., 0., 0.] # capacity, initial, min level, max drain
                 storage[0] = capacity
                 if detailed:
-                    ns.cell(row=cap_row, column=col + 1).value = capacity
-                    ns.cell(row=cap_row, column=col + 1).number_format = '#,##0.00'
+                    ns.cell(row=cap_row, column=col + 2).value = capacity
+                    ns.cell(row=cap_row, column=col + 2).number_format = '#,##0.00'
                 try:
                     storage[1] = self.generators[gen].initial * self.adjustby[gen]
                 except:
@@ -1595,16 +1595,18 @@ class powerMatch(QtGui.QWidget):
                 warm_time = self.constraints[self.generators[gen].constraint].warm_time
                 storage_carry = storage[1] # self.generators[gen].initial
                 if detailed:
-                    ns.cell(row=ini_row, column=col + 1).value = storage_carry
-                    ns.cell(row=ini_row, column=col + 1).number_format = '#,##0.00'
+                    ns.cell(row=ini_row, column=col + 2).value = storage_carry
+                    ns.cell(row=ini_row, column=col + 2).number_format = '#,##0.00'
                 storage_bal = []
                 storage_can = 0.
                 for row in range(8760):
                     storage_loss = 0.
+                    storage_losses = 0.
                     if storage_carry > 0:
                         loss = storage_carry * parasite
                         # for later: record parasitic loss
                         storage_carry = storage_carry - loss
+                        storage_losses -= loss
                     if shortfall[row] < 0:  # excess generation
                         if wait_time > 0:
                             in_run[0] = False
@@ -1619,6 +1621,7 @@ class powerMatch(QtGui.QWidget):
                         else:
                             can_use = 0.
                         # for later: record recharge loss
+                        storage_losses += can_use * recharge[1]
                         storage_carry -= (can_use * (1 - recharge[1]))
                         shortfall[row] -= can_use
                     else: # shortfall
@@ -1642,6 +1645,7 @@ class powerMatch(QtGui.QWidget):
                             can_use = 0
                         if can_use > 0:
                             storage_loss = can_use * discharge[1]
+                            storage_losses -= storage_loss
                             storage_carry -= can_use
                             can_use = can_use - storage_loss
                             shortfall[row] -= can_use
@@ -1660,23 +1664,18 @@ class powerMatch(QtGui.QWidget):
                     if detailed:
                         if can_use > 0:
                             ns.cell(row=row + hrows, column=col).value = 0
-                            ns.cell(row=row + hrows, column=col + 1).value = can_use * self.surplus_sign
+                            ns.cell(row=row + hrows, column=col + 2).value = can_use * self.surplus_sign
                         else:
                             ns.cell(row=row + hrows, column=col).value = can_use * -self.surplus_sign
-                            ns.cell(row=row + hrows, column=col + 1).value = 0
-                        ns.cell(row=row + hrows, column=col + 2).value = storage_carry
-                        ns.cell(row=row + hrows, column=col + 3).value = shortfall[row] * -self.surplus_sign
-                        for ac in range(4):
+                            ns.cell(row=row + hrows, column=col + 2).value = 0
+                        ns.cell(row=row + hrows, column=col + 1).value = storage_losses
+                        ns.cell(row=row + hrows, column=col + 3).value = storage_carry
+                        ns.cell(row=row + hrows, column=col + 4).value = shortfall[row] * -self.surplus_sign
+                        for ac in range(5):
                             ns.cell(row=row + hrows, column=col + ac).number_format = '#,##0.00'
                             ns.cell(row=max_row, column=col + ac).value = '=MAX(' + ss_col(col + ac) + \
                                     str(hrows) + ':' + ss_col(col + ac) + str(hrows + 8759) + ')'
                             ns.cell(row=max_row, column=col + ac).number_format = '#,##0.00'
-                        ns.cell(row=hrs_row, column=col + 1).value = '=COUNTIF(' + ss_col(col + 1) + \
-                                str(hrows) + ':' + ss_col(col + 1) + str(hrows + 8759) + ',">0")'
-                        ns.cell(row=hrs_row, column=col + 1).number_format = '#,##0'
-                        ns.cell(row=hrs_row, column=col + 2).value = '=' + ss_col(col + 1) + \
-                                str(hrs_row) + '/8760'
-                        ns.cell(row=hrs_row, column=col + 2).number_format = '#,##0.0%'
                     else:
                         if can_use > 0:
                             storage_can += can_use
@@ -1685,24 +1684,27 @@ class powerMatch(QtGui.QWidget):
                             str(hrows) + ':' + ss_col(col) + str(hrows + 8759) + ',">0")'
                     ns.cell(row=sum_row, column=col).number_format = '#,##0'
                     ns.cell(row=sum_row, column=col + 1).value = '=SUMIF(' + ss_col(col + 1) + \
-                            str(hrows) + ':' + ss_col(col + 1) + str(hrows + 8759) + ',">0")'
+                            str(hrows) + ':' + ss_col(col + 1) + str(hrows + 8759) + ',"<0")'
                     ns.cell(row=sum_row, column=col + 1).number_format = '#,##0'
-                    ns.cell(row=cf_row, column=col + 1).value = '=IF(' + ss_col(col + 1) + '1>0,' + \
-                                                    ss_col(col + 1) + '3/' + ss_col(col + 1) + '1/8760,"")'
-                    ns.cell(row=cf_row, column=col + 1).number_format = '#,##0.00'
+                    ns.cell(row=sum_row, column=col + 2).value = '=SUMIF(' + ss_col(col + 2) + \
+                            str(hrows) + ':' + ss_col(col + 2) + str(hrows + 8759) + ',">0")'
+                    ns.cell(row=sum_row, column=col + 2).number_format = '#,##0'
+                    ns.cell(row=cf_row, column=col + 2).value = '=IF(' + ss_col(col + 2) + '1>0,' + \
+                                                    ss_col(col + 2) + '3/' + ss_col(col + 2) + '1/8760,"")'
+                    ns.cell(row=cf_row, column=col + 2).number_format = '#,##0.00'
                     ns.cell(row=max_row, column=col).value = '=MAX(' + ss_col(col) + \
                             str(hrows) + ':' + ss_col(col) + str(hrows + 8759) + ')'
                     ns.cell(row=max_row, column=col).number_format = '#,##0.00'
-                    ns.cell(row=hrs_row, column=col + 1).value = '=COUNTIF(' + ss_col(col + 1) + \
-                            str(hrows) + ':' + ss_col(col + 1) + str(hrows + 8759) + ',">0")'
-                    ns.cell(row=hrs_row, column=col + 1).number_format = '#,##0'
-                    ns.cell(row=hrs_row, column=col + 2).value = '=' + ss_col(col + 1) + \
+                    ns.cell(row=hrs_row, column=col + 2).value = '=COUNTIF(' + ss_col(col + 1) + \
+                            str(hrows) + ':' + ss_col(col + 2) + str(hrows + 8759) + ',">0")'
+                    ns.cell(row=hrs_row, column=col + 2).number_format = '#,##0'
+                    ns.cell(row=hrs_row, column=col + 3).value = '=' + ss_col(col + 2) + \
                             str(hrs_row) + '/8760'
-                    ns.cell(row=hrs_row, column=col + 2).number_format = '#,##0.0%'
-                    col += 4
+                    ns.cell(row=hrs_row, column=col + 3).number_format = '#,##0.0%'
+                    col += 5
                 else:
                     sp_data.append([gen, storage[0], storage_can, '', '', '', '', '', ''])
-            else:
+            else: # generator
                 if self.constraints[self.generators[gen].constraint].capacity_max > 0:
                     cap_capacity = capacity * self.constraints[self.generators[gen].constraint].capacity_max
                 else:
@@ -1881,20 +1883,22 @@ class powerMatch(QtGui.QWidget):
         for gen in order:
             ss_row += 1
             if self.constraints[self.generators[gen].constraint].category == 'Storage':
+                nc = 2
                 ns.cell(row=what_row, column=col).value = 'Charge\n' + gen
-                col += 1
+                ns.cell(row=what_row, column=col + 1).value = gen + '\nLosses'
                 is_storage = True
                 sto_sum += '+C' + str(ss_row)
             else:
+                nc = 0
                 is_storage = False
                 not_sum += '-C' + str(ss_row)
-            ns.cell(row=what_row, column=col).value = gen
-            ss.cell(row=ss_row, column=1).value = '=Detail!' + ss_col(col) + str(what_row)
-            ss.cell(row=ss_row, column=2).value = '=Detail!' + ss_col(col) + str(cap_row)
+            ns.cell(row=what_row, column=col + nc).value = gen
+            ss.cell(row=ss_row, column=1).value = '=Detail!' + ss_col(col + nc) + str(what_row)
+            ss.cell(row=ss_row, column=2).value = '=Detail!' + ss_col(col + nc) + str(cap_row)
             ss.cell(row=ss_row, column=2).number_format = '#,##0.00'
-            ss.cell(row=ss_row, column=3).value = '=Detail!' + ss_col(col) + str(sum_row)
+            ss.cell(row=ss_row, column=3).value = '=Detail!' + ss_col(col + nc) + str(sum_row)
             ss.cell(row=ss_row, column=3).number_format = '#,##0'
-            ss.cell(row=ss_row, column=4).value = '=Detail!' + ss_col(col) + str(cf_row)
+            ss.cell(row=ss_row, column=4).value = '=Detail!' + ss_col(col + nc) + str(cf_row)
             ss.cell(row=ss_row, column=4).number_format = '#,##0.00'
             if self.generators[gen].lcoe > 0:
                 capacity = self.generators[gen].capacity
@@ -1903,55 +1907,53 @@ class powerMatch(QtGui.QWidget):
                         capacity = self.generators[gen].capacity * self.adjustby[gen]
                     except:
                         pass
-                ns.cell(row=cost_row, column=col).value = '=IF(' + ss_col(col) + str(cf_row) + \
-                        '>0,' + ss_col(col) + str(sum_row) + '*Summary!H' + str(ss_row) + \
-                        '*Summary!I' + str(ss_row) + '/' + ss_col(col) + str(cf_row) + ',0)'
-                ns.cell(row=cost_row, column=col).number_format = '$#,##0'
+                ns.cell(row=cost_row, column=col + nc).value = '=IF(' + ss_col(col + nc) + str(cf_row) + \
+                        '>0,' + ss_col(col + nc) + str(sum_row) + '*Summary!H' + str(ss_row) + \
+                        '*Summary!I' + str(ss_row) + '/' + ss_col(col + nc) + str(cf_row) + ',0)'
+                ns.cell(row=cost_row, column=col + nc).number_format = '$#,##0'
                 if self.remove_cost:
-                    ss.cell(row=ss_row, column=5).value = '=IF(Detail!' + ss_col(col) + str(sum_row) \
-                            + '>0,Detail!' + ss_col(col) + str(cost_row) + ',"")'
+                    ss.cell(row=ss_row, column=5).value = '=IF(Detail!' + ss_col(col + nc) + str(sum_row) \
+                            + '>0,Detail!' + ss_col(col + nc) + str(cost_row) + ',"")'
                 else:
-                    ss.cell(row=ss_row, column=5).value = '=Detail!' + ss_col(col) + str(cost_row)
+                    ss.cell(row=ss_row, column=5).value = '=Detail!' + ss_col(col + nc) + str(cost_row)
                 ss.cell(row=ss_row, column=5).number_format = '$#,##0'
-                ns.cell(row=lcoe_row, column=col).value = '=IF(AND(' + ss_col(col) + str(cf_row) + '>0,' \
-                            + ss_col(col) + str(cap_row) + '>0),' + ss_col(col) + str(cost_row) + '/8760/' \
-                            + ss_col(col) + str(cf_row) + '/' + ss_col(col) + str(cap_row)+  ',"")'
-                ns.cell(row=lcoe_row, column=col).number_format = '$#,##0.00'
-                ss.cell(row=ss_row, column=6).value = '=Detail!' + ss_col(col) + str(lcoe_row)
+                ns.cell(row=lcoe_row, column=col + nc).value = '=IF(AND(' + ss_col(col + nc) + str(cf_row) + '>0,' \
+                            + ss_col(col + nc) + str(cap_row) + '>0),' + ss_col(col + nc) + str(cost_row) + '/8760/' \
+                            + ss_col(col + nc) + str(cf_row) + '/' + ss_col(col + nc) + str(cap_row)+  ',"")'
+                ns.cell(row=lcoe_row, column=col + nc).number_format = '$#,##0.00'
+                ss.cell(row=ss_row, column=6).value = '=Detail!' + ss_col(col + nc) + str(lcoe_row)
                 ss.cell(row=ss_row, column=6).number_format = '$#,##0.00'
             if self.generators[gen].emissions > 0:
-                ns.cell(row=emi_row, column=col).value = '=' + ss_col(col) + str(sum_row) \
+                ns.cell(row=emi_row, column=col + nc).value = '=' + ss_col(col + nc) + str(sum_row) \
                         + '*' + str(self.generators[gen].emissions)
-                ns.cell(row=emi_row, column=col).number_format = '#,##0'
+                ns.cell(row=emi_row, column=col + nc).number_format = '#,##0'
                 if self.remove_cost:
-                    ss.cell(row=ss_row, column=7).value = '=IF(Detail!' + ss_col(col) + str(sum_row) \
-                            + '>0,Detail!' + ss_col(col) + str(emi_row) + ',"")'
+                    ss.cell(row=ss_row, column=7).value = '=IF(Detail!' + ss_col(col + nc) + str(sum_row) \
+                            + '>0,Detail!' + ss_col(col + nc) + str(emi_row) + ',"")'
                 else:
-                    ss.cell(row=ss_row, column=7).value = '=Detail!' + ss_col(col) + str(emi_row)
+                    ss.cell(row=ss_row, column=7).value = '=Detail!' + ss_col(col + nc) + str(emi_row)
                 ss.cell(row=ss_row, column=7).number_format = '#,##0'
             ss.cell(row=ss_row, column=8).value = self.generators[gen].lcoe
             ss.cell(row=ss_row, column=8).number_format = '$#,##0.00'
             ss.cell(row=ss_row, column=9).value = self.generators[gen].lcoe_cf
             ss.cell(row=ss_row, column=9).number_format = '#,##0.00'
-            if is_storage:
-                col -= 1
-            ns.cell(row=what_row, column=col).alignment = oxl.styles.Alignment(wrap_text=True,
+            ns.cell(row=what_row, column=col + nc).alignment = oxl.styles.Alignment(wrap_text=True,
                     vertical='bottom', horizontal='center')
-            ns.cell(row=what_row, column=col + 1).alignment = oxl.styles.Alignment(wrap_text=True,
+            ns.cell(row=what_row, column=col + nc + 1).alignment = oxl.styles.Alignment(wrap_text=True,
                     vertical='bottom', horizontal='center')
             if is_storage:
-                ns.cell(row=what_row, column=col + 1).value = gen
-                ns.cell(row=what_row, column=col + 2).value = gen + '\nBalance'
-                ns.cell(row=what_row, column=col + 2).alignment = oxl.styles.Alignment(wrap_text=True,
-                        vertical='bottom', horizontal='center')
-                ns.cell(row=what_row, column=col + 3).value = 'After\n' + gen
+             #   ns.cell(row=what_row, column=col + 1).value = gen
+                ns.cell(row=what_row, column=col + 3).value = gen + '\nBalance'
                 ns.cell(row=what_row, column=col + 3).alignment = oxl.styles.Alignment(wrap_text=True,
                         vertical='bottom', horizontal='center')
-                ns.cell(row=fall_row, column=col + 3).value = '=COUNTIF(' + ss_col(col + 3) \
-                        + str(hrows) + ':' + ss_col(col + 3) + str(hrows + 8759) + \
+                ns.cell(row=what_row, column=col + 4).value = 'After\n' + gen
+                ns.cell(row=what_row, column=col + 4).alignment = oxl.styles.Alignment(wrap_text=True,
+                        vertical='bottom', horizontal='center')
+                ns.cell(row=fall_row, column=col + 4).value = '=COUNTIF(' + ss_col(col + 4) \
+                        + str(hrows) + ':' + ss_col(col + 4) + str(hrows + 8759) + \
                         ',"' + sf_test[0] + '0")'
-                ns.cell(row=fall_row, column=col + 3).number_format = '#,##0'
-                col += 4
+                ns.cell(row=fall_row, column=col + 4).number_format = '#,##0'
+                col += 5
             else:
                 ns.cell(row=what_row, column=col + 1).value = 'After\n' + gen
                 ns.cell(row=fall_row, column=col + 1).value = '=COUNTIF(' + ss_col(col + 1) \
@@ -1964,7 +1966,7 @@ class powerMatch(QtGui.QWidget):
                     ':' + ss_col(col -2 ) + str(hrows + 8759) + ')'
             ns.cell(row=emi_row, column=col - 2).number_format = '#,##0.00'
         ns.cell(row=emi_row, column=col - 1).value = '=MIN(' + ss_col(col - 1) + str(hrows) + \
-                ':' + ss_col(col -2 ) + str(hrows + 8759) + ')'
+                ':' + ss_col(col - 2) + str(hrows + 8759) + ')'
         ns.cell(row=emi_row, column=col - 1).number_format = '#,##0.00'
         for column_cells in ns.columns:
             length = 0
