@@ -1177,8 +1177,6 @@ class powerMatch(QtGui.QWidget):
                 for stn in cat:
                     self.order.addItem(stn)
 
- #   def doDispatch(self):
-        # the "guts" of Powermatch
     def pmClicked(self):
         self.setStatus(self.sender().text() + ' processing started')
         if self.sender().text() == 'Powermatch': # detailed spreadsheet?
@@ -1602,9 +1600,11 @@ class powerMatch(QtGui.QWidget):
                 storage_bal = []
                 storage_can = 0.
                 for row in range(8760):
-                    if storage_carry > 0:
-                        storage_carry = storage_carry * (1 - parasite)
                     storage_loss = 0.
+                    if storage_carry > 0:
+                        loss = storage_carry * parasite
+                        # for later: record parasitic loss
+                        storage_carry = storage_carry - loss
                     if shortfall[row] < 0:  # excess generation
                         if wait_time > 0:
                             in_run[0] = False
@@ -1618,6 +1618,7 @@ class powerMatch(QtGui.QWidget):
                                 can_use = - recharge[0]
                         else:
                             can_use = 0.
+                        # for later: record recharge loss
                         storage_carry -= (can_use * (1 - recharge[1]))
                         shortfall[row] -= can_use
                     else: # shortfall
@@ -1642,7 +1643,8 @@ class powerMatch(QtGui.QWidget):
                         if can_use > 0:
                             storage_loss = can_use * discharge[1]
                             storage_carry -= can_use
-                            shortfall[row] -= (can_use - storage_loss)
+                            can_use = can_use - storage_loss
+                            shortfall[row] -= can_use
                             if storage_carry < 0:
                                 storage_carry = 0
                         else:
