@@ -1885,7 +1885,11 @@ class powerMatch(QtGui.QWidget):
             if self.constraints[self.generators[gen].constraint].category == 'Storage':
                 nc = 2
                 ns.cell(row=what_row, column=col).value = 'Charge\n' + gen
+                ns.cell(row=what_row, column=col).alignment = oxl.styles.Alignment(wrap_text=True,
+                        vertical='bottom', horizontal='center')
                 ns.cell(row=what_row, column=col + 1).value = gen + '\nLosses'
+                ns.cell(row=what_row, column=col + 1).alignment = oxl.styles.Alignment(wrap_text=True,
+                        vertical='bottom', horizontal='center')
                 is_storage = True
                 sto_sum += '+C' + str(ss_row)
             else:
@@ -2006,7 +2010,11 @@ class powerMatch(QtGui.QWidget):
                 alen = len(str(int(sum_value))) * 1.5
                 if alen > length:
                     length = alen
-            ns.column_dimensions[column_cells[0].column].width = max(length, 10)
+            if isinstance(cell.column, int):
+                cel = ss_col(cell.column)
+            else:
+                cel = cell.column
+            ns.column_dimensions[cel].width = max(length, 10)
         ns.column_dimensions['A'].width = 6
         ns.column_dimensions['B'].width = 21
         st_row = hrows + 8760
@@ -2054,10 +2062,14 @@ class powerMatch(QtGui.QWidget):
                     for value in values:
                         if len(value) + 1 > length:
                             length = len(value) + 1
-            if cell.column == 'E':
-                ss.column_dimensions[column_cells[0].column].width = max(length, 10) * 2.
+            if isinstance(cell.column, int):
+                cel = ss_col(cell.column)
             else:
-                ss.column_dimensions[column_cells[0].column].width = max(length, 10) * 1.2
+                cel = cell.column
+            if cell.column == 'E':
+                ss.column_dimensions[cel].width = max(length, 10) * 2.
+            else:
+                ss.column_dimensions[cel].width = max(length, 10) * 1.2
         last_col = ss_col(ns.max_column)
         r = 1
         if self.corrected_lcoe:
