@@ -167,6 +167,7 @@ class PowerPlot(QtGui.QWidget):
         iper = '<none>'
         imax = 0
         self.alpha = 0.25
+        self.margin_of_error = .0001
         self.constrained_layout = False
         self.target = ''
         self.palette = True
@@ -191,6 +192,11 @@ class PowerPlot(QtGui.QWidget):
                     self.max_files = int(value)
                 elif key[:4] == 'file':
                     ifiles[key[4:]] = value.replace('$USER$', getUser())
+                if key == 'margin_of_error':
+                    try:
+                        self.margin_of_error = float(value)
+                    except:
+                        pass
                 elif key == 'palette':
                     if value.lower() in ['false', 'no', 'off']:
                         self.palette = False
@@ -265,7 +271,8 @@ class PowerPlot(QtGui.QWidget):
         self.grid.addWidget(self.title, rw, 1, 1, 2)
         rw += 1
         self.grid.addWidget(QtGui.QLabel('Maximum:'), rw, 0)
-        self.maxSpin = QtGui.QSpinBox()
+        self.maxSpin = QtGui.QDoubleSpinBox()
+        self.maxSpin.setDecimals(1)
         self.maxSpin.setRange(0, 6000)
         self.maxSpin.setSingleStep(500)
         self.grid.addWidget(self.maxSpin, rw, 1)
@@ -284,6 +291,11 @@ class PowerPlot(QtGui.QWidget):
         self.percentage.setCheckState(QtCore.Qt.Unchecked)
         self.grid.addWidget(self.percentage, rw, 1) #, 1, 2)
         self.grid.addWidget(QtGui.QLabel('(Check for percentage distribution)'), rw, 3, 1, 3)
+        rw += 1
+        self.grid.addWidget(QtGui.QLabel('Spill label:'), rw, 0)
+        self.spill_label = QtGui.QLineEdit('')
+        self.grid.addWidget(self.spill_label, rw, 1, 1, 2)
+        self.grid.addWidget(QtGui.QLabel('(Enter suffix if you want spill labels)'), rw, 3, 1, 3)
         rw += 1
         self.grid.addWidget(QtGui.QLabel('Show Grid:'), rw, 0)
         grids = ['Both', 'Horizontal', 'Vertical', 'None']
@@ -312,6 +324,7 @@ class PowerPlot(QtGui.QWidget):
         self.plottype.currentIndexChanged.connect(self.somethingChanged)
         self.gridtype.currentIndexChanged.connect(self.somethingChanged)
         self.percentage.stateChanged.connect(self.somethingChanged)
+        self.spill_label.textChanged.connect(self.somethingChanged)
         self.order.itemSelectionChanged.connect(self.somethingChanged)
         rw += 1
         msg_palette = QtGui.QPalette()
@@ -364,11 +377,6 @@ class PowerPlot(QtGui.QWidget):
             for key, value in items:
                 if key == 'columns' + choice:
                     columns = charSplit(value)
-                elif key == 'cumulative' + choice:
-                    if value.lower() in ['false', 'no', 'off']:
-                        self.cumulative.setCheckState(QtCore.Qt.Unchecked)
-                    else:
-                        self.cumulative.setCheckState(QtCore.Qt.Checked)
                 elif key == 'file' + choice:
                     ifile = value.replace('$USER$', getUser())
                 elif key == 'grid' + choice:
@@ -393,6 +401,11 @@ class PowerPlot(QtGui.QWidget):
                         self.maxSpin.setValue(0)
                 elif key == 'sheet' + choice:
                     isheet = value
+                elif key == 'spill_label' + choice:
+                    try:
+                        self.spill_label.setText(value)
+                    except:
+                        pass
                 elif key == 'target' + choice:
                     try:
                         self.target = value
@@ -647,6 +660,7 @@ class PowerPlot(QtGui.QWidget):
             lines.append('period' + choice + '=')
             if str(self.period.currentText()) != '<none>':
                 lines[-1] = lines[-1] + str(self.period.currentText())
+            lines.append('spill_label' + choice + '=' + self.spill_label.text())
             lines.append('target' + choice + '=' + self.target)
             lines.append('title' + choice + '=' + self.title.text())
             lines.append('maximum' + choice + '=')
@@ -937,7 +951,14 @@ class PowerPlot(QtGui.QWidget):
                         for h in range(len(load)):
                            full.append(min(load[h], data[0][h]))
                         bx.fill_between(x, 0, full, label=label[0], color=self.colours[label[0].lower()])
-                        bx.fill_between(x, full, data[0], alpha=self.alpha, color=self.colours[label[0].lower()]) #, hatch=pattern[0])
+                        for h in range(len(data[0])):
+                            if data[0][h] > full[h]:
+                                if self.spill_label.text() != '':
+                                    bx.fill_between(x, full, data[0], alpha=self.alpha, color=self.colours[label[0].lower()],
+                                        label=label[0] + ' ' + self.spill_label.text())
+                                else:
+                                    bx.fill_between(x, full, data[c], alpha=self.alpha, color=self.colours[label[c].lower()])
+                                break
                         for c in range(1, len(data)):
                             full = []
                             for h in range(len(data[c])):
@@ -945,11 +966,14 @@ class PowerPlot(QtGui.QWidget):
                                 maxy = max(maxy, data[c][h])
                                 full.append(max(min(load[h], data[c][h]), data[c - 1][h]))
                             bx.fill_between(x, data[c - 1], full, label=label[c], color=self.colours[label[c].lower()])
-                            pat += 1
-                            if pat >= len(pattern):
-                                pat = 0
-                            bx.fill_between(x, full, data[c], alpha=self.alpha, color=self.colours[label[c].lower()]) #,
-                                         #   hatch=pattern[pat])
+                            for h in range(len(data[c])):
+                                if data[c][h] > full[h] + self.margin_of_error:
+                                    if self.spill_label.text() != '':
+                                        bx.fill_between(x, full, data[c], alpha=self.alpha, color=self.colours[label[c].lower()],
+                                                        label=label[c] + ' ' + self.spill_label.text())
+                                    else:
+                                        bx.fill_between(x, full, data[c], alpha=self.alpha, color=self.colours[label[c].lower()])
+                                    break
                         top = data[0][:]
                         for d in range(1, len(data)):
                             for h in range(len(top)):
@@ -960,8 +984,9 @@ class PowerPlot(QtGui.QWidget):
                             bx.plot(x, top, color='gray')
                         short = []
                         do_short = False
+                        c = len(data) - 1
                         for h in range(len(load)):
-                            if load[h] > round(data[c][h], 2):
+                            if load[h] > data[c][h] + self.margin_of_error:
                                 do_short = True
                             short.append(max(data[c][h], load[h]))
                         if do_short:
@@ -1040,7 +1065,7 @@ class PowerPlot(QtGui.QWidget):
                     column = str(ws.cell_value(self.toprow, c2)).replace('\n',' ')
                     if column == col:
                         data.append([])
-                        data[-1] = hs[:]
+                        data[-1] = [0] * len(hs)
                         label.append(column)
                         tot_rows = 0
                         for s in range(len(strt_row)):
@@ -1059,7 +1084,7 @@ class PowerPlot(QtGui.QWidget):
                     elif column == self.target:
                         tgt_col = c2
             if tgt_col >= 0:
-                load = hs[:]
+                load = [0] * len(hs)
                 tot_rows = 0
                 for s in range(len(strt_row)):
                     h = 0
@@ -1145,7 +1170,14 @@ class PowerPlot(QtGui.QWidget):
                         for h in range(len(load)):
                            full.append(min(load[h], data[0][h]))
                         dx.fill_between(x, 0, full, label=label[0], color=self.colours[label[0].lower()])
-                        dx.fill_between(x, full, data[0], alpha=self.alpha, color=self.colours[label[0].lower()]) #, hatch=pattern[0])
+                        for h in range(len(full)):
+                            if data[0][h] > full[h]:
+                                if self.spill_label.text() != '':
+                                    dx.fill_between(x, full, data[0], alpha=self.alpha, color=self.colours[label[0].lower()],
+                                        label=label[0] + ' ' + self.spill_label.text())
+                                else:
+                                    dx.fill_between(x, full, data[c], alpha=self.alpha, color=self.colours[label[c].lower()])
+                                break
                         for c in range(1, len(data)):
                             full = []
                             for h in range(len(data[c])):
@@ -1156,8 +1188,14 @@ class PowerPlot(QtGui.QWidget):
                             pat += 1
                             if pat >= len(pattern):
                                 pat = 0
-                            dx.fill_between(x, full, data[c], alpha=self.alpha, color=self.colours[label[c].lower()]) #,
-                                         #   hatch=pattern[pat])
+                            for h in range(len(full)):
+                                if data[c][h] > full[h] + self.margin_of_error:
+                                    if self.spill_label.text() != '':
+                                        dx.fill_between(x, full, data[c], alpha=self.alpha, color=self.colours[label[c].lower()],
+                                                    label=label[c] + ' ' + self.spill_label.text())
+                                    else:
+                                        dx.fill_between(x, full, data[c], alpha=self.alpha, color=self.colours[label[c].lower()])
+                                    break
                         top = data[0][:]
                         for d in range(1, len(data)):
                             for h in range(len(top)):
@@ -1169,7 +1207,7 @@ class PowerPlot(QtGui.QWidget):
                         short = []
                         do_short = False
                         for h in range(len(load)):
-                            if load[h] > data[c][h]:
+                            if load[h] > data[c][h] + self.margin_of_error:
                                 do_short = True
                             short.append(max(data[c][h], load[h]))
                         if do_short:

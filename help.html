@@ -1077,21 +1077,21 @@ as embedded solar - Rooftop PV - installed on the grid but not registered with A
 </td></tr>
 <tr class="none" id="p_flexiplot"><td><div class="experiment"><dfn><strong>[Flexiplot]</strong></dfn><br />(experimental)</div></td>
 <td><div class="experiment">
-Options for <a href="#flexiplot">Flexiplot</a>. Properties for individual files (columns, file, grid, maximum, percentage, period, plot, series, sheet, title, xlabel, xvalues, and ylabel) can be repeated a number of times to allow a history of recent files to be accessed. These are suffixed with a number. Properties are as follows:</p>
+Options for <a href="#flexiplot">Flexiplot</a>. Properties for individual files (columns, file, grid, maximum, percentage, period, plot, series, sheet, title, xlabel, xvalues, and ylabel; marked with an asterisk, &ast;, below) can be repeated a number of times to allow a history of recent files to be accessed. These are suffixed with a number. Properties are as follows:</p>
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><dfn>alpha</dfn></td>
 <td class="none">Opacity of plot fill for values above target. Range is 1.0 (opaque) to 0.0 (translucent). Default value is 0.25</td>
 </tr>
 <tr class="none">
-<td class="none"><dfn>columns</dfn></td>
+<td class="none"><dfn>columns (&ast;)</dfn></td>
 <td class="none">List (and order) for columns to be plotted</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>constrained_layout</dfn></td>
 <td class="none">Produce a plot layout with no whitespace around the graph. Default is False</td>
 <tr class="none">
-<td class="none"><dfn>file</dfn></td>
+<td class="none"><dfn>file (&ast;)</dfn></td>
 <td class="none">Spreadsheet file name</td>
 </tr>
 <tr class="none">
@@ -1103,12 +1103,16 @@ Options for <a href="#flexiplot">Flexiplot</a>. Properties for individual files 
 <td class="none">The order of the recent history list</td>
 </tr>
 <tr class="none">
-<td class="none"><dfn>grid</dfn></td>
+<td class="none"><dfn>grid (&ast;)</dfn></td>
 <td class="none">The gridlines to be included on the plot. Options are Both, Horizontal, Vertical and None. The default is None</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>label_font</dfn></td>
 <td class="none">Font properties for plot labels</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>maximum (&ast;)</dfn></td>
+<td class="none">Maximum value for Series (y) axis. Default is 0 (meaning dynamic y axis)</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>legend_font</dfn></td>
@@ -1119,23 +1123,19 @@ Options for <a href="#flexiplot">Flexiplot</a>. Properties for individual files 
 <td class="none">Invoke the Colours editor to create a palette of colours for selected columns. Default is True</td>
 </tr>
 <tr class="none">
-<td class="none"><dfn>percentage</dfn></td>
+<td class="none"><dfn>percentage (&ast;)</dfn></td>
 <td class="none">Produce a percentages plot</td>
 </tr>
 <tr class="none">
-<td class="none"><dfn>plot</dfn></td>
+<td class="none"><dfn>plot (&ast;)</dfn></td>
 <td class="none">The type of plot. Options are Bar Graph, Cumulative, or Linegraph. The default is Bar Graph</td>
 </tr>
 <tr class="none">
-<td class="none"><dfn>maximum</dfn></td>
-<td class="none">Maximum value for Series (y) axis. Default is 0 (meaning dynamic y axis)</td>
-</tr>
-<tr class="none">
-<td class="none"><dfn>series</dfn></td>
+<td class="none"><dfn>series (&ast;)</dfn></td>
 <td class="none">The series to be included in the plot defined as a set of Excel cells. A number of ranges can be defined</td>
 </tr>
 <tr class="none">
-<td class="none"><dfn>sheet</dfn></td>
+<td class="none"><dfn>sheet (&ast;)</dfn></td>
 <td class="none">Worksheet name for plot</td>
 </tr>
 <tr class="none">
@@ -1143,11 +1143,15 @@ Options for <a href="#flexiplot">Flexiplot</a>. Properties for individual files 
 <td class="none">You can specify how often X Axis ticks appear. The default is all</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>target (&ast;)</dfn></td>
+<td class="none">Target field to plot against, e.g. Load</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>ticks_font</dfn></td>
 <td class="none">Font properties for label tick marks</td>
 </tr>
 <tr class="none">
-<td class="none"><dfn>title</dfn></td>
+<td class="none"><dfn>title (&ast;)</dfn></td>
 <td class="none">Plot title</td>
 </tr>
 <tr class="none">
@@ -1698,18 +1702,18 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </div>
 </td></tr>
 <tr class="none" id="p_pp"><td><dfn><strong>[Powerplot]</strong></dfn></td>
-<td>Options for <a href="#powerplot">Powerplot</a>. Properties for individual files (columns, file, grid, maximum, percentage, period, plot, sheet, target, and title) can be repeated a number of times to allow a history of recent files to be accessed. These are suffixed with a number. Properties are as follows:</p>
+<td>Options for <a href="#powerplot">Powerplot</a>. Properties for individual files (columns, file, grid, maximum, percentage, period, plot, sheet, spill_label, target, and title; marked with an asterisk, &ast;, below) can be repeated a number of times to allow a history of recent files to be accessed. These are suffixed with a number. Properties are as follows:</p>
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><dfn>alpha</dfn></td>
 <td class="none">Opacity of plot fill for values above target. Range is 1.0 (opaque) to 0.0 (translucent). Default value is 0.25</td>
 </tr>
 <tr class="none">
-<td class="none"><dfn>columns</dfn></td>
+<td class="none"><dfn>columns (&ast;)</dfn></td>
 <td class="none">List (and order) for columns to be plotted</td>
 </tr>
 <tr class="none">
-<td class="none"><dfn>file</dfn></td>
+<td class="none"><dfn>file (&ast;)</dfn></td>
 <td class="none">Spreadsheet file name</td>
 </tr>
 <tr class="none">
@@ -1721,7 +1725,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">The order of the recent history list</td>
 </tr>
 <tr class="none">
-<td class="none"><dfn>grid</dfn></td>
+<td class="none"><dfn>grid (&ast;)</dfn></td>
 <td class="none">The gridlines to be included on the plot. Options are Both, Horizontal, Vertical and None. The default is None</td>
 </tr>
 <tr class="none">
@@ -1729,35 +1733,39 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">In doing a plot with a target column there may be very minor differences that could cause a Shortfall or Spill legend item to be created. This setting will allow these small differences to be ignored. The default value is .0001</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>maximum (&ast;)</dfn></td>
+<td class="none">Maximum value for Power (y) axis. Default is 0 (meaning dynamic y axis)</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>palette</dfn></td>
 <td class="none">Invoke the Colours editor to create a palette of colours for selected columns. Default is True</td>
 </tr>
 <tr class="none">
-<td class="none"><dfn>percentage</dfn></td>
+<td class="none"><dfn>percentage (&ast;)</dfn></td>
 <td class="none">Produce a percentages plot</td>
 </tr>
 <tr class="none">
-<td class="none"><dfn>period</dfn></td>
+<td class="none"><dfn>period (&ast;)</dfn></td>
 <td class="none">Chosen period for diurnal plot</td>
 </tr>
 <tr class="none">
-<td class="none"><dfn>plot</dfn></td>
+<td class="none"><dfn>plot (&ast;)</dfn></td>
 <td class="none">The type of plot. Options are Bar Graph, Cumulative, or Linegraph. The default is Bar Graph</td>
 </tr>
 <tr class="none">
-<td class="none"><dfn>maximum</dfn></td>
-<td class="none">Maximum value for Power (y) axis. Default is 0 (meaning dynamic y axis)</td>
-</tr>
-<tr class="none">
-<td class="none"><dfn>sheet</dfn></td>
+<td class="none"><dfn>sheet (&ast;)</dfn></td>
 <td class="none">Worksheet name for plot</td>
 </tr>
 <tr class="none">
-<td class="none"><dfn>target</dfn></td>
+<td class="none"><dfn>spill_label (&ast;)</dfn></td>
+<td class="none">Suffix for Legend entries for spilled energy. Default is no entry</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>target (&ast;)</dfn></td>
 <td class="none">Target column (e.g. Load) or <em>none</em> if no target</td>
 </tr>
 <tr class="none">
-<td class="none"><dfn>title</dfn></td>
+<td class="none"><dfn>title (&ast;)</dfn></td>
 <td class="none">Plot title</td>
 </tr>
 </table>
@@ -2916,6 +2924,8 @@ If it's not a diurnal plot (i.e. Period is <em>&lt;None&gt;</em>) any occurence 
 <td class="none">The type of plot to be produced. Options are <em>Bar Graph</em>, <em>Cumulative</em> and <e,>Linegraph</em>. <em>Bar Graph</em> and <em>Cumulative</em> produce cumulative (stacked) plots and have filled areas by technology (or Columns). If a Target field (e.g. Load) is chosen the area above the Target value (i.e. excess generation) in the Cumulative plot have a lightly shaded value (the degree of shading is chosen by the <em>alpha</em> property in the [Powerplot] Section of the Preferences file) (<em>plot</em>)</td></tr>
 <tr><td class="lr"><dfn>Percentage</dfn></td>
 <td class="none">Checking this option will produce a percentage (stacked) curve. The plot will have filled areas showing the percentage of generation for each technology. It is recommended to not set a Target field (i.e. set it to <em>&lt;None&gt;</em>) as this will merely remove the Target field (and it's data) from the plot (<em>percentage</em>)</td></tr>
+<tr><td class="lr"><dfn>Spill label</dfn></td>
+<td class="none">Use this to set a suffix for Legend entries for spilled energy. If the field is blank no spilled energy labels will appear in the Legend (<em>spill_label</em>)</td></tr>
 <tr><td class="lr"><dfn>Show Grid</dfn></td>
 <td class="none">The gridlines to be included on the plot. Options are <em>Both</em>, <em>Horizontal</em>, <em>Vertical</em> and <em>None</em>. The default is <em>None</em> (<em>grid</em>)</td></tr>
 <tr><td class="lr"><dfn>Column Order</dfn></td>
