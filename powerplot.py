@@ -1098,7 +1098,7 @@ class PowerPlot(QtGui.QWidget):
                     load[h] = load[h] / (tot_rows / 24)
                     maxy = max(maxy, load[h])
             if self.plottype.currentText() == 'Linegraph':
-                fig = plt.figure('linegraph_' + str(year) + '_' + self.period.currentText(),
+                fig = plt.figure('linegraph_' + self.period.currentText().lower() + '_' + str(year),
                                  constrained_layout=self.constrained_layout)
                 if gridtype != '':
                     plt.grid(axis=gridtype)
@@ -1132,7 +1132,7 @@ class PowerPlot(QtGui.QWidget):
                 plt.show()
                 del zp
             elif self.plottype.currentText() == 'Cumulative':
-                fig = plt.figure('cumulative_' + str(year),
+                fig = plt.figure('cumulative_' + self.period.currentText().lower() + '_' + str(year),
                                  constrained_layout=self.constrained_layout)
                 if gridtype != '':
                     plt.grid(axis=gridtype)
@@ -1236,7 +1236,8 @@ class PowerPlot(QtGui.QWidget):
                 plt.show()
                 del zp
             elif self.plottype.currentText() == 'Bar Chart':
-                fig = plt.figure('barchart_' + str(year), constrained_layout=self.constrained_layout)
+                fig = plt.figure('barchart_' + self.period.currentText().lower() + '_' + str(year),
+                                 constrained_layout=self.constrained_layout)
                 if gridtype != '':
                     plt.grid(axis=gridtype)
                 ex = fig.add_subplot(111)
