@@ -3126,7 +3126,7 @@ In producing the LCOE figures you can choose to use LCOE figures that ignore any
 <tr><td class="none"><dfn>Rampup Max</dfn></td><td class="none">The maximum rate that a generator can be ramped up (not fully implemented)</td></tr>
 <tr><td class="none"><dfn>Recharge Loss</dfn></td><td class="none">Losses when storage is increased (recharged). If you have a storage technology with a round trip efficiency value you should specify the full loss in this constraint (e.g. for a round trip efficiency of 30% you would set Recharge Loss to 70%).</td></tr>
 <tr><td class="none"><dfn>Recharge Max</dfn></td><td class="none">For Storage the maximum rate at which the storage can be increased</td></tr>
-<tr><td class="none"><dfn>Wait Time</dfn></td><td class="none">For Storage some technologies may be better deployed if they can run for a number of hours. To simulate this Powermatch will not use the technology unless there are projected shortfalls for at least the desired number of hours</td></tr>
+<tr><td class="none"><dfn>Min Run Time</dfn></td><td class="none">For Storage some technologies may be better deployed if they can run for a number of hours. To simulate this Powermatch will not use the technology unless there are projected shortfalls for at least the desired number of hours</td></tr>
 <tr><td class="none"><dfn>Warmup Time</dfn></td><td class="none">For Storage some technologies may require a warmup period before they become operational. You can set a time period for this to occur, either in minutes or part of an hour (if an Initial value is set for the Storage it is assumed the warmup period has occured prior to the first hour of the year).</td></tr>
 </table>
 <div class="experiment">
