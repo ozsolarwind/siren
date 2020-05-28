@@ -103,6 +103,11 @@ ul {
 <ul>
 <li><em>Year</em>. Year of interest. The naming conventions for MERRA-2 files include the date so this defines the date range. The tool processes dates from the last day of the prior year through to the first day of the next year (ignoring 29 February)</li>
 <li><em>Wrap to prior year</em>. To enable you to use (more) recent weather data this option will indicate that weather data should wrap to the prior year. As an example, if you have downloaded MERRA-2 data up until April for the current year <code>makeweatherfiles</code> will use weather data from the prior year for May onwards to give a full year of data. The MERRA data for both years must reside in the same folder (or the next subfolder if yearly folders are used)</li>
+<li><em>Ignore data gaps</em>. This option will cater for individual MERRA-2 files containing different dimensions for latitude and longitude. If this option is selected the program will create weather files where there are gaps for 21 days or less. If there are more gaps the file will not be created. <strong>Notes:</strong>
+<ul>
+<li>The program does require a MERRA-2 file for each day of the year (It is possible to copy another file, say for the same day of another year, and rename it to &ldquo;replace&rdquo; the missing file)</li>
+<li>In creating a solar weather file the program requires both wind and solar MERRA-2 files, so any gaps in either dataset will result in a gap in the solar weather file</li>
+</ul></li>
 <li><em>Time Zone</em>. The (solar) time zone for the area of interest. This is used to create suitable weather files where the first hour in the file is the first hour of the year in the local time zone. A value of <em>auto</em> will cause the program to use the (first) longitude and a value of <em>best</em> will cause the program to use the time zone with the most longitude values in the MERRA-2 data files to calculate the time zone</li>
 <li><em>Solar Format</em>. The solar option can produce weather files in either of two formats - SMW or CSV format. This option allows you to choose your preferred one. SMW format is suitable for SAM while it may have trouble with the CSV format</li>
 <li><em>Solar Variable</em>. There are two MERRA-2 solar variables to use to create weather files - swgdn or swgnt. </li>
@@ -144,6 +149,7 @@ ul {
 <li><em>swg=</em> Solar variable - swgdn or swgnt. Default is swgnt</li>
 <li><em>wind=</em> Location of the MERRA-2 wind (<em>tavg1_2d_slv_Nx</em>) files</li>
 <li><em>target=</em> or <em>tgtdir=</em> Location for the weather files produced</li>
+<li><em>gaps=</em> A value starting with <em>y</em> (yes) or <em>t</em> (true) indicates to create files with data gaps</li>
 </ul>
 </p>
 <p><strong>Note:</strong> The program should also handle MERRA (version 1) data files downloaded (probably) prior to February 2016.</p>
