@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2020 Sustainable Energy Now Inc., Angus King
 #
 #  sammodels.py - This file is part of SIREN.
 #
@@ -126,7 +126,16 @@ def getDHI(ghi=0, dni=0, hour=0, lat=0, azimuth=0., tilt=0., reflectance=0.2, de
     else:
         hour_angle = -172.5
 # L
-    sun_rise_hour_angle = acos(-1 * tan(latitude * pi / 180.) * tan(declination_angle * pi / 180.)) * 180. / pi
+    try:
+        sun_rise_hour_angle = acos(-1 * tan(latitude * pi / 180.) * tan(declination_angle * pi / 180.)) * 180. / pi
+    except: # AK 2020-06-20 cater for "extreme" latitudes
+        lat_rad = latitude * pi / 180
+        dec_rad = declination_angle * pi / 180
+        sin_sun_elevation = sin(lat_rad) * sin(dec_rad) + cos(lat_rad) * cos(dec_rad) * cos(hour_angle * pi / 180)
+        dhi = (ghi / sin_sun_elevation - dni) * sin_sun_elevation
+        if dhi < 0:
+            return 0
+        return round(dhi, 1)
 # J
     if abs(hour_angle) - 7.5 < sun_rise_hour_angle and abs(hour_angle) + 7.5 > sun_rise_hour_angle:
         hour_angle_2 = abs(hour_angle) - 7.5 + (1 - (((abs(hour_angle) + 7.5) - sun_rise_hour_angle) / 15)) * 7.5
