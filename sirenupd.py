@@ -21,7 +21,7 @@
 
 import csv
 import os
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 import subprocess
 import sys
 
@@ -39,15 +39,15 @@ def get_response(outputs):
     return response
 
 
-class UpdDialog(QtGui.QDialog):
+class UpdDialog(QtWidgets.QDialog):
 
     def __init__(self, parent=None):
         self.debug = False
-        QtGui.QDialog.__init__(self, parent)
+        QtWidgets.QDialog.__init__(self, parent)
         self.setWindowTitle('SIREN Update (' + credits.fileVersion() + ') - Check for new versions')
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         row = 0
-        newgrid = QtGui.QGridLayout()
+        newgrid = QtWidgets.QGridLayout()
         host = 'https://sourceforge.net/projects/sensiren/files/'
         versions_file = 'siren_versions.csv'
         command = 'wget -O %s %s%s' % (versions_file, host, versions_file)
@@ -62,7 +62,7 @@ class UpdDialog(QtGui.QDialog):
                 pid = subprocess.Popen(command, stderr=subprocess.PIPE)
             response = get_response(pid.communicate()[1])
         if response != '200 OK':
-            newgrid.addWidget(QtGui.QLabel('Error encountered accessing siren_versions.csv\n\n' + \
+            newgrid.addWidget(QtWidgets.QLabel('Error encountered accessing siren_versions.csv\n\n' + \
                                            response), 0, 0, 1, 4)
             row = 1
         elif os.path.exists(versions_file):
@@ -85,11 +85,11 @@ class UpdDialog(QtGui.QDialog):
                         new_versions.append([program['Program'], version, 'New Release'])
             versions.close()
             if len(new_versions) > 0:
-                newgrid.addWidget(QtGui.QLabel('New versions are available for the following programs.' + \
+                newgrid.addWidget(QtWidgets.QLabel('New versions are available for the following programs.' + \
                                                '\nChoose those you wish to update.' + \
                                                '\nUpdates can take a while so please be patient.' + \
                                                '\nContact siren@sen.asn.au with any issues.'), 0, 0, 1, 4)
-                self.table = QtGui.QTableWidget()
+                self.table = QtWidgets.QTableWidget()
                 self.table.setRowCount(len(new_versions))
                 self.table.setColumnCount(4)
                 hdr_labels = ['', 'Program', 'New Ver.', 'Current / Status']
@@ -100,31 +100,31 @@ class UpdDialog(QtGui.QDialog):
                 rw = -1
                 for new_version in new_versions:
                      rw += 1
-                     self.newbox.append(QtGui.QTableWidgetItem())
+                     self.newbox.append(QtWidgets.QTableWidgetItem())
                      self.newprog.append(new_version[0])
                      if new_version[2] != 'New Release':
                          self.newbox[-1].setFlags(QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
                          self.newbox[-1].setCheckState(QtCore.Qt.Unchecked)
                      self.table.setItem(rw, 0, self.newbox[-1])
-                     self.table.setItem(rw, 1, QtGui.QTableWidgetItem(new_version[0]))
-                     self.table.setItem(rw, 2, QtGui.QTableWidgetItem(new_version[2]))
-                     self.table.setItem(rw, 3, QtGui.QTableWidgetItem(new_version[1]))
+                     self.table.setItem(rw, 1, QtWidgets.QTableWidgetItem(new_version[0]))
+                     self.table.setItem(rw, 2, QtWidgets.QTableWidgetItem(new_version[2]))
+                     self.table.setItem(rw, 3, QtWidgets.QTableWidgetItem(new_version[1]))
                 self.table.resizeColumnsToContents()
                 self.table.setColumnWidth(0, 29)
                 newgrid.addWidget(self.table, 1, 0, 1, 4)
-                doit = QtGui.QPushButton('Update')
+                doit = QtWidgets.QPushButton('Update')
                 doit.clicked.connect(self.doitClicked)
                 newgrid.addWidget(doit, 2, 1)
                 row = 2
             else:
-                newgrid.addWidget(QtGui.QLabel('No new versions available.'), 0, 0, 1, 4)
+                newgrid.addWidget(QtWidgets.QLabel('No new versions available.'), 0, 0, 1, 4)
                 row = 1
         else:
-            newgrid.addWidget(QtGui.QLabel('No versions file available.'), 0, 0, 1, 4)
+            newgrid.addWidget(QtWidgets.QLabel('No versions file available.'), 0, 0, 1, 4)
             row = 1
-        quit = QtGui.QPushButton('Quit')
+        quit = QtWidgets.QPushButton('Quit')
         quit.clicked.connect(self.quit)
-        QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quit)
+        QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.quit)
         newgrid.addWidget(quit, row, 0)
         self.setLayout(newgrid)
 
@@ -150,24 +150,24 @@ class UpdDialog(QtGui.QDialog):
                     response = get_response(pid.communicate()[1])
                     if response != '200 OK':
                         errmsg = 'Error ' + response
-                        self.table.setItem(p, 3, QtGui.QTableWidgetItem(errmsg))
+                        self.table.setItem(p, 3, QtWidgets.QTableWidgetItem(errmsg))
                         continue
                 if suffix == '.exe' or suffix == '.py':
                     if os.path.exists(self.newprog[p] + 'new' + suffix):
                         version = credits.fileVersion(program=self.newprog[p] + 'new')
                         if version != '?':
-                            if version < str(self.table.item(p, 3).text()):
+                            if version < self.table.item(p, 3).text():
                                 if not self.debug:
                                     os.rename(self.newprog[p] + 'new' + suffix,
                                               self.newprog[p] + '.' + version + suffix)
-                                self.table.setItem(p, 3, QtGui.QTableWidgetItem('Current is newer'))
+                                self.table.setItem(p, 3, QtWidgets.QTableWidgetItem('Current is newer'))
                                 continue
                 if not self.debug:
                     if os.path.exists(self.newprog[p] + suffix + '~'):
                         os.remove(self.newprog[p] + suffix + '~')
                     os.rename(self.newprog[p] + suffix, self.newprog[p] + suffix +'~')
                     os.rename(self.newprog[p] + 'new' + suffix, self.newprog[p] + suffix)
-                self.table.setItem(p, 3, QtGui.QTableWidgetItem('Updated'))
+                self.table.setItem(p, 3, QtWidgets.QTableWidgetItem('Updated'))
         self.table.resizeColumnsToContents()
         self.table.setColumnWidth(0, 29)
 
@@ -176,7 +176,7 @@ class UpdDialog(QtGui.QDialog):
 
 
 if '__main__' == __name__:
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     upddialog = UpdDialog()
  #    app.exec_()
  #   app.deleteLater()

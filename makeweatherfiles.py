@@ -2,45 +2,32 @@
 #
 #  Copyright (C) 2015-2020 Sustainable Energy Now Inc., Angus King
 #
-#  makeweatherfiles.py - Make weather files for SAM
+#  makeweatherfiles.py - This file is part of SIREN.
 #
-#  makeweatherfiles.py is free software: you can redistribute it
-#  and/or modify it under the terms of the GNU Affero General
-#  Public License as #  published by the Free Software Foundation,
-#  either version 3 of the License, or (at your option) any later
-#  version.
+#  SIREN is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, either version 3 of
+#  the License, or (at your option) any later version.
 #
-#  makeweatherfiles.py is distributed in the hope that it will be
-#  useful, but WITHOUT ANY WARRANTY; without even the implied
-#  warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-#  See the GNU Affero General Public License for more details.
+#  SIREN is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
 #
 #  You should have received a copy of the GNU Affero General
 #  Public License along with SIREN.  If not, see
 #  <http://www.gnu.org/licenses/>.
 #
-#  The routines getDHI and getDNI in this program have been derived
-#  from models developed by The National Renewable Energy
-#  Laboratory (NREL) Center for Renewable Energy Resources.
-#  Copyright for these routines remain with them.
-#
-#  getDNI is derived from the DISC DNI Model
-#  <http://rredc.nrel.gov/solar/models/DISC/>
-#
-#  getDHI is derived from the NREL DNI-GHI to DHI Calculator
-#  <https://sam.nrel.gov/sites/sam.nrel.gov/files/content/documents/xls/DNI-GHI_to_DHI_Calculator.xlsx>
-#
-# python3 makeweatherfiles.py source=/home/barbangus/Documents/Gus/Duplicated/SEN/Tech\ Stuff/MERRA_data/testdata year=2018 target=/home/barbangus/Documents/Gus/Duplicated/SEN/Tech\ Stuff/MERRA_data/test20200428 fmat=wind gaps=y
 from datetime import datetime
 import gzip
-import math
+from math import *
 import os
 import sys
 from netCDF4 import Dataset
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 if sys.platform == 'win32' or sys.platform == 'cygwin':
     from win32api import GetFileVersionInfo, LOWORD, HIWORD
-
+from sammodels import getDNI, getDHI
 
 def fileVersion(program=None, year=False):
     ver = '?'
@@ -95,8 +82,7 @@ def fileVersion(program=None, year=False):
     else:
         return ver
 
-class AnObject(QtGui.QDialog):
-    procStart = QtCore.pyqtSignal(str)
+class AnObject(QtWidgets.QDialog):
 
     def __init__(self, dialog, anobject, title=None, section=None):
         super(AnObject, self).__init__()
@@ -112,15 +98,15 @@ class AnObject(QtGui.QDialog):
             grid.setColumnMinimumWidth(1, widths[1] + 10)
         i += 1
         if isinstance(self.anobject, str):
-            quit = QtGui.QPushButton('Close', self)
+            quit = QtWidgets.QPushButton('Close', self)
             width = quit.fontMetrics().boundingRect('Close').width() + 10
             quit.setMaximumWidth(width)
         else:
-            quit = QtGui.QPushButton('Quit', self)
+            quit = QtWidgets.QPushButton('Quit', self)
         grid.addWidget(quit, i + 1, 0)
         quit.clicked.connect(self.quitClicked)
         self.setLayout(grid)
-        screen = QtGui.QDesktopWidget().availableGeometry()
+        screen = QtWidgets.QDesktopWidget().availableGeometry()
         h = heights * i
         if h > screen.height():
             if sys.platform == 'win32' or sys.platform == 'cygwin':
@@ -143,8 +129,8 @@ class AnObject(QtGui.QDialog):
         widths = [0, 0]
         heights = 0
         i = -1
-        grid = QtGui.QGridLayout()
-        self.web = QtGui.QTextEdit()
+        grid = QtWidgets.QGridLayout()
+        self.web = QtWidgets.QTextEdit()
         if os.path.exists(self.anobject):
             htf = open(self.anobject, 'r')
             html = htf.read()
@@ -170,7 +156,7 @@ class AnObject(QtGui.QDialog):
             fnt = self.web.fontMetrics()
             widths[0] = (widths[0]) * fnt.maxWidth()
             heights = (heights) * fnt.height()
-            screen = QtGui.QDesktopWidget().availableGeometry()
+            screen = QtWidgets.QDesktopWidget().availableGeometry()
             if widths[0] > screen.width() * .67:
                 heights = int(heights / .67)
                 widths[0] = int(screen.width() * .67)
@@ -178,7 +164,7 @@ class AnObject(QtGui.QDialog):
         i = 1
         grid.addWidget(self.web, 0, 0)
         self.set_stuff(grid, widths, heights, i)
-        QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
+        QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
     def curveClicked(self):
         Turbine(self.turbine).PowerCurve()
         return
@@ -191,179 +177,6 @@ class AnObject(QtGui.QDialog):
 
     def getValues(self):
         return self.anobject
-
-
-def getDNI(ghi=0, hour=0, lat=0, lon=0, press=1013.25, zone=8):
-    hour_of_year = hour
-    day_of_year = int((hour_of_year - 1) / 24) + 1
-    latitude = lat
-    longitude = lon
-    day_angle = 6.283185 * (day_of_year - 1) / 365.
-    time_zone = zone
-    pressure = press
-    etr = 1370 * (1.00011 + 0.034221 * math.cos(day_angle) + 0.00128 * \
-          math.sin(day_angle) + 0.000719 * math.cos(2 * day_angle) + \
-          0.000077 * math.sin(2 * day_angle))
-    dec = (0.006918 - 0.399912 * math.cos(day_angle) + 0.070257 * \
-          math.sin(day_angle) - 0.006758 * math.cos(2 * day_angle) + \
-          0.000907 * math.sin(2 * day_angle) - 0.002697 * math.cos(3 * \
-          day_angle) + 0.00148 * math.sin(3 * day_angle)) * (180. / 3.14159)
-    eqt = (0.000075 + 0.001868 * math.cos(day_angle) - 0.032077 * \
-          math.sin(day_angle) - 0.014615 * math.cos(2 * day_angle) - \
-          0.040849 * math.sin(2 * day_angle)) * (229.18)
-    hour_angle = 15 * (hour_of_year - 12 - 0.5 + eqt / 60 + ((longitude - \
-          time_zone * 15) * 4) / 60)
-    zenith_angle = math.acos(math.cos(math.radians(dec)) * \
-          math.cos(math.radians(latitude)) * \
-          math.cos(math.radians(hour_angle)) + \
-          math.sin(math.radians(dec)) * math.sin(math.radians(latitude))) \
-          * (180. / 3.14159)
-    if zenith_angle < 80:
-        am = 1 / (math.cos(math.radians(zenith_angle)) + 0.15 / \
-        pow(93.885 - zenith_angle, 1.253)) * (pressure / 1013.25)
-    else:
-        am = 0.
-    if am > 0:
-        kt = ghi / (math.cos(math.radians(zenith_angle)) * etr)
-    else:
-        kt = 0.
-    a = 0.
-    if kt > 0:
-        if kt > 0.6:
-            a = -5.743 + 21.77 * kt - 27.49 * pow(kt, 2) + 11.56 * pow(kt, 3)
-        elif kt < 0.6:
-            a = 0.512 - 1.56 * kt + 2.286 * pow(kt, 2) - 2.222 * pow(kt, 3)
-    b = 0.
-    if kt > 0:
-        if kt > 0.6:
-            b = 41.4 - 118.5 * kt + 66.05 * pow(kt, 2) + 31.9 * pow(kt, 3)
-        elif kt < 0.6:
-            b = 0.37 + 0.962 * kt
-    c = 0.
-    if kt > 0:
-        if kt > 0.6:
-            c = -47.01 + 184.2 * kt - 222 * pow(kt, 2) + 73.81 * pow(kt, 3)
-        elif kt < 0.6:
-            c = -0.28 + 0.932 * kt - 2.048 * pow(kt, 2)
-    kn = 0.
-    if kt > 0:
-        kn = a + b * math.exp(c * am)
-    knc = 0.
-    if kt > 0:
-        knc = 0.886 - 0.122 * am + 0.0121 * pow(am, 2) - 0.000653 * \
-              pow(am, 3) + 0.000014 * pow(am, 4)
-    if kt > 0:
-        if etr * (knc - kn) >= 0:
-            return etr * (knc - kn)
-    return 0.
-
-def getDHI(ghi=0, dni=0, hour=0, lat=0, azimuth=0., tilt=0., reflectance=0.2):
-# Ic = Ib math.cos(i) + Idh cos^2(B/2) + p Ih sin^2(B/2)
-# Ic = insolation on a collector;
-# Ib = beam insolation; Idh = diffuse insolation on horizontal;
-# Ih = total insolation on horizontal
-# i = incidence angle; B = surface tilt; p = gnd reflection
-# Idh = Ih - Ibh; Ibh = Ib math.sin(a)  where a = altitude angle
-
-    hour_of_year = hour   # B
-    day_of_year = int((hour_of_year - 1) / 24) + 1   # H
-    declination_angle = math.asin(math.sin(-23.45 * math.pi / 180.) * \
-                        math.cos(360. / 365. * (10.5 + day_of_year) * \
-                        math.pi / 180.)) * 180. / math.pi
-    latitude = lat
-# I
-    if hour_of_year % 24 != 0:
-        hour_angle = (15 * (12 - hour_of_year % 24)) + 7.5
-    else:
-        hour_angle = -172.5
-# L
-    sun_rise_hour_angle = math.acos(-1 * math.tan(latitude * math.pi / \
-                          180.) * math.tan(declination_angle * math.pi / \
-                          180.)) * 180. / math.pi
-# J
-    if abs(hour_angle) - 7.5 < sun_rise_hour_angle and \
-      abs(hour_angle) + 7.5 > sun_rise_hour_angle:
-        hour_angle_2 = abs(hour_angle) - 7.5 + (1 - (((abs(hour_angle) + \
-                       7.5) - sun_rise_hour_angle) / 15)) * 7.5
-    else:
-        hour_angle_2 = 15 * (12 - hour_of_year % 24) + 7.5
-# K
-    if hour_angle < 0:
-        sun_rise_set_adjusted_hour_angle = abs(hour_angle_2) * -1
-    else:
-        sun_rise_set_adjusted_hour_angle = hour_angle_2
-# M
-    sun_rise_hr_am = 12 - (math.acos(-1 * math.tan(latitude * math.pi / \
-                     180.) * math.tan(declination_angle * math.pi / \
-                     180.)) * 180. / math.pi) / 15.
-# N
-    sun_set_hr_pm = math.acos(-1 * math.tan(latitude * math.pi / 180.) * \
-                    math.tan(declination_angle * math.pi / 180.)) * 180. / \
-                    math.pi / 15. + 12
-# O
-    if (math.acos(-math.tan(latitude * math.pi / 180.) * \
-          math.tan(declination_angle * math.pi / 180.)) * 180. / math.pi) > \
-          abs(sun_rise_set_adjusted_hour_angle):
-        sun_rise_set_hsr = 'UP'
-    else:
-        sun_rise_set_hsr = 'DOWN'
-# Q
-    altitude_angle = math.asin((math.sin(latitude * math.pi / 180.) * \
-                     math.sin(declination_angle * math.pi / 180.)) + \
-                     (math.cos(latitude * math.pi / 180.) * \
-                     math.cos(declination_angle * math.pi / 180.) * \
-                     math.cos(sun_rise_set_adjusted_hour_angle * math.pi / \
-                     180.))) * 180. / math.pi
-# R
-    if sun_rise_set_adjusted_hour_angle > 0:
-        solar_azimuth = abs(math.acos(((math.cos(declination_angle * \
-                        math.pi / 180.) * math.sin(latitude * math.pi / \
-                        180.) * math.cos(sun_rise_set_adjusted_hour_angle * \
-                        math.pi / 180.)) - (math.sin(declination_angle * \
-                        math.pi / 180.) * math.cos(latitude * math.pi / \
-                        180.))) / math.cos(altitude_angle * math.pi / 180.)) \
-                        * 180. / math.pi)
-    else:
-        solar_azimuth = -1 * abs(math.acos(((math.cos(declination_angle * \
-                        math.pi / 180.) * math.sin(latitude * math.pi / 180.) \
-                        * math.cos(sun_rise_set_adjusted_hour_angle * \
-                        math.pi / 180.)) - (math.sin(declination_angle * \
-                        math.pi / 180.) * math.cos(latitude * math.pi / \
-                        180.))) / math.cos(altitude_angle * math.pi / \
-                        180.)) * 180. / math.pi)
-# S
-    incidence_angle = math.acos((math.cos(altitude_angle * math.pi / 180.) * \
-                      math.cos((solar_azimuth - azimuth) * math.pi / 180.) * \
-                      math.sin(tilt * math.pi / 180.)) + \
-                      ((math.sin(altitude_angle * math.pi / 180.) * \
-                      math.cos(tilt * math.pi / 180.)))) * 180. / math.pi
-# T
-    if incidence_angle < 90:
-        beam_component = dni * math.cos(incidence_angle * math.pi / 180.)
-    else:
-        beam_component = 0.
-# U, V
-    if altitude_angle > 0:
-        diffuse_component = (ghi - (dni * math.sin(altitude_angle * math.pi / \
-                            180.))) * pow(math.cos((tilt / 2) * math.pi / \
-                            180.), 2)
-        reflected_component = reflectance * ghi * pow(math.sin((tilt / 2) * \
-                              math.pi / 180.), 2)
-    else:
-        diffuse_component = 0.
-        reflected_component = 0.
-# W
-    total_wh = beam_component + diffuse_component + reflected_component
-# X
-    check_total = total_wh - ghi
-# Y
-    if diffuse_component < 0:
-        dhi_negative = 0.
-    else:
-        dhi_negative = diffuse_component
-# Z
-    dhi_rounded = round(dhi_negative, 1)
-    return dhi_rounded
 
 
 class makeWeather():
@@ -409,7 +222,7 @@ class makeWeather():
             for lat in range(len(um[hr])):   # n latitudes
                 lm = []
                 for lon in range(len(um[hr][lat])):   # m longitudes
-                    lm.append(round(math.sqrt(um[hr][lat][lon] * um[hr][lat][lon] +
+                    lm.append(round(sqrt(um[hr][lat][lon] * um[hr][lat][lon] +
                                     vm[hr][lat][lon] * vm[hr][lat][lon]), 4))
                 hm.append(lm)
             sm.append(hm)
@@ -435,8 +248,8 @@ class makeWeather():
                         else:
                             lm.append(90)
                     else:   # Calculate angle and convert to degrees
-                        theta = math.atan(um[hr][lat][lon] / vm[hr][lat][lon])
-                        theta = math.degrees(theta)
+                        theta = atan(um[hr][lat][lon] / vm[hr][lat][lon])
+                        theta = degrees(theta)
                         if vm[hr][lat][lon] > 0:
                             lm.append(int(theta + 180.0))
                         else:   # Make sure angle is positive
@@ -615,16 +428,6 @@ class makeWeather():
         self.longsi.append([])
         for lon in lons:
             self.longsi[-1].append(lon)
-   #     for lat in self.lati[-1]:
-    #        try:
-     #           self.lats.index(lat)
-      #      except:
-       #         self.lats.append(lat)
-        #for lon in self.longi[-1]:
-         #   try:
-          #      self.lons.index(lon)
-           # except:
-            #    self.lons.append(lon)
         if self.vars[self.swg] in cdf_file.variables:
             self.swgnt += self.getGHI(cdf_file.variables[self.vars[self.swg]])
         else:
@@ -714,7 +517,7 @@ class makeWeather():
         self.log += unzip_file[i + 1:] + '\n'
         self.log += ' Format:\n    '
         try:
-            self.log += str(cdf_file.Format) + '\n'
+            self.log += cdf_file.Format + '\n'
         except:
             self.log += '?\n'
         self.log += ' Dimensions:\n    '
@@ -1024,9 +827,6 @@ class makeWeather():
                 del self.t_2m[len(self.t_2m) - (len(self.t_2m) - 8760):]
         self.longrange = [self.lons[0], self.lons[-1]]
         self.checkZone()
-        if self.src_lat is not None:   # specific location(s)
-            self.lats = self.src_lat[:]
-            self.lons = self.src_lon[:]
         if self.make_wind:
             if self.show_progress:
                 self.caller.daybar.setValue(0)
@@ -1036,88 +836,172 @@ class makeWeather():
             if not os.path.exists(target_dir):
                 self.log += 'mkdir %s\n' % target_dir
                 os.makedirs(target_dir)
-            if self.show_progress:
-                self.caller.daybar.setMaximum(len(self.lats) * len(self.lons))
-            for la in range(len(self.lats)):
-                for lo in range(len(self.lons)):
+            if self.src_lat is not None:   # specific location(s)
+                if self.show_progress:
+                    self.caller.daybar.setMaximum(len(self.src_lat) - 1)
+                for i in range(len(self.src_lat)):
                     if self.show_progress:
-                        self.caller.daybar.setValue(len(self.lats) * la + lo)
-                    with_gaps = 0
-                    missing = False
-                    out_file = self.tgt_dir + 'wind_weather_' + '{:0.4f}'.format(self.lats[la]) + \
-                               '_' + '{:0.4f}'.format(self.lons[lo]) + '_' + str(self.src_year) + '.srw'
+                        self.caller.daybar.setValue(i)
+                    out_file = self.tgt_dir + 'wind_weather_' + str(self.src_lat[i]) + '_' + \
+                               str(self.src_lon[i]) + '_' + str(self.src_year) + '.' + self.fmat
                     tf = open(out_file, 'w')
                     hdr = 'id,<city>,<state>,<country>,%s,%s,%s,0,1,8760\n' % (str(self.src_year),
-                          round(self.lats[la], 4), round(self.lons[lo], 4))
+                          round(self.src_lat[i], 4), round(self.src_lon[i], 4))
                     tf.write(hdr)
                     tf.write('Wind data derived from MERRA tavg1_2d_slv_Nx' + '\n')
                     if len(self.s10m) > 0:
-                        tf.write('Temperature,Pressure,Direction,Speed,Temperature,Direction,' +
-                                 'Speed,Direction,Speed' + '\n')
+                        tf.write('Temperature,Pressure,Direction,Speed,Temperature,Direction,Speed,' +
+                                 'Direction,Speed' + '\n')
                         tf.write('C,atm,degrees,m/s,C,degrees,m/s,degrees,m/s' + '\n')
                         tf.write('2,0,2,2,10,10,10,50,50' + '\n')
                         for hr in range(len(self.s50m)):
-                            try:
-                                lat = self.lati[self.lat_lon_ndx[hr]].index(self.lats[la])
-                                lon = self.longi[self.lat_lon_ndx[hr]].index(self.lons[lo])
-                            except:
-                                if self.gaps:
-                                    tf.write(',,,,,,,,\n')
-                                    with_gaps += 1
-                                    continue
-                                else:
-                                    missing = True
+                            for lat2 in range(len(self.lati[self.lat_lon_ndx[hr]])):
+                                if self.src_lat[i] <= self.lati[self.lat_lon_ndx[hr]][lat2]:
                                     break
-                            try:
-                                tf.write(str(self.t_2m[hr][lat][lon]) + ',' + str(self.p_s[hr][lat][lon]) + ',' +
-                                    str(self.d2m[hr][lat][lon]) + ',' + str(self.s2m[hr][lat][lon]) + ',' +
-                                    str(self.t_10m[hr][lat][lon]) + ',' + str(self.d10m[hr][lat][lon]) + ',' +
-                                    str(self.s10m[hr][lat][lon]) + ',' +
-                                    str(self.d50m[hr][lat][lon]) + ',' + str(self.s50m[hr][lat][lon]) + '\n')
-                            except:
-                                if self.gaps:
-                                    tf.write(',,,,,,,,\n')
-                                    with_gaps += 1
-                                    continue
-                                else:
-                                    missing = True
+                            for lon2 in range(len(self.longi[self.lat_lon_ndx[hr]])):
+                                if self.src_lon[i] <= self.longi[self.lat_lon_ndx[hr]][lon2]:
                                     break
+                            if self.longrange[0] is None:
+                                self.longrange[0] = self.longi[self.lat_lon_ndx[hr]][lon2]
+                            else:
+                                if self.longi[self.lat_lon_ndx[hr]][lon2] < self.longrange[0]:
+                                    self.longrange[0] = self.longi[self.lat_lon_ndx[hr]][lon2]
+                            if self.longrange[1] is None:
+                                self.longrange[1] = self.longi[self.lat_lon_ndx[hr]][lon2]
+                            else:
+                                if self.longi[self.lat_lon_ndx[hr]][lon2] > self.longrange[1]:
+                                    self.longrange[1] = self.longi[self.lat_lon_ndx[hr]][lon2]
+                            lat1 = lat2 - 1
+                            lat_rat = (self.lati[self.lat_lon_ndx[hr]][lat2] - self.src_lat[i]) / \
+                                      (self.lati[self.lat_lon_ndx[hr]][lat2] - self.lati[self.lat_lon_ndx[hr]][lat1])
+                            lon1 = lon2 - 1
+                            lon_rat = (self.longi[self.lat_lon_ndx[hr]][lon2] - self.src_lon[i]) / \
+                                      (self.longi[self.lat_lon_ndx[hr]][lon2] - self.longi[self.lat_lon_ndx[hr]][lon1])
+                            tf.write(str(self.valu(self.t_2m[hr], lat1, lon1, lat_rat, lon_rat, rnd=1)) + ',' +
+                                str(self.valu(self.p_s[hr], lat1, lon1, lat_rat, lon_rat, rnd=6)) + ',' +
+                                str(self.valu(self.d2m[hr], lat1, lon1, lat_rat, lon_rat, rnd=0)) + ',' +
+                                str(self.valu(self.s2m[hr], lat1, lon1, lat_rat, lon_rat)) + ',' +
+                                str(self.valu(self.t_10m[hr], lat1, lon1, lat_rat, lon_rat, rnd=1)) + ',' +
+                                str(self.valu(self.d10m[hr], lat1, lon1, lat_rat, lon_rat, rnd=0)) + ',' +
+                                str(self.valu(self.s10m[hr], lat1, lon1, lat_rat, lon_rat)) + ',' +
+                                str(self.valu(self.d50m[hr], lat1, lon1, lat_rat, lon_rat, rnd=0)) + ',' +
+                                str(self.valu(self.s50m[hr], lat1, lon1, lat_rat, lon_rat)) + '\n')
                     else:
                         tf.write('Temperature,Pressure,Direction,Speed,Direction,Speed' + '\n')
                         tf.write('C,atm,degrees,m/s,degrees,m/s' + '\n')
                         tf.write('2,0,2,2,50,50' + '\n')
                         for hr in range(len(self.s50m)):
-                            try:
-                                lat = self.lati[hr].index(self.lats[la])
-                                lon = self.longi[hr].index(self.lons[lo])
-                            except:
-                                if self.gaps:
-                                    continue
-                                else:
-                                    missing = True
+                            for lat2 in range(len(self.lati[self.lat_lon_ndx[hr]])):
+                                if self.src_lat[i] <= self.lati[self.lat_lon_ndx[hr]][lat2]:
                                     break
-                            try:
-                                tf.write(str(self.t_2m[hr][lat][lon]) + ',' + str(self.p_s[hr][lat][lon]) + ',' +
-                                    str(self.d2m[hr][lat][lon]) + ',' + str(self.s2m[hr][lat][lon]) + ',' +
-                                    str(self.d50m[hr][lat][lon]) + ',' + str(self.s50m[hr][lat][lon]) + '\n')
-                            except:
-                                if self.gaps:
-                                    tf.write(',,,,,,,,\n')
-                                    with_gaps += 1
-                                    continue
-                                else:
-                                    missing = True
+                            for lon2 in range(len(self.longi[self.lat_lon_ndx[hr]])):
+                                if self.src_lon[i] <= self.longi[self.lat_lon_ndx[hr]][lon2]:
                                     break
+                            if self.longrange[0] is None:
+                                self.longrange[0] = self.longi[self.lat_lon_ndx[hr]][lon2]
+                            else:
+                                if self.longi[self.lat_lon_ndx[hr]][lon2] < self.longrange[0]:
+                                    self.longrange[0] = self.longi[self.lat_lon_ndx[hr]][lon2]
+                            if self.longrange[1] is None:
+                                self.longrange[1] = self.longi[self.lat_lon_ndx[hr]][lon2]
+                            else:
+                                if self.longi[self.lat_lon_ndx[hr]][lon2] > self.longrange[1]:
+                                    self.longrange[1] = self.longi[self.lat_lon_ndx[hr]][lon2]
+                            lat1 = lat2 - 1
+                            lat_rat = (self.lati[self.lat_lon_ndx[hr]][lat2] - self.src_lat[i]) / (self.lati[self.lat_lon_ndx[hr]][lat2] - self.lati[self.lat_lon_ndx[hr]][lat1])
+                            lon1 = lon2 - 1
+                            lon_rat = (self.longi[self.lat_lon_ndx[hr]][lon2] - self.src_lon[i]) / (self.longi[self.lat_lon_ndx[hr]][lon2] - self.longi[self.lat_lon_ndx[hr]][lon1])
+                            tf.write(str(self.valu(self.t_2m[hr], lat1, lon1, lat_rat, lon_rat, rnd=1)) + ',' +
+                                str(self.valu(self.p_s[hr], lat1, lon1, lat_rat, lon_rat, rnd=6)) + ',' +
+                                str(self.valu(self.d2m[hr], lat1, lon1, lat_rat, lon_rat, rnd=0)) + ',' +
+                                str(self.valu(self.s2m[hr], lat1, lon1, lat_rat, lon_rat)) + ',' +
+                                str(self.valu(self.d50m[hr], lat1, lon1, lat_rat, lon_rat, rnd=0)) + ',' +
+                                str(self.valu(self.s50m[hr], lat1, lon1, lat_rat, lon_rat)) + '\n')
                     tf.close()
-                    if with_gaps > 0 and with_gaps < 504:
-                        self.log += '%s created with gaps (%s days)\n' % ( \
-                                    out_file[out_file.rfind('/') + 1:], str(int(with_gaps / 24)))
-                    elif missing or with_gaps > 0:
-                        os.remove(out_file)
-                        self.gaplog += '%s not created due to data gaps\n' % out_file[out_file.rfind('/') + 1:]
-                        continue
-                    else:
-                        self.log += '%s created\n' % out_file[out_file.rfind('/') + 1:]
+                    self.log += '%s created\n' % out_file[out_file.rfind('/') + 1:]
+            else: # all locations
+                if self.show_progress:
+                    self.caller.daybar.setMaximum(len(self.lats) * len(self.lons))
+                for la in range(len(self.lats)):
+                    for lo in range(len(self.lons)):
+                        if self.show_progress:
+                            self.caller.daybar.setValue(len(self.lats) * la + lo)
+                        with_gaps = 0
+                        missing = False
+                        out_file = self.tgt_dir + 'wind_weather_' + '{:0.4f}'.format(self.lats[la]) + \
+                                   '_' + '{:0.4f}'.format(self.lons[lo]) + '_' + str(self.src_year) + '.srw'
+                        tf = open(out_file, 'w')
+                        hdr = 'id,<city>,<state>,<country>,%s,%s,%s,0,1,8760\n' % (str(self.src_year),
+                              round(self.lats[la], 4), round(self.lons[lo], 4))
+                        tf.write(hdr)
+                        tf.write('Wind data derived from MERRA tavg1_2d_slv_Nx' + '\n')
+                        if len(self.s10m) > 0:
+                            tf.write('Temperature,Pressure,Direction,Speed,Temperature,Direction,' +
+                                     'Speed,Direction,Speed' + '\n')
+                            tf.write('C,atm,degrees,m/s,C,degrees,m/s,degrees,m/s' + '\n')
+                            tf.write('2,0,2,2,10,10,10,50,50' + '\n')
+                            for hr in range(len(self.s50m)):
+                                try:
+                                    lat = self.lati[self.lat_lon_ndx[hr]].index(self.lats[la])
+                                    lon = self.longi[self.lat_lon_ndx[hr]].index(self.lons[lo])
+                                except:
+                                    if self.gaps:
+                                        tf.write(',,,,,,,,\n')
+                                        with_gaps += 1
+                                        continue
+                                    else:
+                                        missing = True
+                                        break
+                                try:
+                                    tf.write(str(self.t_2m[hr][lat][lon]) + ',' + str(self.p_s[hr][lat][lon]) + ',' +
+                                        str(self.d2m[hr][lat][lon]) + ',' + str(self.s2m[hr][lat][lon]) + ',' +
+                                        str(self.t_10m[hr][lat][lon]) + ',' + str(self.d10m[hr][lat][lon]) + ',' +
+                                        str(self.s10m[hr][lat][lon]) + ',' +
+                                        str(self.d50m[hr][lat][lon]) + ',' + str(self.s50m[hr][lat][lon]) + '\n')
+                                except:
+                                    if self.gaps:
+                                        tf.write(',,,,,,,,\n')
+                                        with_gaps += 1
+                                        continue
+                                    else:
+                                        missing = True
+                                        break
+                        else:
+                            tf.write('Temperature,Pressure,Direction,Speed,Direction,Speed' + '\n')
+                            tf.write('C,atm,degrees,m/s,degrees,m/s' + '\n')
+                            tf.write('2,0,2,2,50,50' + '\n')
+                            for hr in range(len(self.s50m)):
+                                try:
+                                    lat = self.lati[self.lat_lon_ndx[hr]].index(self.lats[la])
+                                    lon = self.longi[self.lat_lon_ndx[hr]].index(self.lons[lo])
+                                except:
+                                    if self.gaps:
+                                        continue
+                                    else:
+                                        missing = True
+                                        break
+                                try:
+                                    tf.write(str(self.t_2m[hr][lat][lon]) + ',' + str(self.p_s[hr][lat][lon]) + ',' +
+                                        str(self.d2m[hr][lat][lon]) + ',' + str(self.s2m[hr][lat][lon]) + ',' +
+                                        str(self.d50m[hr][lat][lon]) + ',' + str(self.s50m[hr][lat][lon]) + '\n')
+                                except:
+                                    if self.gaps:
+                                        tf.write(',,,,,,,,\n')
+                                        with_gaps += 1
+                                        continue
+                                    else:
+                                        missing = True
+                                        break
+                        tf.close()
+                        if with_gaps > 0 and with_gaps < 504:
+                            self.log += '%s created with gaps (%s days)\n' % ( \
+                                        out_file[out_file.rfind('/') + 1:], str(int(with_gaps / 24)))
+                        elif missing or with_gaps > 0:
+                            os.remove(out_file)
+                            self.gaplog += '%s not created due to data gaps\n' % out_file[out_file.rfind('/') + 1:]
+                            continue
+                        else:
+                            self.log += '%s created\n' % out_file[out_file.rfind('/') + 1:]
             return  # that's it for wind
          # get variable from solar files
         if self.src_zone > 0:
@@ -1188,53 +1072,57 @@ class makeWeather():
         if not os.path.exists(target_dir):
             self.log += 'mkdir %s\n' % target_dir
             os.makedirs(target_dir)
-        if self.show_progress:
-            self.caller.daybar.setMaximum(len(self.lats) * len(self.lons))
-        for la in range(len(self.lats)):
-            for lo in range(len(self.lons)):
+        if self.src_lat is not None:  # specific location(s)
+            if self.show_progress:
+                self.caller.daybar.setMaximum(len(self.src_lat) - 1)
+            for i in range(len(self.src_lat)):
                 if self.show_progress:
-                    self.caller.daybar.setValue(len(self.lats) * la + lo)
-                with_gaps = 0
-                missing = False
-                out_file = self.tgt_dir + 'solar_weather_' + '{:0.4f}'.format(self.lats[la]) + \
-                        '_' + '{:0.4f}'.format(self.lons[lo]) + '_' + str(self.src_year) + '.' + self.fmat
+                    self.caller.daybar.setValue(i)
+                out_file = self.tgt_dir + 'solar_weather_' + \
+                           str(self.src_lat[i]) + '_' + str(self.src_lon[i]) + '_' + str(self.src_year) + '.' + self.fmat
                 tf = open(out_file, 'w')
                 if self.fmat == 'csv':
                     hdr = 'Location,City,Region,Country,Latitude,Longitude,Time Zone,Elevation,Source\n' + \
-                          'id,<city>,<state>,<country>,%s,%s,%s,0,IWEC\n' % (round(self.lats[la], 4),
-                          round(self.lons[lo], 4), str(self.src_zone))
+                          'id,<city>,<state>,<country>,%s,%s,%s,0,IWEC\n' % (round(self.src_lat[i], 4),
+                          round(self.src_lon[i], 4), str(self.src_zone))
                     tf.write(hdr)
                     tf.write('Year,Month,Day,Hour,GHI,DNI,DHI,Tdry,Pres,Wspd,Wdir' + '\n')
                     mth = 0
                     day = 1
                     hour = 0
                     for hr in range(len(self.s10m)):
-                        try:
-                            lat = self.latsi[self.lat_lon_ndx[hr]].index(self.lats[la])
-                            lon = self.longsi[self.lat_lon_ndx[hr]].index(self.lons[lo])
-                            la2 = self.lati[self.lat_lon_ndx[hr]].index(self.lats[la])
-                            lo2 = self.longi[self.lat_lon_ndx[hr]].index(self.lons[lo])
-                        except:
-                            if self.gaps:
-                                tf.write(',,,,,,,,\n')
-                                with_gaps += 1
-                                continue
-                            else:
-                                missing = True
+                        for lat2 in range(len(self.lati[self.lat_lon_ndx[hr]])):
+                            if self.src_lat[i] <= self.lati[self.lat_lon_ndx[hr]][lat2]:
                                 break
-                        ghi = self.swgnt[hr][lat][lon]
-                        dni = getDNI(ghi, hour=hr + 1, lat=self.latsi[self.lat_lon_ndx[hr]][lat],
-                              lon=self.longsi[self.lat_lon_ndx[hr]][lon],
-                              press=self.p_s[hr][lat][lon], zone=self.src_zone)
-                        dhi = getDHI(ghi, dni, hour=hr + 1, lat=self.latsi[self.lat_lon_ndx[hr]][lat])
-                        tf.write(str(self.src_year) + ',' + '{0:02d}'.format(mth + 1) + ',' +
-                            '{0:02d}'.format(day) + ',' + '{0:02d}'.format(hour) + ',' +
-                            '{:0.1f}'.format(ghi) + ',' + '{:0.1f}'.format(dni) + ',' +
-                            '{:0.1f}'.format(dhi) + ',' +
-                            str(self.t_10m[hr][la2][lo2]) + ',' +
-                            str(self.p_s[hr][la2][lo2]) + ',' +
-                            str(self.s10m[hr][la2][lo2]) + ',' +
-                            str(self.d10m[hr][la2][lo2]) + '\n')
+                        for lon2 in range(len(self.longi[self.lat_lon_ndx[hr]])):
+                            if self.src_lon[i] <= self.longi[self.lat_lon_ndx[hr]][lon2]:
+                                break
+                        if self.longrange[0] is None:
+                            self.longrange[0] = self.longi[self.lat_lon_ndx[hr]][lon2]
+                        else:
+                            if self.longi[self.lat_lon_ndx[hr]][lon2] < self.longrange[0]:
+                                self.longrange[0] = self.longi[self.lat_lon_ndx[hr]][lon2]
+                        if self.longrange[1] is None:
+                            self.longrange[1] = self.longi[self.lat_lon_ndx[hr]][lon2]
+                        else:
+                            if self.longi[self.lat_lon_ndx[hr]][lon2] > self.longrange[1]:
+                                self.longrange[1] = self.longi[self.lat_lon_ndx[hr]][lon2]
+                        lat1 = lat2 - 1
+                        lat_rat = (self.lati[self.lat_lon_ndx[hr]][lat2] - self.src_lat[i]) / (self.lati[self.lat_lon_ndx[hr]][lat2] - self.lati[self.lat_lon_ndx[hr]][lat1])
+                        lon1 = lon2 - 1
+                        lon_rat = (self.longi[self.lat_lon_ndx[hr]][lon2] - self.src_lon[i]) / (self.longi[self.lat_lon_ndx[hr]][lon2] - self.longi[self.lat_lon_ndx[hr]][lon1])
+                        ghi = self.valu(self.swgnt[hr], lat1, lon1, lat_rat, lon_rat)
+                        dni = getDNI(ghi, hour=hr + 1, lat=self.src_lat[i], lon=self.src_lon[i],
+                              press=self.valu(self.p_s[hr], lat1,
+                              lon1, lat_rat, lon_rat, rnd=0), zone=self.src_zone)
+                        dhi = getDHI(ghi, dni, hour=hr + 1, lat=self.src_lat[i])
+                        tf.write(str(self.src_year) + ',' + str(mth + 1) + ',' +
+                        str(day) + ',' + str(hour) + ',' +
+                        str(int(ghi)) + ',' + str(int(dni)) + ',' + str(int(dhi)) + ',' +
+                        str(self.valu(self.t_10m[hr], lat1, lon1, lat_rat, lon_rat, rnd=1)) + ',' +
+                        str(self.valu(self.p_s[hr], lat1, lon1, lat_rat, lon_rat, rnd=0)) + ',' +
+                        str(self.valu(self.s10m[hr], lat1, lon1, lat_rat, lon_rat)) + ',' +
+                        str(self.valu(self.d10m[hr], lat1, lon1, lat_rat, lon_rat, rnd=0)) + '\n')
                         hour += 1
                         if hour > 23:
                             hour = 0
@@ -1245,57 +1133,155 @@ class makeWeather():
                                 hour = 0
                 else:
                     hdr = 'id,<city>,<state>,%s,%s,%s,0,3600.0,%s,0:30:00\n' % (str(self.src_zone),
-                          round(self.lats[la], 4),
-                          round(self.lons[lo], 4), str(self.src_year))
+                          round(self.src_lat[i], 4),
+                          round(self.src_lon[i], 4), str(self.src_year))
                     tf.write(hdr)
                     for hr in range(len(self.s10m)):
-                        try:
-                            lat = self.latsi[self.lat_lon_ndx[hr]].index(self.lats[la])
-                            lon = self.longsi[self.lat_lon_ndx[hr]].index(self.lons[lo])
-                            la2 = self.lati[self.lat_lon_ndx[hr]].index(self.lats[la])
-                            lo2 = self.longi[self.lat_lon_ndx[hr]].index(self.lons[lo])
-                        except:
-                            if self.gaps:
-                                tf.write(',,,,,,,,\n')
-                                with_gaps += 1
-                                continue
-                            else:
-                                missing = True
+                        for lat2 in range(len(self.lati[self.lat_lon_ndx[hr]])):
+                            if self.src_lat[i] <= self.lati[self.lat_lon_ndx[hr]][lat2]:
                                 break
-                        ghi = self.swgnt[hr][lat][lon]
-                        dni = getDNI(ghi, hour=hr + 1, lat=self.latsi[self.lat_lon_ndx[hr]][lat],
-                              lon=self.longsi[self.lat_lon_ndx[hr]][lon],
-                              press=self.p_s[hr][lat][lon], zone=self.src_zone)
-                        dhi = getDHI(ghi, dni, hour=hr + 1, lat=self.latsi[self.lat_lon_ndx[hr]][lat])
-                        tf.write(str(self.t_10m[hr][la2][lo2]) +
-                            ',-999,-999,-999,' +
-                            str(self.s10m[hr][la2][lo2]) + ',' +
-                            str(self.d10m[hr][la2][lo2]) + ',' +
-                            str(self.p_s[hr][la2][lo2]) + ',' +
-                            str(int(ghi)) + ',' + str(int(dni)) + ',' + str(int(dhi)) +
-                            ',-999,-999,\n')
+                        for lon2 in range(len(self.longi[self.lat_lon_ndx[hr]])):
+                            if self.src_lon[i] <= self.longi[self.lat_lon_ndx[hr]][lon2]:
+                                break
+                        if self.longrange[0] is None:
+                            self.longrange[0] = self.longi[self.lat_lon_ndx[hr]][lon2]
+                        else:
+                            if self.longi[self.lat_lon_ndx[hr]][lon2] < self.longrange[0]:
+                                self.longrange[0] = self.longi[self.lat_lon_ndx[hr]][lon2]
+                        if self.longrange[1] is None:
+                            self.longrange[1] = self.longi[self.lat_lon_ndx[hr]][lon2]
+                        else:
+                            if self.longi[self.lat_lon_ndx[hr]][lon2] > self.longrange[1]:
+                                self.longrange[1] = self.longi[self.lat_lon_ndx[hr]][lon2]
+                        lat1 = lat2 - 1
+                        lat_rat = (self.lati[self.lat_lon_ndx[hr]][lat2] - self.src_lat[i]) / (self.lati[self.lat_lon_ndx[hr]][lat2] - self.lati[self.lat_lon_ndx[hr]][lat1])
+                        lon1 = lon2 - 1
+                        lon_rat = (self.longi[self.lat_lon_ndx[hr]][lon2] - self.src_lon[i]) / (self.longi[self.lat_lon_ndx[hr]][lon2] - self.longi[self.lat_lon_ndx[hr]][lon1])
+                        ghi = self.valu(self.swgnt[hr], lat1, lon1, lat_rat, lon_rat)
+                        dni = getDNI(ghi, hour=hr + 1, lat=self.src_lat[i], lon=self.src_lon[i],
+                              press=self.valu(self.p_s[hr], lat1, lon1, lat_rat,
+                              lon_rat, rnd=0), zone=self.src_zone)
+                        dhi = getDHI(ghi, dni, hour=hr + 1, lat=self.src_lat[i])
+                        tf.write(str(self.valu(self.t_10m[hr], lat1, lon1, lat_rat, lon_rat, rnd=1)) +
+                        ',-999,-999,-999,' +
+                        str(self.valu(self.s10m[hr], lat1, lon1, lat_rat, lon_rat)) + ',' +
+                        str(self.valu(self.d10m[hr], lat1, lon1, lat_rat, lon_rat, rnd=0)) + ',' +
+                        str(self.valu(self.p_s[hr], lat1, lon1, lat_rat, lon_rat, rnd=1)) + ',' +
+                        str(int(ghi)) + ',' + str(int(dni)) + ',' + str(int(dhi)) +
+                        ',-999,-999,\n')
                 tf.close()
-                if with_gaps > 0 and with_gaps < 504:
-                    self.log += '%s created with gaps (%s days)\n' % ( \
-                                out_file[out_file.rfind('/') + 1:], str(int(with_gaps / 24)))
-                elif missing or with_gaps > 0:
-                    os.remove(out_file)
-                    self.gaplog += '%s not created due to data gaps\n' % out_file[out_file.rfind('/') + 1:]
-                    continue
-                else:
-                    self.log += '%s created\n' % out_file[out_file.rfind('/') + 1:]
-                self.checkZone()
+                self.log += '%s created\n' % out_file[out_file.rfind('/') + 1:]
+        else: # all locations
+            if self.show_progress:
+                self.caller.daybar.setMaximum(len(self.lats) * len(self.lons))
+            for la in range(len(self.lats)):
+                for lo in range(len(self.lons)):
+                    if self.show_progress:
+                        self.caller.daybar.setValue(len(self.lats) * la + lo)
+                    with_gaps = 0
+                    missing = False
+                    out_file = self.tgt_dir + 'solar_weather_' + '{:0.4f}'.format(self.lats[la]) + \
+                            '_' + '{:0.4f}'.format(self.lons[lo]) + '_' + str(self.src_year) + '.' + self.fmat
+                    tf = open(out_file, 'w')
+                    if self.fmat == 'csv':
+                        hdr = 'Location,City,Region,Country,Latitude,Longitude,Time Zone,Elevation,Source\n' + \
+                              'id,<city>,<state>,<country>,%s,%s,%s,0,IWEC\n' % (round(self.lats[la], 4),
+                              round(self.lons[lo], 4), str(self.src_zone))
+                        tf.write(hdr)
+                        tf.write('Year,Month,Day,Hour,GHI,DNI,DHI,Tdry,Pres,Wspd,Wdir' + '\n')
+                        mth = 0
+                        day = 1
+                        hour = 0
+                        for hr in range(len(self.s10m)):
+                            try:
+                                lat = self.latsi[self.lat_lon_ndx[hr]].index(self.lats[la])
+                                lon = self.longsi[self.lat_lon_ndx[hr]].index(self.lons[lo])
+                                la2 = self.lati[self.lat_lon_ndx[hr]].index(self.lats[la])
+                                lo2 = self.longi[self.lat_lon_ndx[hr]].index(self.lons[lo])
+                            except:
+                                if self.gaps:
+                                    tf.write(',,,,,,,,\n')
+                                    with_gaps += 1
+                                    continue
+                                else:
+                                    missing = True
+                                    break
+                            ghi = self.swgnt[hr][lat][lon]
+                            dni = getDNI(ghi, hour=hr + 1, lat=self.latsi[self.lat_lon_ndx[hr]][lat],
+                                  lon=self.longsi[self.lat_lon_ndx[hr]][lon],
+                                  press=self.p_s[hr][lat][lon], zone=self.src_zone)
+                            dhi = getDHI(ghi, dni, hour=hr + 1, lat=self.latsi[self.lat_lon_ndx[hr]][lat])
+                            tf.write(str(self.src_year) + ',' + '{0:02d}'.format(mth + 1) + ',' +
+                                '{0:02d}'.format(day) + ',' + '{0:02d}'.format(hour) + ',' +
+                                '{:0.1f}'.format(ghi) + ',' + '{:0.1f}'.format(dni) + ',' +
+                                '{:0.1f}'.format(dhi) + ',' +
+                                str(self.t_10m[hr][la2][lo2]) + ',' +
+                                str(self.p_s[hr][la2][lo2]) + ',' +
+                                str(self.s10m[hr][la2][lo2]) + ',' +
+                                str(self.d10m[hr][la2][lo2]) + '\n')
+                            hour += 1
+                            if hour > 23:
+                                hour = 0
+                                day += 1
+                                if day > dys[mth]:
+                                    mth += 1
+                                    day = 1
+                                    hour = 0
+                    else:
+                        hdr = 'id,<city>,<state>,%s,%s,%s,0,3600.0,%s,0:30:00\n' % (str(self.src_zone),
+                              round(self.lats[la], 4),
+                              round(self.lons[lo], 4), str(self.src_year))
+                        tf.write(hdr)
+                        for hr in range(len(self.s10m)):
+                            try:
+                                lat = self.latsi[self.lat_lon_ndx[hr]].index(self.lats[la])
+                                lon = self.longsi[self.lat_lon_ndx[hr]].index(self.lons[lo])
+                                la2 = self.lati[self.lat_lon_ndx[hr]].index(self.lats[la])
+                                lo2 = self.longi[self.lat_lon_ndx[hr]].index(self.lons[lo])
+                            except:
+                                if self.gaps:
+                                    tf.write(',,,,,,,,\n')
+                                    with_gaps += 1
+                                    continue
+                                else:
+                                    missing = True
+                                    break
+                            ghi = self.swgnt[hr][lat][lon]
+                            dni = getDNI(ghi, hour=hr + 1, lat=self.latsi[self.lat_lon_ndx[hr]][lat],
+                                  lon=self.longsi[self.lat_lon_ndx[hr]][lon],
+                                  press=self.p_s[hr][lat][lon], zone=self.src_zone)
+                            dhi = getDHI(ghi, dni, hour=hr + 1, lat=self.latsi[self.lat_lon_ndx[hr]][lat])
+                            tf.write(str(self.t_10m[hr][la2][lo2]) +
+                                ',-999,-999,-999,' +
+                                str(self.s10m[hr][la2][lo2]) + ',' +
+                                str(self.d10m[hr][la2][lo2]) + ',' +
+                                str(self.p_s[hr][la2][lo2]) + ',' +
+                                str(int(ghi)) + ',' + str(int(dni)) + ',' + str(int(dhi)) +
+                                ',-999,-999,\n')
+                    tf.close()
+                    if with_gaps > 0 and with_gaps < 504:
+                        self.log += '%s created with gaps (%s days)\n' % ( \
+                                    out_file[out_file.rfind('/') + 1:], str(int(with_gaps / 24)))
+                    elif missing or with_gaps > 0:
+                        os.remove(out_file)
+                        self.gaplog += '%s not created due to data gaps\n' % out_file[out_file.rfind('/') + 1:]
+                        continue
+                    else:
+                        self.log += '%s created\n' % out_file[out_file.rfind('/') + 1:]
+                    self.checkZone()
 
-class ClickableQLabel(QtGui.QLabel):
+class ClickableQLabel(QtWidgets.QLabel):
+    clicked = QtCore.pyqtSignal()
+
     def __init(self, parent):
         QLabel.__init__(self, parent)
 
     def mousePressEvent(self, event):
-        QtGui.QApplication.widgetAt(event.globalPos()).setFocus()
-        self.emit(QtCore.SIGNAL('clicked()'))
+        QtWidgets.QApplication.widgetAt(event.globalPos()).setFocus()
+        self.clicked.emit()
 
 
-class getParms(QtGui.QWidget):
+class getParms(QtWidgets.QWidget):
 
     def __init__(self, help='makeweatherfiles.html'):
         super(getParms, self).__init__()
@@ -1304,75 +1290,75 @@ class getParms(QtGui.QWidget):
 
     def initUI(self):
         rw = 0
-        self.grid = QtGui.QGridLayout()
-        self.grid.addWidget(QtGui.QLabel('Year:'), 0, 0)
-        self.yearSpin = QtGui.QSpinBox()
+        self.grid = QtWidgets.QGridLayout()
+        self.grid.addWidget(QtWidgets.QLabel('Year:'), 0, 0)
+        self.yearSpin = QtWidgets.QSpinBox()
         now = datetime.now()
         self.yearSpin.setRange(1979, now.year)
         self.yearSpin.setValue(now.year - 1)
         self.grid.addWidget(self.yearSpin, rw, 1)
         rw += 1
-        self.grid.addWidget(QtGui.QLabel('Wrap to prior year:'), rw, 0)
-        self.wrapbox = QtGui.QCheckBox()
+        self.grid.addWidget(QtWidgets.QLabel('Wrap to prior year:'), rw, 0)
+        self.wrapbox = QtWidgets.QCheckBox()
         self.wrapbox.setCheckState(QtCore.Qt.Checked)
         self.grid.addWidget(self.wrapbox, rw, 1)
-        self.grid.addWidget(QtGui.QLabel('If checked will wrap back to prior year'), rw, 2, 1, 3)
+        self.grid.addWidget(QtWidgets.QLabel('If checked will wrap back to prior year'), rw, 2, 1, 3)
         rw += 1
-        self.grid.addWidget(QtGui.QLabel('Ignore data gaps:'), rw, 0)
-        self.gapsbox = QtGui.QCheckBox()
+        self.grid.addWidget(QtWidgets.QLabel('Ignore data gaps:'), rw, 0)
+        self.gapsbox = QtWidgets.QCheckBox()
         self.gapsbox.setCheckState(QtCore.Qt.Unchecked)
         self.grid.addWidget(self.gapsbox, rw, 1)
-        self.grid.addWidget(QtGui.QLabel('If checked will ignore data gaps (but not missing days)'), rw, 2, 1, 3)
+        self.grid.addWidget(QtWidgets.QLabel('If checked will ignore data gaps (but not missing days)'), rw, 2, 1, 3)
         rw += 1
-        self.grid.addWidget(QtGui.QLabel('Time Zone:'), rw, 0)
-        self.zoneCombo = QtGui.QComboBox()
+        self.grid.addWidget(QtWidgets.QLabel('Time Zone:'), rw, 0)
+        self.zoneCombo = QtWidgets.QComboBox()
         self.zoneCombo.addItem('Auto')
         self.zoneCombo.addItem('Best')
         for i in range(-12, 13):
             self.zoneCombo.addItem(str(i))
         self.zoneCombo.currentIndexChanged[str].connect(self.zoneChanged)
-        self.zone_lon = QtGui.QLabel(('Time zone calculated from MERRA data'))
+        self.zone_lon = QtWidgets.QLabel(('Time zone calculated from MERRA data'))
         self.grid.addWidget(self.zoneCombo, rw, 1)
         self.grid.addWidget(self.zone_lon, rw, 2, 1, 3)
         rw += 1
-        self.grid.addWidget(QtGui.QLabel('Solar Format:'), rw, 0)
-        self.fmatcombo = QtGui.QComboBox(self)
+        self.grid.addWidget(QtWidgets.QLabel('Solar Format:'), rw, 0)
+        self.fmatcombo = QtWidgets.QComboBox(self)
         self.fmats = ['csv', 'smw']
         for i in range(len(self.fmats)):
             self.fmatcombo.addItem(self.fmats[i])
         self.fmatcombo.setCurrentIndex(1)
         self.grid.addWidget(self.fmatcombo, rw, 1)
         rw += 1
-        self.grid.addWidget(QtGui.QLabel('Solar Variable:'), rw, 0)
-        self.swgcombo = QtGui.QComboBox(self)
+        self.grid.addWidget(QtWidgets.QLabel('Solar Variable:'), rw, 0)
+        self.swgcombo = QtWidgets.QComboBox(self)
         self.swgs = ['swgdn', 'swgnt']
         for i in range(len(self.fmats)):
             self.swgcombo.addItem(self.swgs[i])
         self.swgcombo.setCurrentIndex(0) # default is swgdn
         self.grid.addWidget(self.swgcombo, rw, 1)
         rw += 1
-        self.grid.addWidget(QtGui.QLabel('Coordinates:'), rw, 0)
-        self.coords = QtGui.QPlainTextEdit()
+        self.grid.addWidget(QtWidgets.QLabel('Coordinates:'), rw, 0)
+        self.coords = QtWidgets.QPlainTextEdit()
         self.grid.addWidget(self.coords, rw, 1, 1, 4)
         rw += 1
-        self.grid.addWidget(QtGui.QLabel('Copy folder down:'), rw, 0)
-        self.checkbox = QtGui.QCheckBox()
+        self.grid.addWidget(QtWidgets.QLabel('Copy folder down:'), rw, 0)
+        self.checkbox = QtWidgets.QCheckBox()
         self.checkbox.setCheckState(QtCore.Qt.Checked)
         self.grid.addWidget(self.checkbox, rw, 1)
-        self.grid.addWidget(QtGui.QLabel('If checked will copy solar folder changes down to others'), rw, 2, 1, 3)
+        self.grid.addWidget(QtWidgets.QLabel('If checked will copy solar folder changes down to others'), rw, 2, 1, 3)
         rw += 1
         cur_dir = os.getcwd()
         self.dir_labels = ['Solar Source', 'Wind Source', 'Target']
         self.dirs = [None, None, None, None]
         for i in range(3):
-            self.grid.addWidget(QtGui.QLabel(self.dir_labels[i] + ' Folder:'), rw, 0)
+            self.grid.addWidget(QtWidgets.QLabel(self.dir_labels[i] + ' Folder:'), rw, 0)
             self.dirs[i] = ClickableQLabel()
             self.dirs[i].setText(cur_dir)
             self.dirs[i].setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
-            self.connect(self.dirs[i], QtCore.SIGNAL('clicked()'), self.dirChanged)
+            self.dirs[i].clicked.connect(self.dirChanged)
             self.grid.addWidget(self.dirs[i], rw, 1, 1, 4)
             rw += 1
-        self.daybar = QtGui.QProgressBar()
+        self.daybar = QtWidgets.QProgressBar()
         self.daybar.setMinimum(0)
         self.daybar.setMaximum(31)
         self.daybar.setValue(0)
@@ -1381,7 +1367,7 @@ class getParms(QtGui.QWidget):
                                        + 'QProgressBar::chunk { background-color: #CB6720;}')
         self.daybar.setHidden(True)
         self.grid.addWidget(self.daybar, rw, 0)
-        self.progressbar = QtGui.QProgressBar()
+        self.progressbar = QtWidgets.QProgressBar()
         self.progressbar.setMinimum(0)
         self.progressbar.setMaximum(100)
         self.progressbar.setValue(0)
@@ -1390,38 +1376,38 @@ class getParms(QtGui.QWidget):
                                        + 'QProgressBar::chunk { background-color: #6891c6;}')
         self.grid.addWidget(self.progressbar, rw, 1, 1, 4)
         self.progressbar.setHidden(True)
-        self.progresslabel = QtGui.QLabel('')
+        self.progresslabel = QtWidgets.QLabel('')
         self.grid.addWidget(self.progresslabel, rw, 1, 1, 2)
         self.progresslabel.setHidden(True)
         rw += 1
-        quit = QtGui.QPushButton('Quit', self)
+        quit = QtWidgets.QPushButton('Quit', self)
         self.grid.addWidget(quit, rw, 0)
         quit.clicked.connect(self.quitClicked)
-        QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
-        dosolar = QtGui.QPushButton('Produce Solar Files', self)
+        QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
+        dosolar = QtWidgets.QPushButton('Produce Solar Files', self)
         wdth = dosolar.fontMetrics().boundingRect(dosolar.text()).width() + 9
         self.grid.addWidget(dosolar, rw, 1)
         dosolar.clicked.connect(self.dosolarClicked)
-        dowind = QtGui.QPushButton('Produce Wind Files', self)
+        dowind = QtWidgets.QPushButton('Produce Wind Files', self)
         dowind.setMaximumWidth(wdth)
         self.grid.addWidget(dowind, rw, 2)
         dowind.clicked.connect(self.dowindClicked)
-        info = QtGui.QPushButton('File Info', self)
+        info = QtWidgets.QPushButton('File Info', self)
         info.setMaximumWidth(wdth)
         self.grid.addWidget(info, rw, 3)
         info.clicked.connect(self.infoClicked)
-        help = QtGui.QPushButton('Help', self)
+        help = QtWidgets.QPushButton('Help', self)
         help.setMaximumWidth(wdth)
         self.grid.addWidget(help, rw, 4)
         help.clicked.connect(self.helpClicked)
-        QtGui.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
+        QtWidgets.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
       #   self.grid.setColumnStretch(4, 2)
-        frame = QtGui.QFrame()
+        frame = QtWidgets.QFrame()
         frame.setLayout(self.grid)
-        self.scroll = QtGui.QScrollArea()
+        self.scroll = QtWidgets.QScrollArea()
         self.scroll.setWidgetResizable(True)
         self.scroll.setWidget(frame)
-        self.layout = QtGui.QVBoxLayout(self)
+        self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
         self.setWindowTitle('makeweatherfiles (' + fileVersion() + ') - Make weather files from MERRA data')
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
@@ -1431,8 +1417,8 @@ class getParms(QtGui.QWidget):
 
     def center(self):
         frameGm = self.frameGeometry()
-        screen = QtGui.QApplication.desktop().screenNumber(QtGui.QApplication.desktop().cursor().pos())
-        centerPoint = QtGui.QApplication.desktop().availableGeometry(screen).center()
+        screen = QtWidgets.QApplication.desktop().screenNumber(QtWidgets.QApplication.desktop().cursor().pos())
+        centerPoint = QtWidgets.QApplication.desktop().availableGeometry(screen).center()
         frameGm.moveCenter(centerPoint)
         self.move(frameGm.topLeft())
 
@@ -1458,8 +1444,8 @@ class getParms(QtGui.QWidget):
             if self.dirs[i].hasFocus():
                 break
         curdir = self.dirs[i].text()
-        newdir = str(QtGui.QFileDialog.getExistingDirectory(self, 'Choose ' + self.dir_labels[i] + ' Folder',
-                 curdir, QtGui.QFileDialog.ShowDirsOnly))
+        newdir = QtWidgets.QFileDialog.getExistingDirectory(self, 'Choose ' + self.dir_labels[i] + ' Folder',
+                 curdir, QtWidgets.QFileDialog.ShowDirsOnly)
         if newdir != '':
             self.dirs[i].setText(newdir)
             if self.checkbox.isChecked():
@@ -1468,7 +1454,7 @@ class getParms(QtGui.QWidget):
                     self.dirs[2].setText(newdir)
 
     def helpClicked(self):
-        dialog = AnObject(QtGui.QDialog(), self.help,
+        dialog = AnObject(QtWidgets.QDialog(), self.help,
                  title='makeweatherfiles (' + fileVersion() + ') - Help', section='makeweather')
         dialog.exec_()
 
@@ -1479,7 +1465,7 @@ class getParms(QtGui.QWidget):
         self.progressbar.setHidden(False)
         self.progresslabel.setHidden(False)
         self.daybar.setHidden(False)
-        coords = str(self.coords.toPlainText())
+        coords = self.coords.toPlainText()
         if coords != '':
             if coords.find(' ') >= 0:
                 if coords.find(',') < 0:
@@ -1500,12 +1486,12 @@ class getParms(QtGui.QWidget):
             zone = 'best'
         else:
             zone = str(self.zoneCombo.currentIndex() - 14)
-        solar = makeWeather(self, str(self.yearSpin.value()), zone, str(self.dirs[0].text()), \
-                            str(self.dirs[1].text()), str(self.dirs[2].text()), str(self.fmatcombo.currentText()), \
-                            str(self.swgcombo.currentText()), wrap, gaps, coords)
-        dialr = RptDialog(str(self.yearSpin.value()), zone, str(self.dirs[0].text()), \
-                          str(self.dirs[1].text()), str(self.dirs[2].text()), str(self.fmatcombo.currentText()), \
-                          str(self.swgcombo.currentText()), wrap, gaps, coords, solar.returnCode(), solar.getLog())
+        solar = makeWeather(self, str(self.yearSpin.value()), zone, self.dirs[0].text(), \
+                            self.dirs[1].text(), self.dirs[2].text(), self.fmatcombo.currentText(), \
+                            self.swgcombo.currentText(), wrap, gaps, coords)
+        dialr = RptDialog(str(self.yearSpin.value()), zone, self.dirs[0].text(), \
+                          self.dirs[1].text(), self.dirs[2].text(), self.fmatcombo.currentText(), \
+                          self.swgcombo.currentText(), wrap, gaps, coords, solar.returnCode(), solar.getLog())
         dialr.exec_()
         del solar
         del dialr
@@ -1520,7 +1506,7 @@ class getParms(QtGui.QWidget):
         self.progressbar.setHidden(False)
         self.progresslabel.setHidden(False)
         self.daybar.setHidden(False)
-        coords = str(self.coords.toPlainText())
+        coords = self.coords.toPlainText()
         if coords != '':
             if coords.find(' ') >= 0:
                 if coords.find(',') < 0:
@@ -1541,11 +1527,11 @@ class getParms(QtGui.QWidget):
             zone = 'best'
         else:
             zone = str(self.zoneCombo.currentIndex() - 14)
-        wind = makeWeather(self, str(self.yearSpin.value()), zone, str(self.dirs[0].text()), \
-                            str(self.dirs[1].text()), str(self.dirs[2].text()), \
+        wind = makeWeather(self, str(self.yearSpin.value()), zone, self.dirs[0].text(), \
+                           self.dirs[1].text(), self.dirs[2].text(), \
                             'wind', '', wrap, gaps, coords)
-        dialr = RptDialog(str(self.yearSpin.value()), zone, str(self.dirs[0].text()), \
-                          str(self.dirs[1].text()), str(self.dirs[2].text()), 'srw', \
+        dialr = RptDialog(str(self.yearSpin.value()), zone, self.dirs[0].text(), \
+                          self.dirs[1].text(), self.dirs[2].text(), 'srw', \
                           '', wrap, gaps, coords, wind.returnCode(), wind.getLog())
         dialr.exec_()
         del wind
@@ -1558,7 +1544,7 @@ class getParms(QtGui.QWidget):
         self.daybar.setHidden(True)
 
     def infoClicked(self):
-        coords = str(self.coords.toPlainText())
+        coords = self.coords.toPlainText()
         if coords != '':
             if coords.find(' ') >= 0:
                 if coords.find(',') < 0:
@@ -1579,12 +1565,12 @@ class getParms(QtGui.QWidget):
             zone = 'best'
         else:
             zone = str(self.zoneCombo.currentIndex() - 14)
-        wind = makeWeather(self, str(self.yearSpin.value()), zone, str(self.dirs[0].text()), \
-                            str(self.dirs[1].text()), str(self.dirs[2].text()), \
-                            'both', str(self.swgcombo.currentText()), wrap, gaps, coords, info=True)
-        dialr = RptDialog(str(self.yearSpin.value()), zone, str(self.dirs[0].text()), \
-                          str(self.dirs[1].text()), str(self.dirs[2].text()), 'srw', \
-                          str(self.swgcombo.currentText()), wrap, gaps, coords, wind.returnCode(), wind.getLog())
+        wind = makeWeather(self, str(self.yearSpin.value()), zone, self.dirs[0].text(), \
+                           self.dirs[1].text(), self.dirs[2].text(), \
+                           'both', self.swgcombo.currentText(), wrap, gaps, coords, info=True)
+        dialr = RptDialog(str(self.yearSpin.value()), zone, self.dirs[0].text(), \
+                          self.dirs[1].text(), self.dirs[2].text(), 'srw', \
+                          self.swgcombo.currentText(), wrap, gaps, coords, wind.returnCode(), wind.getLog())
         dialr.exec_()
         del wind
         del dialr
@@ -1592,7 +1578,7 @@ class getParms(QtGui.QWidget):
     def progress(self, pct):
         self.progressbar.setValue(int(pct * 100.))  #  @QtCore.pyqtSlot()
 
-class RptDialog(QtGui.QDialog):
+class RptDialog(QtWidgets.QDialog):
     def __init__(self, year, zone, solar_dir, wind_dir, tgt_dir, fmat, swg, wrap, gaps, coords, return_code, output):
         super(RptDialog, self).__init__()
         self.parms = [str(year), str(zone), swg, wrap, gaps, fmat, tgt_dir, solar_dir, wind_dir]
@@ -1623,32 +1609,30 @@ class RptDialog(QtGui.QDialog):
         for i in range(line_cnt):
             max_line = max(max_line, len(lenem[i]))
         del lenem
-        QtGui.QDialog.__init__(self)
-        self.saveButton = QtGui.QPushButton(self.tr('&Save'))
-        self.cancelButton = QtGui.QPushButton(self.tr('Cancel'))
-        buttonLayout = QtGui.QHBoxLayout()
+        QtWidgets.QDialog.__init__(self)
+        self.saveButton = QtWidgets.QPushButton(self.tr('&Save'))
+        self.cancelButton = QtWidgets.QPushButton(self.tr('Cancel'))
+        buttonLayout = QtWidgets.QHBoxLayout()
         buttonLayout.addStretch(1)
         buttonLayout.addWidget(self.saveButton)
         buttonLayout.addWidget(self.cancelButton)
-        self.connect(self.saveButton, QtCore.SIGNAL('clicked()'), self,
-                     QtCore.SLOT('accept()'))
-        self.connect(self.cancelButton, QtCore.SIGNAL('clicked()'),
-                     self, QtCore.SLOT('reject()'))
-        self.widget = QtGui.QTextEdit()
+        self.saveButton.clicked.connect(self.accept)
+        self.cancelButton.clicked.connect(self.reject)
+        self.widget = QtWidgets.QTextEdit()
         self.widget.setFont(QtGui.QFont('Courier New', 11))
         fnt = self.widget.fontMetrics()
         ln = (max_line + 5) * fnt.maxWidth()
         ln2 = (line_cnt + 2) * fnt.height()
-        screen = QtGui.QDesktopWidget().availableGeometry()
+        screen = QtWidgets.QDesktopWidget().availableGeometry()
         if ln > screen.width() * .67:
             ln = int(screen.width() * .67)
         if ln2 > screen.height() * .67:
             ln2 = int(screen.height() * .67)
-        self.widget.setSizePolicy(QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding,
-            QtGui.QSizePolicy.Expanding))
+        self.widget.setSizePolicy(QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding,
+            QtWidgets.QSizePolicy.Expanding))
         self.widget.resize(ln, ln2)
         self.widget.setPlainText(self.lines)
-        layout = QtGui.QVBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.widget)
         layout.addLayout(buttonLayout)
         self.setLayout(layout)
@@ -1683,10 +1667,10 @@ class RptDialog(QtGui.QDialog):
                     save_filename += '_' + self.parms[k]
                     last_bit = self.parms[k]
         save_filename += '.txt'
-        fileName = QtGui.QFileDialog.getSaveFileName(self,
+        fileName = QtWidgets.QFileDialog.getSaveFileName(self,
                                          self.tr('Save makeweatherfiles Report'),
                                          save_filename,
-                                         self.tr('All Files (*);;Text Files (*.txt)'))
+                                         self.tr('All Files (*);;Text Files (*.txt)'))[0]
         if fileName != '':
             s = open(fileName, 'w')
             s.write(self.lines)
@@ -1695,7 +1679,7 @@ class RptDialog(QtGui.QDialog):
 
 
 if "__main__" == __name__:
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     if len(sys.argv) > 1:  # arguments
         src_lat_lon = ''
         src_year = 2014

@@ -22,7 +22,7 @@
 import os
 import sys
 import time
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 import configparser   # decode .ini file
 import xlrd
 
@@ -58,7 +58,7 @@ def rreplace(s, old, new, occurrence):
     return new.join(li)
 
 
-class Resource(QtGui.QDialog):
+class Resource(QtWidgets.QDialog):
     procStart = QtCore.pyqtSignal(str)
 
 
@@ -201,20 +201,20 @@ class Resource(QtGui.QDialog):
         for i in range(len(self.the_days) - 1):
             self.mth_index.append(self.mth_index[-1] + self.the_days[i] * 24)
         self.btn = []
-        self.grid = QtGui.QGridLayout()
+        self.grid = QtWidgets.QGridLayout()
         row = 0
-        self.detailCombo = QtGui.QComboBox()
-        self.periodCombo = QtGui.QComboBox()
-        self.dayCombo = QtGui.QComboBox()
-        self.hourCombo = QtGui.QComboBox()
+        self.detailCombo = QtWidgets.QComboBox()
+        self.periodCombo = QtWidgets.QComboBox()
+        self.dayCombo = QtWidgets.QComboBox()
+        self.hourCombo = QtWidgets.QComboBox()
         for det in self.detail:
             self.detailCombo.addItem(det)
         if len(self.detail) > 1:
-            self.grid.addWidget(QtGui.QLabel('Weather Detail:'), row, 0)
+            self.grid.addWidget(QtWidgets.QLabel('Weather Detail:'), row, 0)
             self.grid.addWidget(self.detailCombo, row, 1, 1, 2)
             self.detailCombo.currentIndexChanged[str].connect(self.changeDetail)
             row += 1
-        self.grid.addWidget(QtGui.QLabel('Weather Period:'), row, 0)
+        self.grid.addWidget(QtWidgets.QLabel('Weather Period:'), row, 0)
         self.periodCombo.currentIndexChanged[str].connect(self.periodChange)
         self.grid.addWidget(self.periodCombo, row, 1, 1, 2)
         self.dayCombo.currentIndexChanged[str].connect(self.periodChange)
@@ -224,35 +224,35 @@ class Resource(QtGui.QDialog):
         self.hourCombo.hide()
         self.grid.addWidget(self.hourCombo, row, 5, 1, 3)
         row += 1
-        prev = QtGui.QPushButton('<', self)
+        prev = QtWidgets.QPushButton('<', self)
         width = prev.fontMetrics().boundingRect('<').width() + 10
         prev.setMaximumWidth(width)
         self.grid.addWidget(prev, row, 0)
         prev.clicked.connect(self.prevClicked)
-        self.slider = QtGui.QSlider(QtCore.Qt.Horizontal)
+        self.slider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
         self.slider.valueChanged.connect(self.slideChanged)
         self.grid.addWidget(self.slider, row, 1, 1, 5)
-        next = QtGui.QPushButton('>', self)
+        next = QtWidgets.QPushButton('>', self)
         width = next.fontMetrics().boundingRect('>').width() + 10
         next.setMaximumWidth(width)
         self.grid.addWidget(next, row, 7)
         next.clicked.connect(self.nextClicked)
         row += 1
         self.do_loop = False
-        self.grid.addWidget(QtGui.QLabel('Period Loop (secs):'), row, 0)
-        self.loopSpin = QtGui.QDoubleSpinBox()
+        self.grid.addWidget(QtWidgets.QLabel('Period Loop (secs):'), row, 0)
+        self.loopSpin = QtWidgets.QDoubleSpinBox()
         self.loopSpin.setRange(0., 10.)
         self.loopSpin.setDecimals(1)
         self.loopSpin.setSingleStep(.2)
         self.loopSpin.setValue(0.)
         self.loopSpin.valueChanged[str].connect(self.loopChanged)
         self.grid.addWidget(self.loopSpin, row, 1, 1, 2)
-        self.loop = QtGui.QPushButton('Loop', self)
+        self.loop = QtWidgets.QPushButton('Loop', self)
         self.grid.addWidget(self.loop, row, 3, 1, 4)
         self.loop.clicked.connect(self.loopClicked)
         row += 1
-        self.grid.addWidget(QtGui.QLabel('Weather Variable:'), row, 0)
-        self.whatCombo = QtGui.QComboBox()
+        self.grid.addWidget(QtWidgets.QLabel('Weather Variable:'), row, 0)
+        self.whatCombo = QtWidgets.QComboBox()
         for key in sorted(self.colours):
             self.whatCombo.addItem(self.colours[key][0])
             if variable == self.colours[key][0]:
@@ -262,15 +262,15 @@ class Resource(QtGui.QDialog):
         if len(self.detail) > 1:
             self.detailCombo.currentIndexChanged[str].connect(self.changeDetail)
         row += 1
-        self.grid.addWidget(QtGui.QLabel('Colour Steps:'), row, 0)
-        self.stepSpin = QtGui.QSpinBox()
+        self.grid.addWidget(QtWidgets.QLabel('Colour Steps:'), row, 0)
+        self.stepSpin = QtWidgets.QSpinBox()
         self.stepSpin.setRange(0, max_steps)
         self.stepSpin.setValue(steps)
         self.stepSpin.valueChanged[str].connect(self.stepChanged)
         self.grid.addWidget(self.stepSpin, row, 1, 1, 2)
         row += 1
-        self.grid.addWidget(QtGui.QLabel('Opacity:'), row, 0)
-        self.opacitySpin = QtGui.QDoubleSpinBox()
+        self.grid.addWidget(QtWidgets.QLabel('Opacity:'), row, 0)
+        self.opacitySpin = QtWidgets.QDoubleSpinBox()
         self.opacitySpin.setRange(0, 1.)
         self.opacitySpin.setDecimals(2)
         self.opacitySpin.setSingleStep(.05)
@@ -278,8 +278,8 @@ class Resource(QtGui.QDialog):
         self.opacitySpin.valueChanged[str].connect(self.opacityChanged)
         self.grid.addWidget(self.opacitySpin, row, 1, 1, 2)
         row += 1
-        self.grid.addWidget(QtGui.QLabel('Low Colour'), row, 1)
-        self.grid.addWidget(QtGui.QLabel('High Colour'), row, 2)
+        self.grid.addWidget(QtWidgets.QLabel('Low Colour'), row, 1)
+        self.grid.addWidget(QtWidgets.QLabel('High Colour'), row, 2)
         row += 1
         self.gradients = []
         value = self.palette().color(QtGui.QPalette.Window)
@@ -287,24 +287,24 @@ class Resource(QtGui.QDialog):
         for key in sorted(self.colours):
             self.gradients.append([])
             for i in range(self.stepSpin.maximum() + 1):
-                self.gradients[-1].append(QtGui.QLabel('__'))
+                self.gradients[-1].append(QtWidgets.QLabel('__'))
                 self.gradients[-1][-1].setStyleSheet('QLabel {background-color: %s; color: %s;}' %
                                                     (value.name(), value.name()))
                 self.grid.addWidget(self.gradients[-1][-1], row, i + 3)
             row += 1
         row = self.first_row
         for key in sorted(self.colours):
-            self.grid.addWidget(QtGui.QLabel(self.colours[key][0]), row, 0)
+            self.grid.addWidget(QtWidgets.QLabel(self.colours[key][0]), row, 0)
             if self.colours[key][1] != '':
                 value = QtGui.QColor(self.colours[key][1])
-                self.btn.append(QtGui.QPushButton(key + '_1', self))
+                self.btn.append(QtWidgets.QPushButton(key + '_1', self))
                 self.btn[-1].clicked.connect(self.colourChanged)
                 self.btn[-1].setStyleSheet('QPushButton {background-color: %s; color: %s;}' %
                                  (value.name(), value.name()))
                 self.grid.addWidget(self.btn[-1], row, 1)
             if self.colours[key][2] != '':
                 value = QtGui.QColor(self.colours[key][2])
-                self.btn.append(QtGui.QPushButton(key + '_2', self))
+                self.btn.append(QtWidgets.QPushButton(key + '_2', self))
                 self.btn[-1].clicked.connect(self.colourChanged)
                 self.btn[-1].setStyleSheet('QPushButton {background-color: %s; color: %s;}' %
                                  (value.name(), value.name()))
@@ -316,29 +316,29 @@ class Resource(QtGui.QDialog):
                     self.gradients[row - self.first_row][i].setStyleSheet('QLabel {background-color: %s; color: %s;}' %
                                     (value.name(), value.name()))
             row += 1
-        quit = QtGui.QPushButton('Quit', self)
+        quit = QtWidgets.QPushButton('Quit', self)
         self.grid.addWidget(quit, row, 0)
         quit.clicked.connect(self.quitClicked)
-        QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
-        doit = QtGui.QPushButton('Show', self)
+        QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
+        doit = QtWidgets.QPushButton('Show', self)
         self.grid.addWidget(doit, row, 1)
         doit.clicked.connect(self.showClicked)
-        hide = QtGui.QPushButton('Hide', self)
+        hide = QtWidgets.QPushButton('Hide', self)
         self.grid.addWidget(hide, row, 2)
         hide.clicked.connect(self.hideClicked)
-        save = QtGui.QPushButton('Save', self)
+        save = QtWidgets.QPushButton('Save', self)
         self.grid.addWidget(save, row, 3, 1, 4)
         save.clicked.connect(self.saveClicked)
-        help = QtGui.QPushButton('Help', self)
+        help = QtWidgets.QPushButton('Help', self)
         self.grid.addWidget(help, row, 7, 1, 4)
         help.clicked.connect(self.helpClicked)
-        QtGui.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
-        frame = QtGui.QFrame()
+        QtWidgets.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
+        frame = QtWidgets.QFrame()
         frame.setLayout(self.grid)
-        self.scroll = QtGui.QScrollArea()
+        self.scroll = QtWidgets.QScrollArea()
         self.scroll.setWidgetResizable(True)
         self.scroll.setWidget(frame)
-        self.layout = QtGui.QVBoxLayout(self)
+        self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
         self.setWindowTitle('SIREN - Renewable Resource Overlay')
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
@@ -358,14 +358,14 @@ class Resource(QtGui.QDialog):
                 pass
         if move_right:
             frameGm = self.frameGeometry()
-            screen = QtGui.QApplication.desktop().screenNumber(QtGui.QApplication.desktop().cursor().pos())
-            trPoint = QtGui.QApplication.desktop().availableGeometry(screen).topRight()
+            screen = QtWidgets.QApplication.desktop().screenNumber(QtWidgets.QApplication.desktop().cursor().pos())
+            trPoint = QtWidgets.QApplication.desktop().availableGeometry(screen).topRight()
             frameGm.moveTopRight(trPoint)
             self.move(frameGm.topRight())
-        QtGui.QShortcut(QtGui.QKeySequence('pgup'), self, self.prevClicked)
-        QtGui.QShortcut(QtGui.QKeySequence('pgdown'), self, self.nextClicked)
-        QtGui.QShortcut(QtGui.QKeySequence('Ctrl++'), self, self.nextClicked)
-        QtGui.QShortcut(QtGui.QKeySequence('Ctrl+-'), self, self.prevClicked)
+        QtWidgets.QShortcut(QtGui.QKeySequence('pgup'), self, self.prevClicked)
+        QtWidgets.QShortcut(QtGui.QKeySequence('pgdown'), self, self.nextClicked)
+        QtWidgets.QShortcut(QtGui.QKeySequence('Ctrl++'), self, self.nextClicked)
+        QtWidgets.QShortcut(QtGui.QKeySequence('Ctrl+-'), self, self.prevClicked)
         self.setPeriod()
         self.resourceGrid()
         self.show()
@@ -378,7 +378,7 @@ class Resource(QtGui.QDialog):
         self.resourceGrid()
 
     def helpClicked(self):
-        dialog = displayobject.AnObject(QtGui.QDialog(), self.helpfile, title='Resource Help', section='resource')
+        dialog = displayobject.AnObject(QtWidgets.QDialog(), self.helpfile, title='Resource Help', section='resource')
         dialog.exec_()
 
     def nextClicked(self):
@@ -589,23 +589,23 @@ class Resource(QtGui.QDialog):
         updates['Colors' + self.map] = colour_lines
         view_lines = []
         view_lines.append('resource_opacity=%s' % str(self.opacitySpin.value()))
-        view_lines.append('resource_period=$YEAR$%s' % str(self.periodCombo.currentText())[4:])
+        view_lines.append('resource_period=$YEAR$%s' % self.periodCombo.currentText()[4:])
         view_lines.append('resource_steps=%s' % str(self.stepSpin.value()))
-        view_lines.append('resource_variable=%s' % str(self.whatCombo.currentText()))
+        view_lines.append('resource_variable=%s' % self.whatCombo.currentText())
         updates['View'] = view_lines
         SaveIni(updates)
 
     def colourChanged(self):
-        sender = str(self.sender().text()).split('_')
+        sender = self.sender().text().split('_')
         key = sender[0]
         ndx = int(sender[1])
         if self.colours[key][ndx] != '':
             value = QtGui.QColor(self.colours[key][ndx])
-            col = QtGui.QColorDialog.getColor(value)
+            col = QtWidgets.QColorDialog.getColor(value)
         else:
-            col = QtGui.QColorDialog.getColor(QtGui.QColor(''))
+            col = QtWidgets.QColorDialog.getColor(QtGui.QColor(''))
         if col.isValid():
-            self.colours[key][ndx] = str(col.name())
+            self.colours[key][ndx] = col.name()
             for i in range(len(self.btn)):
                 if self.btn[i] == self.sender():
                     self.btn[i].setStyleSheet('QPushButton {background-color: %s; color: %s;}' % (col.name(), col.name()))
@@ -628,14 +628,14 @@ class Resource(QtGui.QDialog):
             if self.colours[key][0] == self.whatCombo.currentText():
                 colours = self.colours[key][3]
                 break
-        period = str(self.periodCombo.currentText())
+        period = self.periodCombo.currentText()
         if self.detailCombo.currentText() == 'Daily By Month':
             pass
         else:
             if self.detailCombo.currentText() == 'Hourly by Day':
-                period += '-' + str(self.dayCombo.currentText())
-            period += '_' + str(self.hourCombo.currentText())
-        variable = str(self.whatCombo.currentText())
+                period += '-' + self.dayCombo.currentText()
+            period += '_' + self.hourCombo.currentText()
+        variable = self.whatCombo.currentText()
         steps = self.stepSpin.value()
         opacity = self.opacitySpin.value()
         i = period.find('_')
@@ -740,7 +740,7 @@ class Resource(QtGui.QDialog):
             ps = self.scene.mapFromLonLat(QtCore.QPointF(cell[1] - lon_cell, cell[0] - .25))
             x_d = pe.x() - p.x()
             y_d = ps.y() - p.y()
-            self.resource_items.append(QtGui.QGraphicsRectItem(p.x(), p.y(), x_d, y_d))
+            self.resource_items.append(QtWidgets.QGraphicsRectItem(p.x(), p.y(), x_d, y_d))
             if steps > 0:
                 step = int(round((cell[2] - lo_valu) / incr))
                 a_colour = QtGui.QColor(colours[step])

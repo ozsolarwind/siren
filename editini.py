@@ -19,8 +19,8 @@
 #  <http://www.gnu.org/licenses/>.
 #
 
-from PyQt4 import QtCore, QtGui
-from PyQt4.QtGui import QDesktopWidget
+from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtWidgets import QDesktopWidget
 import configparser   # decode .ini file
 import os
 import sys
@@ -31,7 +31,7 @@ import inisyntax
 from senuser import techClean
 
 
-class EdtDialog(QtGui.QDialog):
+class EdtDialog(QtWidgets.QDialog):
     def __init__(self, in_file, parent=None):
         self.in_file = in_file
         try:
@@ -49,18 +49,16 @@ class EdtDialog(QtGui.QDialog):
                 s = ''
             ln = 36
             ln2 = 5
-        QtGui.QDialog.__init__(self, parent)
-        self.saveButton = QtGui.QPushButton(self.tr('&Save'))
-        self.cancelButton = QtGui.QPushButton(self.tr('Cancel'))
-        buttonLayout = QtGui.QHBoxLayout()
+        QtWidgets.QDialog.__init__(self, parent)
+        self.saveButton = QtWidgets.QPushButton(self.tr('&Save'))
+        self.cancelButton = QtWidgets.QPushButton(self.tr('Cancel'))
+        buttonLayout = QtWidgets.QHBoxLayout()
         buttonLayout.addStretch(1)
         buttonLayout.addWidget(self.saveButton)
         buttonLayout.addWidget(self.cancelButton)
-        self.connect(self.saveButton, QtCore.SIGNAL('clicked()'), self,
-                     QtCore.SLOT('accept()'))
-        self.connect(self.cancelButton, QtCore.SIGNAL('clicked()'),
-                     self, QtCore.SLOT('reject()'))
-        self.widget = QtGui.QPlainTextEdit()
+        self.saveButton.clicked.connect(self.accept)
+        self.cancelButton.clicked.connect(self.reject)
+        self.widget = QtWidgets.QPlainTextEdit()
         highlight = inisyntax.IniHighlighter(self.widget.document())
         if sys.platform == 'linux2':
             self.widget.setFont(QtGui.QFont('Ubuntu Mono 13', 12))
@@ -76,7 +74,7 @@ class EdtDialog(QtGui.QDialog):
             ln2 = int(screen.height() * .67)
         self.widget.resize(ln, ln2)
         self.widget.setPlainText(s)
-        layout = QtGui.QVBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.widget)
         layout.addLayout(buttonLayout)
         self.setLayout(layout)
@@ -90,7 +88,7 @@ class EdtDialog(QtGui.QDialog):
         self.widget.show()
 
     def accept(self):
-        t = str(self.widget.toPlainText())
+        t = self.widget.toPlainText()
         bits = t.split('\n')
         if self.in_file[self.in_file.rfind('.'):] != '.ini':
             bits.sort()

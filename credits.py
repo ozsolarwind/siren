@@ -21,7 +21,7 @@
 from datetime import datetime
 import os
 import sys
-from PyQt4 import QtGui, QtCore
+from PyQt5 import QtCore, QtGui, QtWidgets
 import configparser  # decode .ini file
 from getmodels import getModelFile
 if sys.platform == 'win32' or sys.platform == 'cygwin':
@@ -84,7 +84,7 @@ def fileVersion(program=None, year=False):
         return ver
 
 
-class Credits(QtGui.QDialog):
+class Credits(QtWidgets.QDialog):
     procStart = QtCore.pyqtSignal(str)
 
     def __init__(self, initial=False):
@@ -107,13 +107,13 @@ class Credits(QtGui.QDialog):
         except:
             pass
         self.be_open = True
-        self.grid = QtGui.QGridLayout()
+        self.grid = QtWidgets.QGridLayout()
         pixmap = QtGui.QPixmap('sen_logo_2.png')
-        lbl = QtGui.QLabel(self)
+        lbl = QtWidgets.QLabel(self)
         lbl.setPixmap(pixmap)
         self.grid.addWidget(lbl)
         if os.path.exists('credits.html'):
-            web = QtGui.QTextEdit()
+            web = QtWidgets.QTextEdit()
             htf = open('credits.html', 'r')
             html = htf.read()
             html = html.replace('[VERSION]', fileVersion())
@@ -151,22 +151,22 @@ class Credits(QtGui.QDialog):
             labels.append('SIREN may use weather data obtained from MERRA data, a NASA atmospheric data set')
             labels.append('SIREN may use a map derived from OpenStreetMap (MapQuest) Open Aerial Tiles')
             for i in range(len(labels)):
-                labl = QtGui.QLabel(labels[i])
+                labl = QtWidgets.QLabel(labels[i])
                 labl.setWordWrap(True)
                 if i == 0:
                     labl.setFont(bold)
                 self.grid.addWidget(labl)
-        frame = QtGui.QFrame()
+        frame = QtWidgets.QFrame()
         frame.setLayout(self.grid)
-        self.scroll = QtGui.QScrollArea()
+        self.scroll = QtWidgets.QScrollArea()
         self.scroll.setWidgetResizable(True)
         self.scroll.setWidget(frame)
-        self.layout = QtGui.QVBoxLayout(self)
+        self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
-        QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.close)
-        QtGui.QShortcut(QtGui.QKeySequence('F1'), self, self.help)
-        QtGui.QShortcut(QtGui.QKeySequence('Ctrl+I'), self, self.about)
-        screen = QtGui.QDesktopWidget().availableGeometry()
+        QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.close)
+        QtWidgets.QShortcut(QtGui.QKeySequence('F1'), self, self.help)
+        QtWidgets.QShortcut(QtGui.QKeySequence('Ctrl+I'), self, self.about)
+        screen = QtWidgets.QDesktopWidget().availableGeometry()
         if sys.platform == 'win32' or sys.platform == 'cygwin':
             pct = 0.85
         else:
@@ -174,8 +174,8 @@ class Credits(QtGui.QDialog):
         h = int(screen.height() * pct)
         self.resize(pixmap.width() + 55, h)
         frameGm = self.frameGeometry()
-        screen = QtGui.QApplication.desktop().screenNumber(QtGui.QApplication.desktop().cursor().pos())
-        tlPoint = QtGui.QApplication.desktop().availableGeometry(screen).topLeft()
+        screen = QtWidgets.QApplication.desktop().screenNumber(QtWidgets.QApplication.desktop().cursor().pos())
+        tlPoint = QtWidgets.QApplication.desktop().availableGeometry(screen).topLeft()
         frameGm.moveTopLeft(tlPoint)
         self.move(frameGm.topLeft())
         self.setWindowTitle('SIREN - Credits')
@@ -203,10 +203,10 @@ class Credits(QtGui.QDialog):
 
     def closeEvent(self, event):
         if self.be_open:
-            reply = QtGui.QMessageBox.question(self, 'SIREN Credits',
-                    'Do you want to close Credits window?', QtGui.QMessageBox.Yes |
-                    QtGui.QMessageBox.No, QtGui.QMessageBox.No)
-            if reply == QtGui.QMessageBox.Yes:
+            reply = QtWidgets.QMessageBox.question(self, 'SIREN Credits',
+                    'Do you want to close Credits window?', QtWidgets.QMessageBox.Yes |
+                    QtWidgets.QMessageBox.No, QtWidgets.QMessageBox.No)
+            if reply == QtWidgets.QMessageBox.Yes:
                 pass
             else:
                 event.ignore()

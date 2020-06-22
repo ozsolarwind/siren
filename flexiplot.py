@@ -21,7 +21,7 @@
 
 import configparser  # decode .ini file
 import os
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 import sys
 from math import log10, ceil
 import matplotlib
@@ -130,49 +130,69 @@ def font_props(fontin, fontdict=True):
                               fname=font_dict['fname'])
 
 
-class ThumbListWidget(QtGui.QListWidget):
-    def __init__(self, type, parent=None):
-        super(ThumbListWidget, self).__init__(parent)
-        self.setIconSize(QtCore.QSize(124, 124))
-        self.setDragDropMode(QtGui.QAbstractItemView.DragDrop)
-        self.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
+class ListWidget(QtWidgets.QListWidget):
+    def decode_data(self, bytearray):
+        data = []
+        ds = QtCore.QDataStream(bytearray)
+        while not ds.atEnd():
+            row = ds.readInt32()
+            column = ds.readInt32()
+            map_items = ds.readInt32()
+            for i in range(map_items):
+                key = ds.readInt32()
+                value = QtCore.QVariant()
+                ds >> value
+                data.append(value.value())
+        return data
+
+    def __init__(self, parent=None):
+        super(ListWidget, self).__init__(parent)
+        self.setDragDropMode(self.DragDrop)
+        self.setSelectionMode(self.ExtendedSelection)
         self.setAcceptDrops(True)
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls():
             event.accept()
         else:
-            super(ThumbListWidget, self).dragEnterEvent(event)
+            super(ListWidget, self).dragEnterEvent(event)
 
     def dragMoveEvent(self, event):
         if event.mimeData().hasUrls():
             event.setDropAction(QtCore.Qt.CopyAction)
             event.accept()
         else:
-            super(ThumbListWidget, self).dragMoveEvent(event)
+            super(ListWidget, self).dragMoveEvent(event)
 
     def dropEvent(self, event):
-        if event.mimeData().hasUrls():
-            event.setDropAction(QtCore.Qt.CopyAction)
-            event.accept()
-            links = []
-            for url in event.mimeData().urls():
-                links.append(str(url.toLocalFile()))
-            self.emit(QtCore.SIGNAL('dropped'), links)
-        else:
+        if event.source() == self:
             event.setDropAction(QtCore.Qt.MoveAction)
-            super(ThumbListWidget, self).dropEvent(event)
+            QtWidgets.QListWidget.dropEvent(self, event)
+        else:
+            ba = event.mimeData().data('application/x-qabstractitemmodeldatalist')
+            data_items = self.decode_data(ba)
+            event.setDropAction(QtCore.Qt.MoveAction)
+            event.source().deleteItems(data_items)
+            super(ListWidget, self).dropEvent(event)
+
+    def deleteItems(self, items):
+        for row in range(self.count() -1, -1, -1):
+            if self.item(row).text() in items:
+             #   r = self.row(item)
+                self.takeItem(row)
 
 
-class ClickableQLabel(QtGui.QLabel):
+class ClickableQLabel(QtWidgets.QLabel):
+    clicked = QtCore.pyqtSignal()
+
     def __init(self, parent):
         QLabel.__init__(self, parent)
 
     def mousePressEvent(self, event):
-        QtGui.QApplication.widgetAt(event.globalPos()).setFocus()
-        self.emit(QtCore.SIGNAL('clicked()'))
+        QtWidgets.QApplication.widgetAt(event.globalPos()).setFocus()
+        self.clicked.emit()
 
-class CustomCombo(QtGui.QComboBox):
+class CustomCombo(QtWidgets.QComboBox):
     def __init__(self, parent=None):
         self.last_key = ''
         super().__init__(parent)
@@ -184,9 +204,9 @@ class CustomCombo(QtGui.QComboBox):
             self.last_key = event.key()
         else:
             self.last_key = event.key()
-            QtGui.QComboBox.keyPressEvent(self, event)
+            QtWidgets.QComboBox.keyPressEvent(self, event)
 
-class FlexiPlot(QtGui.QWidget):
+class FlexiPlot(QtWidgets.QWidget):
 
     def __init__(self, help='help.html'):
         super(FlexiPlot, self).__init__()
@@ -266,94 +286,94 @@ class FlexiPlot(QtGui.QWidget):
                 except:
                     self.history.pop(0)
         matplotlib.rcParams['savefig.directory'] = os.getcwd()
-        self.grid = QtGui.QGridLayout()
+        self.grid = QtWidgets.QGridLayout()
         self.updated = False
         self.colours_updated = False
-        self.log = QtGui.QLabel('')
+        self.log = QtWidgets.QLabel('')
         rw = 0
-        self.grid.addWidget(QtGui.QLabel('Recent Files:'), rw, 0)
-        self.files = QtGui.QComboBox()
+        self.grid.addWidget(QtWidgets.QLabel('Recent Files:'), rw, 0)
+        self.files = QtWidgets.QComboBox()
         if ifile != '':
             self.popfileslist(ifile, ifiles)
         self.grid.addWidget(self.files, rw, 1, 1, 5)
         rw += 1
-        self.grid.addWidget(QtGui.QLabel('File:'), rw, 0)
+        self.grid.addWidget(QtWidgets.QLabel('File:'), rw, 0)
         self.file = ClickableQLabel()
         self.file.setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
         self.file.setText('')
         self.grid.addWidget(self.file, rw, 1, 1, 5)
         rw += 1
-        self.grid.addWidget(QtGui.QLabel('Sheet:'), rw, 0)
-        self.sheet = QtGui.QComboBox()
+        self.grid.addWidget(QtWidgets.QLabel('Sheet:'), rw, 0)
+        self.sheet = QtWidgets.QComboBox()
         self.grid.addWidget(self.sheet, rw, 1, 1, 2)
         rw += 1
-        self.grid.addWidget(QtGui.QLabel('Title:'), rw, 0)
-        self.title = QtGui.QLineEdit('')
+        self.grid.addWidget(QtWidgets.QLabel('Title:'), rw, 0)
+        self.title = QtWidgets.QLineEdit('')
         self.grid.addWidget(self.title, rw, 1, 1, 2)
         rw += 1
-        self.grid.addWidget(QtGui.QLabel('Series:'), rw, 0)
+        self.grid.addWidget(QtWidgets.QLabel('Series:'), rw, 0)
         self.seriesi = CustomCombo()
         for series in self.series:
             self.seriesi.addItem(series)
         self.seriesi.setEditable(True)
         self.grid.addWidget(self.seriesi, rw, 1, 1, 2)
-        self.grid.addWidget(QtGui.QLabel('(Cells for Series Categories; A1:B2 or r1,c1,r2,c2 format)'), rw, 3, 1, 2)
+        self.grid.addWidget(QtWidgets.QLabel('(Cells for Series Categories; A1:B2 or r1,c1,r2,c2 format)'), rw, 3, 1, 2)
         rw += 1
-        self.grid.addWidget(QtGui.QLabel('Series Label:'), rw, 0)
-        self.ylabel = QtGui.QLineEdit('')
+        self.grid.addWidget(QtWidgets.QLabel('Series Label:'), rw, 0)
+        self.ylabel = QtWidgets.QLineEdit('')
         self.grid.addWidget(self.ylabel, rw, 1, 1, 2)
         rw += 1
-        self.grid.addWidget(QtGui.QLabel('X Values:'), rw, 0)
+        self.grid.addWidget(QtWidgets.QLabel('X Values:'), rw, 0)
         self.xvaluesi = CustomCombo()
         for xvalues in self.xvalues:
             self.xvaluesi.addItem(xvalues)
         self.xvaluesi.setEditable(True)
         self.grid.addWidget(self.xvaluesi, rw, 1, 1, 2)
-        self.grid.addWidget(QtGui.QLabel('(Cells for X values; A1:B2 or r1,c1,r2,c2 format)'), rw, 3, 1, 2)
+        self.grid.addWidget(QtWidgets.QLabel('(Cells for X values; A1:B2 or r1,c1,r2,c2 format)'), rw, 3, 1, 2)
         rw += 1
-        self.grid.addWidget(QtGui.QLabel('X Label:'), rw, 0)
-        self.xlabel = QtGui.QLineEdit('')
+        self.grid.addWidget(QtWidgets.QLabel('X Label:'), rw, 0)
+        self.xlabel = QtWidgets.QLineEdit('')
         self.grid.addWidget(self.xlabel, rw, 1, 1, 2)
         rw += 1
-        self.grid.addWidget(QtGui.QLabel('Maximum:'), rw, 0)
-        self.maxSpin = QtGui.QSpinBox()
+        self.grid.addWidget(QtWidgets.QLabel('Maximum:'), rw, 0)
+        self.maxSpin = QtWidgets.QSpinBox()
         self.maxSpin.setRange(0, 100000)
         self.maxSpin.setSingleStep(500)
         self.grid.addWidget(self.maxSpin, rw, 1)
-        self.grid.addWidget(QtGui.QLabel('(Handy if you want to produce a series of plots)'), rw, 3, 1, 3)
+        self.grid.addWidget(QtWidgets.QLabel('(Handy if you want to produce a series of plots)'), rw, 3, 1, 3)
         rw += 1
-        self.grid.addWidget(QtGui.QLabel('Type of Plot:'), rw, 0)
+        self.grid.addWidget(QtWidgets.QLabel('Type of Plot:'), rw, 0)
         plots = ['Bar Chart', 'Cumulative', 'Linegraph']
-        self.plottype = QtGui.QComboBox()
+        self.plottype = QtWidgets.QComboBox()
         for plot in plots:
              self.plottype.addItem(plot)
         self.grid.addWidget(self.plottype, rw, 1) #, 1, 2)
-        self.grid.addWidget(QtGui.QLabel('(Type of plot - stacked except for Linegraph)'), rw, 3, 1, 3)
+        self.grid.addWidget(QtWidgets.QLabel('(Type of plot - stacked except for Linegraph)'), rw, 3, 1, 3)
         rw += 1
-        self.grid.addWidget(QtGui.QLabel('Percentage:'), rw, 0)
-        self.percentage = QtGui.QCheckBox()
+        self.grid.addWidget(QtWidgets.QLabel('Percentage:'), rw, 0)
+        self.percentage = QtWidgets.QCheckBox()
         self.percentage.setCheckState(QtCore.Qt.Unchecked)
         self.grid.addWidget(self.percentage, rw, 1) #, 1, 2)
-        self.grid.addWidget(QtGui.QLabel('(Check for percentage distribution)'), rw, 3, 1, 3)
+        self.grid.addWidget(QtWidgets.QLabel('(Check for percentage distribution)'), rw, 3, 1, 3)
         rw += 1
-        self.grid.addWidget(QtGui.QLabel('Show Grid:'), rw, 0)
+        self.grid.addWidget(QtWidgets.QLabel('Show Grid:'), rw, 0)
         grids = ['Both', 'Horizontal', 'Vertical', 'None']
-        self.gridtype = QtGui.QComboBox()
+        self.gridtype = QtWidgets.QComboBox()
         for grid in grids:
              self.gridtype.addItem(grid)
         self.grid.addWidget(self.gridtype, rw, 1) #, 1, 2)
-        self.grid.addWidget(QtGui.QLabel('(Choose gridlines)'), rw, 3, 1, 3)
+        self.grid.addWidget(QtWidgets.QLabel('(Choose gridlines)'), rw, 3, 1, 3)
         rw += 1
-        self.grid.addWidget(QtGui.QLabel('Column Order:\n(move to right\nto exclude)'), rw, 0)
-        self.order = ThumbListWidget(self)
+        self.grid.addWidget(QtWidgets.QLabel('Column Order:\n(move to right\nto exclude)'), rw, 0)
+        self.order = ListWidget(self)
         self.grid.addWidget(self.order, rw, 1, 1, 2)
-        self.ignore = ThumbListWidget(self)
+        self.ignore = ListWidget(self)
         self.grid.addWidget(self.ignore, rw, 3, 1, 2)
-        self.grid.addWidget(QtGui.QLabel(' '), rw, 5)
+        self.grid.addWidget(QtWidgets.QLabel(' '), rw, 5)
         if ifile != '':
             self.get_file_config(self.history[0])
         self.files.currentIndexChanged.connect(self.filesChanged)
-        self.connect(self.file, QtCore.SIGNAL('clicked()'), self.fileChanged)
+        self.file.clicked.connect(self.fileChanged)
      #   self.seriesi.textChanged.connect(self.seriesChanged)
         self.seriesi.activated[str].connect(self.seriesChanged)
         self.seriesi.currentIndexChanged.connect(self.seriesChanged)
@@ -374,30 +394,30 @@ class FlexiPlot(QtGui.QWidget):
         self.log.setPalette(msg_palette)
         self.grid.addWidget(self.log, rw, 1, 1, 4)
         rw += 1
-        quit = QtGui.QPushButton('Done', self)
+        quit = QtWidgets.QPushButton('Done', self)
         self.grid.addWidget(quit, rw, 0)
         quit.clicked.connect(self.quitClicked)
-        QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
-        pp = QtGui.QPushButton('Plot', self)
+        QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
+        pp = QtWidgets.QPushButton('Plot', self)
         self.grid.addWidget(pp, rw, 1)
         pp.clicked.connect(self.ppClicked)
-        QtGui.QShortcut(QtGui.QKeySequence('p'), self, self.ppClicked)
-        cb = QtGui.QPushButton('Colours', self)
+        QtWidgets.QShortcut(QtGui.QKeySequence('p'), self, self.ppClicked)
+        cb = QtWidgets.QPushButton('Colours', self)
         self.grid.addWidget(cb, rw, 2)
         cb.clicked.connect(self.editColours)
-        ep = QtGui.QPushButton('Preferences', self)
+        ep = QtWidgets.QPushButton('Preferences', self)
         self.grid.addWidget(ep, rw, 3)
         ep.clicked.connect(self.editIniFile)
-        help = QtGui.QPushButton('Help', self)
+        help = QtWidgets.QPushButton('Help', self)
         self.grid.addWidget(help, rw, 4)
         help.clicked.connect(self.helpClicked)
-        QtGui.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
-        frame = QtGui.QFrame()
+        QtWidgets.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
+        frame = QtWidgets.QFrame()
         frame.setLayout(self.grid)
-        self.scroll = QtGui.QScrollArea()
+        self.scroll = QtWidgets.QScrollArea()
         self.scroll.setWidgetResizable(True)
         self.scroll.setWidget(frame)
-        self.layout = QtGui.QVBoxLayout(self)
+        self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
         self.setWindowTitle('SIREN - flexiplot (' + fileVersion() + ') - FlexiPlot')
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
@@ -407,8 +427,8 @@ class FlexiPlot(QtGui.QWidget):
 
     def center(self):
         frameGm = self.frameGeometry()
-        screen = QtGui.QApplication.desktop().screenNumber(QtGui.QApplication.desktop().cursor().pos())
-        centerPoint = QtGui.QApplication.desktop().availableGeometry(screen).center()
+        screen = QtWidgets.QApplication.desktop().screenNumber(QtWidgets.QApplication.desktop().cursor().pos())
+        centerPoint = QtWidgets.QApplication.desktop().availableGeometry(screen).center()
         frameGm.moveCenter(centerPoint)
         self.move(frameGm.topLeft())
 
@@ -574,12 +594,12 @@ class FlexiPlot(QtGui.QWidget):
             curfile = self.file.text()
         else:
             curfile = self.scenarios + self.file.text()
-        newfile = str(QtGui.QFileDialog.getOpenFileName(self, 'Open file', curfile))
+        newfile = QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', curfile)[0]
         if newfile != '':
             if self.book is not None:
                 pxl.free_resources()
                 self.book = None
-            isheet = str(self.sheet.currentText())
+            isheet = self.sheet.currentText()
             self.setSheet(newfile, isheet)
             if newfile[: len(self.scenarios)] == self.scenarios:
                 self.file.setText(newfile[len(self.scenarios):])
@@ -616,8 +636,8 @@ class FlexiPlot(QtGui.QWidget):
         j = -1
         for sht in self.book.sheet_names():
             j += 1
-            self.sheet.addItem(str(sht))
-            if str(sht) == isheet:
+            self.sheet.addItem(sht)
+            if sht == isheet:
                 ndx = j
         self.sheet.setCurrentIndex(ndx)
 
@@ -625,7 +645,7 @@ class FlexiPlot(QtGui.QWidget):
         self.log.setText('')
         if self.book is None:
             self.book = pxl.get_book(file_name=ifile)
-        isheet = str(self.sheet.currentText())
+        isheet = self.sheet.currentText()
         if isheet not in self.book.sheet_names():
             self.log.setText("Can't find sheet - " + isheet)
             return
@@ -639,7 +659,7 @@ class FlexiPlot(QtGui.QWidget):
         for i in range(self.seriesi.count()):
             if self.seriesi.itemText(i) != series:
                 self.series.append(self.seriesi.itemText(i))
-        self.setColumns(str(self.sheet.currentText()))
+        self.setColumns(self.sheet.currentText())
         self.updated = True
 
     def xvaluesChanged(self):
@@ -663,13 +683,16 @@ class FlexiPlot(QtGui.QWidget):
             oldcolumns.append(self.order.item(col).text())
         self.order.clear()
         self.ignore.clear()
-        roco = get_range(self.series[0])
+        try:
+            roco = get_range(self.series[0])
+        except:
+            return
         if roco is None:
             return
         for row in range(roco[0], roco[2] + 1):
             for col in range(roco[1], roco[3] + 1):
                 try:
-                    column = str(ws[row, col]).replace('\n',' ')
+                    column = ws[row, col].replace('\n',' ')
                 except:
                     continue
                 self.columns.append(column) # need order of columns
@@ -695,7 +718,7 @@ class FlexiPlot(QtGui.QWidget):
         self.updated = True
 
     def helpClicked(self):
-        dialog = displayobject.AnObject(QtGui.QDialog(), self.help,
+        dialog = displayobject.AnObject(QtWidgets.QDialog(), self.help,
                  title='Help for flexiplot (' + fileVersion() + ')', section='flexiplot')
         dialog.exec_()
 
@@ -718,7 +741,7 @@ class FlexiPlot(QtGui.QWidget):
             config = configparser.RawConfigParser()
             config.read(self.config_file)
             choice = self.history[0]
-            save_file = str(self.file.text()).replace(getUser(), '$USER$')
+            save_file = self.file.text().replace(getUser(), '$USER$')
             try:
                 self.max_files = int(config.get('Flexiplot', 'file_choices'))
             except:
@@ -740,19 +763,19 @@ class FlexiPlot(QtGui.QWidget):
             cols = 'columns' + choice + '='
             for col in range(self.order.count()):
                 try:
-                    if str(self.order.item(col).text()).index(',') >= 0:
+                    if self.order.item(col).text().index(',') >= 0:
                         try:
-                            if str(self.order.item(col).text()).index("'") >= 0:
+                            if self.order.item(col).text().index("'") >= 0:
                                 qte = '"'
                         except:
                             qte = "'"
                 except:
                     qte = ''
-                cols += qte + str(self.order.item(col).text()) + qte + ','
+                cols += qte + self.order.item(col).text() + qte + ','
             if cols[-1] != '=':
                 cols = cols[:-1]
             lines.append(cols)
-            lines.append('file' + choice + '=' + str(self.file.text()).replace(getUser(), '$USER$'))
+            lines.append('file' + choice + '=' + self.file.text().replace(getUser(), '$USER$'))
             lines.append('grid' + choice + '=' + self.gridtype.currentText())
             lines.append('maximum' + choice + '=')
             if self.maxSpin.value() != 0:
@@ -761,7 +784,7 @@ class FlexiPlot(QtGui.QWidget):
             if self.percentage.isChecked():
                 lines[-1] = lines[-1] + 'True'
             lines.append('plot' + choice + '=' + self.plottype.currentText())
-            lines.append('sheet' + choice + '=' + str(self.sheet.currentText()))
+            lines.append('sheet' + choice + '=' + self.sheet.currentText())
             line = 'series' + choice + '='
             for series in self.series:
                 if series.find(',') >= 0:
@@ -819,13 +842,13 @@ class FlexiPlot(QtGui.QWidget):
         except:
             pass
         for c in range(self.order.count()):
-            col = str(self.order.item(c).text())
+            col = self.order.item(c).text()
             try:
                 self.order.item(c).setBackground(QtGui.QColor(self.colours[col.lower()]))
             except:
                 pass
         for c in range(self.ignore.count()):
-            col = str(self.ignore.item(c).text())
+            col = self.ignore.item(c).text()
             try:
                 self.ignore.item(c).setBackground(QtGui.QColor(self.colours[col.lower()]))
             except:
@@ -874,7 +897,7 @@ class FlexiPlot(QtGui.QWidget):
         if self.order.count() == 0:
             self.log.setText('Nothing to plot.')
             return
-        isheet = str(self.sheet.currentText())
+        isheet = self.sheet.currentText()
         if isheet == '':
             self.log.setText('Sheet not set.')
             return
@@ -940,7 +963,7 @@ class FlexiPlot(QtGui.QWidget):
         roco = get_range(self.series[0])
         for c in range(self.order.count() -1, -1, -1):
             try:
-                column = str(self.order.item(c).text())
+                column = self.order.item(c).text()
                 ndx = self.columns.index(column)
                 if data_in_cols:
                     col = roco[1] + ndx
@@ -1116,7 +1139,7 @@ class FlexiPlot(QtGui.QWidget):
 
 
 if "__main__" == __name__:
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     ex = FlexiPlot()
     app.exec_()
     app.deleteLater()

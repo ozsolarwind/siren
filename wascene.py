@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2020 Sustainable Energy Now Inc., Angus King
 #
 #  wascene.py - This file is part of SIREN.
 #
@@ -27,7 +27,7 @@ import sys
 import xlrd
 
 import configparser   # decode .ini file
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 #try:
 #    import mpl_toolkits.basemap.pyproj as pyproj   # Import the pyproj module
 #except:
@@ -41,7 +41,7 @@ from station import Station, Stations
 from dijkstra_4 import Shortest
 
 
-class WAScene(QtGui.QGraphicsScene):
+class WAScene(QtWidgets.QGraphicsScene):
 
     def get_config(self):
         config = configparser.RawConfigParser()
@@ -464,7 +464,7 @@ class WAScene(QtGui.QGraphicsScene):
         return degrees(lon2), degrees(lat2)
 
     def __init__(self):
-        QtGui.QGraphicsScene.__init__(self)
+        QtWidgets.QGraphicsScene.__init__(self)
         self.exitLoop = False
         self.loopMax = 0
         self.get_config()
@@ -499,31 +499,31 @@ class WAScene(QtGui.QGraphicsScene):
         self.setSceneRect(-w * 0.05, -h * 0.05, w * 1.1, h * 1.1)
         self._positions = {}
         self._setupCoordTransform()
-        self._gridGroup = QtGui.QGraphicsItemGroup()
-        self._gridGroup2 = QtGui.QGraphicsItemGroup()
+        self._gridGroup = QtWidgets.QGraphicsItemGroup()
+        self._gridGroup2 = QtWidgets.QGraphicsItemGroup()
         self._setupGrid()
         self.addItem(self._gridGroup)
         if not self.existing_grid:
             self._gridGroup.setVisible(False)
         if self.existing_grid2:
             self.addItem(self._gridGroup2)
-        self._coordGroup = QtGui.QGraphicsItemGroup()
+        self._coordGroup = QtWidgets.QGraphicsItemGroup()
         self._setupCoordGrid()
         self.addItem(self._coordGroup)
         if not self.show_coord:
             self._coordGroup.setVisible(False)
-        self._townGroup = QtGui.QGraphicsItemGroup()
+        self._townGroup = QtWidgets.QGraphicsItemGroup()
         self._setupTowns()
         self.addItem(self._townGroup)
         if not self.show_towns:
             self._townGroup.setVisible(False)
         self._scenarios = []
-        self._capacityGroup = QtGui.QGraphicsItemGroup()
-        self._generationGroup = QtGui.QGraphicsItemGroup()
-        self._nameGroup = QtGui.QGraphicsItemGroup()
-        self._fossilGroup = QtGui.QGraphicsItemGroup()
-        self._fcapacityGroup = QtGui.QGraphicsItemGroup()
-        self._fnameGroup = QtGui.QGraphicsItemGroup()
+        self._capacityGroup = QtWidgets.QGraphicsItemGroup()
+        self._generationGroup = QtWidgets.QGraphicsItemGroup()
+        self._nameGroup = QtWidgets.QGraphicsItemGroup()
+        self._fossilGroup = QtWidgets.QGraphicsItemGroup()
+        self._fcapacityGroup = QtWidgets.QGraphicsItemGroup()
+        self._fnameGroup = QtWidgets.QGraphicsItemGroup()
         self._setupStations()
         self.addItem(self._capacityGroup)
         if not self.show_capacity:
@@ -580,7 +580,7 @@ class WAScene(QtGui.QGraphicsScene):
         while lat <= self.map_upper_left[0]:
             fromm = self.mapFromLonLat(QtCore.QPointF(self.map_upper_left[1], lat))
             too = self.mapFromLonLat(QtCore.QPointF(self.map_lower_right[1], lat))
-            item = QtGui.QGraphicsLineItem(fromm.x(), fromm.y(), too.x(), too.y())
+            item = QtWidgets.QGraphicsLineItem(fromm.x(), fromm.y(), too.x(), too.y())
             item.setPen(pen)
             item.setZValue(3)
             self._coordGroup.addToGroup(item)
@@ -589,7 +589,7 @@ class WAScene(QtGui.QGraphicsScene):
         while lon <= self.map_lower_right[1]:
             fromm = self.mapFromLonLat(QtCore.QPointF(lon, self.map_upper_left[0]))
             too = self.mapFromLonLat(QtCore.QPointF(lon, self.map_lower_right[0]))
-            item = QtGui.QGraphicsLineItem(fromm.x(), fromm.y(), too.x(), too.y())
+            item = QtWidgets.QGraphicsLineItem(fromm.x(), fromm.y(), too.x(), too.y())
             item.setPen(pen)
             item.setZValue(3)
             self._coordGroup.addToGroup(item)
@@ -602,12 +602,12 @@ class WAScene(QtGui.QGraphicsScene):
                       lr_lat=self.lower_right[3], lr_lon=self.lower_right[2])
         for st in self._towns.towns:
             p = self.mapFromLonLat(QtCore.QPointF(st.lon, st.lat))
-            el = QtGui.QGraphicsEllipseItem(p.x() - 1, p.y() - 1, 2, 2)   # here to adjust town circles
+            el = QtWidgets.QGraphicsEllipseItem(p.x() - 1, p.y() - 1, 2, 2)   # here to adjust town circles
             el.setBrush(QtGui.QColor(self.colors['town']))
             el.setPen(QtGui.QColor(self.colors['town']))
             el.setZValue(0)
             self._townGroup.addToGroup(el)
-            txt = QtGui.QGraphicsSimpleTextItem(st.name)
+            txt = QtWidgets.QGraphicsSimpleTextItem(st.name)
             new_font = txt.font()
             new_font.setPointSizeF(self.width() * (self.txt_ratio / 2.))
             txt.setFont(new_font)
@@ -618,7 +618,7 @@ class WAScene(QtGui.QGraphicsScene):
         return
 
     def _setupStations(self):
-        self._current_name = QtGui.QGraphicsSimpleTextItem('')
+        self._current_name = QtWidgets.QGraphicsSimpleTextItem('')
         new_font = self._current_name.font()
         new_font.setPointSizeF(self.width() * self.txt_ratio)
         self._current_name.setFont(new_font)
@@ -771,7 +771,8 @@ class WAScene(QtGui.QGraphicsScene):
                 start = self.mapFromLonLat(QtCore.QPointF(line.coordinates[0][1], line.coordinates[0][0]))
                 for pt in range(1, len(line.coordinates)):
                     end = self.mapFromLonLat(QtCore.QPointF(line.coordinates[pt][1], line.coordinates[pt][0]))
-                    ln = QtGui.QGraphicsLineItem(QtCore.QLineF(start, end))
+                    # FIXME Can't identify the QGraphicsScene in the arguments of the QGraphicsItem
+                    ln = QtWidgets.QGraphicsLineItem(QtCore.QLineF(start, end))
                     ln.setPen(pen)
                     ln.setZValue(0)
                     self.addItem(ln)
@@ -814,9 +815,9 @@ class WAScene(QtGui.QGraphicsScene):
                 ps = self.mapFromLonLat(QtCore.QPointF(w[0], s[1]))
                 x_d = pe.x() - p2.x()
                 y_d = ps.y() - p2.y()
-                el = QtGui.QGraphicsRectItem(p2.x(), p2.y(), x_d, y_d)
+                el = QtWidgets.QGraphicsRectItem(p2.x(), p2.y(), x_d, y_d)
             else:
-                el = QtGui.QGraphicsRectItem(p.x() - 1.5, p.y() - 1.5, 3, 3)   # here to adjust station squares when not scaling
+                el = QtWidgets.QGraphicsRectItem(p.x() - 1.5, p.y() - 1.5, 3, 3)   # here to adjust station squares when not scaling
         else:
             if self.scale:
                 try:
@@ -834,9 +835,9 @@ class WAScene(QtGui.QGraphicsScene):
                 pn = self.mapFromLonLat(QtCore.QPointF(st.lon, north[1]))
                 x_d = p.x() - pe.x()
                 y_d = pn.y() - p.y()
-                el = QtGui.QGraphicsEllipseItem(p.x() - x_d / 2, p.y() - y_d / 2, x_d, y_d)
+                el = QtWidgets.QGraphicsEllipseItem(p.x() - x_d / 2, p.y() - y_d / 2, x_d, y_d)
             else:
-                el = QtGui.QGraphicsEllipseItem(p.x() - 1.5, p.y() - 1.5, 3, 3)   # here to adjust station circles when not scaling
+                el = QtWidgets.QGraphicsEllipseItem(p.x() - 1.5, p.y() - 1.5, 3, 3)   # here to adjust station circles when not scaling
         try:
             el.setBrush(QtGui.QColor(self.colors[st.technology]))
         except:
@@ -864,7 +865,7 @@ class WAScene(QtGui.QGraphicsScene):
         pn = self.mapFromLonLat(QtCore.QPointF(st.lon, north[1]))
         x_d = p.x() - pe.x()
         y_d = pn.y() - p.y()
-        el = QtGui.QGraphicsEllipseItem(p.x() - x_d / 2, p.y() - y_d / 2, x_d, y_d)
+        el = QtWidgets.QGraphicsEllipseItem(p.x() - x_d / 2, p.y() - y_d / 2, x_d, y_d)
         if self.show_capacity_fill:
             el.setBrush(QtGui.QColor(self.colors[st.technology]))
             el.setOpacity(self.capacity_opacity)
@@ -881,7 +882,7 @@ class WAScene(QtGui.QGraphicsScene):
         else:
             self._capacityGroup.addToGroup(el)
         self.addLine(st)
-        txt = QtGui.QGraphicsSimpleTextItem(st.name)
+        txt = QtWidgets.QGraphicsSimpleTextItem(st.name)
         new_font = txt.font()
         new_font.setPointSizeF(self.width() * self.txt_ratio)
         txt.setFont(new_font)
@@ -910,7 +911,7 @@ class WAScene(QtGui.QGraphicsScene):
             pn = self.mapFromLonLat(QtCore.QPointF(st.lon, north[1]))
             x_d = p.x() - pe.x()
             y_d = pn.y() - p.y()
-            el = QtGui.QGraphicsEllipseItem(p.x() - x_d / 2, p.y() - y_d / 2, x_d, y_d)
+            el = QtWidgets.QGraphicsEllipseItem(p.x() - x_d / 2, p.y() - y_d / 2, x_d, y_d)
             if self.show_capacity_fill:
                 brush = QtGui.QBrush()
                 brush.setColor(QtGui.QColor(self.colors[st.technology]))
@@ -1047,7 +1048,8 @@ class WAScene(QtGui.QGraphicsScene):
                 for i in range(1, len(l.coordinates)):
                     end = self.mapFromLonLat(QtCore.QPointF(l.coordinates[i][1],
                       l.coordinates[i][0]))
-                    ln = QtGui.QGraphicsLineItem(QtCore.QLineF(start, end))
+                    # FIXME Can't identify the QGraphicsScene in the arguments of the QGraphicsItem
+                    ln = QtWidgets.QGraphicsLineItem(QtCore.QLineF(start, end))
                     ln.setPen(pen)
                     ln.setZValue(0)
                     self.addItem(ln)
@@ -1073,7 +1075,7 @@ class WAScene(QtGui.QGraphicsScene):
                 if self.lines.lines[i].length > 0:
                     try:
                         for j in range(len(self._stationGroups[self.lines.lines[i].name])):
-                            if isinstance(self._stationGroups[self.lines.lines[i].name][j], QtGui.QGraphicsLineItem):
+                            if isinstance(self._stationGroups[self.lines.lines[i].name][j], QtWidgets.QGraphicsLineItem):
                                 self.removeItem(self._stationGroups[self.lines.lines[i].name][j])
                                 del self._stationGroups[self.lines.lines[i].name][j]
                                 break

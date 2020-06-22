@@ -132,6 +132,12 @@ class Stations:
                 self.fac_files.append(fac_file)
             except:
                 pass
+        self.ignore_deleted = True
+        try:
+            if config.get('Grid', 'ignore_deleted_existing').lower() in ['false', 'off', 'no']:
+                self.ignore_deleted = False
+        except:
+            pass
         self.technologies = ['']
         self.areas = {}
         try:
@@ -219,6 +225,8 @@ class Stations:
                     facile = open(fac_file)
                     facilities = csv.DictReader(facile)
                     for facility in facilities:
+                        if self.ignore_deleted and facility['Balancing Status'] == 'Deleted':
+                            continue
                         if facility['Longitude'] != '':
                             if not within_map(float(facility['Latitude']),
                               float(facility['Longitude']), self.map_polygon):
@@ -280,19 +288,24 @@ class Stations:
                                     area = self.areas[tech] * float(facility['Maximum Capacity (MW)'])
                                 else:
                                     tech = 'Fossil '
-                                    if bit[-1][:2] == 'GT' or bit[-1][0] == 'U':
-                                        tech += 'Gas'
-                                    elif bit[-1][:2] == 'CC':
-                                        tech += 'Gas'
-                                    elif bit[-1][:3] == 'COG':
-                                        tech += 'Cogen'
-                                    elif bit[0] == 'TESLA':
-                                        tech += 'Gas'
-                                    elif bit[-1][0] == 'G' and (bit[-1][1] >= '1' and bit[-1][1] <= '9'):
-                                        tech += 'Coal'
+                                    if 'Fossil' in facilities.fieldnames:
+                                        tech += facility['Fossil']
                                     else:
-                                        tech += 'Mixed'
-                                       #  tech += 'Distillate'
+                                        if bit[-1][:2] == 'GT' or bit[-1][0] == 'U':
+                                            tech += 'Gas'
+                                        elif bit[-1][:2] == 'CC':
+                                            tech += 'Gas'
+                                        elif bit[-1][:3] == 'COG':
+                                            tech += 'Cogen'
+                                        elif bit[0] == 'TESLA' or bit[-1] == 'WGP':
+                                            tech += 'Distillate'
+                                        elif bit[-2] == 'WGP':
+                                            tech += 'Mixed'
+                                        elif bit[-1][0] == 'G' and (bit[-1][1] >= '1' and bit[-1][1] <= '9'):
+                                            tech += 'Coal'
+                                        else:
+                                            tech += 'Mixed'
+                                           #  tech += 'Distillate'
                                     area = self.areas[tech] * float(facility['Maximum Capacity (MW)'])
                                 if code:
                                     nice_name = facility['Facility Code']

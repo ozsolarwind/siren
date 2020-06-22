@@ -28,7 +28,7 @@ import time
 import xlrd
 
 import configparser  # decode .ini file
-from PyQt4 import Qt, QtGui, QtCore
+from PyQt5 import Qt, QtCore, QtGui, QtWidgets
 
 from getmodels import getModelFile
 from senuser import getUser, techClean
@@ -40,6 +40,11 @@ from turbine import Turbine
 the_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
 class SuperPower():
+    log = QtCore.pyqtSignal()
+    log2 = QtCore.pyqtSignal()
+    barProgress = QtCore.pyqtSignal(int, str)
+    barRange = QtCore.pyqtSignal(int, int)
+
     def haversine(self, lat1, lon1, lat2, lon2):
         """
         Calculate the great circle distance between two points
@@ -224,7 +229,7 @@ class SuperPower():
         while ssc_info.get():
             var_names.append(ssc_info.name() + ' ' + str(ssc_info.var_type()) + ' ' + str(ssc_info.data_type()))
         if status:
-            status.emit(QtCore.SIGNAL('log'), 'SAM Variable list for ' + tech + ' - ' + name)
+            status.log('SAM Variable list for ' + tech + ' - ' + name)
         else:
             print('SAM Variable list for ' + tech + ' - ' + name)
         var_names = sorted(var_names, key=lambda s: s.lower())
@@ -257,8 +262,8 @@ class SuperPower():
             info.append(msg)
         if status:
             for msg in info:
-                status.emit(QtCore.SIGNAL('log2'), msg)
-            status.emit(QtCore.SIGNAL('log'), 'Variable list complete for ' + tech + ' - ' + name)
+                status.log2(msg)
+            status.log('Variable list complete for ' + tech + ' - ' + name)
         else:
             for msg in info:
                 print(msg)
@@ -607,17 +612,17 @@ class SuperPower():
         if self.show_progress:
             if self.progress_bar == 0:
                 show_progress = True
-                self.progress.emit(QtCore.SIGNAL('range'), 0, len(to_do))
+                self.progress.barRange(0, len(to_do))
             elif len(to_do) >= self.progress_bar:
                 show_progress = True
-                self.progress.emit(QtCore.SIGNAL('range'), 0, len(to_do))
+                self.progress.barRange(0, len(to_do))
         for st in range(len(to_do)):
   #      for st in range(len(self.stations)):
             stn = self.stations[to_do[st]]
             if show_progress:
                 try:
-                    self.progress.emit(QtCore.SIGNAL('progress'), st, 'Processing ' + stn.name + ' (' + stn.technology + ')')
-                    QtGui.qApp.processEvents()
+                    self.progress.barProgress(st, 'Processing ' + stn.name + ' (' + stn.technology + ')')
+                    QtWidgets.QApplication.processEvents()
                     if not self.progress.be_open:
                         break
                 except:
@@ -691,7 +696,7 @@ class SuperPower():
                 pt = PowerSummary(stn.name, stn.technology, total_power, stn.capacity)
             self.power_summary.append(pt)
         if show_progress:
-            self.progress.emit(QtCore.SIGNAL('progress'), -1)
+            self.progress.barProgress(-1)
 
     def getStationPower(self, station):
         def do_module(modname, station, field):
@@ -703,27 +708,27 @@ class SuperPower():
             module = ssc.Module(modname.encode('utf-8'))
             if do_time:
                 time2 = time.time() - clock_start
-                self.status.emit(QtCore.SIGNAL('log'), 'Load (%.6f seconds)' % (time2))
+                self.status.log('Load (%.6f seconds)' % (time2))
             if (module.exec_(self.data)):
                 if do_time:
                     time3 = time.time() - clock_start - time2
-                    self.status.emit(QtCore.SIGNAL('log'), 'Execute (%.6f seconds)' % (time3))
+                    self.status.log('Execute (%.6f seconds)' % (time3))
                 if self.debug:
                     self.debug_sam(station.name, station.technology, module, self.data, self.status)
                 farmpwr = self.data.get_array(field.encode('utf-8'))
                 if do_time:
                     time4 = time.time() - clock_start - time2 - time3
-                    self.status.emit(QtCore.SIGNAL('log'), 'Get data (%.6f seconds)' % (time4))
+                    self.status.log('Get data (%.6f seconds)' % (time4))
                 del module
                 return farmpwr
             else:
                 if self.status:
-                   self.status.emit(QtCore.SIGNAL('log'), 'Errors encountered processing ' + station.name)
+                   self.status.log('Errors encountered processing ' + station.name)
                 idx = 0
                 msg = module.log(idx)
                 while (msg is not None):
                     if self.status:
-                       self.status.emit(QtCore.SIGNAL('log'), modname + ' error [' + str(idx) + ']: ' + msg.decode())
+                       self.status.log(modname + ' error [' + str(idx) + ']: ' + msg.decode())
                     else:
                         print(modname + ' error [', idx, ' ]: ', msg.decode())
                     idx += 1
@@ -809,8 +814,8 @@ class SuperPower():
         if station.capacity == 0:
             return None
         if self.status:
-            self.status.emit(QtCore.SIGNAL('log'), 'Processing ' + station.name + ' (' + station.technology + ')')
-            QtGui.qApp.processEvents()
+            self.status.log('Processing ' + station.name + ' (' + station.technology + ')')
+            QtWidgets.QApplication.processEvents()
         self.data = None
         self.data = ssc.Data()
         farmpwr = [] # just in case
@@ -881,7 +886,7 @@ class SuperPower():
                 optic_file = self.variable_files + '/' + self.default_files['optical_table']
                 if not os.path.exists(optic_file):
                     if self.status:
-                        self.status.emit(QtCore.SIGNAL('log'), 'optical_table file required for ' + station.name)
+                        self.status.log('optical_table file required for ' + station.name)
                     return
                 self.defaults['optical_table'] = []
                 hf = open(optic_file)
@@ -925,7 +930,7 @@ class SuperPower():
                         helio_file = self.variable_files + '/' + self.default_files['helio_positions']
                         if not os.path.exists(helio_file):
                             if self.status:
-                               self.status.emit(QtCore.SIGNAL('log'), 'helio_positions file required for ' + station.name)
+                               self.status.log('helio_positions file required for ' + station.name)
                             return
                         self.defaults['helio_positions'] = []
                         hf = open(helio_file)

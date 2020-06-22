@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2020 Sustainable Energy Now Inc., Angus King
 #
 #  inisyntax.py - This file is part of SIREN.
 #
@@ -19,8 +19,8 @@
 #  <http://www.gnu.org/licenses/>.
 #
 
-from PyQt4.QtCore import QRegExp
-from PyQt4.QtGui import QColor, QTextCharFormat, QFont, QSyntaxHighlighter
+from PyQt5.QtCore import QRegExp
+from PyQt5.QtGui import QColor, QTextCharFormat, QFont, QSyntaxHighlighter
 
 
 def format(color, style=''):

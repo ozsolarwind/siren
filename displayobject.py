@@ -21,15 +21,14 @@
 
 import os
 import sys
-from PyQt4 import QtCore
-from PyQt4 import QtGui
+from PyQt5 import QtCore, QtWidgets
+from PyQt5 import QtGui, QtWidgets
 
 import credits
 from turbine import Turbine
 
 
-class AnObject(QtGui.QDialog):
-    procStart = QtCore.pyqtSignal(str)
+class AnObject(QtWidgets.QDialog):
 
     def __init__(self, dialog, anobject, readonly=True, title=None, section=None, textedit=True):
         super(AnObject, self).__init__()
@@ -47,19 +46,19 @@ class AnObject(QtGui.QDialog):
             grid.setColumnMinimumWidth(1, widths[1] + 10)
         i += 1
         if isinstance(self.anobject, str):
-            quit = QtGui.QPushButton('Close', self)
+            quit = QtWidgets.QPushButton('Close', self)
             width = quit.fontMetrics().boundingRect('Close').width() + 10
             quit.setMaximumWidth(width)
         else:
-            quit = QtGui.QPushButton('Quit', self)
+            quit = QtWidgets.QPushButton('Quit', self)
         grid.addWidget(quit, i + 1, 0)
         quit.clicked.connect(self.quitClicked)
         if not self.readonly:
-            save = QtGui.QPushButton("Save", self)
+            save = QtWidgets.QPushButton("Save", self)
             grid.addWidget(save, i + 1, 1)
             save.clicked.connect(self.saveClicked)
         self.setLayout(grid)
-        screen = QtGui.QDesktopWidget().availableGeometry()
+        screen = QtWidgets.QDesktopWidget().availableGeometry()
         h = heights * i
         if h > screen.height():
             if sys.platform == 'win32' or sys.platform == 'cygwin':
@@ -84,9 +83,9 @@ class AnObject(QtGui.QDialog):
         widths = [0, 0]
         heights = 0
         i = -1
-        grid = QtGui.QGridLayout()
+        grid = QtWidgets.QGridLayout()
         if isinstance(self.anobject, str):
-            self.web = QtGui.QTextEdit()
+            self.web = QtWidgets.QTextEdit()
             if os.path.exists(self.anobject):
                 htf = open(self.anobject, 'r')
                 html = htf.read()
@@ -142,7 +141,7 @@ class AnObject(QtGui.QDialog):
                 fnt = self.web.fontMetrics()
                 widths[0] = (widths[0]) * fnt.maxWidth()
                 heights = (heights) * fnt.height()
-                screen = QtGui.QDesktopWidget().availableGeometry()
+                screen = QtWidgets.QDesktopWidget().availableGeometry()
                 if widths[0] > screen.width() * .67:
                     heights = int(heights / .67)
                     widths[0] = int(screen.width() * .67)
@@ -156,9 +155,9 @@ class AnObject(QtGui.QDialog):
                 self.keys = []
                 for key, value in self.anobject.items():
                     self.field_type.append('str')
-                    label.append(QtGui.QLabel(key + ':'))
+                    label.append(QtWidgets.QLabel(key + ':'))
                     self.keys.append(key)
-                    self.edit.append(QtGui.QTextEdit())
+                    self.edit.append(QtWidgets.QTextEdit())
                     self.edit[-1].setPlainText(value)
                  #   print '(160)', key, self.edit[-1].document().blockCount()
                     if i < 0:
@@ -195,9 +194,9 @@ class AnObject(QtGui.QDialog):
                 self.keys = []
                 for key, value in self.anobject.items():
                     self.field_type.append('str')
-                    label.append(QtGui.QLabel(key + ':'))
+                    label.append(QtWidgets.QLabel(key + ':'))
                     self.keys.append(key)
-                    self.edit.append(QtGui.QLineEdit())
+                    self.edit.append(QtWidgets.QLineEdit())
                     self.edit[-1].setText(value)
                     if i < 0:
                         metrics.append(label[-1].fontMetrics())
@@ -230,11 +229,11 @@ class AnObject(QtGui.QDialog):
                          self.field_type.append('float')
                     else:
                          self.field_type.append('str')
-                    label.append(QtGui.QLabel(prop.title() + ':'))
+                    label.append(QtWidgets.QLabel(prop.title() + ':'))
                     if self.field_type[-1] != "str":
-                        self.edit.append(QtGui.QLineEdit(str(attr)))
+                        self.edit.append(QtWidgets.QLineEdit(str(attr)))
                     else:
-                        self.edit.append(QtGui.QLineEdit(attr))
+                        self.edit.append(QtWidgets.QLineEdit(attr))
                     if i < 0:
                         metrics.append(label[-1].fontMetrics())
                         metrics.append(self.edit[-1].fontMetrics())
@@ -251,15 +250,15 @@ class AnObject(QtGui.QDialog):
                     grid.addWidget(label[-1], i + 1, 0)
                     grid.addWidget(self.edit[-1], i + 1, 1)
                     if prop in list(units.keys()):
-                        grid.addWidget(QtGui.QLabel(units[prop]), i + 1, 2)
+                        grid.addWidget(QtWidgets.QLabel(units[prop]), i + 1, 2)
                     if prop == 'turbine':
                         i += 1
-                        curve = QtGui.QPushButton('Show Power Curve', self)
+                        curve = QtWidgets.QPushButton('Show Power Curve', self)
                         grid.addWidget(curve, i + 1, 1)
                         curve.clicked.connect(self.curveClicked)
                         self.turbine = attr
             self.set_stuff(grid, widths, heights, i)
-        QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
+        QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
 
     def curveClicked(self):
         Turbine(self.turbine).PowerCurve()
@@ -272,10 +271,10 @@ class AnObject(QtGui.QDialog):
         if isinstance(self.anobject, dict):
             if self.textedit:
                 for i in range(len(self.keys)):
-                    self.anobject[self.keys[i]] = str(self.edit[i].toPlainText())
+                    self.anobject[self.keys[i]] = self.edit[i].toPlainText()
             else:
                 for i in range(len(self.keys)):
-                    self.anobject[self.keys[i]] = str(self.edit[i].text())
+                    self.anobject[self.keys[i]] = self.edit[i].text()
         else:
             i = -1
             for prop in dir(self.anobject):
@@ -286,7 +285,7 @@ class AnObject(QtGui.QDialog):
                     elif self.field_type[i] == 'float':
                         setattr(self.anobject, prop, float(self.edit[i].text()))
                     else:
-                        setattr(self.anobject, prop, str(self.edit[i].text()))
+                        setattr(self.anobject, prop, self.edit[i].text())
         self.close()
 
     def getValues(self):

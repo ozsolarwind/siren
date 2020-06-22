@@ -277,8 +277,8 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 <td class="none">Invoke <code>getmerra2</code> to download MERRA-2 data files (see <a href="#getmerra2">Get MERRA-2 Files</a>)</td>
 </tr>
 <tr class="none">
-<td class="none"><img src="weather_b.png" alt="makeweather2">&nbsp;&nbsp;makeweather2</td>
-<td class="none">Invoke <code>makeweather2</code> to create weather files for SAM (see <a href="#makeweather">Produce wind and solar weather files</a>)</td>
+<td class="none"><img src="weather_b.png" alt="makeweatherfiles">&nbsp;&nbsp;makeweatherfiles</td>
+<td class="none">Invoke <code>makeweatherfiles</code> to create weather files for SAM (see <a href="#makeweather">Produce wind and solar weather files</a>)</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="line.png" alt="powerplot">&nbsp;&nbsp;powerplot</td>
@@ -934,18 +934,6 @@ as embedded solar - Rooftop PV - installed on the grid but not registered with A
 </tr>
 <tr class="none">
 </table>
-<div class="experiment">
-<table border="0", class="none">
-<tr class="none">
-<td class="none">&nbsp;</td>
-<td class="none">Rainfall (experimental)</td>
-</tr>
-<tr class="none">
-<td class="none"><dfn>rain_files&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</dfn></td>
-<td class="none">Location of rainfall weather files. The file name includes the geographic location of the file - &lt;location_latitude_longitude_year.csv&gt;</td>
-</tr>
-</table>
-</div>
 </td></tr>
 <tr class="none" id="financial"><td><dfn><strong>[Financial]</strong></dfn></td>
 <td>Financial options. When running the financial Power Models you will be presented with this list of properties. They can be altered and saved. Properties are:</p>
@@ -2189,18 +2177,6 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">The zoom rate for the map view. Each zoom in or zoom out action will alter the displayed map by this amount. Values can be between .75 (75% or 133%) and 0.95 (95% or 105%). The default value is 0.8</td>
 </tr>
 </table>
-<div class="experiment">
-<table border="0", class="none">
-<tr class="none">
-<td class="none">&nbsp;</td>
-<td class="none">Rainfall (experimental)</td>
-</tr>
-<tr class="none">
-<td class="none"><dfn>resource_rainfall&nbsp;&nbsp;&nbsp;&nbsp;</dfn></td>
-<td class="none">If set to True this will allow rainfall to appear in the resource grid and weather displays</td>
-</tr>
-</table>
-</div>
 </tr>
 <tr class="none" id="p_wave"><td><div class="experiment"><dfn><strong>[Wave]</strong></dfn><br />(experimental)</div></td>
 <td><div class="experiment">Specifics on Wave characteristics (experimental). Properties are:
@@ -2618,8 +2594,8 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <td class="none">Invoke <code>makegrid</code> to create resource grid file (see <a href="#resource">Visualising Renewable Resource Attributes</a>)</td>
 </tr>
 <tr class="none">
-<td class="none"><img src="weather_b.png" alt="makeweather2">&nbsp;&nbsp;makeweather2</td>
-<td class="none">Invoke <code>makeweather2</code> to create weather files for SAM (see <a href="#makeweather">Produce wind and solar weather files</a>)</td>
+<td class="none"><img src="weather_b.png" alt="makeweatherfiles">&nbsp;&nbsp;makeweatherfiles</td>
+<td class="none">Invoke <code>makeweatherfiles</code> to create weather files for SAM (see <a href="#makeweather">Produce wind and solar weather files</a>)</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="power.png" alt="powermatch">&nbsp;&nbsp;powermatch</td>
@@ -2634,17 +2610,6 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <td class="none">Invoke <code>updateswis</code> to update the list of existing SWIS Stations (facilities; see <a href="#updateswis">Existing Stations (Facilities)</a>) or SWIS Load data</td>
 </tr>
 </table>
-<div class="experiment">
-<table border="0", class="none">
-<td class="none">&nbsp;</td>
-<td class="none">Rainfall (experimental)</td>
-</tr>
-<tr class="none">
-<td class="none"><img src="rain.png" alt="makerainfall2">&nbsp;&nbsp;makerainfall2&nbsp;</td>
-<td class="none">Invoke <code>makerainfall2</code> to create rainfall files (see <a href="#merrar">Produce rainfall files (experimental)</a>)</td>
-</tr>
-</table>
-</div>
 </td>
 </tr>
 <tr class="none">
@@ -3404,19 +3369,6 @@ Genetic algorithms are inspired by the process of natural selection and simulate
 </ul></td>
 </tr>
 </table>
-<div class="experiment">
-<table border="0", class="none">
-<tr class="none">
-<td class="none">&nbsp;</td>
-<td class="none">Rainfall (experimental)</td>
-</tr>
-<tr class="none">
-<td class="none"><dfn>rainfall_files</dfn>&nbsp;&nbsp;&nbsp;</td>
-<td class="none">These are rainfall weather files in a format similar to solar CSV files. SIREN uses the file name to define the location and year for the file by separating the file name by an underscore as follows:- <em>anything_anything_latitude_longitude_year.filetype</em>
-</td>
-</tr>
-</table>
-</div>
 <p><a href="#help">Back to top</a></p>
 <h2 id="notes">Supporting Notes</h2>
 <h3 id="map">Obtaining a Suitable Map Image</h3>
@@ -3572,9 +3524,6 @@ NASA MERRA-2 data is a suitable source to generate data files containing all wea
 <ul>
 <li><em>tavg1_2d_slv_Nx</em> for wind</li>
 <li><em>tavg1_2d_rad_Nx</em> for solar</li>
-<div class="experiment">
-<li><em>tavg1_2d_flx_Nx</em>, <em>tavg1_2d_lnd_Nx</em> or <em>tavg1_2d_mld_Nx</em> for rainfall (experimental)</li>
-</div>
 </ul>
 <h4 id="merra2">Obtaining MERRA-2 Data</h4>
 <p>MERRA-2 Data is publicly available and the following steps can be used to obtain the required data.</p>
@@ -3617,9 +3566,6 @@ Select Data Product from the pull-down list:
 <!--http://disc.sci.gsfc.nasa.gov/uui/datasets/M2T1NXSLV_V5.12.4/summary-->
 <li>MERRA-2 <em>tavg1_2d_rad_Nx</em> for solar</li>
 <!--http://disc.sci.gsfc.nasa.gov/uui/datasets/M2T1NXRAD_V5.12.4/summary-->
-<div class="experiment">
-<li>MERRA-2 <em>tavg1_2d_flx_Nx</em>, <em>tavg1_2d_lnd_Nx</em> or <em>tavg1_2d_mld_Nx</em> for rainfall (experimental)</li>
-</div>
 </ol>
 </li>
 <li>Spatial Search<br/>
@@ -3763,15 +3709,24 @@ You can alternate between these approaches to choose the desired area. If you ha
 </p>
 <!-- Back to top< -->
 <h4 id="makeweather">Produce wind and solar weather files</h4>
-<h5>makeweather2</h5>
-<p><code>makeweather2.py</code> is a Python program that can be used to produce solar and/or wind weather files for input to SAM. The program generates SMW (preferred for SAM) or CSV format solar resource files and SRW format wind resource files. These file formats have been chosen as they're easier to generate than other formats. Using the program you specify the source folder for the MERRA-2 data files, the time zone for the area of interest, a file format and target folder for the weather files. The program will generate files for each of the MERRA-2 grid squares within the chosen MERRA-2 data files or optionally for a number of latitude and longitude positions. You can invoke the program either by choosing <code>makeweather2</code> from the SIREN Tools menu or in Windows by running <code>makeweather2.exe</code> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
+<h5>makeweatherfiles</h5>
+<p><code>makeweatherfiles.py</code> is a Python program that can be used to produce solar and/or wind weather files for input to SAM. The program generates SMW (preferred for SAM) or CSV format solar resource files and SRW format wind resource files. These file formats have been chosen as they're easier to generate than other formats. Using the program you specify the source folder for the MERRA-2 data files, the time zone for the area of interest, a file format and target folder for the weather files. The program will generate files for each of the MERRA-2 grid squares within the chosen MERRA-2 data files or optionally for a number of latitude and longitude positions. You can invoke the program either by choosing <code>makeweatherfiles</code> from the SIREN Tools menu or in Windows by running <code>makeweatherfiles.exe</code> in the <em>siren</em> (or <em>makeweatherfiles</em>) folder. Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
 <ul>
 <li><em>Year</em>. Year of interest. The naming conventions for MERRA-2 files include the date so this defines the date range. The tool processes dates from the last day of the prior year through to the first day of the next year (ignoring 29 February)</li>
-<li><em>Wrap to prior year</em>. To enable you to use (more) recent weather data this option will indicate that weather data should wrap to the prior year. As an example, if you have downloaded MERRA-2 data up until April for the current year <code>makeweather2</code> will use weather data from the prior year for May onwards to give a full year of data. The MERRA data for both years must reside in the same folder (or the next sub-folder if yearly folders are used)</li>
+<li><em>Wrap to prior year</em>. To enable you to use (more) recent weather data this option will indicate that weather data should wrap to the prior year. As an example, if you have downloaded MERRA-2 data up until April for the current year <code>makeweatherfiles</code> will use weather data from the prior year for May onwards to give a full year of data. The MERRA data for both years must reside in the same folder (or the next sub-folder if yearly folders are used)</li>
+<li><em>Ignore data gaps</em>. This option will cater for individual MERRA-2 files containing different dimensions for latitude and longitude. If this option is selected the program will create weather files where there are gaps for 21 days or less. If there are more gaps the file will not be created.
+<ul>
+<li>The program does require a MERRA-2 file for each day of the year (It is possible to copy another file, say for the same day of another year, and rename it to &ldquo;replace&rdquo; the missing file)</li>
+<li>In creating a solar weather file the program requires both wind and solar MERRA-2 files, so any gaps in either dataset will result in a gap in the solar weather file</li>
+</ul></li>
 <li><em>Time Zone</em>. The (solar) time zone for the area of interest. This is used to create suitable weather files where the first hour in the file is the first hour of the year in the local time zone. A value of <em>auto</em> will cause the program to use the (first) longitude and a value of <em>best</em> will cause the program to use the time zone with the most longitude values in the MERRA-2 data files to calculate the time zone</li>
 <li><em>Solar Format</em>. The solar option can produce weather files in either of two formats - SMW or CSV format. This option allows you to choose your preferred one. SMW format is suitable for SAM while it may have trouble with the CSV format</li>
-<li><em>Solar Variable</em>. There are two MERRA-2 solar variables to use to create weather files - swgdn or swgnt. </li>
-<li><em>Coordinates</em>. Rather than producing weather files for each grid cell in the chosen area you can restrict it by passing a string of comma-separated latitude and longitude values. The tool will then generate files for just these coordinates</li>
+<li><em>Solar Variable</em>. There are two MERRA-2 solar variables to use to create weather files - swgdn or swgnt</li>
+<li><em>Coordinates</em>. Rather than producing weather files for each grid cell in the chosen area you can restrict it by passing a string of comma-separated latitude and longitude values. The tool will then generate files for just these coordinates.
+<ul>
+<li>For latitudes and longitudes that don't match cell dimensions in the MERRA-2 files values will be calculated from ratios of values for the surrounding cells</li>
+<li>If there are data gaps values will be calculated from the nearest cells</li>
+</ul></li>
 <li><em>Copy folder down</em>. This is an ease of use field. If this is checked any changes to the Solar Source Folder field will be propagated to the other two Folder fields</li>
 <li><em>Solar Source Folder</em>. Use this to specify the location for the MERRA-2 solar (<em>tavg1_2d_rad_Nx</em>) files. To change the location you need to click on the field and navigate to the correct folder (you can't type into the field). This location is only used for solar files</li>
 <li><em>Wind Source Folder</em>. Use this to specify the location for the MERRA-2 wind (<em>tavg1_2d_slv_Nx</em>) files. To change the location you need to click on the field and navigate to the correct folder (you can't type into the field). This location is used for both solar and wind files so you need to specify it in all cases</li>
@@ -3786,16 +3741,17 @@ You can alternate between these approaches to choose the desired area. If you ha
 <li><em>File Info</em> Display details about the weather file dimensions and variables</li>
 </ul>
 <p>Creation of weather files may take some time so please be patient. There are two progress bars that will display to indicate how far along the process the program is. The tool will produce an output report which will include the list of weather files produced. The report will include a return code as follows:</p>
-<ol class="none">
-<li value="0">Successful execution</li>
-<li value="1">Successful execution, however, the time zone chosen does not match the time zone(s) suggested by the MERRA-2 data files. If you chose <em>auto</em> or <em>best</em> this indicates more than one time zone is suggested by the MERRA-2 data files</li>
-<li value="4">Error with coordinates field</li>
-<li value="8">Invalid output file format specified. It must be one of <em>csv</em>, <em>smw</em>, <em>srw</em>, or <em>wind</em></li>
-<li value="12">MERRA-2 data file not found. The program requires file name(s) to be in a specific format so either the file name doesn't match that format or the source folder is incorrect</li>
-</ol>
+<ul style="list-style-type: none; padding: 1; margin: 1">
+<li><em>0.</em> Successful execution</li>
+<li><em>1.</em> Successful execution, however, the time zone chosen does not match the time zone(s) suggested by the MERRA-2 data files. If you chose <em>auto</em> or <em>best</em> this indicates more than one time zone is suggested by the MERRA-2 data files</li>
+<li><em>2.</em> Error with coordinates field</li>
+<li><em>3.</em> Invalid output file format specified. It must be one of <em>csv</em>, <em>smw</em>, <em>srw</em>, or <em>wind</em></li>
+<li><em>4.</em> MERRA-2 data file not found. The program requires file name(s) to be in a specific format so either the file name doesn't match that format or the source folder is incorrect</li>
+<li><em>5.</em> Error with MERRA-2 data file. If you encounter an error &ldquo;Regridder Error. File generation error: Failed to create working directory.&rdquo; you might attempt to obtain a valid copy of the file in error by entering it's URL entry from the MERRA-2 search results into your browser</li>
+</ul>
 <p>You can also run the program on the command line. In this case the parameters are passed to the program as follows:</p>
 <pre>
-      makeweather2.exe &lt;parm1=value parm2=value&gt;
+      makeweatherfiles.exe &lt;parm1=value parm2=value&gt;
 </pre>
 <p>Parameters are as described above and can be passed to the program as follows:</p>
 <ul>
@@ -3808,22 +3764,24 @@ You can alternate between these approaches to choose the desired area. If you ha
 <li><em>swg=</em> Solar variable - swgdn or swgnt. Default is swgnt</li>
 <li><em>wind=</em> Location of the MERRA-2 wind (<em>tavg1_2d_slv_Nx</em>) files</li>
 <li><em>target=</em> or <em>tgtdir=</em> Location for the weather files produced</li>
+<li><em>gaps=</em> A value starting with <em>y</em> (yes) or <em>t</em> (true) indicates to create files with data gaps</li>
 </ul>
 </p>
 <p><strong>Notes:</strong>
-<ol class="none">
+<ol>
 <li>The program should also handle MERRA (version 1) data files downloaded (probably) prior to February 2016</li>
 <li>The program assumes each day of data is a separate file and uses the filename to as a &ldquo;key&rdquo; to the data. It relies on:
 <ul>
 <li>The string <em>MERRA</em> being part of the filename</li>
 <li>Filenames contain <em>tavg1_2d_slv_Nx.YYYYMMDD</em> for wind and <em>tavg1_2d_rad_Nx.YYYYMMDD</em> for solar, where <em>YYYYMMDD</em> indicates the data file for that day</li>
 <li>All files of the same type (solar or wind) being in the same folder</em>
+<li>If you download two copies of the same file wget will append a number to the scond copy file name, e.g. ...nc4.1. At present these will be ignored</li>
 </ul>
-<li><code>makeweatherfiles.py</code> is a standalone version of <code>makeweather2.py</code>. It allows you to create SAM weather files  without requiring any other parts of SIREN. See <a href="makeweatherfiles.html" target="_blank">makeweatherfiles.html</a></li>
+<li>A packaged version of <code>makeweatherfiles</code> for Windows is available as a self-extracting zip file from <a href="https://sourceforge.net/projects/sensiren/" target="_blank">https://sourceforge.net/projects/sensiren/</a>. The file is <a href="https://sourceforge.net/projects/sensiren/files/sen_makeweather_getmerra2.exe/download" target="_blank">sen_makeweather_getmerra2.exe</a> (the package has been created with PyInstaller) and contains both <code>makeweatherfiles</code> and <code>getmerra2</code> which enables MERRA-2 files to be downloaded. This package allows you to create SAM weather files from MERRA-2 files without requiring any other parts of SIREN</a></li>
 </ol>
 <p>
-<h4 id="usage">Using getmerra2 and makeweather2</h4>
-<p>To make use of <code>getmerra2</code> and <code>makeweather2</code> the following steps should help:</p>
+<h4 id="usage">Using getmerra2 and makeweatherfiles</h4>
+<p>To make use of <code>getmerra2</code> and <code>makeweatherfiles</code> the following steps should help:</p>
 <ol>
 <li>Ensure you <a href="#merra2a">Register for access</a> as described above to gain access to the MERRA-2 data</p></li>
 <li>Set up a <code>.netrc</code> file and for Windows a <code>HOME</code> environment variable. The first time you invoke <code>getmerra2</code> it will allow you to set these up</p></li>
@@ -3835,13 +3793,13 @@ You can alternate between these approaches to choose the desired area. If you ha
 <li>Click <em>Get Solar</em> for solar files and <em>Get Wind</em> for wind files. If you're creating solar weather files you'll need both. When you click the buttons <code>getmerra2</code> will launch separate tasks to download the files into the target folder. You can Quit out of <code>getmerra2</code> as this stage. The two tasks will probably take a while to run as they have to download individual files for each day in the range. The output and success will be in a log file in the target folder</li>
 <li>If you click <em>Check Solar</em> or <em>Check Wind</em> <code>getmerra2</code> will interrogate MERRA-2 solar files in the appropriate Target Folder to provide the boundaries for the Area of Interest and set the starting date to download the next day in sequence. The interrogation will cater for files in yearly sub-folders</li>
 </ol></p></li>
-<li>Once the MERRA-2 files are downloaded run <code>makeweather2</code> to create the SAM weather files</p>
+<li>Once the MERRA-2 files are downloaded run <code>makeweatherfiles</code> to create the SAM weather files</p>
 <ol>
 <li>Specify the year, 2016 in the case above</li>
 <li>Click on the source folder(s) to locate the MERRA-2 files. This will be the same as point 1.3 above</li>
 <li>Click on Target folder to specify a location for the weather files. It's convenient to use a different folder to the MERRA-2 files</li>
 <li>You can click <em>File Info</em> to test if the MERRA-2 files are OK. This reads the first file of the year (e.g. 20160101) and displays the dimensions of the MERRA-2 file. The output shows the latitude and longitude cells covered</li>
-<li>Click <em>Produce Solar Files</em> to create solar weather files. Clicking the button will cause <code>makeweather2</code> to create the weather files. It will take a while to run so please be patient. There are two progress bars that will display to indicate how far along the process the program is. It will eventually return with an output listing of the files produced</li>
+<li>Click <em>Produce Solar Files</em> to create solar weather files. Clicking the button will cause <code>makeweatherfiles</code> to create the weather files. It will take a while to run so please be patient. There are two progress bars that will display to indicate how far along the process the program is. It will eventually return with an output listing of the files produced</li>
 <li>Click <em>Produce Wind Files</em> to create wind weather files. Same deal as solar</li>
 </ol></p></li></ol>
 <h4>SAM Weather Files</h4>
@@ -4001,7 +3959,7 @@ MERRA-2 Variables
 <td>W/m<sup>2</sup></td>
 <td>swgdn /
 <br />swgnt</td>
-<td>Surface incoming shortwave flux flux
+<td>Surface incoming shortwave flux
 <br/>Surface net downward shortwave flux
 <br/>(from tavg1_2d_rad_Nx data files)</td>
 <td>W/m<sup>2</sup></td>
@@ -4038,89 +3996,11 @@ MERRA-2 Variables
 <li>I interpret each grid is centred on the latitude / longitude for that set of variables, that is, the value extends outwards in all directions from that point</li>
 </ul>
 <p><a href="#help">Back to top</a></p>
-<div class="experiment">
-<h4 id="merrar">Produce rainfall files (experimental)</h4>
-<h5>makerainfall2</h5>
-<p><code>makerainfall2.py</code> is a Python program that can be used to produce rainfall weather files. The program generates CSV format files that resembles solar resource files with a single Rainfall variable. Using the program you specify the source folder for the MERRA-2 data files, the time zone for the area of interest, a file format and target folder for the weather files. The program will generate files for each of the MERRA-2 grid squares within the chosen MERRA-2 data files or optionally for a number of latitude and longitude positions. You can invoke the program either by choosing <em>makerainfall2</em> from the SIREN Tools menu or in Windows by running <code>makerainfall2.exe</code> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
-<ul>
-<li><em>Year</em>. Year of interest. The naming conventions for MERRA-2 files include the date so this defines the date range. The tool processes dates from the last day of the prior year through to the first day of the next year (ignoring 29 February)</li>
-<li><em>Wrap to prior year</em>. To enable you to use (more) recent weather data this option will indicate that weather data should wrap to the prior year. As an example, if you have downloaded MERRA-2 data up until April for the current year <code>makeweather2</code> will use weather data from the prior year for May onwards to give a full year of data. The MERRA data for both years must reside in the same folder</li>
-<li><em>Time Zone</em>. The (solar) time zone for the area of interest. This is used to create suitable weather files where the first hour in the file is the first hour of the year in the local time zone. A value of <em>auto</em> will cause the program to use the (first) longitude in the MERRA-2 data files to calculate the time zone</li>
-<li><em>File Format</em>. The MERRA-2 input file format. This is three-letter group mnemonic - <em>flx</em>, <em>lnd</em> or <em>mld</em></li>
-<li><em>Coordinates</em>. Rather than producing weather files for each grid cell in the chosen area you can restrict it by passing a string of comma-separated latitude and longitude values. The tool will then generate files for just these coordinates</li>
-<li><em>Copy folder down</em>. This is an ease of use field. If this is checked any changes to the Rainfall Source Folder field will be propagated to the Target Folder fields</li>
-<li><em>Rainfall Source Folder</em>. Use this to specify the location for the MERRA-2 source files. To change the location you need to click on the field and navigate to the correct folder (you can't type into the field)</li>
-<li><em>Target Folder</em>. Use this to specify the location for the weather files produced by the tool. To change the location you need to click on the field and navigate to the correct folder (you can't type into the field)</li>
-</ul>
-<p>There are three buttons:</p>
-<ul>
-<li><em>Quit</em> will exit the program</li>
-<li><em>Produce Rainfall Files</em> will produce rainfall weather files</li>
-<li><em>Help</em> Display this help</li>
-</ul>
-<p>Creation of weather files may take some time so please be patient. There are two progress bars that will display to indicate how far along the process the program is. The tool will produce an output report which will include the list of weather files produced. The report will include a return code as follows:</p>
-<ol class="none">
-<li value="0">Successful execution</li>
-<li value="1">Successful execution, however, the time zone chosen does not match the time zone(s) suggested by the MERRA-2 data files. If you chose <em>auto</em> this indicates more than one time zone is suggested by the MERRA-2 data files</li>
-<li value="4">Error with coordinates field</li>
-<li value="8">Invalid output file format specified. It must be either <em>csv</em> or <em>rainfall</em></li>
-<li value="12">MERRA-2 data file not found. The program requires file name(s) to be in a specific format so either the file name doesn't match that format or the source folder is incorrect</li>
-</ol>
-<p>You can also run the program on the command line. In this case the parameters are passed to the program as follows:</p>
-<pre>
-      makerainfall2.exe &lt;parm1=value parm2=value&gt;
-</pre>
-<p>Parameters are as described above and can be passed to the program as follows:</p>
-<ul>
-<li><em>year=</em> Year of interest</li>
-<li><em>wrap=</em> A value starting with <em>y</em> (yes) or <em>t</em> (true) indicates to wrap back to the prior year</li>
-<li><em>zone=</em> or <em>timezone=</em> The (solar) time zone for the area of interest</li>
-<li><em>fmat=</em> Weather file format</li>
-<li><em>coords=</em> or <em>latlon=</em> A string of comma-separated latitude and longitude values</li>
-<li><em>source=</em> Location of the MERRA-2 source files</li>
-<li><em>target=</em> or <em>tgtdir=</em> Location for the weather files produced</li>
-</ul>
-</p>
-<p><strong>Note:</strong> The program should also handle MERRA (version 1) data files downloaded (probably) prior to February 2016.</p>
-<h5 id="merrar2">Rainfall Files</h5>
-<p>MERRA-2 variables from tavg1_2d_flx_Nx, tavg1_2d_lnd_Nx, or avg1_2d_mld_Nx data files are used to create a CSV format file with a single Rainfall variable.</p>
-<table border="1">
-<thead>
-<tr>
-<td colspan="3">
-CSV Variable
-</td>
-<td colspan="3">
-MERRA-2 Variable
-</td>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Column</td>
-<td>Variable</td>
-<td>Units</td>
-<td>&nbsp;</td>
-<td>Description</td>
-<td>Units</td>
-</tr>
-<tr>
-<td>4</td>
-<td>Rainfall</td>
-<td>mm</td>
-<td>prectot</td>
-<td>Total surface precipitation flux</td>
-<td>kg/m<sup>2</sup>/s</td>
-</tr>
-</tbody>
-</table>
-<p><a href="#help">Back to top</a></p>
-</div>
 <h3 id="index">Using other Weather Files</h3>
 <p>The use of MERRA data for the weather files is not necessary but provides a way of obtaining (gridded) weather data for any geographic area. Any weather files suitable for SAM can be used by SIREN. <a href="https://sam.nrel.gov/weather" target="_blank">Weather Data</a> describes these file formats and <a href="https://sam.nrel.gov/content/weather-data-non-us-locations" target="_blank">Weather Data for non-U.S. Locations</a> gives some details on where non-U.S. weather data may be obtained.</p>
 <p>SIREN has two approaches for obtaining weather files:</p>
 <ol>
-<li>Having the geographic location of the file as part of the file name. This option uses file name formats of &lt;location_latitude_longitude_year&gt; and includes files created from MERRA-2 data by <code>makeweather2</code>. The location for weather files for solar and wind are defined by the <em>solar_files</em> and <em>wind_files</em> properties in the <a href="#p_files">[Files]</a> Section of the Preferences file</li>
+<li>Having the geographic location of the file as part of the file name. This option uses file name formats of &lt;location_latitude_longitude_year&gt; and includes files created from MERRA-2 data by <code>makeweatherfiles</code>. The location for weather files for solar and wind are defined by the <em>solar_files</em> and <em>wind_files</em> properties in the <a href="#p_files">[Files]</a> Section of the Preferences file</li>
 <li>By using an index file. To use other files you need to create index files that contain the latitude, longitude and file name for each weather file, where the filename is relative to the location for the weather files. Index files for solar and wind are defined by the <em>solar_index</em> and <em>wind_index</em> properties. You can either create these files manually or use <em>indexweather</em> to create an index</li>
 </ol>
 <h5>indexweather</h5>
@@ -4155,9 +4035,6 @@ MERRA-2 Variable
 <li><em>DHI (Diffuse)</em>. Average daily DHI insolation (W)</li>
 <li><em>DNI (Normal)</em>. Average daily DNI insolation (W). Important for CST and Solar Thermal generation</li>
 <li><em>GHI (Direct)</em>. Average daily GHI insolation (W). Important for PV generation</li>
-<div class="experiment">
-<li><em>Rainfall</em>. Average hourly rainfall (mm) (experimental)</li>
-</div>
 <li><em>Temperature</em>. Average hourly temperature (<sup>o</sup>C)</li>
 <li><em>Wind Speed</em>. Average hourly wind speed at 10m height (m/s)</li>
 <li><em>Wind @ 50m</em>. Average hourly wind speed at 50m height (m/s). Important for Wind generation</li>

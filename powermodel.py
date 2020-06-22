@@ -33,7 +33,7 @@ import xlrd
 import xlwt
 
 import configparser  # decode .ini file
-from PyQt4 import Qt, QtGui, QtCore
+from PyQt5 import Qt, QtCore, QtGui, QtWidgets
 
 from senuser import getUser, techClean
 import displayobject
@@ -55,6 +55,8 @@ the_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
 class PowerModel():
     powerExit = QtCore.pyqtSignal(str)
+   # barProgress = QtCore.pyqtSignal(int, str)
+   # barRange = QtCore.pyqtSignal(int, int)
 
     def showGraphs(self, ydata, x):
         def shrinkKey(key):
@@ -97,7 +99,8 @@ class PowerModel():
                     mm = 0
                     dy = 1
                     for d in range(1, len(xs)):
-                        sp_data[-1].append('%s-%s-%s' % (self.load_year, str(mm + 1).zfill(2), str(dy).zfill(2)))
+                        sp_data[-1].append('%s-%s-%s' % (self.load_year,
+                                           str(mm + 1).zfill(2), str(dy).zfill(2)))
                         dy += 1
                         if dy > the_days[mm]:
                             mm += 1
@@ -405,9 +408,10 @@ class PowerModel():
 
         def saveBalance(self, shortstuff):
             data_file = 'Powerbalance_data_%s.xls' % (
-                    str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'yyyy-MM-dd_hhmm')))
-            data_file = QtGui.QFileDialog.getSaveFileName(None, 'Save Powerbalance data file',
-                        self.scenarios + data_file, 'Excel Files (*.xls*);;CSV Files (*.csv)')
+                        QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),
+                        'yyyy-MM-dd_hhmm'))
+            data_file = QtWidgets.QFileDialog.getSaveFileName(None, 'Save Powerbalance data file',
+                        self.scenarios + data_file, 'Excel Files (*.xls*);;CSV Files (*.csv)')[0]
             if data_file != '':
                 if data_file[-4:] == '.csv' or data_file[-4:] == '.xls' \
                   or data_file[-5:] == '.xlsx':
@@ -630,8 +634,8 @@ class PowerModel():
                             except:
                                 ws.cell(row=row, column=col).value = None
                         elif ws.cell(row=row, column=col).value == '<date>':
-                            dte = str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),
-                                    'yyyy-MM-dd hh:mm'))
+                            dte = QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),
+                                  'yyyy-MM-dd hh:mm')
                             ws.cell(row=row, column=col).value = dte
                         elif ws.cell(row=row, column=col).value == '<period>':
                             per_row[1] = row
@@ -649,13 +653,13 @@ class PowerModel():
                             else:
                                 ws.cell(row=row, column=col).value = None
                         elif ws.cell(row=row, column=col).value[:5] == '<stn_':
-                            bit = str(ws.cell(row=row, column=col).value)[:-1].split('_')
+                            bit = ws.cell(row=row, column=col).value[:-1].split('_')
                             ty = type_tags.index(bit[-1])
                             st_row[ty] = row
                             st_col[ty] = col
                             ws.cell(row=row, column=col).value = None
                         elif ws.cell(row=row, column=col).value.find('_') > 0:
-                            bit = str(ws.cell(row=row, column=col).value)[1:-1].split('_')
+                            bit = ws.cell(row=row, column=col).value[1:-1].split('_')
                             te = tech_tags.index(bit[0])
                             ty = type_tags.index(bit[-1])
                             tech_row[te][ty] = row
@@ -664,9 +668,11 @@ class PowerModel():
                     except:
                         pass
             data_file = 'Powermatch_data_%s.xlsx' % (
-                    str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'yyyy-MM-dd_hhmm')))
-            data_file = str(QtGui.QFileDialog.getSaveFileName(None, 'Save Powermatch data file',
-                        self.scenarios + data_file, 'Excel Files (*.xlsx)'))
+                        QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),
+                        'yyyy-MM-dd_hhmm'))
+            data_file = QtWidgets.QFileDialog.getSaveFileName(None,
+                        'Save Powermatch data file',
+                        self.scenarios + data_file, 'Excel Files (*.xlsx)')[0]
             if data_file == '':
                 return
             if data_file[-5:] != '.xlsx':
@@ -1581,7 +1587,8 @@ class PowerModel():
                 plt.title('Daily Shortfall')
                 sdfx = plt.subplot(111)
                 for i in range(self.iterations):
-                    sdfx.step(xs, d_short[i], linewidth=self.other_width, label=str(i + 1) + ' day average',
+                    sdfx.step(xs, d_short[i], linewidth=self.other_width,
+                              label=str(i + 1) + ' day average',
                               color=colours[i])
                 plt.xticks(list(range(0, len(xs), 7)))
                 tick_spot = []
@@ -1904,8 +1911,8 @@ class PowerModel():
             pass
         else:
             data_file += '.xls'
-        data_file = QtGui.QFileDialog.getSaveFileName(None, 'Save power data file',
-                    self.scenarios + data_file, 'Excel Files (*.xls*);;CSV Files (*.csv)')
+        data_file = QtWidgets.QFileDialog.getSaveFileName(None, 'Save power data file',
+                    self.scenarios + data_file, 'Excel Files (*.xls*);;CSV Files (*.csv)')[0]
         if data_file == '':
             return
         if self.load_multiplier != 0:
@@ -2203,7 +2210,7 @@ class PowerModel():
             self.can_do_load = True
         if self.show_menu:
             if __name__ == '__main__':
-                app = QtGui.QApplication(sys.argv)
+                app = QtWidgets.QApplication(sys.argv)
             what_plots = whatPlots(self.plots, self.plot_order, self.hdrs, self.spacers,
                                    self.load_growth, self.base_year, self.load_year,
                                    self.iterations, self.storage, self.discharge,
@@ -2257,8 +2264,8 @@ class PowerModel():
         if self.plots['save_data']:
             if self.data_file == '':
                 data_file = 'Power_Table_%s.xls' % \
-                            str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),
-                                'yyyy-MM-dd_hhmm'))
+                            QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),
+                            'yyyy-MM-dd_hhmm')
             else:
                 data_file = self.data_file
             stnsh = {}
@@ -2598,12 +2605,12 @@ class PowerModel():
                         if self.data_file == '':
                             if year is None:
                                 data_file = 'Power_Detail_%s%s.xls' % ( dos[l] ,
-                                str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),
-                                    'yyyy-MM-dd_hhmm')))
+                                QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),
+                                'yyyy-MM-dd_hhmm'))
                             else:
                                 data_file = 'Power_Detail_%s%s_%s.xls' % ( dos[l] , str(year),
-                                str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),
-                                    'yyyy-MM-dd_hhmm')))
+                                QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),
+                                'yyyy-MM-dd_hhmm'))
                         else:
                              data_file = self.data_file
                         keys = []

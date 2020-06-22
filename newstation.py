@@ -24,7 +24,7 @@ import os
 import sys
 
 import configparser  # decode .ini file
-from PyQt4 import QtGui, QtCore
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 from parents import getParents
 from getmodels import getModelFile
@@ -33,16 +33,18 @@ from station import Station
 from turbine import Turbine
 
 
-class ClickableQLabel(QtGui.QLabel):
+class ClickableQLabel(QtWidgets.QLabel):
+    clicked = QtCore.pyqtSignal()
+
     def __init(self, parent):
         QLabel.__init__(self, parent)
 
     def mousePressEvent(self, event):
-        QtGui.QApplication.widgetAt(event.globalPos()).setFocus()
-        self.emit(QtCore.SIGNAL('clicked()'))
+        QtWidgets.QApplication.widgetAt(event.globalPos()).setFocus()
+        self.clicked.emit()
 
 
-class AnObject(QtGui.QDialog):
+class AnObject(QtWidgets.QDialog):
 
     def get_config(self):
         config = configparser.RawConfigParser()
@@ -153,8 +155,8 @@ class AnObject(QtGui.QDialog):
         self.turbines = [['', '', 0., 0.]]
         #                 name, class, rotor, size
        #  self.turbine_class = ['']
-        grid = QtGui.QGridLayout()
-        turbcombo = QtGui.QComboBox(self)
+        grid = QtWidgets.QGridLayout()
+        turbcombo = QtWidgets.QComboBox(self)
         if os.path.exists(self.sam_file):
             sam = open(self.sam_file)
             sam_turbines = csv.DictReader(sam)
@@ -217,13 +219,13 @@ class AnObject(QtGui.QDialog):
                     got_turbine = True
         if not got_turbine:
             turbcombo.setCurrentIndex(j)
-        techcombo = QtGui.QComboBox(self)
+        techcombo = QtWidgets.QComboBox(self)
         for i in range(len(self.technologies)):
             techcombo.addItem(self.technologies[i])
             if self.technologies[i] == self.anobject.technology:
                 techcombo.setCurrentIndex(i)
         if self.scenarios is not None:
-            scencombo = QtGui.QComboBox(self)
+            scencombo = QtWidgets.QComboBox(self)
             for i in range(len(self.scenarios)):
                 scencombo.addItem(self.scenarios[i])
                 if self.scenarios[i] == self.anobject.scenario:
@@ -232,9 +234,9 @@ class AnObject(QtGui.QDialog):
             if self.field[i] == 'turbine':
                 self.label.append(ClickableQLabel(self.field[i].title() + ': (Name order)'))
                 self.label[-1].setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
-                self.connect(self.label[-1], QtCore.SIGNAL('clicked()'), self.turbineSort)
+                self.label[-1].clicked.connect(self.turbineSort)
             else:
-                self.label.append(QtGui.QLabel(self.field[i].title() + ':'))
+                self.label.append(QtWidgets.QLabel(self.field[i].title() + ':'))
             if i == 0:
                 metrics.append(self.label[-1].fontMetrics())
                 if metrics[0].boundingRect(self.label[-1].text()).width() > widths[0]:
@@ -243,7 +245,7 @@ class AnObject(QtGui.QDialog):
         self.capacity_was = 0.0
         self.no_turbines_was = 0
         self.turbine_was = ''
-        self.turbine_classd = QtGui.QLabel('')
+        self.turbine_classd = QtWidgets.QLabel('')
         self.show_hide = {}
         units = {'area': 'sq. Km', 'capacity': 'MW'}
         for i in range(len(self.field)):
@@ -259,7 +261,7 @@ class AnObject(QtGui.QDialog):
                 self.field_type.append('str')
             if self.field[i] == 'name':
                 self.name = attr
-                self.edit.append(QtGui.QLineEdit(self.name))
+                self.edit.append(QtWidgets.QLineEdit(self.name))
                 metrics.append(self.label[-1].fontMetrics())
             elif self.field[i] == 'technology':
                 self.techcomb = techcombo
@@ -267,19 +269,20 @@ class AnObject(QtGui.QDialog):
                 self.techcomb.currentIndexChanged.connect(self.technologyChanged)
             elif self.field[i] == 'lat':
                 self.lat = attr
-                self.edit.append(QtGui.QLineEdit(str(self.lat)))
+                self.edit.append(QtWidgets.QLineEdit(str(self.lat)))
             elif self.field[i] == 'lon':
                 self.lon = attr
-                self.edit.append(QtGui.QLineEdit(str(self.lon)))
+                self.edit.append(QtWidgets.QLineEdit(str(self.lon)))
             elif self.field[i] == 'capacity':
                 self.capacity = attr
                 self.capacity_was = attr
-                self.edit.append(QtGui.QDoubleSpinBox())  # QtGui.QLineEdit(str(self.capacity)))
+                self.edit.append(QtWidgets.QDoubleSpinBox())  # QtWidgets.QLineEdit(str(self.capacity)))
                 self.edit[-1].setRange(0, 10000)
                 self.edit[-1].setValue(self.capacity)
                 self.edit[-1].setDecimals(3)
             elif self.field[i] == 'turbine':
-                if str(self.techcomb.currentText()).find('Wind') < 0 and str(self.techcomb.currentText()).find('Offshore') < 0 \
+                if self.techcomb.currentText().find('Wind') < 0 \
+                  and self.techcomb.currentText().find('Offshore') < 0 \
                   and self.techcomb.currentText() != '':
                     turbcombo.setCurrentIndex(0)
                 self.turbine = turbcombo
@@ -292,16 +295,16 @@ class AnObject(QtGui.QDialog):
             elif self.field[i] == 'rotor':
                 self.rotor = attr
                 self.show_hide['rotor'] = len(self.edit)
-                self.edit.append(QtGui.QLineEdit(str(self.rotor)))
+                self.edit.append(QtWidgets.QLineEdit(str(self.rotor)))
                 self.edit[-1].setEnabled(False)
-                self.curve = QtGui.QPushButton('Show Power Curve', self)
+                self.curve = QtWidgets.QPushButton('Show Power Curve', self)
                 grid.addWidget(self.curve, i + 1, 2)
                 self.curve.clicked.connect(self.curveClicked)
             elif self.field[i] == 'no_turbines':
                 self.no_turbines = attr
                 self.no_turbines_was = attr
                 self.show_hide['no_turbines'] = len(self.edit)
-                self.edit.append(QtGui.QSpinBox())  # QtGui.QLineEdit(str(self.no_turbines)))
+                self.edit.append(QtWidgets.QSpinBox())  # QtWidgets.QLineEdit(str(self.no_turbines)))
                 self.edit[-1].setRange(0, 299)
                 if self.no_turbines == '':
                     self.edit[-1].setValue(0)
@@ -309,12 +312,12 @@ class AnObject(QtGui.QDialog):
                     self.edit[-1].setValue(int(self.no_turbines))
             elif self.field[i] == 'area':
                 self.area = attr
-                self.edit.append(QtGui.QLineEdit(str(self.area)))
+                self.edit.append(QtWidgets.QLineEdit(str(self.area)))
                 self.edit[-1].setEnabled(False)
             elif self.field[i] == 'scenario':
                 self.scenario = attr
                 if self.scenarios is None:
-                    self.edit.append(QtGui.QLineEdit(self.scenario))
+                    self.edit.append(QtWidgets.QLineEdit(self.scenario))
                     self.edit[-1].setEnabled(False)
                 else:
                     self.scencomb = scencombo
@@ -322,40 +325,40 @@ class AnObject(QtGui.QDialog):
                     self.edit.append(self.scencomb)
             elif self.field[i] == 'power_file':
                 self.power_file = attr
-                self.edit.append(QtGui.QLineEdit(self.power_file))
+                self.edit.append(QtWidgets.QLineEdit(self.power_file))
             elif self.field[i] == 'grid_line':
                 self.grid_line = attr
                 if attr is not None:
-                    self.edit.append(QtGui.QLineEdit(self.grid_line))
+                    self.edit.append(QtWidgets.QLineEdit(self.grid_line))
                 else:
-                    self.edit.append(QtGui.QLineEdit(''))
+                    self.edit.append(QtWidgets.QLineEdit(''))
             elif self.field[i] == 'storage_hours':
                 self.storage_hours = attr
                 self.show_hide['storage_hours'] = len(self.edit)
                 if attr is not None:
-                    self.edit.append(QtGui.QLineEdit(str(self.storage_hours)))
+                    self.edit.append(QtWidgets.QLineEdit(str(self.storage_hours)))
                 else:
                     try:
-                        if str(self.techcomb.currentText()) == 'CST':
-                            self.edit.append(QtGui.QLineEdit(str(self.cst_tshours)))
+                        if self.techcomb.currentText() == 'CST':
+                            self.edit.append(QtWidgets.QLineEdit(str(self.cst_tshours)))
                         else:
-                            self.edit.append(QtGui.QLineEdit(str(self.st_tshours)))
+                            self.edit.append(QtWidgets.QLineEdit(str(self.st_tshours)))
                     except:
                         pass
             elif self.field[i] == 'direction':
                 self.direction = attr
                 self.show_hide['direction'] = len(self.edit)
                 if attr is not None:
-                    self.edit.append(QtGui.QLineEdit(str(self.direction)))
+                    self.edit.append(QtWidgets.QLineEdit(str(self.direction)))
                 else:
-                    self.edit.append(QtGui.QLineEdit(''))
+                    self.edit.append(QtWidgets.QLineEdit(''))
             elif self.field[i] == 'tilt':
                 self.tilt = attr
                 self.show_hide['tilt'] = len(self.edit)
                 if attr is not None:
-                    self.edit.append(QtGui.QLineEdit(str(self.tilt)))
+                    self.edit.append(QtWidgets.QLineEdit(str(self.tilt)))
                 else:
-                    self.edit.append(QtGui.QLineEdit(''))
+                    self.edit.append(QtWidgets.QLineEdit(''))
             try:
                 if metrics[1].boundingRect(self.edit[-1].text()).width() > widths[1]:
                     widths[1] = metrics[1].boundingRect(self.edit[-1].text()).width()
@@ -363,13 +366,13 @@ class AnObject(QtGui.QDialog):
                 pass
             grid.addWidget(self.edit[-1], i + 1, 1)
             if self.field[i] in list(units.keys()):
-                grid.addWidget(QtGui.QLabel(units[self.field[i]]), i + 1, 2)
+                grid.addWidget(QtWidgets.QLabel(units[self.field[i]]), i + 1, 2)
         self.technologyChanged(self.techcomb.currentIndex)
         grid.setColumnMinimumWidth(0, widths[0] + 10)
         grid.setColumnMinimumWidth(1, widths[1] + 10)
         grid.setColumnMinimumWidth(2, 30)
         i += 1
-        self.message = QtGui.QLabel('')
+        self.message = QtWidgets.QLabel('')
         msg_font = self.message.font()
         msg_font.setBold(True)
         self.message.setFont(msg_font)
@@ -378,16 +381,16 @@ class AnObject(QtGui.QDialog):
         self.message.setPalette(msg_palette)
         grid.addWidget(self.message, i + 1, 0, 1, 2)
         i += 1
-        quit = QtGui.QPushButton("Quit", self)
+        quit = QtWidgets.QPushButton("Quit", self)
         grid.addWidget(quit, i + 1, 0)
         quit.clicked.connect(self.quitClicked)
-        save = QtGui.QPushButton("Save && Exit", self)
+        save = QtWidgets.QPushButton("Save && Exit", self)
         grid.addWidget(save, i + 1, 1)
         save.clicked.connect(self.saveClicked)
         self.setLayout(grid)
         self.resize(widths[0] + widths[1] + 40, heights * i)
         self.setWindowTitle('SIREN - Edit ' + getattr(self.anobject, '__module__'))
-        QtGui.QShortcut(QtGui.QKeySequence("q"), self, self.quitClicked)
+        QtWidgets.QShortcut(QtGui.QKeySequence("q"), self, self.quitClicked)
        #  self.connect(self, SIGNAL('status_text'), self.setStatusText)
         # self.emit(SIGNAL('status_text'), 'Well Hello!')
 
@@ -397,7 +400,8 @@ class AnObject(QtGui.QDialog):
         pv_fields = ['direction', 'tilt']
         show_fields = []
         hide_fields = []
-        if str(self.techcomb.currentText()).find('Wind') >= 0 or str(self.techcomb.currentText()).find('Offshore') >= 0:
+        if self.techcomb.currentText().find('Wind') >= 0 \
+          or self.techcomb.currentText().find('Offshore') >= 0:
             hide_fields.append(cst_fields)
             hide_fields.append(pv_fields)
             show_fields.append(wind_fields)
@@ -406,11 +410,11 @@ class AnObject(QtGui.QDialog):
         else:
             self.curve.hide()
             self.turbine_classd.hide()
-            if str(self.techcomb.currentText()) in ['CST', 'Solar Thermal']:
+            if self.techcomb.currentText() in ['CST', 'Solar Thermal']:
                 show_fields.append(cst_fields)
                 hide_fields.append(pv_fields)
                 hide_fields.append(wind_fields)
-            elif 'PV' in str(self.techcomb.currentText()):
+            elif 'PV' in self.techcomb.currentText():
                 hide_fields.append(cst_fields)
                 show_fields.append(pv_fields)
                 hide_fields.append(wind_fields)
@@ -431,7 +435,7 @@ class AnObject(QtGui.QDialog):
                 self.edit[self.show_hide[show_fields[i][j]]].show()
                 if show_fields[i][j] != 'rotor':
                     self.edit[self.show_hide[show_fields[i][j]]].setEnabled(True)
-        self.technology = str(self.techcomb.currentText())
+        self.technology = self.techcomb.currentText()
 
     def scenarioChanged(self, val):
         self.scenario = self.scencomb.currentText()
@@ -471,8 +475,8 @@ class AnObject(QtGui.QDialog):
         self.statusBar().showMessage(text)
 
     def curveClicked(self):
-        if str(self.turbine.currentText()) != '':
-            Turbine(str(self.turbine.currentText())).PowerCurve()
+        if self.turbine.currentText() != '':
+            Turbine(self.turbine.currentText()).PowerCurve()
         return
 
     def quitClicked(self):
@@ -486,7 +490,7 @@ class AnObject(QtGui.QDialog):
             except:
                 continue
             self.edit[i].setFocus()
-            if isinstance(self.edit[i], QtGui.QLineEdit):
+            if isinstance(self.edit[i], QtWidgets.QLineEdit):
                 if self.field[i] == 'direction' and 'PV' in self.technology:
                     try:
                         setattr(self, self.field[i], int(self.edit[i].text()))
@@ -496,7 +500,7 @@ class AnObject(QtGui.QDialog):
                             self.message.setText('Error with ' + self.field[i].title() + ' field')
                             return
                     except:
-                        setattr(self, self.field[i], str(self.edit[i].text()))
+                        setattr(self, self.field[i], self.edit[i].text())
                         if self.direction.upper() in ['', 'N', 'NNE', 'NE', 'ENE', 'E', 'ESE',
                                                       'SE', 'SSE', 'S', 'SSW', 'SW',
                                                       'WSW', 'W', 'WNW', 'NW', 'NNW']:
@@ -545,14 +549,14 @@ class AnObject(QtGui.QDialog):
                         setattr(self, self.field[i], self.edit[i].text())
                 else:
                     setattr(self, self.field[i], self.edit[i].text())
-            elif isinstance(self.edit[i], QtGui.QComboBox):
-                setattr(self, self.field[i], str(self.edit[i].currentText()))
-                if self.field[i] == 'technology' and str(self.edit[i].currentText()) == '':
+            elif isinstance(self.edit[i], QtWidgets.QComboBox):
+                setattr(self, self.field[i], self.edit[i].currentText())
+                if self.field[i] == 'technology' and self.edit[i].currentText() == '':
                     self.message.setText('Error with ' + self.field[i].title() + '. Choose technology')
                     return
-            elif isinstance(self.edit[i], QtGui.QDoubleSpinBox):
+            elif isinstance(self.edit[i], QtWidgets.QDoubleSpinBox):
                 setattr(self, self.field[i], self.edit[i].value())
-            elif isinstance(self.edit[i], QtGui.QSpinBox):
+            elif isinstance(self.edit[i], QtWidgets.QSpinBox):
                 setattr(self, self.field[i], self.edit[i].value())
         if self.technology.find('Wind') < 0 and self.technology.find('Offshore') < 0:
             self.rotor = 0.0
@@ -592,7 +596,7 @@ class AnObject(QtGui.QDialog):
 
     def getValues(self):
         if self.save:
-            station = Station(str(self.name), self.technology, self.lat, self.lon, self.capacity, self.turbine, self.rotor,
+            station = Station(self.name, self.technology, self.lat, self.lon, self.capacity, self.turbine, self.rotor,
                       self.no_turbines, self.area, self.scenario, power_file=self.power_file)
             if self.grid_line is not None:
                 station.grid_line = self.grid_line

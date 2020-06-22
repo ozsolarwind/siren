@@ -132,7 +132,7 @@ def getDHI(ghi=0, dni=0, hour=0, lat=0, azimuth=0., tilt=0., reflectance=0.2, de
         lat_rad = latitude * pi / 180
         dec_rad = declination_angle * pi / 180
         sin_sun_elevation = sin(lat_rad) * sin(dec_rad) + cos(lat_rad) * cos(dec_rad) * cos(hour_angle * pi / 180)
-        dhi = (ghi / sin_sun_elevation - dni) * sin_sun_elevation
+        dhi = ghi - dni * sin_sun_elevation
         if dhi < 0:
             return 0
         return round(dhi, 1)

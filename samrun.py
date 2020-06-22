@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2020 Sustainable Energy Now Inc., Angus King
 #
 #  samrun.py - This file is part of SIREN.
 #
@@ -20,13 +20,12 @@
 #
 
 import sys
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 import subprocess as sp
 
 import ssc   # contains all Python classes for accessing ssc
 
 from senuser import getUser
-
 
 def spaceSplit(string, dropquote=False):
     last = 0
@@ -53,7 +52,7 @@ def spaceSplit(string, dropquote=False):
     return splits
 
 
-class RptDialog(QtGui.QDialog):
+class RptDialog(QtWidgets.QDialog):
     def __init__(self, parms, return_code, output, comment=None, parent=None):
         super(RptDialog, self).__init__()
         self.parms = parms
@@ -116,32 +115,30 @@ class RptDialog(QtGui.QDialog):
             if len(self.lines) < 1:
                 self.close
                 return
-        QtGui.QDialog.__init__(self, parent)
-        self.saveButton = QtGui.QPushButton(self.tr('&Save'))
-        self.cancelButton = QtGui.QPushButton(self.tr('Cancel'))
-        buttonLayout = QtGui.QHBoxLayout()
+        QtWidgets.QDialog.__init__(self, parent)
+        self.saveButton = QtWidgets.QPushButton(self.tr('&Save'))
+        self.cancelButton = QtWidgets.QPushButton(self.tr('Cancel'))
+        buttonLayout = QtWidgets.QHBoxLayout()
         buttonLayout.addStretch(1)
         buttonLayout.addWidget(self.saveButton)
         buttonLayout.addWidget(self.cancelButton)
-        self.connect(self.saveButton, QtCore.SIGNAL('clicked()'), self,
-                     QtCore.SLOT('accept()'))
-        self.connect(self.cancelButton, QtCore.SIGNAL('clicked()'),
-                     self, QtCore.SLOT('reject()'))
-        self.widget = QtGui.QTextEdit()
+        self.saveButton.clicked.connect(self.accept)
+        self.cancelButton.clicked.connect(self.reject)
+        self.widget = QtWidgets.QTextEdit()
         self.widget.setFont(QtGui.QFont('Courier New', 10))
         fnt = self.widget.fontMetrics()
         ln = (max_line + 5) * fnt.maxWidth()
         ln2 = (line_cnt + 2) * fnt.height()
-        screen = QtGui.QDesktopWidget().availableGeometry()
+        screen = QtWidgets.QDesktopWidget().availableGeometry()
         if ln > screen.width() * .67:
             ln = int(screen.width() * .67)
         if ln2 > screen.height() * .67:
             ln2 = int(screen.height() * .67)
-        self.widget.setSizePolicy(QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding,
-            QtGui.QSizePolicy.Expanding))
+        self.widget.setSizePolicy(QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding,
+            QtWidgets.QSizePolicy.Expanding))
         self.widget.resize(ln, ln2)
         self.widget.setPlainText(self.lines)
-        layout = QtGui.QVBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.widget)
         layout.addLayout(buttonLayout)
         self.setLayout(layout)
@@ -174,12 +171,13 @@ class RptDialog(QtGui.QDialog):
                 save_filename += '_' + self.parms[k][i + 1:]
             else:
                 save_filename += '_' + self.parms[k]
-        save_filename += '_' + str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'yyyy-MM-dd_hhmm'))
+        save_filename += '_' + QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),
+                         'yyyy-MM-dd_hhmm')
         save_filename += '.txt'
-        fileName = QtGui.QFileDialog.getSaveFileName(self,
+        fileName = QtWidgets.QFileDialog.getSaveFileName(self,
                                          self.tr("QFileDialog.getSaveFileName()"),
                                          save_filename,
-                                         self.tr("All Files (*);;Text Files (*.txt)"))
+                                         self.tr("All Files (*);;Text Files (*.txt)"))[0]
         if fileName != '':
             s = open(fileName, 'w')
             s.write(self.lines)
@@ -209,7 +207,5 @@ class SAMRun():
 
 
 if "__main__" == __name__:
-    app = QtGui.QApplication(sys.argv)
-    fil = SAMRun('windpower_ak2.py', parameters=['Enercon E66_1870kw(MG)', '/home/' +
-      getUser() +
-     '/Dropbox/SEN stuff/Tech Team/SIREN App/SAM_wind_files/Albany_-35.0000_118.0000_2014.srw'])
+    app = QtWidgets.QApplication(sys.argv)
+    fil = SAMRun('<program>.py', parameters=['Enercon E66_1870kw(MG)', '<weather_file>'])

@@ -20,13 +20,13 @@
 #
 import os
 import sys
-from PyQt4 import QtGui, QtCore
+from PyQt5 import QtCore, QtGui, QtWidgets
 import configparser  # decode .ini file
 from editini import SaveIni
 from getmodels import getModelFile
 from senuser import techClean
 
-class Colours(QtGui.QDialog):
+class Colours(QtWidgets.QDialog):
 
     def __init__(self, ini_file=None, section='Colors', add_colour=False, palette=None):
         super(Colours, self).__init__()
@@ -90,9 +90,9 @@ class Colours(QtGui.QDialog):
                 pass
         if palette is not None and len(palette) > 0: # set palette of colours
             col = ['', '']
-            col[0] = QtGui.QColorDialog.getColor(QtCore.Qt.white, None, 'Select colour for item 1')
+            col[0] = QtWidgets.QColorDialog.getColor(QtCore.Qt.white, None, 'Select colour for item 1')
             if len(palette) > 1:
-                col[1] = QtGui.QColorDialog.getColor(QtCore.Qt.white, None,
+                col[1] = QtWidgets.QColorDialog.getColor(QtCore.Qt.white, None,
                          'Select colour for item ' + str(len(palette)))
                 inc = []
                 for c in range(3):
@@ -136,17 +136,17 @@ class Colours(QtGui.QDialog):
         self.height = [0, 0]
         self.item = []
         self.btn = []
-        self.grid = QtGui.QGridLayout()
-        self.grid.addWidget(QtGui.QLabel('Item'), 0, 0)
+        self.grid = QtWidgets.QGridLayout()
+        self.grid.addWidget(QtWidgets.QLabel('Item'), 0, 0)
         if self.map != '':
-            self.grid.addWidget(QtGui.QLabel('Colour for ' + self.map), 0, 1)
-        self.grid.addWidget(QtGui.QLabel('Default Colour'), 0, self.default_col)
+            self.grid.addWidget(QtWidgets.QLabel('Colour for ' + self.map), 0, 1)
+        self.grid.addWidget(QtWidgets.QLabel('Default Colour'), 0, self.default_col)
         i = 1
         if group_colours:
             bold = QtGui.QFont()
             bold.setBold(True)
             for gkey, gvalue in iter(sorted(colour_groups.items())):
-                label = QtGui.QLabel(gkey)
+                label = QtWidgets.QLabel(gkey)
                 label.setFont(bold)
                 self.grid.addWidget(label, i, 0)
                 i += 1
@@ -163,21 +163,21 @@ class Colours(QtGui.QDialog):
             self.colours[key] = ['', '']
             self.add_item(key, ['', ''], -1)
             self.showDialog(colour=key)
-        buttonLayout = QtGui.QHBoxLayout()
-        quit = QtGui.QPushButton('Quit', self)
+        buttonLayout = QtWidgets.QHBoxLayout()
+        quit = QtWidgets.QPushButton('Quit', self)
         quit.setMaximumWidth(70)
         buttonLayout.addWidget(quit)
         quit.clicked.connect(self.quitClicked)
-        save = QtGui.QPushButton('Save && Exit', self)
+        save = QtWidgets.QPushButton('Save && Exit', self)
         buttonLayout.addWidget(save)
         save.clicked.connect(self.saveClicked)
         if self.section != 'Colors':
-            add = QtGui.QPushButton('Add', self)
+            add = QtWidgets.QPushButton('Add', self)
             buttonLayout.addWidget(add)
             add.clicked.connect(self.addClicked)
-        buttons = QtGui.QFrame()
+        buttons = QtWidgets.QFrame()
         buttons.setLayout(buttonLayout)
-        layout = QtGui.QVBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
         layout.addLayout(self.grid)
         layout.addWidget(buttons)
         self.setLayout(layout)
@@ -185,14 +185,14 @@ class Colours(QtGui.QDialog):
         self.grid.setColumnMinimumWidth(1, self.width[0])
         if self.map != '':
             self.grid.setColumnMinimumWidth(2, self.width[0])
-        frame = QtGui.QFrame()
+        frame = QtWidgets.QFrame()
         frame.setLayout(layout)
-        self.scroll = QtGui.QScrollArea()
+        self.scroll = QtWidgets.QScrollArea()
         self.scroll.setWidgetResizable(True)
         self.scroll.setWidget(frame)
-        self.layout = QtGui.QVBoxLayout(self)
+        self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
-        screen = QtGui.QDesktopWidget().availableGeometry()
+        screen = QtWidgets.QDesktopWidget().availableGeometry()
        # if self.height[0] == 0:
         metrics = quit.fontMetrics()
         self.height[0] = metrics.boundingRect(quit.text()).height() + self.grid.verticalSpacing() * 3
@@ -209,20 +209,20 @@ class Colours(QtGui.QDialog):
      #   self.resize(640, 480)
         self.setWindowTitle('SIREN - Color dialog')
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
-        QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
+        QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
 
     def add_item(self, key, value, i):
         if i < 0:
             i = self.grid.rowCount() # could possibly use this always just not sure about colour groups
-            screen = QtGui.QDesktopWidget().availableGeometry()
+            screen = QtWidgets.QDesktopWidget().availableGeometry()
             if self.height[1] + self.height[0] < int(screen.height() * .9):
                 width = max(self.width[1], self.frameGeometry().width())
                 self.height[1] += self.height[0]
                 self.resize(width, self.height[1])
         wht = techClean(key, full=True)
-        self.grid.addWidget(QtGui.QLabel(wht), i, 0)
+        self.grid.addWidget(QtWidgets.QLabel(wht), i, 0)
         if self.map != '':
-            self.btn.append(QtGui.QPushButton(key, self))
+            self.btn.append(QtWidgets.QPushButton(key, self))
             self.btn[-1].clicked.connect(self.showDialog)
             if value[0] != '':
                 self.btn[-1].setStyleSheet('QPushButton {background-color: %s; color: %s;}' %
@@ -233,7 +233,7 @@ class Colours(QtGui.QDialog):
                 self.width[0] = metrics.boundingRect(self.btn[-1].text()).width()
             if metrics.boundingRect(self.btn[-1].text()).height() > self.height[0]:
                 self.height[0] = metrics.boundingRect(self.btn[-1].text()).height() + self.grid.verticalSpacing() * 2
-        self.btn.append(QtGui.QPushButton(key + '_base', self))
+        self.btn.append(QtWidgets.QPushButton(key + '_base', self))
         metrics = self.btn[-1].fontMetrics()
         if i < 2:
             self.default_style = self.btn[-1].styleSheet()
@@ -252,15 +252,15 @@ class Colours(QtGui.QDialog):
             for btn in self.btn:
                 if btn.hasFocus():
                     if btn.text()[-5:] != '_base':
-                        key = str(btn.text())
+                        key = btn.text()
                         if self.colours[key][0] != '':
                             self.colours[key] = ['delete', self.colours[key][1]]
                         btn.setStyleSheet(self.default_style)
                     elif self.section != 'Colors':
                         if btn.text()[-5:] == '_base':
-                            key = str(btn.text()[:-5])
+                            key = btn.text()[:-5]
                         else:
-                            key = str(btn.text())
+                            key = btn.text()
                         self.colours[key] = ['', '']
                         btn.setStyleSheet(self.default_style)
                         break
@@ -269,18 +269,18 @@ class Colours(QtGui.QDialog):
         sender = self.sender()
         if not colour:
             if sender.text()[-5:] == '_base':
-                key = str(sender.text())[:-5]
+                key = sender.text()[:-5]
                 ndx = 1
             else:
-                key = str(sender.text())
+                key = sender.text()
                 ndx = 0
         else:
             key = colour
             ndx = 1
         if self.colours[key][ndx] != '' and self.colours[key][ndx] != 'delete':
-            col = QtGui.QColorDialog.getColor(self.colours[key][ndx], None, 'Select colour for ' + key.title())
+            col = QtWidgets.QColorDialog.getColor(self.colours[key][ndx], None, 'Select colour for ' + key.title())
         else:
-            col = QtGui.QColorDialog.getColor(QtGui.QColor('white'), None, 'Select colour for ' + key.title())
+            col = QtWidgets.QColorDialog.getColor(QtGui.QColor('white'), None, 'Select colour for ' + key.title())
         if col.isValid():
             if not colour:
                 if ndx == 0:
@@ -302,7 +302,7 @@ class Colours(QtGui.QDialog):
         self.close()
 
     def addClicked(self):
-        text, ok = QtGui.QInputDialog.getText(self, 'Add Colour Item', 'Enter name for colour item:')
+        text, ok = QtWidgets.QInputDialog.getText(self, 'Add Colour Item', 'Enter name for colour item:')
         if ok:
             key = text.lower().replace(' ', '_')
             self.colours[key] = ['', '']
@@ -316,7 +316,7 @@ class Colours(QtGui.QDialog):
                 if value[i] == 'delete':
                     lines[i].append(key + '=')
                 elif value[i] != '':
-                    lines[i].append(key + '=' + str(value[i].name()))
+                    lines[i].append(key + '=' + value[i].name())
                 elif self.section != 'Colors':
                     lines[i].append(key + '=')
         if len(lines[0]) > 0:

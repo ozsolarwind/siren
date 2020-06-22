@@ -21,7 +21,7 @@
 
 import os
 import sys
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 import configparser   # decode .ini file
 import xlwt
 
@@ -114,16 +114,18 @@ class makeIndex():
         self.log += '%s created' % tgt_fil[tgt_fil.rfind('/') + 1:]
 
 
-class ClickableQLabel(QtGui.QLabel):
+class ClickableQLabel(QtWidgets.QLabel):
+    clicked = QtCore.pyqtSignal()
+
     def __init(self, parent):
         QLabel.__init__(self, parent)
 
     def mousePressEvent(self, event):
-        QtGui.QApplication.widgetAt(event.globalPos()).setFocus()
-        self.emit(QtCore.SIGNAL('clicked()'))
+        QtWidgets.QApplication.widgetAt(event.globalPos()).setFocus()
+        self.clicked.emit()
 
 
-class getParms(QtGui.QWidget):
+class getParms(QtWidgets.QWidget):
 
     def __init__(self, help='help.html'):
         super(getParms, self).__init__()
@@ -182,62 +184,62 @@ class getParms(QtGui.QWidget):
             self.windindex = ''
         if self.windindex == '':
             self.windindex = self.windfiles + '/wind_index.xls'
-        self.grid = QtGui.QGridLayout()
-        self.grid.addWidget(QtGui.QLabel('Solar Folder:'), 1, 0)
+        self.grid = QtWidgets.QGridLayout()
+        self.grid.addWidget(QtWidgets.QLabel('Solar Folder:'), 1, 0)
         self.ssource = ClickableQLabel()
         self.ssource.setText(self.solarfiles)
         self.ssource.setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
-        self.connect(self.ssource, QtCore.SIGNAL('clicked()'), self.sdirChanged)
+        self.ssource.clicked.connect(self.sdirChanged)
         self.grid.addWidget(self.ssource, 1, 1, 1, 4)
-        self.grid.addWidget(QtGui.QLabel('Solar Index:'), 2, 0)
+        self.grid.addWidget(QtWidgets.QLabel('Solar Index:'), 2, 0)
         self.starget = ClickableQLabel()
         self.starget.setText(self.solarindex)
         self.starget.setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
-        self.connect(self.starget, QtCore.SIGNAL('clicked()'), self.stgtChanged)
+        self.starget.clicked.connect(self.stgtChanged)
         self.grid.addWidget(self.starget, 2, 1, 1, 4)
-        self.grid.addWidget(QtGui.QLabel('Wind Folder:'), 3, 0)
+        self.grid.addWidget(QtWidgets.QLabel('Wind Folder:'), 3, 0)
         self.wsource = ClickableQLabel()
         self.wsource.setText(self.windfiles)
         self.wsource.setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
-        self.connect(self.wsource, QtCore.SIGNAL('clicked()'), self.wdirChanged)
+        self.wsource.clicked.connect(self.wdirChanged)
         self.grid.addWidget(self.wsource, 3, 1, 1, 4)
-        self.grid.addWidget(QtGui.QLabel('Wind Index:'), 4, 0)
+        self.grid.addWidget(QtWidgets.QLabel('Wind Index:'), 4, 0)
         self.wtarget = ClickableQLabel()
         self.wtarget.setText(self.windindex)
         self.wtarget.setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
-        self.connect(self.wtarget, QtCore.SIGNAL('clicked()'), self.wtgtChanged)
+        self.wtarget.clicked.connect(self.wtgtChanged)
         self.grid.addWidget(self.wtarget, 4, 1, 1, 4)
-        self.grid.addWidget(QtGui.QLabel('Properties:'), 5, 0)
-        self.properties = QtGui.QLineEdit()
+        self.grid.addWidget(QtWidgets.QLabel('Properties:'), 5, 0)
+        self.properties = QtWidgets.QLineEdit()
         self.properties.setReadOnly(True)
         self.grid.addWidget(self.properties, 5, 1, 1, 4)
-        self.log = QtGui.QLabel(' ')
+        self.log = QtWidgets.QLabel(' ')
         self.grid.addWidget(self.log, 6, 1, 1, 4)
-        quit = QtGui.QPushButton('Quit', self)
+        quit = QtWidgets.QPushButton('Quit', self)
         self.grid.addWidget(quit, 7, 0)
         quit.clicked.connect(self.quitClicked)
-        QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
-        dosolar = QtGui.QPushButton('Produce Solar Index', self)
+        QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
+        dosolar = QtWidgets.QPushButton('Produce Solar Index', self)
         wdth = dosolar.fontMetrics().boundingRect(dosolar.text()).width() + 9
         dosolar.setMaximumWidth(wdth)
         self.grid.addWidget(dosolar, 7, 1)
         dosolar.clicked.connect(self.dosolarClicked)
-        dowind = QtGui.QPushButton('Produce Wind Index', self)
+        dowind = QtWidgets.QPushButton('Produce Wind Index', self)
         dowind.setMaximumWidth(wdth)
         self.grid.addWidget(dowind, 7, 2)
         dowind.clicked.connect(self.dowindClicked)
-        help = QtGui.QPushButton('Help', self)
+        help = QtWidgets.QPushButton('Help', self)
         help.setMaximumWidth(wdth)
         self.grid.addWidget(help, 7, 3)
         help.clicked.connect(self.helpClicked)
-        QtGui.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
+        QtWidgets.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
         self.grid.setColumnStretch(3, 5)
-        frame = QtGui.QFrame()
+        frame = QtWidgets.QFrame()
         frame.setLayout(self.grid)
-        self.scroll = QtGui.QScrollArea()
+        self.scroll = QtWidgets.QScrollArea()
         self.scroll.setWidgetResizable(True)
         self.scroll.setWidget(frame)
-        self.layout = QtGui.QVBoxLayout(self)
+        self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
         self.setWindowTitle('SIREN - indexweather (' + fileVersion() + ') - Make resource grid file')
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
@@ -247,41 +249,41 @@ class getParms(QtGui.QWidget):
 
     def center(self):
         frameGm = self.frameGeometry()
-        screen = QtGui.QApplication.desktop().screenNumber(QtGui.QApplication.desktop().cursor().pos())
-        centerPoint = QtGui.QApplication.desktop().availableGeometry(screen).center()
+        screen = QtWidgets.QApplication.desktop().screenNumber(QtWidgets.QApplication.desktop().cursor().pos())
+        centerPoint = QtWidgets.QApplication.desktop().availableGeometry(screen).center()
         frameGm.moveCenter(centerPoint)
         self.move(frameGm.topLeft())
 
     def sdirChanged(self):
         curdir = self.ssource.text()
-        newdir = str(QtGui.QFileDialog.getExistingDirectory(self, 'Choose Solar Folder',
-                 curdir, QtGui.QFileDialog.ShowDirsOnly))
+        newdir = str(QtWidgets.QFileDialog.getExistingDirectory(self, 'Choose Solar Folder',
+                 curdir, QtWidgets.QFileDialog.ShowDirsOnly))
         if newdir != '':
             self.ssource.setText(newdir)
 
     def wdirChanged(self):
         curdir = self.wsource.text()
-        newdir = str(QtGui.QFileDialog.getExistingDirectory(self, 'Choose Wind Folder',
-                 curdir, QtGui.QFileDialog.ShowDirsOnly))
+        newdir = str(QtWidgets.QFileDialog.getExistingDirectory(self, 'Choose Wind Folder',
+                 curdir, QtWidgets.QFileDialog.ShowDirsOnly))
         if newdir != '':
             self.wsource.setText(newdir)
 
     def stgtChanged(self):
         curtgt = self.starget.text()
-        newtgt = str(QtGui.QFileDialog.getSaveFileName(self, 'Choose Solar Index',
-                 curtgt))
+        newtgt = str(QtWidgets.QFileDialog.getSaveFileName(self, 'Choose Solar Index',
+                 curtgt))[0]
         if newtgt != '':
             self.starget.setText(newtgt)
 
     def wtgtChanged(self):
         curtgt = self.starget.text()
-        newtgt = str(QtGui.QFileDialog.getSaveFileName(self, 'Choose Wind Index',
-                 curtgt))
+        newtgt = str(QtWidgets.QFileDialog.getSaveFileName(self, 'Choose Wind Index',
+                 curtgt))[0]
         if newtgt != '':
             self.wtarget.setText(newtgt)
 
     def helpClicked(self):
-        dialog = displayobject.AnObject(QtGui.QDialog(), self.help,
+        dialog = displayobject.AnObject(QtWidgets.QDialog(), self.help,
                  title='Help for indexweather (' + fileVersion() + ')', section='index')
         dialog.exec_()
 
@@ -302,7 +304,7 @@ class getParms(QtGui.QWidget):
 
 
 if "__main__" == __name__:
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     if len(sys.argv) > 2:   # arguments
         src_dir_s = ''
         src_dir_w = ''

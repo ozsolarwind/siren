@@ -21,8 +21,8 @@
 
 import os
 import xlwt
-from PyQt4 import QtCore
-from PyQt4 import QtGui
+from PyQt5 import QtCore, QtWidgets
+from PyQt5 import QtGui, QtWidgets
 
 import displayobject
 from sirenicons import Icons
@@ -48,19 +48,18 @@ class FakeObject:
                 setattr(self, fields[f], fake_object[i])
 
 
-class Table(QtGui.QDialog):
+class Table(QtWidgets.QDialog):
     def __init__(self, objects, parent=None, fields=None, fossil=True, sumby=None, sumfields=None, units='', title=None,
                  save_folder='', edit=False, sortby=None, decpts=None, totfields=None, abbr=True):
         super(Table, self).__init__(parent)
         self.oclass = None
         if len(objects) == 0:
-            buttonLayout = QtGui.QVBoxLayout()
-            buttonLayout.addWidget(QtGui.QLabel('Nothing to display.'))
-            self.quitButton = QtGui.QPushButton(self.tr('&Quit'))
+            buttonLayout = QtWidgets.QVBoxLayout()
+            buttonLayout.addWidget(QtWidgets.QLabel('Nothing to display.'))
+            self.quitButton = QtWidgets.QPushButton(self.tr('&Quit'))
             buttonLayout.addWidget(self.quitButton)
-            self.connect(self.quitButton, QtCore.SIGNAL('clicked()'),
-                        self.quit)
-            QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quit)
+            self.quitButton.clicked.connect(self.quit)
+            QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.quit)
             self.setLayout(buttonLayout)
             return
         elif isinstance(objects, list) and isinstance(objects[0], list):
@@ -147,31 +146,27 @@ class Table(QtGui.QDialog):
                 msg = '(Left or right click row to display, ' + msg[1:]
         except:
             pass
-        buttonLayout = QtGui.QHBoxLayout()
-        self.message = QtGui.QLabel(msg)
-        self.quitButton = QtGui.QPushButton(self.tr('&Quit'))
+        buttonLayout = QtWidgets.QHBoxLayout()
+        self.message = QtWidgets.QLabel(msg)
+        self.quitButton = QtWidgets.QPushButton(self.tr('&Quit'))
         buttonLayout.addWidget(self.quitButton)
-        self.connect(self.quitButton, QtCore.SIGNAL('clicked()'),
-                    self.quit)
+        self.quitButton.clicked.connect(self.quit)
         if self.edit_table:
             if isinstance(objects, dict):
                 if fields[0] == 'property' or fields[0] == 'name':
-                    self.addButton = QtGui.QPushButton(self.tr('Add'))
+                    self.addButton = QtWidgets.QPushButton(self.tr('Add'))
                     buttonLayout.addWidget(self.addButton)
-                    self.connect(self.addButton, QtCore.SIGNAL('clicked()'),
-                                self.addtotbl)
-            self.replaceButton = QtGui.QPushButton(self.tr('Save'))
+                    self.addButton.clicked.connect(self.addtotbl)
+            self.replaceButton = QtWidgets.QPushButton(self.tr('Save'))
             buttonLayout.addWidget(self.replaceButton)
-            self.connect(self.replaceButton, QtCore.SIGNAL('clicked()'),
-                         self.replacetbl)
-        self.saveButton = QtGui.QPushButton(self.tr(self.title_word[1]))
+            self.replaceButton.clicked.connect(self.replacetbl)
+        self.saveButton = QtWidgets.QPushButton(self.tr(self.title_word[1]))
         buttonLayout.addWidget(self.saveButton)
-        self.connect(self.saveButton, QtCore.SIGNAL('clicked()'),
-                    self.saveit)
-        buttons = QtGui.QFrame()
+        self.saveButton.clicked.connect(self.saveit)
+        buttons = QtWidgets.QFrame()
         buttons.setLayout(buttonLayout)
-        layout = QtGui.QGridLayout()
-        self.table = QtGui.QTableWidget()
+        layout = QtWidgets.QGridLayout()
+        self.table = QtWidgets.QTableWidget()
         self.populate()
         if self.sumfields is None:
             self.table.setRowCount(len(self.entry))
@@ -191,20 +186,20 @@ class Table(QtGui.QDialog):
         self.headers = self.table.horizontalHeader()
         self.headers.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.headers.customContextMenuRequested.connect(self.header_click)
-        self.headers.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
+        self.headers.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
         self.table.verticalHeader().setVisible(False)
       #   self.table.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
         if self.edit_table:
-            self.table.setEditTriggers(QtGui.QAbstractItemView.CurrentChanged)
+            self.table.setEditTriggers(QtWidgets.QAbstractItemView.CurrentChanged)
             if self.fields[0] == 'name':
                 self.rows = self.table.verticalHeader()
                 self.rows.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
                 self.rows.customContextMenuRequested.connect(self.row_click)
-                self.rows.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
+                self.rows.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
                 self.table.verticalHeader().setVisible(True)
         else:
-            self.table.setEditTriggers(QtGui.QAbstractItemView.SelectedClicked)
-            self.table.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
+            self.table.setEditTriggers(QtWidgets.QAbstractItemView.SelectedClicked)
+            self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         layout.addWidget(self.table, 0, 0)
         layout.addWidget(self.message, 1, 0)
         layout.addWidget(buttons, 2, 0)
@@ -254,24 +249,24 @@ class Table(QtGui.QDialog):
                 if self.sumby is not None:
                     if self.sumby[0] == 'technology' and tkey != 'Total':
                         icon = self.icons.getIcon(tkey)
-                        icon_item = QtGui.QTableWidgetItem(str(tkey))
+                        icon_item = QtWidgets.QTableWidgetItem(str(tkey))
                         icon_item.setIcon(QtGui.QIcon(icon))
-                        self.table.setItem(rw, clk, QtGui.QTableWidgetItem(icon_item))
+                        self.table.setItem(rw, clk, QtWidgets.QTableWidgetItem(icon_item))
                     else:
-                        self.table.setItem(rw, clk, QtGui.QTableWidgetItem(str(tkey)))
+                        self.table.setItem(rw, clk, QtWidgets.QTableWidgetItem(str(tkey)))
                         if not isinstance(tkey, str):
                             self.table.item(rw, clk).setTextAlignment(130)  # x'82'
                 for f in range(len(self.sumfields)):
-                    self.table.setItem(rw, clv[f], QtGui.QTableWidgetItem(fmat_str[f].format(value[f])))
+                    self.table.setItem(rw, clv[f], QtWidgets.QTableWidgetItem(fmat_str[f].format(value[f])))
                     self.table.item(rw, clv[f]).setTextAlignment(130)  # x'82'
                     if clp[f] > 0 and totl[f] > 0:
-                        self.table.setItem(rw, clp[f], QtGui.QTableWidgetItem('{:.1%}'.format(float(value[f]) /
+                        self.table.setItem(rw, clp[f], QtWidgets.QTableWidgetItem('{:.1%}'.format(float(value[f]) /
                           float(totl[f])) + ' '))
                         self.table.item(rw, clp[f]).setTextAlignment(130)  # x'82'
             if self.totfields is not None:
                 for f in range(len(self.totfields)):
                     self.table.setItem(rw, clv[len(self.sumfields) + f],
-                        QtGui.QTableWidgetItem(fmat_str[len(self.sumfields) + f].format(self.totfields[f][1])))
+                        QtWidgets.QTableWidgetItem(fmat_str[len(self.sumfields) + f].format(self.totfields[f][1])))
                     self.table.item(rw, clv[len(self.sumfields) + f]).setTextAlignment(130)  # x'82'
         self.table.resizeColumnsToContents()
         width = 0
@@ -279,14 +274,14 @@ class Table(QtGui.QDialog):
             width += self.table.columnWidth(cl)
         width += 50
         height = self.table.rowHeight(1) * (self.table.rowCount() + 4)
-        screen = QtGui.QDesktopWidget().availableGeometry()
+        screen = QtWidgets.QDesktopWidget().availableGeometry()
         if height > (screen.height() - 70):
             height = screen.height() - 70
         self.setLayout(layout)
         size = QtCore.QSize(QtCore.QSize(int(width), int(height)))
         self.resize(size)
-        self.updated = QtCore.pyqtSignal(QtGui.QLabel)   # ??
-        QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quit)
+        self.updated = QtCore.pyqtSignal(QtWidgets.QLabel)   # ??
+        QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.quit)
         if self.edit_table:
             self.table.cellChanged.connect(self.item_changed)
         else:
@@ -526,9 +521,9 @@ class Table(QtGui.QDialog):
                 cl = self.fields.index(key)
                 if key == 'technology':
                     icon = self.icons.getIcon(value)
-                    icon_item = QtGui.QTableWidgetItem(value)
+                    icon_item = QtWidgets.QTableWidgetItem(value)
                     icon_item.setIcon(QtGui.QIcon(icon))
-                    self.table.setItem(rw, cl, QtGui.QTableWidgetItem(icon_item))
+                    self.table.setItem(rw, cl, QtWidgets.QTableWidgetItem(icon_item))
                 elif key == 'coordinates':
                     if len(value) > 2:
                         trick = '(%s, %s)+%s+(%s, %s)' % (value[0][0], value[0][1],
@@ -536,20 +531,20 @@ class Table(QtGui.QDialog):
                     else:
                         trick = '(%s, %s)(%s, %s)' % (value[0][0], value[0][1],
                                 value[-1][0], value[-1][1])
-                    self.table.setItem(rw, cl, QtGui.QTableWidgetItem(trick))
+                    self.table.setItem(rw, cl, QtWidgets.QTableWidgetItem(trick))
                 else:
                     if value is not None:
                         if isinstance(value, list):
                             fld = str(value[0])
                             for i in range(1, len(value)):
                                 fld = fld + ',' + str(value[i])
-                            self.table.setItem(rw, cl, QtGui.QTableWidgetItem(fld))
+                            self.table.setItem(rw, cl, QtWidgets.QTableWidgetItem(fld))
                         else:
-                            self.table.setItem(rw, cl, QtGui.QTableWidgetItem(value))
+                            self.table.setItem(rw, cl, QtWidgets.QTableWidgetItem(value))
                             if self.labels[key] != 'str':
                                 self.table.item(rw, cl).setTextAlignment(130)   # x'82'
                     else:
-                        self.table.setItem(rw, cl, QtGui.QTableWidgetItem(''))
+                        self.table.setItem(rw, cl, QtWidgets.QTableWidgetItem(''))
          #       if key == self.name or not self.edit_table:
                 if not self.edit_table:
                     self.table.item(rw, cl).setFlags(QtCore.Qt.ItemIsEnabled)
@@ -563,19 +558,19 @@ class Table(QtGui.QDialog):
 
     def row_click(self, position):
         row = self.rows.logicalIndexAt(position)
-        msgbox = QtGui.QMessageBox()
+        msgbox = QtWidgets.QMessageBox()
         msgbox.setWindowTitle('SIREN - Delete item')
-        msgbox.setText("Press Yes to delete '" + str(self.table.item(row, 0).text()) + "'")
-        msgbox.setIcon(QtGui.QMessageBox.Question)
-        msgbox.setStandardButtons(QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
+        msgbox.setText("Press Yes to delete '" + self.table.item(row, 0).text() + "'")
+        msgbox.setIcon(QtWidgets.QMessageBox.Question)
+        msgbox.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
         reply = msgbox.exec_()
-        if reply == QtGui.QMessageBox.Yes:
+        if reply == QtWidgets.QMessageBox.Yes:
             for i in range(len(self.entry)):
-                if self.entry[i]['name'] == str(self.table.item(row, 0).text()):
+                if self.entry[i]['name'] == self.table.item(row, 0).text():
                     del self.entry[i]
                     break
             for i in range(len(self.objects)):
-                if self.objects[i].name == str(self.table.item(row, 0).text()):
+                if self.objects[i].name == self.table.item(row, 0).text():
                     del self.objects[i]
                     break
             self.table.removeRow(row)
@@ -588,7 +583,7 @@ class Table(QtGui.QDialog):
             textedit = False
         else:
             textedit = True
-        dialog = displayobject.AnObject(QtGui.QDialog(), addproperty, readonly=False,
+        dialog = displayobject.AnObject(QtWidgets.QDialog(), addproperty, readonly=False,
                  textedit=textedit, title='Add ' + self.fields[0].title())
         dialog.exec_()
         if dialog.getValues()[self.fields[0]] != '' or 1 == 1:
@@ -623,7 +618,7 @@ class Table(QtGui.QDialog):
             try:
                 attr = getattr(thing, self.name)
                 if attr == self.entry[row][self.name]:
-                    dialog = displayobject.AnObject(QtGui.QDialog(), thing)
+                    dialog = displayobject.AnObject(QtWidgets.QDialog(), thing)
                     dialog.exec_()
                     break
             except:
@@ -632,11 +627,11 @@ class Table(QtGui.QDialog):
     def item_changed(self, row, col):
         if self.recur:
             return
-        self.entry[row][self.fields[col]] = str(self.table.item(row, col).text())
+        self.entry[row][self.fields[col]] = self.table.item(row, col).text()
         self.message.setText(' ')
         if self.labels[self.fields[col]] == 'int' or self.labels[self.fields[col]] == 'float':
             self.recur = True
-            tst = str(self.table.item(row, col).text().replace(',', ''))
+            tst = self.table.item(row, col).text().replace(',', '')
             if len(tst) < 1:
                 return
             mult = 1
@@ -652,7 +647,7 @@ class Table(QtGui.QDialog):
                     fmat_str = '{: >' + str(self.lens[self.fields[col]][0] \
                                + self.lens[self.fields[col]][1] + 1) + ',.' \
                                + str(self.lens[self.fields[col]][1]) + 'f}'
-                    self.table.setItem(row, col, QtGui.QTableWidgetItem(fmat_str.format(tst)))
+                    self.table.setItem(row, col, QtWidgets.QTableWidgetItem(fmat_str.format(tst)))
                     self.table.item(row, col).setTextAlignment(130)  # x'82'
                     self.recur = False
                     return
@@ -665,7 +660,7 @@ class Table(QtGui.QDialog):
                     fmat_str = '{: >' + str(self.lens[self.fields[col]][0] \
                                + self.lens[self.fields[col]][1] + 1) + ',.' \
                                + str(self.lens[self.fields[col]][1]) + 'f}'
-                    self.table.setItem(row, col, QtGui.QTableWidgetItem(fmat_str.format(tst)))
+                    self.table.setItem(row, col, QtWidgets.QTableWidgetItem(fmat_str.format(tst)))
                     self.table.item(row, col).setTextAlignment(130)  # x'82'
                     self.recur = False
                     return
@@ -688,12 +683,11 @@ class Table(QtGui.QDialog):
         else:
             iam = self.title
         data_file = '%s_Table_%s.xls' % (iam,
-                    str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'yyyy-MM-dd_hhmm')))
-        data_file = QtGui.QFileDialog.getSaveFileName(None, 'Save ' + iam + ' Table',
-                    self.save_folder + data_file, 'Excel Files (*.xls*);;CSV Files (*.csv)')
+                    QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'yyyy-MM-dd_hhmm'))
+        data_file = QtWidgets.QFileDialog.getSaveFileName(None, 'Save ' + iam + ' Table',
+                    self.save_folder + data_file, 'Excel Files (*.xls*);;CSV Files (*.csv)')[0]
         if data_file == '':
             return
-        data_file = str(data_file)
         if data_file[-4:] == '.csv' or data_file[-4:] == '.xls' or data_file[-5:] == '.xlsx':
             pass
         else:
@@ -709,7 +703,7 @@ class Table(QtGui.QDialog):
             for cl in range(self.table.columnCount()):
                 if cl > 0:
                     line += ','
-                hdr = str(self.table.horizontalHeaderItem(cl).text())
+                hdr = self.table.horizontalHeaderItem(cl).text()
                 if hdr[0] != '%':
                     txt = hdr
                     if ',' in txt:
@@ -728,15 +722,15 @@ class Table(QtGui.QDialog):
                     if cl > 0:
                         line += ','
                     if self.table.item(rw, cl) is not None:
-                        txt = str(self.table.item(rw, cl).text())
+                        txt = self.table.item(rw, cl).text()
                         if hdr_types[cl] == 'int':
                             try:
-                                txt = str(self.table.item(rw, cl).text()).strip()
+                                txt = self.table.item(rw, cl).text().strip()
                             except:
                                 pass
                         elif hdr_types[cl] == 'float':
                             try:
-                                txt = str(self.table.item(rw, cl).text()).strip()
+                                txt = self.table.item(rw, cl).text().strip()
                                 txt = txt.replace(',', '')
                             except:
                                 pass
@@ -748,12 +742,12 @@ class Table(QtGui.QDialog):
             tf.close()
         else:
             wb = xlwt.Workbook()
-            ws = wb.add_sheet(str(iam))
+            ws = wb.add_sheet(iam)
             hdr_types = []
             dec_fmts = []
             xl_lens = []
             for cl in range(self.table.columnCount()):
-                hdr = str(self.table.horizontalHeaderItem(cl).text())
+                hdr = self.table.horizontalHeaderItem(cl).text()
                 if hdr[0] != '%':
                     ws.write(0, cl, hdr)
                 txt = self.hdrs[hdr]
@@ -778,17 +772,17 @@ class Table(QtGui.QDialog):
             for rw in range(self.table.rowCount()):
                 for cl in range(self.table.columnCount()):
                     if self.table.item(rw, cl) is not None:
-                        valu = str(self.table.item(rw, cl).text())
+                        valu = self.table.item(rw, cl).text()
                         if hdr_types[cl] == 'int':
                             try:
-                                val1 = str(self.table.item(rw, cl).text()).strip()
+                                val1 = self.table.item(rw, cl).text().strip()
                                 val1 = val1.replace(',', '')
                                 valu = int(val1)
                             except:
                                 pass
                         elif hdr_types[cl] == 'float':
                             try:
-                                val1 = str(self.table.item(rw, cl).text()).strip()
+                                val1 = self.table.item(rw, cl).text().strip()
                                 val1 = val1.replace(',', '')
                                 valu = float(val1)
                             except:
@@ -812,11 +806,11 @@ class Table(QtGui.QDialog):
         if self.oclass is not None:
             for rw in range(self.table.rowCount()):
                 newdict = {}
-                key = str(self.table.item(rw, 0).text())
+                key = self.table.item(rw, 0).text()
                 for cl in range(1, self.table.columnCount()):
                     if self.labels[self.fields[cl]] == 'int' or self.labels[self.fields[cl]] == 'float':
                         try:
-                            tst = str(self.table.item(rw, cl).text()).strip().replace(',', '')
+                            tst = self.table.item(rw, cl).text().strip().replace(',', '')
                             if tst == '':
                                 tst = '0'
                             if self.labels[self.fields[cl]] == 'int':
@@ -826,19 +820,19 @@ class Table(QtGui.QDialog):
                         except:
                             valu = ''
                     else:
-                        valu = str(self.table.item(rw, cl).text())
+                        valu = self.table.item(rw, cl).text()
                     setattr(self.objects[rw], self.fields[cl], valu)
                     newdict[self.fields[cl]] = valu
                 self.replaced[key] = newdict
             self.close()
             return
         for rw in range(self.table.rowCount()):
-            key = str(self.table.item(rw, 0).text())
+            key = self.table.item(rw, 0).text()
             values = []
             for cl in range(1, self.table.columnCount()):
                 if self.table.item(rw, cl) is not None:
                     if self.labels[self.fields[cl]] == 'int' or self.labels[self.fields[cl]] == 'float':
-                        tst = str(self.table.item(rw, cl).text()).strip().replace(',', '')
+                        tst = self.table.item(rw, cl).text().strip().replace(',', '')
                         if tst == '':
                             valu = tst
                         else:
@@ -896,7 +890,7 @@ class Table(QtGui.QDialog):
                                     self.replace = None
                                     return
                     else:
-                        valu = str(self.table.item(rw, cl).text())
+                        valu = self.table.item(rw, cl).text()
                 else:
                     valu = ''
                 if valu != '':

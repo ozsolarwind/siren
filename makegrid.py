@@ -21,7 +21,7 @@
 
 import os
 import sys
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 import configparser   # decode .ini file
 import xlwt
 
@@ -91,10 +91,10 @@ class makeFile():
             self.do_rain = True
         else:
             self.do_rain = False
-        self.nonzero = True
+        self.nonzero = False
         if nonzero != '':
-            if nonzero[0].upper() in ('F', 'N'):
-                self.nonzero = False
+            if nonzero[0].upper() in ('T', 'Y'):
+                self.nonzero = True
         self.tgt_fil = tgt_fil
         bits = detail.split(' ')
         self.hourly = False
@@ -135,13 +135,14 @@ class makeFile():
         fils = os.listdir(self.src_dir)
         for fil in fils:
             if fil[-4:] == '.csv' or fil[-4:] == '.smw':
-                tf = open(self.src_dir + '/' + fil, 'r')
-                line = tf.readline()
-                if line.find('Latitude') < 0 or line.find('Longitude') < 0 \
-                  or line.find('Time Zone') < 0:
-                    tf.close()
-                    continue
-                tf.seek(0)
+                if fil[-4:] == '.csv':
+                    tf = open(self.src_dir + '/' + fil, 'r')
+                    line = tf.readline()
+                    if line.find('Latitude') < 0 or line.find('Longitude') < 0 \
+                      or line.find('Time Zone') < 0:
+                        tf.close()
+                        continue
+                    tf.seek(0)
                 tf = open(self.src_dir + '/' + fil, 'r')
                 lines = tf.readlines()
                 tf.close()
@@ -243,7 +244,8 @@ class makeFile():
                     for j in range(len(col)):
                         if col[j] >= 0:
                             if col_min[1][j] == None or float(bits[col[j]]) < col_min[1][j]:
-                                if not self.nonzero or j == the_cols.index('Temperature') or float(bits[col[j]]) > 0:
+                                if (self.nonzero and float(bits[col[j]]) > 0) \
+                                  or j == the_cols.index('Temperature') :
                                     col_min[1][j] = float(bits[col[j]])
                             if float(bits[col[j]]) > col_max[1][j]:
                                 col_max[1][j] = float(bits[col[j]])
@@ -310,7 +312,7 @@ class makeFile():
                         mth = j - 1
                         break
                 if col_min[1][val_col] == None or float(bits[wnd_col]) < col_min[1][val_col]:
-                    if not self.nonzero or float(bits[wnd_col]) > 0:
+                    if self.nonzero and float(bits[wnd_col]) > 0:
                         col_min[1][val_col] = float(bits[wnd_col])
                 if float(bits[wnd_col]) > col_max[1][val_col]:
                     col_max[1][val_col] = float(bits[wnd_col])
@@ -428,7 +430,7 @@ class makeFile():
                             mth = j - 1
                             break
                     if col_min[1][val_col] == None or float(bits[rain_col]) < col_min[1][val_col]:
-                        if not self.nonzero or float(bits[rain_col]) > 0:
+                        if self.nonzero and float(bits[rain_col]) > 0:
                             col_min[1][val_col] = float(bits[rain_col])
                     if float(bits[rain_col]) > col_max[1][val_col]:
                         col_max[1][val_col] = float(bits[rain_col])
@@ -507,7 +509,7 @@ class makeFile():
                         valu = round(value[i][j] / (the_days[i] * the_hrs[j]), 1)
                         ws.write(row, j + 3, valu)
                         if col_min[0][j] == None or valu < col_min[0][j]:
-                            if not self.nonzero or j == the_cols.index('Temperature') or valu > 0:
+                            if (self.nonzero and valu > 0) or j == the_cols.index('Temperature'):
                                 col_min[0][j] = valu
                         if valu > col_max[0][j]:
                             col_max[0][j] = valu
@@ -577,7 +579,10 @@ class makeFile():
                 if drop_rainfall:
                     if j == the_cols.index('Rainfall'):
                         continue
-                ws.write(row, j + 3, round(col_min[0][j], 1))
+                if col_min[0][j] == None:
+                    ws.write(row, j + 3, 0.)
+                else:
+                    ws.write(row, j + 3, round(col_min[0][j], 1))
                 ws.write(row + 1, j + 3, round(col_max[0][j], 1))
             lens = [8, 9, per_len + 1]
             for i in range(len(the_cols)):
@@ -768,16 +773,18 @@ class makeFile():
         self.log += '%s created' % tgt_fil[tgt_fil.rfind('/') + 1:]
 
 
-class ClickableQLabel(QtGui.QLabel):
+class ClickableQLabel(QtWidgets.QLabel):
+    clicked = QtCore.pyqtSignal()
+
     def __init(self, parent):
         QLabel.__init__(self, parent)
 
     def mousePressEvent(self, event):
-        QtGui.QApplication.widgetAt(event.globalPos()).setFocus()
-        self.emit(QtCore.SIGNAL('clicked()'))
+        QtWidgets.QApplication.widgetAt(event.globalPos()).setFocus()
+        self.clicked.emit()
 
 
-class getParms(QtGui.QWidget):
+class getParms(QtWidgets.QWidget):
 
     def __init__(self, help='help.html'):
         super(getParms, self).__init__()
@@ -864,95 +871,95 @@ class getParms(QtGui.QWidget):
             self.resource_grid = ''
         if self.resource_grid == '':
             self.resource_grid = self.solarfiles + '/resource_$YEAR$.xls'
-        self.grid = QtGui.QGridLayout()
+        self.grid = QtWidgets.QGridLayout()
         row = 0
-        self.grid.addWidget(QtGui.QLabel('Year:'), row, 0)
-        self.yearCombo = QtGui.QComboBox()
+        self.grid.addWidget(QtWidgets.QLabel('Year:'), row, 0)
+        self.yearCombo = QtWidgets.QComboBox()
         for i in range(len(self.years)):
             self.yearCombo.addItem(self.years[i])
         self.yearCombo.setCurrentIndex(self.yrndx)
         self.yearCombo.currentIndexChanged[str].connect(self.yearChanged)
         self.grid.addWidget(self.yearCombo, row, 1)
         row += 1
-        self.grid.addWidget(QtGui.QLabel('Update year:'), row, 0)
-        self.checkbox = QtGui.QCheckBox()
+        self.grid.addWidget(QtWidgets.QLabel('Update year:'), row, 0)
+        self.checkbox = QtWidgets.QCheckBox()
         self.checkbox.setCheckState(QtCore.Qt.Checked)
         self.grid.addWidget(self.checkbox, row, 1)
-        self.grid.addWidget(QtGui.QLabel('Update year in solar, wind and resource fields'), row, 2, 1, 2)
+        self.grid.addWidget(QtWidgets.QLabel('Update year in solar, wind and resource fields'), row, 2, 1, 2)
         row += 1
-        self.grid.addWidget(QtGui.QLabel('Level of Detail:'), row, 0)
-        self.detailCombo = QtGui.QComboBox()
+        self.grid.addWidget(QtWidgets.QLabel('Level of Detail:'), row, 0)
+        self.detailCombo = QtWidgets.QComboBox()
         details = ['Daily By Month', 'Hourly by Month', 'Hourly by Day']
         for detail in details:
             self.detailCombo.addItem(detail)
         self.detailCombo.currentIndexChanged[str].connect(self.detailChanged)
         self.grid.addWidget(self.detailCombo, row, 1)
-        self.msg = QtGui.QLabel('')
+        self.msg = QtWidgets.QLabel('')
         self.grid.addWidget(self.msg, row, 2, 1, 2)
         row += 1
-        self.grid.addWidget(QtGui.QLabel('Non-zero minimum:'), row, 0)
-        self.nonzero = QtGui.QCheckBox()
-        self.nonzero.setCheckState(QtCore.Qt.Unchecked)
+        self.grid.addWidget(QtWidgets.QLabel('Non-zero minimum:'), row, 0)
+        self.nonzero = QtWidgets.QCheckBox()
+        self.nonzero.setCheckState(QtCore.Qt.Checked)
         self.grid.addWidget(self.nonzero, row, 1)
-        self.grid.addWidget(QtGui.QLabel('Set non-zero minimum for all but temperature'), row, 2, 1, 2)
+        self.grid.addWidget(QtWidgets.QLabel('Set non-zero minimum for all but temperature'), row, 2, 1, 2)
         row += 1
-        self.grid.addWidget(QtGui.QLabel('Solar Folder:'), row, 0)
+        self.grid.addWidget(QtWidgets.QLabel('Solar Folder:'), row, 0)
         self.source = ClickableQLabel()
         self.source.setText(self.solarfiles)
         self.source.setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
-        self.connect(self.source, QtCore.SIGNAL('clicked()'), self.dirChanged)
+        self.source.clicked.connect(self.dirChanged)
         self.grid.addWidget(self.source, row, 1, 1, 3)
         row += 1
-        self.grid.addWidget(QtGui.QLabel('Wind Folder:'), row, 0)
+        self.grid.addWidget(QtWidgets.QLabel('Wind Folder:'), row, 0)
         self.wsource = ClickableQLabel()
         self.wsource.setText(self.windfiles)
         self.wsource.setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
-        self.connect(self.wsource, QtCore.SIGNAL('clicked()'), self.wdirChanged)
+        self.wsource.clicked.connect(self.wdirChanged)
         self.grid.addWidget(self.wsource, row, 1, 1, 3)
         if self.do_rain:
             row += 1
-            self.grid.addWidget(QtGui.QLabel('Rain Folder:'), row, 0)
+            self.grid.addWidget(QtWidgets.QLabel('Rain Folder:'), row, 0)
             self.rsource = ClickableQLabel()
             self.rsource.setText(self.rainfiles)
             self.rsource.setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
-            self.connect(self.rsource, QtCore.SIGNAL('clicked()'), self.rdirChanged)
+            self.rsource.clicked.connect(self.rdirChanged)
             self.grid.addWidget(self.rsource, row, 1, 1, 3)
         row += 1
-        self.grid.addWidget(QtGui.QLabel('Resource File:'), row, 0)
+        self.grid.addWidget(QtWidgets.QLabel('Resource File:'), row, 0)
         self.target = ClickableQLabel()
         self.target.setText(self.resource_grid)
         self.target.setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
-        self.connect(self.target, QtCore.SIGNAL('clicked()'), self.tgtChanged)
+        self.target.clicked.connect(self.tgtChanged)
         self.grid.addWidget(self.target, row, 1, 1, 3)
         row += 1
-        self.grid.addWidget(QtGui.QLabel('Properties:'), row, 0)
-        self.properties = QtGui.QPlainTextEdit()
+        self.grid.addWidget(QtWidgets.QLabel('Properties:'), row, 0)
+        self.properties = QtWidgets.QPlainTextEdit()
         self.properties.setMaximumHeight(self.yearCombo.sizeHint().height())
         self.properties.setReadOnly(True)
         self.grid.addWidget(self.properties, row, 1, 1, 3)
-        self.log = QtGui.QLabel(' ')
+        self.log = QtWidgets.QLabel(' ')
         row += 1
         self.grid.addWidget(self.log, row, 1, 1, 3)
-        quit = QtGui.QPushButton('Quit', self)
+        quit = QtWidgets.QPushButton('Quit', self)
         row += 1
         self.grid.addWidget(quit, row, 0)
         quit.clicked.connect(self.quitClicked)
-        QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
-        dofile = QtGui.QPushButton('Produce Resource File', self)
+        QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
+        dofile = QtWidgets.QPushButton('Produce Resource File', self)
         self.grid.addWidget(dofile, row, 1)
         dofile.clicked.connect(self.dofileClicked)
-        help = QtGui.QPushButton('Help', self)
+        help = QtWidgets.QPushButton('Help', self)
      #    help.setMaximumWidth(wdth)
         self.grid.addWidget(help, row, 2)
         help.clicked.connect(self.helpClicked)
-        QtGui.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
+        QtWidgets.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
         self.grid.setColumnStretch(3, 5)
-        frame = QtGui.QFrame()
+        frame = QtWidgets.QFrame()
         frame.setLayout(self.grid)
-        self.scroll = QtGui.QScrollArea()
+        self.scroll = QtWidgets.QScrollArea()
         self.scroll.setWidgetResizable(True)
         self.scroll.setWidget(frame)
-        self.layout = QtGui.QVBoxLayout(self)
+        self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
         self.setWindowTitle('SIREN - makegrid (' + fileVersion() + ') - Make resource grid file')
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
@@ -962,33 +969,33 @@ class getParms(QtGui.QWidget):
 
     def center(self):
         frameGm = self.frameGeometry()
-        screen = QtGui.QApplication.desktop().screenNumber(QtGui.QApplication.desktop().cursor().pos())
-        centerPoint = QtGui.QApplication.desktop().availableGeometry(screen).center()
+        screen = QtWidgets.QApplication.desktop().screenNumber(QtWidgets.QApplication.desktop().cursor().pos())
+        centerPoint = QtWidgets.QApplication.desktop().availableGeometry(screen).center()
         frameGm.moveCenter(centerPoint)
         self.move(frameGm.topLeft())
 
     def detailChanged(self, val):
-        if str(self.detailCombo.currentText())[:3] == 'Da':
+        if self.detailCombo.currentText()[:3] == 'Da':
             self.msg.setText('')
         else:
             self.msg.setText('Sure you want this level of detail?')
 
     def yearChanged(self, val):
-        year = str(self.yearCombo.currentText())
+        year = self.yearCombo.currentText()
         if self.checkbox.isChecked() and year != self.years[self.yrndx]:
-            src_dir = str(self.source.text())
+            src_dir = self.source.text()
             i = src_dir.find(self.years[self.yrndx])
             while i >= 0:
                 src_dir = src_dir[:i] + year + src_dir[i + len(self.years[self.yrndx]):]
                 i = src_dir.find(self.years[self.yrndx])
             self.source.setText(src_dir)
-            src_dir = str(self.wsource.text())
+            src_dir = self.wsource.text()
             i = src_dir.find(self.years[self.yrndx])
             while i >= 0:
                 src_dir = src_dir[:i] + year + src_dir[i + len(self.years[self.yrndx]):]
                 i = src_dir.find(self.years[self.yrndx])
             self.wsource.setText(src_dir)
-            target = str(self.target.text())
+            target = self.target.text()
             i = target.find(self.years[self.yrndx])
             while i >= 0:
                 target = target[:i] + year + target[i + len(self.years[self.yrndx]):]
@@ -998,29 +1005,29 @@ class getParms(QtGui.QWidget):
 
     def dirChanged(self):
         curdir = self.source.text()
-        newdir = str(QtGui.QFileDialog.getExistingDirectory(self, 'Choose Solar Folder',
-                 curdir, QtGui.QFileDialog.ShowDirsOnly))
+        newdir = QtWidgets.QFileDialog.getExistingDirectory(self, 'Choose Solar Folder',
+                 curdir, QtWidgets.QFileDialog.ShowDirsOnly)
         if newdir != '':
             self.source.setText(newdir)
 
     def rdirChanged(self):
         curdir = self.rsource.text()
-        newdir = str(QtGui.QFileDialog.getExistingDirectory(self, 'Choose Rain Folder',
-                 curdir, QtGui.QFileDialog.ShowDirsOnly))
+        newdir = QtWidgets.QFileDialog.getExistingDirectory(self, 'Choose Rain Folder',
+                 curdir, QtWidgets.QFileDialog.ShowDirsOnly)
         if newdir != '':
             self.rsource.setText(newdir)
 
     def wdirChanged(self):
         curdir = self.wsource.text()
-        newdir = str(QtGui.QFileDialog.getExistingDirectory(self, 'Choose Wind Folder',
-                 curdir, QtGui.QFileDialog.ShowDirsOnly))
+        newdir = QtWidgets.QFileDialog.getExistingDirectory(self, 'Choose Wind Folder',
+                 curdir, QtWidgets.QFileDialog.ShowDirsOnly)
         if newdir != '':
             self.wsource.setText(newdir)
 
     def tgtChanged(self):
         curtgt = self.target.text()
-        newtgt = str(QtGui.QFileDialog.getSaveFileName(self, 'Choose Target File',
-                 curtgt))
+        newtgt = QtWidgets.QFileDialog.getSaveFileName(self, 'Choose Target File',
+                 curtgt)[0]
         if newtgt != '':
             i = newtgt.rfind('.')
             if i < 0:
@@ -1028,7 +1035,7 @@ class getParms(QtGui.QWidget):
             self.target.setText(newtgt)
 
     def helpClicked(self):
-        dialog = displayobject.AnObject(QtGui.QDialog(), self.help,
+        dialog = displayobject.AnObject(QtWidgets.QDialog(), self.help,
                  title='Help for makegrid (' + fileVersion() + ')', section='resource')
         dialog.exec_()
 
@@ -1036,14 +1043,17 @@ class getParms(QtGui.QWidget):
         self.close()
 
     def dofileClicked(self):
-        self.log.setText('')
-        year = str(self.yearCombo.currentText())
+        self.log.setText('About to produce ' + \
+                         self.target.text()[self.target.text().rfind('/') + 1:] + \
+                         '. Please be patient.')
+        QtCore.QCoreApplication.processEvents()
+        year = self.yearCombo.currentText()
         if self.do_rain:
-            rain_dir = str(self.rsource.text())
+            rain_dir = self.rsource.text()
         else:
             rain_dir = ''
-        resource = makeFile(year, str(self.source.text()), str(self.wsource.text()), str(self.target.text()),
-                   str(self.detailCombo.currentText()), rain=rain_dir, nonzero=str(self.nonzero.isChecked()))
+        resource = makeFile(year, self.source.text(), self.wsource.text(), self.target.text(),
+                   self.detailCombo.currentText(), rain=rain_dir, nonzero=str(self.nonzero.isChecked()))
         log, prop = resource.getLog()
         self.log.setText(log)
         l = 0
@@ -1063,7 +1073,7 @@ class getParms(QtGui.QWidget):
         if l > 0:
             prop = props[0] + '=' + best_key + props[1][len(best_par):]
         if self.checkbox.isChecked():
-            year = str(self.yearCombo.currentText())
+            year = self.yearCombo.currentText()
             i = prop.find(year)
             while i >= 0:
                 prop = prop[:i] + '$YEAR$' + prop[i + len(year):]
@@ -1072,7 +1082,7 @@ class getParms(QtGui.QWidget):
 
 
 if "__main__" == __name__:
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     if len(sys.argv) > 2:  # arguments
         src_year = 2014
         src_dir_s = ''

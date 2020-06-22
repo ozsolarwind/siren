@@ -24,7 +24,7 @@ import http.client
 import os
 import sys
 import time
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 import configparser   # decode .ini file
 import xlwt
 
@@ -132,17 +132,17 @@ class makeFile():
                     keeps.append(facility['Facility Code'])
                 self.log += "Facility '%s' no longer on file%s" % (facility['Facility Code'], nl)
         if changes > 0:
-            msgbox = QtGui.QMessageBox()
+            msgbox = QtWidgets.QMessageBox()
             msgbox.setWindowTitle('SIREN - updateswis Status')
             msgbox.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
             msgbox.setText(str(changes) + ' changes. Do you want to replace existing file (Y)?')
             msgbox.setInformativeText(info)
             msgbox.setDetailedText(self.log)
-            msgbox.setIcon(QtGui.QMessageBox.Question)
-            msgbox.setStandardButtons(QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
+            msgbox.setIcon(QtWidgets.QMessageBox.Question)
+            msgbox.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
             reply = msgbox.exec_()
-            if reply == QtGui.QMessageBox.Yes:
-                extra_fields = ['Latitude', 'Longitude', 'Facility Name', 'Turbine', 'No. turbines', 'Tilt']
+            if reply == QtWidgets.QMessageBox.Yes:
+                extra_fields = ['Fossil', 'Latitude', 'Longitude', 'Facility Name', 'Turbine', 'No. turbines', 'Tilt']
                 upd_file = open(fac_file + '.csv', 'w')
                 upd_writer = csv.writer(upd_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 upd_writer.writerow(common_fields + extra_fields)
@@ -354,16 +354,18 @@ class makeLoadFile():
         return
 
 
-class ClickableQLabel(QtGui.QLabel):
+class ClickableQLabel(QtWidgets.QLabel):
+    clicked = QtCore.pyqtSignal()
+
     def __init(self, parent):
         QLabel.__init__(self, parent)
 
     def mousePressEvent(self, event):
-        QtGui.QApplication.widgetAt(event.globalPos()).setFocus()
-        self.emit(QtCore.SIGNAL('clicked()'))
+        QtWidgets.QApplication.widgetAt(event.globalPos()).setFocus()
+        self.clicked.emit()
 
 
-class getParms(QtGui.QWidget):
+class getParms(QtWidgets.QWidget):
 
     def __init__(self, help='help.html'):
         super(getParms, self).__init__()
@@ -450,81 +452,81 @@ class getParms(QtGui.QWidget):
             aemo_url = my_config.get('updateswis', 'aemo_url')
         except:
             aemo_url = 'data.wa.aemo.com.au'
-        self.grid = QtGui.QGridLayout()
-        self.grid.addWidget(QtGui.QLabel('Host site:'), 0, 0)
-        self.host = QtGui.QLineEdit()
+        self.grid = QtWidgets.QGridLayout()
+        self.grid.addWidget(QtWidgets.QLabel('Host site:'), 0, 0)
+        self.host = QtWidgets.QLineEdit()
         self.host.setText(aemo_url)
         self.grid.addWidget(self.host, 0, 1, 1, 2)
-        self.grid.addWidget(QtGui.QLabel('Existing Stations (Facilities)'), 1, 0, 1, 2)
-        self.grid.addWidget(QtGui.QLabel('File location:'), 2, 0)
-        self.url = QtGui.QLineEdit()
+        self.grid.addWidget(QtWidgets.QLabel('Existing Stations (Facilities)'), 1, 0, 1, 2)
+        self.grid.addWidget(QtWidgets.QLabel('File location:'), 2, 0)
+        self.url = QtWidgets.QLineEdit()
         self.url.setText(aemo_facilities)
         self.grid.addWidget(self.url, 2, 1, 1, 2)
-        self.grid.addWidget(QtGui.QLabel('Target file:'), 3, 0)
+        self.grid.addWidget(QtWidgets.QLabel('Target file:'), 3, 0)
         self.target = ClickableQLabel()
         self.target.setText(self.grid_stations)
         self.target.setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
-        self.connect(self.target, QtCore.SIGNAL('clicked()'), self.tgtChanged)
+        self.target.clicked.connect(self.tgtChanged)
         self.grid.addWidget(self.target, 3, 1, 1, 4)
-        self.grid.addWidget(QtGui.QLabel('Excel file:'), 4, 0)
+        self.grid.addWidget(QtWidgets.QLabel('Excel file:'), 4, 0)
         self.excel = ClickableQLabel()
         self.excel.setText('')
         self.excel.setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
-        self.connect(self.excel, QtCore.SIGNAL('clicked()'), self.excelChanged)
+        self.excel.clicked.connect(self.excelChanged)
         self.grid.addWidget(self.excel, 4, 1, 1, 3)
-        self.grid.addWidget(QtGui.QLabel('Keep deleted:'), 5, 0)
-        self.keepbox = QtGui.QCheckBox()
+        self.grid.addWidget(QtWidgets.QLabel('Keep deleted:'), 5, 0)
+        self.keepbox = QtWidgets.QCheckBox()
         self.keepbox.setCheckState(QtCore.Qt.Checked)
         self.grid.addWidget(self.keepbox, 5, 1)
-        self.grid.addWidget(QtGui.QLabel('If checked will retain deleted facilities'), 5, 2, 1, 3)
-        self.grid.addWidget(QtGui.QLabel('System Load'), 6, 0)
-        self.grid.addWidget(QtGui.QLabel('Year:'), 7, 0)
-        self.yearCombo = QtGui.QComboBox()
+        self.grid.addWidget(QtWidgets.QLabel('If checked will retain deleted facilities'), 5, 2, 1, 3)
+        self.grid.addWidget(QtWidgets.QLabel('System Load'), 6, 0)
+        self.grid.addWidget(QtWidgets.QLabel('Year:'), 7, 0)
+        self.yearCombo = QtWidgets.QComboBox()
         for i in range(len(self.years)):
             self.yearCombo.addItem(self.years[i])
         self.yearCombo.setCurrentIndex(self.yrndx)
         self.yearCombo.currentIndexChanged[str].connect(self.yearChanged)
         self.grid.addWidget(self.yearCombo, 7, 1)
-        self.grid.addWidget(QtGui.QLabel('Wrap to prior year:'), 8, 0)
-        self.wrapbox = QtGui.QCheckBox()
+        self.grid.addWidget(QtWidgets.QLabel('Wrap to prior year:'), 8, 0)
+        self.wrapbox = QtWidgets.QCheckBox()
         self.wrapbox.setCheckState(QtCore.Qt.Checked)
         self.grid.addWidget(self.wrapbox, 8, 1)
-        self.grid.addWidget(QtGui.QLabel('If checked will wrap back to prior year'), 8, 2, 1, 3)
-        self.grid.addWidget(QtGui.QLabel('Load file location:'), 9, 0)
-        self.lurl = QtGui.QLineEdit()
+        self.grid.addWidget(QtWidgets.QLabel('If checked will wrap back to prior year'), 8, 2, 1, 3)
+        self.grid.addWidget(QtWidgets.QLabel('Load file location:'), 9, 0)
+        self.lurl = QtWidgets.QLineEdit()
         self.lurl.setText(aemo_load)
         self.grid.addWidget(self.lurl, 9, 1, 1, 3)
-        self.grid.addWidget(QtGui.QLabel('Target load file:'), 10, 0)
+        self.grid.addWidget(QtWidgets.QLabel('Target load file:'), 10, 0)
         self.targetl = ClickableQLabel()
         self.targetl.setText(self.load_file)
         self.targetl.setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
-        self.connect(self.targetl, QtCore.SIGNAL('clicked()'), self.tgtlChanged)
+        self.targetl.clicked.connect(self.tgtlChanged)
         self.grid.addWidget(self.targetl, 10, 1, 1, 4)
-        self.log = QtGui.QLabel(' ')
+        self.log = QtWidgets.QLabel(' ')
         self.grid.addWidget(self.log, 11, 1, 1, 3)
-        quit = QtGui.QPushButton('Quit', self)
+        quit = QtWidgets.QPushButton('Quit', self)
         wdth = quit.fontMetrics().boundingRect(quit.text()).width() + 29
         self.grid.addWidget(quit, 12, 0)
         quit.clicked.connect(self.quitClicked)
-        QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
-        dofile = QtGui.QPushButton('Update Existing Stations', self)
+        QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
+        dofile = QtWidgets.QPushButton('Update Existing Stations', self)
         self.grid.addWidget(dofile, 12, 1)
         dofile.clicked.connect(self.dofileClicked)
-        dofilel = QtGui.QPushButton('Update Load file', self)
+        dofilel = QtWidgets.QPushButton('Update Load file', self)
         self.grid.addWidget(dofilel, 12, 2)
         dofilel.clicked.connect(self.dofilelClicked)
-        help = QtGui.QPushButton('Help', self)
+        help = QtWidgets.QPushButton('Help', self)
         help.setMaximumWidth(wdth)
         self.grid.addWidget(help, 12, 3)
         help.clicked.connect(self.helpClicked)
-        QtGui.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
+        QtWidgets.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
         self.grid.setColumnStretch(3, 5)
-        frame = QtGui.QFrame()
+        frame = QtWidgets.QFrame()
         frame.setLayout(self.grid)
-        self.scroll = QtGui.QScrollArea()
+        self.scroll = QtWidgets.QScrollArea()
         self.scroll.setWidgetResizable(True)
         self.scroll.setWidget(frame)
-        self.layout = QtGui.QVBoxLayout(self)
+        self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
         self.setWindowTitle('SIREN - updateswis (' + fileVersion() + ') - Update SWIS Data')
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
@@ -534,42 +536,42 @@ class getParms(QtGui.QWidget):
 
     def center(self):
         frameGm = self.frameGeometry()
-        screen = QtGui.QApplication.desktop().screenNumber(QtGui.QApplication.desktop().cursor().pos())
-        centerPoint = QtGui.QApplication.desktop().availableGeometry(screen).center()
+        screen = QtWidgets.QApplication.desktop().screenNumber(QtWidgets.QApplication.desktop().cursor().pos())
+        centerPoint = QtWidgets.QApplication.desktop().availableGeometry(screen).center()
         frameGm.moveCenter(centerPoint)
         self.move(frameGm.topLeft())
 
     def tgtChanged(self):
         curtgt = self.target.text()
-        newtgt = str(QtGui.QFileDialog.getSaveFileName(self, 'Choose Target file',
-                 curtgt))
+        newtgt = QtWidgets.QFileDialog.getSaveFileName(self, 'Choose Target file',
+                 curtgt)[0]
         if newtgt != '':
             self.target.setText(newtgt)
 
     def tgtlChanged(self):
         curtgt = self.targetl.text()
-        newtgt = str(QtGui.QFileDialog.getSaveFileName(self, 'Choose Target Load file',
-                 curtgt))
+        newtgt = QtWidgets.QFileDialog.getSaveFileName(self, 'Choose Target Load file',
+                 curtgt)[0]
         if newtgt != '':
             self.targetl.setText(newtgt)
 
     def excelChanged(self):
         curtgt = self.excel.text()
-        newtgt = str(QtGui.QFileDialog.getSaveFileName(self, 'Choose Excel File',
-                 curtgt))
+        newtgt = QtWidgets.QFileDialog.getSaveFileName(self, 'Choose Excel File',
+                 curtgt)[0]
         if newtgt != '':
             self.excel.setText(newtgt)
 
     def yearChanged(self, val):
-        year = str(self.yearCombo.currentText())
+        year = self.yearCombo.currentText()
         if year != self.years[self.yrndx]:
-            lurl = str(self.lurl.text())
+            lurl = self.lurl.text()
             i = lurl.find(self.years[self.yrndx])
             while i >= 0:
                 lurl = lurl[:i] + year + lurl[i + len(self.years[self.yrndx]):]
                 i = lurl.find(self.years[self.yrndx])
             self.lurl.setText(lurl)
-            targetl = str(self.targetl.text())
+            targetl = self.targetl.text()
             i = targetl.find(self.years[self.yrndx])
             while i >= 0:
                 targetl = targetl[:i] + year + targetl[i + len(self.years[self.yrndx]):]
@@ -578,7 +580,7 @@ class getParms(QtGui.QWidget):
             self.yrndx = self.years.index(year)
 
     def helpClicked(self):
-        dialog = displayobject.AnObject(QtGui.QDialog(), self.help,
+        dialog = displayobject.AnObject(QtWidgets.QDialog(), self.help,
                  title='Help for updateswis (' + fileVersion() + ')', section='updateswis')
         dialog.exec_()
 
@@ -586,8 +588,8 @@ class getParms(QtGui.QWidget):
         self.close()
 
     def dofileClicked(self):
-        resource = makeFile(str(self.host.text()), str(self.url.text()), str(self.target.text()),
-                            str(self.excel.text()), self.keepbox.isChecked())
+        resource = makeFile(self.host.text(), self.url.text(), self.target.text(),
+                            self.excel.text(), self.keepbox.isChecked())
         log = resource.getLog()
         self.log.setText(log)
 
@@ -596,14 +598,14 @@ class getParms(QtGui.QWidget):
             wrap = True
         else:
             wrap = False
-        resource = makeLoadFile(str(self.host.text()), str(self.lurl.text()), str(self.targetl.text()),
-                   str(self.yearCombo.currentText()), wrap)
+        resource = makeLoadFile(self.host.text(), self.lurl.text(), self.targetl.text(),
+                   self.yearCombo.currentText(), wrap)
         log = resource.getLog()
         self.log.setText(log)
 
 
 if "__main__" == __name__:
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     if len(sys.argv) > 2:   # arguments
         my_config = configparser.RawConfigParser()
         my_config_file = 'getfiles.ini'

@@ -23,12 +23,12 @@ import math
 import os
 import sys
 import time
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 import configparser   # decode .ini file
 
 from getmodels import getModelFile
 
-class Visualise(QtGui.QDialog):
+class Visualise(QtWidgets.QDialog):
     def destinationxy(self, lon1, lat1, bearing, distance):
         """
         Given a start point, initial bearing, and distance, calculate
@@ -55,7 +55,7 @@ class Visualise(QtGui.QDialog):
         self.viewPrefix = None
         self.viewSuffix = None
         self.viewDo = False
-        self.visual_group = QtGui.QGraphicsItemGroup()
+        self.visual_group = QtWidgets.QGraphicsItemGroup()
         self.visual_items = []
         self.scene.addItem(self.visual_group)
         self.be_open = True
@@ -123,74 +123,74 @@ class Visualise(QtGui.QDialog):
                 self.stn_items[j] = i
             except:
                 pass
-        self.grid = QtGui.QGridLayout()
+        self.grid = QtWidgets.QGridLayout()
         row = 0
-        self.detailCombo = QtGui.QComboBox()
-        self.dayCombo = QtGui.QComboBox()
-        self.hourCombo = QtGui.QComboBox()
+        self.detailCombo = QtWidgets.QComboBox()
+        self.dayCombo = QtWidgets.QComboBox()
+        self.hourCombo = QtWidgets.QComboBox()
         for det in self.detail:
             self.detailCombo.addItem(det)
-        self.grid.addWidget(QtGui.QLabel('Detail:'), row, 0)
+        self.grid.addWidget(QtWidgets.QLabel('Detail:'), row, 0)
         self.grid.addWidget(self.detailCombo, row, 1, 1, 2)
         self.detailCombo.currentIndexChanged[str].connect(self.changeDetail)
         row += 1
-        self.grid.addWidget(QtGui.QLabel('Period:'), row, 0)
-        self.periodCombo = QtGui.QComboBox()
+        self.grid.addWidget(QtWidgets.QLabel('Period:'), row, 0)
+        self.periodCombo = QtWidgets.QComboBox()
         self.grid.addWidget(self.periodCombo, row, 1) #, 1, 2)
         self.grid.addWidget(self.dayCombo, row, 2) #, 1, 2)
         self.grid.addWidget(self.hourCombo, row, 3)
         row += 1
-        prev = QtGui.QPushButton('<', self)
+        prev = QtWidgets.QPushButton('<', self)
         width = prev.fontMetrics().boundingRect('<').width() + 10
         prev.setMaximumWidth(width)
         self.grid.addWidget(prev, row, 0)
         prev.clicked.connect(self.prevClicked)
-        self.slider = QtGui.QSlider(QtCore.Qt.Horizontal)
+        self.slider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
         self.slider.valueChanged.connect(self.slideChanged)
         self.grid.addWidget(self.slider, row, 1, 1, 5)
-        nextt = QtGui.QPushButton('>', self)
+        nextt = QtWidgets.QPushButton('>', self)
         width = nextt.fontMetrics().boundingRect('>').width() + 10
         nextt.setMaximumWidth(width)
         self.grid.addWidget(nextt, row, 7)
         nextt.clicked.connect(self.nextClicked)
         row += 1
-        self.viewSpin = QtGui.QSpinBox()
+        self.viewSpin = QtWidgets.QSpinBox()
         self.viewSpin.setRange(0, 100)
         self.viewSpin.setValue(0)
         if self.viewDo:
-            self.grid.addWidget(QtGui.QLabel('Save Views:'), row, 0)
+            self.grid.addWidget(QtWidgets.QLabel('Save Views:'), row, 0)
             self.viewSpin.valueChanged.connect(self.viewChanged)
             self.grid.addWidget(self.viewSpin, row, 1)
             row += 1
-        self.grid.addWidget(QtGui.QLabel('Repeat Loop:'), row, 0)
-        self.repeat = QtGui.QCheckBox()
+        self.grid.addWidget(QtWidgets.QLabel('Repeat Loop:'), row, 0)
+        self.repeat = QtWidgets.QCheckBox()
         self.repeat.setCheckState(QtCore.Qt.Unchecked)
         self.grid.addWidget(self.repeat, row, 1)
-        self.loopSpin = QtGui.QDoubleSpinBox()
+        self.loopSpin = QtWidgets.QDoubleSpinBox()
         row += 1
         self.do_loop = False
-        self.grid.addWidget(QtGui.QLabel('Period Loop (secs):'), row, 0)
-        self.loopSpin = QtGui.QDoubleSpinBox()
+        self.grid.addWidget(QtWidgets.QLabel('Period Loop (secs):'), row, 0)
+        self.loopSpin = QtWidgets.QDoubleSpinBox()
         self.loopSpin.setRange(0., 10.)
         self.loopSpin.setDecimals(2)
         self.loopSpin.setSingleStep(.05)
         self.loopSpin.setValue(0.)
         self.loopSpin.valueChanged[str].connect(self.loopChanged)
         self.grid.addWidget(self.loopSpin, row, 1, 1, 2)
-        self.loop = QtGui.QPushButton('Loop', self)
+        self.loop = QtWidgets.QPushButton('Loop', self)
         self.grid.addWidget(self.loop, row, 3, 1, 4)
         self.loop.clicked.connect(self.loopClicked)
         row += 1
-        quit = QtGui.QPushButton('Quit', self)
+        quit = QtWidgets.QPushButton('Quit', self)
         self.grid.addWidget(quit, row, 0)
         quit.clicked.connect(self.quitClicked)
-        QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
-        frame = QtGui.QFrame()
+        QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
+        frame = QtWidgets.QFrame()
         frame.setLayout(self.grid)
-        self.scroll = QtGui.QScrollArea()
+        self.scroll = QtWidgets.QScrollArea()
         self.scroll.setWidgetResizable(True)
         self.scroll.setWidget(frame)
-        self.layout = QtGui.QVBoxLayout(self)
+        self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
         self.setWindowTitle('SIREN - Visualise generation')
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
@@ -198,11 +198,11 @@ class Visualise(QtGui.QDialog):
             move_right = False
         else:
             move_right = True
-        QtGui.QShortcut(QtGui.QKeySequence('pgup'), self, self.prevClicked)
-        QtGui.QShortcut(QtGui.QKeySequence('pgdown'), self, self.nextClicked)
-        QtGui.QShortcut(QtGui.QKeySequence('Ctrl++'), self, self.nextClicked)
-        QtGui.QShortcut(QtGui.QKeySequence('Ctrl+-'), self, self.prevClicked)
-        QtGui.QShortcut(QtGui.QKeySequence('Ctrl+Z'), self, self.loopClicked)
+        QtWidgets.QShortcut(QtGui.QKeySequence('pgup'), self, self.prevClicked)
+        QtWidgets.QShortcut(QtGui.QKeySequence('pgdown'), self, self.nextClicked)
+        QtWidgets.QShortcut(QtGui.QKeySequence('Ctrl++'), self, self.nextClicked)
+        QtWidgets.QShortcut(QtGui.QKeySequence('Ctrl+-'), self, self.prevClicked)
+        QtWidgets.QShortcut(QtGui.QKeySequence('Ctrl+Z'), self, self.loopClicked)
         self.setPeriod()
         self.periodCombo.currentIndexChanged[str].connect(self.periodChange)
         self.dayCombo.currentIndexChanged[str].connect(self.periodChange)
@@ -423,8 +423,8 @@ class Visualise(QtGui.QDialog):
         txt = txt.replace(':00', '')
         if self.viewPrefix is None:
             fname = 'Image_' + txt + '.png'
-            fname = QtGui.QFileDialog.getSaveFileName(self, 'Save image file',
-                    self.scene.scenarios + fname, 'Image Files (*.png *.jpg *.bmp)')
+            fname = QtWidgets.QFileDialog.getSaveFileName(self, 'Save image file',
+                    self.scene.scenarios + fname, 'Image Files (*.png *.jpg *.bmp)')[0]
             if fname == '':
                 self.viewSpin.setValue(1)
             else:
@@ -465,7 +465,7 @@ class Visualise(QtGui.QDialog):
             pn = self.scene.mapFromLonLat(QtCore.QPointF(st.lon, north.y()))
             x_d = p.x() - pe.x()
             y_d = pn.y() - p.y()
-            el = QtGui.QGraphicsEllipseItem(p.x() - x_d / 2, p.y() - y_d / 2, x_d, y_d)
+            el = QtWidgets.QGraphicsEllipseItem(p.x() - x_d / 2, p.y() - y_d / 2, x_d, y_d)
             el.setBrush(QtGui.QColor(self.scene.colors[st.technology]))
             el.setOpacity(1)
             if self.scene.colors['border'] != '':
@@ -479,7 +479,7 @@ class Visualise(QtGui.QDialog):
             txt = self.periodCombo.currentText() + ' ' + self.hourCombo.currentText()
         else:
             txt = self.periodCombo.currentText() + '-' + self.dayCombo.currentText() + ' ' + self.hourCombo.currentText()
-        itm = QtGui.QGraphicsSimpleTextItem(txt)
+        itm = QtWidgets.QGraphicsSimpleTextItem(txt)
         new_font = itm.font()
         new_font.setPointSizeF(self.scene.width() / 50)
         itm.setFont(new_font)

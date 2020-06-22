@@ -21,7 +21,7 @@
 
 import configparser  # decode .ini file
 import os
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 import sys
 from math import log10, ceil
 import matplotlib
@@ -62,50 +62,70 @@ def charSplit(string, char=',', dropquote=True):
     return splits
 
 
-class ThumbListWidget(QtGui.QListWidget):
-    def __init__(self, type, parent=None):
-        super(ThumbListWidget, self).__init__(parent)
-        self.setIconSize(QtCore.QSize(124, 124))
-        self.setDragDropMode(QtGui.QAbstractItemView.DragDrop)
-        self.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
+class ListWidget(QtWidgets.QListWidget):
+    def decode_data(self, bytearray):
+        data = []
+        ds = QtCore.QDataStream(bytearray)
+        while not ds.atEnd():
+            row = ds.readInt32()
+            column = ds.readInt32()
+            map_items = ds.readInt32()
+            for i in range(map_items):
+                key = ds.readInt32()
+                value = QtCore.QVariant()
+                ds >> value
+                data.append(value.value())
+        return data
+
+    def __init__(self, parent=None):
+        super(ListWidget, self).__init__(parent)
+        self.setDragDropMode(self.DragDrop)
+        self.setSelectionMode(self.ExtendedSelection)
         self.setAcceptDrops(True)
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls():
             event.accept()
         else:
-            super(ThumbListWidget, self).dragEnterEvent(event)
+            super(ListWidget, self).dragEnterEvent(event)
 
     def dragMoveEvent(self, event):
         if event.mimeData().hasUrls():
             event.setDropAction(QtCore.Qt.CopyAction)
             event.accept()
         else:
-            super(ThumbListWidget, self).dragMoveEvent(event)
+            super(ListWidget, self).dragMoveEvent(event)
 
     def dropEvent(self, event):
-        if event.mimeData().hasUrls():
-            event.setDropAction(QtCore.Qt.CopyAction)
-            event.accept()
-            links = []
-            for url in event.mimeData().urls():
-                links.append(str(url.toLocalFile()))
-            self.emit(QtCore.SIGNAL('dropped'), links)
-        else:
+        if event.source() == self:
             event.setDropAction(QtCore.Qt.MoveAction)
-            super(ThumbListWidget, self).dropEvent(event)
+            QtWidgets.QListWidget.dropEvent(self, event)
+        else:
+            ba = event.mimeData().data('application/x-qabstractitemmodeldatalist')
+            data_items = self.decode_data(ba)
+            event.setDropAction(QtCore.Qt.MoveAction)
+            event.source().deleteItems(data_items)
+            super(ListWidget, self).dropEvent(event)
+
+    def deleteItems(self, items):
+        for row in range(self.count() -1, -1, -1):
+            if self.item(row).text() in items:
+             #   r = self.row(item)
+                self.takeItem(row)
 
 
-class ClickableQLabel(QtGui.QLabel):
+class ClickableQLabel(QtWidgets.QLabel):
+    clicked = QtCore.pyqtSignal()
+
     def __init(self, parent):
         QLabel.__init__(self, parent)
 
     def mousePressEvent(self, event):
-        QtGui.QApplication.widgetAt(event.globalPos()).setFocus()
-        self.emit(QtCore.SIGNAL('clicked()'))
+        QtWidgets.QApplication.widgetAt(event.globalPos()).setFocus()
+        self.clicked.emit()
 
 
-class PowerPlot(QtGui.QWidget):
+class PowerPlot(QtWidgets.QWidget):
 
     def __init__(self, help='help.html'):
         super(PowerPlot, self).__init__()
@@ -229,29 +249,29 @@ class PowerPlot(QtGui.QWidget):
                 self.history = sorted(ifiles.keys(), reverse=True)
             ifile = ifiles[self.history[0]]
         matplotlib.rcParams['savefig.directory'] = os.getcwd()
-        self.grid = QtGui.QGridLayout()
+        self.grid = QtWidgets.QGridLayout()
         self.updated = False
         self.colours_updated = False
-        self.log = QtGui.QLabel('')
+        self.log = QtWidgets.QLabel('')
         rw = 0
-        self.grid.addWidget(QtGui.QLabel('Recent Files:'), rw, 0)
-        self.files = QtGui.QComboBox()
+        self.grid.addWidget(QtWidgets.QLabel('Recent Files:'), rw, 0)
+        self.files = QtWidgets.QComboBox()
         if ifile != '':
             self.popfileslist(ifile, ifiles)
         self.grid.addWidget(self.files, rw, 1, 1, 5)
         rw += 1
-        self.grid.addWidget(QtGui.QLabel('File:'), rw, 0)
+        self.grid.addWidget(QtWidgets.QLabel('File:'), rw, 0)
         self.file = ClickableQLabel()
         self.file.setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
         self.file.setText('')
         self.grid.addWidget(self.file, rw, 1, 1, 5)
         rw += 1
-        self.grid.addWidget(QtGui.QLabel('Sheet:'), rw, 0)
-        self.sheet = QtGui.QComboBox()
+        self.grid.addWidget(QtWidgets.QLabel('Sheet:'), rw, 0)
+        self.sheet = QtWidgets.QComboBox()
         self.grid.addWidget(self.sheet, rw, 1, 1, 2)
         rw += 1
-        self.grid.addWidget(QtGui.QLabel('Period:'), rw, 0)
-        self.period = QtGui.QComboBox()
+        self.grid.addWidget(QtWidgets.QLabel('Period:'), rw, 0)
+        self.period = QtWidgets.QComboBox()
         self.period.addItem('<none>')
         self.period.addItem('Year')
         for mth in mth_labels:
@@ -259,62 +279,62 @@ class PowerPlot(QtGui.QWidget):
         for per in sorted(self.seasons.keys()):
             self.period.addItem(per)
         self.grid.addWidget(self.period, rw, 1, 1, 2)
-        self.grid.addWidget(QtGui.QLabel('(Diurnal profile for Period)'), rw, 3, 1, 2)
+        self.grid.addWidget(QtWidgets.QLabel('(Diurnal profile for Period)'), rw, 3, 1, 2)
         rw += 1
-        self.grid.addWidget(QtGui.QLabel('Target:'), rw, 0)
-        self.targets = QtGui.QComboBox()
+        self.grid.addWidget(QtWidgets.QLabel('Target:'), rw, 0)
+        self.targets = QtWidgets.QComboBox()
         self.grid.addWidget(self.targets, rw, 1, 1, 2)
-        self.grid.addWidget(QtGui.QLabel('(e.g. Load)'), rw, 3, 1, 2)
+        self.grid.addWidget(QtWidgets.QLabel('(e.g. Load)'), rw, 3, 1, 2)
         rw += 1
-        self.grid.addWidget(QtGui.QLabel('Title:'), rw, 0)
-        self.title = QtGui.QLineEdit('')
+        self.grid.addWidget(QtWidgets.QLabel('Title:'), rw, 0)
+        self.title = QtWidgets.QLineEdit('')
         self.grid.addWidget(self.title, rw, 1, 1, 2)
         rw += 1
-        self.grid.addWidget(QtGui.QLabel('Maximum:'), rw, 0)
-        self.maxSpin = QtGui.QDoubleSpinBox()
+        self.grid.addWidget(QtWidgets.QLabel('Maximum:'), rw, 0)
+        self.maxSpin = QtWidgets.QDoubleSpinBox()
         self.maxSpin.setDecimals(1)
         self.maxSpin.setRange(0, 6000)
         self.maxSpin.setSingleStep(500)
         self.grid.addWidget(self.maxSpin, rw, 1)
-        self.grid.addWidget(QtGui.QLabel('(Handy if you want to produce a series of plots)'), rw, 3, 1, 3)
+        self.grid.addWidget(QtWidgets.QLabel('(Handy if you want to produce a series of plots)'), rw, 3, 1, 3)
         rw += 1
-        self.grid.addWidget(QtGui.QLabel('Type of Plot:'), rw, 0)
+        self.grid.addWidget(QtWidgets.QLabel('Type of Plot:'), rw, 0)
         plots = ['Bar Chart', 'Cumulative', 'Linegraph']
-        self.plottype = QtGui.QComboBox()
+        self.plottype = QtWidgets.QComboBox()
         for plot in plots:
              self.plottype.addItem(plot)
         self.grid.addWidget(self.plottype, rw, 1) #, 1, 2)
-        self.grid.addWidget(QtGui.QLabel('(Type of plot - stacked except for Linegraph)'), rw, 3, 1, 3)
+        self.grid.addWidget(QtWidgets.QLabel('(Type of plot - stacked except for Linegraph)'), rw, 3, 1, 3)
         rw += 1
-        self.grid.addWidget(QtGui.QLabel('Percentage:'), rw, 0)
-        self.percentage = QtGui.QCheckBox()
+        self.grid.addWidget(QtWidgets.QLabel('Percentage:'), rw, 0)
+        self.percentage = QtWidgets.QCheckBox()
         self.percentage.setCheckState(QtCore.Qt.Unchecked)
         self.grid.addWidget(self.percentage, rw, 1) #, 1, 2)
-        self.grid.addWidget(QtGui.QLabel('(Check for percentage distribution)'), rw, 3, 1, 3)
+        self.grid.addWidget(QtWidgets.QLabel('(Check for percentage distribution)'), rw, 3, 1, 3)
         rw += 1
-        self.grid.addWidget(QtGui.QLabel('Spill label:'), rw, 0)
-        self.spill_label = QtGui.QLineEdit('')
+        self.grid.addWidget(QtWidgets.QLabel('Spill label:'), rw, 0)
+        self.spill_label = QtWidgets.QLineEdit('')
         self.grid.addWidget(self.spill_label, rw, 1, 1, 2)
-        self.grid.addWidget(QtGui.QLabel('(Enter suffix if you want spill labels)'), rw, 3, 1, 3)
+        self.grid.addWidget(QtWidgets.QLabel('(Enter suffix if you want spill labels)'), rw, 3, 1, 3)
         rw += 1
-        self.grid.addWidget(QtGui.QLabel('Show Grid:'), rw, 0)
+        self.grid.addWidget(QtWidgets.QLabel('Show Grid:'), rw, 0)
         grids = ['Both', 'Horizontal', 'Vertical', 'None']
-        self.gridtype = QtGui.QComboBox()
+        self.gridtype = QtWidgets.QComboBox()
         for grid in grids:
              self.gridtype.addItem(grid)
         self.grid.addWidget(self.gridtype, rw, 1) #, 1, 2)
-        self.grid.addWidget(QtGui.QLabel('(Choose gridlines)'), rw, 3, 1, 3)
+        self.grid.addWidget(QtWidgets.QLabel('(Choose gridlines)'), rw, 3, 1, 3)
         rw += 1
-        self.grid.addWidget(QtGui.QLabel('Column Order:\n(move to right\nto exclude)'), rw, 0)
-        self.order = ThumbListWidget(self)
+        self.grid.addWidget(QtWidgets.QLabel('Column Order:\n(move to right\nto exclude)'), rw, 0)
+        self.order = ListWidget(self)
         self.grid.addWidget(self.order, rw, 1, 1, 2)
-        self.ignore = ThumbListWidget(self)
+        self.ignore = ListWidget(self)
         self.grid.addWidget(self.ignore, rw, 3, 1, 2)
-        self.grid.addWidget(QtGui.QLabel(' '), rw, 5)
+        self.grid.addWidget(QtWidgets.QLabel(' '), rw, 5)
         if ifile != '':
             self.get_file_config(self.history[0])
         self.files.currentIndexChanged.connect(self.filesChanged)
-        self.connect(self.file, QtCore.SIGNAL('clicked()'), self.fileChanged)
+        self.file.clicked.connect(self.fileChanged)
         self.period.currentIndexChanged.connect(self.somethingChanged)
         self.files.currentIndexChanged.connect(self.targetChanged)
         self.sheet.currentIndexChanged.connect(self.sheetChanged)
@@ -332,27 +352,27 @@ class PowerPlot(QtGui.QWidget):
         self.log.setPalette(msg_palette)
         self.grid.addWidget(self.log, rw, 1, 1, 4)
         rw += 1
-        quit = QtGui.QPushButton('Done', self)
+        quit = QtWidgets.QPushButton('Done', self)
         self.grid.addWidget(quit, rw, 0)
         quit.clicked.connect(self.quitClicked)
-        QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
-        pp = QtGui.QPushButton('Plot', self)
+        QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
+        pp = QtWidgets.QPushButton('Plot', self)
         self.grid.addWidget(pp, rw, 1)
         pp.clicked.connect(self.ppClicked)
-        QtGui.QShortcut(QtGui.QKeySequence('p'), self, self.ppClicked)
-        cb = QtGui.QPushButton('Colours', self)
+        QtWidgets.QShortcut(QtGui.QKeySequence('p'), self, self.ppClicked)
+        cb = QtWidgets.QPushButton('Colours', self)
         self.grid.addWidget(cb, rw, 2)
         cb.clicked.connect(self.editColours)
-        help = QtGui.QPushButton('Help', self)
+        help = QtWidgets.QPushButton('Help', self)
         self.grid.addWidget(help, rw, 4)
         help.clicked.connect(self.helpClicked)
-        QtGui.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
-        frame = QtGui.QFrame()
+        QtWidgets.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
+        frame = QtWidgets.QFrame()
         frame.setLayout(self.grid)
-        self.scroll = QtGui.QScrollArea()
+        self.scroll = QtWidgets.QScrollArea()
         self.scroll.setWidgetResizable(True)
         self.scroll.setWidget(frame)
-        self.layout = QtGui.QVBoxLayout(self)
+        self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
         self.setWindowTitle('SIREN - powerplot (' + fileVersion() + ') - PowerPlot')
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
@@ -362,8 +382,8 @@ class PowerPlot(QtGui.QWidget):
 
     def center(self):
         frameGm = self.frameGeometry()
-        screen = QtGui.QApplication.desktop().screenNumber(QtGui.QApplication.desktop().cursor().pos())
-        centerPoint = QtGui.QApplication.desktop().availableGeometry(screen).center()
+        screen = QtWidgets.QApplication.desktop().screenNumber(QtWidgets.QApplication.desktop().cursor().pos())
+        centerPoint = QtWidgets.QApplication.desktop().availableGeometry(screen).center()
         frameGm.moveCenter(centerPoint)
         self.move(frameGm.topLeft())
 
@@ -475,13 +495,13 @@ class PowerPlot(QtGui.QWidget):
             curfile = self.file.text()
         else:
             curfile = self.scenarios + self.file.text()
-        newfile = str(QtGui.QFileDialog.getOpenFileName(self, 'Open file', curfile))
+        newfile = QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', curfile)[0]
         if newfile != '':
             if self.book is not None:
                 self.book.release_resources()
                 self.book = None
                 self.toprow = None
-            isheet = str(self.sheet.currentText())
+            isheet = self.sheet.currentText()
             self.setSheet(newfile, isheet)
             if newfile[: len(self.scenarios)] == self.scenarios:
                 self.file.setText(newfile[len(self.scenarios):])
@@ -522,8 +542,8 @@ class PowerPlot(QtGui.QWidget):
         j = -1
         for sht in self.book.sheet_names():
             j += 1
-            self.sheet.addItem(str(sht))
-            if str(sht) == isheet:
+            self.sheet.addItem(sht)
+            if sht == isheet:
                 ndx = j
         self.sheet.setCurrentIndex(ndx)
 
@@ -532,7 +552,7 @@ class PowerPlot(QtGui.QWidget):
         self.toprow = None
         if self.book is None:
             self.book = xlrd.open_workbook(newfile, on_demand=True)
-        isheet = str(self.sheet.currentText())
+        isheet = self.sheet.currentText()
         if isheet not in self.book.sheet_names():
             self.log.setText("Can't find sheet - " + isheet)
             return
@@ -541,7 +561,7 @@ class PowerPlot(QtGui.QWidget):
 
     def targetChanged(self):
         self.log.setText('')
-        target = str(self.targets.currentText())
+        target = self.targets.currentText()
         if target != self.target:
             if target == '<none>':
                 if self.target != '':
@@ -575,8 +595,8 @@ class PowerPlot(QtGui.QWidget):
             return
         row = 0
         while row < ws.nrows:
-            if str(ws.cell_value(row, 0)) == 'Hour':
-                if str(ws.cell_value(row, 1)) != 'Period':
+            if ws.cell_value(row, 0) == 'Hour':
+                if ws.cell_value(row, 1) != 'Period':
                     self.log.setText(isheet + ' sheet format incorrect')
                     return
                 self.toprow = row
@@ -591,7 +611,7 @@ class PowerPlot(QtGui.QWidget):
                 self.targets.addItem('<none>')
                 self.targets.setCurrentIndex(0)
                 for col in range(ws.ncols -1, 1, -1):
-                    column = str(ws.cell_value(row, col)).replace('\n',' ')
+                    column = ws.cell_value(row, col).replace('\n',' ')
                     if column in oldcolumns:
                         columns.append(column)
                     if self.targets.findText(column, QtCore.Qt.MatchExactly) >= 0:
@@ -624,7 +644,7 @@ class PowerPlot(QtGui.QWidget):
             self.log.setText(isheet + ' sheet format incorrect')
 
     def helpClicked(self):
-        dialog = displayobject.AnObject(QtGui.QDialog(), self.help,
+        dialog = displayobject.AnObject(QtWidgets.QDialog(), self.help,
                  title='Help for powerplot (' + fileVersion() + ')', section='powerplot')
         dialog.exec_()
 
@@ -642,7 +662,7 @@ class PowerPlot(QtGui.QWidget):
             config = configparser.RawConfigParser()
             config.read(self.config_file)
             choice = self.history[0]
-            save_file = str(self.file.text()).replace(getUser(), '$USER$')
+            save_file = self.file.text().replace(getUser(), '$USER$')
             try:
                 self.max_files = int(config.get('Powerplot', 'file_choices'))
             except:
@@ -654,12 +674,12 @@ class PowerPlot(QtGui.QWidget):
                     line += itm + ','
                 line = line[:-1]
                 lines.append('file_history=' + line)
-            lines.append('file' + choice + '=' + str(self.file.text()).replace(getUser(), '$USER$'))
+            lines.append('file' + choice + '=' + self.file.text().replace(getUser(), '$USER$'))
             lines.append('grid' + choice + '=' + self.gridtype.currentText())
-            lines.append('sheet' + choice + '=' + str(self.sheet.currentText()))
+            lines.append('sheet' + choice + '=' + self.sheet.currentText())
             lines.append('period' + choice + '=')
-            if str(self.period.currentText()) != '<none>':
-                lines[-1] = lines[-1] + str(self.period.currentText())
+            if self.period.currentText() != '<none>':
+                lines[-1] = lines[-1] + self.period.currentText()
             lines.append('spill_label' + choice + '=' + self.spill_label.text())
             lines.append('target' + choice + '=' + self.target)
             lines.append('title' + choice + '=' + self.title.text())
@@ -673,15 +693,15 @@ class PowerPlot(QtGui.QWidget):
             cols = 'columns' + choice + '='
             for col in range(self.order.count()):
                 try:
-                    if str(self.order.item(col).text()).index(',') >= 0:
+                    if self.order.item(col).text().index(',') >= 0:
                         try:
-                            if str(self.order.item(col).text()).index("'") >= 0:
+                            if self.order.item(col).text().index("'") >= 0:
                                 qte = '"'
                         except:
                             qte = "'"
                 except:
                     qte = ''
-                cols += qte + str(self.order.item(col).text()) + qte + ','
+                cols += qte + self.order.item(col).text() + qte + ','
             if cols[-1] != '=':
                 cols = cols[:-1]
             lines.append(cols)
@@ -718,13 +738,13 @@ class PowerPlot(QtGui.QWidget):
         except:
             pass
         for c in range(self.order.count()):
-            col = str(self.order.item(c).text())
+            col = self.order.item(c).text()
             try:
                 self.order.item(c).setBackground(QtGui.QColor(self.colours[col.lower()]))
             except:
                 pass
         for c in range(self.ignore.count()):
-            col = str(self.ignore.item(c).text())
+            col = self.ignore.item(c).text()
             try:
                 self.ignore.item(c).setBackground(QtGui.QColor(self.colours[col.lower()]))
             except:
@@ -773,7 +793,7 @@ class PowerPlot(QtGui.QWidget):
         if self.order.count() == 0:
             self.log.setText('Nothing to plot.')
             return
-        isheet = str(self.sheet.currentText())
+        isheet = self.sheet.currentText()
         if isheet == '':
             self.log.setText('Sheet not set.')
             return
@@ -810,8 +830,8 @@ class PowerPlot(QtGui.QWidget):
         if self.toprow is None:
             row = 0
             while row < ws.nrows:
-                if str(ws.cell_value(row, 0)) == 'Hour':
-                    if str(ws.cell_value(row, 1)) != 'Period':
+                if ws.cell_value(row, 0) == 'Hour':
+                    if ws.cell_value(row, 1) != 'Period':
                         self.log.setText(isheet + ' sheet format incorrect')
                         return
                     self.toprow = row
@@ -830,7 +850,7 @@ class PowerPlot(QtGui.QWidget):
         if self.leapyear: #rows == 8784: # leap year
             the_days[1] = 29
         mth_labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-        if str(self.period.currentText()) == '<none>': # full year of hourly figures
+        if self.period.currentText() == '<none>': # full year of hourly figures
             m = 0
             d = 1
             day_labels = []
@@ -858,9 +878,9 @@ class PowerPlot(QtGui.QWidget):
             titl = titl.replace('Diurnal', '')
             titl = titl.replace('$SHEET$', isheet)
             for c in range(self.order.count() -1, -1, -1):
-                col = str(self.order.item(c).text())
+                col = self.order.item(c).text()
                 for c2 in range(2, ws.ncols):
-                    column = str(ws.cell_value(self.toprow, c2)).replace('\n',' ')
+                    column = ws.cell_value(self.toprow, c2).replace('\n',' ')
                     if column == col:
                         data.append([])
                         label.append(column)
@@ -1060,9 +1080,9 @@ class PowerPlot(QtGui.QWidget):
                 hs.append(h)
             x = hs[:]
             for c in range(self.order.count() -1, -1, -1):
-                col = str(self.order.item(c).text())
+                col = self.order.item(c).text()
                 for c2 in range(2, ws.ncols):
-                    column = str(ws.cell_value(self.toprow, c2)).replace('\n',' ')
+                    column = ws.cell_value(self.toprow, c2).replace('\n',' ')
                     if column == col:
                         data.append([])
                         data[-1] = [0] * len(hs)
@@ -1304,7 +1324,7 @@ class PowerPlot(QtGui.QWidget):
 
 
 if "__main__" == __name__:
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     ex = PowerPlot()
     app.exec_()
     app.deleteLater()

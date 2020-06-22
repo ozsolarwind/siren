@@ -22,7 +22,7 @@
 import os
 import sys
 import time
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 import displayobject
 import displaytable
 from credits import fileVersion
@@ -44,6 +44,10 @@ from getmodels import getModelFile
 import xlrd
 import configparser  # decode .ini file
 from zoompan import ZoomPanX
+try:
+    from opt_debug import optimiseDebug
+except:
+    pass
 
 tech_names = ['Load', 'Onshore Wind', 'Offshore Wind', 'Rooftop PV', 'Fixed PV', 'Single Axis PV',
               'Dual Axis PV', 'Biomass', 'Geothermal', 'Other1', 'CST', 'Shortfall']
@@ -62,47 +66,67 @@ def ss_col(col, base=1):
     return (col_letters[c1] + col_letters[c2 + 1]).strip()
 
 
-class ThumbListWidget(QtGui.QListWidget):
-    def __init__(self, type, parent=None):
-        super(ThumbListWidget, self).__init__(parent)
-        self.setIconSize(QtCore.QSize(124, 124))
-        self.setDragDropMode(QtGui.QAbstractItemView.DragDrop)
-        self.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
+class ListWidget(QtWidgets.QListWidget):
+    def decode_data(self, bytearray):
+        data = []
+        ds = QtCore.QDataStream(bytearray)
+        while not ds.atEnd():
+            row = ds.readInt32()
+            column = ds.readInt32()
+            map_items = ds.readInt32()
+            for i in range(map_items):
+                key = ds.readInt32()
+                value = QtCore.QVariant()
+                ds >> value
+                data.append(value.value())
+        return data
+
+    def __init__(self, parent=None):
+        super(ListWidget, self).__init__(parent)
+        self.setDragDropMode(self.DragDrop)
+        self.setSelectionMode(self.ExtendedSelection)
         self.setAcceptDrops(True)
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls():
             event.accept()
         else:
-            super(ThumbListWidget, self).dragEnterEvent(event)
+            super(ListWidget, self).dragEnterEvent(event)
 
     def dragMoveEvent(self, event):
         if event.mimeData().hasUrls():
             event.setDropAction(QtCore.Qt.CopyAction)
             event.accept()
         else:
-            super(ThumbListWidget, self).dragMoveEvent(event)
+            super(ListWidget, self).dragMoveEvent(event)
 
     def dropEvent(self, event):
-        if event.mimeData().hasUrls():
-            event.setDropAction(QtCore.Qt.CopyAction)
-            event.accept()
-            links = []
-            for url in event.mimeData().urls():
-                links.append(str(url.toLocalFile()))
-            self.emit(QtCore.SIGNAL("dropped"), links)
-        else:
+        if event.source() == self:
             event.setDropAction(QtCore.Qt.MoveAction)
-            super(ThumbListWidget, self).dropEvent(event)
+            QtWidgets.QListWidget.dropEvent(self, event)
+        else:
+            ba = event.mimeData().data('application/x-qabstractitemmodeldatalist')
+            data_items = self.decode_data(ba)
+            event.setDropAction(QtCore.Qt.MoveAction)
+            event.source().deleteItems(data_items)
+            super(ListWidget, self).dropEvent(event)
+
+    def deleteItems(self, items):
+        for row in range(self.count() -1, -1, -1):
+            if self.item(row).text() in items:
+             #   r = self.row(item)
+                self.takeItem(row)
 
 
-class ClickableQLabel(QtGui.QLabel):
+class ClickableQLabel(QtWidgets.QLabel):
+    clicked = QtCore.pyqtSignal()
+
     def __init(self, parent):
         QLabel.__init__(self, parent)
 
     def mousePressEvent(self, event):
-        QtGui.QApplication.widgetAt(event.globalPos()).setFocus()
-        self.emit(QtCore.SIGNAL('clicked()'))
+        QtWidgets.QApplication.widgetAt(event.globalPos()).setFocus()
+        self.clicked.emit()
 
 
 class Constraint:
@@ -234,7 +258,7 @@ class Optimisation:
         self.capacity = 0.
 
 
-class Adjustments(QtGui.QDialog):
+class Adjustments(QtWidgets.QDialog):
     def setAdjValue(self, key, typ, capacity):
         if key != 'Load':
             mw = capacity * self.adjustm[key]
@@ -277,7 +301,7 @@ class Adjustments(QtGui.QDialog):
         self.save_folder = save_folder
         self.ignore = False
         self.results = None
-        self.grid = QtGui.QGridLayout()
+        self.grid = QtWidgets.QGridLayout()
         self.data = {}
         ctr = 0
         self.decpts = None
@@ -298,7 +322,7 @@ class Adjustments(QtGui.QDialog):
             self.adjustt[key] = typ
             if key != 'Load' and capacity is None:
                 continue
-            self.adjusts[key] = QtGui.QDoubleSpinBox()
+            self.adjusts[key] = QtWidgets.QDoubleSpinBox()
             self.adjusts[key].setRange(0, adjust_cap)
             self.adjusts[key].setDecimals(4)
             try:
@@ -310,15 +334,15 @@ class Adjustments(QtGui.QDialog):
             self.data[key] = capacity
             self.adjusts[key].setSingleStep(.1)
             self.adjusts[key].setObjectName(key)
-            self.grid.addWidget(QtGui.QLabel(key), ctr, 0)
+            self.grid.addWidget(QtWidgets.QLabel(key), ctr, 0)
             self.grid.addWidget(self.adjusts[key], ctr, 1)
             self.adjusts[key].valueChanged.connect(self.adjust)
-            self.labels[key] = QtGui.QLabel('')
+            self.labels[key] = QtWidgets.QLabel('')
             self.labels[key].setObjectName(key + 'label')
             mw, mwtxt, mwstr = self.setAdjValue(key, typ, capacity)
             self.labels[key].setText(mwtxt)
             self.grid.addWidget(self.labels[key], ctr, 2)
-            self.adjustval[key] = QtGui.QLineEdit()
+            self.adjustval[key] = QtWidgets.QLineEdit()
             self.adjustval[key].setObjectName(key)
             self.adjustval[key].setText(mwstr)
             if self.decpts is None:
@@ -328,36 +352,36 @@ class Adjustments(QtGui.QDialog):
             self.grid.addWidget(self.adjustval[key], ctr, 3)
             self.adjustval[key].textChanged.connect(self.adjustst)
             ctr += 1
-        quit = QtGui.QPushButton('Quit', self)
+        quit = QtWidgets.QPushButton('Quit', self)
         self.grid.addWidget(quit, ctr, 0)
         quit.clicked.connect(self.quitClicked)
-        show = QtGui.QPushButton('Proceed', self)
+        show = QtWidgets.QPushButton('Proceed', self)
         self.grid.addWidget(show, ctr, 1)
         show.clicked.connect(self.showClicked)
-        reset = QtGui.QPushButton('Reset', self)
+        reset = QtWidgets.QPushButton('Reset', self)
         self.grid.addWidget(reset, ctr, 2)
         reset.clicked.connect(self.resetClicked)
         if save_folder is not None:
-            save = QtGui.QPushButton('Save', self)
+            save = QtWidgets.QPushButton('Save', self)
             self.grid.addWidget(save, ctr, 3)
             save.clicked.connect(self.saveClicked)
-            restore = QtGui.QPushButton('Restore', self)
+            restore = QtWidgets.QPushButton('Restore', self)
             self.grid.addWidget(restore, ctr, 4)
             restore.clicked.connect(self.restoreClicked)
-        frame = QtGui.QFrame()
+        frame = QtWidgets.QFrame()
         frame.setLayout(self.grid)
-        self.scroll = QtGui.QScrollArea()
+        self.scroll = QtWidgets.QScrollArea()
         self.scroll.setWidgetResizable(True)
         self.scroll.setWidget(frame)
-        self.layout = QtGui.QVBoxLayout(self)
+        self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
         self.setWindowTitle('SIREN - Powermatch - Adjust generators')
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
-        QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
+        QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
         self.show()
 
     def adjust(self):
-        key = str(self.sender().objectName())
+        key = self.sender().objectName()
         if not self.ignore:
             self.adjustm[key] = self.adjusts[key].value()
         mw, mwtxt, mwstr = self.setAdjValue(key, self.adjustt[key], self.data[key])
@@ -369,7 +393,7 @@ class Adjustments(QtGui.QDialog):
     def adjustst(self):
         if self.ignore:
             return
-        key = str(self.sender().objectName())
+        key = self.sender().objectName()
         if self.decpts is None:
             value = int(self.sender().text())
         else:
@@ -408,8 +432,8 @@ class Adjustments(QtGui.QDialog):
             self.adjusts[key].setValue(1)
 
     def restoreClicked(self):
-        ini_file = str(QtGui.QFileDialog.getOpenFileName(self, 'Open Adjustments file',
-                   self.save_folder, 'Preferences Files (*.ini)'))
+        ini_file = QtWidgets.QFileDialog.getOpenFileName(self, 'Open Adjustments file',
+                   self.save_folder, 'Preferences Files (*.ini)')[0]
         if ini_file != '':
             reshow = False
             config = configparser.RawConfigParser()
@@ -435,8 +459,8 @@ class Adjustments(QtGui.QDialog):
         if line != '':
             line = 'adjustments=' + line[:-1]
             updates = {'Powermatch': [line]}
-            inifile = str(QtGui.QFileDialog.getSaveFileName(None, 'Save Adjustments to file',
-                          self.save_folder, 'Preferences Files (*.ini)'))
+            inifile = QtWidgets.QFileDialog.getSaveFileName(None, 'Save Adjustments to file',
+                      self.save_folder, 'Preferences Files (*.ini)')[0]
             if inifile != '':
                 if inifile[-4:] != '.ini':
                     inifile = inifile + '.ini'
@@ -451,13 +475,15 @@ class Adjustments(QtGui.QDialog):
     def getValues(self):
         return self.results
 
-class powerMatch(QtGui.QWidget):
+class powerMatch(QtWidgets.QWidget):
+    log = QtCore.pyqtSignal()
+    progress = QtCore.pyqtSignal()
 
     def get_filename(self, filename):
-        if str(filename).find('/') == 0: # full directory in non-Windows
+        if filename.find('/') == 0: # full directory in non-Windows
             return filename
         elif (sys.platform == 'win32' or sys.platform == 'cygwin') \
-          and str(filename)[1] == ':': # full directory for Windows
+          and filename[1] == ':': # full directory for Windows
             return filename
         else: # subdirectory of scenarios
             return self.scenarios + filename
@@ -634,7 +660,7 @@ class powerMatch(QtGui.QWidget):
    #     tab3 = QtGui.QWidget()
    #     tab4 = QtGui.QWidget()
    #     tab5 = QtGui.QWidget()
-        self.grid = QtGui.QGridLayout()
+        self.grid = QtWidgets.QGridLayout()
         self.files = [None] * 5
         self.sheets = self.file_labels[:]
         del self.sheets[-2:]
@@ -642,25 +668,25 @@ class powerMatch(QtGui.QWidget):
         edit = [None, None, None]
         r = 0
         for i in range(5):
-            self.grid.addWidget(QtGui.QLabel(self.file_labels[i] + ' File:'), r, 0)
+            self.grid.addWidget(QtWidgets.QLabel(self.file_labels[i] + ' File:'), r, 0)
             self.files[i] = ClickableQLabel()
             self.files[i].setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
             self.files[i].setText(self.ifiles[i])
-            self.connect(self.files[i], QtCore.SIGNAL('clicked()'), self.fileChanged)
+            self.files[i].clicked.connect(self.fileChanged)
             self.grid.addWidget(self.files[i], r, 1, 1, 3)
             if i < D:
                 r += 1
-                self.grid.addWidget(QtGui.QLabel(self.file_labels[i] + ' Sheet:'), r, 0)
-                self.sheets[i] = QtGui.QComboBox()
+                self.grid.addWidget(QtWidgets.QLabel(self.file_labels[i] + ' Sheet:'), r, 0)
+                self.sheets[i] = QtWidgets.QComboBox()
                 self.sheets[i].addItem(self.isheets[i])
                 self.grid.addWidget(self.sheets[i], r, 1, 1, 2)
-                edit[i] = QtGui.QPushButton(self.file_labels[i], self)
+                edit[i] = QtWidgets.QPushButton(self.file_labels[i], self)
                 self.grid.addWidget(edit[i], r, 3)
                 edit[i].clicked.connect(self.editClicked)
             r += 1
         wdth = edit[1].fontMetrics().boundingRect(edit[1].text()).width() + 9
-        self.grid.addWidget(QtGui.QLabel('Carbon Price:'), r, 0)
-        self.carbon = QtGui.QDoubleSpinBox()
+        self.grid.addWidget(QtWidgets.QLabel('Carbon Price:'), r, 0)
+        self.carbon = QtWidgets.QDoubleSpinBox()
         self.carbon.setRange(0, 200)
         self.carbon.setDecimals(2)
         try:
@@ -669,29 +695,29 @@ class powerMatch(QtGui.QWidget):
             self.carbon.setValue(0.)
         self.grid.addWidget(self.carbon, r, 1)
         self.carbon.valueChanged.connect(self.cpchanged)
-        self.grid.addWidget(QtGui.QLabel('($/tCO2e. Use only if LCOE excludes carbon price)'), r, 2, 1, 2)
+        self.grid.addWidget(QtWidgets.QLabel('($/tCO2e. Use only if LCOE excludes carbon price)'), r, 2, 1, 2)
         r += 1
-        self.grid.addWidget(QtGui.QLabel('Adjust Generators:'), r, 0)
-        self.adjust = QtGui.QCheckBox('(check to adjust/multiply generators capacity data)', self)
+        self.grid.addWidget(QtWidgets.QLabel('Adjust Generators:'), r, 0)
+        self.adjust = QtWidgets.QCheckBox('(check to adjust/multiply generators capacity data)', self)
         if self.adjust_re:
             self.adjust.setCheckState(QtCore.Qt.Checked)
         self.grid.addWidget(self.adjust, r, 1, 1, 3)
         r += 1
-        self.grid.addWidget(QtGui.QLabel('Dispatch Order:\n(move to right\nto exclude)'), r, 0)
-        self.order = ThumbListWidget(self) #QtGui.QListWidget()
+        self.grid.addWidget(QtWidgets.QLabel('Dispatch Order:\n(move to right\nto exclude)'), r, 0)
+        self.order = ListWidget(self) #QtWidgets.QListWidget()
       #  self.order.setDragDropMode(QtGui.QAbstractItemView.InternalMove)
         self.grid.addWidget(self.order, r, 1, 1, 2)
-        self.ignore = ThumbListWidget(self) # QtGui.QListWidget()
+        self.ignore = ListWidget(self) # QtWidgets.QListWidget()
       #  self.ignore.setDragDropMode(QtGui.QAbstractItemView.InternalMove)
         self.grid.addWidget(self.ignore, r, 3, 1, 2)
         r += 1
-        self.log = QtGui.QLabel('')
+        self.log = QtWidgets.QLabel('')
         msg_palette = QtGui.QPalette()
         msg_palette.setColor(QtGui.QPalette.Foreground, QtCore.Qt.red)
         self.log.setPalette(msg_palette)
         self.grid.addWidget(self.log, r, 1, 1, 4)
         r += 1
-        self.progressbar = QtGui.QProgressBar()
+        self.progressbar = QtWidgets.QProgressBar()
         self.progressbar.setMinimum(0)
         self.progressbar.setMaximum(10)
         self.progressbar.setValue(0)
@@ -701,28 +727,28 @@ class powerMatch(QtGui.QWidget):
         self.progressbar.setHidden(True)
         r += 1
         r += 1
-        quit = QtGui.QPushButton('Done', self)
+        quit = QtWidgets.QPushButton('Done', self)
         self.grid.addWidget(quit, r, 0)
         quit.clicked.connect(self.quitClicked)
-        QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
-        pms = QtGui.QPushButton('Summary', self)
+        QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
+        pms = QtWidgets.QPushButton('Summary', self)
         self.grid.addWidget(pms, r, 1)
         pms.clicked.connect(self.pmClicked)
-        pm = QtGui.QPushButton('Powermatch', self)
+        pm = QtWidgets.QPushButton('Powermatch', self)
      #   pm.setMaximumWidth(wdth)
         self.grid.addWidget(pm, r, 2)
         pm.clicked.connect(self.pmClicked)
-        opt = QtGui.QPushButton('Optimise', self)
+        opt = QtWidgets.QPushButton('Optimise', self)
         self.grid.addWidget(opt, r, 3)
         opt.clicked.connect(self.pmClicked)
-        help = QtGui.QPushButton('Help', self)
+        help = QtWidgets.QPushButton('Help', self)
         help.setMaximumWidth(wdth)
         quit.setMaximumWidth(wdth)
         self.grid.addWidget(help, r, 5)
         help.clicked.connect(self.helpClicked)
-        QtGui.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
+        QtWidgets.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
         try:
-            ts = xlrd.open_workbook(self.get_filename(str(self.files[G].text())))
+            ts = xlrd.open_workbook(self.get_filename(self.files[G].text()))
             ws = ts.sheet_by_name('Generators')
             self.getGenerators(ws)
             self.setOrder()
@@ -730,12 +756,12 @@ class powerMatch(QtGui.QWidget):
             del ts
         except:
             pass
-        frame = QtGui.QFrame()
+        frame = QtWidgets.QFrame()
         frame.setLayout(self.grid)
-        self.scroll = QtGui.QScrollArea()
+        self.scroll = QtWidgets.QScrollArea()
         self.scroll.setWidgetResizable(True)
         self.scroll.setWidget(frame)
-        self.layout = QtGui.QVBoxLayout(self)
+        self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
     #    tab1.setLayout(self.layout)
     #    self.tabs.addTab(tab1,'Parms')
@@ -752,8 +778,8 @@ class powerMatch(QtGui.QWidget):
 
     def center(self):
         frameGm = self.frameGeometry()
-        screen = QtGui.QApplication.desktop().screenNumber(QtGui.QApplication.desktop().cursor().pos())
-        centerPoint = QtGui.QApplication.desktop().availableGeometry(screen).center()
+        screen = QtWidgets.QApplication.desktop().screenNumber(QtWidgets.QApplication.desktop().cursor().pos())
+        centerPoint = QtWidgets.QApplication.desktop().availableGeometry(screen).center()
         frameGm.moveCenter(centerPoint)
         self.move(frameGm.topLeft())
 
@@ -768,11 +794,11 @@ class powerMatch(QtGui.QWidget):
                 curfile = self.scenarios + self.files[D].text()
                 curfile = curfile.replace('data', 'results')
                 curfile = curfile.replace('Data', 'Results')
-            newfile = str(QtGui.QFileDialog.getSaveFileName(None, 'Save ' + self.file_labels[i] + ' file',
-                      curfile, 'Excel Files (*.xlsx)'))
+            newfile = QtWidgets.QFileDialog.getSaveFileName(None, 'Save ' + self.file_labels[i] + ' file',
+                      curfile, 'Excel Files (*.xlsx)')[0]
         else:
-            newfile = str(QtGui.QFileDialog.getOpenFileName(self, 'Open ' + self.file_labels[i] + ' file',
-                      curfile))
+            newfile = QtWidgets.QFileDialog.getOpenFileName(self, 'Open ' + self.file_labels[i] + ' file',
+                      curfile)[0]
         if newfile != '':
             if i < D:
                 if i == C:
@@ -787,8 +813,8 @@ class powerMatch(QtGui.QWidget):
                 j = -1
                 for sht in ts.sheet_names():
                     j += 1
-                    self.sheets[i].addItem(str(sht))
-                    if str(sht) == self.file_labels[i]:
+                    self.sheets[i].addItem(sht)
+                    if sht == self.file_labels[i]:
                         ndx = j
                 self.sheets[i].setCurrentIndex(ndx)
                 if i == 1:
@@ -802,15 +828,15 @@ class powerMatch(QtGui.QWidget):
             else:
                 self.files[i].setText(newfile)
             if i == D and self.change_res:
-                newfile = str(self.files[D].text())
+                newfile = self.files[D].text()
                 newfile = newfile.replace('data', 'results')
                 newfile = newfile.replace('Data', 'Results')
-                if newfile != str(self.files[D].text()):
+                if newfile != self.files[D].text():
                     self.files[R].setText(newfile)
             self.updated = True
 
     def helpClicked(self):
-        dialog = displayobject.AnObject(QtGui.QDialog(), self.help,
+        dialog = displayobject.AnObject(QtWidgets.QDialog(), self.help,
                  title='Help for powermatch (' + fileVersion() + ')', section='powermatch')
         dialog.exec_()
 
@@ -835,9 +861,9 @@ class powerMatch(QtGui.QWidget):
                     lines.append('adjustments=' + line[:-1])
             lines.append('carbon_price=' + str(self.carbon_price))
             for i in range(len(self.file_labels)):
-                lines.append(str(self.file_labels[i].lower()) + '_file=' + str(self.files[i].text()))
+                lines.append(self.file_labels[i].lower() + '_file=' + self.files[i].text())
             for i in range(D):
-                lines.append(str(self.file_labels[i].lower()) + '_sheet=' + str(self.sheets[i].currentText()))
+                lines.append(self.file_labels[i].lower() + '_sheet=' + self.sheets[i].currentText())
             lines.append('optimise_choice=' + self.optimise_choice)
             lines.append('optimise_generations=' + str(self.optimise_generations))
             lines.append('optimise_mutation=' + str(self.optimise_mutation))
@@ -911,7 +937,7 @@ class powerMatch(QtGui.QWidget):
             pass
         else:
             try:
-                ts = xlrd.open_workbook(self.get_filename(str(self.files[it].text())))
+                ts = xlrd.open_workbook(self.get_filename(self.files[it].text()))
                 try:
                     sht = self.sheets[it].currentText()
                 except:
@@ -1130,7 +1156,7 @@ class powerMatch(QtGui.QWidget):
             return
         self.optimisation = {}
         for row in range(1, ws.nrows):
-            tech = str(ws.cell_value(row, 0))
+            tech = ws.cell_value(row, 0)
             if coln[2] > 0: # values format
                 self.optimisation[tech] = Optimisation(tech,
                                      ws.cell_value(row, coln[1]),
@@ -1198,29 +1224,29 @@ class powerMatch(QtGui.QWidget):
         err_msg = ''
         if self.constraints is None:
             try:
-                ts = xlrd.open_workbook(self.get_filename(str(self.files[C].text())))
+                ts = xlrd.open_workbook(self.get_filename(self.files[C].text()))
                 ws = ts.sheet_by_name(self.sheets[C].currentText())
                 self.getConstraints(ws)
                 ts.release_resources()
                 del ts
             except FileNotFoundError:
-                err_msg = 'Constraints file not found - ' + str(self.files[C].text())
+                err_msg = 'Constraints file not found - ' + self.files[C].text()
                 self.getConstraints(None)
             except:
                 err_msg = 'Error accessing Constraints'
                 self.getConstraints(None)
         if self.generators is None:
             try:
-                ts = xlrd.open_workbook(self.get_filename(str(self.files[G].text())))
+                ts = xlrd.open_workbook(self.get_filename(self.files[G].text()))
                 ws = ts.sheet_by_name(self.sheets[G].currentText())
                 self.getGenerators(ws)
                 ts.release_resources()
                 del ts
             except FileNotFoundError:
                 if err_msg != '':
-                    err_msg += ' nor Generators - ' + str(self.files[G].text())
+                    err_msg += ' nor Generators - ' + self.files[G].text()
                 else:
-                    err_msg = 'Generators file not found - ' + str(self.files[G].text())
+                    err_msg = 'Generators file not found - ' + self.files[G].text()
                 self.getGenerators(None)
             except:
                 if err_msg != '':
@@ -1230,16 +1256,16 @@ class powerMatch(QtGui.QWidget):
                 self.getGenerators(None)
         if option == 'O' and self.optimisation is None:
             try:
-                ts = xlrd.open_workbook(self.get_filename(str(self.files[O].text())))
+                ts = xlrd.open_workbook(self.get_filename(self.files[O].text()))
                 ws = ts.sheet_by_name(self.sheets[O].currentText())
                 self.getoptimisation(ws)
                 ts.release_resources()
                 del ts
             except FileNotFoundError:
                 if err_msg != '':
-                    err_msg += ' nor Optimisation - ' + str(self.files[O].text())
+                    err_msg += ' nor Optimisation - ' + self.files[O].text()
                 else:
-                    err_msg = 'Optimisation file not found - ' + str(self.files[O].text())
+                    err_msg = 'Optimisation file not found - ' + self.files[O].text()
                 self.getoptimisation(None)
             except:
                 if err_msg != '':
@@ -1250,7 +1276,7 @@ class powerMatch(QtGui.QWidget):
         if err_msg != '':
             self.setStatus(err_msg)
             return
-        pm_data_file = self.get_filename(str(self.files[D].text()))
+        pm_data_file = self.get_filename(self.files[D].text())
         if pm_data_file[-5:] != '.xlsx': #xlsx format only
             self.setStatus('Not a Powermatch data spreadsheet')
             self.progressbar.setHidden(True)
@@ -1258,10 +1284,10 @@ class powerMatch(QtGui.QWidget):
         try:
             ts = oxl.load_workbook(pm_data_file)
         except FileNotFoundError:
-            self.setStatus('Data file not found - ' + str(self.files[D].text()))
+            self.setStatus('Data file not found - ' + self.files[D].text())
             return
         except:
-            self.setStatus('Error accessing Data file - ' + str(self.files[D].text()))
+            self.setStatus('Error accessing Data file - ' + self.files[D].text())
             return
         ws = ts.active
         top_row = ws.max_row - 8760
@@ -1321,7 +1347,7 @@ class powerMatch(QtGui.QWidget):
         do_adjust = False
         if option == 'O':
             for itm in range(self.order.count()):
-                gen = str(self.order.item(itm).text())
+                gen = self.order.item(itm).text()
                 try:
                     if self.generators[gen].constraint in self.constraints and \
                       self.constraints[self.generators[gen].constraint].category == 'Generator':
@@ -1379,7 +1405,7 @@ class powerMatch(QtGui.QWidget):
             do_adjust = True
         ts.close()
         self.progressbar.setValue(1)
-        if str(self.files[R].text()) == '':
+        if self.files[R].text() == '':
             i = pm_data_file.find('/')
             if i >= 0:
                 data_file = pm_data_file[i + 1:]
@@ -1387,10 +1413,10 @@ class powerMatch(QtGui.QWidget):
                 data_file = pm_data_file
             data_file = data_file.replace('data', 'results')
         else:
-            data_file = self.get_filename(str(self.files[R].text()))
+            data_file = self.get_filename(self.files[R].text())
         self.progressbar.setValue(2)
         for itm in range(self.order.count()):
-            gen = str(self.order.item(itm).text())
+            gen = self.order.item(itm).text()
             if do_adjust:
                 try:
                     if self.adjustby[gen] <= 0:
@@ -2428,13 +2454,13 @@ class powerMatch(QtGui.QWidget):
         if self.opt_progressbar is None:
             self.opt_progressbar = ProgressBar(maximum=maximum, msg=msg, title=title)
             self.opt_progressbar.setWindowModality(QtCore.Qt.WindowModal)
-            self.connect(self.opt_progressbar, QtCore.SIGNAL('progress'), self.opt_progressbar.progress)
-            self.connect(self.opt_progressbar, QtCore.SIGNAL('range'), self.opt_progressbar.range)
+         #   self.opt_progressbar.progress.connect(self.opt_progressbar.progress)
+         #   self.opt_progressbar.range.connect(self.opt_progressbar.range)
             self.opt_progressbar.show()
             self.opt_progressbar.setVisible(False)
             self.activateWindow()
         else:
-            self.opt_progressbar.range(0, maximum, msg=msg)
+            self.opt_progressbar.barRange(0, maximum, msg=msg)
 
     def show_FloatStatus(self):
         if not self.log_status:
@@ -2446,7 +2472,7 @@ class powerMatch(QtGui.QWidget):
                          QtCore.Qt.WindowSystemMenuHint |
                          QtCore.Qt.WindowMinMaxButtonsHint)
             self.floatstatus.procStart.connect(self.getStatus)
-            self.connect(self.floatstatus, QtCore.SIGNAL('log'), self.floatstatus.log)
+       #     self.floatstatus.log.connect(self.floatstatus.log)
             self.floatstatus.show()
             self.activateWindow()
 
@@ -2457,8 +2483,8 @@ class powerMatch(QtGui.QWidget):
         if text == '':
             return
         if self.floatstatus and self.log_status:
-            self.floatstatus.emit(QtCore.SIGNAL('log'), text)
-            QtGui.QApplication.processEvents()
+            self.floatstatus.log(text)
+            QtWidgets.QApplication.processEvents()
 
     @QtCore.pyqtSlot(str)
     def getStatus(self, text):
@@ -2548,8 +2574,8 @@ class powerMatch(QtGui.QWidget):
             # Apply random mutation
             random_mutation_array = np.random.random(size=(population.shape))
             random_mutation_boolean = random_mutation_array <= mutation_probability
-            random_mutation_boolean[0][:] = False # keep the best multi and lcoe
-            random_mutation_boolean[1][:] = False
+        #    random_mutation_boolean[0][:] = False # keep the best multi and lcoe
+       #     random_mutation_boolean[1][:] = False
             population[random_mutation_boolean] = np.logical_not(population[random_mutation_boolean])
             # Return mutation population
             return population
@@ -2629,7 +2655,7 @@ class powerMatch(QtGui.QWidget):
                             try:
                                 weight += 1 - ((tgt / tgts[key]) * self.targets[key][1])
                             except:
-                                print('(2630)', key, tgts[key], tgt)
+                                print('(2658)', key, tgts[key], tgt)
                     else:
                         try:
                             weight += 1 - (((maxs[key] - tgt) / (maxs[key] - mins[key])) \
@@ -2755,13 +2781,13 @@ class powerMatch(QtGui.QWidget):
                         data[axis].append(multi[multi_order[axis]] * 100.)
                     else:
                         data[axis].append(multi[multi_order[axis]])
-            fig = plt.figure(title + str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), '_yyyy-MM-dd_hhmm')))
+            fig = plt.figure(title + QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), '_yyyy-MM-dd_hhmm'))
             mx = fig.gca(projection='3d')
             plt.title('\n' + title.title() + '\n')
             try:
                 surf = mx.scatter(data[0], data[1], data[2], picker=1) # enable picking a point
             except:
-                print('(2762)', data[0], data[1], data[2])
+                print('(2790)', data[0], data[1], data[2])
                 return
             mx.xaxis.set_major_formatter(FormatStrFormatter(self.targets[multi_order[0]][5]))
             mx.yaxis.set_major_formatter(FormatStrFormatter(self.targets[multi_order[1]][5]))
@@ -2814,72 +2840,72 @@ class powerMatch(QtGui.QWidget):
         self.setStatus('Optimise processing started')
         err_msg = ''
         optExit = False
-        optDialog = QtGui.QDialog()
-        grid = QtGui.QGridLayout()
-        grid.addWidget(QtGui.QLabel('Adjust load'), 0, 0)
-        optLoad = QtGui.QDoubleSpinBox()
+        optDialog = QtWidgets.QDialog()
+        grid = QtWidgets.QGridLayout()
+        grid.addWidget(QtWidgets.QLabel('Adjust load'), 0, 0)
+        optLoad = QtWidgets.QDoubleSpinBox()
         optLoad.setRange(-1, self.adjust_cap)
         optLoad.setDecimals(3)
         optLoad.setSingleStep(.1)
         optLoad.setValue(pmss_details['Load'][3])
         rw = 0
         grid.addWidget(optLoad, rw, 1)
-        grid.addWidget(QtGui.QLabel('Multiplier for input Load'), rw, 2, 1, 3)
+        grid.addWidget(QtWidgets.QLabel('Multiplier for input Load'), rw, 2, 1, 3)
         rw += 1
-        grid.addWidget(QtGui.QLabel('Population size'), rw, 0)
-        optPopn = QtGui.QSpinBox()
+        grid.addWidget(QtWidgets.QLabel('Population size'), rw, 0)
+        optPopn = QtWidgets.QSpinBox()
         optPopn.setRange(10, 500)
         optPopn.setSingleStep(10)
         optPopn.setValue(self.optimise_population)
         optPopn.valueChanged.connect(self.changes)
         grid.addWidget(optPopn, rw, 1)
-        grid.addWidget(QtGui.QLabel('Size of population'), rw, 2, 1, 3)
+        grid.addWidget(QtWidgets.QLabel('Size of population'), rw, 2, 1, 3)
         rw += 1
-        grid.addWidget(QtGui.QLabel('No. of generations'), rw, 0, 1, 3)
-        optGenn = QtGui.QSpinBox()
+        grid.addWidget(QtWidgets.QLabel('No. of generations'), rw, 0, 1, 3)
+        optGenn = QtWidgets.QSpinBox()
         optGenn.setRange(10, 500)
         optGenn.setSingleStep(10)
         optGenn.setValue(self.optimise_generations)
         optGenn.valueChanged.connect(self.changes)
         grid.addWidget(optGenn, rw, 1)
-        grid.addWidget(QtGui.QLabel('Number of generations (iterations)'), rw, 2, 1, 3)
+        grid.addWidget(QtWidgets.QLabel('Number of generations (iterations)'), rw, 2, 1, 3)
         rw += 1
-        grid.addWidget(QtGui.QLabel('Mutation probability'), rw, 0)
-        optMutn = QtGui.QDoubleSpinBox()
+        grid.addWidget(QtWidgets.QLabel('Mutation probability'), rw, 0)
+        optMutn = QtWidgets.QDoubleSpinBox()
         optMutn.setRange(0, 1)
         optMutn.setDecimals(4)
         optMutn.setSingleStep(0.001)
         optMutn.setValue(self.optimise_mutation)
         optMutn.valueChanged.connect(self.changes)
         grid.addWidget(optMutn, rw, 1)
-        grid.addWidget(QtGui.QLabel('Add in mutation'), rw, 2, 1, 3)
+        grid.addWidget(QtWidgets.QLabel('Add in mutation'), rw, 2, 1, 3)
         rw += 1
-        grid.addWidget(QtGui.QLabel('Exit if stable'), rw, 0)
-        optStop = QtGui.QSpinBox()
+        grid.addWidget(QtWidgets.QLabel('Exit if stable'), rw, 0)
+        optStop = QtWidgets.QSpinBox()
         optStop.setRange(0, 50)
         optStop.setSingleStep(10)
         optStop.setValue(self.optimise_stop)
         optStop.valueChanged.connect(self.changes)
         grid.addWidget(optStop, rw, 1)
-        grid.addWidget(QtGui.QLabel('Exit if LCOE/weight remains the same after this many iterations'),
+        grid.addWidget(QtWidgets.QLabel('Exit if LCOE/weight remains the same after this many iterations'),
                        rw, 2, 1, 3)
         rw += 1
-        grid.addWidget(QtGui.QLabel('Optimisation choice'), rw, 0)
-        optCombo = QtGui.QComboBox()
+        grid.addWidget(QtWidgets.QLabel('Optimisation choice'), rw, 0)
+        optCombo = QtWidgets.QComboBox()
         choices = ['LCOE', 'Multi', 'Both']
         for choice in choices:
             optCombo.addItem(choice)
             if choice == self.optimise_choice:
                 optCombo.setCurrentIndex(optCombo.count() - 1)
         grid.addWidget(optCombo, rw, 1)
-        grid.addWidget(QtGui.QLabel('Choose type of optimisation'),
+        grid.addWidget(QtWidgets.QLabel('Choose type of optimisation'),
                        rw, 2, 1, 3)
         rw += 1
         # for each variable name
-        grid.addWidget(QtGui.QLabel('Variable'), rw, 0)
-        grid.addWidget(QtGui.QLabel('Weight'), rw, 1)
-        grid.addWidget(QtGui.QLabel('Better'), rw, 2)
-        grid.addWidget(QtGui.QLabel('Worse'), rw, 3)
+        grid.addWidget(QtWidgets.QLabel('Variable'), rw, 0)
+        grid.addWidget(QtWidgets.QLabel('Weight'), rw, 1)
+        grid.addWidget(QtWidgets.QLabel('Better'), rw, 2)
+        grid.addWidget(QtWidgets.QLabel('Worse'), rw, 3)
         rw += 1
         ndx = grid.count()
         for key in self.targets.keys():
@@ -2894,42 +2920,42 @@ class powerMatch(QtGui.QWidget):
                 ud = '(<html>&darr;</html>)'
             else:
                 ud = '(<html>&uarr;</html>)'
-            grid.addWidget(QtGui.QLabel(value[0] + ': ' + ud), rw, 0)
-            weight = QtGui.QDoubleSpinBox()
+            grid.addWidget(QtWidgets.QLabel(value[0] + ': ' + ud), rw, 0)
+            weight = QtWidgets.QDoubleSpinBox()
             weight.setRange(0, 1)
             weight.setDecimals(2)
             weight.setSingleStep(0.05)
             weight.setValue(value[1])
             grid.addWidget(weight, rw, 1)
             if key[-4:] == '_pct':
-                minim = QtGui.QDoubleSpinBox()
+                minim = QtWidgets.QDoubleSpinBox()
                 minim.setRange(-.1, 1.)
                 minim.setDecimals(2)
                 minim.setSingleStep(0.1)
                 minim.setValue(value[2])
                 grid.addWidget(minim, rw, 2)
-                maxim = QtGui.QDoubleSpinBox()
+                maxim = QtWidgets.QDoubleSpinBox()
                 maxim.setRange(-.1, 1.)
                 maxim.setDecimals(2)
                 maxim.setSingleStep(0.1)
                 maxim.setValue(value[3])
                 grid.addWidget(maxim, rw, 3)
             else:
-                minim = QtGui.QLineEdit()
+                minim = QtWidgets.QLineEdit()
                 minim.setValidator(QtGui.QDoubleValidator())
                 minim.validator().setDecimals(2)
                 minim.setText(str(value[2]))
                 grid.addWidget(minim, rw, 2)
-                maxim = QtGui.QLineEdit()
+                maxim = QtWidgets.QLineEdit()
                 maxim.setValidator(QtGui.QDoubleValidator())
                 maxim.validator().setDecimals(2)
                 maxim.setText(str(value[3]))
                 grid.addWidget(maxim, rw, 3)
             rw += 1
-        quit = QtGui.QPushButton('Quit', self)
+        quit = QtWidgets.QPushButton('Quit', self)
         grid.addWidget(quit, rw, 0)
         quit.clicked.connect(optQuitClicked)
-        show = QtGui.QPushButton('Proceed', self)
+        show = QtWidgets.QPushButton('Proceed', self)
         grid.addWidget(show, rw, 1)
         show.clicked.connect(optDialog.close)
         optDialog.setLayout(grid)
@@ -3057,7 +3083,7 @@ class powerMatch(QtGui.QWidget):
         self.opt_progressbar.setVisible(True)
         start_time = time.time()
         # Create starting population
-        self.opt_progressbar.emit(QtCore.SIGNAL('progress'), 1, 'Processing generation 1')
+        self.opt_progressbar.barProgress(1, 'Processing generation 1')
         QtCore.QCoreApplication.processEvents()
         population = create_starting_population(population_size, chromosome_length)
         # calculate best score(s) in starting population
@@ -3065,8 +3091,8 @@ class powerMatch(QtGui.QWidget):
         # if do_multi best_multi = lowest weight and if not do_lcoe best_score also = best_weight
         if self.debug:
             filename = self.scenarios + 'opt_debug_' + \
-                       str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),
-                           'yyyy-MM-dd_hhmm')) + '.csv'
+                       QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),
+                       'yyyy-MM-dd_hhmm') + '.csv'
             self.db_file = open(filename, 'w')
             line0 = 'Popn,Chrom,'
             line1 = 'Weights,,'
@@ -3085,7 +3111,7 @@ class powerMatch(QtGui.QWidget):
                      line3 += str(abs(self.targets[key][2] - self.targets[key][3])) + ','
                  else:
                      line3 += ','
-            line0 += 'Weight'
+            line0 += 'Score'
             self.db_file.write(line0 + '\n' + line1 + '\n' + line2 + '\n' + line3 + '\n')
             self.popn = 0
             self.chrom = 0
@@ -3116,7 +3142,7 @@ class powerMatch(QtGui.QWidget):
             multi_lowest_chrom = population[best_mndx]
             multi_best_popn.append(multi_lowest_chrom)
             multi_best.append(multi_values[best_mndx])
-            self.setStatus('Starting Weight: %.2f' % best_multi)
+            self.setStatus('Starting Weight: %.4f' % best_multi)
             multi_best_weight = best_multi
             if not do_lcoe:
                 best_score = best_multi
@@ -3134,12 +3160,12 @@ class powerMatch(QtGui.QWidget):
         for generation in range(1, maximum_generation):
             tim = (time.time() - start_time)
             if tim < 60:
-                tim = ' ( %s %s%.2f ; %.1f secs)' % (ud, d_sign, best_score, tim)
+                tim = ' ( %s %s%.4f ; %.1f secs)' % (ud, d_sign, best_score, tim)
             else:
-                tim = ' ( %s %s%.2f ; %.2f mins)' % (ud, d_sign, best_score, tim / 60.)
-            self.opt_progressbar.emit(QtCore.SIGNAL('progress'), generation + 1,
+                tim = ' ( %s %s%.4f ; %.2f mins)' % (ud, d_sign, best_score, tim / 60.)
+            self.opt_progressbar.barProgress(generation + 1,
                 'Processing generation ' + str(generation + 1) + tim)
-            QtGui.QApplication.processEvents()
+            QtWidgets.QApplication.processEvents()
             if not self.opt_progressbar.be_open:
                 break
         # Create an empty list for new population
@@ -3225,6 +3251,8 @@ class powerMatch(QtGui.QWidget):
         if self.debug:
             try:
                 self.db_file.close()
+                optimiseDebug(self.db_file.name)
+                os.remove(self.db_file.name)
             except:
                 pass
             self.debug = False
@@ -3246,7 +3274,7 @@ class powerMatch(QtGui.QWidget):
         if do_multi:
             op_data[1], score_data[1] = calculate_fitness([multi_lowest_chrom])
         self.setStatus(msg)
-        QtGui.QApplication.processEvents()
+        QtWidgets.QApplication.processEvents()
         self.progressbar.setHidden(True)
         self.progressbar.setValue(0)
         # GA has completed required generation
@@ -3264,7 +3292,8 @@ class powerMatch(QtGui.QWidget):
         # Plot progress
         x = list(range(1, len(best_score_progress)+ 1))
         rcParams['savefig.directory'] = self.scenarios
-        plt.figure(fig + str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), '_yyyy-MM-dd_hhmm')))
+        plt.figure(fig + QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),
+                   '_yyyy-MM-dd_hhmm'))
         lx = plt.subplot(111)
         plt.title(titl)
         lx.plot(x, best_score_progress)
@@ -3338,25 +3367,25 @@ class powerMatch(QtGui.QWidget):
                     if chromosome[c]:
                         capacity = capacity + capacities[c]
                 its[gen].append(capacity / pmss_details[gen][0])
-        chooseDialog = QtGui.QDialog()
-        hbox = QtGui.QHBoxLayout()
-        grid = [QtGui.QGridLayout()]
-        label = QtGui.QLabel('<b>Facility</b>')
+        chooseDialog = QtWidgets.QDialog()
+        hbox = QtWidgets.QHBoxLayout()
+        grid = [QtWidgets.QGridLayout()]
+        label = QtWidgets.QLabel('<b>Facility</b>')
         label.setAlignment(QtCore.Qt.AlignCenter)
         grid[0].addWidget(label, 0, 0)
         for h in range(len(chrom_hdrs)):
-            grid.append(QtGui.QGridLayout())
-            label = QtGui.QLabel('<b>' + chrom_hdrs[h] + '</b>')
+            grid.append(QtWidgets.QGridLayout())
+            label = QtWidgets.QLabel('<b>' + chrom_hdrs[h] + '</b>')
             label.setAlignment(QtCore.Qt.AlignCenter)
             grid[-1].addWidget(label, 0, 0, 1, 2)
         rw = 1
         for key, value in its.items():
-            grid[0].addWidget(QtGui.QLabel(key), rw, 0)
+            grid[0].addWidget(QtWidgets.QLabel(key), rw, 0)
             for h in range(len(chrom_hdrs)):
-                label = QtGui.QLabel('{:.2f}'.format(value[h]))
+                label = QtWidgets.QLabel('{:.2f}'.format(value[h]))
                 label.setAlignment(QtCore.Qt.AlignRight)
                 grid[h + 1].addWidget(label, rw, 0)
-                label = QtGui.QLabel('({:,.2f})'.format(value[h] * pmss_details[key][0]))
+                label = QtWidgets.QLabel('({:,.2f})'.format(value[h] * pmss_details[key][0]))
                 label.setAlignment(QtCore.Qt.AlignRight)
                 grid[h + 1].addWidget(label, rw, 1)
             rw += 1
@@ -3380,7 +3409,7 @@ class powerMatch(QtGui.QWidget):
         self.targets['cost'][5] = self.targets['cost'][5].replace('pwr_chr', pwr_chr[0])
         self.targets['co2'][5] = self.targets['co2'][5].replace('pwr_chr', pwr_chr[1])
         for key in multi_order:
-            lbl = QtGui.QLabel('<i>' + self.targets[key][0] + '</i>')
+            lbl = QtWidgets.QLabel('<i>' + self.targets[key][0] + '</i>')
             lbl.setAlignment(QtCore.Qt.AlignCenter)
             grid[0].addWidget(lbl, rw, 0)
             for h in range(len(chrom_hdrs)):
@@ -3394,23 +3423,23 @@ class powerMatch(QtGui.QWidget):
                     amt = score_data[ndxes[h]][0][key]
                 txt = '<i>' + self.targets[key][5] + '</i>'
                 try:
-                    label = QtGui.QLabel(txt % amt)
+                    label = QtWidgets.QLabel(txt % amt)
                 except:
                     label = '?'
-                    print('(3399)', txt, amt)
+                    print('(3428)', txt, amt)
                 label.setAlignment(QtCore.Qt.AlignCenter)
                 grid[h + 1].addWidget(label, rw, 0, 1, 2)
             rw += 1
-        cshow = QtGui.QPushButton('Quit', self)
+        cshow = QtWidgets.QPushButton('Quit', self)
         grid[0].addWidget(cshow)
         cshow.clicked.connect(chooseDialog.close)
         for h in range(len(chrom_hdrs)):
-            button = QtGui.QPushButton(chrom_hdrs[h], self)
+            button = QtWidgets.QPushButton(chrom_hdrs[h], self)
             grid[h + 1].addWidget(button, rw, 0, 1, 2)
             button.clicked.connect(chooseClicked) #(chrom_hdrs[h]))
         for gri in grid:
-            frame = QtGui.QFrame()
-            frame.setFrameStyle(QtGui.QFrame.Box)
+            frame = QtWidgets.QFrame()
+            frame.setFrameStyle(QtWidgets.QFrame.Box)
             frame.setLineWidth(1)
             frame.setLayout(gri)
             hbox.addWidget(frame)
@@ -3456,7 +3485,7 @@ class powerMatch(QtGui.QWidget):
         return
 
 if "__main__" == __name__:
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     ex = powerMatch()
     app.exec_()
     app.deleteLater()

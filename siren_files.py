@@ -3,7 +3,7 @@
 source_files = ['check_siren.py', 'colours', 'credits', 'dijkstra_4',
                 'displayobject', 'displaytable', 'editini', 'flexiplot', 'floaters',
                 'getmap', 'getmerra2', 'getmodels', 'grid', 'indexweather', 'inisyntax',
-                'makegrid', 'makerainfall2', 'makeweatherfiles', 'makeweather2',
+                'makegrid', 'makeweatherfiles',
                 'newstation', 'parents', 'plotweather', 'powerclasses',
                 'powermatch', 'powermodel', 'powerplot', 'sammodels', 'samrun',
                 'senuser', 'siren', 'sirenicons', 'sirenm', 'sirenupd', 'ssc',
@@ -13,6 +13,6 @@ source_files = ['check_siren.py', 'colours', 'credits', 'dijkstra_4',
                 'makeweatherfiles.html', 'SIREN_notes.html', 'siren_versions.csv',
                 'siren_files.py', 'compare_to_siren.git.py']
 version_files = ['flexiplot', 'getmap', 'getmerra2', 'indexweather', 'makegrid',
-                 'makerainfall2', 'makeweatherfiles', 'makeweather2',
+                 'makeweatherfiles',
                  'powermatch', 'powerplot', 'siren', 'sirenm', 'sirenupd',
                  'updateswis']

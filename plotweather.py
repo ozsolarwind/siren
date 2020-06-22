@@ -29,7 +29,7 @@ import sys
 import xlrd
 
 import configparser  # decode .ini file
-from PyQt4 import QtGui, QtCore
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 import displaytable
 from getmodels import getModelFile
@@ -41,7 +41,7 @@ from sammodels import getZenith
 the_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
 
-class whatPlots(QtGui.QDialog):
+class whatPlots(QtWidgets.QDialog):
     def __init__(self, plots, plot_order, hdrs, spacers, base_year, comment):
         self.plots = plots
         self.plot_order = plot_order
@@ -53,38 +53,38 @@ class whatPlots(QtGui.QDialog):
         self.initUI()
 
     def initUI(self):
-        self.grid = QtGui.QGridLayout()
+        self.grid = QtWidgets.QGridLayout()
         self.checkbox = []
         i = 0
         bold = QtGui.QFont()
         bold.setBold(True)
         for plot in range(len(self.plot_order)):
             if self.plot_order[plot] in self.spacers:
-                label = QtGui.QLabel(self.spacers[self.plot_order[plot]])
+                label = QtWidgets.QLabel(self.spacers[self.plot_order[plot]])
                 label.setFont(bold)
                 self.grid.addWidget(label, i, 0)
                 i += 1
-            self.checkbox.append(QtGui.QCheckBox(self.hdrs[self.plot_order[plot]], self))
+            self.checkbox.append(QtWidgets.QCheckBox(self.hdrs[self.plot_order[plot]], self))
             if self.plots[self.plot_order[plot]]:
                 self.checkbox[plot].setCheckState(QtCore.Qt.Checked)
             self.grid.addWidget(self.checkbox[-1], i, 0)
             i += 1
-        self.grid.connect(self.checkbox[0], QtCore.SIGNAL('stateChanged(int)'), self.check_all)
-        show = QtGui.QPushButton('Proceed', self)
+        self.checkbox[0].stateChanged[int].connect(self.check_all)
+        show = QtWidgets.QPushButton('Proceed', self)
         show.clicked.connect(self.showClicked)
         self.grid.addWidget(show, i, 0)
-        frame = QtGui.QFrame()
+        frame = QtWidgets.QFrame()
         frame.setLayout(self.grid)
-        self.scroll = QtGui.QScrollArea()
+        self.scroll = QtWidgets.QScrollArea()
         self.scroll.setWidgetResizable(True)
         self.scroll.setWidget(frame)
-        self.layout = QtGui.QVBoxLayout(self)
+        self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
-        commnt = QtGui.QLabel('Nearest weather files:\n' + self.comment)
+        commnt = QtWidgets.QLabel('Nearest weather files:\n' + self.comment)
         self.layout.addWidget(commnt)
         self.setWindowTitle('SIREN - Weather dialog for ' + str(self.base_year))
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
-        QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
+        QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
         self.show_them = False
         self.show()
 
@@ -284,6 +284,7 @@ class PlotWeather():
                 plt.xticks(list(range(4, 25, 4)))
        #         px.set_xticklabels(labels])
   #              plt.xticks(range(0, 25, 4))
+           #     plt.grid(axis='x')
                 px.set_xticklabels(x_labels[1:])
                 px.set_ylim([0, maxy])
                 if self.two_axes:

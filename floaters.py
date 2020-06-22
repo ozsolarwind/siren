@@ -22,12 +22,12 @@ import os
 import ssc
 import sys
 import configparser   # decode .ini file
-from PyQt4 import QtGui, QtCore
+from PyQt5 import QtCore, QtGui, QtWidgets
 from editini import SaveIni
 from getmodels import getModelFile
 
 
-class FloatLegend(QtGui.QDialog):
+class FloatLegend(QtWidgets.QDialog):
     procStart = QtCore.pyqtSignal(str)
 
     def __init__(self, techdata, stations, flags):
@@ -52,7 +52,7 @@ class FloatLegend(QtGui.QDialog):
         except:
             pass
         self.be_open = True
-        self.grid = QtGui.QGridLayout()
+        self.grid = QtWidgets.QGridLayout()
         tech_sizes = {}
         txt_lens = [10, 0]
         for st in self.stations:
@@ -68,23 +68,23 @@ class FloatLegend(QtGui.QDialog):
         total_area = 0.
         row = 0
         for key, value in iter(sorted(tech_sizes.items())):
-            labl = QtGui.QLabel('__')
+            labl = QtWidgets.QLabel('__')
             colr = QtGui.QColor(self.techdata[key][1])
             labl.setStyleSheet('QLabel {background-color: %s; color: %s;}' % (colr.name(), colr.name()))
             self.grid.addWidget(labl, row, 0)
-            self.grid.addWidget(QtGui.QLabel(key), row, 1)
+            self.grid.addWidget(QtWidgets.QLabel(key), row, 1)
             total_area += value
             area = '%s sq. Km' % '{:0.1f}'.format(value)
             txt_lens[1] = max(txt_lens[1], len(area))
-            self.grid.addWidget(QtGui.QLabel(area), row, 2)
+            self.grid.addWidget(QtWidgets.QLabel(area), row, 2)
             self.grid.setRowStretch(row, 0)
             row += 1
         self.grid.setColumnStretch(0, 0)
         self.grid.setColumnStretch(1, 1)
-        self.grid.addWidget(QtGui.QLabel('Total Area'), row, 1)
+        self.grid.addWidget(QtWidgets.QLabel('Total Area'), row, 1)
         area = '%s sq. Km' % '{:0.1f}'.format(total_area)
         txt_lens[1] = max(txt_lens[1], len(area))
-        self.grid.addWidget(QtGui.QLabel(area), row, 2)
+        self.grid.addWidget(QtWidgets.QLabel(area), row, 2)
         self.grid.setRowStretch(row, 1)
         row += 1
         if self.flags[0]:
@@ -110,27 +110,27 @@ class FloatLegend(QtGui.QDialog):
                 else:
                     txt += ' ' + txts[i]
                     ln += len(txts[i]) + 1
-        self.grid.addWidget(QtGui.QLabel(txt), row, 1, 1, 2)
+        self.grid.addWidget(QtWidgets.QLabel(txt), row, 1, 1, 2)
         self.grid.setRowStretch(row, 1)
         row += 1
-        quit = QtGui.QPushButton('Quit', self)
+        quit = QtWidgets.QPushButton('Quit', self)
         self.grid.addWidget(quit, row, 1)
         self.grid.setRowStretch(row, 1)
         self.grid.setVerticalSpacing(10)
         quit.clicked.connect(self.quitClicked)
-        QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
-        frame = QtGui.QFrame()
+        QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
+        frame = QtWidgets.QFrame()
         frame.setLayout(self.grid)
-        self.scroll = QtGui.QScrollArea()
+        self.scroll = QtWidgets.QScrollArea()
         self.scroll.setWidgetResizable(True)
         self.scroll.setWidget(frame)
-        self.layout = QtGui.QVBoxLayout(self)
+        self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
         self.setWindowTitle('SIREN - Legend')
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
-        screen = QtGui.QApplication.desktop().primaryScreen()
-        scr_right = QtGui.QApplication.desktop().availableGeometry(screen).right()
-        scr_bottom = QtGui.QApplication.desktop().availableGeometry(screen).bottom()
+        screen = QtWidgets.QApplication.desktop().primaryScreen()
+        scr_right = QtWidgets.QApplication.desktop().availableGeometry(screen).right()
+        scr_bottom = QtWidgets.QApplication.desktop().availableGeometry(screen).bottom()
         win_width = self.sizeHint().width()
         win_height = self.sizeHint().height()
         if self.restorewindows:
@@ -143,16 +143,16 @@ class FloatLegend(QtGui.QDialog):
                 lst_top = int(mp[1])
                 lst_right = lst_left + lst_width
                 lst_bottom = lst_top + lst_height
-                screen = QtGui.QApplication.desktop().screenNumber(QtCore.QPoint(lst_left, lst_top))
-                scr_right = QtGui.QApplication.desktop().availableGeometry(screen).right()
-                scr_left = QtGui.QApplication.desktop().availableGeometry(screen).left()
+                screen = QtWidgets.QApplication.desktop().screenNumber(QtCore.QPoint(lst_left, lst_top))
+                scr_right = QtWidgets.QApplication.desktop().availableGeometry(screen).right()
+                scr_left = QtWidgets.QApplication.desktop().availableGeometry(screen).left()
                 if lst_right < scr_right:
                     if (lst_right - win_width) >= scr_left:
                         scr_right = lst_right
                     else:
                         scr_right = scr_left + win_width
-                scr_bottom = QtGui.QApplication.desktop().availableGeometry(screen).bottom()
-                scr_top = QtGui.QApplication.desktop().availableGeometry(screen).top()
+                scr_bottom = QtWidgets.QApplication.desktop().availableGeometry(screen).bottom()
+                scr_top = QtWidgets.QApplication.desktop().availableGeometry(screen).top()
                 if lst_bottom < scr_bottom:
                     if (lst_bottom - win_height) >= scr_top:
                         scr_bottom = lst_bottom
@@ -188,16 +188,13 @@ class FloatLegend(QtGui.QDialog):
         self.close()
 
 
-class FloatMenu(QtGui.QDialog):
+class FloatMenu(QtWidgets.QDialog):
     procStart = QtCore.pyqtSignal(str)
-    procAction = QtCore.pyqtSignal(QtGui.QAction)
+    procAction = QtCore.pyqtSignal(QtWidgets.QAction)
 
     def __init__(self, menubar):
         super(FloatMenu, self).__init__()
         self.menubar = menubar
-        self.initUI()
-
-    def initUI(self):
         config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
@@ -218,38 +215,38 @@ class FloatMenu(QtGui.QDialog):
         self.be_open = True
         self.menus = []
         for lvl1 in self.menubar.actions():
-            if str(lvl1.text()).find('&') >= 0:
+            if lvl1.text().find('&') >= 0:
                 try:
-                    self.menus.append([str(lvl1.text()).replace('&', ''), lvl1.icon(), None, []])
+                    self.menus.append([lvl1.text().replace('&', ''), lvl1.icon(), None, []])
                 except:
-                    self.menus.append([str(lvl1.text()).replace('&', ''), None, None, []])
+                    self.menus.append([lvl1.text().replace('&', ''), None, None, []])
                 try:
                     for lvl2 in lvl1.menu().actions():
-                        if str(lvl2.text()).find('&') >= 0:
+                        if lvl2.text().find('&') >= 0:
                             try:
-                                self.menus[-1][-1].append([str(lvl2.text()).replace('&', ''), lvl2.icon(), None, []])
+                                self.menus[-1][-1].append([lvl2.text().replace('&', ''), lvl2.icon(), None, []])
                             except:
-                                self.menus[-1][-1].append([str(lvl2.text()).replace('&', ''), None, None, []])
+                                self.menus[-1][-1].append([lvl2.text().replace('&', ''), None, None, []])
                             try:
                                 for lvl3 in lvl2.menu().actions():
-                                    self.menus[-1][-1][-1][-1].append([str(lvl3.text()),
+                                    self.menus[-1][-1][-1][-1].append([lvl3.text(),
                                         lvl3.icon(), lvl3, '3'])
                             except:
                                 pass
                         else:
                             self.thisaction = lvl2
-                            self.menus[-1][-1].append([str(lvl2.text()), lvl2.icon(), lvl2, '2'])
+                            self.menus[-1][-1].append([lvl2.text(), lvl2.icon(), lvl2, '2'])
                 except:
                     pass
             else:
-                self.menus.append([str(lvl1.text()), lvl1.icon(), lvl1.actions()[0], '1'])
-        self.grid = QtGui.QGridLayout()
+                self.menus.append([lvl1.text(), lvl1.icon(), lvl1.actions()[0], '1'])
+        self.grid = QtWidgets.QGridLayout()
         ctr = 0
         self.butn = []
         self.topmenus = {}
         self.buttons = {}
         for i in range(len(self.menus)):
-            self.butn.append(QtGui.QPushButton(self.menus[i][0], self))
+            self.butn.append(QtWidgets.QPushButton(self.menus[i][0], self))
             self.butn[-1].setIcon(self.menus[i][1])
             self.butn[-1].setStyleSheet('QPushButton {color: #005fb6; border: 2px solid #e65900;' +
                                ' border-radius: 6px;}')
@@ -259,7 +256,7 @@ class FloatMenu(QtGui.QDialog):
             self.topmenus[self.menus[i][0]] = [False, ctr, 0]
             if type(self.menus[i][3]) is list:
                 for j in range(len(self.menus[i][3])):
-                    self.butn.append(QtGui.QPushButton(self.menus[i][3][j][0], self))
+                    self.butn.append(QtWidgets.QPushButton(self.menus[i][3][j][0], self))
                     self.butn[-1].setIcon(self.menus[i][3][j][1])
                 #     self.butn[-1].setStyleSheet('QPushButton {Text-align:left;}')
                     self.butn[-1].clicked.connect(self.buttonClicked)
@@ -269,7 +266,7 @@ class FloatMenu(QtGui.QDialog):
                     ctr += 1
                     if type(self.menus[i][3][j][3]) is list:
                         for k in range(len(self.menus[i][3][j][3])):
-                            self.butn.append(QtGui.QPushButton(self.menus[i][3][j][3][k][0], self))
+                            self.butn.append(QtWidgets.QPushButton(self.menus[i][3][j][3][k][0], self))
                             self.butn[-1].setIcon(self.menus[i][3][j][3][k][1])
                           #   self.butn[-1].setStyleSheet('QPushButton {Text-align:left;}')
                             self.butn[-1].clicked.connect(self.buttonClicked)
@@ -278,22 +275,22 @@ class FloatMenu(QtGui.QDialog):
                             self.grid.addWidget(self.butn[-1], ctr, 2)
                             ctr += 1
             self.topmenus[self.menus[i][0]][2] = ctr
-        quit = QtGui.QPushButton('Quit Menu', self)
+        quit = QtWidgets.QPushButton('Quit Menu', self)
         self.grid.addWidget(quit, ctr, 0)
         quit.clicked.connect(self.close)
-        QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.close)
+        QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.close)
         for mnu in open_menus:
             strt = self.topmenus[mnu][1]
             stop = self.topmenus[mnu][2]
             for j in range(strt, stop):
                 self.butn[j].show()
             self.topmenus[mnu][0] = True
-        frame = QtGui.QFrame()
+        frame = QtWidgets.QFrame()
         frame.setLayout(self.grid)
-        self.scroll = QtGui.QScrollArea()
+        self.scroll = QtWidgets.QScrollArea()
         self.scroll.setWidgetResizable(True)
         self.scroll.setWidget(frame)
-        self.layout = QtGui.QVBoxLayout(self)
+        self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
         self.setWindowTitle('SIREN - Menu')
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
@@ -309,23 +306,22 @@ class FloatMenu(QtGui.QDialog):
 
     def menuClicked(self, event):
         sender = self.sender()
-        strt = self.topmenus[str(sender.text())][1]
-        stop = self.topmenus[str(sender.text())][2]
-        if self.topmenus[str(sender.text())][0]:
+        strt = self.topmenus[sender.text()][1]
+        stop = self.topmenus[sender.text()][2]
+        if self.topmenus[sender.text()][0]:
             for j in range(strt, stop):
                 self.butn[j].hide()
-            self.topmenus[str(sender.text())][0] = False
+            self.topmenus[sender.text()][0] = False
         else:
             for j in range(strt, stop):
                 self.butn[j].show()
-            self.topmenus[str(sender.text())][0] = True
-    #     self.topmenus[str(sender.text())][0] = self.topmenus[str(sender.text())][0] != True
+            self.topmenus[sender.text()][0] = True
 
-    @QtCore.pyqtSlot(QtGui.QAction)
+ #   @QtCore.pyqtSlot(QtWidgets.QAction)
     def buttonClicked(self, event):
         sender = self.sender()
-        self.thetext = str(sender.text())
-        self.procAction.emit(self.buttons[str(sender.text())])
+        self.thetext = sender.text()
+        self.procAction.emit(self.buttons[sender.text()])
 
     @QtCore.pyqtSlot()
     def exit(self):
@@ -355,25 +351,27 @@ class FloatMenu(QtGui.QDialog):
         event.accept()
 
 
-class ProgressBar(QtGui.QDialog):
+class ProgressBar(QtWidgets.QDialog):
     procStart = QtCore.pyqtSignal(str)
+   # progress = QtCore.pyqtSignal(int, str)
+  #  srange = QtCore.pyqtSignal(int, int)
 
     def __init__(self, minimum=0, maximum=100, msg=None, title=None):
         super(ProgressBar, self).__init__()
     #    self.mainwindow = mainwindow
         self.log_progress = True
         self.be_open = True
-        self.progressbar = QtGui.QProgressBar()
+        self.progressbar = QtWidgets.QProgressBar()
         self.progressbar.setMinimum(minimum)
         self.progressbar.setMaximum(maximum)
         self.progressbar.setStyleSheet('QProgressBar {border: 1px solid grey; border-radius: 2px; text-align: center;}' \
                                        + 'QProgressBar::chunk { background-color: #6891c6;}')
-        self.button = QtGui.QPushButton('Stop')
+        self.button = QtWidgets.QPushButton('Stop')
         self.button.clicked.connect(self.stopit)
         if msg == None:
              msg = 'Note: Solar Thermal Stations take a while to process'
-        self.progress_msg = QtGui.QLabel(msg)
-        main_layout = QtGui.QGridLayout()
+        self.progress_msg = QtWidgets.QLabel(msg)
+        main_layout = QtWidgets.QGridLayout()
         main_layout.addWidget(self.button, 0, 0)
         main_layout.addWidget(self.progressbar, 0, 1)
         main_layout.addWidget(self.progress_msg, 1, 1)
@@ -396,8 +394,9 @@ class ProgressBar(QtGui.QDialog):
         self.be_open = False
         self.close()
 
+    @QtCore.pyqtSlot(int)
     @QtCore.pyqtSlot(int, int)
-    def range(self, minimum, maximum, msg=None):
+    def barRange(self, minimum, maximum, msg=None):
         self.progressbar.setMinimum(minimum)
         self.progressbar.setMaximum(maximum)
         if msg == None:
@@ -407,7 +406,7 @@ class ProgressBar(QtGui.QDialog):
         self.setVisible(True)
 
     @QtCore.pyqtSlot(int, str)
-    def progress(self, ctr, message=''):
+    def barProgress(self, ctr, message=''):
         if ctr < 0 or ctr == self.progressbar.maximum():
             self.setVisible(False)
         else:
@@ -426,7 +425,7 @@ class ProgressBar(QtGui.QDialog):
         event.accept()
 
 
-class FloatStatus(QtGui.QDialog):
+class FloatStatus(QtWidgets.QDialog):
     procStart = QtCore.pyqtSignal(str)
 
     def __init__(self, mainwindow, scenarios_folder, scenarios, program='SIREN'):
@@ -481,7 +480,7 @@ class FloatStatus(QtGui.QDialog):
                     line = '%s. SIREN log started\n          Preference File: %s' + \
                            '\n          Working directory: %s' + \
                            '\n          Scenarios folder: %s\n          %s'
-                    lines2 = line % (str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'hh:mm:ss')), \
+                    lines2 = line % (QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'hh:mm:ss'), \
                              self.config_file, os.getcwd(), self.scenarios_folder, comment)
                     line_cnt2 = 1
                     if len(lines2) > max_line:
@@ -494,51 +493,51 @@ class FloatStatus(QtGui.QDialog):
             line = '%s. %s log started\n          Preference File: %s' + \
                    '\n          Working directory: %s' + \
                    '\n          Scenarios folder: %s'
-            lines2 = line % (str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'hh:mm:ss')), \
+            lines2 = line % (QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'hh:mm:ss'), \
                      self.program, self.config_file, os.getcwd(), self.scenarios_folder)
             line_cnt2 = 1
             max_line = len(lines2)
-        self.saveButton = QtGui.QPushButton(self.tr('Save Log'))
+        self.saveButton = QtWidgets.QPushButton(self.tr('Save Log'))
         self.saveButton.clicked.connect(self.save)
-        self.quitButton = QtGui.QPushButton('Quit')
+        self.quitButton = QtWidgets.QPushButton('Quit')
         self.quitButton.clicked.connect(self.close)
-        QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.close)
-        buttonLayout = QtGui.QHBoxLayout()
+        QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.close)
+        buttonLayout = QtWidgets.QHBoxLayout()
         buttonLayout.addStretch(1)
         buttonLayout.addWidget(self.quitButton)
         buttonLayout.addWidget(self.saveButton)
-        self.scenarios = QtGui.QPlainTextEdit()
+        self.scenarios = QtWidgets.QPlainTextEdit()
         self.scenarios.setFont(QtGui.QFont('Courier New', 10))
         fnt = self.scenarios.fontMetrics()
-        self.scenarios.setSizePolicy(QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding,
-            QtGui.QSizePolicy.Expanding))
+        self.scenarios.setSizePolicy(QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding,
+            QtWidgets.QSizePolicy.Expanding))
         self.scenarios.setPlainText(lines1)
         self.scenarios.setReadOnly(True)
-        screen = QtGui.QDesktopWidget().availableGeometry()
+        screen = QtWidgets.QDesktopWidget().availableGeometry()
         ln = (max_line + 5) * fnt.maxWidth()
         if ln > screen.width() * .80:
             ln = int(screen.width() * .80)
         h1 = (line_cnt1 + 1) * fnt.height()
         if self.log_status:
-            self.loglines = QtGui.QPlainTextEdit()
+            self.loglines = QtWidgets.QPlainTextEdit()
             self.loglines.setFont(QtGui.QFont('Courier New', 10))
             h2 = (line_cnt2 + 2) * fnt.height()
             if h1 + h2 > screen.height() * .80:
        #      h1 = max(int(screen.height() * float(h1 / h2)), int(fnt.height()))
                 h2 = int(screen.height() * .80) - h1
-            self.loglines.setSizePolicy(QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding,
-                QtGui.QSizePolicy.Expanding))
+            self.loglines.setSizePolicy(QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding,
+                QtWidgets.QSizePolicy.Expanding))
             self.loglines.setPlainText(lines2)
             self.loglines.setReadOnly(True)
             self.loglines.resize(ln, h2)
         self.scenarios.resize(ln, h1)
         self.scenarios.setFixedHeight(h1)
-        layout = QtGui.QVBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
         if self.full_log:
-            layout.addWidget(QtGui.QLabel('Open scenarios'))
+            layout.addWidget(QtWidgets.QLabel('Open scenarios'))
             layout.addWidget(self.scenarios)
         if self.log_status:
-            layout.addWidget(QtGui.QLabel('Session log'))
+            layout.addWidget(QtWidgets.QLabel('Session log'))
             layout.addWidget(self.loglines)
         layout.addLayout(buttonLayout)
         self.setLayout(layout)
@@ -556,10 +555,10 @@ class FloatStatus(QtGui.QDialog):
 
     def save(self):
         save_filename = self.scenarios_folder + self.program + '_Log_' + self.config_file[:-4]
-        save_filename += '_' + str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'yyyy-MM-dd_hhmm'))
+        save_filename += '_' + QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'yyyy-MM-dd_hhmm')
         save_filename += '.txt'
-        fileName = QtGui.QFileDialog.getSaveFileName(self, self.tr("QFileDialog.getSaveFileName()"),
-                   save_filename, self.tr("All Files (*);;Text Files (*.txt)"))
+        fileName = QtWidgets.QFileDialog.getSaveFileName(self, self.tr("QFileDialog.getSaveFileName()"),
+                   save_filename, self.tr("All Files (*);;Text Files (*.txt)"))[0]
          # save scenarios list and log
         if fileName != '':
             if not self.full_log and not self.log_status:
@@ -567,14 +566,14 @@ class FloatStatus(QtGui.QDialog):
             s = open(fileName, 'w')
             if self.full_log:
                 s.write('Scenarios:\n')
-                t = str(self.scenarios.toPlainText())
+                t = self.scenarios.toPlainText()
                 bits = t.split('\n')
                 for lin in bits:
                     if len(lin) > 0:
                         s.write(' ' * 10 + lin + '\n')
             if self.log_status:
                 s.write('\nSession log:\n\n')
-                t = str(self.loglines.toPlainText())
+                t = self.loglines.toPlainText()
                 bits = t.split('\n')
                 for lin in bits:
                     if len(lin) > 0:
@@ -591,8 +590,8 @@ class FloatStatus(QtGui.QDialog):
 
     @QtCore.pyqtSlot()
     def log(self, text):
-        self.loglines.appendPlainText(str(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),
-                                'hh:mm:ss. ')) + text)
+        self.loglines.appendPlainText(QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),
+                                'hh:mm:ss. ') + text)
         self.logged = True
 
     @QtCore.pyqtSlot()
@@ -609,10 +608,10 @@ class FloatStatus(QtGui.QDialog):
 
     def closeEvent(self, event):
         if self.logged:
-            reply = QtGui.QMessageBox.question(self, self.program + ' Status',
-                    'Do you want to save Session log?', QtGui.QMessageBox.Yes |
-                    QtGui.QMessageBox.No, QtGui.QMessageBox.No)
-            if reply == QtGui.QMessageBox.Yes:
+            reply = QtWidgets.QMessageBox.question(self, self.program + ' Status',
+                    'Do you want to save Session log?', QtWidgets.QMessageBox.Yes |
+                    QtWidgets.QMessageBox.No, QtWidgets.QMessageBox.No)
+            if reply == QtWidgets.QMessageBox.Yes:
                 self.save()
         if self.restorewindows:
             updates = {}

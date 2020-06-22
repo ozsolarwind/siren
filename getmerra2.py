@@ -26,7 +26,7 @@ import subprocess
 import sys
 from netCDF4 import Dataset
 import configparser   # decode .ini file
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 import displayobject
 import worldwindow
@@ -271,7 +271,7 @@ class fileInfo:
         i = inp_file.rfind('/')
         self.file = inp_file[i + 1:]
         try:
-            self.format = str(cdf_file.Format)
+            self.format = cdf_file.Format
         except:
             self.format = '?'
         self.dimensions = ''
@@ -307,16 +307,18 @@ class fileInfo:
         self.ok = True
 
 
-class ClickableQLabel(QtGui.QLabel):
+class ClickableQLabel(QtWidgets.QLabel):
+    clicked = QtCore.pyqtSignal()
+
     def __init(self, parent):
         QLabel.__init__(self, parent)
 
     def mousePressEvent(self, event):
-        QtGui.QApplication.widgetAt(event.globalPos()).setFocus()
-        self.emit(QtCore.SIGNAL('clicked()'))
+        QtWidgets.QApplication.widgetAt(event.globalPos()).setFocus()
+        self.clicked.emit()
 
 
-class subwindow(QtGui.QDialog):
+class subwindow(QtWidgets.QDialog):
     def __init__(self, parent = None):
         super(subwindow, self).__init__(parent)
 
@@ -327,8 +329,9 @@ class subwindow(QtGui.QDialog):
         self.close()
 
 
-class getMERRA2(QtGui.QDialog):
+class getMERRA2(QtWidgets.QDialog):
     procStart = QtCore.pyqtSignal(str)
+    statusmsg = QtCore.pyqtSignal()
 
     def get_config(self):
         self.config = configparser.RawConfigParser()
@@ -383,47 +386,47 @@ class getMERRA2(QtGui.QDialog):
             netrcmsg = '.netrc file missing.\n(' + netrc + ')\nDo you want create one?'
             if sys.platform == 'win32' or sys.platform == 'cygwin':
                 netrcmsg += '\nYou will need to reinvoke getMERRA2.'
-            reply = QtGui.QMessageBox.question(self, 'SIREN - getmerra2 - No .netrc file',
+            reply = QtWidgets.QMessageBox.question(self, 'SIREN - getmerra2 - No .netrc file',
                     netrcmsg,
-                    QtGui.QMessageBox.Yes | QtGui.QMessageBox.No, QtGui.QMessageBox.No)
-            if reply == QtGui.QMessageBox.Yes:
+                    QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No, QtWidgets.QMessageBox.No)
+            if reply == QtWidgets.QMessageBox.Yes:
                 self.create_netrc()
-        self.northSpin = QtGui.QDoubleSpinBox()
+        self.northSpin = QtWidgets.QDoubleSpinBox()
         self.northSpin.setDecimals(3)
         self.northSpin.setSingleStep(.5)
         self.northSpin.setRange(-85.06, 85.06)
         self.northSpin.setObjectName('north')
-        self.westSpin = QtGui.QDoubleSpinBox()
+        self.westSpin = QtWidgets.QDoubleSpinBox()
         self.westSpin.setDecimals(3)
         self.westSpin.setSingleStep(.5)
         self.westSpin.setRange(-180, 180)
         self.westSpin.setObjectName('west')
-        self.southSpin = QtGui.QDoubleSpinBox()
+        self.southSpin = QtWidgets.QDoubleSpinBox()
         self.southSpin.setDecimals(3)
         self.southSpin.setSingleStep(.5)
         self.southSpin.setRange(-85.06, 85.06)
         self.southSpin.setObjectName('south')
-        self.eastSpin = QtGui.QDoubleSpinBox()
+        self.eastSpin = QtWidgets.QDoubleSpinBox()
         self.eastSpin.setDecimals(3)
         self.eastSpin.setSingleStep(.5)
         self.eastSpin.setRange(-180, 180)
         self.eastSpin.setObjectName('east')
-        self.latSpin = QtGui.QDoubleSpinBox()
+        self.latSpin = QtWidgets.QDoubleSpinBox()
         self.latSpin.setDecimals(3)
         self.latSpin.setSingleStep(.5)
         self.latSpin.setRange(-84.56, 84.56)
         self.latSpin.setObjectName('lat')
-        self.lonSpin = QtGui.QDoubleSpinBox()
+        self.lonSpin = QtWidgets.QDoubleSpinBox()
         self.lonSpin.setDecimals(3)
         self.lonSpin.setSingleStep(.5)
         self.lonSpin.setRange(-179.687, 179.687)
         self.lonSpin.setObjectName('lon')
-        self.latwSpin = QtGui.QDoubleSpinBox()
+        self.latwSpin = QtWidgets.QDoubleSpinBox()
         self.latwSpin.setDecimals(3)
         self.latwSpin.setSingleStep(.5)
         self.latwSpin.setRange(0, 170.12)
         self.latwSpin.setObjectName('latw')
-        self.lonwSpin = QtGui.QDoubleSpinBox()
+        self.lonwSpin = QtWidgets.QDoubleSpinBox()
         self.lonwSpin.setDecimals(3)
         self.lonwSpin.setSingleStep(.5)
         self.lonwSpin.setRange(0, 360)
@@ -461,67 +464,67 @@ class getMERRA2(QtGui.QDialog):
         self.lonSpin.valueChanged.connect(self.showArea)
         self.latwSpin.valueChanged.connect(self.showArea)
         self.lonwSpin.valueChanged.connect(self.showArea)
-        self.grid = QtGui.QGridLayout()
-        self.grid.addWidget(QtGui.QLabel('Area of Interest:'), 0, 0)
-        area = QtGui.QPushButton('Choose area via Map', self)
+        self.grid = QtWidgets.QGridLayout()
+        self.grid.addWidget(QtWidgets.QLabel('Area of Interest:'), 0, 0)
+        area = QtWidgets.QPushButton('Choose area via Map', self)
         self.grid.addWidget(area, 0, 1, 1, 2)
         area.clicked.connect(self.areaClicked)
-        self.grid.addWidget(QtGui.QLabel('Upper left:'), 1, 0, 1, 2)
+        self.grid.addWidget(QtWidgets.QLabel('Upper left:'), 1, 0, 1, 2)
    #     self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignCenter)
-        self.grid.addWidget(QtGui.QLabel('North'), 2, 0)
+        self.grid.addWidget(QtWidgets.QLabel('North'), 2, 0)
         self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignRight)
         self.grid.addWidget(self.northSpin, 2, 1)
-        self.grid.addWidget(QtGui.QLabel('West'), 3, 0)
+        self.grid.addWidget(QtWidgets.QLabel('West'), 3, 0)
         self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignRight)
         self.grid.addWidget(self.westSpin, 3, 1)
-        self.grid.addWidget(QtGui.QLabel('Lower right:'), 1, 2)
+        self.grid.addWidget(QtWidgets.QLabel('Lower right:'), 1, 2)
     #    self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignCenter)
         self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignRight)
-        self.grid.addWidget(QtGui.QLabel('South'), 2, 2)
+        self.grid.addWidget(QtWidgets.QLabel('South'), 2, 2)
         self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignRight)
         self.grid.addWidget(self.southSpin, 2, 3)
-        self.grid.addWidget(QtGui.QLabel('East'), 3, 2)
+        self.grid.addWidget(QtWidgets.QLabel('East'), 3, 2)
         self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignRight)
         self.grid.addWidget(self.eastSpin, 3, 3)
-        self.grid.addWidget(QtGui.QLabel('Centre:'), 1, 4)
+        self.grid.addWidget(QtWidgets.QLabel('Centre:'), 1, 4)
    #     self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignCenter)
         self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignRight)
-        self.grid.addWidget(QtGui.QLabel('Lat.'), 2, 4)
+        self.grid.addWidget(QtWidgets.QLabel('Lat.'), 2, 4)
         self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignRight)
         self.grid.addWidget(self.latSpin, 2, 5)
-        self.grid.addWidget(QtGui.QLabel('Lon.'), 3, 4)
+        self.grid.addWidget(QtWidgets.QLabel('Lon.'), 3, 4)
         self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignRight)
         self.grid.addWidget(self.lonSpin, 3, 5)
-        self.grid.addWidget(QtGui.QLabel('Degrees'), 1, 6)
+        self.grid.addWidget(QtWidgets.QLabel('Degrees'), 1, 6)
    #     self.grid.addWidget(QtGui.QLabel('  South'), 2, 2)
         self.grid.addWidget(self.latwSpin, 2, 6)
   #      self.grid.addWidget(QtGui.QLabel('  East'), 3, 2)
         self.grid.addWidget(self.lonwSpin, 3, 6)
-        self.grid.addWidget(QtGui.QLabel('Approx. area:'), 4, 0)
-        self.approx_area = QtGui.QLabel('')
+        self.grid.addWidget(QtWidgets.QLabel('Approx. area:'), 4, 0)
+        self.approx_area = QtWidgets.QLabel('')
         self.grid.addWidget(self.approx_area, 4, 1)
-        self.grid.addWidget(QtGui.QLabel('MERRA dimensions:'), 4, 2)
-        self.merra_cells = QtGui.QLabel('')
+        self.grid.addWidget(QtWidgets.QLabel('MERRA dimensions:'), 4, 2)
+        self.merra_cells = QtWidgets.QLabel('')
         self.grid.addWidget(self.merra_cells, 4, 3)
-        self.grid.addWidget(QtGui.QLabel('Start date:'), 5, 0)
-        self.strt_date = QtGui.QDateEdit(self)
+        self.grid.addWidget(QtWidgets.QLabel('Start date:'), 5, 0)
+        self.strt_date = QtWidgets.QDateEdit(self)
         self.strt_date.setDate(QtCore.QDate.currentDate().addDays(-self.wait_days))
         self.strt_date.setCalendarPopup(True)
         self.strt_date.setMinimumDate(QtCore.QDate(1980, 1, 1))
         self.strt_date.setMaximumDate(QtCore.QDate.currentDate().addDays(-self.wait_days))
         self.grid.addWidget(self.strt_date, 5, 1)
-        self.grid.addWidget(QtGui.QLabel('End date:'), 6, 0)
-        self.end_date = QtGui.QDateEdit(self)
+        self.grid.addWidget(QtWidgets.QLabel('End date:'), 6, 0)
+        self.end_date = QtWidgets.QDateEdit(self)
         self.end_date.setDate(QtCore.QDate.currentDate().addDays(-self.wait_days))
         self.end_date.setCalendarPopup(True)
         self.end_date.setMinimumDate(QtCore.QDate(1980,1,1))
         self.end_date.setMaximumDate(QtCore.QDate.currentDate())
         self.grid.addWidget(self.end_date, 6, 1)
-        self.grid.addWidget(QtGui.QLabel('Copy folder down:'), 7, 0)
-        self.checkbox = QtGui.QCheckBox()
+        self.grid.addWidget(QtWidgets.QLabel('Copy folder down:'), 7, 0)
+        self.checkbox = QtWidgets.QCheckBox()
         self.checkbox.setCheckState(QtCore.Qt.Checked)
         self.grid.addWidget(self.checkbox, 7, 1)
-        self.grid.addWidget(QtGui.QLabel('If checked will copy solar folder changes down'), 7, 2, 1, 3)
+        self.grid.addWidget(QtWidgets.QLabel('If checked will copy solar folder changes down'), 7, 2, 1, 3)
         cur_dir = os.getcwd()
         self.dir_labels = ['Solar', 'Wind']
         datasets = []
@@ -532,49 +535,49 @@ class getMERRA2(QtGui.QDialog):
             self.collections.append(self.config.get('getmerra2', typ.lower() + '_collection'))
         self.dirs = [None, None, None]
         for i in range(2):
-            self.grid.addWidget(QtGui.QLabel(self.dir_labels[i] + ' files:'), 8 + i * 2, 0)
-            self.grid.addWidget(QtGui.QLabel(datasets[i]), 8 + i * 2, 1, 1, 4)
-            self.grid.addWidget(QtGui.QLabel('    Target Folder:'), 9 + i * 2, 0)
+            self.grid.addWidget(QtWidgets.QLabel(self.dir_labels[i] + ' files:'), 8 + i * 2, 0)
+            self.grid.addWidget(QtWidgets.QLabel(datasets[i]), 8 + i * 2, 1, 1, 4)
+            self.grid.addWidget(QtWidgets.QLabel('    Target Folder:'), 9 + i * 2, 0)
             self.dirs[i] = ClickableQLabel()
             self.dirs[i].setText(cur_dir)
             self.dirs[i].setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
-            self.connect(self.dirs[i], QtCore.SIGNAL('clicked()'), self.dirChanged)
+            self.dirs[i].clicked.connect(self.dirChanged)
             self.grid.addWidget(self.dirs[i], 9 + i * 2, 1, 1, 4)
-        self.log = QtGui.QLabel('')
+        self.log = QtWidgets.QLabel('')
         msg_palette = QtGui.QPalette()
         msg_palette.setColor(QtGui.QPalette.Foreground, QtCore.Qt.red)
         self.log.setPalette(msg_palette)
         self.grid.addWidget(self.log, 12, 1, 2, 4)
-        buttongrid = QtGui.QGridLayout()
-        quit = QtGui.QPushButton('Quit', self)
+        buttongrid = QtWidgets.QGridLayout()
+        quit = QtWidgets.QPushButton('Quit', self)
         buttongrid.addWidget(quit, 0, 0)
         quit.clicked.connect(self.quitClicked)
-        QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
-        QtGui.QShortcut(QtGui.QKeySequence('x'), self, self.quitClicked)
-        solar = QtGui.QPushButton('Get Solar', self)
+        QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
+        QtWidgets.QShortcut(QtGui.QKeySequence('x'), self, self.quitClicked)
+        solar = QtWidgets.QPushButton('Get Solar', self)
         buttongrid.addWidget(solar, 0, 1)
         solar.clicked.connect(self.getClicked)
-        wind = QtGui.QPushButton('Get Wind', self)
+        wind = QtWidgets.QPushButton('Get Wind', self)
         buttongrid.addWidget(wind, 0, 2)
         wind.clicked.connect(self.getClicked)
-        check = QtGui.QPushButton('Check Solar', self)
+        check = QtWidgets.QPushButton('Check Solar', self)
         buttongrid.addWidget(check, 0, 3)
         check.clicked.connect(self.checkClicked)
-        check = QtGui.QPushButton('Check Wind', self)
+        check = QtWidgets.QPushButton('Check Wind', self)
         buttongrid.addWidget(check, 0, 4)
         check.clicked.connect(self.checkClicked)
-        help = QtGui.QPushButton('Help', self)
+        help = QtWidgets.QPushButton('Help', self)
         buttongrid.addWidget(help, 0, 5)
         help.clicked.connect(self.helpClicked)
-        QtGui.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
-        frame = QtGui.QFrame()
+        QtWidgets.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
+        frame = QtWidgets.QFrame()
         frame.setLayout(self.grid)
-        self.scroll = QtGui.QScrollArea()
+        self.scroll = QtWidgets.QScrollArea()
         self.scroll.setWidgetResizable(True)
         self.scroll.setWidget(frame)
-        self.layout = QtGui.QVBoxLayout(self)
+        self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
-        frame2 = QtGui.QFrame()
+        frame2 = QtWidgets.QFrame()
         frame2.setLayout(buttongrid)
         self.layout.addWidget(frame2)
         self.setWindowTitle('SIREN - getmerra2 (' + fileVersion() + ') - Get MERRA-2 data')
@@ -586,9 +589,9 @@ class getMERRA2(QtGui.QDialog):
         for i in range(2):
             if self.dirs[i].hasFocus():
                 break
-        curdir = str(self.dirs[i].text())
-        newdir = str(QtGui.QFileDialog.getExistingDirectory(self, 'Choose ' + self.dir_labels[i] + ' Folder',
-                 curdir, QtGui.QFileDialog.ShowDirsOnly))
+        curdir = self.dirs[i].text()
+        newdir = QtWidgets.QFileDialog.getExistingDirectory(self, 'Choose ' + self.dir_labels[i] + ' Folder',
+                 curdir, QtWidgets.QFileDialog.ShowDirsOnly)
         if newdir != '':
             self.dirs[i].setText(newdir)
             if self.checkbox.isChecked():
@@ -600,16 +603,16 @@ class getMERRA2(QtGui.QDialog):
         self.zoomScale.adjustSize()
 
     def fileChanged(self):
-        self.filename.setText(QtGui.QFileDialog.getSaveFileName(self, 'Save Image File',
+        self.filename.setText(QtWidgets.QFileDialog.getSaveFileName(self, 'Save Image File',
                               self.filename.text(),
-                              'Images (*.jpeg *.jpg *.png)'))
+                              'Images (*.jpeg *.jpg *.png)'))[0]
         if self.filename.text() != '':
-            i = str(self.filename.text()).rfind('.')
+            i = self.filename.text().rfind('.')
             if i < 0:
                 self.filename.setText(self.filename.text() + '.png')
 
     def helpClicked(self):
-        dialog = displayobject.AnObject(QtGui.QDialog(), self.help,
+        dialog = displayobject.AnObject(QtWidgets.QDialog(), self.help,
                  title='Help for getting MERRA data (' + fileVersion() + ')', section='getmerra2')
         dialog.exec_()
 
@@ -623,10 +626,14 @@ class getMERRA2(QtGui.QDialog):
             pass
         event.accept()
 
-    @QtCore.pyqtSlot()
+    @QtCore.pyqtSlot(list, str)
     def maparea(self, rectangle, approx_area=None):
         if type(rectangle) is str:
             if rectangle == 'goodbye':
+                 self.worldwindow = None
+                 return
+        elif type(rectangle[0]) is str:
+            if rectangle[0] == 'goodbye':
                  self.worldwindow = None
                  return
         self.ignore = True
@@ -644,7 +651,7 @@ class getMERRA2(QtGui.QDialog):
         if self.worldwindow is None:
             scene = worldwindow.WorldScene()
             self.worldwindow = worldwindow.WorldWindow(self, scene)
-            self.connect(self.worldwindow.view, QtCore.SIGNAL('tellarea'), self.maparea)
+            self.worldwindow.view.tellarea.connect(self.maparea)
             self.worldwindow.show()
             self.showArea('init')
 
@@ -702,7 +709,7 @@ class getMERRA2(QtGui.QDialog):
                                    QtCore.QPointF(self.eastSpin.value(), self.southSpin.value())])
         self.approx_area.setText(approx_area)
         if event != 'init':
-            self.worldwindow.view.emit(QtCore.SIGNAL('statusmsg'), approx_area + ' ' + merra_dims)
+            self.worldwindow.view.statusmsg.emit(approx_area + ' ' + merra_dims)
 
     def quitClicked(self):
         self.close()
@@ -744,7 +751,7 @@ class getMERRA2(QtGui.QDialog):
         self.log.setText('')
         self.chk_collection = self.collections[ndx]
 
-        check = checkFiles(chk_key, str(self.dirs[ndx].text()), ini_file=self.ini_file, collection=self.chk_collection)
+        check = checkFiles(chk_key, self.dirs[ndx].text(), ini_file=self.ini_file, collection=self.chk_collection)
         if len(check) > 1: # ok
             self.ignore = True
             self.southSpin.setValue(check[4])
@@ -769,7 +776,7 @@ class getMERRA2(QtGui.QDialog):
         approx_area = self.worldwindow.view.drawRect([QtCore.QPointF(self.westSpin.value(), self.northSpin.value()),
                                    QtCore.QPointF(self.eastSpin.value(), self.southSpin.value())])
         self.approx_area.setText(approx_area)
-        self.worldwindow.view.emit(QtCore.SIGNAL('statusmsg'), approx_area + ' ' + merra_dims)
+        self.worldwindow.view.statusmsg.emit(approx_area + ' ' + merra_dims)
 
     def getClicked(self):
         lat_rnge = self.northSpin.value() - self.southSpin.value()
@@ -786,7 +793,7 @@ class getMERRA2(QtGui.QDialog):
         date2 = datetime.date(int(self.end_date.date().year()), int(self.end_date.date().month()),
                 int(self.end_date.date().day()))
         i = self.dir_labels.index(me.title())
-        tgt_dir = str(self.dirs[i].text())
+        tgt_dir = self.dirs[i].text()
         wgot = invokeWget(self.ini_file, me, date1, date2, self.northSpin.value(),
                self.southSpin.value(), self.westSpin.value(), self.eastSpin.value(), tgt_dir, True)
         self.log.setText(wgot)
@@ -794,37 +801,37 @@ class getMERRA2(QtGui.QDialog):
 
     def create_netrc(self):
         self.mySubwindow = subwindow()
-        grid = QtGui.QGridLayout()
-        grid.addWidget(QtGui.QLabel('Enter details for URS Registration'), 0, 0, 1, 2)
+        grid = QtWidgets.QGridLayout()
+        grid.addWidget(QtWidgets.QLabel('Enter details for URS Registration'), 0, 0, 1, 2)
         r = 1
         if sys.platform == 'win32' or sys.platform == 'cygwin':
             try:
                 self.home_dir = os.environ['HOME']
             except:
                 self.home_dir = os.getcwd()
-                grid.addWidget(QtGui.QLabel('HOME directory:'), 1, 0)
+                grid.addWidget(QtWidgets.QLabel('HOME directory:'), 1, 0)
                 self.home = ClickableQLabel()
                 self.home.setText(self.home_dir)
                 self.home.setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
-                self.connect(self.home, QtCore.SIGNAL('clicked()'), self.ursdirChanged)
+                self.home.clicked.connect(self.ursdirChanged)
                 grid.addWidget(self.home, 1, 1, 1, 3)
                 r = 2
-        grid.addWidget(QtGui.QLabel('URS Userid:'), r, 0)
-        self.urs_id = QtGui.QLineEdit('')
+        grid.addWidget(QtWidgets.QLabel('URS Userid:'), r, 0)
+        self.urs_id = QtWidgets.QLineEdit('')
         grid.addWidget(self.urs_id, r, 1)
-        grid.addWidget(QtGui.QLabel('URS Password:'), r + 1, 0)
-        self.urs_pwd = QtGui.QLineEdit('')
+        grid.addWidget(QtWidgets.QLabel('URS Password:'), r + 1, 0)
+        self.urs_pwd = QtWidgets.QLineEdit('')
         grid.addWidget(self.urs_pwd, r + 1, 1)
-        netrc_button = QtGui.QPushButton('Create .netrc file', self.mySubwindow)
-        self.connect(netrc_button, QtCore.SIGNAL('clicked()'), self.createnetrc)
+        netrc_button = QtWidgets.QPushButton('Create .netrc file', self.mySubwindow)
+        netrc_button.clicked.connect(self.createnetrc)
         grid.addWidget(netrc_button, r + 2, 0)
         self.mySubwindow.setLayout(grid)
         self.mySubwindow.exec_()
 
     def ursdirChanged(self):
-        curdir = str(self.home.text())
-        newdir = str(QtGui.QFileDialog.getExistingDirectory(self, 'Choose .netrc Folder',
-                 curdir, QtGui.QFileDialog.ShowDirsOnly))
+        curdir = self.home.text()
+        newdir = QtWidgets.QFileDialog.getExistingDirectory(self, 'Choose .netrc Folder',
+                 curdir, QtWidgets.QFileDialog.ShowDirsOnly)
         if newdir != '':
             self.home.setText(newdir)
             self.home_dir = newdir
@@ -833,11 +840,11 @@ class getMERRA2(QtGui.QDialog):
         if sys.platform == 'win32' or sys.platform == 'cygwin':
             env_var = 'HOME'
             os.system('SETX {0} "{1}"'.format(env_var, self.home_dir))
-            netrc = str(self.home_dir) + '\\.netrc'
+            netrc = self.home_dir + '\\.netrc'
         else:
             netrc = '~/.netrc'.replace('~', os.path.expanduser('~'))
-        netrc_string = 'machine urs.earthdata.nasa.gov login %s password %s' % (str(self.urs_id.text()),
-                       str(self.urs_pwd.text()))
+        netrc_string = 'machine urs.earthdata.nasa.gov login %s password %s' % (self.urs_id.text(),
+                       self.urs_pwd.text())
         fou = open(netrc, 'wb')
         fou.write(netrc_string.encode())
         fou.close()
@@ -994,7 +1001,7 @@ if '__main__' == __name__:
         print(wgot)
         sys.exit()
     else:
-        app = QtGui.QApplication(sys.argv)
+        app = QtWidgets.QApplication(sys.argv)
         ex = getMERRA2(ini_file=ini_file)
         app.exec_()
         app.deleteLater()

@@ -24,7 +24,7 @@ import os
 import sys
 
 import configparser   # decode getfiles.ini file
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 #try:
 #    from mpl_toolkits.basemap.pyproj import Proj  # Import the pyproj.Proj module
@@ -77,19 +77,19 @@ def merra_cells(top, lft, bot, rht):
     return 'Lat: %s x Lon: %s' % (str(int((top - bot) * 2)), str(int((rht - lft) / 0.625)))
 
 
-class GetMany(QtGui.QDialog):
+class GetMany(QtWidgets.QDialog):
 
     def __init__(self, parent=None):
         super(GetMany, self).__init__(parent)
-        layout = QtGui.QVBoxLayout(self)
-        layout.addWidget(QtGui.QLabel('Enter Coordinates'))
-        self.text = QtGui.QPlainTextEdit()
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.addWidget(QtWidgets.QLabel('Enter Coordinates'))
+        self.text = QtWidgets.QPlainTextEdit()
         self.text.setPlainText('Enter list of coordinates separated by spaces or commas. west lat.,' \
                                + ' north lon., east lat., south lon. ...')
         layout.addWidget(self.text)
          # OK and Cancel buttons
-        buttons = QtGui.QDialogButtonBox(
-            QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel,
+        buttons = QtWidgets.QDialogButtonBox(
+            QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel,
             QtCore.Qt.Horizontal, self)
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
@@ -98,7 +98,7 @@ class GetMany(QtGui.QDialog):
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
 
     def list(self):
-        coords = str(self.text.toPlainText())
+        coords = self.text.toPlainText()
         if coords != '':
             if coords.find(' ') >= 0:
                 if coords.find(',') < 0:
@@ -130,7 +130,7 @@ class GetMany(QtGui.QDialog):
         return (dialog.list())
 
 
-class WorldScene(QtGui.QGraphicsScene):
+class WorldScene(QtWidgets.QGraphicsScene):
 
     def get_config(self):
         config = configparser.RawConfigParser()
@@ -200,11 +200,11 @@ class WorldScene(QtGui.QGraphicsScene):
                     self.colors[item] = colour
             except:
                 pass
-        self.check_icon = 'check-mark.png'
+        self.check_icon = 'check-mark_b.png'
         try:
             mb = config.get('View', 'menu_background')
             if mb.lower() != 'b':
-                self.check_icon = 'check-mark_b.png'
+                self.check_icon = 'check-mark.png'
         except:
             pass
         self.show_ruler = False
@@ -272,7 +272,7 @@ class WorldScene(QtGui.QGraphicsScene):
         return degrees(lon2), degrees(lat2)
 
     def __init__(self):
-        QtGui.QGraphicsScene.__init__(self)
+        QtWidgets.QGraphicsScene.__init__(self)
         self.exitLoop = False
         self.loopMax = 0
         self.get_config()
@@ -338,15 +338,17 @@ class WorldScene(QtGui.QGraphicsScene):
             return
 
 
-class WorldView(QtGui.QGraphicsView):
+class WorldView(QtWidgets.QGraphicsView):
+    statusmsg = QtCore.pyqtSignal(str)
+    tellarea = QtCore.pyqtSignal(list, str)
 
     def __init__(self, scene, zoom=.8):
-        QtGui.QGraphicsView.__init__(self, scene)
+        QtWidgets.QGraphicsView.__init__(self, scene)
         self.zoom = zoom
-        QtGui.QShortcut(QtGui.QKeySequence('pgdown'), self, self.zoomIn)
-        QtGui.QShortcut(QtGui.QKeySequence('pgup'), self, self.zoomOut)
-        QtGui.QShortcut(QtGui.QKeySequence('Ctrl++'), self, self.zoomIn)
-        QtGui.QShortcut(QtGui.QKeySequence('Ctrl+-'), self, self.zoomOut)
+        QtWidgets.QShortcut(QtGui.QKeySequence('pgdown'), self, self.zoomIn)
+        QtWidgets.QShortcut(QtGui.QKeySequence('pgup'), self, self.zoomOut)
+        QtWidgets.QShortcut(QtGui.QKeySequence('Ctrl++'), self, self.zoomIn)
+        QtWidgets.QShortcut(QtGui.QKeySequence('Ctrl+-'), self, self.zoomOut)
         self._rectangle = None
         self._drag_start = None
         self.setMouseTracking(True)
@@ -373,7 +375,7 @@ class WorldView(QtGui.QGraphicsView):
         pen.setCapStyle(QtCore.Qt.RoundCap)
         fromm = self.mapFromLonLat(coords[0])
         too = self.mapFromLonLat(coords[1])
-        self.rect_items.append(QtGui.QGraphicsRectItem(fromm.x(), fromm.y(),
+        self.rect_items.append(QtWidgets.QGraphicsRectItem(fromm.x(), fromm.y(),
             too.x() - fromm.x(), too.y() - fromm.y()))
         self.rect_items[-1].setPen(pen)
         self.rect_items[-1].setZValue(3)
@@ -401,12 +403,12 @@ class WorldView(QtGui.QGraphicsView):
         for g in range(len(grids)):
             fromm = self.mapFromLonLat(QtCore.QPointF(grids[g][1], grids[g][0]))
             too = self.mapFromLonLat(QtCore.QPointF(grids[g][3], grids[g][2]))
-            self.rect_items.append(QtGui.QGraphicsRectItem(fromm.x(), fromm.y(),
+            self.rect_items.append(QtWidgets.QGraphicsRectItem(fromm.x(), fromm.y(),
                                    too.x() - fromm.x(), too.y() - fromm.y()))
             self.rect_items[-1].setPen(pen)
             self.rect_items[-1].setZValue(3)
             self.scene().addItem(self.rect_items[-1])
-        self.emit(QtCore.SIGNAL('statusmsg'), str(len(grids)) + ' Areas drawn')
+        self.statusmsg.emit(str(len(grids)) + ' Areas drawn')
 
     def destinationxy(self, lon1, lat1, bearing, distance):
         """
@@ -441,7 +443,7 @@ class WorldView(QtGui.QGraphicsView):
         return p
 
     def wheelEvent(self, event):
-        delta = -event.delta() / (100 * (1 + 1 - self.zoom))
+        delta = -event.angleDelta().y() / (100 * (1 + 1 - self.zoom))
         zoom = pow(self.zoom, delta)
         self.scale(zoom, zoom)
 
@@ -455,7 +457,7 @@ class WorldView(QtGui.QGraphicsView):
         if QtCore.Qt.LeftButton == event.button():
             where = self.mapToLonLat(event.pos())
             pl = self.mapToLonLat(event.pos())
-            self.emit(QtCore.SIGNAL('statusmsg'), p2str(pl) + ' ' + p2str(event.pos()))
+            self.statusmsg.emit(p2str(pl) + ' ' + p2str(event.pos()))
             if self._rectangle is None:
                 self._rectangle = [where]
                 hb = self.horizontalScrollBar()
@@ -472,8 +474,8 @@ class WorldView(QtGui.QGraphicsView):
                     self._rectangle[0] = QtCore.QPointF(self._rectangle[0].x(), self._rectangle[1].y())
                     self._rectangle[1] = QtCore.QPointF(self._rectangle[1].x(), y)
                 approx_area = self.drawRect(self._rectangle)
-                self.emit(QtCore.SIGNAL('statusmsg'), p2str(pl) + ' ' + approx_area)
-                self.emit(QtCore.SIGNAL('tellarea'), self._rectangle, approx_area)
+                self.statusmsg.emit(p2str(pl) + ' ' + approx_area)
+                self.tellarea.emit(self._rectangle, approx_area)
                 self._rectangle = None
             self._drag_start = QtCore.QPoint(event.pos())
             hb = self.horizontalScrollBar()
@@ -520,13 +522,13 @@ class WorldView(QtGui.QGraphicsView):
             start = self.mapFromLonLat(frll)
             toll = self.destinationxy(frll.x(), frll.y(), 0, ruler)
             end = self.mapFromLonLat(toll)
-            self.ruler_items.append(QtGui.QGraphicsLineItem(QtCore.QLineF(start, end)))
+            self.ruler_items.append(QtWidgets.QGraphicsLineItem(QtCore.QLineF(start, end)))
             self.ruler_items[-1].setPen(pen)
             self.ruler_items[-1].setZValue(0)
             self.scene().addItem(self.ruler_items[-1])
             toll = self.destinationx(frll.x(), frll.y(), ruler)
             end = self.mapFromLonLat(toll)
-            self.ruler_items.append(QtGui.QGraphicsLineItem(QtCore.QLineF(start, end)))
+            self.ruler_items.append(QtWidgets.QGraphicsLineItem(QtCore.QLineF(start, end)))
             self.ruler_items[-1].setPen(pen)
             self.ruler_items[-1].setZValue(0)
             self.scene().addItem(self.ruler_items[-1])
@@ -535,11 +537,11 @@ class WorldView(QtGui.QGraphicsView):
                 start = self.mapFromLonLat(strt)
                 toll = self.destinationxy(strt.x(), strt.y(), 0, ruler / 50)
                 end = self.mapFromLonLat(toll)
-                self.ruler_items.append(QtGui.QGraphicsLineItem(QtCore.QLineF(start, end)))
+                self.ruler_items.append(QtWidgets.QGraphicsLineItem(QtCore.QLineF(start, end)))
                 self.ruler_items[-1].setPen(pen)
                 self.ruler_items[-1].setZValue(0)
                 self.scene().addItem(self.ruler_items[-1])
-            self.ruler_items.append(QtGui.QGraphicsSimpleTextItem(str(int(ruler)) + ' Km'))
+            self.ruler_items.append(QtWidgets.QGraphicsSimpleTextItem(str(int(ruler)) + ' Km'))
             new_font = self.ruler_items[-1].font()
             new_font.setPointSizeF(self.scene().width() / 90.)
             up = float(QtGui.QFontMetrics(new_font).height())
@@ -553,7 +555,7 @@ class WorldView(QtGui.QGraphicsView):
                 start = self.mapFromLonLat(strt)
                 toll = self.destinationx(strt.x(), strt.y(), ruler / 50)
                 end = self.mapFromLonLat(toll)
-                self.ruler_items.append(QtGui.QGraphicsLineItem(QtCore.QLineF(start, end)))
+                self.ruler_items.append(QtWidgets.QGraphicsLineItem(QtCore.QLineF(start, end)))
                 self.ruler_items[-1].setPen(pen)
                 self.ruler_items[-1].setZValue(0)
                 self.scene().addItem(self.ruler_items[-1])
@@ -596,7 +598,11 @@ class WorldView(QtGui.QGraphicsView):
         del self.ruler_items
 
 
-class WorldWindow(QtGui.QMainWindow):
+class WorldWindow(QtWidgets.QMainWindow):
+    log = QtCore.pyqtSignal()
+    statusmsg = QtCore.pyqtSignal(str)
+    tellarea = QtCore.pyqtSignal()
+
     def get_config(self):
         self.config = configparser.RawConfigParser()
         self.config_file = 'getfiles.ini'
@@ -632,31 +638,31 @@ class WorldWindow(QtGui.QMainWindow):
         self.view.scale(1., 1.)
         self._mv = self.view
         self.grid_items = None
-        self.setStatusBar(QtGui.QStatusBar())
-        self.connect(self.view, QtCore.SIGNAL('statusmsg'), self.setStatusText)
-        w = QtGui.QWidget()
-        lay = QtGui.QVBoxLayout(w)
+        self.setStatusBar(QtWidgets.QStatusBar())
+        self.view.statusmsg.connect(self.setStatusText)
+        w = QtWidgets.QWidget()
+        lay = QtWidgets.QVBoxLayout(w)
         lay.addWidget(self.view)
         self.setCentralWidget(w)
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.popup)
         menubar = self.menuBar()
-        self.showRuler = QtGui.QAction(QtGui.QIcon('blank.png'), 'Scale Ruler', self)
+        self.showRuler = QtWidgets.QAction(QtGui.QIcon('blank.png'), 'Scale Ruler', self)
         self.showRuler.setShortcut('Ctrl+R')
         self.showRuler.setStatusTip('Show Scale Ruler')
         self.showRuler.triggered.connect(self.show_Ruler)
-        self.showGrid = QtGui.QAction(QtGui.QIcon('blank.png'), 'Coordinates Grid', self)
+        self.showGrid = QtWidgets.QAction(QtGui.QIcon('blank.png'), 'Coordinates Grid', self)
         self.showGrid.setShortcut('Ctrl+G')
         self.showGrid.setStatusTip('Show Coordinates Grid')
         self.showGrid.triggered.connect(self.show_Grid)
-        self.showMGrid = QtGui.QAction(QtGui.QIcon('blank.png'), 'MERRA-2 Grid', self)
+        self.showMGrid = QtWidgets.QAction(QtGui.QIcon('blank.png'), 'MERRA-2 Grid', self)
         self.showMGrid.setShortcut('Ctrl+M')
         self.showMGrid.setStatusTip('Show MERRA-2 Grid')
         self.showMGrid.triggered.connect(self.show_MGrid)
-        self.saveView = QtGui.QAction(QtGui.QIcon('camera.png'), 'Save View', self)
+        self.saveView = QtWidgets.QAction(QtGui.QIcon('camera.png'), 'Save View', self)
         self.saveView.setShortcut('Ctrl+V')
         self.saveView.triggered.connect(self.save_View)
-        self.showMany = QtGui.QAction(QtGui.QIcon('blank.png'), 'Show many Areas', self)
+        self.showMany = QtWidgets.QAction(QtGui.QIcon('blank.png'), 'Show many Areas', self)
         self.showMany.setShortcut('Ctrl+A')
         self.showMany.setStatusTip('Show many Areas')
         self.showMany.triggered.connect(self.show_Many)
@@ -666,29 +672,29 @@ class WorldWindow(QtGui.QMainWindow):
         viewMenu.addAction(self.showMGrid)
         viewMenu.addAction(self.showMany)
         viewMenu.addAction(self.saveView)
-        self.editIni = QtGui.QAction(QtGui.QIcon('edit.png'), 'Edit Preferences File', self)
+        self.editIni = QtWidgets.QAction(QtGui.QIcon('edit.png'), 'Edit Preferences File', self)
         self.editIni.setShortcut('Ctrl+E')
         self.editIni.setStatusTip('Edit Preferences')
         self.editIni.triggered.connect(self.editIniFile)
-        self.editColour = QtGui.QAction(QtGui.QIcon('rainbow-icon.png'), 'Edit Colours', self)
+        self.editColour = QtWidgets.QAction(QtGui.QIcon('rainbow-icon.png'), 'Edit Colours', self)
         self.editColour.setShortcut('Ctrl+U')
         self.editColour.setStatusTip('Edit Colours')
         self.editColour.triggered.connect(self.editColours)
-        self.editSect = QtGui.QAction(QtGui.QIcon('arrow.png'), 'Edit Section', self)
+        self.editSect = QtWidgets.QAction(QtGui.QIcon('arrow.png'), 'Edit Section', self)
         self.editSect.setStatusTip('Edit Preferences Section')
         self.editSect.triggered.connect(self.editSects)
         editMenu = menubar.addMenu('P&references')
         editMenu.addAction(self.editIni)
         editMenu.addAction(self.editColour)
         editMenu.addAction(self.editSect)
-        help = QtGui.QAction(QtGui.QIcon('help.png'), 'Help', self)
+        help = QtWidgets.QAction(QtGui.QIcon('help.png'), 'Help', self)
         help.setShortcut('F1')
         help.setStatusTip('Help')
         help.triggered.connect(self.showHelp)
         helpMenu = menubar.addMenu('&Help')
         helpMenu.addAction(help)
-        QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.exit)
-        QtGui.QShortcut(QtGui.QKeySequence('x'), self, self.exit)
+        QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.exit)
+        QtWidgets.QShortcut(QtGui.QKeySequence('x'), self, self.exit)
         self.config = configparser.RawConfigParser()
         self.config_file = 'getfiles.ini'
         self.config.read(self.config_file)
@@ -709,20 +715,19 @@ class WorldWindow(QtGui.QMainWindow):
             if not os.path.exists(mapp):
                 if self.floatstatus is None:
                     self.show_FloatStatus()
-                self.floatstatus.emit(QtCore.SIGNAL('log'),
-                    'Need to check [Map].map%s property. Resolves to %s' % (mapc, mapp))
+                self.floatstatus.log.emit('Need to check [Map].map%s property. Resolves to %s' % (mapc, mapp))
         except:
             pass
         self.setWindowTitle('SIREN - worldwindow (' + fileVersion() + ')')
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         note = 'Map data ' + chr(169) + ' OpenStreetMap contributors CC-BY-SA ' + \
                '(http://www.openstreetmap.org/copyright)'
-        self.view.emit(QtCore.SIGNAL('statusmsg'), note)
+        self.view.statusmsg.emit(note)
         if not self.restorewindows:
             return
-        screen = QtGui.QApplication.desktop().primaryScreen()
-        scr_right = QtGui.QApplication.desktop().availableGeometry(screen).right()
-        scr_bottom = QtGui.QApplication.desktop().availableGeometry(screen).bottom()
+        screen = QtWidgets.QApplication.desktop().primaryScreen()
+        scr_right = QtWidgets.QApplication.desktop().availableGeometry(screen).right()
+        scr_bottom = QtWidgets.QApplication.desktop().availableGeometry(screen).bottom()
         win_width = self.sizeHint().width()
         win_height = self.sizeHint().height()
         try:
@@ -734,16 +739,16 @@ class WorldWindow(QtGui.QMainWindow):
             lst_top = int(mp[1])
             lst_right = lst_left + lst_width
             lst_bottom = lst_top + lst_height
-            screen = QtGui.QApplication.desktop().screenNumber(QtCore.QPoint(lst_left, lst_top))
-            scr_right = QtGui.QApplication.desktop().availableGeometry(screen).right()
-            scr_left = QtGui.QApplication.desktop().availableGeometry(screen).left()
+            screen = QtWidgets.QApplication.desktop().screenNumber(QtCore.QPoint(lst_left, lst_top))
+            scr_right = QtWidgets.QApplication.desktop().availableGeometry(screen).right()
+            scr_left = QtWidgets.QApplication.desktop().availableGeometry(screen).left()
             if lst_right < scr_right:
                 if (lst_right - win_width) >= scr_left:
                     scr_right = lst_right
                 else:
                     scr_right = scr_left + win_width
-            scr_bottom = QtGui.QApplication.desktop().availableGeometry(screen).bottom()
-            scr_top = QtGui.QApplication.desktop().availableGeometry(screen).top()
+            scr_bottom = QtWidgets.QApplication.desktop().availableGeometry(screen).bottom()
+            scr_top = QtWidgets.QApplication.desktop().availableGeometry(screen).top()
             if lst_bottom < scr_bottom:
                 if (lst_bottom - win_height) >= scr_top:
                     scr_bottom = lst_bottom
@@ -761,7 +766,7 @@ class WorldWindow(QtGui.QMainWindow):
         dialr.exec_()
         self.get_config()   # refresh config values
         comment = self.config_file + ' edited. Reload may be required.'
-        self.view.emit(QtCore.SIGNAL('statusmsg'), comment)
+        self.view.statusmsg.emit(comment)
 
     def changeColours(self, new_color, elements):
         for el in elements:
@@ -805,13 +810,13 @@ class WorldWindow(QtGui.QMainWindow):
             if colour != self.view.scene().colors[item]:
                 self.changeColours(colour, self.view.scene()._stationCircles[item])
         comment = 'Colours edited. Reload may be required.'
-        self.view.emit(QtCore.SIGNAL('statusmsg'), comment)
+        self.view.statusmsg.emit(comment)
 
     def editSects(self):
         config = configparser.RawConfigParser()
         config.read(self.config_file)
         sections = sorted(config.sections())
-        menu = QtGui.QMenu()
+        menu = QtWidgets.QMenu()
         stns = []
         for section in sections:
             stns.append(menu.addAction(section))
@@ -819,10 +824,10 @@ class WorldWindow(QtGui.QMainWindow):
             y = self.frameGeometry().y() + 50
         action = menu.exec_(QtCore.QPoint(x, y))
         if action is not None:
-            section = str(action.text())
+            section = action.text()
             EditSect(section, None, ini_file=self.config_file)
             comment = section + ' Section edited. Reload may be required.'
-            self.view.emit(QtCore.SIGNAL('statusmsg'), comment)
+            self.view.statusmsg.emit(comment)
 
     def mapToLonLat(self, p):
         p = self.mapToScene(p)
@@ -834,13 +839,13 @@ class WorldWindow(QtGui.QMainWindow):
 
     def center(self):
         frameGm = self.frameGeometry()
-        screen = QtGui.QApplication.desktop().screenNumber(QtGui.QApplication.desktop().cursor().pos())
-        centerPoint = QtGui.QApplication.desktop().availableGeometry(screen).center()
+        screen = QtWidgets.QApplication.desktop().screenNumber(QtWidgets.QApplication.desktop().cursor().pos())
+        centerPoint = QtWidgets.QApplication.desktop().availableGeometry(screen).center()
         frameGm.moveCenter(centerPoint)
         self.move(frameGm.topLeft())
 
     def showHelp(self):
-        dialog = displayobject.AnObject(QtGui.QDialog(), self.help,
+        dialog = displayobject.AnObject(QtWidgets.QDialog(), self.help,
                  title='Help for worldwindow (' + fileVersion() + ')', section='worldwindow')
         dialog.exec_()
 
@@ -856,10 +861,9 @@ class WorldWindow(QtGui.QMainWindow):
         sourcerect = QtCore.QRect(0, 0, self.view.width(), self.view.height())
         self.view.render(painter, targetrect, sourcerect)
         fname = 'worldwindow_view.png'
-        fname = QtGui.QFileDialog.getSaveFileName(self, 'Save image file',
-                fname, 'Image Files (*.png *.jpg *.bmp)')
+        fname = QtWidgets.QFileDialog.getSaveFileName(self, 'Save image file',
+                fname, 'Image Files (*.png *.jpg *.bmp)')[0]
         if fname != '':
-            fname = str(fname)
             i = fname.rfind('.')
             if i < 0:
                 fname = fname + '.png'
@@ -869,12 +873,12 @@ class WorldWindow(QtGui.QMainWindow):
                 comment = 'View saved to ' + fname[fname.rfind('/') + 1:]
             except:
                 comment = 'View saved to ' + fname
-            self.view.emit(QtCore.SIGNAL('statusmsg'), comment)
+            self.view.statusmsg.emit(comment)
         painter.end()
 
     def popup(self, pos):
         where = self.view.mapToLonLat(pos)
-        menu = QtGui.QMenu()
+        menu = QtWidgets.QMenu()
         act1 = 'Center here'
         ctrAction = menu.addAction(QtGui.QIcon('zoom.png'), act1)
         ctrAction.setIconVisibleInMenu(True)
@@ -895,7 +899,7 @@ class WorldWindow(QtGui.QMainWindow):
             self.view.show_Ruler(self.view.scene().ruler, self.view.scene().ruler_ticks, pos)
             self.showRuler.setIcon(QtGui.QIcon(self.view.scene().check_icon))
             self.view.scene().show_ruler = True
-            self.view.emit(QtCore.SIGNAL('statusmsg'), 'Scale Ruler Toggled On')
+            self.view.statusmsg.emit('Scale Ruler Toggled On')
         elif action == ctrAction:
             go_to = self.mapFromLonLat(where)
             self.view.centerOn(go_to)
@@ -909,7 +913,7 @@ class WorldWindow(QtGui.QMainWindow):
             comment += 'Off'
         else:
             if self.view.scene()._gridGroup is None:
-                self.view.scene()._gridGroup = QtGui.QGraphicsItemGroup()
+                self.view.scene()._gridGroup = QtWidgets.QGraphicsItemGroup()
                 self.view.scene().addItem(self.view.scene()._gridGroup)
                 color = QtGui.QColor()
                 color.setNamedColor((self.view.scene().colors['grid']))
@@ -921,14 +925,14 @@ class WorldWindow(QtGui.QMainWindow):
                         continue
                     fromm = self.mapFromLonLat(QtCore.QPointF(-180, lat))
                     too = self.mapFromLonLat(QtCore.QPointF(180, lat))
-                    item = QtGui.QGraphicsLineItem(fromm.x(), fromm.y(), too.x(), too.y())
+                    item = QtWidgets.QGraphicsLineItem(fromm.x(), fromm.y(), too.x(), too.y())
                     item.setPen(pen)
                     item.setZValue(3)
                     self.view.scene()._gridGroup.addToGroup(item)
                 for lon in range(-180, 181, 10):
                     fromm = self.mapFromLonLat(QtCore.QPointF(lon, self.view.scene().map_upper_left[0]))
                     too = self.mapFromLonLat(QtCore.QPointF(lon, self.view.scene().map_lower_right[0]))
-                    item = QtGui.QGraphicsLineItem(fromm.x(), fromm.y(), too.x(), too.y())
+                    item = QtWidgets.QGraphicsLineItem(fromm.x(), fromm.y(), too.x(), too.y())
                     item.setPen(pen)
                     item.setZValue(3)
                     self.view.scene()._gridGroup.addToGroup(item)
@@ -936,7 +940,7 @@ class WorldWindow(QtGui.QMainWindow):
             self.view.scene()._gridGroup.setVisible(True)
             self.showGrid.setIcon(QtGui.QIcon(self.view.scene().check_icon))
             comment += 'On'
-        self.view.emit(QtCore.SIGNAL('statusmsg'), comment)
+        self.view.statusmsg.emit(comment)
 
     def show_MGrid(self):
         comment = 'MERRA-2 Grid Toggled '
@@ -947,7 +951,7 @@ class WorldWindow(QtGui.QMainWindow):
             comment += 'Off'
         else:
             if self.view.scene()._mgridGroup is None:
-                self.view.scene()._mgridGroup = QtGui.QGraphicsItemGroup()
+                self.view.scene()._mgridGroup = QtWidgets.QGraphicsItemGroup()
                 self.view.scene().addItem(self.view.scene()._mgridGroup)
                 color = QtGui.QColor()
                 color.setNamedColor((self.view.scene().colors['mgrid']))
@@ -962,7 +966,7 @@ class WorldWindow(QtGui.QMainWindow):
                 while lat > -85:
                     fromm = self.mapFromLonLat(QtCore.QPointF(-180, lat))
                     too = self.mapFromLonLat(QtCore.QPointF(180, lat))
-                    item = QtGui.QGraphicsLineItem(fromm.x(), fromm.y(), too.x(), too.y())
+                    item = QtWidgets.QGraphicsLineItem(fromm.x(), fromm.y(), too.x(), too.y())
                     if lat % 10 == 0:
                         item.setPen(pen)
                     else:
@@ -974,7 +978,7 @@ class WorldWindow(QtGui.QMainWindow):
                 while lon < 180:
                     fromm = self.mapFromLonLat(QtCore.QPointF(lon, self.view.scene().map_upper_left[0]))
                     too = self.mapFromLonLat(QtCore.QPointF(lon, self.view.scene().map_lower_right[0]))
-                    item = QtGui.QGraphicsLineItem(fromm.x(), fromm.y(), too.x(), too.y())
+                    item = QtWidgets.QGraphicsLineItem(fromm.x(), fromm.y(), too.x(), too.y())
                     if lon % 10 == 0:
                         item.setPen(pen)
                     else:
@@ -986,7 +990,7 @@ class WorldWindow(QtGui.QMainWindow):
             self.view.scene()._mgridGroup.setVisible(True)
             self.showMGrid.setIcon(QtGui.QIcon(self.view.scene().check_icon))
             comment += 'On'
-        self.view.emit(QtCore.SIGNAL('statusmsg'), comment)
+        self.view.statusmsg.emit(comment)
 
     def show_Ruler(self):
         comment = 'Scale Ruler Toggled '
@@ -1000,7 +1004,7 @@ class WorldWindow(QtGui.QMainWindow):
             self.showRuler.setIcon(QtGui.QIcon(self.view.scene().check_icon))
             self.view.scene().show_ruler = True
             comment += 'On'
-        self.view.emit(QtCore.SIGNAL('statusmsg'), comment)
+        self.view.statusmsg.emit(comment)
 
     def show_Many(self):
         self.view.drawMany()
@@ -1020,11 +1024,11 @@ class WorldWindow(QtGui.QMainWindow):
                          str(self.view.mapToScene(self.view.width(), self.view.height()).y())))
             updates['Windows'] = lines
             SaveIni(updates, ini_file=self.config_file)
-        self.view.emit(QtCore.SIGNAL('tellarea'), 'goodbye')
+        self.view.tellarea.emit(['goodbye'], '')
 
 
 if '__main__' == __name__:
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     scene = WorldScene()
     openNewWindow = WorldWindow(None, scene)
     openNewWindow.show()

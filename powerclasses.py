@@ -26,7 +26,7 @@ import ssc
 import xlrd
 
 import configparser  # decode .ini file
-from PyQt4 import Qt, QtGui, QtCore
+from PyQt5 import Qt, QtCore, QtGui, QtWidgets
 
 from senuser import getUser, techClean
 import displayobject
@@ -151,7 +151,7 @@ class DailyData:
                 setattr(self, 'value', round(value, 2))
 
 
-class whatPlots(QtGui.QDialog):
+class whatPlots(QtWidgets.QDialog):
     def __init__(self, plots, plot_order, hdrs, spacers, load_growth, base_year, load_year,
                  iterations, storage, discharge, recharge, initials=None, initial=False, helpfile=None):
         self.plots = plots
@@ -175,7 +175,7 @@ class whatPlots(QtGui.QDialog):
         self.initUI()
 
     def initUI(self):
-        self.grid = QtGui.QGridLayout()
+        self.grid = QtWidgets.QGridLayout()
         self.checkbox = []
         i = 0
         bold = QtGui.QFont()
@@ -183,16 +183,16 @@ class whatPlots(QtGui.QDialog):
         for plot in range(len(self.plot_order)):
             if self.plot_order[plot] in self.spacers:
                 if self.plot_order[plot] == 'save_plot':  # fudge to add in growth stuff
-                    self.percentLabel = QtGui.QLabel('        Growth. Set annual '
+                    self.percentLabel = QtWidgets.QLabel('        Growth. Set annual '
                                                      + 'Load growth & target year')
-                    self.percentSpin = QtGui.QDoubleSpinBox()
+                    self.percentSpin = QtWidgets.QDoubleSpinBox()
                     self.percentSpin.setDecimals(2)
                     self.percentSpin.setSingleStep(.1)
                     self.percentSpin.setRange(-100, 100)
                     self.percentSpin.setValue(self.load_growth)
-                    self.counterSpin = QtGui.QSpinBox()
+                    self.counterSpin = QtWidgets.QSpinBox()
                     self.counterSpin.setRange(min(self.base_year, 2015), 2100)
-                    self.totalOutput = QtGui.QLabel('')
+                    self.totalOutput = QtWidgets.QLabel('')
                     self.grid.addWidget(self.percentLabel, i, 0)
                     self.grid.addWidget(self.percentSpin, i, 1)
                     self.grid.addWidget(self.counterSpin, i, 2)
@@ -201,17 +201,17 @@ class whatPlots(QtGui.QDialog):
                     self.counterSpin.valueChanged[str].connect(self.growthChanged)
                     self.counterSpin.setValue(int(self.load_year))
                     i += 1
-                    label = QtGui.QLabel('Storage')
+                    label = QtWidgets.QLabel('Storage')
                     label.setFont(bold)
                     self.grid.addWidget(label, i, 0)
                     i += 1
-                    label = QtGui.QLabel('        Storage capacity (GWh) & initial value')
-                    self.storageSpin = QtGui.QDoubleSpinBox()
+                    label = QtWidgets.QLabel('        Storage capacity (GWh) & initial value')
+                    self.storageSpin = QtWidgets.QDoubleSpinBox()
                     self.storageSpin.setDecimals(3)
                     self.storageSpin.setRange(0, 500)
                     self.storageSpin.setValue(self.storage[0])
                     self.storageSpin.setSingleStep(5)
-                    self.storpctSpin = QtGui.QDoubleSpinBox()
+                    self.storpctSpin = QtWidgets.QDoubleSpinBox()
                     self.storpctSpin.setDecimals(3)
                     self.storpctSpin.setRange(0, 500)
                     self.storpctSpin.setValue(self.storage[1])
@@ -220,26 +220,26 @@ class whatPlots(QtGui.QDialog):
                     self.grid.addWidget(self.storageSpin, i, 1)
                     self.grid.addWidget(self.storpctSpin, i, 2)
                     i += 1
-                    label = QtGui.QLabel('        Discharge cap (MW) & loss (%)')
-                    self.dischargeSpin = QtGui.QDoubleSpinBox()
+                    label = QtWidgets.QLabel('        Discharge cap (MW) & loss (%)')
+                    self.dischargeSpin = QtWidgets.QDoubleSpinBox()
                     self.dischargeSpin.setDecimals(3)
                     self.dischargeSpin.setRange(0, 50000)  # max is 10% of capacity
                     self.dischargeSpin.setValue(self.discharge[0])
                     self.dischargeSpin.setSingleStep(5)
-                    self.dischargepctSpin = QtGui.QSpinBox()
+                    self.dischargepctSpin = QtWidgets.QSpinBox()
                     self.dischargepctSpin.setRange(0, 50)
                     self.dischargepctSpin.setValue(int(100 - self.discharge[1] * 100))
                     self.grid.addWidget(label, i, 0)
                     self.grid.addWidget(self.dischargeSpin, i, 1)
                     self.grid.addWidget(self.dischargepctSpin, i, 2)
                     i += 1
-                    label = QtGui.QLabel('        Recharge cap (MW) & loss (%)')
-                    self.rechargeSpin = QtGui.QDoubleSpinBox()
+                    label = QtWidgets.QLabel('        Recharge cap (MW) & loss (%)')
+                    self.rechargeSpin = QtWidgets.QDoubleSpinBox()
                     self.rechargeSpin.setDecimals(3)
                     self.rechargeSpin.setRange(0, 50000)  # max is 10% of capacity
                     self.rechargeSpin.setValue(self.recharge[0])
                     self.rechargeSpin.setSingleStep(5)
-                    self.rechargepctSpin = QtGui.QSpinBox()
+                    self.rechargepctSpin = QtWidgets.QSpinBox()
                     self.rechargepctSpin.setRange(0, 50)
                     self.rechargepctSpin.setValue(int(100 - self.recharge[1] * 100))
                     self.grid.addWidget(label, i, 0)
@@ -247,18 +247,18 @@ class whatPlots(QtGui.QDialog):
                     self.grid.addWidget(self.rechargepctSpin, i, 2)
                     i += 1
                 elif self.plot_order[plot] == 'summary' and 'shortfall' in self.plot_order:  # fudge to add in iterations stuff
-                    self.iterLabel = QtGui.QLabel('        Shortfall. Choose analysis iterations')
-                    self.iterSpin = QtGui.QSpinBox()
+                    self.iterLabel = QtWidgets.QLabel('        Shortfall. Choose analysis iterations')
+                    self.iterSpin = QtWidgets.QSpinBox()
                     self.iterSpin.setRange(0, 3)
                     self.iterSpin.setValue(self.iterations)
                     self.grid.addWidget(self.iterLabel, i, 0)
                     self.grid.addWidget(self.iterSpin, i, 1)
                     i += 1
-                label = QtGui.QLabel(self.spacers[self.plot_order[plot]])
+                label = QtWidgets.QLabel(self.spacers[self.plot_order[plot]])
                 label.setFont(bold)
                 self.grid.addWidget(label, i, 0)
                 i += 1
-            self.checkbox.append(QtGui.QCheckBox(self.hdrs[self.plot_order[plot]], self))
+            self.checkbox.append(QtWidgets.QCheckBox(self.hdrs[self.plot_order[plot]], self))
             if self.plots[self.plot_order[plot]]:
                 self.checkbox[plot].setCheckState(QtCore.Qt.Checked)
             if not self.initial:
@@ -266,14 +266,14 @@ class whatPlots(QtGui.QDialog):
                     self.checkbox[plot].setEnabled(False)
             self.grid.addWidget(self.checkbox[-1], i, 0)
             if self.plot_order[plot] == 'save_balance':
-                self.grid.connect(self.checkbox[-1], QtCore.SIGNAL('stateChanged(int)'), self.check_balance)
+                self.checkbox[-1].stateChanged[int].connect(self.check_balance)
             i += 1
-        self.grid.connect(self.checkbox[0], QtCore.SIGNAL('stateChanged(int)'), self.check_all)
-        show = QtGui.QPushButton('Proceed', self)
+        self.checkbox[0].stateChanged[int].connect(self.check_all)
+        show = QtWidgets.QPushButton('Proceed', self)
         show.clicked.connect(self.showClicked)
         self.grid.addWidget(show, i, 0)
         if self.initial:
-            save = QtGui.QPushButton('Save Options', self)
+            save = QtWidgets.QPushButton('Save Options', self)
             save.clicked.connect(self.saveClicked)
             self.grid.addWidget(save, i, 1)
         else:
@@ -281,19 +281,19 @@ class whatPlots(QtGui.QDialog):
                 quitxt = 'Do Financials'
             else:
                 quitxt = 'All Done'
-            quit = QtGui.QPushButton(quitxt, self)
+            quit = QtWidgets.QPushButton(quitxt, self)
             quit.clicked.connect(self.quitClicked)
             self.grid.addWidget(quit, i, 1)
-        frame = QtGui.QFrame()
+        frame = QtWidgets.QFrame()
         frame.setLayout(self.grid)
-        self.scroll = QtGui.QScrollArea()
+        self.scroll = QtWidgets.QScrollArea()
         self.scroll.setWidgetResizable(True)
         self.scroll.setWidget(frame)
-        self.layout = QtGui.QVBoxLayout(self)
+        self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
         #
-        menubar = QtGui.QMenuBar()
-        help = QtGui.QAction(QtGui.QIcon('help.png'), 'Help', self)
+        menubar = QtWidgets.QMenuBar()
+        help = QtWidgets.QAction(QtGui.QIcon('help.png'), 'Help', self)
         help.setShortcut('F1')
         help.setStatusTip('Help')
         help.triggered.connect(self.showHelp)
@@ -301,7 +301,7 @@ class whatPlots(QtGui.QDialog):
         helpMenu.addAction(help)
         self.layout.setMenuBar(menubar)
         #
-        screen = QtGui.QDesktopWidget().availableGeometry()
+        screen = QtWidgets.QDesktopWidget().availableGeometry()
         if self.grid.geometry().height() > (screen.height() / 1.2):
             h = int(screen.height() * .9)
         else:
@@ -309,12 +309,12 @@ class whatPlots(QtGui.QDialog):
         self.resize(600, h)
         self.setWindowTitle('SIREN - Power dialog for ' + str(self.base_year))
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
-        QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
+        QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
         self.show_them = False
         self.show()
 
     def showHelp(self):
-        dialog = displayobject.AnObject(QtGui.QDialog(), self.helpfile, title='Powermodel Help', section='popts')
+        dialog = displayobject.AnObject(QtWidgets.QDialog(), self.helpfile, title='Powermodel Help', section='popts')
         dialog.exec_()
 
     def growthChanged(self, val):
@@ -409,7 +409,7 @@ class whatPlots(QtGui.QDialog):
                [self.rechargeSpin.value(), (1. - self.rechargepctSpin.value() / 100.)]
 
 
-class whatStations(QtGui.QDialog):
+class whatStations(QtWidgets.QDialog):
     def __init__(self, stations, gross_load=False, actual=False, helpfile=None):
         self.stations = stations
         self.gross_load = gross_load
@@ -419,9 +419,9 @@ class whatStations(QtGui.QDialog):
 
     def initUI(self):
         self.chosen = []
-        self.grid = QtGui.QGridLayout()
+        self.grid = QtWidgets.QGridLayout()
         self.checkbox = []
-        self.checkbox.append(QtGui.QCheckBox('Check / Uncheck all', self))
+        self.checkbox.append(QtWidgets.QCheckBox('Check / Uncheck all', self))
         self.grid.addWidget(self.checkbox[-1], 0, 0)
         i = 0
         c = 0
@@ -431,7 +431,7 @@ class whatStations(QtGui.QDialog):
                 continue
             if stn.technology == 'Rooftop PV' and stn.scenario == 'Existing' and not self.gross_load:
                 continue
-            self.checkbox.append(QtGui.QCheckBox(stn.name, self))
+            self.checkbox.append(QtWidgets.QCheckBox(stn.name, self))
             icon = icons.getIcon(stn.technology)
             if icon != '':
                 self.checkbox[-1].setIcon(QtGui.QIcon(icon))
@@ -440,14 +440,14 @@ class whatStations(QtGui.QDialog):
             if i > 25:
                 i = 0
                 c += 1
-        self.grid.connect(self.checkbox[0], QtCore.SIGNAL('stateChanged(int)'), self.check_all)
-        show = QtGui.QPushButton('Choose', self)
+        self.checkbox[0].stateChanged[int].connect(self.check_all)
+        show = QtWidgets.QPushButton('Choose', self)
         self.grid.addWidget(show, i + 1, c)
         show.clicked.connect(self.showClicked)
         self.setLayout(self.grid)
         self.setWindowTitle('SIREN - Power Stations dialog')
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
-        QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
+        QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
         self.show_them = False
         self.show()
 
@@ -470,7 +470,7 @@ class whatStations(QtGui.QDialog):
     def showClicked(self):
         for stn in range(1, len(self.checkbox)):
             if self.checkbox[stn].checkState() == QtCore.Qt.Checked:
-                self.chosen.append(str(self.checkbox[stn].text()))
+                self.chosen.append(self.checkbox[stn].text())
         self.show_them = True
         self.close()
 
@@ -478,7 +478,7 @@ class whatStations(QtGui.QDialog):
         return self.chosen
 
 
-class whatFinancials(QtGui.QDialog):
+class whatFinancials(QtWidgets.QDialog):
     def __init__(self, parms=None, helpfile=None):
         super(whatFinancials, self).__init__()
         self.proceed = False
@@ -537,7 +537,7 @@ class whatFinancials(QtGui.QDialog):
                 pass
         else:
             self.financials = parms
-        self.grid = QtGui.QGridLayout()
+        self.grid = QtWidgets.QGridLayout()
         self.labels = []
         self.spin = []
         i = 0
@@ -547,13 +547,13 @@ class whatFinancials(QtGui.QDialog):
             if isinstance(item[2], int) or isinstance(item[3], int):
                 if item[2] == 0 and item[3] == 1:
                     continue
-            self.labels.append(QtGui.QLabel(item[1]))
+            self.labels.append(QtWidgets.QLabel(item[1]))
             if isinstance(item[2], float) or isinstance(item[3], float):
-                self.spin.append(QtGui.QDoubleSpinBox())
+                self.spin.append(QtWidgets.QDoubleSpinBox())
                 self.spin[-1].setDecimals(1)
                 self.spin[-1].setSingleStep(.1)
             else:
-                self.spin.append(QtGui.QSpinBox())
+                self.spin.append(QtWidgets.QSpinBox())
             self.spin[-1].setRange(item[2], item[3])
             self.spin[-1].setValue(item[4])
             self.grid.addWidget(self.labels[-1], i, 0)
@@ -562,37 +562,37 @@ class whatFinancials(QtGui.QDialog):
         self.checkbox = []
         for item in self.financials:
             if isinstance(item[2], bool) and isinstance(item[3], bool):
-                self.checkbox.append(QtGui.QCheckBox(item[1], self))
+                self.checkbox.append(QtWidgets.QCheckBox(item[1], self))
                 self.grid.addWidget(self.checkbox[-1], i, 0)
                 if item[4]:
                     self.checkbox[-1].setCheckState(QtCore.Qt.Checked)
                 i += 1
             elif isinstance(item[2], int) and isinstance(item[3], int):
                 if item[2] == 0 and item[3] == 1:
-                    self.checkbox.append(QtGui.QCheckBox(item[1], self))
+                    self.checkbox.append(QtWidgets.QCheckBox(item[1], self))
                     self.grid.addWidget(self.checkbox[-1], i, 0)
                     if item[4] == 1:
                         self.checkbox[-1].setCheckState(QtCore.Qt.Checked)
                     i += 1
-        show = QtGui.QPushButton('Proceed', self)
+        show = QtWidgets.QPushButton('Proceed', self)
         show.clicked.connect(self.showClicked)
-        save = QtGui.QPushButton('Save Options', self)
+        save = QtWidgets.QPushButton('Save Options', self)
         save.clicked.connect(self.saveClicked)
-        quit = QtGui.QPushButton('All Done', self)
+        quit = QtWidgets.QPushButton('All Done', self)
         quit.clicked.connect(self.quitClicked)
         self.grid.addWidget(show, i + 1, 0)
         self.grid.addWidget(save, i + 1, 1)
         self.grid.addWidget(quit, i + 1, 2)
-        frame = QtGui.QFrame()
+        frame = QtWidgets.QFrame()
         frame.setLayout(self.grid)
-        self.scroll = QtGui.QScrollArea()
+        self.scroll = QtWidgets.QScrollArea()
         self.scroll.setWidgetResizable(True)
         self.scroll.setWidget(frame)
-        self.layout = QtGui.QVBoxLayout(self)
+        self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
         #
-        menubar = QtGui.QMenuBar()
-        help = QtGui.QAction(QtGui.QIcon('help.png'), 'Help', self)
+        menubar = QtWidgets.QMenuBar()
+        help = QtWidgets.QAction(QtGui.QIcon('help.png'), 'Help', self)
         help.setShortcut('F1')
         help.setStatusTip('Help')
         help.triggered.connect(self.showHelp)
@@ -600,16 +600,16 @@ class whatFinancials(QtGui.QDialog):
         helpMenu.addAction(help)
         self.layout.setMenuBar(menubar)
         #
-        screen = QtGui.QDesktopWidget().availableGeometry()
+        screen = QtWidgets.QDesktopWidget().availableGeometry()
         h = int(screen.height() * .9)
         self.resize(600, h)
         self.setWindowTitle('SIREN - Financial Parameters dialog')
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
-        QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
+        QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
         self.show()
 
     def showHelp(self):
-        dialog = displayobject.AnObject(QtGui.QDialog(), self.helpfile, title='Powermodel Help', section='fopts')
+        dialog = displayobject.AnObject(QtWidgets.QDialog(), self.helpfile, title='Powermodel Help', section='fopts')
         dialog.exec_()
 
     def closeEvent(self, event):
@@ -685,7 +685,7 @@ class whatFinancials(QtGui.QDialog):
                     break
         return self.financials
 
-class Adjustments(QtGui.QDialog):
+class Adjustments(QtWidgets.QDialog):
     def __init__(self, keys, load_key=None, load=None, data=None, base_year=None):
         super(Adjustments, self).__init__()
         config = configparser.RawConfigParser()
@@ -742,7 +742,7 @@ class Adjustments(QtGui.QDialog):
         self.adjusts = {}
         self.checkbox = {}
         self.results = None
-        self.grid = QtGui.QGridLayout()
+        self.grid = QtWidgets.QGridLayout()
         ctr = 0
         self.skeys = []
         self.lkey = load_key
@@ -752,8 +752,8 @@ class Adjustments(QtGui.QDialog):
         else:
             octr = -1
         if load is not None:
-            self.grid.addWidget(QtGui.QLabel('Check / Uncheck all zeroes'), ctr, 0)
-            self.zerobox = QtGui.QCheckBox('', self)
+            self.grid.addWidget(QtWidgets.QLabel('Check / Uncheck all zeroes'), ctr, 0)
+            self.zerobox = QtWidgets.QCheckBox('', self)
             self.zerobox.setCheckState(QtCore.Qt.Unchecked)
             self.zerobox.stateChanged.connect(self.zeroCheck)
             self.grid.addWidget(self.zerobox, ctr, 2)
@@ -764,7 +764,7 @@ class Adjustments(QtGui.QDialog):
             if key[:4] == 'Load':
                 self.lkey = key
                 continue
-            self.adjusts[key] = QtGui.QDoubleSpinBox()
+            self.adjusts[key] = QtWidgets.QDoubleSpinBox()
             self.adjusts[key].setRange(0, max(self.adjust_cap, self.adjusts[key].value()))
             if type(keys) is dict:
                 self.adjusts[key].setValue(keys[key])
@@ -773,10 +773,10 @@ class Adjustments(QtGui.QDialog):
             self.adjusts[key].setDecimals(2)
             self.adjusts[key].setSingleStep(.1)
             self.skeys.append(key)
-            self.grid.addWidget(QtGui.QLabel(key), ctr, 0)
+            self.grid.addWidget(QtWidgets.QLabel(key), ctr, 0)
             self.grid.addWidget(self.adjusts[key], ctr, 1)
             if load is not None:
-                self.checkbox[key] = QtGui.QCheckBox('', self)
+                self.checkbox[key] = QtWidgets.QCheckBox('', self)
                 self.checkbox[key].setCheckState(QtCore.Qt.Checked)
                 self.grid.addWidget(self.checkbox[key], ctr, 2)
             ctr += 1
@@ -790,8 +790,8 @@ class Adjustments(QtGui.QDialog):
             self.load = load
             self.data = data
          # add pulldown list to optimise for year, month, none
-            self.grid.addWidget(QtGui.QLabel('Optimise for:'), ctr, 0)
-            self.periodCombo = QtGui.QComboBox()
+            self.grid.addWidget(QtWidgets.QLabel('Optimise for:'), ctr, 0)
+            self.periodCombo = QtWidgets.QComboBox()
             self.periodCombo.addItem('None')
             self.periodCombo.addItem(base_year)
             for i in range(1, 13):
@@ -804,30 +804,30 @@ class Adjustments(QtGui.QDialog):
                 self.periodCombo.addItem(base_year + '-' + self.periods[i][0])
             self.l_p = self.periodCombo.count()
             self.grid.addWidget(self.periodCombo, ctr, 1)
-            self.optmsg = QtGui.QLabel('')
+            self.optmsg = QtWidgets.QLabel('')
             self.grid.addWidget(self.optmsg, ctr, 2)
             ctr += 1
-        quit = QtGui.QPushButton('Quit', self)
+        quit = QtWidgets.QPushButton('Quit', self)
         self.grid.addWidget(quit, ctr, 0)
         quit.clicked.connect(self.quitClicked)
-        show = QtGui.QPushButton('Proceed', self)
+        show = QtWidgets.QPushButton('Proceed', self)
         self.grid.addWidget(show, ctr, 1)
         show.clicked.connect(self.showClicked)
         if load is not None:
-            optimise = QtGui.QPushButton('Optimise', self)
+            optimise = QtWidgets.QPushButton('Optimise', self)
             self.grid.addWidget(optimise, ctr, 2)
             optimise.clicked.connect(self.optimiseClicked)
   #       self.setLayout(self.grid)
-        frame = QtGui.QFrame()
+        frame = QtWidgets.QFrame()
         frame.setLayout(self.grid)
-        self.scroll = QtGui.QScrollArea()
+        self.scroll = QtWidgets.QScrollArea()
         self.scroll.setWidgetResizable(True)
         self.scroll.setWidget(frame)
-        self.layout = QtGui.QVBoxLayout(self)
+        self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
         self.setWindowTitle('SIREN - Gen Adj. multiplier')
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
-        QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
+        QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
         self.show()
 
     def closeEvent(self, event):
@@ -1006,6 +1006,8 @@ class FinancialSummary:
 
 
 class FinancialModel():
+    log = QtCore.pyqtSignal()
+
     def get_variables(self, xl_file, overrides=None):
         data = None
         data = ssc.Data()
@@ -1028,7 +1030,7 @@ class FinancialModel():
             curr_row += 1
             if worksheet.cell_value(curr_row, var['TYPE']) == 'SSC_INPUT' and \
               worksheet.cell_value(curr_row, var['DEFAULT']) != '' and \
-              str(worksheet.cell_value(curr_row, var['DEFAULT'])).lower() != 'input':
+              worksheet.cell_value(curr_row, var['DEFAULT']).lower() != 'input':
                 if worksheet.cell_value(curr_row, var['DATA']) == 'SSC_STRING':
                     data.set_string(worksheet.cell_value(curr_row, var['NAME']).encode('utf-8'),
                     worksheet.cell_value(curr_row, var['DEFAULT']).encode('utf-8'))
@@ -1161,13 +1163,13 @@ class FinancialModel():
                   generation, 0, round(capital_cost), lcoe_real, lcoe_nom, npv, round(grid_cost)))
             else:
                 if self.status:
-                   self.status.emit(QtCore.SIGNAL('log'), 'Errors encountered processing ' + name[stn])
-                   QtGui.qApp.processEvents()
+                   self.status.log.emit('Errors encountered processing ' + name[stn])
+                   QtWidgets.QApplication.processEvents()
                 idx = 0
                 msg = module.log(idx)
                 while (msg is not None):
                     if self.status:
-                       self.status.emit(QtCore.SIGNAL('log'), 'ippppa error [' + str(idx) + ']: ' + msg.decode())
+                       self.status.log.emit('ippppa error [' + str(idx) + ']: ' + msg.decode())
                     else:
                         print('ippppa error [', idx, ' ]: ', msg.decode())
                     idx += 1
@@ -1229,7 +1231,7 @@ class FinancialModel():
         annual_data, annual_outputs = self.get_variables(annual_file)
         if annual_data is None:
             if self.status:
-                self.status.emit(QtCore.SIGNAL('log'), 'Error accessing ' + annual_file)
+                self.status.log.emit('Error accessing ' + annual_file)
             else:
                 print('Error accessing ' + annual_file)
             self.stations = None
@@ -1248,7 +1250,7 @@ class FinancialModel():
         ippppa_data, ippppa_outputs = self.get_variables(ippppa_file, overrides=ippas)
         if ippppa_data is None:
             if self.status:
-                self.status.emit(QtCore.SIGNAL('log'), 'Error accessing ' + ippppa_file)
+                self.status.log.emit('Error accessing ' + ippppa_file)
             else:
                 print('Error accessing ' + ippppa_file)
             self.stations = None
@@ -1307,12 +1309,12 @@ class FinancialModel():
                 do_ippppa()
             else:
                 if self.status:
-                   self.status.emit(QtCore.SIGNAL('log'), 'Errors encountered processing ' + name[stn])
+                   self.status.log.emit('Errors encountered processing ' + name[stn])
                 idx = 0
                 msg = module.log(idx)
                 while (msg is not None):
                     if self.status:
-                       self.status.emit(QtCore.SIGNAL('log'), 'annualoutput error [' + str(idx) + ']: ' + msg.decode())
+                       self.status.log.emit('annualoutput error [' + str(idx) + ']: ' + msg.decode())
                     else:
                         print('annualoutput error [', idx, ' ]: ', msg.decode())
                     idx += 1
