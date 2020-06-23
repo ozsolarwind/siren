@@ -2452,7 +2452,7 @@ class MainWindow(QtWidgets.QMainWindow):
         dialog = displaytable.Table(self.view.scene()._stations.stations,
                  fossil=self.view.scene().show_fossil, fields=fields,
                  units=units, sumby='technology', sumfields=sumfields,
-                 save_folder=self.scenarios)
+                 decpts=[0, 0, 3, 0], save_folder=self.scenarios)
         dialog.exec_()
         comment = 'Stations displayed'
         self.view.statusmsg.emit(comment)
