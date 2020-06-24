@@ -265,7 +265,7 @@ class whatPlots(QtWidgets.QDialog):
                 if self.plot_order[plot] in self.initials:
                     self.checkbox[plot].setEnabled(False)
             self.grid.addWidget(self.checkbox[-1], i, 0)
-            if self.plot_order[plot] == 'save_balance':
+            if self.plot_order[plot] == 'save_match':
                 self.checkbox[-1].stateChanged[int].connect(self.check_balance)
             i += 1
         self.checkbox[0].stateChanged[int].connect(self.check_all)
@@ -396,6 +396,7 @@ class whatPlots(QtWidgets.QDialog):
                 power_lines.append(key + '=False')
         power_lines.append('load_growth=%s%%' % str(self.percentSpin.value()))
         power_lines.append('shortfall_iterations=%s' % str(self.iterSpin.value()))
+        power_lines.append('save_balance=') # remove old key
         updates['Power'] = power_lines
         SaveIni(updates)
 
@@ -1030,7 +1031,7 @@ class FinancialModel():
             curr_row += 1
             if worksheet.cell_value(curr_row, var['TYPE']) == 'SSC_INPUT' and \
               worksheet.cell_value(curr_row, var['DEFAULT']) != '' and \
-              worksheet.cell_value(curr_row, var['DEFAULT']).lower() != 'input':
+              str(worksheet.cell_value(curr_row, var['DEFAULT'])).lower() != 'input':
                 if worksheet.cell_value(curr_row, var['DATA']) == 'SSC_STRING':
                     data.set_string(worksheet.cell_value(curr_row, var['NAME']).encode('utf-8'),
                     worksheet.cell_value(curr_row, var['DEFAULT']).encode('utf-8'))

@@ -578,7 +578,7 @@ class SuperPower():
             self.stn_pows = []
             self.stn_grid = []
             self.stn_path = []
-        elif self.plots['save_tech'] or self.plots['save_balance']:
+        elif self.plots['save_tech'] or self.plots['save_match']:
             self.stn_outs = []
             self.stn_tech = []
         elif self.plots['visualise']:
@@ -657,7 +657,7 @@ class SuperPower():
                     self.stn_path.append(stn.grid_path_len)
                 else:
                     self.stn_path.append(0.)
-            elif self.plots['save_tech'] or self.plots['save_balance']:
+            elif self.plots['save_tech'] or self.plots['save_match']:
                 self.stn_outs.append(stn.name)
                 self.stn_tech.append(stn.technology)
             elif self.plots['visualise']:

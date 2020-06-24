@@ -1536,7 +1536,7 @@ class PowerModel():
                 plt.draw()
         if not self.plots['block']:
             plt.show(block=True)
-        if (self.plots['shortfall_detail'] or self.plots['save_balance']) and self.do_load:
+        if (self.plots['shortfall_detail'] or self.plots['save_match']) and self.do_load:
             load = []
             rgen = []
             shortfall = [[], [], [], []]
@@ -1754,7 +1754,7 @@ class PowerModel():
                                             save_folder=self.scenarios, fields=vals)
                 dialog.exec_()
                 del dialog
-            if self.plots['save_balance']:
+            if self.plots['save_match']:
                 if self.pm_template:
                     saveMatch(self, shortstuff)
                 else:
@@ -2081,7 +2081,7 @@ class PowerModel():
                            'show_pct', 'maximise', 'block', 'by_day', 'by_month', 'by_season',
                            'by_period', 'hour', 'total', 'month', 'season', 'period',
                            'duration', 'augment', 'shortfall_detail', 'summary', 'save_data', 'save_detail',
-                           'save_tech', 'save_balance', 'financials']
+                           'save_tech', 'save_match', 'financials']
         self.initials = ['actual', 'by_station', 'grid_losses', 'save_data', 'gross_load',
                          'summary', 'financials'] #, 'show_menu']
         self.hdrs = {'show_menu': 'Check / Uncheck all',
@@ -2114,7 +2114,7 @@ class PowerModel():
                 'save_data': 'Save initial Hourly Data Output',
                 'save_detail': 'Save Hourly Data Output by Station',
                 'save_tech': 'Save Hourly Data Output by Technology',
-                'save_balance': 'Save Powermatch Inputs',
+                'save_match': 'Save Powermatch Inputs',
                 'financials': 'Run Financial Models'}
         self.spacers = {'actual': 'Show in Plot',
                    'save_plot': 'Choose plots (all use a full year of data)',
@@ -2146,6 +2146,8 @@ class PowerModel():
         except:
             pass
         for key, value in plot_opts:
+            if key == 'save_balance': # old name for save_match
+                key = 'save_match'
             if key in self.plots:
                 if value.lower() in ['true', 'yes', 'on']:
                     self.plots[key] = True
@@ -2247,7 +2249,7 @@ class PowerModel():
         if self.plots['save_data'] or self.plots['financials'] or self.plots['save_detail']:
             self.stn_outs, self.stn_tech, self.stn_size, self.stn_pows, self.stn_grid, \
               self.stn_path = self.model.getStnOuts()
-        elif self.plots['save_tech'] or self.plots['save_balance']:
+        elif self.plots['save_tech'] or self.plots['save_match']:
             self.stn_outs, self.stn_tech = self.model.getStnTech()
         elif self.plots['visualise']:
             self.stn_outs, self.stn_pows = self.model.getStnPows()
@@ -2327,7 +2329,7 @@ class PowerModel():
                     except:
                         pass
                     self.load_key = ''
-                if (self.plots['show_load'] or self.plots['save_balance'] or self.plots['shortfall'] \
+                if (self.plots['show_load'] or self.plots['save_match'] or self.plots['shortfall'] \
                     or self.plots['shortfall_detail']) and self.can_do_load:
                     if self.load_data is None:
                         tf = open(self.load_file, 'r')
@@ -2389,7 +2391,7 @@ class PowerModel():
                         else:
                             for i in range(len(self.ly[key])):
                                 wrkly[key].append(self.ly[key][i] * self.adjustby[key])
-                if self.plots['shortfall'] or self.plots['shortfall_detail'] or self.plots['save_balance']:
+                if self.plots['shortfall'] or self.plots['shortfall_detail'] or self.plots['save_match']:
                     self.plots['show_load'] = True
                     self.plots['cumulative'] = True
                 try:

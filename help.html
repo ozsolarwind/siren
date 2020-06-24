@@ -1594,7 +1594,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </td>
 </tr>
 <tr class="none">
-<td class="none"><dfn>save_balance</dfn></td>
+<td class="none"><dfn>save_match</dfn></td>
 <td class="none">Save inputs for Powermatch (or Powerbalance)</td>
 </tr>
 <tr class="none">
@@ -1916,6 +1916,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">Default values required for the CST module</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>geothermal_variables</dfn></td>
+<td class="none">Default values required for the geothermal module</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>ippppa_variables</dfn></td>
 <td class="none">Default values required for the Utility IPP/Commercial PPA Finance module. This is the second of the financial models for the simulation</td>
 </tr>
@@ -1938,6 +1942,14 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <tr class="none">
 <td class="none"><dfn>solar_thermal_variables</dfn></td>
 <td class="none">Default values required for the solar thermal module</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>helio_positions</dfn></td>
+<td class="none">A heliostat positions table for the solar thermal module</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>optical table</dfn></td>
+<td class="none">An optical table for the solar thermal module</td>
 </tr>
 <!--
 <tr class="none">
@@ -2102,7 +2114,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>hide_map</dfn></td>
-<td class="none">If set to True this will open SIREN in the normal manner but will display a blank map this allows the current View to be save without the underlying map. Default value is False</td>
+<td class="none">If set to True this will open SIREN in the normal manner but will display a blank map this allows the current View to be saved without the underlying map. Default value is False</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>leave_help_open</dfn></td>
@@ -2111,10 +2123,6 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <tr class="none">
 <td class="none"><dfn>line_width</dfn></td>
 <td class="none">Width of grid lines on the map in pixels. A line width of zero indicates a cosmetic pen. This means that the pen width is always drawn one pixel wide, independent of the level of zoom. This is the default. A value &gt; 0 will show lines at this width irrespective of the size of the map. A value &lt; 1 and &gt; 0 will be used to calculate the number of pixels by multiplying the width of the map image by this value. A useful value is 0.0016. For example a map image 12,000 pixels wide will have grid lines 19.2 pixels wide</td>
-</tr>
-<tr class="none">
-<td class="none"><dfn>menu_background</dfn></td>
-<td class="none">Two icons (toggle ticks and grid network) can be lost in the windows menu background colour. If you set menu background to any value other than <em>b</em> these icons will be replaced with black ones which will show up more clearly</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>new_grid</dfn></td>
@@ -2146,7 +2154,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>ruler</dfn></td>
-<td class="none">Length of ruler in kilometres in format <em<length></em> or <em>length, ticks</em> where <em>length</em> specifies the total length of the ruler and <em>ticks</em> ticks indicates the length of tick marks along the ruler</td>
+<td class="none">Length of ruler in kilometres in format <em>length</em> or <em>length, ticks</em> where <em>length</em> specifies the total length of the ruler and <em>ticks</em> ticks indicates the length of tick marks along the ruler</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>scene_save</dfn></td>
@@ -2800,7 +2808,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <tr><td class="lr"><dfn>Save (adjusted) Hourly Data Output by Technology</dfn></td>
 <td class="none">Save adjusted data outputs produced by the model for each technology and other options (<em>save_tech</em>)</td></tr>
 <tr><td class="lr"><dfn>Save Powermatch data</dfn></td>
-<td class="none">Save the input data for Powermatch (or Powerbalance). If you check this option it will check two options that are required for Powermatch (&lsquo;Generation - show Load&rsquo; and &lsquo;Generation - reduce generation by grid losses&rsquo;). (<em>save_balance</em>)</td></tr>
+<td class="none">Save the input data for Powermatch (or Powerbalance). If you check this option it will check two options that are required for Powermatch (&lsquo;Generation - show Load&rsquo; and &lsquo;Generation - reduce generation by grid losses&rsquo;). (<em>save_match</em>)</td></tr>
 <tr><td class="lr"><dfn>Run Financial Models</dfn></td>
 <td class="none">Run SAM financial models on the power results for each station and produces a summary table showing additional financial outputs (<em>financials</em>)</td></tr>
 <tr><td class="bottom"><strong>Proceed, Save Options / Do Financials</strong></td>
