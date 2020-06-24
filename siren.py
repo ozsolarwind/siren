@@ -59,8 +59,6 @@ class TabDialog(QtWidgets.QDialog):
         fils = os.listdir(self.siren_dir)
         self.help = ''
         self.about = ''
-        self.weather_icon = 'weather_b.png'
-        self.line_icon = 'line_b.png'
         config = configparser.RawConfigParser()
         ignore = ['flexiplot.ini', 'getfiles.ini', 'powerplot.ini', 'siren_default.ini',
                   'siren_windows_default.ini']
@@ -99,13 +97,6 @@ class TabDialog(QtWidgets.QDialog):
                             self.help = ''
                     except:
                         pass
-                try:
-                    mb = config.get('View', 'menu_background')
-                    if mb.lower() != 'b':
-                        self.weather_icon = 'weather.png'
-                        self.line_icon = 'line.png'
-                except:
-                    pass
         if len(errors) > 0:
             dialog = displayobject.AnObject(QtWidgets.QDialog(), errors,
                      title='SIREN (' + fileVersion() + ') - Preferences file errors')
@@ -165,9 +156,8 @@ class TabDialog(QtWidgets.QDialog):
         layout.addWidget(self.table, 1, 0)
         layout.addWidget(buttons, 2, 0)
         menubar = QtWidgets.QMenuBar()
-        utilities = ['flexiplot', 'getmap', 'getmerra2', 'makeweather2', 'powerplot', 'sirenupd']
-        utilicon = [self.line_icon, 'map.png', 'download.png', self.weather_icon, self.line_icon,
-                    'download.png']
+        utilities = ['flexiplot', 'getmap', 'getmerra2', 'makeweatherfiles', 'powerplot', 'sirenupd']
+        utilicon = ['line.png', 'map.png', 'download.png', 'weather.png', 'line.png', 'download.png']
         spawns = []
         icons = []
         if sys.platform == 'win32' or sys.platform == 'cygwin':
@@ -465,7 +455,7 @@ class makeNew(QtWidgets.QDialog):
         self.scroll.setWidget(frame)
         self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
-        utilities = ['getmap', 'getmerra2', 'makeweather2', 'sirenupd']
+        utilities = ['getmap', 'getmerra2', 'makeweatherfiles', 'sirenupd']
         utilicon = ['map.png', 'download.png', 'weather.png', 'download.png']
         spawns = []
         icons = []

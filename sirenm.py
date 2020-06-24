@@ -874,19 +874,6 @@ class MainWindow(QtWidgets.QMainWindow):
                     self.old_grid = True
             except:
                 pass
-        self.grid_icon = 'network_b.png'
-        self.check_icon = 'check-mark_b.png'
-        self.line_icon = 'line_b.png'
-        self.weather_icon = 'weather_b.png'
-        try:
-            mb = config.get('View', 'menu_background')
-            if mb.lower() != 'b':
-                self.grid_icon = 'network.png'
-                self.check_icon = 'check-mark.png'
-                self.line_icon = 'line.png'
-                self.weather_icon = 'weather.png'
-        except:
-            pass
         self.crop_save = True
         try:
             crop_save = config.get('View', 'crop_save')
@@ -1027,7 +1014,7 @@ class MainWindow(QtWidgets.QMainWindow):
             tip = 'List Grid'
         else:
             tip = 'List New Grid'
-        listGrid = QtWidgets.QAction(QtGui.QIcon(self.grid_icon), tip, self)
+        listGrid = QtWidgets.QAction(QtGui.QIcon('network.png'), tip, self)
         listGrid.setStatusTip(tip)
         listGrid.setShortcut('Ctrl+W')
         listGrid.triggered.connect(self.list_Grid)
@@ -1069,74 +1056,74 @@ class MainWindow(QtWidgets.QMainWindow):
         powerMenu.addAction(self.escape)
         self.escape.setVisible(False)
         if self.view.scene().show_capacity:
-            self.showCapacity = QtWidgets.QAction(QtGui.QIcon(self.check_icon), 'Capacity Circles', self)
+            self.showCapacity = QtWidgets.QAction(QtGui.QIcon('check-mark.png'), 'Capacity Circles', self)
         else:
             self.showCapacity = QtWidgets.QAction(QtGui.QIcon('blank.png'), 'Capacity Circles', self)
         self.showCapacity.setShortcut('Ctrl+C')
         self.showCapacity.setStatusTip('Toggle Capacity Circles')
         self.showCapacity.triggered.connect(self.show_Capacity)
         if self.view.scene().show_generation:
-            self.showGeneration = QtWidgets.QAction(QtGui.QIcon(self.check_icon), 'Generation Circles', self)
+            self.showGeneration = QtWidgets.QAction(QtGui.QIcon('check-mark.png'), 'Generation Circles', self)
         else:
             self.showGeneration = QtWidgets.QAction(QtGui.QIcon('blank.png'), 'Generation Circles', self)
         self.showGeneration.setShortcut('Ctrl+K')
         self.showGeneration.setStatusTip('Toggle Generation Circles')
         self.showGeneration.triggered.connect(self.show_Generation)
         if self.view.scene().show_station_name:
-            self.showName = QtWidgets.QAction(QtGui.QIcon(self.check_icon), 'Station Names', self)
+            self.showName = QtWidgets.QAction(QtGui.QIcon('check-mark.png'), 'Station Names', self)
         else:
             self.showName = QtWidgets.QAction(QtGui.QIcon('blank.png'), 'Station Names', self)
         self.showName.setShortcut('Ctrl+N')
         self.showName.triggered.connect(self.show_Name)
         if self.view.scene().show_fossil:
-            self.showFossil = QtWidgets.QAction(QtGui.QIcon(self.check_icon), 'Fossil-fueled Stations', self)
+            self.showFossil = QtWidgets.QAction(QtGui.QIcon('check-mark.png'), 'Fossil-fueled Stations', self)
         else:
             self.showFossil = QtWidgets.QAction(QtGui.QIcon('blank.png'), 'Fossil-fueled Stations', self)
         self.showFossil.setShortcut('Ctrl+F')
         self.showFossil.setStatusTip('Show Fossil Stations')
         self.showFossil.triggered.connect(self.show_Fossil)
         if self.view.scene().show_ruler:
-            self.showRuler = QtWidgets.QAction(QtGui.QIcon(self.check_icon), 'Scale Ruler', self)
+            self.showRuler = QtWidgets.QAction(QtGui.QIcon('check-mark.png'), 'Scale Ruler', self)
         else:
             self.showRuler = QtWidgets.QAction(QtGui.QIcon('blank.png'), 'Scale Ruler', self)
         self.showRuler.setShortcut('Ctrl+R')
         self.showRuler.setStatusTip('Show Scale Ruler')
         self.showRuler.triggered.connect(self.show_Ruler)
         if self.view.scene().show_legend:
-            self.showLegend = QtWidgets.QAction(QtGui.QIcon(self.check_icon), 'Show Legend', self)
+            self.showLegend = QtWidgets.QAction(QtGui.QIcon('check-mark.png'), 'Show Legend', self)
         else:
             self.showLegend = QtWidgets.QAction(QtGui.QIcon('blank.png'), 'Show Legend', self)
         self.showLegend.setStatusTip('Show Legend')
         self.showLegend.triggered.connect(self.show_Legend)
         if self.view.scene().show_towns:
-            self.showTowns = QtWidgets.QAction(QtGui.QIcon(self.check_icon), 'Show Towns', self)
+            self.showTowns = QtWidgets.QAction(QtGui.QIcon('check-mark.png'), 'Show Towns', self)
         else:
             self.showTowns = QtWidgets.QAction(QtGui.QIcon('blank.png'), 'Show Towns', self)
         self.showTowns.setStatusTip('Show Towns')
         self.showTowns.triggered.connect(self.show_Towns)
         if self.view.scene().existing_grid:
-            self.showOldg = QtWidgets.QAction(QtGui.QIcon(self.check_icon), 'Show Existing Grid', self)
+            self.showOldg = QtWidgets.QAction(QtGui.QIcon('check-mark.png'), 'Show Existing Grid', self)
         else:
             self.showOldg = QtWidgets.QAction(QtGui.QIcon('blank.png'), 'Show Existing Grid', self)
         self.showOldg.setShortcut('Ctrl+H')
         self.showOldg.setStatusTip('Show Existing Grid')
         self.showOldg.triggered.connect(self.show_OldGrid)
         if self.view.scene().existing_grid2:
-            self.showOldg2 = QtWidgets.QAction(QtGui.QIcon(self.check_icon), 'Show Existing Grid2', self)
+            self.showOldg2 = QtWidgets.QAction(QtGui.QIcon('check-mark.png'), 'Show Existing Grid2', self)
             self.showOldg2.setShortcut('Ctrl+2')
             self.showOldg2.setStatusTip('Show Existing Grid 2')
             self.showOldg2.triggered.connect(self.show_OldGrid2)
         self.hideTrace = QtWidgets.QAction(QtGui.QIcon('blank.png'), 'Clear Grid Trace', self)
         self.hideTrace.setStatusTip('Clear Grid Trace')
         self.hideTrace.triggered.connect(self.clear_Trace)
-        self.showGrid = QtWidgets.QAction(QtGui.QIcon(self.grid_icon), 'Show Grid Line', self)
+        self.showGrid = QtWidgets.QAction(QtGui.QIcon('network.png'), 'Show Grid Line', self)
         self.showGrid.setStatusTip('Show Grid')
         self.showGrid.setShortcut('Ctrl+J')
         self.showGrid.triggered.connect(self.show_Grid)
         self.refreshGrid = QtWidgets.QAction(QtGui.QIcon('refresh.png'), 'Refresh Grid', self)
         self.refreshGrid.setStatusTip('Refresh Grid')
         self.refreshGrid.triggered.connect(self.refresh_Grid)
-        self.coordGrid = QtWidgets.QAction(QtGui.QIcon(self.grid_icon), 'Show Coordinates Grid', self)
+        self.coordGrid = QtWidgets.QAction(QtGui.QIcon('network.png'), 'Show Coordinates Grid', self)
         self.coordGrid.setStatusTip('Show Coordinates Grid')
         self.coordGrid.triggered.connect(self.coord_Grid)
         self.goTo = QtWidgets.QAction(QtGui.QIcon('arrow.png'), 'Go to Station', self)
@@ -1190,9 +1177,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.editTech = QtWidgets.QAction(QtGui.QIcon('blank.png'), 'Edit Technologies', self)
         self.editTech.setStatusTip('Edit Technologies')
         self.editTech.triggered.connect(self.editTechs)
-        self.showDtable = QtWidgets.QAction(QtGui.QIcon(self.grid_icon), 'Dispatchable Lines Table', self)
+        self.showDtable = QtWidgets.QAction(QtGui.QIcon('network.png'), 'Dispatchable Lines Table', self)
         self.showDtable.triggered.connect(self.showStables)
-        self.showStable = QtWidgets.QAction(QtGui.QIcon(self.grid_icon), 'Standard Lines Table', self)
+        self.showStable = QtWidgets.QAction(QtGui.QIcon('network.png'), 'Standard Lines Table', self)
         self.showStable.triggered.connect(self.showStables)
         self.showLtable = QtWidgets.QAction(QtGui.QIcon('blank.png'), 'Line Costs', self)
         self.showLtable.triggered.connect(self.showStables)
@@ -1252,8 +1239,8 @@ class MainWindow(QtWidgets.QMainWindow):
         utilities = ['getmap', 'getmerra2', 'indexweather', 'makegrid', 'makeweatherfiles',
                      'powermatch', 'powerplot', 'updateswis']
         utilini = [True, False, True, True, False, True, True, True]
-        utilicon = ['map.png', 'download.png', 'list.png', 'grid.png', self.weather_icon,
-                    'power.png', self.line_icon, 'list.png']
+        utilicon = ['map.png', 'download.png', 'list.png', 'grid.png', 'weather.png',
+                    'power.png', 'line.png', 'list.png']
         spawns = []
         icons = []
         if sys.platform == 'win32' or sys.platform == 'cygwin':
@@ -2116,13 +2103,13 @@ class MainWindow(QtWidgets.QMainWindow):
                 trcAction = ''
         addsAction = menu.addAction(QtGui.QIcon('plus.png'), act7)
         addsAction.setIconVisibleInMenu(True)
-        sunAction = menu.addAction(QtGui.QIcon(self.weather_icon), act14)
+        sunAction = menu.addAction(QtGui.QIcon('weather.png'), act14)
         sunAction.setIconVisibleInMenu(True)
         subWthr = []
         if self.years is not None:
-            subWthrMenu = menu.addMenu(QtGui.QIcon(self.weather_icon), 'Show weather here for year')
+            subWthrMenu = menu.addMenu(QtGui.QIcon('weather.png'), 'Show weather here for year')
             for year in self.years:
-                subWthr.append(QtWidgets.QAction(QtGui.QIcon(self.weather_icon), year, self))
+                subWthr.append(QtWidgets.QAction(QtGui.QIcon('weather.png'), year, self))
                 subWthrMenu.addAction(subWthr[-1])
         notAction = menu.addAction(ttitl)
         if ttitl[:2] != 'No':
@@ -2177,14 +2164,14 @@ class MainWindow(QtWidgets.QMainWindow):
             if self.view.scene().show_ruler:
                 self.view.hide_Ruler()
             self.view.show_Ruler(self.view.scene().ruler, self.view.scene().ruler_ticks, pos)
-            self.showRuler.setIcon(QtGui.QIcon(self.check_icon))
+            self.showRuler.setIcon(QtGui.QIcon('check-mark.png'))
             self.view.scene().show_ruler = True
             self.view.statusmsg.emit('Scale Ruler Toggled On')
         elif action == legAction:
             if self.view.scene().show_legend:
                 self.view.hide_Legend()
             self.view.show_Legend(pos, where=where)
-            self.showLegend.setIcon(QtGui.QIcon(self.check_icon))
+            self.showLegend.setIcon(QtGui.QIcon('check-mark.png'))
             self.view.scene().show_legend = True
             self.view.statusmsg.emit('Legend Toggled On')
         elif action == sunAction:
@@ -2692,7 +2679,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.view.scene()._fcapacityGroup.setVisible(False)
             comment += ' Off'
         else:
-            self.showCapacity.setIcon(QtGui.QIcon(self.check_icon))
+            self.showCapacity.setIcon(QtGui.QIcon('check-mark.png'))
             self.view.scene().show_capacity = True
             self.view.scene()._capacityGroup.setVisible(True)
             if self.view.scene().show_fossil:
@@ -2709,7 +2696,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.view.scene()._generationGroup.setVisible(False)
             comment += ' Off'
         else:
-            self.showGeneration.setIcon(QtGui.QIcon(self.check_icon))
+            self.showGeneration.setIcon(QtGui.QIcon('check-mark.png'))
             self.view.scene().show_generation = True
             self.view.scene()._generationGroup.setVisible(True)
             comment += ' On'
@@ -2726,7 +2713,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.view.scene()._fnameGroup.setVisible(False)
             comment += ' Off'
         else:
-            self.showFossil.setIcon(QtGui.QIcon(self.check_icon))
+            self.showFossil.setIcon(QtGui.QIcon('check-mark.png'))
             self.view.scene().show_fossil = True
             self.view.scene()._fossilGroup.setVisible(True)
             if self.view.scene().show_capacity:
@@ -2745,7 +2732,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.view.scene()._townGroup.setVisible(False)
             comment += ' Off'
         else:
-            self.showTowns.setIcon(QtGui.QIcon(self.check_icon))
+            self.showTowns.setIcon(QtGui.QIcon('check-mark.png'))
             self.view.scene().show_towns = True
             self.view.scene()._townGroup.setVisible(True)
             comment += ' On'
@@ -2759,7 +2746,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.view.scene()._gridGroup.setVisible(False)
             comment += ' Off'
         else:
-            self.showOldg.setIcon(QtGui.QIcon(self.check_icon))
+            self.showOldg.setIcon(QtGui.QIcon('check-mark.png'))
             self.view.scene().existing_grid = True
             self.view.scene()._gridGroup.setVisible(True)
             comment += ' On'
@@ -2773,7 +2760,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.view.scene()._gridGroup2.setVisible(False)
             comment += ' Off'
         else:
-            self.showOldg2.setIcon(QtGui.QIcon(self.check_icon))
+            self.showOldg2.setIcon(QtGui.QIcon('check-mark.png'))
             self.view.scene().existing_grid2 = True
             self.view.scene()._gridGroup2.setVisible(True)
             comment += ' On'
@@ -2826,7 +2813,7 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             self.view.scene().show_coord = True
             self.view.scene()._coordGroup.setVisible(True)
-            self.coordGrid.setIcon(QtGui.QIcon(self.check_icon))
+            self.coordGrid.setIcon(QtGui.QIcon('check-mark.png'))
             comment += 'On'
         self.view.statusmsg.emit(comment)
 
@@ -2839,7 +2826,7 @@ class MainWindow(QtWidgets.QMainWindow):
             comment += ' Off'
         else:
             self.view.show_Ruler(self.view.scene().ruler, self.view.scene().ruler_ticks)
-            self.showRuler.setIcon(QtGui.QIcon(self.check_icon))
+            self.showRuler.setIcon(QtGui.QIcon('check-mark.png'))
             self.view.scene().show_ruler = True
             comment += ' On'
         self.view.statusmsg.emit(comment)
@@ -2948,7 +2935,7 @@ class MainWindow(QtWidgets.QMainWindow):
             comment += ' Off'
         else:
             self.view.show_Legend()
-            self.showLegend.setIcon(QtGui.QIcon(self.check_icon))
+            self.showLegend.setIcon(QtGui.QIcon('check-mark.png'))
             self.view.scene().show_legend = True
             comment += ' On'
         self.view.statusmsg.emit(comment)
@@ -2962,7 +2949,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.view.scene()._fnameGroup.setVisible(False)
             comment += ' Off'
         else:
-            self.showName.setIcon(QtGui.QIcon(self.check_icon))
+            self.showName.setIcon(QtGui.QIcon('check-mark.png'))
             self.view.scene().show_station_name = True
             self.view.scene()._nameGroup.setVisible(True)
             if self.view.scene().show_fossil:

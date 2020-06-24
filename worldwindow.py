@@ -200,13 +200,6 @@ class WorldScene(QtWidgets.QGraphicsScene):
                     self.colors[item] = colour
             except:
                 pass
-        self.check_icon = 'check-mark_b.png'
-        try:
-            mb = config.get('View', 'menu_background')
-            if mb.lower() != 'b':
-                self.check_icon = 'check-mark.png'
-        except:
-            pass
         self.show_ruler = False
         try:
             show_ruler = config.get('View', 'show_ruler')
@@ -897,7 +890,7 @@ class WorldWindow(QtWidgets.QMainWindow):
             if self.view.scene().show_ruler:
                 self.view.hide_Ruler()
             self.view.show_Ruler(self.view.scene().ruler, self.view.scene().ruler_ticks, pos)
-            self.showRuler.setIcon(QtGui.QIcon(self.view.scene().check_icon))
+            self.showRuler.setIcon(QtGui.QIcon('check-mark.png'))
             self.view.scene().show_ruler = True
             self.view.statusmsg.emit('Scale Ruler Toggled On')
         elif action == ctrAction:
@@ -938,7 +931,7 @@ class WorldWindow(QtWidgets.QMainWindow):
                     self.view.scene()._gridGroup.addToGroup(item)
             self.view.scene().show_grid = True
             self.view.scene()._gridGroup.setVisible(True)
-            self.showGrid.setIcon(QtGui.QIcon(self.view.scene().check_icon))
+            self.showGrid.setIcon(QtGui.QIcon('check-mark.png'))
             comment += 'On'
         self.view.statusmsg.emit(comment)
 
@@ -988,7 +981,7 @@ class WorldWindow(QtWidgets.QMainWindow):
                     lon += 0.625
             self.view.scene().show_mgrid = True
             self.view.scene()._mgridGroup.setVisible(True)
-            self.showMGrid.setIcon(QtGui.QIcon(self.view.scene().check_icon))
+            self.showMGrid.setIcon(QtGui.QIcon('check-mark.png'))
             comment += 'On'
         self.view.statusmsg.emit(comment)
 
@@ -1001,7 +994,7 @@ class WorldWindow(QtWidgets.QMainWindow):
             comment += 'Off'
         else:
             self.view.show_Ruler(self.view.scene().ruler, self.view.scene().ruler_ticks)
-            self.showRuler.setIcon(QtGui.QIcon(self.view.scene().check_icon))
+            self.showRuler.setIcon(QtGui.QIcon('check-mark.png'))
             self.view.scene().show_ruler = True
             comment += 'On'
         self.view.statusmsg.emit(comment)
