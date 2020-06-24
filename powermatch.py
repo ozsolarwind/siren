@@ -291,7 +291,7 @@ class Adjustments(QtWidgets.QDialog):
         mwstr = str(round(mw, dp))
         return mw, mwtxt, mwstr
 
-    def __init__(self, data, adjustin, adjust_cap, save_folder=None):
+    def __init__(self, parent, data, adjustin, adjust_cap, save_folder=None):
         super(Adjustments, self).__init__()
         self.adjustt = {}
         self.adjustm = {} # (actual) adjust multiplier
@@ -1393,7 +1393,7 @@ class powerMatch(QtWidgets.QWidget):
                     except:
                         typ = ''
                     adjustin.append([who, typ, self.generators[who].capacity])
-            adjust = Adjustments(adjustin, self.adjustby, self.adjust_cap,
+            adjust = Adjustments(self, adjustin, self.adjustby, self.adjust_cap,
                                  save_folder=self.scenarios)
             adjust.exec_()
             if adjust.getValues() is None:
