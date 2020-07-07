@@ -299,7 +299,7 @@ class PowerPlot(QtWidgets.QWidget):
         self.grid.addWidget(QtWidgets.QLabel('(Handy if you want to produce a series of plots)'), rw, 3, 1, 3)
         rw += 1
         self.grid.addWidget(QtWidgets.QLabel('Type of Plot:'), rw, 0)
-        plots = ['Bar Chart', 'Cumulative', 'Linegraph']
+        plots = ['Bar Chart', 'Cumulative', 'Linegraph', 'Step Plot']
         self.plottype = QtWidgets.QComboBox()
         for plot in plots:
              self.plottype.addItem(plot)
@@ -523,9 +523,10 @@ class PowerPlot(QtWidgets.QWidget):
         self.setup[0] = False
 
     def somethingChanged(self):
-        if self.plottype.currentText() == 'Bar Chart' and self.period.currentText() == '<none>':
-            self.plottype.setCurrentIndex(self.plottype.currentIndex() + 1) # set to something else
-        elif self.plottype.currentText() == 'Linegraph' and self.percentage.isChecked():
+       # if self.plottype.currentText() == 'Bar Chart' and self.period.currentText() == '<none>' and 1 == 2:
+       #     self.plottype.setCurrentIndex(self.plottype.currentIndex() + 1) # set to something else
+       # el
+        if self.plottype.currentText() == 'Linegraph' and self.percentage.isChecked():
             self.percentage.setCheckState(QtCore.Qt.Unchecked)
         if not self.setup[0]:
             self.updated = True
@@ -928,8 +929,14 @@ class PowerPlot(QtWidgets.QWidget):
                 f = zp.zoom_pan(ax, base_scale=1.2) # enable scrollable zoom
                 plt.show()
                 del zp
-            elif self.plottype.currentText() == 'Cumulative':
-                fig = plt.figure('cumulative_' + str(year), constrained_layout=self.constrained_layout)
+            elif self.plottype.currentText() in ['Cumulative', 'Step Plot']:
+                if self.plottype.currentText() == 'Cumulative':
+                    step = None
+                    pfx = 'cumulative_'
+                else:
+                    step = 'pre'
+                    pfx = 'step_plot_'
+                fig = plt.figure(pfx + str(year), constrained_layout=self.constrained_layout)
                 if gridtype != '':
                     plt.grid(axis=gridtype)
                 bx = fig.add_subplot(111)
@@ -943,41 +950,49 @@ class PowerPlot(QtWidgets.QWidget):
                             totals[h] = totals[h] + data[c][h]
                     for h in range(len(data[0])):
                         values[h] = data[0][h] / totals[h] * 100.
-                    bx.fill_between(x, 0, values, label=label[0], color=self.colours[label[0].lower()])
+                    bx.fill_between(x, 0, values, label=label[0], color=self.colours[label[0].lower()], step=step)
                     for c in range(1, len(data)):
                         for h in range(len(data[c])):
                             bottoms[h] = values[h]
                             values[h] = values[h] + data[c][h] / totals[h] * 100.
-                        bx.fill_between(x, bottoms, values, label=label[c], color=self.colours[label[c].lower()])
+                        bx.fill_between(x, bottoms, values, label=label[c], color=self.colours[label[c].lower()],
+                                        step=step)
                     maxy = 100
                     bx.set_ylabel('Power (%)')
                 else:
                     if self.target == '<none>':
-                        bx.fill_between(x, 0, data[0], label=label[0], color=self.colours[label[0].lower()])
+                        bx.fill_between(x, 0, data[0], label=label[0], color=self.colours[label[0].lower()],
+                                        step=step)
                         for c in range(1, len(data)):
                             for h in range(len(data[c])):
                                 data[c][h] = data[c][h] + data[c - 1][h]
                                 maxy = max(maxy, data[c][h])
-                            bx.fill_between(x, data[c - 1], data[c], label=label[c], color=self.colours[label[c].lower()])
+                            bx.fill_between(x, data[c - 1], data[c], label=label[c], color=self.colours[label[c].lower()],
+                                            step=step)
                         top = data[0][:]
                         for d in range(1, len(data)):
                             for h in range(len(top)):
                                 top[h] = max(top[h], data[d][h])
-                        bx.plot(x, top, color='white')
+                        if self.plottype.currentText() == 'Cumulative':
+                            bx.plot(x, top, color='white')
+                        else:
+                            bx.step(x, top, color='white')
                     else:
                         pattern = ['-', '+', 'x', '\\', '*', 'o', 'O', '.']
                         pat = 0
                         full = []
                         for h in range(len(load)):
                            full.append(min(load[h], data[0][h]))
-                        bx.fill_between(x, 0, full, label=label[0], color=self.colours[label[0].lower()])
+                        bx.fill_between(x, 0, full, label=label[0], color=self.colours[label[0].lower()],
+                                        step=step)
                         for h in range(len(data[0])):
                             if data[0][h] > full[h]:
                                 if self.spill_label.text() != '':
                                     bx.fill_between(x, full, data[0], alpha=self.alpha, color=self.colours[label[0].lower()],
-                                        label=label[0] + ' ' + self.spill_label.text())
+                                        label=label[0] + ' ' + self.spill_label.text(), step=step)
                                 else:
-                                    bx.fill_between(x, full, data[c], alpha=self.alpha, color=self.colours[label[c].lower()])
+                                    bx.fill_between(x, full, data[c], alpha=self.alpha, color=self.colours[label[c].lower()],
+                                                    step=step)
                                 break
                         for c in range(1, len(data)):
                             full = []
@@ -985,23 +1000,31 @@ class PowerPlot(QtWidgets.QWidget):
                                 data[c][h] = data[c][h] + data[c - 1][h]
                                 maxy = max(maxy, data[c][h])
                                 full.append(max(min(load[h], data[c][h]), data[c - 1][h]))
-                            bx.fill_between(x, data[c - 1], full, label=label[c], color=self.colours[label[c].lower()])
+                            bx.fill_between(x, data[c - 1], full, label=label[c], color=self.colours[label[c].lower()],
+                                            step=step)
                             for h in range(len(data[c])):
                                 if data[c][h] > full[h] + self.margin_of_error:
                                     if self.spill_label.text() != '':
                                         bx.fill_between(x, full, data[c], alpha=self.alpha, color=self.colours[label[c].lower()],
-                                                        label=label[c] + ' ' + self.spill_label.text())
+                                                        label=label[c] + ' ' + self.spill_label.text(), step=step)
                                     else:
-                                        bx.fill_between(x, full, data[c], alpha=self.alpha, color=self.colours[label[c].lower()])
+                                        bx.fill_between(x, full, data[c], alpha=self.alpha, color=self.colours[label[c].lower()],
+                                                        step=step)
                                     break
                         top = data[0][:]
                         for d in range(1, len(data)):
                             for h in range(len(top)):
                                 top[h] = max(top[h], data[d][h])
-                        if self.alpha == 0:
-                            bx.plot(x, top, color='gray', linestyle='dashed')
+                        if self.plottype.currentText() == 'Cumulative':
+                            if self.alpha == 0:
+                                bx.plot(x, top, color='gray', linestyle='dashed')
+                            else:
+                                bx.plot(x, top, color='gray')
                         else:
-                            bx.plot(x, top, color='gray')
+                            if self.alpha == 0:
+                                bx.step(x, top, color='gray', linestyle='dashed')
+                            else:
+                                bx.step(x, top, color='gray')
                         short = []
                         do_short = False
                         c = len(data) - 1
@@ -1010,8 +1033,12 @@ class PowerPlot(QtWidgets.QWidget):
                                 do_short = True
                             short.append(max(data[c][h], load[h]))
                         if do_short:
-                            bx.fill_between(x, data[c], short, label='Shortfall', color=self.colours['shortfall'])
-                        bx.plot(x, load, linewidth=2.5, label=self.target, color=self.colours[self.target.lower()])
+                            bx.fill_between(x, data[c], short, label='Shortfall', color=self.colours['shortfall'],
+                                            step=step)
+                        if self.plottype.currentText() == 'Cumulative':
+                            bx.plot(x, load, linewidth=2.5, label=self.target, color=self.colours[self.target.lower()])
+                        else:
+                            bx.step(x, load, linewidth=2.5, label=self.target, color=self.colours[self.target.lower()])
                     if self.maxSpin.value() > 0:
                         maxy = self.maxSpin.value()
                     else:
@@ -1032,6 +1059,71 @@ class PowerPlot(QtWidgets.QWidget):
                 bx.set_xlabel('Period')
                 zp = ZoomPanX()
                 f = zp.zoom_pan(bx, base_scale=1.2) # enable scrollable zoom
+                plt.show()
+                del zp
+            elif self.plottype.currentText() == 'Bar Chart':
+                fig = plt.figure('barchart_' + str(year),
+                                 constrained_layout=self.constrained_layout)
+                if gridtype != '':
+                    plt.grid(axis=gridtype)
+                fx = fig.add_subplot(111)
+                plt.title(titl)
+                if self.percentage.isChecked():
+                    miny = 0
+                    totals = [0.] * len(x)
+                    bottoms = [0.] * len(x)
+                    values = [0.] * len(x)
+                    for c in range(len(data)):
+                        for h in range(len(data[c])):
+                            totals[h] = totals[h] + data[c][h]
+                    for h in range(len(data[0])):
+                        values[h] = data[0][h] / totals[h] * 100.
+                    fx.bar(x, values, label=label[0], color=self.colours[label[0].lower()])
+                    for c in range(1, len(data)):
+                        for h in range(len(data[c])):
+                            bottoms[h] = bottoms[h] + values[h]
+                            values[h] = data[c][h] / totals[h] * 100.
+                        ex.bar(x, values, bottom=bottoms, label=label[c], color=self.colours[label[c].lower()])
+                    maxy = 100
+                    fx.set_ylabel('Power (%)')
+                else:
+                    if self.target == '<none>':
+                        fx.bar(x, data[0], label=label[0], color=self.colours[label[0].lower()])
+                        bottoms = [0.] * len(x)
+                        for c in range(1, len(data)):
+                            for h in range(len(data[c])):
+                                bottoms[h] = bottoms[h] + data[c - 1][h]
+                                maxy = max(maxy, data[c][h])
+                            fx.bar(x, data[c], bottom=bottoms, label=label[c], color=self.colours[label[c].lower()])
+                    else:
+                        fx.bar(x, data[0], label=label[0], color=self.colours[label[0].lower()])
+                        bottoms = [0.] * len(x)
+                        for c in range(1, len(data)):
+                            for h in range(len(data[c])):
+                                bottoms[h] = bottoms[h] + data[c - 1][h]
+                                maxy = max(maxy, data[c][h])
+                            fx.bar(x, data[c], bottom=bottoms, label=label[c], color=self.colours[label[c].lower()])
+                        fx.plot(x, load, linewidth=2.5, label=self.target, color=self.colours[self.target.lower()])
+                    if self.maxSpin.value() > 0:
+                        maxy = self.maxSpin.value()
+                    else:
+                        try:
+                            rndup = pow(10, round(log10(maxy * 1.5) - 1)) / 2
+                            maxy = ceil(maxy / rndup) * rndup
+                        except:
+                            pass
+                    fx.set_ylabel('Power (MW)')
+        #        miny = 0
+                lbl_font = FontProperties()
+                lbl_font.set_size('small')
+                fx.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 2), prop=lbl_font)
+                plt.ylim([miny, maxy])
+                plt.xlim([0, len(x)])
+                plt.xticks(list(range(12, len(x), 168)))
+                fx.set_xticklabels(day_labels, rotation='vertical')
+                fx.set_xlabel('Period')
+                zp = ZoomPanX()
+                f = zp.zoom_pan(fx, base_scale=1.2) # enable scrollable zoom
                 plt.show()
                 del zp
         else: # diurnal average
@@ -1151,7 +1243,11 @@ class PowerPlot(QtWidgets.QWidget):
                 f = zp.zoom_pan(cx, base_scale=1.2) # enable scrollable zoom
                 plt.show()
                 del zp
-            elif self.plottype.currentText() == 'Cumulative':
+            elif self.plottype.currentText() in ['Cumulative', 'Step Plot']:
+                if self.plottype.currentText() == 'Cumulative':
+                    step = None
+                else:
+                    step = 'pre'
                 fig = plt.figure('cumulative_' + self.period.currentText().lower() + '_' + str(year),
                                  constrained_layout=self.constrained_layout)
                 if gridtype != '':
@@ -1167,36 +1263,36 @@ class PowerPlot(QtWidgets.QWidget):
                             totals[h] = totals[h] + data[c][h]
                     for h in range(len(data[0])):
                         values[h] = data[0][h] / totals[h] * 100.
-                    dx.fill_between(x, 0, values, label=label[0], color=self.colours[label[0].lower()])
+                    dx.fill_between(x, 0, values, label=label[0], color=self.colours[label[0].lower()], step=step)
                     for c in range(1, len(data)):
                         for h in range(len(data[c])):
                             bottoms[h] = values[h]
                             values[h] = values[h] + data[c][h] / totals[h] * 100.
-                        dx.fill_between(x, bottoms, values, label=label[c], color=self.colours[label[c].lower()])
+                        dx.fill_between(x, bottoms, values, label=label[c], color=self.colours[label[c].lower()], step=step)
                     maxy = 100
                     dx.set_ylabel('Power (%)')
                 else:
                     if self.target == '<none>':
-                        dx.fill_between(x, 0, data[0], label=label[0], color=self.colours[label[0].lower()])
+                        dx.fill_between(x, 0, data[0], label=label[0], color=self.colours[label[0].lower()], step=step)
                         for c in range(1, len(data)):
                             for h in range(len(data[c])):
                                 data[c][h] = data[c][h] + data[c - 1][h]
                                 maxy = max(maxy, data[c][h])
-                            dx.fill_between(x, data[c - 1], data[c], label=label[c], color=self.colours[label[c].lower()])
+                            dx.fill_between(x, data[c - 1], data[c], label=label[c], color=self.colours[label[c].lower()], step=step)
                     else:
                         pattern = ['-', '+', 'x', '\\', '*', 'o', 'O', '.']
                         pat = 0
                         full = []
                         for h in range(len(load)):
                            full.append(min(load[h], data[0][h]))
-                        dx.fill_between(x, 0, full, label=label[0], color=self.colours[label[0].lower()])
+                        dx.fill_between(x, 0, full, label=label[0], color=self.colours[label[0].lower()], step=step)
                         for h in range(len(full)):
                             if data[0][h] > full[h]:
                                 if self.spill_label.text() != '':
                                     dx.fill_between(x, full, data[0], alpha=self.alpha, color=self.colours[label[0].lower()],
-                                        label=label[0] + ' ' + self.spill_label.text())
+                                        label=label[0] + ' ' + self.spill_label.text(), step=step)
                                 else:
-                                    dx.fill_between(x, full, data[c], alpha=self.alpha, color=self.colours[label[c].lower()])
+                                    dx.fill_between(x, full, data[c], alpha=self.alpha, color=self.colours[label[c].lower()], step=step)
                                 break
                         for c in range(1, len(data)):
                             full = []
@@ -1204,7 +1300,7 @@ class PowerPlot(QtWidgets.QWidget):
                                 data[c][h] = data[c][h] + data[c - 1][h]
                                 maxy = max(maxy, data[c][h])
                                 full.append(max(min(load[h], data[c][h]), data[c - 1][h]))
-                            dx.fill_between(x, data[c - 1], full, label=label[c], color=self.colours[label[c].lower()])
+                            dx.fill_between(x, data[c - 1], full, label=label[c], color=self.colours[label[c].lower()], step=step)
                             pat += 1
                             if pat >= len(pattern):
                                 pat = 0
@@ -1212,18 +1308,24 @@ class PowerPlot(QtWidgets.QWidget):
                                 if data[c][h] > full[h] + self.margin_of_error:
                                     if self.spill_label.text() != '':
                                         dx.fill_between(x, full, data[c], alpha=self.alpha, color=self.colours[label[c].lower()],
-                                                    label=label[c] + ' ' + self.spill_label.text())
+                                                    label=label[c] + ' ' + self.spill_label.text(), step=step)
                                     else:
-                                        dx.fill_between(x, full, data[c], alpha=self.alpha, color=self.colours[label[c].lower()])
+                                        dx.fill_between(x, full, data[c], alpha=self.alpha, color=self.colours[label[c].lower()], step=step)
                                     break
                         top = data[0][:]
                         for d in range(1, len(data)):
                             for h in range(len(top)):
                                 top[h] = max(top[h], data[d][h])
-                        if self.alpha == 0:
-                            dx.plot(x, top, color='gray', linestyle='dashed')
+                        if self.plottype.currentText() == 'Cumulative':
+                            if self.alpha == 0:
+                                dx.plot(x, top, color='gray', linestyle='dashed')
+                            else:
+                                dx.plot(x, top, color='gray')
                         else:
-                            dx.plot(x, top, color='gray')
+                            if self.alpha == 0:
+                                dx.step(x, top, color='gray', linestyle='dashed')
+                            else:
+                                dx.step(x, top, color='gray')
                         short = []
                         do_short = False
                         for h in range(len(load)):
@@ -1231,8 +1333,11 @@ class PowerPlot(QtWidgets.QWidget):
                                 do_short = True
                             short.append(max(data[c][h], load[h]))
                         if do_short:
-                            dx.fill_between(x, data[c], short, label='Shortfall', color=self.colours['shortfall'])
-                        dx.plot(x, load, linewidth=2.0, label=self.target, color=self.colours[self.target.lower()])
+                            dx.fill_between(x, data[c], short, label='Shortfall', color=self.colours['shortfall'], step=step)
+                        if self.plottype.currentText() == 'Cumulative':
+                            dx.plot(x, load, linewidth=2.5, label=self.target, color=self.colours[self.target.lower()])
+                        else:
+                            dx.step(x, load, linewidth=2.5, label=self.target, color=self.colours[self.target.lower()])
                     if self.maxSpin.value() > 0:
                         maxy = self.maxSpin.value()
                     else:
@@ -1297,7 +1402,7 @@ class PowerPlot(QtWidgets.QWidget):
                                 bottoms[h] = bottoms[h] + data[c - 1][h]
                                 maxy = max(maxy, data[c][h])
                             ex.bar(x, data[c], bottom=bottoms, label=label[c], color=self.colours[label[c].lower()])
-                        ex.plot(x, load, linewidth=2.0, label=self.target, color=self.colours[self.target.lower()])
+                        ex.plot(x, load, linewidth=2.5, label=self.target, color=self.colours[self.target.lower()])
                     if self.maxSpin.value() > 0:
                         maxy = self.maxSpin.value()
                     else:

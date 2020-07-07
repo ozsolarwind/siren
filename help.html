@@ -1116,7 +1116,7 @@ Options for <a href="#flexiplot">Flexiplot</a>. Properties for individual files 
 </tr>
 <tr class="none">
 <td class="none"><dfn>plot (&ast;)</dfn></td>
-<td class="none">The type of plot. Options are Bar Graph, Cumulative, or Linegraph. The default is Bar Graph</td>
+<td class="none">The type of plot. Options are Bar Graph, Cumulative, Linegraph, or Step Plot. The default is Bar Graph</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>series (&ast;)</dfn></td>
@@ -1738,7 +1738,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>plot (&ast;)</dfn></td>
-<td class="none">The type of plot. Options are Bar Graph, Cumulative, or Linegraph. The default is Bar Graph</td>
+<td class="none">The type of plot. Options are Bar Graph, Cumulative, Linegraph, or Step Plot. The default is Bar Graph</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>sheet (&ast;)</dfn></td>
@@ -2894,7 +2894,7 @@ If it's not a diurnal plot (i.e. Period is <em>&lt;None&gt;</em>) any occurence 
 <tr><td class="lr"><dfn>Maximum</dfn></td>
 <td class="none">You can specify a maximum value for the Power (y) axis. This allows you to produce a series of plots with the same scale (<em>maximum</em>)</td></tr>
 <tr><td class="lr"><dfn>Type of Plot</dfn></td>
-<td class="none">The type of plot to be produced. Options are <em>Bar Graph</em>, <em>Cumulative</em> and <e,>Linegraph</em>. <em>Bar Graph</em> and <em>Cumulative</em> produce cumulative (stacked) plots and have filled areas by technology (or Columns). If a Target field (e.g. Load) is chosen the area above the Target value (i.e. excess generation) in the Cumulative plot have a lightly shaded value (the degree of shading is chosen by the <em>alpha</em> property in the [Powerplot] Section of the Preferences file) (<em>plot</em>)</td></tr>
+<td class="none">The type of plot to be produced. Options are <em>Bar Graph</em>, <em>Cumulative</em>, <em>Linegraph</em> and <em>Step Plot</em>. <em>Bar Graph</em>, <em>Cumulative</em> and <em>Step Plot</em> produce cumulative (stacked) plots and have filled areas by technology (or Columns). A Step Plot is similar to a Bar Graph but does not have spaces between the hourly bars; also it is a lot faster to display than a Bar Graph (a Bar Graph is not recommended for hourly plots). If a Target field (e.g. Load) is chosen the area above the Target value (i.e. excess generation) in the Cumulative and Step plot have a lightly shaded value (the degree of shading is chosen by the <em>alpha</em> property in the [Powerplot] Section of the Preferences file) (<em>plot</em>)</td></tr>
 <tr><td class="lr"><dfn>Percentage</dfn></td>
 <td class="none">Checking this option will produce a percentage (stacked) curve. The plot will have filled areas showing the percentage of generation for each technology. It is recommended to not set a Target field (i.e. set it to <em>&lt;None&gt;</em>) as this will merely remove the Target field (and it's data) from the plot (<em>percentage</em>)</td></tr>
 <tr><td class="lr"><dfn>Spill label</dfn></td>

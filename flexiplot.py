@@ -343,7 +343,7 @@ class FlexiPlot(QtWidgets.QWidget):
         self.grid.addWidget(QtWidgets.QLabel('(Handy if you want to produce a series of plots)'), rw, 3, 1, 3)
         rw += 1
         self.grid.addWidget(QtWidgets.QLabel('Type of Plot:'), rw, 0)
-        plots = ['Bar Chart', 'Cumulative', 'Linegraph']
+        plots = ['Bar Chart', 'Cumulative', 'Linegraph', 'Step Plot']
         self.plottype = QtWidgets.QComboBox()
         for plot in plots:
              self.plottype.addItem(plot)
@@ -1003,7 +1003,11 @@ class FlexiPlot(QtWidgets.QWidget):
             plt.grid(axis=gridtype)
         graph = fig.add_subplot(111)
         plt.title(titl, fontdict=font_props(self.title_font))
-        if self.plottype.currentText() == 'Cumulative':
+        if self.plottype.currentText() in ['Cumulative', 'Step Plot']:
+            if self.plottype.currentText() == 'Cumulative':
+                step = None
+            else:
+                step = 'pre'
             if self.percentage.isChecked():
                 miny = 0
                 totals = [0.] * len(x)
@@ -1014,25 +1018,28 @@ class FlexiPlot(QtWidgets.QWidget):
                         totals[h] = totals[h] + data[c][h]
                 for h in range(len(data[0])):
                     values[h] = data[0][h] / totals[h] * 100.
-                graph.fill_between(x, 0, values, label=label[0], color=self.colours[label[0].lower()])
+                graph.fill_between(x, 0, values, label=label[0], color=self.colours[label[0].lower()], step=step)
                 for c in range(1, len(data)):
                     for h in range(len(data[c])):
                         bottoms[h] = values[h]
                         values[h] = values[h] + data[c][h] / totals[h] * 100.
-                    graph.fill_between(x, bottoms, values, label=label[c], color=self.colours[label[c].lower()])
+                    graph.fill_between(x, bottoms, values, label=label[c], color=self.colours[label[c].lower()], step=step)
                 maxy = 100
             else:
-                graph.fill_between(x, miny, data[0], label=label[0], color=self.colours[label[0].lower()])
+                graph.fill_between(x, miny, data[0], label=label[0], color=self.colours[label[0].lower()], step=step)
                 for c in range(1, len(data)):
                     for h in range(len(data[c])):
                         data[c][h] = data[c][h] + data[c - 1][h]
                         maxy = max(maxy, data[c][h])
-                    graph.fill_between(x, data[c - 1], data[c], label=label[c], color=self.colours[label[c].lower()])
+                    graph.fill_between(x, data[c - 1], data[c], label=label[c], color=self.colours[label[c].lower()], step=step)
                 top = data[0][:]
                 for d in range(1, len(data)):
                     for h in range(len(top)):
                         top[h] = max(top[h], data[d][h])
-                graph.plot(x, top, color='white')
+                if self.plottype.currentText() == 'Cumulative':
+                    graph.plot(x, top, color='white')
+                else:
+                    graph.step(x, top, color='white')
                 if self.maxSpin.value() > 0:
                     maxy = self.maxSpin.value()
                 else:
