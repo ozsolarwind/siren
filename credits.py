@@ -46,14 +46,14 @@ def fileVersion(program=None, year=False):
     if check[-3:] == '.py':
         try:
             modtime = datetime.fromtimestamp(os.path.getmtime(check))
-            ver = '2.0.%04d.%d%02d' % (modtime.year, modtime.month, modtime.day)
+            ver = '3.0.%04d.%d%02d' % (modtime.year, modtime.month, modtime.day)
             ver_yr = '%04d' % modtime.year
         except:
             pass
     elif check[-5:] == '.html':
         try:
             modtime = datetime.fromtimestamp(os.path.getmtime(check))
-            ver = '2.0.%04d.%d%02d' % (modtime.year, modtime.month, modtime.day)
+            ver = '3.0.%04d.%d%02d' % (modtime.year, modtime.month, modtime.day)
             ver_yr = '%04d' % modtime.year
         except:
             pass
@@ -72,7 +72,7 @@ def fileVersion(program=None, year=False):
             except:
                 try:
                     info = os.path.getmtime(os.getcwd() + '\\' + check)
-                    ver = '2.0.' + datetime.fromtimestamp(info).strftime('%Y.%m%d')
+                    ver = '3.0.' + datetime.fromtimestamp(info).strftime('%Y.%m%d')
                     ver_yr = datetime.fromtimestamp(info).strftime('%Y')
                     if ver[9] == '0':
                         ver = ver[:9] + ver[10:]

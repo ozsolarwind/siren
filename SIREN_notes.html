@@ -51,11 +51,12 @@ pre {
 <tr><td>csv</td><td style="text-align:center">y</td></tr>
 <tr><td>ctypes</td><td style="text-align:center">y</td></tr>
 <tr><td>datetime</td><td style="text-align:center">y</td></tr>
-<tr><td>et_xmlfile</td><td>&nbsp;</td><td>Windows. Required by openpyxl</td></tr>
+<tr><td>et_xmlfile</td><td>&nbsp;</td><td>Windows. Required by openpyxl?</td></tr>
 <tr><td>functools</td><td style="text-align:center">y</td></tr>
 <tr><td>gzip</td><td style="text-align:center">y</td></tr>
 <tr><td>heapq</td><td style="text-align:center">y</td></tr>
 <tr><td>http.client</td><td style="text-align:center">y</td></tr>
+<tr><td>io</td><td style="text-align:center">y</td></tr>
 <tr><td>jdcal</td><td>&nbsp;</td><td>Windows. Required by openpyxl</td</tr>
 <tr><td>math</td><td style="text-align:center">y</td></tr>
 <tr><td>matplotlib</td></tr>
@@ -64,26 +65,30 @@ pre {
 <tr><td>numpy</td></tr>
 <tr><td>openpyxl</td></tr>
 <tr><td>os</td><td style="text-align:center">y</td></tr>
-<tr><td>pwd</td><td style="text-align:center">Linux</td></td></tr>
+<tr><td>pwd</td><td style="text-align:center">y</td><td style="text-align:center">Linux</td></td></tr>
 <tr><td>pyexcel</td><td>&nbsp;</td><td>Support for spreadsheets</td></td></tr>
 <tr><td>pyexcel-io</td><td>&nbsp;</td><td>CSV files</td></td></tr>
 <tr><td>pyexcel-ods</td><td>&nbsp;</td><td>ODS (LibreOffice) files</td></td></tr>
 <tr><td>pyexcel-xls</td><td>&nbsp;</td><td>XLS and XLSX (Excel) files</td></td></tr>
 <tr><td>pylab</td></tr>
 <tr><td>pyproj</td><td>&nbsp;</td><td>Windows?</td></tr>
-<tr><td>PyQt4</td></tr>
+<tr><td>PyQt5</td></tr>
+<tr><td>random</td><td style="text-align:center">y</td></tr>
 <tr><td>scipy</td></tr>
+<tr><td>shutil</td><td style="text-align:center">y</td></tr>
 <tr><td>ssc</td><td>&nbsp;</td><td>SAM</td></tr>
 <tr><td>struct</td><td style="text-align:center">y</td></tr>
 <tr><td>subprocess</td><td style="text-align:center">y</td></tr>
 <tr><td>sys</td><td style="text-align:center">y</td></tr>
 <tr><td>tempfile</td><td style="text-align:center">y</td></tr>
-<tr><td>time</td><td style="text-align:center">y</td></tr>
+<tr><td>time</td></tr>
+<tr><td>urllib3</td></tr>
 <tr><td>webbrowser</td><td style="text-align:center">y</td></tr>
 <tr><td>win32api</td><td>&nbsp;</td><td>Windows</td></tr>
 <tr><td>xlrd</td></tr>
 <tr><td>xlwt</td></tr>
 <tr><td>xml.etree.ElementTree</td><td style="text-align:center">y</td></tr>
+<tr><td>zipfile</td><td style="text-align:center">y</td></tr>
 </table>
 <h2 id="source">SIREN Programs</h2>
 <p>This is a list of the Python source programs for SIREN. Where there is a dependency on the os environment the programs test <code>sys.platform</code>. These programs are highlighted in the list with an asterisk (*).</p>
@@ -94,7 +99,8 @@ pre {
 <tr><td>displayobject.py (*)</td><td>Display an object</td></tr>
 <tr><td>displaytable.py</td><td>Display a table</td></tr>
 <tr><td>editini.py (*)</td><td>Edit window for Preferences (model) file</td></tr>
-<tr><td>flexiplot.py</td><td>A standalone program that can be used to produce plots from a spreadsheet that contains data in rows or columns</td></tr>
+<tr><td style="vertical-align:top">flexiplot.py</td><td>A standalone program that can be used to produce plots from a spreadsheet that contains data in rows or columns
+<br />This uses pyexcel to allow flexibility in input file formats, but seems to perform quite poorly due to that choice</td></tr>
 <tr><td>floaters.py</td><td>Display floating windows for legend, menu, status, and progress bar</td></tr>
 <tr><td>getmap.py</td><td>Download map tiles to create a map image</td></tr>
 <tr><td>getmerra2.py (*)</td><td>Invoke wget to download MERRA-2 files</td></tr>
@@ -103,8 +109,8 @@ pre {
 <tr><td>indexweather.py</td><td>Create index file for weather files</td></tr>
 <tr><td>inisyntax.py</td><td>Syntax highlighting for Preferences Edit window</td></tr>
 <tr><td>makegrid.py</td><td>Create weather grid files</td></tr>
-<tr><td>makerainfall2.py</td><td>Create rainfall files from MERRA-2 data</td></tr>
-<tr><td>makeweather2.py</td><td>Create weather files from MERRA-2 data</td></tr>
+<tr><td><del>makerainfall2.py</del></td><td><del>Create rainfall files from MERRA-2 data</del></td></tr>
+<tr><td><del>makeweather2.py</del></td><td><del>Create weather files from MERRA-2 data</del></td></tr>
 <tr><td>makeweatherfiles.py (*)</td><td>Standalone program to create weather files from MERRA-2 data</td></tr>
 <tr><td>newstation.py</td><td>Create/edit a new power station</td></tr>
 <tr><td>parents.py (*)</td><td>Adjust file names from Parents properties in config (.ini) file</td></tr>
@@ -133,11 +139,12 @@ pre {
 <tr><td>zoompan.py</td><td>Implement a more dynamic zoom and pan for hourly plots</td></tr>
 </table>
 <h2>Packaging for Windows</h2>
-<p>I use PyInstaller (currently Version 3.4) to package SIREN for Windows. I use the multi-package facility to create executables for <code>siren.py, sirenm.py</code> and the tools (<code>getmap.py, getmerra2.py, indexweather.py, makegrid.py, makerainfall2.py, makeweather2.py, powerbalance2.py, powerplot.py, sirenupd.py</code> and <code>updateswis.py</code>). <code>siren_application.spec</code> is the spec file (<code>pyinstaller.exe siren_application.spec</code> with options <code>--log-level ERROR</code> and/or <code>--noconfirm</code> ... <code>pyinstaller.exe --noconfirm --log-level ERROR siren_application.spec</code>). This enables all programs to be included in a single library for distribution. PyInstaller places them in individual directories - I use <code>package_siren.py</code> to copy all the executables into the <em>siren</em> directory and remove some unwanted files that are included as part of the packaging process.</p>
-<p>All these files have a version file where the version is <em>&lt;major&gt;,&lt;minor&gt;.&lt;yyyy&gt;.&lt;mmdd&gt;</em>. <em>&lt;major&gt;</em> and <em>&lt;minor&gt;</em> refer to the SIREN release. The date part is the date the program was last changed. The version numbering simulates Microsoft version numbers. <code>template_version</code> provides a template for the version files to enable new SIREN releases to be packaged.</p>
+<p>I use PyInstaller (currently Version 3.4) to package SIREN for Windows. I use the multi-package facility to create executables for <code>siren.py, sirenm.py</code> and the tools (<code>flexiplot.py, getmap.py, getmerra2.py, indexweather.py, makegrid.py, makeweatherfiles.py, powermatch.py, powerplot.py, sirenupd.py</code> and <code>updateswis.py</code>). <code>siren_application.spec</code> is the spec file (<code>pyinstaller.exe siren_application.spec</code> with options <code>--log-level ERROR</code> and/or <code>--noconfirm</code> ... <code>pyinstaller.exe --noconfirm --log-level ERROR siren_application.spec</code>). This enables all programs to be included in a single library for distribution. PyInstaller places them in individual directories - I use <code>package_siren.py</code> to copy all the executables into the <em>siren</em> directory and remove some unwanted files that are included as part of the packaging process.</p>
+<p>All these files have a version file where the version is <em>&lt;major&gt;,&lt;minor&gt;.&lt;yyyy&gt;.&lt;mmdd&gt;</em>. <em>&lt;major&gt;</em> and <em>&lt;minor&gt;</em> refer to the SIREN release. The date part is the date the program was last changed. The version numbering simulates Microsoft version numbers. <code>template_version</code> provides a template for the version files to enable new SIREN releases to be packaged. The current <em>major</em> version is <strong><em>3</em></strong> (<em>1</em> was the initial version, <em>2</em> for the change from Python2 to Python3, <em>3</em> for the change from PyQt4 to PyQt5).</p>
 <p>To enable the modules to be built correctly most require <em>hiddenimports</em>, as identified in <code>siren_application.spec</code>, as often PyInstaller will fail to identify all imports from libraries used by the SIREN program.</p>
 <p><code>makeweather_getmerra2.spec</code> and <code>package_makeweatherfiles.py</code> package <code>makeweatherfiles.py</code> and <code>getmerra2.py</code> to provide a standalone tool to create SAM weather files from MERRA-2 datasets.</p>
 <h2>Useful tools</h2>
+<h3>sam_models_list</h3>
 <p>The parameters and variables utilised by the SAM API often change between versions. <code>sam_models_list.py</code> can be run to list the SAM models and variables for different SAM versions. Usage:</p>
 <ul style="list-style-type:none">
 <li><code>python sam_models_list.py</code> &rArr; Produce HTML file of models for current SSC version</li>
@@ -151,5 +158,7 @@ pre {
 <li><code>&lt;SAM model&gt;</code> is a SAM Model</li>
 <li><code>&lt;Ver n&gt;</code> is an SDK Version<li>
 </ul>
-<p>Angus King<br />April 2020</p>
+<h3>opt_debug</h3>
+<p><code>opt_debug.py</code> can be used to debug the <code>powermatch</code> optimisation routine. It doesn't need to be packaged with SIREN.</p>
+<p>Angus King<br />July 2020</p>
 </body>
