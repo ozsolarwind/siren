@@ -392,6 +392,7 @@ class PowerPlot(QtWidgets.QWidget):
         ignore = True
         config = configparser.RawConfigParser()
         config.read(self.config_file)
+        columns = []
         try: # get list of files if any
             items = config.items('Powerplot')
             for key, value in items:
@@ -594,13 +595,19 @@ class PowerPlot(QtWidgets.QWidget):
         except:
             self.log.setText("Can't find sheet - " + isheet)
             return
+        tech_row = -1
         row = 0
         while row < ws.nrows:
-            if ws.cell_value(row, 0) == 'Hour':
+            if ws.cell_value(row, 0) == 'Technology':
+                tech_row = row
+            elif ws.cell_value(row, 0) == 'Hour':
                 if ws.cell_value(row, 1) != 'Period':
                     self.log.setText(isheet + ' sheet format incorrect')
                     return
-                self.toprow = row
+                if tech_row >= 0:
+                    self.toprow = [tech_row, row]
+                else:
+                    self.toprow = [row, row]
                 self.rows = ws.nrows - (row + 1)
                 oldcolumns = []
                 if len(columns) == 0:
@@ -611,8 +618,12 @@ class PowerPlot(QtWidgets.QWidget):
                 self.targets.clear()
                 self.targets.addItem('<none>')
                 self.targets.setCurrentIndex(0)
+                if tech_row >= 0:
+                    the_row = tech_row
+                else:
+                    the_row = row
                 for col in range(ws.ncols -1, 1, -1):
-                    column = ws.cell_value(row, col).replace('\n',' ')
+                    column = ws.cell_value(the_row, col).replace('\n',' ')
                     if column in oldcolumns:
                         columns.append(column)
                     if self.targets.findText(column, QtCore.Qt.MatchExactly) >= 0:
@@ -829,17 +840,23 @@ class PowerPlot(QtWidgets.QWidget):
             gridtype = ''
         ws = self.book.sheet_by_name(isheet)
         if self.toprow is None:
+            tech_row = -1
             row = 0
             while row < ws.nrows:
-                if ws.cell_value(row, 0) == 'Hour':
+                if ws.cell_value(row, 0) == 'Technology':
+                    tech_row = row
+                elif ws.cell_value(row, 0) == 'Hour':
                     if ws.cell_value(row, 1) != 'Period':
                         self.log.setText(isheet + ' sheet format incorrect')
                         return
-                    self.toprow = row
+                    if tech_row >= 0:
+                        self.toprow = [tech_row, row]
+                    else:
+                        self.toprow = [row, row]
                     self.rows = ws.nrows - row + 1
                     break
         try:
-            year = int(ws.cell_value(self.toprow + 1, 1)[:4])
+            year = int(ws.cell_value(self.toprow[1] + 1, 1)[:4])
             if year % 4 == 0 and year % 100 != 0 or year % 400 == 0:
                 self.leapyear = True
             else:
@@ -881,11 +898,11 @@ class PowerPlot(QtWidgets.QWidget):
             for c in range(self.order.count() -1, -1, -1):
                 col = self.order.item(c).text()
                 for c2 in range(2, ws.ncols):
-                    column = ws.cell_value(self.toprow, c2).replace('\n',' ')
+                    column = ws.cell_value(self.toprow[0], c2).replace('\n',' ')
                     if column == col:
                         data.append([])
                         label.append(column)
-                        for row in range(self.toprow + 1, self.toprow + self.rows + 1):
+                        for row in range(self.toprow[1] + 1, self.toprow[1] + self.rows + 1):
                             data[-1].append(ws.cell_value(row, c2))
                             maxy = max(maxy, data[-1][-1])
                             miny = min(miny, data[-1][-1])
@@ -893,7 +910,7 @@ class PowerPlot(QtWidgets.QWidget):
                     elif column == self.target:
                         tgt_col = c2
             if tgt_col >= 0:
-                for row in range(self.toprow + 1, self.toprow + self.rows + 1):
+                for row in range(self.toprow[1] + 1, self.toprow[1] + self.rows + 1):
                     load.append(ws.cell_value(row, tgt_col))
                     maxy = max(maxy, load[-1])
             if self.plottype.currentText() == 'Linegraph':
@@ -1136,7 +1153,7 @@ class PowerPlot(QtWidgets.QWidget):
                 titl = titl.replace('$MTH$', '')
                 titl = titl.replace('$MONTH$', '')
                 titl = titl.replace('  ', '')
-                strt_row = [self.toprow]
+                strt_row = [self.toprow[1]]
                 todo_rows = [self.rows]
             else:
                 titl = titl.replace('$MTH$', self.period.currentText())
@@ -1150,7 +1167,7 @@ class PowerPlot(QtWidgets.QWidget):
                         while m < s:
                             strt_row[-1] = strt_row[-1] + the_days[m] * 24
                             m += 1
-                        strt_row[-1] = strt_row[-1] + self.toprow
+                        strt_row[-1] = strt_row[-1] + self.toprow[1]
                         todo_rows.append(the_days[s] * 24)
                 else:
                     i = mth_labels.index(self.period.currentText())
@@ -1159,7 +1176,7 @@ class PowerPlot(QtWidgets.QWidget):
                     while m < i:
                         strt_row = strt_row + the_days[m] * 24
                         m += 1
-                    strt_row = [self.toprow + strt_row]
+                    strt_row = [self.toprow[1] + strt_row]
                     todo_rows = [the_days[i] * 24]
             load = []
             tgt_col = -1
@@ -1174,7 +1191,7 @@ class PowerPlot(QtWidgets.QWidget):
             for c in range(self.order.count() -1, -1, -1):
                 col = self.order.item(c).text()
                 for c2 in range(2, ws.ncols):
-                    column = ws.cell_value(self.toprow, c2).replace('\n',' ')
+                    column = ws.cell_value(self.toprow[0], c2).replace('\n',' ')
                     if column == col:
                         data.append([])
                         data[-1] = [0] * len(hs)
