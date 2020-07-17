@@ -1457,8 +1457,8 @@ class powerMatch(QtWidgets.QWidget):
     # The "guts" of Powermatch processing. Have a single calculation algorithm
     # for Summary, Powermatch (detail), and Optimise. The detail makes it messy
         the_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-        headers = ['Facility', 'Capacity (MW/MWh)', 'Subtotal (MWh)', 'CF', 'Cost ($)',
-                   'LCOE ($/MWh)', 'Emissions (tCO2e)','Reference LCOE','Reference CF']
+        headers = ['Facility', 'Capacity\n(Gen, MW;\nStor, MWh)', 'Subtotal\n(MWh)', 'CF', 'Cost\n($/yr)',
+                   'LCOE\n($/MWh)', 'Emissions\n(tCO2e)','Reference\nLCOE','Reference\nCF']
         if self.surplus_sign < 0:
             sf_test = ['>', '<']
             sf_sign = ['+', '-']
@@ -1497,25 +1497,26 @@ class powerMatch(QtWidgets.QWidget):
             sto_sum = ''
             not_sum = ''
             cap_row = 1
-            ns.cell(row=cap_row, column=2).value = headers[1]
+            ns.cell(row=cap_row, column=2).value = 'Capacity (MW/MWh)' #headers[1].replace('\n', ' ')
+            ss.row_dimensions[3].height = 40
             ss.cell(row=3, column=1).value = headers[0]
             ss.cell(row=3, column=2).value = headers[1]
             ini_row = 2
             ns.cell(row=ini_row, column=2).value = 'Initial Capacity'
             sum_row = 3
-            ns.cell(row=sum_row, column=2).value = headers[2]
+            ns.cell(row=sum_row, column=2).value = headers[2].replace('\n', ' ')
             ss.cell(row=3, column=3).value = headers[2]
             cf_row = 4
-            ns.cell(row=cf_row, column=2).value = headers[3]
+            ns.cell(row=cf_row, column=2).value = headers[3].replace('\n', ' ')
             ss.cell(row=3, column=4).value = headers[3]
             cost_row = 5
-            ns.cell(row=cost_row, column=2).value = headers[4]
+            ns.cell(row=cost_row, column=2).value = headers[4].replace('\n', ' ')
             ss.cell(row=3, column=5).value = headers[4]
             lcoe_row = 6
-            ns.cell(row=lcoe_row, column=2).value = headers[5]
+            ns.cell(row=lcoe_row, column=2).value = headers[5].replace('\n', ' ')
             ss.cell(row=3, column=6).value = headers[5]
             emi_row = 7
-            ns.cell(row=emi_row, column=2).value = headers[6]
+            ns.cell(row=emi_row, column=2).value = headers[6].replace('\n', ' ')
             ss.cell(row=3, column=7).value = headers[6]
             ss.cell(row=3, column=8).value = headers[7]
             ss.cell(row=3, column=9).value = headers[8]
@@ -3306,7 +3307,7 @@ class powerMatch(QtWidgets.QWidget):
             pick = plot_multi(multi_best, multi_order, 'best of each generation')
         else:
             pick = None
-        headers = ['Facility', 'Capacity (MW/MWh)', 'Subtotal (MWh)', 'CF', 'Cost ($)',
+        headers = ['Facility', 'Capacity (MW/MWh)', 'Subtotal (MWh)', 'CF', 'Cost ($/yr)',
                    'LCOE ($/MWh)', 'Emissions (tCO2e)','Reference LCOE','Reference CF']
         op_pts = [0, 3, 0, 2, 0, 2, 0, 2, 2]
         if self.more_details:
