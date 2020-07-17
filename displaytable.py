@@ -746,6 +746,7 @@ class Table(QtWidgets.QDialog):
             hdr_types = []
             dec_fmts = []
             xl_lens = []
+            hdr_rows = 0
             for cl in range(self.table.columnCount()):
                 hdr = self.table.horizontalHeaderItem(cl).text()
                 if hdr[0] != '%':
@@ -768,7 +769,14 @@ class Table(QtWidgets.QDialog):
                 except:
                     pass
                 dec_fmts.append(style)
-                xl_lens.append(len(hdr))
+                bits = hdr.split('\n')
+                hdr_rows = max(hdr_rows, len(bits))
+                hl = 0
+                for bit in bits:
+                    hl = max(hl, len(bit) + 1)
+                xl_lens.append(hl)
+            if hdr_rows > 1:
+                ws.row(0).height = 250 * hdr_rows
             for rw in range(self.table.rowCount()):
                 for cl in range(self.table.columnCount()):
                     if self.table.item(rw, cl) is not None:
