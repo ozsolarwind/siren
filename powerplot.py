@@ -1200,7 +1200,10 @@ class PowerPlot(QtWidgets.QWidget):
                         for s in range(len(strt_row)):
                             h = 0
                             for row in range(strt_row[s] + 1, strt_row[s] + todo_rows[s] + 1):
-                                data[-1][h] = data[-1][h] + ws.cell_value(row, c2)
+                                try:
+                                    data[-1][h] = data[-1][h] + ws.cell_value(row, c2)
+                                except:
+                                    break # part period
                                 h += 1
                                 if h >= 24:
                                     h = 0
