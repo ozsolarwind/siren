@@ -166,7 +166,6 @@ class Visualise(QtWidgets.QDialog):
         self.repeat = QtWidgets.QCheckBox()
         self.repeat.setCheckState(QtCore.Qt.Unchecked)
         self.grid.addWidget(self.repeat, row, 1)
-        self.loopSpin = QtWidgets.QDoubleSpinBox()
         row += 1
         self.do_loop = False
         self.grid.addWidget(QtWidgets.QLabel('Period Loop (secs):'), row, 0)
