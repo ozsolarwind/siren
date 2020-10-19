@@ -19,7 +19,7 @@
 #  <http://www.gnu.org/licenses/>.
 #
 # Based on: https://gist.github.com/tacaswell/3144287
-# and ttps://stackoverflow.com/questions/10374930/matplotlib-annotating-a-3d-scatter-plot
+# and https://stackoverflow.com/questions/10374930/matplotlib-annotating-a-3d-scatter-plot
 from mpl_toolkits.mplot3d import proj3d
 #from matplotlib.lines import Line2D
 #from matplotlib.collections import PathCollection
@@ -42,8 +42,26 @@ class ZoomPanX():
         self.week = None
         self.keys = ''
         self.yformat = yformat
+        self.flex_ticks = False
+        self.flex_on = False
 
-    def zoom_pan(self, ax, base_scale=2., annotate=False, dropone=False):
+    def zoom_pan(self, ax, base_scale=2., annotate=False, dropone=False, flex_ticks=False):
+        def set_flex():
+            if self.flex_ticks:
+                cur_xlim = ax.get_xlim()
+                if cur_xlim[1] - cur_xlim[0] > 168:
+                    if not self.flex_on:
+                        ax.set_xticks(self.x_ticks_s)
+                        ax.set_xticklabels(self.x_labels_s)
+                        ax.set_xlim(cur_xlim)
+                        self.flex_on = True
+                else:
+                    if self.flex_on:
+                        ax.set_xticks(self.x_ticks)
+                        ax.set_xticklabels(self.x_labels)
+                        ax.set_xlim(cur_xlim)
+                        self.flex_on = False
+
         def zoom(event):
             if event.inaxes != ax:
                 return
@@ -71,7 +89,7 @@ class ZoomPanX():
             else:
                 # deal with something that should never happen
                 scale_factor = 1
-                print('(56)', event.button)
+                print('(92)', event.button)
             # set new limits
             if self.d3:
                 z_left = ydata - cur_zlim[0]
@@ -85,6 +103,7 @@ class ZoomPanX():
             elif self.axis == 'z':
                 ax.set_zlim([ydata - (ydata - cur_zlim[0]) * scale_factor,
                             ydata + (cur_zlim[1] - ydata) * scale_factor])
+            set_flex()
        #     ax.figure.canvas.draw() # force re-draw
             ax.figure.canvas.draw_idle() # force re-draw
 
@@ -104,6 +123,7 @@ class ZoomPanX():
                 self.week = None
                 if self.base_xlim is not None:
                     ax.set_xlim(self.base_xlim)
+                    set_flex()
                     ax.figure.canvas.draw()
                     return
             if event.inaxes != ax:
@@ -171,6 +191,7 @@ class ZoomPanX():
                                 pass
                             self.datapoint = None
                         ax.set_zlim(self.base_zlim)
+                    set_flex()
                     ax.figure.canvas.draw()
                     return
             if event_key == 'pageup':
@@ -244,6 +265,7 @@ class ZoomPanX():
                 else:
                     self.month += 1
                 ax.set_xlim([self.mth_xlim[self.month], self.mth_xlim[self.month + 1]])
+                set_flex()
                 ax.figure.canvas.draw()
             elif event_key == 'w':
                 if self.axis != 'x':
@@ -263,6 +285,7 @@ class ZoomPanX():
                         self.week = 0
                     strt = self.mth_xlim[self.month] + self.week * 168
                 ax.set_xlim([strt, strt + 168])
+                set_flex()
                 ax.figure.canvas.draw()
             elif event.key >= '0' and event.key <= '9':
                 if self.axis != 'x':
@@ -299,9 +322,11 @@ class ZoomPanX():
                         strt = self.mth_xlim[self.month] + self.week * 168
                     self.keys += event.key
                     ax.set_xlim([strt, strt + 168])
+                    set_flex()
                     ax.figure.canvas.draw()
                     return
                 ax.set_xlim([self.mth_xlim[self.month], self.mth_xlim[self.month + 1]])
+                set_flex()
                 ax.figure.canvas.draw()
             elif event_key == 'x':
                 if self.axis != 'x':
@@ -372,6 +397,7 @@ class ZoomPanX():
                                 bbox = dict(boxstyle = 'round,pad=0.5', alpha = 0.5),
                                 arrowprops = dict(arrowstyle = '->',
                                                   connectionstyle = 'arc3,rad=0'))
+                set_flex()
                 ax.figure.canvas.draw()
 
         the_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
@@ -379,6 +405,26 @@ class ZoomPanX():
         self.title = ax.get_title()
         self.base_xlim = ax.get_xlim() # remember x base
         self.base_ylim = ax.get_ylim() # remember y base
+        self.flex_ticks = flex_ticks
+        if self.flex_ticks:
+            self.x_ticks = []
+            self.x_labels = []
+            self.x_ticks_s = []
+            self.x_labels_s = []
+            l = 0
+            for xtick in ax.get_xticks():
+                self.x_ticks.append(xtick)
+                if l % 7 == 0:
+                    self.x_ticks_s.append(xtick)
+                l += 1
+            l = 0
+            for xtick in ax.get_xticklabels():
+                self.x_labels.append(xtick.get_text())
+                if l % 7 == 0:
+                    self.x_labels_s.append(xtick.get_text())
+                l += 1
+            self.flex_on = False
+            set_flex()
         try:
             self.base_zlim = ax.get_zlim() # remember z base for 3D
             self.d3 = True

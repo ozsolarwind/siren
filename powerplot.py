@@ -872,9 +872,11 @@ class PowerPlot(QtWidgets.QWidget):
             m = 0
             d = 1
             day_labels = []
+            days_per_label = 1 # set to 1 and flex_on to True to have some flexibilty in x_labels
+            flex_on = True
             while m < len(the_days):
                 day_labels.append('%s %s' % (str(d), mth_labels[m]))
-                d += 7
+                d += days_per_label
                 if d > the_days[m]:
                     d = d - the_days[m]
                     m += 1
@@ -938,12 +940,12 @@ class PowerPlot(QtWidgets.QWidget):
                           prop=lbl_font)
                 plt.ylim([miny, maxy])
                 plt.xlim([0, len(x)])
-                plt.xticks(list(range(12, len(x), 168)))
+                plt.xticks(list(range(0, len(x), 24 * days_per_label)))
                 ax.set_xticklabels(day_labels, rotation='vertical')
                 ax.set_xlabel('Period')
                 ax.set_ylabel('Power (MW)')
                 zp = ZoomPanX()
-                f = zp.zoom_pan(ax, base_scale=1.2) # enable scrollable zoom
+                f = zp.zoom_pan(ax, base_scale=1.2, flex_ticks=flex_on) # enable scrollable zoom
                 plt.show()
                 del zp
             elif self.plottype.currentText() in ['Cumulative', 'Step Plot']:
@@ -1071,11 +1073,11 @@ class PowerPlot(QtWidgets.QWidget):
                 bx.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 2), prop=lbl_font)
                 plt.ylim([miny, maxy])
                 plt.xlim([0, len(x)])
-                plt.xticks(list(range(12, len(x), 168)))
+                plt.xticks(list(range(0, len(x), 24 * days_per_label)))
                 bx.set_xticklabels(day_labels, rotation='vertical')
                 bx.set_xlabel('Period')
                 zp = ZoomPanX()
-                f = zp.zoom_pan(bx, base_scale=1.2) # enable scrollable zoom
+                f = zp.zoom_pan(bx, base_scale=1.2, flex_ticks=flex_on) # enable scrollable zoom
                 plt.show()
                 del zp
             elif self.plottype.currentText() == 'Bar Chart':
@@ -1136,11 +1138,11 @@ class PowerPlot(QtWidgets.QWidget):
                 fx.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 2), prop=lbl_font)
                 plt.ylim([miny, maxy])
                 plt.xlim([0, len(x)])
-                plt.xticks(list(range(12, len(x), 168)))
+                plt.xticks(list(range(0, len(x), 24 * days_per_label)))
                 fx.set_xticklabels(day_labels, rotation='vertical')
                 fx.set_xlabel('Period')
                 zp = ZoomPanX()
-                f = zp.zoom_pan(fx, base_scale=1.2) # enable scrollable zoom
+                f = zp.zoom_pan(fx, base_scale=1.2, flex_ticks=flex_on) # enable scrollable zoom
                 plt.show()
                 del zp
         else: # diurnal average
@@ -1328,9 +1330,10 @@ class PowerPlot(QtWidgets.QWidget):
                                 if data[c][h] > full[h] + self.margin_of_error:
                                     if self.spill_label.text() != '':
                                         dx.fill_between(x, full, data[c], alpha=self.alpha, color=self.colours[label[c].lower()],
-                                                    label=label[c] + ' ' + self.spill_label.text(), step=step)
+                                                        label=label[c] + ' ' + self.spill_label.text(), step=step)
                                     else:
-                                        dx.fill_between(x, full, data[c], alpha=self.alpha, color=self.colours[label[c].lower()], step=step)
+                                        dx.fill_between(x, full, data[c], alpha=self.alpha, color=self.colours[label[c].lower()],
+                                                        step=step)
                                     break
                         top = data[0][:]
                         for d in range(1, len(data)):
