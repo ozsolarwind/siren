@@ -277,6 +277,9 @@ class Stations:
                                     except:
                                         pass
                                     area = self.areas[tech] * float(no_turbines) * pow((rotor * .001), 2)
+                                elif bit[0] == 'MERSOLAR':
+                                    tech = 'Tracking PV'
+                                    area = self.areas[tech] * float(facility['Maximum Capacity (MW)'])
                                 elif bit[-1][:2] == 'PV':
                                     tech = 'Fixed PV'
                                     area = self.areas[tech] * float(facility['Maximum Capacity (MW)'])
