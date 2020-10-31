@@ -24,68 +24,21 @@ from math import *
 import os
 import sys
 from netCDF4 import Dataset
+import configparser   # decode .ini file
 from PyQt5 import QtCore, QtGui, QtWidgets
 if sys.platform == 'win32' or sys.platform == 'cygwin':
     from win32api import GetFileVersionInfo, LOWORD, HIWORD
+
+from credits import fileVersion
+from editini import SaveIni
+from senuser import getUser
 from sammodels import getDNI, getDHI
 
-def fileVersion(program=None, year=False):
-    ver = '?'
-    ver_yr = '????'
-    if program == None:
-        check = sys.argv[0]
-    else:
-        s = program.rfind('.')
-        if s > 0 and program[s:] == '.html':
-            check = program
-        elif s < len(program) - 4:
-            check = program + sys.argv[0][sys.argv[0].rfind('.'):]
-        else:
-            check = program
-    if check[-3:] == '.py':
-        try:
-            modtime = datetime.fromtimestamp(os.path.getmtime(check))
-            ver = '2.0.%04d.%d%02d' % (modtime.year, modtime.month, modtime.day)
-            ver_yr = '%04d' % modtime.year
-        except:
-            pass
-    elif check[-5:] == '.html':
-        try:
-            modtime = datetime.fromtimestamp(os.path.getmtime(check))
-            ver = '2.0.%04d.%d%02d' % (modtime.year, modtime.month, modtime.day)
-            ver_yr = '%04d' % modtime.year
-        except:
-            pass
-    else:
-        if sys.platform == 'win32' or sys.platform == 'cygwin':
-            try:
-                if check.find('\\') >= 0:  # if full path
-                    info = GetFileVersionInfo(check, '\\')
-                else:
-                    info = GetFileVersionInfo(os.getcwd() + '\\' + check, '\\')
-                ms = info['ProductVersionMS']
-              #  ls = info['FileVersionLS']
-                ls = info['ProductVersionLS']
-                ver = str(HIWORD(ms)) + '.' + str(LOWORD(ms)) + '.' + str(HIWORD(ls)) + '.' + str(LOWORD(ls))
-                ver_yr = str(HIWORD(ls))
-            except:
-                try:
-                    info = os.path.getmtime(os.getcwd() + '\\' + check)
-                    ver = '2.0.' + datetime.fromtimestamp(info).strftime('%Y.%m%d')
-                    ver_yr = datetime.fromtimestamp(info).strftime('%Y')
-                    if ver[9] == '0':
-                        ver = ver[:9] + ver[10:]
-                except:
-                    pass
-    if year:
-        return ver_yr
-    else:
-        return ver
 
-class AnObject(QtWidgets.QDialog):
+class ShowHelp(QtWidgets.QDialog):
 
     def __init__(self, dialog, anobject, title=None, section=None):
-        super(AnObject, self).__init__()
+        super(ShowHelp, self).__init__()
         self.anobject = anobject
         self.title = title
         self.section = section
@@ -165,18 +118,9 @@ class AnObject(QtWidgets.QDialog):
         grid.addWidget(self.web, 0, 0)
         self.set_stuff(grid, widths, heights, i)
         QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
-    def curveClicked(self):
-        Turbine(self.turbine).PowerCurve()
-        return
 
     def quitClicked(self):
         self.close()
-
-    def saveClicked(self):
-        self.close()
-
-    def getValues(self):
-        return self.anobject
 
 
 class makeWeather():
@@ -526,7 +470,10 @@ class makeWeather():
         values = list(cdf_file.dimensions.values())
         if type(cdf_file.dimensions) is dict:
             for i in range(len(keys)):
-                vals += keys[i] + ': ' + str(values[i]) + ', '
+                try:
+                    vals += keys[i] + ': ' + str(values[i].size) + ', '
+                except:
+                    vals += keys[i] + ': ' + str(values[i]) + ', '
         else:
             for i in range(len(keys)):
                 bits = str(values[i]).strip().split(' ')
@@ -1283,12 +1230,14 @@ class ClickableQLabel(QtWidgets.QLabel):
 
 class getParms(QtWidgets.QWidget):
 
-    def __init__(self, help='makeweatherfiles.html'):
+    def __init__(self, help='makeweatherfiles.html', ini_file='getfiles.ini'):
         super(getParms, self).__init__()
         self.help = help
-        self.initUI()
-
-    def initUI(self):
+        self.ini_file = ini_file
+        self.config = configparser.RawConfigParser()
+        self.config_file = self.ini_file
+        self.config.read(self.config_file)
+        self.ignore = False
         rw = 0
         self.grid = QtWidgets.QGridLayout()
         self.grid.addWidget(QtWidgets.QLabel('Year:'), 0, 0)
@@ -1296,7 +1245,9 @@ class getParms(QtWidgets.QWidget):
         now = datetime.now()
         self.yearSpin.setRange(1979, now.year)
         self.yearSpin.setValue(now.year - 1)
+        self.last_year = str(self.yearSpin.value())
         self.grid.addWidget(self.yearSpin, rw, 1)
+        self.yearSpin.valueChanged.connect(self.yearChanged)
         rw += 1
         self.grid.addWidget(QtWidgets.QLabel('Wrap to prior year:'), rw, 0)
         self.wrapbox = QtWidgets.QCheckBox()
@@ -1348,12 +1299,15 @@ class getParms(QtWidgets.QWidget):
         self.grid.addWidget(QtWidgets.QLabel('If checked will copy solar folder changes down to others'), rw, 2, 1, 3)
         rw += 1
         cur_dir = os.getcwd()
-        self.dir_labels = ['Solar Source', 'Wind Source', 'Target']
+        self.dir_labels = ['Solar', 'Wind', 'Target']
         self.dirs = [None, None, None, None]
         for i in range(3):
             self.grid.addWidget(QtWidgets.QLabel(self.dir_labels[i] + ' Folder:'), rw, 0)
             self.dirs[i] = ClickableQLabel()
-            self.dirs[i].setText(cur_dir)
+            try:
+                self.dirs[i].setText(self.config.get('Files', self.dir_labels[i].lower() + '_files').replace('$USER$', getUser()))
+            except:
+                self.dirs[i].setText(cur_dir)
             self.dirs[i].setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
             self.dirs[i].clicked.connect(self.dirChanged)
             self.grid.addWidget(self.dirs[i], rw, 1, 1, 4)
@@ -1380,7 +1334,7 @@ class getParms(QtWidgets.QWidget):
         self.grid.addWidget(self.progresslabel, rw, 1, 1, 2)
         self.progresslabel.setHidden(True)
         rw += 1
-        quit = QtWidgets.QPushButton('Quit', self)
+        quit = QtWidgets.QPushButton('Done', self)
         self.grid.addWidget(quit, rw, 0)
         quit.clicked.connect(self.quitClicked)
         QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
@@ -1413,6 +1367,7 @@ class getParms(QtWidgets.QWidget):
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         self.center()
         self.resize(int(self.sizeHint().width()* 1.27), int(self.sizeHint().height() * 1.07))
+        self.updated = False
         self.show()
 
     def center(self):
@@ -1421,6 +1376,14 @@ class getParms(QtWidgets.QWidget):
         centerPoint = QtWidgets.QApplication.desktop().availableGeometry(screen).center()
         frameGm.moveCenter(centerPoint)
         self.move(frameGm.topLeft())
+
+    def yearChanged(self):
+        yr = str(self.yearSpin.value())
+        for i in range(3):
+            if self.dirs[i].text()[-len(self.last_year):] == self.last_year:
+                self.dirs[i].setText(self.dirs[i].text()[:-len(self.last_year)] + yr)
+                self.updated = True
+        self.last_year = yr
 
     def zoneChanged(self, val):
         if self.zoneCombo.currentIndex() <= 1:
@@ -1452,13 +1415,22 @@ class getParms(QtWidgets.QWidget):
                 if i == 0:
                     self.dirs[1].setText(newdir)
                     self.dirs[2].setText(newdir)
+            self.updated = True
 
     def helpClicked(self):
-        dialog = AnObject(QtWidgets.QDialog(), self.help,
+        dialog = ShowHelp(QtWidgets.QDialog(), self.help,
                  title='makeweatherfiles (' + fileVersion() + ') - Help', section='makeweather')
         dialog.exec_()
 
     def quitClicked(self):
+        if self.updated:
+            updates = {}
+            lines = []
+            for i in range(3):
+                lines.append(self.dir_labels[i].lower() + '_files=' + \
+                             self.dirs[i].text().replace(getUser(), '$USER$'))
+            updates['Files'] = lines
+            SaveIni(updates, ini_file=self.config_file)
         self.close()
 
     def dosolarClicked(self):
@@ -1641,8 +1613,8 @@ class RptDialog(QtWidgets.QDialog):
         size = self.geometry()
         self.setGeometry(1, 1, ln + 10, ln2 + 35)
         size = self.geometry()
-        self.move((screen.width() - size.width()) / 2,
-            (screen.height() - size.height()) / 2)
+        self.move(int((screen.width() - size.width()) / 2),
+                  int((screen.height() - size.height()) / 2))
         self.widget.show()
 
     def accept(self):
