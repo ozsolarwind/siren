@@ -28,9 +28,11 @@ from netCDF4 import Dataset
 import configparser   # decode .ini file
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-import displayobject
-import worldwindow
 from credits import fileVersion
+import displayobject
+from editini import SaveIni
+from senuser import getUser
+import worldwindow
 
 def spawn(who, cwd, log):
     stdoutf = cwd + '/' + log
@@ -539,7 +541,10 @@ class getMERRA2(QtWidgets.QDialog):
             self.grid.addWidget(QtWidgets.QLabel(datasets[i]), 8 + i * 2, 1, 1, 4)
             self.grid.addWidget(QtWidgets.QLabel('    Target Folder:'), 9 + i * 2, 0)
             self.dirs[i] = ClickableQLabel()
-            self.dirs[i].setText(cur_dir)
+            try:
+                self.dirs[i].setText(self.config.get('Files', self.dir_labels[i].lower() + '_files').replace('$USER$', getUser()))
+            except:
+                self.dirs[i].setText(cur_dir)
             self.dirs[i].setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
             self.dirs[i].clicked.connect(self.dirChanged)
             self.grid.addWidget(self.dirs[i], 9 + i * 2, 1, 1, 4)
@@ -549,7 +554,7 @@ class getMERRA2(QtWidgets.QDialog):
         self.log.setPalette(msg_palette)
         self.grid.addWidget(self.log, 12, 1, 2, 4)
         buttongrid = QtWidgets.QGridLayout()
-        quit = QtWidgets.QPushButton('Quit', self)
+        quit = QtWidgets.QPushButton('Done', self)
         buttongrid.addWidget(quit, 0, 0)
         quit.clicked.connect(self.quitClicked)
         QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
@@ -583,6 +588,7 @@ class getMERRA2(QtWidgets.QDialog):
         self.setWindowTitle('SIREN - getmerra2 (' + fileVersion() + ') - Get MERRA-2 data')
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         self.resize(int(self.sizeHint().width()* 1.4), int(self.sizeHint().height() * 1.07))
+        self.updated = False
         self.show()
 
     def dirChanged(self):
@@ -597,19 +603,7 @@ class getMERRA2(QtWidgets.QDialog):
             if self.checkbox.isChecked():
                 if i == 0:
                     self.dirs[1].setText(newdir)
-
-    def zoomChanged(self, val):
-        self.zoomScale.setText('(' + scale[int(val)] + ')')
-        self.zoomScale.adjustSize()
-
-    def fileChanged(self):
-        self.filename.setText(QtWidgets.QFileDialog.getSaveFileName(self, 'Save Image File',
-                              self.filename.text(),
-                              'Images (*.jpeg *.jpg *.png)'))[0]
-        if self.filename.text() != '':
-            i = self.filename.text().rfind('.')
-            if i < 0:
-                self.filename.setText(self.filename.text() + '.png')
+            self.updated = True
 
     def helpClicked(self):
         dialog = displayobject.AnObject(QtWidgets.QDialog(), self.help,
@@ -712,6 +706,14 @@ class getMERRA2(QtWidgets.QDialog):
             self.worldwindow.view.statusmsg.emit(approx_area + ' ' + merra_dims)
 
     def quitClicked(self):
+        if self.updated:
+            updates = {}
+            lines = []
+            for i in range(2):
+                lines.append(self.dir_labels[i].lower() + '_files=' + \
+                             self.dirs[i].text().replace(getUser(), '$USER$'))
+            updates['Files'] = lines
+            SaveIni(updates, ini_file=self.config_file)
         self.close()
 
     def checkClicked(self):
@@ -794,8 +796,8 @@ class getMERRA2(QtWidgets.QDialog):
                 int(self.end_date.date().day()))
         i = self.dir_labels.index(me.title())
         tgt_dir = self.dirs[i].text()
-        wgot = invokeWget(self.ini_file, me, date1, date2, self.northSpin.value(),
-               self.southSpin.value(), self.westSpin.value(), self.eastSpin.value(), tgt_dir, True)
+        wgot = invokeWget(self.ini_file, me, date1, date2, self.southSpin.value(),
+               self.northSpin.value(), self.westSpin.value(), self.eastSpin.value(), tgt_dir, True)
         self.log.setText(wgot)
         return
 
@@ -997,7 +999,7 @@ if '__main__' == __name__:
         if date2 < date1:
             print('Date2 (End) less than Date1 (Start)')
             sys.exit(4)
-        wgot = invokeWget(ini_file, coll, date1, date2, lat1, lat2, lon1, lon2, tgt_dir, spawn_wget)
+        wgot = invokeWget(ini_file, coll, date1, date2, lat2, lat1, lon1, lon2, tgt_dir, spawn_wget)
         print(wgot)
         sys.exit()
     else:
