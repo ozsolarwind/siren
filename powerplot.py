@@ -1073,8 +1073,9 @@ class PowerPlot(QtWidgets.QWidget):
                 bx.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 2), prop=lbl_font)
                 plt.ylim([miny, maxy])
                 plt.xlim([0, len(x)])
-                plt.xticks(list(range(0, len(x), 24 * days_per_label)))
-                bx.set_xticklabels(day_labels, rotation='vertical')
+                xticks = list(range(0, len(x), 24 * days_per_label))
+                plt.xticks(xticks)
+                bx.set_xticklabels(day_labels[:len(xticks)], rotation='vertical')
                 bx.set_xlabel('Period')
                 zp = ZoomPanX()
                 f = zp.zoom_pan(bx, base_scale=1.2, flex_ticks=flex_on) # enable scrollable zoom
