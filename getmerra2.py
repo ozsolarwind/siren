@@ -35,9 +35,14 @@ from senuser import getUser
 import worldwindow
 
 def spawn(who, cwd, log):
+    pid = ''
     stdoutf = cwd + '/' + log
     stdout = open(stdoutf, 'wb')
-    who = who.split(' ')
+    if who[0] == '"':
+        e = who.find('"', 1)
+        who = [who[:e + 1]] + who[e + 1:].strip().split(' ')
+    else:
+        who = who.split(' ')
   #  for i in range(len(who)):
    #     who[i] = who[i].replace('~', os.path.expanduser('~'))
     try:
@@ -46,8 +51,9 @@ def spawn(who, cwd, log):
         else:
             pid = subprocess.Popen([who], cwd=cwd, stderr=subprocess.STDOUT, stdout=stdout).pid
     except:
+        return pid, sys.exc_info()[0]
         pass
-    return
+    return pid, None
 
 def checkFiles(chk_key, tgt_dir, ini_file=None, collection=None):
     def get_range(top):
@@ -241,8 +247,11 @@ def invokeWget(ini_file, coll, date1, date2, lat1, lat2, lon1, lon2, tgt_dir, sp
     if sys.platform == 'linux' or sys.platform == 'linux2':
         os.chmod(tgt_dir + '/' + bat_file, 0o777)
     if spawn_wget:
-        spawn(bat_cmd, cwd, log_file)
-        return 'wget being launched (logging to: ' + log_file +')'
+        pid, msg = spawn(bat_cmd, cwd, log_file)
+        if msg == None:
+            return 'wget being launched (pid=' + str(pid) + '; logging to: ' + log_file +')'
+        else:
+            return 'wget launch returned error: ' + msg
     return bat_file + ', ' + wget_file + ' (' + str(days) + ' days) created.'
 
 
@@ -471,8 +480,8 @@ class getMERRA2(QtWidgets.QDialog):
         area = QtWidgets.QPushButton('Choose area via Map', self)
         self.grid.addWidget(area, 0, 1, 1, 2)
         area.clicked.connect(self.areaClicked)
-        self.grid.addWidget(QtWidgets.QLabel('Upper left:'), 1, 0, 1, 2)
-   #     self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignCenter)
+        self.grid.addWidget(QtWidgets.QLabel('Upper left:'), 1, 0, 1, 1)
+        self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignRight)
         self.grid.addWidget(QtWidgets.QLabel('North'), 2, 0)
         self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignRight)
         self.grid.addWidget(self.northSpin, 2, 1)
@@ -480,7 +489,6 @@ class getMERRA2(QtWidgets.QDialog):
         self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignRight)
         self.grid.addWidget(self.westSpin, 3, 1)
         self.grid.addWidget(QtWidgets.QLabel('Lower right:'), 1, 2)
-    #    self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignCenter)
         self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignRight)
         self.grid.addWidget(QtWidgets.QLabel('South'), 2, 2)
         self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignRight)
@@ -489,7 +497,6 @@ class getMERRA2(QtWidgets.QDialog):
         self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignRight)
         self.grid.addWidget(self.eastSpin, 3, 3)
         self.grid.addWidget(QtWidgets.QLabel('Centre:'), 1, 4)
-   #     self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignCenter)
         self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignRight)
         self.grid.addWidget(QtWidgets.QLabel('Lat.'), 2, 4)
         self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignRight)
@@ -498,16 +505,14 @@ class getMERRA2(QtWidgets.QDialog):
         self.grid.itemAt(self.grid.count() - 1).setAlignment(QtCore.Qt.AlignRight)
         self.grid.addWidget(self.lonSpin, 3, 5)
         self.grid.addWidget(QtWidgets.QLabel('Degrees'), 1, 6)
-   #     self.grid.addWidget(QtGui.QLabel('  South'), 2, 2)
         self.grid.addWidget(self.latwSpin, 2, 6)
-  #      self.grid.addWidget(QtGui.QLabel('  East'), 3, 2)
         self.grid.addWidget(self.lonwSpin, 3, 6)
         self.grid.addWidget(QtWidgets.QLabel('Approx. area:'), 4, 0)
         self.approx_area = QtWidgets.QLabel('')
         self.grid.addWidget(self.approx_area, 4, 1)
         self.grid.addWidget(QtWidgets.QLabel('MERRA dimensions:'), 4, 2)
         self.merra_cells = QtWidgets.QLabel('')
-        self.grid.addWidget(self.merra_cells, 4, 3)
+        self.grid.addWidget(self.merra_cells, 4, 3, 1, 2)
         self.grid.addWidget(QtWidgets.QLabel('Start date:'), 5, 0)
         self.strt_date = QtWidgets.QDateEdit(self)
         self.strt_date.setDate(QtCore.QDate.currentDate().addDays(-self.wait_days))
@@ -538,7 +543,7 @@ class getMERRA2(QtWidgets.QDialog):
         self.dirs = [None, None, None]
         for i in range(2):
             self.grid.addWidget(QtWidgets.QLabel(self.dir_labels[i] + ' files:'), 8 + i * 2, 0)
-            self.grid.addWidget(QtWidgets.QLabel(datasets[i]), 8 + i * 2, 1, 1, 4)
+            self.grid.addWidget(QtWidgets.QLabel(datasets[i]), 8 + i * 2, 1, 1, 5)
             self.grid.addWidget(QtWidgets.QLabel('    Target Folder:'), 9 + i * 2, 0)
             self.dirs[i] = ClickableQLabel()
             try:
@@ -547,7 +552,7 @@ class getMERRA2(QtWidgets.QDialog):
                 self.dirs[i].setText(cur_dir)
             self.dirs[i].setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
             self.dirs[i].clicked.connect(self.dirChanged)
-            self.grid.addWidget(self.dirs[i], 9 + i * 2, 1, 1, 4)
+            self.grid.addWidget(self.dirs[i], 9 + i * 2, 1, 1, 8)
         self.log = QtWidgets.QLabel('')
         msg_palette = QtGui.QPalette()
         msg_palette.setColor(QtGui.QPalette.Foreground, QtCore.Qt.red)
@@ -587,7 +592,7 @@ class getMERRA2(QtWidgets.QDialog):
         self.layout.addWidget(frame2)
         self.setWindowTitle('SIREN - getmerra2 (' + fileVersion() + ') - Get MERRA-2 data')
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
-        self.resize(int(self.sizeHint().width()* 1.4), int(self.sizeHint().height() * 1.07))
+        self.resize(int(self.sizeHint().width()* 1.5), int(self.sizeHint().height() * 1.07))
         self.updated = False
         self.show()
 
