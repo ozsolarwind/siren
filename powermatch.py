@@ -1261,17 +1261,22 @@ class powerMatch(QtWidgets.QWidget):
                 self.getoptimisation(ws)
                 ts.release_resources()
                 del ts
+                if self.optimisation is None:
+                    if err_msg != '':
+                        err_msg += ' not an Optimisation worksheet'
+                    else:
+                        err_msg = 'Not an optimisation worksheet'
             except FileNotFoundError:
                 if err_msg != '':
                     err_msg += ' nor Optimisation - ' + self.files[O].text()
                 else:
                     err_msg = 'Optimisation file not found - ' + self.files[O].text()
-                self.getoptimisation(None)
             except:
                 if err_msg != '':
                     err_msg += ' and Optimisation'
                 else:
                     err_msg = 'Error accessing Optimisation'
+            if self.optimisation is None:
                 self.getoptimisation(None)
         if err_msg != '':
             self.setStatus(err_msg)
