@@ -729,12 +729,14 @@ class makeWeather():
                 else:
                     self.caller.progress(mt * 2 / 36.)
                 self.caller.daybar.setMaximum(dys[mt])
+                QtCore.QCoreApplication.processEvents()
             for dy in range(1, dys[mt] + 1):
                 if self.src_zone <= 0:
                     if mt == 0 and dy == 1:
                         continue
                 if self.show_progress:
                     self.caller.daybar.setValue(dy)
+                    QtCore.QCoreApplication.processEvents()
                 for yr in range(yrs):
                     inp_strt = '{0:04d}'.format(self.the_year) + '{0:02d}'.format(mt + 1) + \
                                '{0:02d}'.format(dy)
@@ -778,6 +780,7 @@ class makeWeather():
             if self.show_progress:
                 self.caller.daybar.setValue(0)
                 self.caller.progresslabel.setText('Creating wind weather files')
+                QtCore.QCoreApplication.processEvents()
             target_dir = self.tgt_dir
             self.log += 'Target directory is %s\n' % target_dir
             if not os.path.exists(target_dir):
@@ -786,9 +789,11 @@ class makeWeather():
             if self.src_lat is not None:   # specific location(s)
                 if self.show_progress:
                     self.caller.daybar.setMaximum(len(self.src_lat) - 1)
+                    QtCore.QCoreApplication.processEvents()
                 for i in range(len(self.src_lat)):
                     if self.show_progress:
                         self.caller.daybar.setValue(i)
+                        QtCore.QCoreApplication.processEvents()
                     out_file = self.tgt_dir + 'wind_weather_' + str(self.src_lat[i]) + '_' + \
                                str(self.src_lon[i]) + '_' + str(self.src_year) + '.' + self.fmat
                     tf = open(out_file, 'w')
@@ -869,10 +874,12 @@ class makeWeather():
             else: # all locations
                 if self.show_progress:
                     self.caller.daybar.setMaximum(len(self.lats) * len(self.lons))
+                    QtCore.QCoreApplication.processEvents()
                 for la in range(len(self.lats)):
                     for lo in range(len(self.lons)):
                         if self.show_progress:
                             self.caller.daybar.setValue(len(self.lats) * la + lo)
+                            QtCore.QCoreApplication.processEvents()
                         with_gaps = 0
                         missing = False
                         out_file = self.tgt_dir + 'wind_weather_' + '{:0.4f}'.format(self.lats[la]) + \
@@ -976,12 +983,14 @@ class makeWeather():
                 self.caller.progress((mt + 24) / 36.)
                 self.caller.daybar.setMaximum(dys[mt])
                 self.caller.progresslabel.setText(txt[:-1])
+                QtCore.QCoreApplication.processEvents()
             for dy in range(1, dys[mt] + 1):
                 if self.src_zone <= 0:
                     if mt == 0 and dy == 1:
                         continue
                 if self.show_progress:
                     self.caller.daybar.setValue(dy)
+                    QtCore.QCoreApplication.processEvents()
                 found = False
                 for yr in range(yrs):
                     inp_strt = '{0:04d}'.format(self.the_year) + '{0:02d}'.format(mt + 1) + \
@@ -1014,6 +1023,7 @@ class makeWeather():
         if self.show_progress:
             self.caller.daybar.setValue(0)
             self.caller.progresslabel.setText('Creating solar weather files')
+            QtCore.QCoreApplication.processEvents()
         target_dir = self.tgt_dir
         self.log += 'Target directory is %s\n' % target_dir
         if not os.path.exists(target_dir):
@@ -1022,9 +1032,11 @@ class makeWeather():
         if self.src_lat is not None:  # specific location(s)
             if self.show_progress:
                 self.caller.daybar.setMaximum(len(self.src_lat) - 1)
+                QtCore.QCoreApplication.processEvents()
             for i in range(len(self.src_lat)):
                 if self.show_progress:
                     self.caller.daybar.setValue(i)
+                    QtCore.QCoreApplication.processEvents()
                 out_file = self.tgt_dir + 'solar_weather_' + \
                            str(self.src_lat[i]) + '_' + str(self.src_lon[i]) + '_' + str(self.src_year) + '.' + self.fmat
                 tf = open(out_file, 'w')
@@ -1121,10 +1133,12 @@ class makeWeather():
         else: # all locations
             if self.show_progress:
                 self.caller.daybar.setMaximum(len(self.lats) * len(self.lons))
+                QtCore.QCoreApplication.processEvents()
             for la in range(len(self.lats)):
                 for lo in range(len(self.lons)):
                     if self.show_progress:
                         self.caller.daybar.setValue(len(self.lats) * la + lo)
+                        QtCore.QCoreApplication.processEvents()
                     with_gaps = 0
                     missing = False
                     out_file = self.tgt_dir + 'solar_weather_' + '{:0.4f}'.format(self.lats[la]) + \
