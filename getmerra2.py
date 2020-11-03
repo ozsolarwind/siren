@@ -45,11 +45,16 @@ def spawn(who, cwd, log):
         who = who.split(' ')
   #  for i in range(len(who)):
    #     who[i] = who[i].replace('~', os.path.expanduser('~'))
+    startupinfo = subprocess.STARTUPINFO()
+    if sys.argv[0][-4:] == '.exe': # avoide need for console window?
+        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
     try:
         if type(who) is list:
-            pid = subprocess.Popen(who, cwd=cwd, stderr=subprocess.STDOUT, stdout=stdout).pid
+            pid = subprocess.Popen(who, cwd=cwd, startupinfo=startupinfo, stderr=subprocess.STDOUT,
+                                   stdout=stdout).pid
         else:
-            pid = subprocess.Popen([who], cwd=cwd, stderr=subprocess.STDOUT, stdout=stdout).pid
+            pid = subprocess.Popen([who], cwd=cwd, startupinfo=startupinfo,
+                                   stderr=subprocess.STDOUT, stdout=stdout).pid
     except:
         return pid, sys.exc_info()[0]
         pass
