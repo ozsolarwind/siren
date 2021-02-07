@@ -45,9 +45,11 @@ def spawn(who, cwd, log):
         who = who.split(' ')
   #  for i in range(len(who)):
    #     who[i] = who[i].replace('~', os.path.expanduser('~'))
-    startupinfo = subprocess.STARTUPINFO()
-    if sys.argv[0][-4:] == '.exe': # avoide need for console window?
+    if sys.argv[0][-4:] == '.exe': # avoid need for console window?
+        startupinfo = subprocess.STARTUPINFO()
         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+    else:
+        startupinfo = None
     try:
         if type(who) is list:
             pid = subprocess.Popen(who, cwd=cwd, startupinfo=startupinfo, stderr=subprocess.STDOUT,
@@ -253,7 +255,7 @@ def invokeWget(ini_file, coll, date1, date2, lat1, lat2, lon1, lon2, tgt_dir, sp
         os.chmod(tgt_dir + '/' + bat_file, 0o777)
     if spawn_wget:
         pid, msg = spawn(bat_cmd, cwd, log_file)
-        if msg == None:
+        if msg is None:
             return 'wget being launched (pid=' + str(pid) + '; logging to: ' + log_file +')'
         else:
             return 'wget launch returned error: ' + msg
@@ -401,7 +403,7 @@ class getMERRA2(QtWidgets.QDialog):
         if not ok:
             netrcmsg = '.netrc file missing.\n(' + netrc + ')\nDo you want create one?'
             if sys.platform == 'win32' or sys.platform == 'cygwin':
-                netrcmsg += '\nYou will need to reinvoke getMERRA2.'
+                netrcmsg += '\nYou will need to reinvoke getmerra2.'
             reply = QtWidgets.QMessageBox.question(self, 'SIREN - getmerra2 - No .netrc file',
                     netrcmsg,
                     QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No, QtWidgets.QMessageBox.No)
@@ -515,7 +517,7 @@ class getMERRA2(QtWidgets.QDialog):
         self.grid.addWidget(QtWidgets.QLabel('Approx. area:'), 4, 0)
         self.approx_area = QtWidgets.QLabel('')
         self.grid.addWidget(self.approx_area, 4, 1)
-        self.grid.addWidget(QtWidgets.QLabel('MERRA dimensions:'), 4, 2)
+        self.grid.addWidget(QtWidgets.QLabel('MERRA-2 dimensions:'), 4, 2)
         self.merra_cells = QtWidgets.QLabel('')
         self.grid.addWidget(self.merra_cells, 4, 3, 1, 2)
         self.grid.addWidget(QtWidgets.QLabel('Start date:'), 5, 0)
@@ -628,7 +630,7 @@ class getMERRA2(QtWidgets.QDialog):
 
     def helpClicked(self):
         dialog = displayobject.AnObject(QtWidgets.QDialog(), self.help,
-                 title='Help for getting MERRA data (' + fileVersion() + ')', section='getmerra2')
+                 title='Help for getting MERRA-2 data (' + fileVersion() + ')', section='getmerra2')
         dialog.exec_()
 
     def exit(self):

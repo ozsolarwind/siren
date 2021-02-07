@@ -383,12 +383,12 @@ class makeWeather():
         self.return_code = 0
         if self.longrange[0] is not None:
             if int(round(self.longrange[0] / 15)) != self.src_zone:
-                self.log += 'MERRA west longitude (%s) in different time zone: %s\n' % ('{:0.4f}'.format(self.longrange[0]),
+                self.log += 'MERRA-2 west longitude (%s) in different time zone: %s\n' % ('{:0.4f}'.format(self.longrange[0]),
                             int(round(self.longrange[0] / 15)))
                 self.return_code = 1
         if self.longrange[1] is not None:
             if int(round(self.longrange[1] / 15)) != self.src_zone:
-                self.log += 'MERRA east longitude (%s) in different time zone: %s\n' % ('{:0.4f}'.format(self.longrange[1]),
+                self.log += 'MERRA-2 east longitude (%s) in different time zone: %s\n' % ('{:0.4f}'.format(self.longrange[1]),
                             int(round(self.longrange[1] / 15)))
                 self.return_code = 1
         return
@@ -629,7 +629,7 @@ class makeWeather():
                         except:
                             zones[zone] = 1
                     self.src_zone = max(zones, key=lambda k: zones[k])
-            self.log += 'Time zone: %s based on MERRA (west) longitude (%s to %s)\n' % (str(self.src_zone),
+            self.log += 'Time zone: %s based on MERRA-2 (west) longitude (%s to %s)\n' % (str(self.src_zone),
                         '{:0.4f}'.format(longitude[0]), '{:0.4f}'.format(longitude[-1]))
             cdf_file.close()
         else:
@@ -800,7 +800,7 @@ class makeWeather():
                     hdr = 'id,<city>,<state>,<country>,%s,%s,%s,0,1,8760\n' % (str(self.src_year),
                           round(self.src_lat[i], 4), round(self.src_lon[i], 4))
                     tf.write(hdr)
-                    tf.write('Wind data derived from MERRA tavg1_2d_slv_Nx' + '\n')
+                    tf.write('Wind data derived from MERRA-2 tavg1_2d_slv_Nx' + '\n')
                     if len(self.s10m) > 0:
                         tf.write('Temperature,Pressure,Direction,Speed,Temperature,Direction,Speed,' +
                                  'Direction,Speed' + '\n')
@@ -888,7 +888,7 @@ class makeWeather():
                         hdr = 'id,<city>,<state>,<country>,%s,%s,%s,0,1,8760\n' % (str(self.src_year),
                               round(self.lats[la], 4), round(self.lons[lo], 4))
                         tf.write(hdr)
-                        tf.write('Wind data derived from MERRA tavg1_2d_slv_Nx' + '\n')
+                        tf.write('Wind data derived from MERRA-2 tavg1_2d_slv_Nx' + '\n')
                         if len(self.s10m) > 0:
                             tf.write('Temperature,Pressure,Direction,Speed,Temperature,Direction,' +
                                      'Speed,Direction,Speed' + '\n')
@@ -1282,7 +1282,7 @@ class getParms(QtWidgets.QWidget):
         for i in range(-12, 13):
             self.zoneCombo.addItem(str(i))
         self.zoneCombo.currentIndexChanged[str].connect(self.zoneChanged)
-        self.zone_lon = QtWidgets.QLabel(('Time zone calculated from MERRA data'))
+        self.zone_lon = QtWidgets.QLabel(('Time zone calculated from MERRA-2 data'))
         self.grid.addWidget(self.zoneCombo, rw, 1)
         self.grid.addWidget(self.zone_lon, rw, 2, 1, 3)
         rw += 1
@@ -1377,7 +1377,7 @@ class getParms(QtWidgets.QWidget):
         self.scroll.setWidget(frame)
         self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
-        self.setWindowTitle('makeweatherfiles (' + fileVersion() + ') - Make weather files from MERRA data')
+        self.setWindowTitle('makeweatherfiles (' + fileVersion() + ') - Make weather files from MERRA-2 data')
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         self.center()
         self.resize(int(self.sizeHint().width()* 1.27), int(self.sizeHint().height() * 1.07))
@@ -1401,7 +1401,7 @@ class getParms(QtWidgets.QWidget):
 
     def zoneChanged(self, val):
         if self.zoneCombo.currentIndex() <= 1:
-            lon = '(Time zone calculated from MERRA data)'
+            lon = '(Time zone calculated from MERRA-2 data)'
         else:
             lw = int(self.zoneCombo.currentIndex() - 14) * 15 - 7.5
             le = int(self.zoneCombo.currentIndex() - 14) * 15 + 7.5

@@ -148,7 +148,7 @@ class Credits(QtWidgets.QDialog):
                           ' Help -> About, for more details):')
             labels.append('SIREN uses System Advisor Model (SAM) modules for energy calculations. SAM is provided' +
                           ' by NREL for the US DOE')
-            labels.append('SIREN may use weather data obtained from MERRA data, a NASA atmospheric data set')
+            labels.append('SIREN may use weather data obtained from MERRA-2 data, a NASA atmospheric data set')
             labels.append('SIREN may use a map derived from OpenStreetMap (MapQuest) Open Aerial Tiles')
             for i in range(len(labels)):
                 labl = QtWidgets.QLabel(labels[i])

@@ -1,10 +1,10 @@
 Program,Version
 flexiplot,3.0.2020.622
 getmap,3.0.2020.613
-getmerra2,3.0.2020.613
+getmerra2,3.0.2020.1103
 indexweather,3.0.2020.608
 makegrid,3.0.2020.614
-makeweatherfiles,3.0.2020.621
+makeweatherfiles,3.0.2020.1102
 powermatch,3.0.2020.623
 powerplot,3.0.2020.613
 siren,3.0.2020.623
