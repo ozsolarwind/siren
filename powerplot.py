@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2019-2020 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2019-2021 Sustainable Energy Now Inc., Angus King
 #
 #  powerplot.py - This file is possibly part of SIREN.
 #
@@ -378,6 +378,7 @@ class PowerPlot(QtWidgets.QWidget):
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         self.center()
         self.resize(int(self.sizeHint().width() * 1.07), int(self.sizeHint().height() * 1.07))
+        self.log.setText('Preferences file: ' + self.config_file)
         self.show()
 
     def center(self):
