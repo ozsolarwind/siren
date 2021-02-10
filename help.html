@@ -128,6 +128,7 @@ ul {
 <p>The SEN SAM simulation, SIREN, is used to calculate energy generation for renewable energy power stations. The program uses the SAM SDK API for energy calculations. SAM is provided by the NREL. This help briefly describes how to use the simulation.</p>
 <h2>Contents</h2>
 <ul class="none">
+<li><a href="#licence">Licence</a></li>
 <li><a href="#overview">Overview</a></li>
 <li><a href="#install">Installation</a></li>
 <ul class="none">
@@ -177,6 +178,10 @@ ul {
 </ul>
 <li><a href="#acronyms">Acronyms</a></li>
 </ul>
+<h3 id="licence">Licence</h3>
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+You should have received a copy of the GNU Affero General Public License along with this program. If not, see <a href="http://www.gnu.org/licenses/">http://www.gnu.org/licenses/</a>. The source for the program is included in the packaged versions and also available at <a href="https://github.com/ozsolarwind/siren">https://github.com/ozsolarwind/siren</a>.
 <h2 id="overview">Overview</h2>
 <p>Welcome to SEN's renewable energy conceptual simulation - SIREN.</p>
 <p>The worlds renewable energy resources could provide many times the amount of fossil-fuelled energy currently used. SEN's computer simulation models an electricity network and allows you to create, cost and evaluate scenarios for supplying electricity using a mixture of renewable energy sources.</p>
@@ -243,7 +248,7 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 <li><em>source</em> contains the Python source programs for SIREN</li>
 </ul>
 <p>The first time you open SIREN (without passing a target file or folder) it will present a window titled &lsquo;Choose location for SIREN model (preferences) files&rsquo; to allow you to choose the location for your SIREN Models. SIREN stores this location (in <em>siren_models_location.txt</em> in the <em>siren</em> folder) and uses this as the location of the SIREN Models whenever you invoke SIREN without a target file or location.</p>
-<p>When you open SIREN you will be presented with a list of SIREN Models (Preferences files). Choose the SIREN Model you want by clicking on your choice. You can sort the list presented in order of either Preferences File, SIREN Model or Date modified (last time the Preferences file was saved) by right-clicking the appropriate column header. If want to use a specific Preferences file you can open the simulation passing the alternate file name, or a folder, as a parameter, as in these examples:</p>
+<p>When you open SIREN you will be presented with a list of SIREN Models (Preferences files). Choose the SIREN Model you want by clicking on your choice. It is also possible to launch tools for the model by right-clicking on your choice - the tools are as described in <a href="#tools">Tools</a>. You can sort the list presented in order of either Preferences File, SIREN Model or Date modified (last time the Preferences file was saved) by right-clicking the appropriate column header. If want to use a specific Preferences file you can open the simulation passing the alternate file name, or a folder, as a parameter, as in these examples:</p>
 <pre>
       siren.exe
       siren.exe SIREN_NWIS.ini
@@ -261,7 +266,7 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 <div class="experiment">
 <table border="0", class="none">
 <tr class="none">
-<td class="none"><img src="line.png" alt="flexiplot">&nbsp;&nbsp;flexiplot&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td class="none"><img src="line.png" alt="flexiplot">&nbsp;&nbsp;flexiplot&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
 <td class="none">Invoke <code>flexiplot</code> to create plots from Excel columns or rows (see <a href="#flexiplot">Flexiplot</a>)</td>
 </tr>
 </table>
@@ -276,7 +281,7 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 <td class="none">Invoke <code>getmerra2</code> to download MERRA-2 data files (see <a href="#getmerra2">Get MERRA-2 Files</a>)</td>
 </tr>
 <tr class="none">
-<td class="none"><img src="weather_b.png" alt="makeweatherfiles">&nbsp;&nbsp;makeweatherfiles</td>
+<td class="none"><img src="weather.png" alt="makeweatherfiles">&nbsp;&nbsp;makeweatherfiles</td>
 <td class="none">Invoke <code>makeweatherfiles</code> to create weather files for SAM (see <a href="#makeweather">Produce wind and solar weather files</a>)</td>
 </tr>
 <tr class="none">
@@ -306,6 +311,7 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 </td>
 </tr>
 </table>
+
 <h3 id="sample">Sample SIREN Model</h3>
 <p>The sample SIREN model for the SWIS for 2014 and 2015. The default Preferences files, <em>SIREN.ini</em>, is set up for this data and assumes the <em>siren_sample</em> folder is located in the same parent folder as the <em>siren</em> folder. The sample data contains:
 <ul class="none">
@@ -2401,7 +2407,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <td class="none">List all stations in the current model. By right-clicking a column header you can sort by that column in ascending and then descending order. By left or right-clicking a station you can display the details for that station</td>
 </tr>
 <tr class="none">
-<td class="none"><img src="network_b.png" alt="List Grid">&nbsp;&nbsp;List Grid (Wires; Ctrl+W)</td>
+<td class="none"><img src="network.png" alt="List Grid">&nbsp;&nbsp;List Grid (Wires; Ctrl+W)</td>
 <td class="none">List grid network lines in the current model. By right-clicking a column header you can sort by that column in ascending and then descending order. If <em>[Grid]</em> <em>trace_existing</em> is set existing grid lines will also be displayed</td>
 </tr>
 <tr class="none">
@@ -2438,39 +2444,39 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <td class="none">Modify the view of certain elements of the simulation. Those identified with a tick icon can be toggled on or off</p>
 <table border="0", class="none">
 <tr class="none">
-<td class="none"><img src="check-mark_b.png" alt="Toggle Capacity">&nbsp;&nbsp;Capacity Circles (Ctrl+C)</td>
+<td class="none"><img src="check-mark.png" alt="Toggle Capacity">&nbsp;&nbsp;Capacity Circles (Ctrl+C)</td>
 <td class="none">Display circles for the stations based upon Capacity (True) or station area (False)</td>
 </tr>
 <tr class="none">
-<td class="none"><img src="check-mark_b.png" alt="Toggle Generation">&nbsp;&nbsp;Generation Circles (Ctrl+K)</td>
+<td class="none"><img src="check-mark.png" alt="Toggle Generation">&nbsp;&nbsp;Generation Circles (Ctrl+K)</td>
 <td class="none">Display circles for the stations based upon Generation (True). This will only display circles for stations that have had the Power model run for them</td>
 </tr>
 <tr class="none">
-<td class="none"><img src="check-mark_b.png" alt="Toggle Names">&nbsp;&nbsp;Station Names (Ctrl+N)</td>
+<td class="none"><img src="check-mark.png" alt="Toggle Names">&nbsp;&nbsp;Station Names (Ctrl+N)</td>
 <td class="none">Display all station names (True) or just the current one (False)</td>
 </tr>
 <tr class="none">
-<td class="none"><img src="check-mark_b.png" alt="Toggle Fossil">&nbsp;&nbsp;Fossil-fuelled Stations (Ctrl+F)</td>
+<td class="none"><img src="check-mark.png" alt="Toggle Fossil">&nbsp;&nbsp;Fossil-fuelled Stations (Ctrl+F)</td>
 <td class="none">Display fossil-fuelled stations (True)</td>
 </tr>
 <tr class="none">
-<td class="none"><img src="check-mark_b.png" alt="Scale Ruler">&nbsp;&nbsp;Scale Ruler (Ctrl+R)</td>
+<td class="none"><img src="check-mark.png" alt="Scale Ruler">&nbsp;&nbsp;Scale Ruler (Ctrl+R)</td>
 <td class="none">If True Display a Scale Ruler. If you want to move the ruler you need to toggle it off and then back on again</td>
 </tr>
 <tr class="none">
-<td class="none"><img src="check-mark_b.png" alt="Legend">&nbsp;&nbsp;Show Legend</td>
+<td class="none"><img src="check-mark.png" alt="Legend">&nbsp;&nbsp;Show Legend</td>
 <td class="none">If True Display a legend. The legend displays coloured circles for each technology on the map and squares indicating the <strong>total</strong> land area occupied by these technologies. The legend will be placed (top) right of the map</td>
 </tr>
 <tr class="none">
-<td class="none"><img src="check-mark_b.png" alt="Show Towns">&nbsp;&nbsp;Show Towns</td>
+<td class="none"><img src="check-mark.png" alt="Show Towns">&nbsp;&nbsp;Show Towns</td>
 <td class="none">Display Towns (True)</td>
 </tr>
 <tr class="none">
-<td class="none"><img src="check-mark_b.png" alt="Show Existing Grid">&nbsp;&nbsp;Show Existing Grid (Ctrl+H)</td>
+<td class="none"><img src="check-mark.png" alt="Show Existing Grid">&nbsp;&nbsp;Show Existing Grid (Ctrl+H)</td>
 <td class="none">Display the existing grid network (True)</td>
 </tr>
 <tr class="none">
-<td class="none"><img src="check-mark_b.png" alt="Show Existing Grid">&nbsp;&nbsp;Show Existing Grid (Ctrl+2)</td>
+<td class="none"><img src="check-mark.png" alt="Show Existing Grid">&nbsp;&nbsp;Show Existing Grid (Ctrl+2)</td>
 <td class="none">Display the existing detailed grid network if one is available (this grid is not utilised by SIREN; True)</td>
 </tr>
 <tr class="none">
@@ -2478,7 +2484,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <td class="none">Clear any grid trace</td>
 </tr>
 <tr class="none">
-<td class="none"><img src="network_b.png" alt="Show Grid Line">&nbsp;&nbsp;Show Grid Line (Ctrl+J)</td>
+<td class="none"><img src="network.png" alt="Show Grid Line">&nbsp;&nbsp;Show Grid Line (Ctrl+J)</td>
 <td class="none">The option allows you to choose an existing grid line to trace it's path</td>
 </tr>
 <tr class="none">
@@ -2486,7 +2492,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <td class="none">This is a temporary option to refresh the Grid if the grid tracing and shortest path algorithms misbehave</td>
 </tr>
 <tr class="none">
-<td class="none"><img src="check-mark_b.png" alt="Show Coordinates Grid">&nbsp;&nbsp;Show Coordinates Grid</td>
+<td class="none"><img src="check-mark.png" alt="Show Coordinates Grid">&nbsp;&nbsp;Show Coordinates Grid</td>
 <td class="none">Display a grid of latitude and longitude. The spacing of the grid is based upon the geographic size of the map.</td>
 </tr>
 <tr class="none">
@@ -2533,11 +2539,11 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <td class="none">Edit standard Properties for all Technologies. This option allows you to edit the &ldquo;standard&rdquo; variables for all technologies (<em>area</em>, <em>capital_cost</em> and <em>o_m_cost</em>)</td>
 </tr>
 <tr class="none">
-<td class="none"><img src="network_b.png" alt="Dispatchable Lines">&nbsp;&nbsp;Dispatchable Lines Table</td>
+<td class="none"><img src="network.png" alt="Dispatchable Lines">&nbsp;&nbsp;Dispatchable Lines Table</td>
 <td class="none">This will list the <em>dispatchable_lines</em> table showing the range of dispatchable lines for each level of peak dispatchable capacity</td>
 </tr>
 <tr class="none">
-<td class="none"><img src="network_b.png" alt="Standard Lines">&nbsp;&nbsp;Standard Lines Table</td>
+<td class="none"><img src="network.png" alt="Standard Lines">&nbsp;&nbsp;Standard Lines Table</td>
 <td class="none">This will list the <em>standard_lines</em> table showing the range of standard lines for each level of peak capacity</td>
 </tr>
 <tr class="none">
@@ -2585,7 +2591,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 </table>
 </td>
 </tr>
-<tr class="none">
+<tr class="none" id="tools">
 <td class="none"><dfn><strong>Tools</strong></dfn></td>
 <td class="none">Invoke SIREN tools. This will launch the chosen tool as a new task</p>
 <table border="0", class="none">
@@ -2606,7 +2612,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <td class="none">Invoke <code>makegrid</code> to create resource grid file (see <a href="#resource">Visualising Renewable Resource Attributes</a>)</td>
 </tr>
 <tr class="none">
-<td class="none"><img src="weather_b.png" alt="makeweatherfiles">&nbsp;&nbsp;makeweatherfiles</td>
+<td class="none"><img src="weather.png" alt="makeweatherfiles">&nbsp;&nbsp;makeweatherfiles</td>
 <td class="none">Invoke <code>makeweatherfiles</code> to create weather files for SAM (see <a href="#makeweather">Produce wind and solar weather files</a>)</td>
 </tr>
 <tr class="none">
@@ -2685,7 +2691,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <td class="none">Delete nearest station</td>
 </tr>
 <tr class="none">
-<td class="none"><img src="network_b.png" alt="Edit Grid">&nbsp;&nbsp;Edit grid line for station</td>
+<td class="none"><img src="network.png" alt="Edit Grid">&nbsp;&nbsp;Edit grid line for station</td>
 <td class="none">Edit Grid line for station at (this) location. This option allows you to override the default process of connecting the grid line to the nearest existing grid line. By clicking the left mouse button you can indicate where you want the grid line to be positioned; each click adds a new leg to the grid line; double-clicking terminates the edit and connects the grid to the (now) nearest grid line</td>
 </tr>
 <tr class="none">
@@ -2697,7 +2703,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <td class="none">Add station at (this) location</td>
 </tr>
 <tr class="none">
-<td class="none"><img src="weather_b.png" alt="Weather">&nbsp;&nbsp;Show weather for here</td>
+<td class="none"><img src="weather.png" alt="Weather">&nbsp;&nbsp;Show weather for here</td>
 <td class="none">Present a menu to allow you to plot weather values (DHI, DNI, GHI, temperature, wind speed) for this location. You select the weather values you want to display and one of a series of plots to display either by hour or the average for a period. There is also an option to display chosen plots one at a time or all together, that is, display them all and allow you to navigate between them</td>
 </tr>
 <tr class="none">
@@ -4525,15 +4531,15 @@ MERRA-2 Variables
 <td class="none">Overlay items on the world map. Those identified with a tick icon can be toggled on or off</p>
 <table border="0", class="none">
 <tr class="none">
-<td class="none"><img src="check-mark_b.png" alt="Scale Ruler">&nbsp;&nbsp;Scale Ruler (Ctrl+R)</td>
+<td class="none"><img src="check-mark.png" alt="Scale Ruler">&nbsp;&nbsp;Scale Ruler (Ctrl+R)</td>
 <td class="none">If True Display a Scale Ruler. If you want to move the ruler you need to toggle it off and then back on again</td>
 </tr>
 <tr class="none">
-<td class="none"><img src="check-mark_b.png" alt="Show Coordinates Grid">&nbsp;&nbsp;Coordinates Grid (Ctrl+G)</td>
+<td class="none"><img src="check-mark.png" alt="Show Coordinates Grid">&nbsp;&nbsp;Coordinates Grid (Ctrl+G)</td>
 <td class="none">Display a grid for every 10 degrees of latitude and longitude</td>
 </tr>
 <tr class="none">
-<td class="none"><img src="check-mark_b.png" alt="Show MERRA-2 Grid">&nbsp;&nbsp;MERRA-2 Grid (Ctrl+M)</td>
+<td class="none"><img src="check-mark.png" alt="Show MERRA-2 Grid">&nbsp;&nbsp;MERRA-2 Grid (Ctrl+M)</td>
 <td class="none">Display a grid for every MERRA-2 cell. Due to the number of cells (720 latitude x 576 longitude) this is not very useful unless you zoom in</td>
 </tr>
 <tr class="none">

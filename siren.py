@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2016-2020 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2016-2021 Sustainable Energy Now Inc., Angus King
 #
 #  siren.py - This file is part of SIREN.
 #
@@ -44,7 +44,7 @@ class TabDialog(QtWidgets.QDialog):
         self.siren_dir = '.'
         if len(sys.argv) > 1:
             if sys.argv[1][-4:] == '.ini':
-                self.invoke(sys.argv[1])
+                self.invoke('sirenm', sys.argv[1])
                 sys.exit()
             elif os.path.isdir(sys.argv[1]):
                 self.siren_dir = sys.argv[1]
@@ -103,9 +103,6 @@ class TabDialog(QtWidgets.QDialog):
             dialog.exec_()
         if len(self.entries) == 0:
             self.new()
-     #    if len(entries) == 1:
-     #        self.invoke(entries[0][0])
-     #        sys.exit()
         self.setWindowTitle('SIREN (' + fileVersion() + ') - Select SIREN Model')
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         buttonLayout = QtWidgets.QHBoxLayout()
@@ -143,7 +140,7 @@ class TabDialog(QtWidgets.QDialog):
         self.sort_col = 2
         self.order(2)
         self.table.resizeColumnsToContents()
-        self.table.itemClicked.connect(self.Clicked)
+        self.table.viewport().installEventFilter(self)
         fnt = self.table.fontMetrics()
         ln = max_row * max(9, fnt.averageCharWidth())
         ln2 = (len(self.entries) + 8) * (fnt.xHeight() + fnt.lineSpacing())
@@ -186,6 +183,10 @@ class TabDialog(QtWidgets.QDialog):
                 spawnitem[-1].triggered.connect(partial(self.spawn, spawns[i]))
                 spawnMenu.addAction(spawnitem[-1])
             layout.setMenuBar(menubar)
+        self.model_tool = ['flexiplot', 'getmap', 'indexweather', 'makegrid', 'powermatch',
+                           'powerplot', 'sirenm', 'updateswis']
+        self.model_icon = ['line.png', 'map.png', 'list.png', 'grid.png', 'power.png',
+                           'line.png', 'sen24x24.png', 'list.png']
         help = QtWidgets.QAction(QtGui.QIcon('help.png'), 'Help', self)
         help.setShortcut('F1')
         help.setStatusTip('Help')
@@ -201,20 +202,41 @@ class TabDialog(QtWidgets.QDialog):
         size = QtCore.QSize(ln, ln2)
         self.resize(size)
 
-    def Clicked(self):
-        for i, row in enumerate(self.table.selectionModel().selectedRows()):
-            ent = self.table.item(row.row(), 0).text()
-            self.invoke(self.siren_dir + ent)
-        self.quit()
+    def eventFilter(self, source, event):
+        if self.table.selectedIndexes() != []:
+            if event.type() == QtCore.QEvent.MouseButtonRelease:
+                if event.button() == QtCore.Qt.LeftButton:
+                    ent = self.table.item(self.table.currentRow(), 0).text()
+                    self.table.viewport().removeEventFilter(self)
+                    self.invoke('sirenm', self.siren_dir + ent)
+                    self.quit()
+                elif event.button() == QtCore.Qt.RightButton:
+                    ent = self.table.item(self.table.currentRow(), 0).text()
+                    menu = QtWidgets.QMenu()
+                    actions =  []
+                    for i in range(len(self.model_tool)):
+                        actions.append(menu.addAction(QtGui.QIcon(self.model_icon[i]),
+                                                     'Execute ' + self.model_tool[i]))
+                        actions[-1].setIconVisibleInMenu(True)
+                    actions.append(menu.addAction(QtGui.QIcon('edit.png'), 'Edit Preferences'))
+                    actions[-1].setIconVisibleInMenu(True)
+                    action = menu.exec_(self.mapToGlobal(event.pos()))
+                    if action is not None:
+                        if action.text()[:8] == 'Execute ':
+                            self.invoke(action.text()[8:], self.siren_dir + ent)
+                        elif action.text()[-11:] == 'Preferences':
+                            self.editIniFile(self.siren_dir + ent)
+        return QtCore.QObject.event(source, event)
 
-    def invoke(self, ent):
+    def invoke(self, program, ent):
         if sys.platform == 'win32' or sys.platform == 'cygwin':
-            if os.path.exists('sirenm.exe'):
-                pid = subprocess.Popen(['sirenm.exe', ent]).pid
-            elif os.path.exists('sirenm.py'):
-                pid = subprocess.Popen(['sirenm.py', ent], shell=True).pid
+            if os.path.exists(program + '.exe'):
+                pid = subprocess.Popen([program + '.exe', ent]).pid
+            elif os.path.exists(program + '.py'):
+                pid = subprocess.Popen([program + '.py', ent], shell=True).pid
         else:
-            pid = subprocess.Popen(['python3', 'sirenm.py', ent]).pid # python3
+            pid = subprocess.Popen(['python3', program + '.py', ent]).pid # python3
+        return
 
     def new(self):
         do_new = makeNew(self.siren_dir)
@@ -222,6 +244,11 @@ class TabDialog(QtWidgets.QDialog):
         if do_new.ini_file != '':
             self.invoke(do_new.ini_file)
             self.quit()
+
+    def editIniFile(self, ini=None):
+        dialr = EdtDialog(ini)
+        dialr.exec_()
+        return
 
     def showAbout(self):
         dialog = displayobject.AnObject(QtWidgets.QDialog(), self.about, title='About SENs SAM Model')
