@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2017-2020 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2017-2021 Sustainable Energy Now Inc., Angus King
 #
 #  sirenupd.py - This file is part of SIREN.
 #
@@ -75,12 +75,13 @@ class UpdDialog(QtWidgets.QDialog):
                     cur = version.split('.')
                     new = program['Version'].split('.')
                     if new[0] == cur[0]: # must be same major release
-                        cur[-1] = cur[-1].rjust(4, '0')
-                        new[-1] = new[-1].rjust(4, '0')
-                        for b in range(len(cur)):
-                            if new[b] > cur[b]:
-                                new_versions.append([program['Program'], version, program['Version']])
-                                break
+                        curt = ''
+                        newt = ''
+                        for b in range (1, len(cur)):
+                            curt += cur[b].rjust(4, '0')
+                            newt += new[b].rjust(4, '0')
+                        if newt > curt:
+                            new_versions.append([program['Program'], version, program['Version']])
                     elif new[0] > cur[0]:
                         new_versions.append([program['Program'], version, 'New Release'])
             versions.close()
