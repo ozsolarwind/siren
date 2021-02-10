@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2021 Sustainable Energy Now Inc., Angus King
 #
 #  credits.py - This file is part of SIREN.
 #

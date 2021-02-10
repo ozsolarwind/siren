@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2017-2020 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2017-2021 Sustainable Energy Now Inc., Angus King
 #
 #  getmerra2.py - This file is part of SIREN.
 #
