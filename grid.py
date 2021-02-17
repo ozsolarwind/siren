@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2020 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2021 Sustainable Energy Now Inc., Angus King
 #
 #  grid.py - This file is part of SIREN.
 #
@@ -53,6 +53,8 @@ def within_map(x, y, poly):
 
 
 def dust(pyd, pxd, y1d, x1d, y2d, x2d):   # debug
+    if y1d == y2d and x1d == x2d:
+        return [-1]
     px = radians(pxd)
     py = radians(pyd)
     x1 = radians(x1d)
