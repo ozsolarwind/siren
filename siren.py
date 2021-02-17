@@ -186,7 +186,7 @@ class TabDialog(QtWidgets.QDialog):
         self.model_tool = ['flexiplot', 'getmap', 'indexweather', 'makegrid', 'powermatch',
                            'powerplot', 'sirenm', 'updateswis']
         self.model_icon = ['line.png', 'map.png', 'list.png', 'grid.png', 'power.png',
-                           'line.png', 'sen24x24.png', 'list.png']
+                           'line.png', 'sen_icon32.png', 'list.png']
         help = QtWidgets.QAction(QtGui.QIcon('help.png'), 'Help', self)
         help.setShortcut('F1')
         help.setStatusTip('Help')
