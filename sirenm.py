@@ -2072,6 +2072,7 @@ class MainWindow(QtWidgets.QMainWindow):
         act10 = 'Position ruler here'
         act11 = 'Position legend here'
         act14 = 'Show weather for here'
+        act15 = 'Show details for nearest grid line'
         subPwr = []
         if station is not None:  # a stations
             noAction = menu.addAction(titl)
@@ -2103,6 +2104,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 trcAction = ''
         addsAction = menu.addAction(QtGui.QIcon('plus.png'), act7)
         addsAction.setIconVisibleInMenu(True)
+        linAction = menu.addAction(QtGui.QIcon('line.png'), act15)
+        linAction.setIconVisibleInMenu(True)
         sunAction = menu.addAction(QtGui.QIcon('weather.png'), act14)
         sunAction.setIconVisibleInMenu(True)
         subWthr = []
@@ -2174,6 +2177,21 @@ class MainWindow(QtWidgets.QMainWindow):
             self.showLegend.setIcon(QtGui.QIcon('check-mark.png'))
             self.view.scene().show_legend = True
             self.view.statusmsg.emit('Legend Toggled On')
+        elif action == linAction:
+            shortest = self.view.scene().lines.gridConnect(where.y(), where.x())
+            grid_path_len, centre = self.view.traceGrid(None, coords=self.view.scene().lines.lines[shortest[3]].coordinates)
+            if self.view.scene().lines.lines[shortest[3]].line_table is not None:
+                msg = ', ' +  self.view.scene().lines.lines[shortest[3]].line_table
+            else:
+                msg = ''
+            if self.view.scene().lines.lines[shortest[3]].dispatchable is not None:
+                msg += ', Dispatchable'
+            if self.view.scene().lines.lines[shortest[3]].peak_load is not None:
+                msg += ', Peak load {:0.1f} MW'.format(self.view.scene().lines.lines[shortest[3]].peak_load)
+            self.view.statusmsg.emit('Line: %s (%s Km%s)' % \
+                                    (self.view.scene().lines.lines[shortest[3]].name,
+                                     '{:0.1f}'.format(grid_path_len),
+                                     msg))
         elif action == sunAction:
             PlotWeather(where.y(), where.x(), self.base_year)
             self.view.statusmsg.emit('Weather displayed')
