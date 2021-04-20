@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2018-2020 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2018-2021 Sustainable Energy Now Inc., Angus King
 #
 #  powermatch.py - This file is possibly part of SIREN.
 #
@@ -27,7 +27,8 @@ import displayobject
 import displaytable
 from credits import fileVersion
 from math import log10
-from matplotlib import rcParams
+import matplotlib
+matplotlib.use('TkAgg') # so PyQT5 and Matplotlib windows don't interfere
 import matplotlib.pyplot as plt
 # This import registers the 3D projection, but is otherwise unused.
 from mpl_toolkits.mplot3d import Axes3D
@@ -3297,7 +3298,7 @@ class powerMatch(QtWidgets.QWidget):
             self.setStatus('Final Weight: %.4f' % multi_best_weight)
         # Plot progress
         x = list(range(1, len(best_score_progress)+ 1))
-        rcParams['savefig.directory'] = self.scenarios
+        matplotlib.rcParams['savefig.directory'] = self.scenarios
         plt.figure(fig + QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),
                    '_yyyy-MM-dd_hhmm'))
         lx = plt.subplot(111)
