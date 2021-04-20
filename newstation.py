@@ -105,7 +105,7 @@ class AnObject(QtWidgets.QDialog):
         self.areas = {}
         try:
             technologies = config.get('Power', 'technologies')
-            for item in technologies.split(' '):
+            for item in technologies.split():
                 itm = techClean(item)
                 self.technologies.append(itm)
                 try:

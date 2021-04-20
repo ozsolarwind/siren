@@ -1379,7 +1379,7 @@ class MainWindow(QtWidgets.QMainWindow):
         config = configparser.RawConfigParser()
         config.read(self.config_file)
         technologies = config.get('Power', 'technologies')
-        technologies = technologies.split(' ')
+        technologies = technologies.split()
         try:
             map = config.get('Map', 'map_choice')
         except:
@@ -2187,10 +2187,10 @@ class MainWindow(QtWidgets.QMainWindow):
             if self.view.scene().lines.lines[shortest[3]].dispatchable is not None:
                 msg += ', Dispatchable'
             if self.view.scene().lines.lines[shortest[3]].peak_load is not None:
-                msg += ', Peak load {:0.1f} MW'.format(self.view.scene().lines.lines[shortest[3]].peak_load)
+                msg += ', Peak load {:,.1f} MW'.format(self.view.scene().lines.lines[shortest[3]].peak_load)
             self.view.statusmsg.emit('Line: %s (%s Km%s)' % \
                                     (self.view.scene().lines.lines[shortest[3]].name,
-                                     '{:0.1f}'.format(grid_path_len),
+                                     '{:,.1f}'.format(grid_path_len),
                                      msg))
         elif action == sunAction:
             PlotWeather(where.y(), where.x(), self.base_year)

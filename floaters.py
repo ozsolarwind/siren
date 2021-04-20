@@ -102,7 +102,7 @@ class FloatLegend(QtWidgets.QDialog):
                 txt += 'Circles'
             txt += ' show estimated area in sq. Km'
         if len(txt) > (txt_lens[0] + txt_lens[1]):
-            txts = txt.split(' ')
+            txts = txt.split()
             txt = txts[0]
             ln = len(txt)
             for i in range(1, len(txts)):

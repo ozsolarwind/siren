@@ -235,7 +235,7 @@ class SuperPower():
         var_names = sorted(var_names, key=lambda s: s.lower())
         info = []
         for fld in var_names:
-            bits = fld.split(' ')
+            bits = fld.split()
             msg = bits[0] + ',' + var_typs[int(bits[1])] + ',' + data_typs[int(bits[2])] + ','
             if bits[2] == '1':
                 msg += data.get_string(bits[0])
@@ -1132,7 +1132,7 @@ class SuperPower():
                     bits = lines[i].strip().split(',')
                     if wnd50:
                         bits2 = wlines[i + wnd50_row].strip().split(',')
-                    formulb = propty['formula'].lower().split(' ')
+                    formulb = propty['formula'].lower().split()
                     formula = ''
                     for form in formulb:
                         if form == 'dhi':

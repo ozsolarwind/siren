@@ -169,7 +169,7 @@ class WAScene(QtWidgets.QGraphicsScene):
         self.colors['town'] = 'red'
         self.colors['town_name'] = 'lightGray'
         technologies = config.get('Power', 'technologies')
-        technologies = technologies.split(' ')
+        technologies = technologies.split()
         try:
             colours = config.items('Colors')
             for item, colour in colours:
@@ -192,7 +192,7 @@ class WAScene(QtWidgets.QGraphicsScene):
             pass
         try:
             technologies = config.get('Power', 'fossil_technologies')
-            technologies = technologies.split(' ')
+            technologies = technologies.split()
             for item in technologies:
                 itm = techClean(item)
                 try:

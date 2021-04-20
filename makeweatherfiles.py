@@ -476,7 +476,7 @@ class makeWeather():
                     vals += keys[i] + ': ' + str(values[i]) + ', '
         else:
             for i in range(len(keys)):
-                bits = str(values[i]).strip().split(' ')
+                bits = str(values[i]).strip().split()
                 vals += keys[i] + ': ' + bits[-1] + ', '
         self.log += vals[:-2] + '\n'
         self.log += ' Variables:\n    '

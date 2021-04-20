@@ -96,7 +96,7 @@ class makeFile():
             if nonzero[0].upper() in ('T', 'Y'):
                 self.nonzero = True
         self.tgt_fil = tgt_fil
-        bits = detail.split(' ')
+        bits = detail.split()
         self.hourly = False
         self.daily = False
         if len(bits) < 3:

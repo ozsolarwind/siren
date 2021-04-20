@@ -142,7 +142,7 @@ class Stations:
         self.areas = {}
         try:
             technologies = config.get('Power', 'technologies')
-            for item in technologies.split(' '):
+            for item in technologies.split():
                 itm = techClean(item)
                 self.technologies.append(itm)
                 try:
@@ -153,7 +153,7 @@ class Stations:
             pass
         try:
             technologies = config.get('Power', 'fossil_technologies')
-            technologies = technologies.split(' ')
+            technologies = technologies.split()
             for item in technologies:
                 itm = techClean(item)
                 try:

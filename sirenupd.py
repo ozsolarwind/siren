@@ -51,7 +51,7 @@ class UpdDialog(QtWidgets.QDialog):
         host = 'https://sourceforge.net/projects/sensiren/files/'
         versions_file = 'siren_versions.csv'
         command = 'wget -O %s %s%s' % (versions_file, host, versions_file)
-        command = command.split(' ')
+        command = command.split()
         if self.debug:
             response = '200 OK'
         else:
@@ -143,7 +143,7 @@ class UpdDialog(QtWidgets.QDialog):
                     suffix = ''
                 command = 'wget -O %snew%s %s%s%s' % (self.newprog[p], suffix, host,
                           self.newprog[p], suffix)
-                command = command.split(' ')
+                command = command.split()
                 if self.debug:
                     response = '200 OK'
                 else:

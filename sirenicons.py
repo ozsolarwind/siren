@@ -38,14 +38,14 @@ class Icons:
                       'Other': 'question.png', 'PV': 'solar_pv_g.png',
                       'Solar Thermal': 'solar_g.png', 'Wave': 'wave_g.png', 'Wind': 'wind_g.png'}
         try:
-            technologies = config.get('Power', 'technologies').split(' ')
+            technologies = config.get('Power', 'technologies').split()
             for tec in technologies:
                 tec = techClean(tec)
                 try:
                     self.icons[tec] = config.get(tec, 'icon')
                 except:
                     pass
-            technologies = config.get('Power', 'fossil_technologies').split(' ')
+            technologies = config.get('Power', 'fossil_technologies').split()
             for tec in technologies:
                 tec = techClean(tec)
                 try:

@@ -223,7 +223,7 @@ class Optimisation:
         self.name = name
         self.approach = approach
         if approach == 'Discrete':
-            caps = values.split(' ')
+            caps = values.split()
             self.capacities = []
             cap_max = 0.
             for cap in caps:
@@ -236,7 +236,7 @@ class Optimisation:
             self.capacity_max = round(cap_max, 3)
             self.capacity_step = None
         elif approach == 'Range':
-            caps = values.split(' ')
+            caps = values.split()
             try:
                 self.capacity_min = float(caps[0])
             except:
@@ -989,7 +989,7 @@ class powerMatch(QtWidgets.QWidget):
                 update_dictionary(it, dialog.getValues())
                 for key in self.optimisation.keys():
                     if self.optimisation[key].approach == 'Discrete':
-                        caps = self.optimisation[key].capacities.split(' ')
+                        caps = self.optimisation[key].capacities.split()
                         self.optimisation[key].capacities = []
                         cap_max = 0.
                         for cap in caps:

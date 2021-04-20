@@ -40,9 +40,9 @@ def spawn(who, cwd, log):
     stdout = open(stdoutf, 'wb')
     if who[0] == '"':
         e = who.find('"', 1)
-        who = [who[:e + 1]] + who[e + 1:].strip().split(' ')
+        who = [who[:e + 1]] + who[e + 1:].strip().split()
     else:
-        who = who.split(' ')
+        who = who.split()
   #  for i in range(len(who)):
    #     who[i] = who[i].replace('~', os.path.expanduser('~'))
     if sys.argv[0][-4:] == '.exe': # avoid need for console window?
@@ -241,7 +241,7 @@ def invokeWget(ini_file, coll, date1, date2, lat1, lat2, lon1, lon2, tgt_dir, sp
     cwd = tgt_dir
     bat_file = wget_file[:-3] + 'bat'
     bf = open(tgt_dir + '/' + bat_file, 'w')
-    who = wget_cmd.split(' ')
+    who = wget_cmd.split()
     for i in range(len(who)):
         if who[i] == '-i': # input file
             who[i] = who[i] + ' ' + wget_file
@@ -300,7 +300,7 @@ class fileInfo:
                 self.dimensions += keys[i] + ': ' + str(values[i]) + ', '
         else:
             for i in range(len(keys)):
-                bits = str(values[i]).strip().split(' ')
+                bits = str(values[i]).strip().split()
                 self.dimensions += keys[i] + ': ' + bits[-1] + ', '
         self.variables = ''
         for key in iter(sorted(cdf_file.variables.keys())):

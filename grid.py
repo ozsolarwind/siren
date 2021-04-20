@@ -425,7 +425,7 @@ class Grid:
                 styl = element.text[1:]
             elif elem == 'coordinates':
                 coords = []
-                coordinates = ' '.join(element.text.split()).split(' ')
+                coordinates = ' '.join(element.text.split()).split()
                 for i in range(len(coordinates)):
                     coords.append([float(coordinates[i].split(',')[1]), float(coordinates[i].split(',')[0])])
                 inmap = False
@@ -693,7 +693,7 @@ class Grid_Boundary:
                 styl = element.text[1:]
             elif elem == 'coordinates':
                 coords = []
-                coordinates = ' '.join(element.text.split()).split(' ')
+                coordinates = ' '.join(element.text.split()).split()
                 for i in range(len(coordinates)):
                     coords.append([round(float(coordinates[i].split(',')[1]), 6),
                       round(float(coordinates[i].split(',')[0]), 6)])

@@ -146,7 +146,7 @@ class EditTech():
         config.read(config_file)
         technologies = config.get('Power', 'technologies')
         technologies += ' ' + config.get('Power', 'fossil_technologies')
-        technologies = technologies.split(' ')
+        technologies = technologies.split()
         for i in range(len(technologies)):
             technologies[i] = techClean(technologies[i])
         technologies = sorted(technologies)
