@@ -3147,7 +3147,8 @@ Genetic algorithms are inspired by the process of natural selection and simulate
 <li>The Weight, a value between 0 and 1, to be applied to this variable</li>
 <li>The best target value (Better). A value less than zero indicates the maximum or minimum value. For percentage targets it can be between 0 (i.e 0%) and 1 (i.e 100%). If Better is (positive and) less than Worse we want the lowest value; if Better is greater than Worse we want the highest value</li>
 <li>The worst target value (Worse). A value less than zero indicates the maximum or minimum value</li>
-</ol></td></tr>
+</ol>
+If the best and worse values are the same for a variable and that value is not achieved the variable will be given zero weight for that iteration. As such, it may be helpful to provide even a small difference between the best and worse values to provide some differentiation between solutions</td></tr>
 <tr><td class="lr"><dfn>LCOE</dfn></td>
 <td class="none">A lower value is better (<em>optimise_lcoe</em>)</td></tr>
 <tr><td class="lr"><dfn>Load%</dfn></td>
