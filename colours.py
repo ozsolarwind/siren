@@ -51,12 +51,12 @@ class Colours(QtWidgets.QDialog):
             colour_groups[group] = []
         try:
             technologies = config.get('Power', 'technologies')
-            technologies = technologies.split(' ')
+            technologies = technologies.split()
         except:
             technologies = []
         try:
             fossil_technologies = config.get('Power', 'fossil_technologies')
-            fossil_technologies = fossil_technologies.split(' ')
+            fossil_technologies = fossil_technologies.split()
         except:
             fossil_technologies = []
         self.map = ''
