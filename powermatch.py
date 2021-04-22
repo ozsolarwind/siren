@@ -2,7 +2,7 @@
 #
 #  Copyright (C) 2018-2021 Sustainable Energy Now Inc., Angus King
 #
-#  powermatch.py - This file is possibly part of SIREN.
+#  powermatch.py - This file is part of SIREN.
 #
 #  SIREN is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Affero General Public License as
@@ -2024,6 +2024,8 @@ class powerMatch(QtWidgets.QWidget):
                     'cost': cost_sum, # cost. lower better
                     'co2': co2_sum} # CO2. lower better
                 if option == 'O':
+                    if multi_value['lcoe'] == '':
+                        multi_value['lcoe'] = 0
                     return multi_value, sp_data, None
                 else:
                     extra = [gsw, op_load_tot, sto_sum, re_sum, re_pct, sf_sums]
@@ -2484,7 +2486,7 @@ class powerMatch(QtWidgets.QWidget):
             self.activateWindow()
 
     def setStatus(self, text):
-        if self.log.text == text:
+        if self.log.text() == text:
             return
         self.log.setText(text)
         if text == '':
@@ -2656,13 +2658,14 @@ class powerMatch(QtWidgets.QWidget):
                     except:
                         continue
                     if key[-4:] == '_pct':
-                        if tgt > tgts[key]:
-                            weight += 1 * self.targets[key][1]
-                        else:
-                            try:
-                                weight += 1 - ((tgt / tgts[key]) * self.targets[key][1])
-                            except:
-                                print('(2658)', key, tgts[key], tgt)
+                        if tgts[key] != 0:
+                            if tgt > tgts[key]:
+                                weight += 1 * self.targets[key][1]
+                            else:
+                                try:
+                                    weight += 1 - ((tgt / tgts[key]) * self.targets[key][1])
+                                except:
+                                    pass
                     else:
                         try:
                             weight += 1 - (((maxs[key] - tgt) / (maxs[key] - mins[key])) \
@@ -2794,7 +2797,7 @@ class powerMatch(QtWidgets.QWidget):
             try:
                 surf = mx.scatter(data[0], data[1], data[2], picker=1) # enable picking a point
             except:
-                print('(2790)', data[0], data[1], data[2])
+                print('(2800)', data[0], data[1], data[2])
                 return
             mx.xaxis.set_major_formatter(FormatStrFormatter(self.targets[multi_order[0]][5]))
             mx.yaxis.set_major_formatter(FormatStrFormatter(self.targets[multi_order[1]][5]))
@@ -3124,7 +3127,10 @@ class powerMatch(QtWidgets.QWidget):
             self.chrom = 0
         lcoe_scores, multi_scores, multi_values = calculate_fitness(population)
         if do_lcoe:
-            best_score = np.min(lcoe_scores)
+            try:
+                best_score = np.min(lcoe_scores)
+            except:
+                print('(3133)', lcoe_scores)
             best_ndx = lcoe_scores.index(best_score)
             lowest_chrom = population[best_ndx]
             self.setStatus('Starting LCOE: $%.2f' % best_score)
@@ -3153,23 +3159,28 @@ class powerMatch(QtWidgets.QWidget):
             multi_best_weight = best_multi
             if not do_lcoe:
                 best_score = best_multi
+            last_multi_score = best_multi
+            lowest_multi_score = best_multi
+            mud = '='
         # Add starting best score to progress tracker
         best_score_progress = [best_score]
         best_ctr = 1
         last_score = best_score
         lowest_score = best_score
-        ud = '='
-        if do_lcoe:
-            d_sign = '$'
-        else:
-            d_sign = ''
+        lud = '='
         # Now we'll go through the generations of genetic algorithm
         for generation in range(1, maximum_generation):
+            lcoe_status = ''
+            multi_status = ''
+            if do_lcoe:
+                lcoe_status = ' %s $%.2f ;' % (lud, best_score)
+            if do_multi:
+                multi_status = ' %s %.4f ;' % (mud, best_multi)
             tim = (time.time() - start_time)
             if tim < 60:
-                tim = ' ( %s %s%.4f ; %.1f secs)' % (ud, d_sign, best_score, tim)
+                tim = ' (%s%s %.1f secs)' % (lcoe_status, multi_status, tim)
             else:
-                tim = ' ( %s %s%.4f ; %.2f mins)' % (ud, d_sign, best_score, tim / 60.)
+                tim = ' (%s%s %.2f mins)' % (lcoe_status, multi_status, tim / 60.)
             self.opt_progressbar.barProgress(generation + 1,
                 'Processing generation ' + str(generation + 1) + tim)
             QtWidgets.QApplication.processEvents()
@@ -3234,7 +3245,6 @@ class powerMatch(QtWidgets.QWidget):
                 if not do_lcoe:
                     best_score = best_multi
             best_score_progress.append(best_score)
-            last_score = best_score
             if best_score < lowest_score:
                 lowest_score = best_score
                 if do_lcoe:
@@ -3249,12 +3259,22 @@ class powerMatch(QtWidgets.QWidget):
                 else:
                     last_score = best_score
                     best_ctr = 1
-            if best_score == best_score_progress[-2]:
-                ud = '='
-            elif best_score < best_score_progress[-2]:
-                ud = '<html>&darr;</html>'
-            else:
-                ud = '<html>&uarr;</html>'
+            last_score = best_score
+            if do_lcoe:
+                if best_score == best_score_progress[-2]:
+                    lud = '='
+                elif best_score < best_score_progress[-2]:
+                    lud = '<html>&darr;</html>'
+                else:
+                    lud = '<html>&uarr;</html>'
+            if do_multi:
+                if best_multi == last_multi_score:
+                    mud = '='
+                elif best_multi < last_multi_score:
+                    mud = '<html>&darr;</html>'
+                else:
+                    mud = '<html>&uarr;</html>'
+                last_multi_score = best_multi
         if self.debug:
             try:
                 self.db_file.close()
@@ -3432,8 +3452,8 @@ class powerMatch(QtWidgets.QWidget):
                 try:
                     label = QtWidgets.QLabel(txt % amt)
                 except:
-                    label = '?'
-                    print('(3428)', txt, amt)
+                    label = QtWidgets.QLabel('?')
+                    print('(3456)', key, txt, amt)
                 label.setAlignment(QtCore.Qt.AlignCenter)
                 grid[h + 1].addWidget(label, rw, 0, 1, 2)
             rw += 1
