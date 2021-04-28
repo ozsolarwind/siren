@@ -277,6 +277,10 @@ class Resource(QtWidgets.QDialog):
         self.opacitySpin.setValue(opacity)
         self.opacitySpin.valueChanged[str].connect(self.opacityChanged)
         self.grid.addWidget(self.opacitySpin, row, 1, 1, 2)
+        self.grid.addWidget(QtWidgets.QLabel('Grid only:'), row, 3)
+        self.grid_only = QtWidgets.QCheckBox()
+        self.grid_only.setCheckState(QtCore.Qt.Unchecked)
+        self.grid.addWidget(self.grid_only, row, 4)
         row += 1
         self.grid.addWidget(QtWidgets.QLabel('Low Colour'), row, 1)
         self.grid.addWidget(QtWidgets.QLabel('High Colour'), row, 2)
@@ -751,9 +755,10 @@ class Resource(QtWidgets.QDialog):
                     colr.append(((hi_colour[i] - lo_colour[i]) * pct + lo_colour[i]) / 255.)
                 a_colour = QtGui.QColor()
                 a_colour.setRgbF(colr[0], colr[1], colr[2])
-            if cell[2] >= lo_valu:
-                if cell[2] > 0 or variable == 'temp':
-                    self.resource_items[-1].setBrush(a_colour)
+            if not self.grid_only.isChecked():
+                if cell[2] >= lo_valu:
+                    if cell[2] > 0 or variable == 'temp':
+                        self.resource_items[-1].setBrush(a_colour)
             self.resource_items[-1].setPen(a_colour)
             self.resource_items[-1].setOpacity(opacity)
             self.resource_items[-1].setZValue(1)
