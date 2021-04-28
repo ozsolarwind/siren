@@ -61,7 +61,6 @@ def rreplace(s, old, new, occurrence):
 class Resource(QtWidgets.QDialog):
     procStart = QtCore.pyqtSignal(str)
 
-
     def __init__(self, year=None, scene=None):
         super(Resource, self).__init__()
         self.year = year
@@ -562,7 +561,7 @@ class Resource(QtWidgets.QDialog):
         self.close()
 
     def closeEvent(self, event):
-        self.clear_Resource()
+     #   self.clear_Resource()
         if self.restorewindows:
             updates = {}
             lines = []
@@ -571,8 +570,11 @@ class Resource(QtWidgets.QDialog):
             lines.append('resource_size=%s,%s' % (str(self.width()), str(self.height())))
             updates['Windows'] = lines
             SaveIni(updates)
+        if self.do_loop:
+            self.scene.exitLoop = True
         if self.be_open:
             self.procStart.emit('goodbye')
+        self.hideClicked()
         event.accept()
 
     def quitClicked(self):
