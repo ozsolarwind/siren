@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2019-2020 Angus King
+#  Copyright (C) 2019-2021 Angus King
 #
 #  zoompan.py - This file is used by SIREN.
 #
@@ -35,6 +35,7 @@ class ZoomPanX():
         self.axis = 'x'
         self.d3 = False
         self.datapoint = None
+        self.msg = None
         self.tbar = None
         self.cur_xlim = None
         self.press = None
@@ -116,8 +117,8 @@ class ZoomPanX():
                     self.d3 = True
                 except:
                     self.d3 = False
-            if self.tbar._active is not None:
-                return
+          #  if self.tbar._active is not None:
+           #     return
             if event.button == 3: # reset?
                 self.month = None
                 self.week = None
@@ -140,6 +141,21 @@ class ZoomPanX():
 
         def onRelease(event):
             self.press = None
+            if self.datapoint is not None:
+                # If we have previously displayed another label, remove it first
+                if hasattr(ax, 'label'):
+                    try:
+                        ax.label.remove()
+                    except:
+                        pass
+                x2, y2, _ = proj3d.proj_transform(self.datapoint[0][1], self.datapoint[0][2],
+                            self.datapoint[0][3], ax.get_proj())
+                ax.label = ax.annotate(self.msg, xy = (x2, y2), xytext = (0, 20),
+                           textcoords = 'offset points', ha = 'right', va = 'bottom',
+                           bbox = dict(boxstyle = 'round,pad=0.5', alpha = 0.5),
+                           arrowprops = dict(arrowstyle = '->',
+                                             connectionstyle = 'arc3,rad=0'))
+                set_flex()
             ax.figure.canvas.draw()
 
         def onMotion(event):
@@ -382,8 +398,11 @@ class ZoomPanX():
                     for n in event.ind:
                         self.datapoint.append([n, event.artist._offsets3d[0][n],
                             event.artist._offsets3d[1][n], event.artist._offsets3d[2][n]])
-                    msg = '{:d}: x: {:.2f} y: {:.2f} z: {:.2f}'.format(self.datapoint[0][0],
-                          self.datapoint[0][1], self.datapoint[0][2], self.datapoint[0][3])
+             #       msg = '{:d}: x: {:.2f} y: {:.2f} z: {:.2f}'.format(self.datapoint[0][0],
+             #             self.datapoint[0][1], self.datapoint[0][2], self.datapoint[0][3])
+                    self.msg = '{:d}: {}: {:.2f}\n{}: {:.2f}\n{}: {:.2f}'.format(self.datapoint[0][0],
+                          ax.get_xlabel(), self.datapoint[0][1], ax.get_ylabel(),
+                          self.datapoint[0][2], ax.get_zlabel(), self.datapoint[0][3])
                     # If we have previously displayed another label, remove it first
                     if hasattr(ax, 'label'):
                         try:
@@ -392,7 +411,7 @@ class ZoomPanX():
                             pass
                     x2, y2, _ = proj3d.proj_transform(self.datapoint[0][1], self.datapoint[0][2],
                                 self.datapoint[0][3], ax.get_proj())
-                    ax.label = ax.annotate(msg, xy = (x2, y2), xytext = (0, 20),
+                    ax.label = ax.annotate(self.msg, xy = (x2, y2), xytext = (0, 20),
                                 textcoords = 'offset points', ha = 'right', va = 'bottom',
                                 bbox = dict(boxstyle = 'round,pad=0.5', alpha = 0.5),
                                 arrowprops = dict(arrowstyle = '->',
