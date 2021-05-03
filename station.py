@@ -295,9 +295,9 @@ class Stations:
                                         tech += facility['Fossil']
                                     else:
                                         if bit[-1][:2] == 'GT' or bit[-1][0] == 'U':
-                                            tech += 'Gas'
+                                            tech += 'OCGT'
                                         elif bit[-1][:2] == 'CC':
-                                            tech += 'Gas'
+                                            tech += 'CCGT'
                                         elif bit[-1][:3] == 'COG':
                                             tech += 'Cogen'
                                         elif bit[0] == 'TESLA' or bit[-1] == 'WGP':
