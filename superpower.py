@@ -759,6 +759,7 @@ class SuperPower():
                         break
                 else:
                     col += 1
+                farmpwr = []
                 if col < worksheet.ncols:
                     for i in range(1, worksheet.nrows):
                         farmpwr.append(worksheet.cell_value(i, col) * 1000.)
