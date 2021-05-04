@@ -796,7 +796,7 @@ class powerMatch(QtWidgets.QWidget):
                 curfile = curfile.replace('data', 'results')
                 curfile = curfile.replace('Data', 'Results')
             newfile = QtWidgets.QFileDialog.getSaveFileName(None, 'Save ' + self.file_labels[i] + ' file',
-                      curfile, 'Excel Files (*.xlsx)')[0]
+                      curfile, 'Excel Files (*.xls*)')[0]
         else:
             newfile = QtWidgets.QFileDialog.getOpenFileName(self, 'Open ' + self.file_labels[i] + ' file',
                       curfile)[0]
