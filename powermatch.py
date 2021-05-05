@@ -1463,7 +1463,7 @@ class powerMatch(QtWidgets.QWidget):
     # The "guts" of Powermatch processing. Have a single calculation algorithm
     # for Summary, Powermatch (detail), and Optimise. The detail makes it messy
         the_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-        headers = ['Facility', 'Capacity\n(Gen, MW;\nStor, MWh)', 'Subtotal\n(MWh)', 'CF', 'Cost\n($/yr)',
+        headers = ['Facility', 'Capacity\n(Gen, MW;\nStor, MWh)', 'Subtotal\n(MWh)', 'CF', 'Cost ($/yr)',
                    'LCOE\n($/MWh)', 'Emissions\n(tCO2e)','Reference\nLCOE','Reference\nCF']
         if self.surplus_sign < 0:
             sf_test = ['>', '<']
@@ -2194,6 +2194,7 @@ class powerMatch(QtWidgets.QWidget):
             row = 0
             sum_value = 0
             do_sum = False
+            do_cost = False
             for cell in column_cells:
                 if cell.row >= hrows:
                     if do_sum:
@@ -2220,10 +2221,14 @@ class powerMatch(QtWidgets.QWidget):
                             if alen > length:
                                 length = alen
                     else:
+                        if cell.row == cost_row:
+                            do_cost = True
                         if cell.value[1:4] == 'SUM':
                             do_sum = True
             if sum_value > 0:
                 alen = len(str(int(sum_value))) * 1.5
+                if do_cost:
+                    alen = int(alen * 1.5)
                 if alen > length:
                     length = alen
             if isinstance(cell.column, int):
@@ -2282,6 +2287,8 @@ class powerMatch(QtWidgets.QWidget):
                 cel = ss_col(cell.column)
             else:
                 cel = cell.column
+            if cell.column == 'B':
+                ss.column_dimensions[cel].width = max(length, 18) * 2.
             if cell.column == 'E':
                 ss.column_dimensions[cel].width = max(length, 10) * 2.
             else:
@@ -2401,6 +2408,8 @@ class powerMatch(QtWidgets.QWidget):
             ss_row += 1
             ss.cell(row=ss_row, column=1).value = 'Largest Shortfall:'
             ss.cell(row=ss_row, column=2).value = '=Detail!B' + str(hrows + max_short[0])
+            if ss.column_dimensions['B'].width < 17:
+                ss.column_dimensions['B'].width = 17.4
             ss.cell(row=ss_row, column=3).value = '=Detail!' + last_col + str(hrows + max_short[0])
             ss.cell(row=ss_row, column=3).number_format = '#,##0.00'
         ss_row += 2
