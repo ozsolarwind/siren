@@ -309,7 +309,10 @@ class Stations:
                                         else:
                                             tech += 'Mixed'
                                            #  tech += 'Distillate'
-                                    area = self.areas[tech] * float(facility['Maximum Capacity (MW)'])
+                                    try:
+                                        area = self.areas[tech] * float(facility['Maximum Capacity (MW)'])
+                                    except:
+                                        area = 0
                                 if code:
                                     nice_name = facility['Facility Code']
                                 else:
