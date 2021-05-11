@@ -719,15 +719,21 @@ class WAScene(QtWidgets.QGraphicsScene):
                         except:
                             pass
                         try:
+                            tilt = worksheet.cell_value(curr_row, var['Tilt'])
+                            if tilt != '':
+                                setattr(new_st, 'tilt', tilt)
+                        except:
+                            pass
+                        try:
                             storage_hours = worksheet.cell_value(curr_row, var['Storage Hours'])
                             if storage_hours != '':
-                                new_st.storage_hours = storage_hours
+                                setattr(new_st, 'storage_hours', storage_hours)
                         except:
                             pass
                         self._stations.stations.append(new_st)
                         self.addStation(self._stations.stations[-1])
                     except:
-                        break
+                        pass
             else:
                 scene = open(scen_file)
                 line = scene.readline()
