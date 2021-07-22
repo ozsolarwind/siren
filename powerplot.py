@@ -1156,7 +1156,7 @@ class PowerPlot(QtWidgets.QWidget):
             if self.period.currentText() == 'Year':
                 titl = titl.replace('$MTH$', '')
                 titl = titl.replace('$MONTH$', '')
-                titl = titl.replace('  ', '')
+                titl = titl.replace('  ', ' ')
                 strt_row = [self.toprow[1]]
                 todo_rows = [self.rows]
             else:
