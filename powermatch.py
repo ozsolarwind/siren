@@ -809,6 +809,14 @@ class powerMatch(QtWidgets.QWidget):
                 curfile = self.scenarios + self.files[D].text()
                 curfile = curfile.replace('data', 'results')
                 curfile = curfile.replace('Data', 'Results')
+                if curfile == self.scenarios + self.files[D].text():
+                    j = curfile.find(' ')
+                    if j > 0:
+                        jnr = ' '
+                    else:
+                        jnr = '_'
+                    j = curfile.rfind('.')
+                    curfile = curfile[:j] + jnr + 'Results' + curfile[j:]
             newfile = QtWidgets.QFileDialog.getSaveFileName(None, 'Save ' + self.file_labels[i] + ' file',
                       curfile, 'Excel Files (*.xls*)')[0]
         else:
@@ -822,7 +830,7 @@ class powerMatch(QtWidgets.QWidget):
                     self.generators = None
                 else:
                     self.optimisation = None
-                ts = xlrd.open_workbook(newfile, on_demand = True)
+                ts = xlrd.open_workbook(newfile, on_demand=True)
                 ndx = 0
                 self.sheets[i].clear()
                 j = -1
@@ -1436,12 +1444,22 @@ class powerMatch(QtWidgets.QWidget):
         ts.close()
         self.progressbar.setValue(1)
         if self.files[R].text() == '':
-            i = pm_data_file.find('/')
+            i = pm_data_file.rfind('/')
             if i >= 0:
                 data_file = pm_data_file[i + 1:]
             else:
                 data_file = pm_data_file
             data_file = data_file.replace('data', 'results')
+            data_file = data_file.replace('Data', 'Results')
+            if data_file == pm_data_file[i + 1:]:
+                j = data_file.find(' ')
+                if j > 0:
+                    jnr = ' '
+                else:
+                    jnr = '_'
+                j = data_file.rfind('.')
+                data_file = data_file[:j] + jnr + 'Results' + data_file[j:]
+            self.files[R].setText(data_file)
         else:
             data_file = self.get_filename(self.files[R].text())
         self.progressbar.setValue(2)
