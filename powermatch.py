@@ -39,7 +39,7 @@ import random
 # from openpyxl.utils import get_column_letter
 from parents import getParents
 from senuser import getUser
-from editini import SaveIni
+from editini import EdtDialog, SaveIni
 from floaters import ProgressBar, FloatStatus
 from getmodels import getModelFile
 import xlrd
@@ -752,6 +752,10 @@ class powerMatch(QtWidgets.QWidget):
         opt = QtWidgets.QPushButton('Optimise', self)
         self.grid.addWidget(opt, r, 3)
         opt.clicked.connect(self.pmClicked)
+        editini = QtWidgets.QPushButton('Preferences', self)
+        editini.setMaximumWidth(wdth)
+        self.grid.addWidget(editini, r, 4)
+        editini.clicked.connect(self.editIniFile)
         help = QtWidgets.QPushButton('Help', self)
         help.setMaximumWidth(wdth)
         quit.setMaximumWidth(wdth)
@@ -891,6 +895,16 @@ class powerMatch(QtWidgets.QWidget):
         if self.floatstatus is not None:
             self.floatstatus.exit()
         event.accept()
+
+    def editIniFile(self):
+        if len(sys.argv) > 1:
+            config_file = sys.argv[1]
+        else:
+            config_file = getModelFile('SIREN.ini')
+        dialr = EdtDialog(config_file)
+        dialr.exec_()
+     #   self.get_config()   # refresh config values
+        self.setStatus = config_file + ' edited. Reload may be required.'
 
     def editClicked(self):
 

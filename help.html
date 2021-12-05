@@ -1772,6 +1772,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td>File names, worksheet names and other variables used by Powermatch. Properties are:</p>
 <table border="0", class="none">
 <tr class="none">
+<td class="none"><dfn>adjust_capacities</dfn></td>
+<td class="none">Contains a list of adjusted capacities (in MW) for generators</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>adjust_generators</dfn></td>
 <td class="none">Indicates whether to adjust generators capacity inputs or not. Default is False</td>
 </tr>
@@ -3207,6 +3211,14 @@ If the best and worse values are the same for a variable and that value is not a
 <li>Present a table for the optimal solutions. The table shows the adjustment values and capacity for each generator followed by the estimated value for each of the six multi-variables prioritised by Weight. By pressing the appropriate button the adjustment values for the chosen solution will be made available for <strong>Summary</strong> and <strong>Powermatch</strong></li>
 </ol>
 </div>
+<h4>Minimal Preferences file</h4>
+<p>It is possible to run <code>powermatch</code> with a minimal Preferences file. If you have a Powermatch data file produced from SIREN you can use that as an input to Powermatch without having access to the full set of SIREN files. As well as the <a href="#p_pm">[Powermatch]</a> Section of the Preferences file the only properties required are:
+<ul>
+<li>If you want to access the same folders:- [Base] <em>year</em>, [Parents] Section properties, [Files] <em>scenario_prefix</em> and <em>scenarios</em> properties</li>
+<li>[Power] <em>adjust_cap</em> property if you want to use a different cap for Adjust Generators</li>
+<li>[Windows] <em>log_status</em> property to turn off the Session log</li>
+<li>If you want to use <code>powermatch</code> and have access to the same colours, periods, and seasons as the main Preferences file then you might also want the appropriate properties from the [Colors], [Power] and [Powerplot] Sections and the [Map] <em>map_choice</em> property</li>
+</ul>
 <p><a href="#help">Back to top</a></p>
 <h3 id="resourcegrid">Resource Grids</h3>
 <p>To assist with placement of renewable energy stations SIREN can display a grid of renewable resource attributes derived from the SAM weather files. The grid can be displayed by invoking the <em>Show Resource Grid</em> (Ctrl+B) menu option. The Resource Overlay menu presented has the following fields:</p>
