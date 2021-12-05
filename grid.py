@@ -74,7 +74,7 @@ def dust(pyd, pxd, y1d, x1d, y2d, x2d):   # debug
     dx = x - px
     dy = y - py
     dist = sqrt(dx * dx + dy * dy)
-    return [round(abs(dist) * RADIUS, 2), round(degrees(y), 6), round(degrees(x), 6)]
+    return [round(abs(dist) * RADIUS, 3), round(degrees(y), 6), round(degrees(x), 6)]
 
 
 class Line:
@@ -378,7 +378,10 @@ class Grid:
             kml_data = open(kml_file, 'rb')
             root = ElementTree(fromstring(kml_data.read()))
          # Create an iterator
-        iterat = root.getiterator()
+        if sys.version_info[1] < 9: # before python 3.9
+            iterat = root.getiterator()
+        else:
+            iterat = root.iter()
         placemark_id = ''
         line_names = []
         stylm = ''
@@ -678,7 +681,10 @@ class Grid_Boundary:
             kml_data = open(self.kml_file, 'rb')
             root = ElementTree(fromstring(kml_data.read()))
          # Create an iterator
-        iterat = root.getiterator()
+        if sys.version_info[1] < 9: # before python 3.9
+            iterat = root.getiterator()
+        else:
+            iterat = root.iter()
         for element in iterat:
             elem = element.tag[element.tag.find('}') + 1:]
             if elem == 'Style':
