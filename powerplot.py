@@ -286,6 +286,10 @@ class PowerPlot(QtWidgets.QWidget):
         self.grid.addWidget(self.targets, rw, 1, 1, 2)
         self.grid.addWidget(QtWidgets.QLabel('(e.g. Load)'), rw, 3, 1, 2)
         rw += 1
+        self.grid.addWidget(QtWidgets.QLabel('Header:'), rw, 0)
+        self.suptitle = QtWidgets.QLineEdit('')
+        self.grid.addWidget(self.suptitle, rw, 1, 1, 2)
+        rw += 1
         self.grid.addWidget(QtWidgets.QLabel('Title:'), rw, 0)
         self.title = QtWidgets.QLineEdit('')
         self.grid.addWidget(self.title, rw, 1, 1, 2)
@@ -339,6 +343,7 @@ class PowerPlot(QtWidgets.QWidget):
         self.files.currentIndexChanged.connect(self.targetChanged)
         self.sheet.currentIndexChanged.connect(self.sheetChanged)
         self.targets.currentIndexChanged.connect(self.targetChanged)
+        self.suptitle.textChanged.connect(self.somethingChanged)
         self.title.textChanged.connect(self.somethingChanged)
         self.maxSpin.valueChanged.connect(self.somethingChanged)
         self.plottype.currentIndexChanged.connect(self.somethingChanged)
@@ -394,6 +399,9 @@ class PowerPlot(QtWidgets.QWidget):
         config = configparser.RawConfigParser()
         config.read(self.config_file)
         columns = []
+        self.period.setCurrentIndex(0)
+        self.gridtype.setCurrentIndex(0)
+        self.plottype.setCurrentIndex(0)
         try: # get list of files if any
             items = config.items('Powerplot')
             for key, value in items:
@@ -433,6 +441,8 @@ class PowerPlot(QtWidgets.QWidget):
                         self.target = value
                     except:
                         pass
+                elif key == 'suptitle' + choice:
+                    self.suptitle.setText(value)
                 elif key == 'title' + choice:
                     self.title.setText(value)
         except:
@@ -502,7 +512,7 @@ class PowerPlot(QtWidgets.QWidget):
             if self.book is not None:
                 self.book.release_resources()
                 self.book = None
-                self.toprow = None
+            self.toprow = None
             isheet = self.sheet.currentText()
             self.setSheet(newfile, isheet)
             if newfile[: len(self.scenarios)] == self.scenarios:
@@ -521,7 +531,7 @@ class PowerPlot(QtWidgets.QWidget):
         self.saveConfig()
         self.get_file_config(self.history[self.files.currentIndex()])
         self.popfileslist(self.files.currentText())
-        self.log.setText('File "loaded"')
+        self.log.setText("File 'loaded'")
         self.setup[0] = False
 
     def somethingChanged(self):
@@ -694,6 +704,7 @@ class PowerPlot(QtWidgets.QWidget):
             if self.period.currentText() != '<none>':
                 lines[-1] = lines[-1] + self.period.currentText()
             lines.append('spill_label' + choice + '=' + self.spill_label.text())
+            lines.append('suptitle' + choice + '=' + self.suptitle.text())
             lines.append('target' + choice + '=' + self.target)
             lines.append('title' + choice + '=' + self.title.text())
             lines.append('maximum' + choice + '=')
@@ -844,6 +855,7 @@ class PowerPlot(QtWidgets.QWidget):
             tech_row = -1
             row = 0
             while row < ws.nrows:
+                print('(848)', row, ws.cell_value(row, 0), ws.cell_value(row, 1))
                 if ws.cell_value(row, 0) == 'Technology':
                     tech_row = row
                 elif ws.cell_value(row, 0) == 'Hour':
@@ -854,7 +866,7 @@ class PowerPlot(QtWidgets.QWidget):
                         self.toprow = [tech_row, row]
                     else:
                         self.toprow = [row, row]
-                    self.rows = ws.nrows - row + 1
+                    self.rows = ws.nrows - (row + 1)
                     break
         try:
             year = int(ws.cell_value(self.toprow[1] + 1, 1)[:4])
@@ -918,6 +930,8 @@ class PowerPlot(QtWidgets.QWidget):
                     maxy = max(maxy, load[-1])
             if self.plottype.currentText() == 'Linegraph':
                 fig = plt.figure('linegraph_' + str(year), constrained_layout=self.constrained_layout)
+                if self.suptitle.text() != '':
+                    fig.suptitle(self.suptitle.text(), fontsize=16)
                 if gridtype != '':
                     plt.grid(axis=gridtype)
                 ax = fig.add_subplot(111)
@@ -941,10 +955,11 @@ class PowerPlot(QtWidgets.QWidget):
                           prop=lbl_font)
                 plt.ylim([miny, maxy])
                 plt.xlim([0, len(x)])
-                plt.xticks(list(range(0, len(x), 24 * days_per_label)))
-                ax.set_xticklabels(day_labels, rotation='vertical')
+                xticks = list(range(0, len(x), 24 * days_per_label))
+                plt.xticks(xticks)
+                ax.set_xticklabels(day_labels[:len(xticks)], rotation='vertical')
                 ax.set_xlabel('Period')
-                ax.set_ylabel('Power (MW)')
+                ax.set_ylabel('Power (MW)') # MWh?
                 zp = ZoomPanX()
                 f = zp.zoom_pan(ax, base_scale=1.2, flex_ticks=flex_on) # enable scrollable zoom
                 plt.show()
@@ -957,6 +972,8 @@ class PowerPlot(QtWidgets.QWidget):
                     step = 'pre'
                     pfx = 'step_plot_'
                 fig = plt.figure(pfx + str(year), constrained_layout=self.constrained_layout)
+                if self.suptitle.text() != '':
+                    fig.suptitle(self.suptitle.text(), fontsize=16)
                 if gridtype != '':
                     plt.grid(axis=gridtype)
                 bx = fig.add_subplot(111)
@@ -1085,6 +1102,8 @@ class PowerPlot(QtWidgets.QWidget):
             elif self.plottype.currentText() == 'Bar Chart':
                 fig = plt.figure('barchart_' + str(year),
                                  constrained_layout=self.constrained_layout)
+                if self.suptitle.text() != '':
+                    fig.suptitle(self.suptitle.text(), fontsize=16)
                 if gridtype != '':
                     plt.grid(axis=gridtype)
                 fx = fig.add_subplot(111)
@@ -1140,8 +1159,9 @@ class PowerPlot(QtWidgets.QWidget):
                 fx.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 2), prop=lbl_font)
                 plt.ylim([miny, maxy])
                 plt.xlim([0, len(x)])
-                plt.xticks(list(range(0, len(x), 24 * days_per_label)))
-                fx.set_xticklabels(day_labels, rotation='vertical')
+                xticks = list(range(0, len(x), 24 * days_per_label))
+                plt.xticks(xticks)
+                fx.set_xticklabels(day_labels[:len(xticks)], rotation='vertical')
                 fx.set_xlabel('Period')
                 zp = ZoomPanX()
                 f = zp.zoom_pan(fx, base_scale=1.2, flex_ticks=flex_on) # enable scrollable zoom
@@ -1236,6 +1256,8 @@ class PowerPlot(QtWidgets.QWidget):
             if self.plottype.currentText() == 'Linegraph':
                 fig = plt.figure('linegraph_' + self.period.currentText().lower() + '_' + str(year),
                                  constrained_layout=self.constrained_layout)
+                if self.suptitle.text() != '':
+                    fig.suptitle(self.suptitle.text(), fontsize=16)
                 if gridtype != '':
                     plt.grid(axis=gridtype)
                 cx = fig.add_subplot(111)
@@ -1274,6 +1296,8 @@ class PowerPlot(QtWidgets.QWidget):
                     step = 'pre'
                 fig = plt.figure('cumulative_' + self.period.currentText().lower() + '_' + str(year),
                                  constrained_layout=self.constrained_layout)
+                if self.suptitle.text() != '':
+                    fig.suptitle(self.suptitle.text(), fontsize=16)
                 if gridtype != '':
                     plt.grid(axis=gridtype)
                 dx = fig.add_subplot(111)
@@ -1388,6 +1412,8 @@ class PowerPlot(QtWidgets.QWidget):
             elif self.plottype.currentText() == 'Bar Chart':
                 fig = plt.figure('barchart_' + self.period.currentText().lower() + '_' + str(year),
                                  constrained_layout=self.constrained_layout)
+                if self.suptitle.text() != '':
+                    fig.suptitle(self.suptitle.text(), fontsize=16)
                 if gridtype != '':
                     plt.grid(axis=gridtype)
                 ex = fig.add_subplot(111)
