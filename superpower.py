@@ -640,7 +640,7 @@ class SuperPower():
                     continue
                 key = stn.name
             else:
-                if stn.technology == 'Rooftop PV' and stn.scenario == 'Existing':
+                if stn.technology == 'Rooftop PV' and (stn.scenario == 'Existing' or stn.scenario.find('Rooftop PV') > 0):
                     key = 'Existing Rooftop PV'
                 else:
                     key = stn.technology
