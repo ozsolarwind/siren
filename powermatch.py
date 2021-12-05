@@ -1238,6 +1238,7 @@ class powerMatch(QtWidgets.QWidget):
     def setOrder(self):
         self.order.clear()
         self.ignore.clear()
+        self.re_capacity = {}
         if self.generators is None:
             order = ['Storage', 'Biomass', 'PHS', 'Gas', 'CCG1', 'Other', 'Coal']
             for stn in order:
@@ -1246,7 +1247,10 @@ class powerMatch(QtWidgets.QWidget):
             order = []
             zero = []
             for key, value in self.generators.items():
-                if value.capacity == 0:
+            #    if value.capacity == 0:
+            #        continue
+                if key in tech_names:
+                    self.re_capacity[key] = value.capacity
                     continue
                 try:
                     o = int(value.order)
@@ -1391,7 +1395,10 @@ class powerMatch(QtWidgets.QWidget):
                 load_col = len(pmss_data)
                 typ = 'L'
                 capacity = 0
+                fctr = 1
             else:
+                if len(self.re_capacity) > 0 and tech_names[i] not in self.re_capacity.keys():
+                    continue
                 try:
                     capacity = float(ws.cell(row=icap_row, column=col).value)
                 except:
@@ -1399,7 +1406,11 @@ class powerMatch(QtWidgets.QWidget):
                 if capacity <= 0:
                     continue
                 typ = 'R'
-            pmss_details[tech_names[i]] = [capacity, typ, len(pmss_data), 1]
+                if tech_names[i] in self.re_capacity:
+                    fctr = self.re_capacity[tech_names[i]] / capacity
+                else:
+                    fctr = 1
+            pmss_details[tech_names[i]] = [capacity, typ, len(pmss_data), fctr]
             pmss_data.append([])
             re_order.append(tech_names[i])
             for row in range(top_row + 1, ws.max_row + 1):
@@ -1409,6 +1420,8 @@ class powerMatch(QtWidgets.QWidget):
         if option == 'O':
             for itm in range(self.order.count()):
                 gen = self.order.item(itm).text()
+                if self.generators[gen].capacity <= 0:
+                    continue
                 try:
                     if self.generators[gen].constraint in self.constraints and \
                       self.constraints[self.generators[gen].constraint].category == 'Generator':
@@ -1488,6 +1501,8 @@ class powerMatch(QtWidgets.QWidget):
         self.progressbar.setValue(2)
         for itm in range(self.order.count()):
             gen = self.order.item(itm).text()
+            if self.generators[gen].capacity <= 0:
+                continue
             if do_adjust:
                 try:
                     if self.adjustto[gen] <= 0:
@@ -1729,6 +1744,8 @@ class powerMatch(QtWidgets.QWidget):
                 if gen == 'Load':
                     sp_load = sum(pmss_data[pmss_details[gen][2]]) * pmss_details[gen][3]
                     continue
+                if pmss_details[gen][0] * pmss_details[gen][3] == 0:
+                    continue
                 sp_data.append([gen, pmss_details[gen][0] * pmss_details[gen][3],
                                0., '', '', '', '', '', ''])
                 g = sum(pmss_data[pmss_details[gen][2]]) * pmss_details[gen][3]
@@ -1919,11 +1936,16 @@ class powerMatch(QtWidgets.QWidget):
                     ns.cell(row=hrs_row, column=col + 3).number_format = '#,##0.0%'
                     col += 5
                 else:
+                    if storage[0] == 0:
+                        continue
                     sp_data.append([gen, storage[0], storage_can, '', '', '', '', '', ''])
             else: # generator
-                if self.constraints[self.generators[gen].constraint].capacity_max > 0:
-                    cap_capacity = capacity * self.constraints[self.generators[gen].constraint].capacity_max
-                else:
+                try:
+                    if self.constraints[self.generators[gen].constraint].capacity_max > 0:
+                        cap_capacity = capacity * self.constraints[self.generators[gen].constraint].capacity_max
+                    else:
+                        cap_capacity = capacity
+                except:
                     cap_capacity = capacity
                 if gen in short_taken.keys():
                     for row in range(8760):
@@ -1994,6 +2016,8 @@ class powerMatch(QtWidgets.QWidget):
                         else:
                             gen_can += min_gen
                             shortfall[row] -= min_gen # ??
+                    if capacity == 0:
+                        continue
                     sp_data.append([gen, capacity, gen_can, '', '', '', '', '', ''])
         if option != 'O' and option != '1':
             self.progressbar.setValue(4)
