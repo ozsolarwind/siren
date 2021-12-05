@@ -260,19 +260,19 @@ class Optimisation:
 
 
 class Adjustments(QtWidgets.QDialog):
-    def setAdjValue(self, key, typ, capacity):
+    def setAdjValueText(self, key, typ, capacity):
         if key != 'Load':
-            mw = capacity * self.adjustm[key]
+            mw = capacity * self._adjust_mul[key]
             if typ == 'Storage':
                 unit = 'MWh'
             else:
                 unit = 'MW'
-            fmtstr = self.fmtstr
-            dp = self.decpts
+            fmtstr = self._fmtstr
+            dp = self._decpts
         else:
-            if self.adjusts[key].value() <= 0:
+            if self._adjust_rnd[key].value() <= 0:
                 return 0, '0 MW', '0'
-            dimen = log10(capacity * self.adjusts[key].value())
+            dimen = log10(capacity * self._adjust_rnd[key].value())
             unit = 'MWh'
             if dimen > 11:
                 unit = 'PWh'
@@ -285,7 +285,7 @@ class Adjustments(QtWidgets.QDialog):
                 div = 3
             else:
                 div = 0
-            mw = (capacity * self.adjusts[key].value()) / pow(10, div)
+            mw = (capacity * self._adjust_rnd[key].value()) / pow(10, div)
             fmtstr = '{:,.0f}'
             dp = None
         mwtxt = fmtstr.format(mw) + ' ' + unit
@@ -294,64 +294,68 @@ class Adjustments(QtWidgets.QDialog):
 
     def __init__(self, parent, data, adjustin, adjust_cap, save_folder=None):
         super(Adjustments, self).__init__()
-        self.adjustt = {}
-        self.adjustm = {} # (actual) adjust multiplier
-        self.adjusts = {} # multiplier widget (rounded to 4 digits)
-        self.labels = {} # string with calculated capacity
-        self.adjustval = {} # adjust capacity input
-        self.save_folder = save_folder
-        self.ignore = False
-        self.results = None
+        self._adjust_typ = {} # facility type = G, S or L
+        self._adjust_mul = {} # (actual) adjust multiplier
+        self._adjust_cty = {} # (actual) adjust capacity
+        self._adjust_rnd = {} # multiplier widget (rounded to 4 digits)
+        self._adjust_txt = {} # string with calculated capacity
+        self._adjust_val = {} # adjust capacity input
+        self._save_folder = save_folder
+        self._ignore = False
+        self._results = None
         self.grid = QtWidgets.QGridLayout()
-        self.data = {}
+        self._data = {}
         ctr = 0
-        self.decpts = None
+        self._decpts = None
         for key, typ, capacity in data:
             if key == 'Load' or capacity is None:
                 continue
             dimen = log10(capacity)
             if dimen < 2.:
                 if dimen < 1.:
-                    self.decpts = 2
-                elif self.decpts != 2:
-                    self.decpts = 1
-        if self.decpts is None:
-            self.fmtstr = '{:,.0f}'
+                    self._decpts = 2
+                elif self._decpts != 2:
+                    self._decpts = 1
+        if self._decpts is None:
+            self._fmtstr = '{:,.0f}'
         else:
-            self.fmtstr = '{:,.' + str(self.decpts) + 'f}'
+            self._fmtstr = '{:,.' + str(self._decpts) + 'f}'
         for key, typ, capacity in data:
-            self.adjustt[key] = typ
+            self._adjust_typ[key] = typ
             if key != 'Load' and capacity is None:
                 continue
-            self.adjusts[key] = QtWidgets.QDoubleSpinBox()
-            self.adjusts[key].setRange(0, adjust_cap)
-            self.adjusts[key].setDecimals(4)
+            if key not in adjustin.keys():
+                continue
+            self._data[key] = capacity
+            self._adjust_rnd[key] = QtWidgets.QDoubleSpinBox()
+            self._adjust_rnd[key].setRange(0, adjust_cap)
+            self._adjust_rnd[key].setDecimals(4)
             try:
-                self.adjustm[key] = adjustin[key]
-                self.adjusts[key].setValue(round(adjustin[key], 4))
+                self._adjust_mul[key] = adjustin[key] / capacity
+                self._adjust_rnd[key].setValue(round(self._adjust_mul[key], 4))
             except:
-                self.adjustm[key] = 1.
-                self.adjusts[key].setValue(1.)
-            self.data[key] = capacity
-            self.adjusts[key].setSingleStep(.1)
-            self.adjusts[key].setObjectName(key)
+                self._adjust_mul[key] = 1.
+                self._adjust_rnd[key].setValue(1.)
+            self._adjust_cty[key] = adjustin[key]
+            self._adjust_rnd[key].setSingleStep(.1)
+            self._adjust_rnd[key].setObjectName(key)
             self.grid.addWidget(QtWidgets.QLabel(key), ctr, 0)
-            self.grid.addWidget(self.adjusts[key], ctr, 1)
-            self.adjusts[key].valueChanged.connect(self.adjust)
-            self.labels[key] = QtWidgets.QLabel('')
-            self.labels[key].setObjectName(key + 'label')
-            mw, mwtxt, mwstr = self.setAdjValue(key, typ, capacity)
-            self.labels[key].setText(mwtxt)
-            self.grid.addWidget(self.labels[key], ctr, 2)
-            self.adjustval[key] = QtWidgets.QLineEdit()
-            self.adjustval[key].setObjectName(key)
-            self.adjustval[key].setText(mwstr)
-            if self.decpts is None:
-                self.adjustval[key].setValidator(QtGui.QIntValidator())
+            self.grid.addWidget(self._adjust_rnd[key], ctr, 1)
+            self._adjust_rnd[key].valueChanged.connect(self.adjustMult)
+            self._adjust_txt[key] = QtWidgets.QLabel('')
+            self._adjust_txt[key].setObjectName(key + 'label')
+            mw, mwtxt, mwstr = self.setAdjValueText(key, typ, capacity)
+            self._adjust_txt[key].setText(mwtxt)
+            self.grid.addWidget(self._adjust_txt[key], ctr, 2)
+            self._adjust_val[key] = QtWidgets.QLineEdit()
+            self._adjust_val[key].setObjectName(key)
+            self._adjust_val[key].setText(mwstr)
+            if self._decpts is None:
+                self._adjust_val[key].setValidator(QtGui.QIntValidator())
             else:
-                self.adjustval[key].setValidator(QtGui.QDoubleValidator())
-            self.grid.addWidget(self.adjustval[key], ctr, 3)
-            self.adjustval[key].textChanged.connect(self.adjustst)
+                self._adjust_val[key].setValidator(QtGui.QDoubleValidator())
+            self.grid.addWidget(self._adjust_val[key], ctr, 3)
+            self._adjust_val[key].textChanged.connect(self.adjustCap)
             ctr += 1
         quit = QtWidgets.QPushButton('Quit', self)
         self.grid.addWidget(quit, ctr, 0)
@@ -381,33 +385,34 @@ class Adjustments(QtWidgets.QDialog):
         QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
         self.show()
 
-    def adjust(self):
+    def adjustMult(self):
         key = self.sender().objectName()
-        if not self.ignore:
-            self.adjustm[key] = self.adjusts[key].value()
-        mw, mwtxt, mwstr = self.setAdjValue(key, self.adjustt[key], self.data[key])
-        self.labels[key].setText(mwtxt)
-        if not self.ignore:
-            self.adjustval[key].setText(mwstr)
-        self.ignore = False
+        if not self._ignore:
+            self._adjust_mul[key] = self._adjust_rnd[key].value()
+            self._adjust_cty[key] = self._data[key] * self._adjust_rnd[key].value()
+        mw, mwtxt, mwstr = self.setAdjValueText(key, self._adjust_typ[key], self._data[key])
+        self._adjust_txt[key].setText(mwtxt)
+        if not self._ignore:
+            self._adjust_val[key].setText(mwstr)
+        self._ignore = False
 
-    def adjustst(self):
-        if self.ignore:
+    def adjustCap(self):
+        if self._ignore:
             return
         key = self.sender().objectName()
-        if self.decpts is None:
+        if self._decpts is None:
             value = int(self.sender().text())
         else:
             try:
                 value = float(self.sender().text())
-                value = round(value, self.decpts)
+                value = round(value, self._decpts)
             except:
                 value = 0
         if key != 'Load':
-            adj = value / self.data[key]
-         #   self.adjusts[key].setValue(adj)
+            adj = value / self._data[key]
+         #   self._adjust_rnd[key].setValue(adj)
         else:
-            dimen = log10(self.data[key])
+            dimen = log10(self._data[key])
             if dimen > 11:
                 mul = 9
             elif dimen > 8:
@@ -416,11 +421,12 @@ class Adjustments(QtWidgets.QDialog):
                 mul = 3
             else:
                 mul = 0
-            adj = (value * pow(10, mul)) / self.data[key]
-        self.adjustm[key] = adj
-        self.ignore = True
-        self.adjusts[key].setValue(round(adj, 4))
-        self.ignore = False
+            adj = (value * pow(10, mul)) / self._data[key]
+        self._adjust_mul[key] = adj
+        self._adjust_cty[key] = self._data[key] * adj
+        self._ignore = True
+        self._adjust_rnd[key].setValue(round(adj, 4))
+        self._ignore = False
 
     def closeEvent(self, event):
         event.accept()
@@ -429,52 +435,53 @@ class Adjustments(QtWidgets.QDialog):
         self.close()
 
     def resetClicked(self):
-        for key in self.adjusts.keys():
-            self.adjusts[key].setValue(1)
+        for key in self._adjust_rnd.keys():
+            self._adjust_rnd[key].setValue(1)
 
     def restoreClicked(self):
         ini_file = QtWidgets.QFileDialog.getOpenFileName(self, 'Open Adjustments file',
-                   self.save_folder, 'Preferences Files (*.ini)')[0]
+                   self._save_folder, 'Preferences Files (*.ini)')[0]
         if ini_file != '':
             reshow = False
             config = configparser.RawConfigParser()
             config.read(ini_file)
             try:
-                adjustin = config.get('Powermatch', 'adjustments')
+                adjustto = config.get('Powermatch', 'adjusted_capacities')
             except:
                 return
             self.resetClicked()
-            bits = adjustin.split(',')
+            bits = adjustto.split(',')
             for bit in bits:
                 bi = bit.split('=')
                 try:
-                    self.adjusts[bi[0]].setValue(float(bi[1]))
+                    self._adjust_cty[bi[0]] = float(bi[1])
+                    self._adjust_mul[bi[0]] = self._adjust_cty[bi[0]] / self._data[bi[0]]
+                    self._adjust_rnd[bi[0]].setValue(round(self._adjust_mul[bi[0]], 4))
                 except:
                     pass
 
     def saveClicked(self):
         line = ''
-        for key, value in self.adjustm.items():
-            if value != 1:
-                line += key + '=' + str(value) + ','
+        for key, value in self._adjust_cty.items():
+            line += '{}={:.1f},'.format(key, value)
         if line != '':
-            line = 'adjustments=' + line[:-1]
-            updates = {'Powermatch': [line]}
+            line = 'adjusted_capacities=' + line[:-1]
+            updates = {'Powermatch': ['adjustments=', line]}
             inifile = QtWidgets.QFileDialog.getSaveFileName(None, 'Save Adjustments to file',
-                      self.save_folder, 'Preferences Files (*.ini)')[0]
+                      self._save_folder, 'Preferences Files (*.ini)')[0]
             if inifile != '':
                 if inifile[-4:] != '.ini':
                     inifile = inifile + '.ini'
                 SaveIni(updates, ini_file=inifile)
 
     def showClicked(self):
-        self.results = {}
-        for key in list(self.adjusts.keys()):
-            self.results[key] = self.adjustm[key]
+        self._results = {}
+        for key in list(self._adjust_cty.keys()):
+            self._results[key] = self._adjust_cty[key]
         self.close()
 
     def getValues(self):
-        return self.results
+        return self._results
 
 class powerMatch(QtWidgets.QWidget):
     log = QtCore.pyqtSignal()
@@ -543,9 +550,9 @@ class powerMatch(QtWidgets.QWidget):
         self.constraints = None
         self.generators = None
         self.optimisation = None
-        self.adjustby = None
+        self.adjustto = None # adjust capacity to this
         self.adjust_cap = 25
-        self.adjust_re = False
+        self.adjust_gen = False
         self.change_res = True
         self.corrected_lcoe = True
         self.carbon_price = 0.
@@ -582,13 +589,13 @@ class powerMatch(QtWidgets.QWidget):
                      self.isheets[ndx] = value
                  elif key == 'adjust_generators':
                      if value.lower() in ['true', 'on', 'yes']:
-                         self.adjust_re = True
-                 elif key == 'adjustments':
-                     self.adjustby = {}
+                         self.adjust_gen = True
+                 elif key == 'adjusted_capacities':
+                     self.adjustto = {}
                      bits = value.split(',')
                      for bit in bits:
                          bi = bit.split('=')
-                         self.adjustby[bi[0]] = float(bi[1])
+                         self.adjustto[bi[0]] = float(bi[1])
                  elif key == 'carbon_price':
                      try:
                          self.carbon_price = float(value)
@@ -700,7 +707,7 @@ class powerMatch(QtWidgets.QWidget):
         r += 1
         self.grid.addWidget(QtWidgets.QLabel('Adjust Generators:'), r, 0)
         self.adjust = QtWidgets.QCheckBox('(check to adjust/multiply generators capacity data)', self)
-        if self.adjust_re:
+        if self.adjust_gen:
             self.adjust.setCheckState(QtCore.Qt.Checked)
         self.grid.addWidget(self.adjust, r, 1, 1, 3)
         r += 1
@@ -853,13 +860,13 @@ class powerMatch(QtWidgets.QWidget):
             updates = {}
             lines = []
             lines.append('adjust_generators=' + str(self.adjust.isChecked()))
-            if self.adjustby is not None:
+            lines.append('adjustments=') # clean up the old way
+            if self.adjustto is not None:
                 line = ''
-                for key, value in self.adjustby.items():
-                    if value != 1:
-                        line += key + '=' + str(value) + ','
+                for key, value in self.adjustto.items():
+                    line += '{}={:.1f},'.format(key, value)
                 if line != '':
-                    lines.append('adjustments=' + line[:-1])
+                    lines.append('adjusted_capacities=' + line[:-1])
             lines.append('carbon_price=' + str(self.carbon_price))
             for i in range(len(self.file_labels)):
                 lines.append(self.file_labels[i].lower() + '_file=' + self.files[i].text())
@@ -1321,7 +1328,7 @@ class powerMatch(QtWidgets.QWidget):
             self.setStatus('no capacity data')
             return
         year = ws.cell(row=top_row + 1, column=2).value[:4]
-        pmss_details = {}
+        pmss_details = {} # contains [data_file capacity, type, ss_column, capacity multiplier]
         pmss_data = []
         re_order = [] # order for re technology
         dispatch_order = [] # order for dispatchable technology
@@ -1399,14 +1406,14 @@ class powerMatch(QtWidgets.QWidget):
                     except:
                         typ = ''
                     adjustin.append([who, typ, self.generators[who].capacity])
-            adjust = Adjustments(self, adjustin, self.adjustby, self.adjust_cap,
+            adjust = Adjustments(self, adjustin, self.adjustto, self.adjust_cap,
                                  save_folder=self.scenarios)
             adjust.exec_()
             if adjust.getValues() is None:
                 self.setStatus('Execution aborted.')
                 self.progressbar.setHidden(True)
                 return
-            self.adjustby = adjust.getValues()
+            self.adjustto = adjust.getValues()
             self.updated = True
             do_adjust = True
         ts.close()
@@ -1425,7 +1432,7 @@ class powerMatch(QtWidgets.QWidget):
             gen = self.order.item(itm).text()
             if do_adjust:
                 try:
-                    if self.adjustby[gen] <= 0:
+                    if self.adjustto[gen] <= 0:
                         continue
                 except:
                     pass
@@ -1440,12 +1447,12 @@ class powerMatch(QtWidgets.QWidget):
             dispatch_order.append(gen)
             pmss_details[gen] = [self.generators[gen].capacity, typ, -1, 1]
         if do_adjust:
-            for gen, value in self.adjustby.items():
-                if value != 1:
-                     try:
-                         pmss_details[gen][3] = value
-                     except:
-                         pass
+            if self.adjustto is not None:
+                for gen, value in self.adjustto.items():
+                    try:
+                        pmss_details[gen][3] = value / pmss_details[gen][0]
+                    except:
+                        pass
         self.doDispatch(year, option, pmss_details, pmss_data, re_order, dispatch_order,
                         pm_data_file, data_file)
 
@@ -1477,8 +1484,7 @@ class powerMatch(QtWidgets.QWidget):
         start_time = time.time()
         for gen in re_order:
             col = pmss_details[gen][2]
-            multiplier = pmss_details[gen][3]
-            if multiplier == 1:
+            if pmss_details[gen][3] == 1:
                 if gen == 'Load':
                     for h in range(len(pmss_data[col])):
                         shortfall[h] += pmss_data[col][h]
@@ -1488,10 +1494,10 @@ class powerMatch(QtWidgets.QWidget):
             else:
                 if gen == 'Load':
                     for h in range(len(pmss_data[col])):
-                        shortfall[h] += pmss_data[col][h] * multiplier
+                        shortfall[h] += pmss_data[col][h] * pmss_details[gen][3]
                 else:
                     for h in range(len(pmss_data[col])):
-                        shortfall[h] -= pmss_data[col][h] * multiplier
+                        shortfall[h] -= pmss_data[col][h] * pmss_details[gen][3]
         if option == 'P':
             ds = oxl.Workbook()
             ns = ds.active
@@ -2073,15 +2079,6 @@ class powerMatch(QtWidgets.QWidget):
             if max_short[1] > 0:
                 sp_data.append(['Largest Shortfall ' + format_period(max_short[0]),
                                 round(max_short[1], 2)])
-            sp_data.append(' ')
-            adjusted = False
-            if self.adjust.isChecked():
-                for gen, value in iter(sorted(pmss_details.items())):
-                    if value[3] != 1:
-                        if not adjusted:
-                            adjusted = True
-                            sp_data.append('Generators Adjustments:')
-                        sp_data.append([gen, value[3]])
             list(map(list, list(zip(*sp_data))))
             sp_pts = [0, 2, 0, 2, 0, 2, 0, 2, 2]
             self.setStatus(self.sender().text() + ' completed')
@@ -2436,19 +2433,6 @@ class powerMatch(QtWidgets.QWidget):
                + '.' + str(self.sheets[G].currentText())
         ss.merge_cells('B' + str(ss_row) + ':I' + str(ss_row))
         self.progressbar.setValue(7)
-        try:
-            if self.adjust.isChecked():
-                adjusted = ''
-                for key, value in iter(sorted(pmss_details.items())):
-                    if value != 1:
-                        adjusted += key + ': {:.4f}'.format(value[3]).rstrip('0') + '; '
-                if len(adjusted) > 0:
-                    ss_row += 1
-                    ss.cell(row=ss_row, column=1).value = 'Inputs adjusted'
-                    ss.cell(row=ss_row, column=2).value = adjusted[:-2]
-                    ss.merge_cells('B' + str(ss_row) + ':I' + str(ss_row))
-        except:
-            pass
         for row in range(1, ss_row + 1):
             for col in range(1, 10):
                 try:
@@ -2616,7 +2600,10 @@ class powerMatch(QtWidgets.QWidget):
                     for c in range(value[0], value[1]):
                         if chromosome[c]:
                             capacity = capacity + capacities[c]
-                    pmss_details[gen][3] = capacity / pmss_details[gen][0]
+                    try:
+                        pmss_details[gen][3] = capacity / pmss_details[gen][0]
+                    except:
+                        print('(2664)', gen, capacity, pmss_details[gen][0])
                 multi_value, op_data, extra = self.doDispatch(year, option, pmss_details, pmss_data, re_order,
                                               dispatch_order, pm_data_file, data_file)
                 lcoe_fitness_scores.append(multi_value['lcoe'])
@@ -3026,7 +3013,7 @@ class powerMatch(QtWidgets.QWidget):
         multi_order.sort(reverse=True)
     #    multi_order = multi_order[:3] # get top three weighted variables - but I want them all
         multi_order = [o[4:] for o in multi_order]
-        self.adjust_re = True
+        self.adjust_gen = True
         orig_load = []
         load_col = -1
         orig_tech = {}
@@ -3514,10 +3501,9 @@ class powerMatch(QtWidgets.QWidget):
         dialog.exec_()
         del dialog
         if self.adjust.isChecked():
-            self.adjustby = {}
+            self.adjustto = {}
             for gen, value in iter(sorted(pmss_details.items())):
-                if value[3] != 1:
-                    self.adjustby[gen] = value[3]
+                self.adjustto[gen] = value[0] * value[3]
         return
 
 if "__main__" == __name__:
