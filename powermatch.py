@@ -562,6 +562,7 @@ class powerMatch(QtWidgets.QWidget):
         self.optimise_population = 50
         self.optimise_stop = 0
         self.optimise_debug = False
+        self.optimise_default = None
         self.remove_cost = True
         self.surplus_sign = 1 # Note: Preferences file has it called shortfall_sign
         # it's easier for the user to understand while for the program logic surplus is easier
@@ -616,6 +617,8 @@ class powerMatch(QtWidgets.QWidget):
                  elif key == 'optimise_debug':
                      if value.lower() in ['true', 'on', 'yes']:
                          self.optimise_debug = True
+                 elif key == 'optimise_default':
+                     self.optimise_default = value
                  elif key == 'optimise_choice':
                      self.optimise_choice = value
                  elif key == 'optimise_generations':
@@ -987,7 +990,7 @@ class powerMatch(QtWidgets.QWidget):
         elif it == O: # self.optimisation
             if self.optimisation is None:
                 try:
-                    self.getoptimisation(ws)
+                    self.getOptimisation(ws)
                 except:
                     return
             dialog = displaytable.Table(self.optimisation, title=self.sender().text(),
@@ -1142,7 +1145,7 @@ class powerMatch(QtWidgets.QWidget):
                                      initial=ws.cell_value(row, ini_col))
         return
 
-    def getoptimisation(self, ws):
+    def getOptimisation(self, ws):
         if ws is None:
             self.optimisation = {}
             self.optimisation['<name>'] = Optimisation('<name>', 'None', None)
@@ -1266,7 +1269,7 @@ class powerMatch(QtWidgets.QWidget):
             try:
                 ts = xlrd.open_workbook(self.get_filename(self.files[O].text()))
                 ws = ts.sheet_by_name(self.sheets[O].currentText())
-                self.getoptimisation(ws)
+                self.getOptimisation(ws)
                 ts.release_resources()
                 del ts
                 if self.optimisation is None:
@@ -1285,7 +1288,7 @@ class powerMatch(QtWidgets.QWidget):
                 else:
                     err_msg = 'Error accessing Optimisation'
             if self.optimisation is None:
-                self.getoptimisation(None)
+                self.getOptimisation(None)
         if err_msg != '':
             self.setStatus(err_msg)
             return
@@ -2606,7 +2609,11 @@ class powerMatch(QtWidgets.QWidget):
                         print('(2664)', gen, capacity, pmss_details[gen][0])
                 multi_value, op_data, extra = self.doDispatch(year, option, pmss_details, pmss_data, re_order,
                                               dispatch_order, pm_data_file, data_file)
-                lcoe_fitness_scores.append(multi_value['lcoe'])
+                if multi_value['load_pct'] < self.targets['load_pct'][3]:
+                    lcoe_fitness_scores.append(pow(multi_value['lcoe'],
+                        self.targets['load_pct'][3] / multi_value['load_pct']))
+                else:
+                    lcoe_fitness_scores.append(multi_value['lcoe'])
                 multi_values.append(multi_value)
                 multi_fitness_scores.append(calc_weight(multi_value))
                 if self.debug:
@@ -2731,12 +2738,12 @@ class powerMatch(QtWidgets.QWidget):
                         if multi_value[key] > value[2]: # high no weight
                             w = 0.
                         elif multi_value[key] < value[3]: # low maximum weight
-                            w = 1.
+                            w = 2.
                         else:
                             w = 1 - (multi_value[key] - value[3]) / (value[2] - value[3])
                     else: # lower target
                         if multi_value[key] == -1 or multi_value[key] > value[3]: # high maximum weight
-                            w = 1.
+                            w = 2.
                         elif multi_value[key] < value[2]: # low no weight
                             w = 0.
                         else:
@@ -2829,19 +2836,54 @@ class powerMatch(QtWidgets.QWidget):
             self.debug = True
         else:
             self.debug = False
-        check = ''
+        missing = []
         for gen in re_order:
             if gen == 'Load':
                 continue
             if gen not in self.optimisation.keys():
-                check += gen + ', '
+                missing.append(gen)
         for gen in dispatch_order:
             if gen not in self.optimisation.keys():
-                check += gen + ', '
-        if check != '':
-            check = check[:-2]
-            self.setStatus('Key Error: Missing Optimisation entries for: ' + check)
-            return
+                missing.append(gen)
+        if len(missing) > 0:
+            bad = False
+            if self.optimise_default is not None:
+                defaults = self.optimise_default.split(',')
+                if len(defaults) < 1 or len(defaults) > 3:
+                    bad = True
+                else:
+                    try:
+                        for miss in missing:
+                            if len(defaults) == 2:
+                                minn = 0
+                            else:
+                                if defaults[0][-1] == 'd':
+                                    minn = pmss_details[miss][0] * float(defaults[0][:-1])
+                                elif defaults[0][-1] == 'c':
+                                    minn = pmss_details[miss][0] * pmss_details[miss][3] * float(defaults[0][:-1])
+                                else:
+                                    minn = float(defaults[0])
+                            if defaults[-2][-1] == 'd':
+                                maxx = pmss_details[miss][0] * float(defaults[-2][:-1])
+                            elif defaults[-2][-1] == 'c':
+                                maxx = pmss_details[miss][0] * pmss_details[miss][3] * float(defaults[-2][:-1])
+                            else:
+                                maxx = float(defaults[-2])
+                            step = (maxx - minn) / float(defaults[-1])
+                            self.optimisation[miss] =  Optimisation(miss, 'None', None)
+                            self.optimisation[miss].approach = 'Range'
+                            self.optimisation[miss].capacity_min = minn
+                            self.optimisation[miss].capacity_max = maxx
+                            self.optimisation[miss].capacity_step = step
+                    except:
+                        bad = True
+                if bad:
+                    check = ''
+                    for miss in missing:
+                        check += missing + ', '
+                    check = check[:-2]
+                    self.setStatus('Key Error: Missing Optimisation entries for: ' + check)
+                    return
         self.optExit = False
         self.setStatus('Optimise processing started')
         err_msg = ''
@@ -3126,7 +3168,7 @@ class powerMatch(QtWidgets.QWidget):
             try:
                 best_score = np.min(lcoe_scores)
             except:
-                print('(3133)', lcoe_scores)
+                print('(3352)', lcoe_scores)
             best_ndx = lcoe_scores.index(best_score)
             lowest_chrom = population[best_ndx]
             self.setStatus('Starting LCOE: $%.2f' % best_score)
@@ -3449,7 +3491,7 @@ class powerMatch(QtWidgets.QWidget):
                     label = QtWidgets.QLabel(txt % amt)
                 except:
                     label = QtWidgets.QLabel('?')
-                    print('(3456)', key, txt, amt)
+                    print('(3675)', key, txt, amt)
                 label.setAlignment(QtCore.Qt.AlignCenter)
                 grid[h + 1].addWidget(label, rw, 0, 1, 2)
             rw += 1
