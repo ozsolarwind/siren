@@ -691,6 +691,7 @@ class powerMatch(QtWidgets.QWidget):
                 self.sheets[i] = QtWidgets.QComboBox()
                 self.sheets[i].addItem(self.isheets[i])
                 self.grid.addWidget(self.sheets[i], r, 1, 1, 2)
+                self.sheets[i].currentIndexChanged.connect(self.sheetChanged)
                 edit[i] = QtWidgets.QPushButton(self.file_labels[i], self)
                 self.grid.addWidget(edit[i], r, 3)
                 edit[i].clicked.connect(self.editClicked)
@@ -764,7 +765,7 @@ class powerMatch(QtWidgets.QWidget):
         QtWidgets.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
         try:
             ts = xlrd.open_workbook(self.get_filename(self.files[G].text()))
-            ws = ts.sheet_by_name('Generators')
+            ws = ts.sheet_by_name(self.isheets[G])
             self.getGenerators(ws)
             self.setOrder()
             ts.release_resources()
@@ -840,7 +841,7 @@ class powerMatch(QtWidgets.QWidget):
                     if sht == self.file_labels[i]:
                         ndx = j
                 self.sheets[i].setCurrentIndex(ndx)
-                if i == 1:
+                if i == G:
                     ws = ts.sheet_by_index(ndx)
                     self.getGenerators(ws)
                     self.setOrder()
@@ -857,6 +858,28 @@ class powerMatch(QtWidgets.QWidget):
                 if newfile != self.files[D].text():
                     self.files[R].setText(newfile)
             self.updated = True
+
+    def sheetChanged(self, i):
+        try:
+            for i in range(5):
+                if self.sheets[i].hasFocus():
+                    break
+        except:
+            return # probably file changed
+        self.setStatus('')
+        newfile = self.scenarios + self.files[i].text()
+        ts = xlrd.open_workbook(newfile, on_demand=True)
+        ws = ts.sheet_by_name(self.sheets[i].currentText())
+        self.setStatus('Sheet ' + self.sheets[i].currentText() + ' loaded')
+        if i == C:
+            self.getConstraints(ws)
+        elif i == G:
+            self.getGenerators(ws)
+            self.setOrder()
+        elif i == O:
+            self.getOptimisation(ws)
+        ts.release_resources()
+        del ts
 
     def helpClicked(self):
         dialog = displayobject.AnObject(QtWidgets.QDialog(), self.help,
