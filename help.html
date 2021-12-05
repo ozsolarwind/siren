@@ -181,7 +181,7 @@ ul {
 <h3 id="licence">Licence</h3>
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
-You should have received a copy of the GNU Affero General Public License along with this program. If not, see <a href="http://www.gnu.org/licenses/">http://www.gnu.org/licenses/</a>. The source for the program is included in the packaged versions and also available at <a href="https://github.com/ozsolarwind/siren">https://github.com/ozsolarwind/siren</a>.
+You should have received a copy of the GNU Affero General Public License along with this program. If not, see <a href="http://www.gnu.org/licenses/">http://www.gnu.org/licenses/</a>. The source for the program is included in the packaged versions and also available at <a href="https://github.com/ozsolarwind/siren" target="_blank">https://github.com/ozsolarwind/siren</a> (<a href="https://github.com/ozsolarwind/siren/wiki">wiki</a>). The programs are written Python 3.
 <h2 id="overview">Overview</h2>
 <p>Welcome to SEN's renewable energy conceptual simulation - SIREN.</p>
 <p>The worlds renewable energy resources could provide many times the amount of fossil-fuelled energy currently used. SEN's computer simulation models an electricity network and allows you to create, cost and evaluate scenarios for supplying electricity using a mixture of renewable energy sources.</p>
@@ -205,6 +205,8 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 </ul>
 <p>Occasionally new versions of some of the SIREN programs will be uploaded to SourceForge. You can check for new versions and download them by selecting the <code>sirenupd</code> option in SIREN. (Major new releases can also be indicated but these will require a complete new SIREN version to be installed.)</p>
 <p>To install the required package you can just open/launch it and extract it to your desired location. It may be necessary to execute the program as Administrator.</p>
+<p>It is also possible to install and run the Python programs. <a href="https://github.com/ozsolarwind/siren/blob/master/SIREN_notes.html">SIREN_Notes.html</a> provides some guidance on how to do this</a>.</p>
+<p><strong>Note:</strong> This help file may refer to individual programs either with or without the program suffix, for example <code>sirenm</code>, <code>sirenm.exe</code> or <code>sirenm.py</code>. You may have to use the appropriate suffix for your environment.
 <h3>Possible folder setup for SIREN</h3>
 <p>To enable new versions of SIREN to be installed without affecting your work a folder structure similar to the following is suggested.</p>
 <table border="0", class="none">
@@ -1629,7 +1631,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>save_view</dfn></td>
-<td class="none">If True this Property will allow you to save individual images of visualised generation. The default value is False</td>
+<td class="none">If True this property will allow you to save individual images of visualised generation. The default value is False</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>season</dfn></td>
@@ -1769,7 +1771,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </table>
 </td></tr>
 <tr class="none" id="p_pm"><td><dfn><strong>[Powermatch]</strong></dfn></td>
-<td>File names, worksheet names and other variables used by Powermatch. Properties are:</p>
+<td>File names, worksheet names and other variables used by <a href="#powermatch">Powermatch</a>. Properties are:</p>
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><dfn>adjust_capacities</dfn></td>
@@ -2621,7 +2623,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 </tr>
 <tr class="none">
 <td class="none"><img src="power.png" alt="powermatch">&nbsp;&nbsp;powermatch</td>
-<td class="none">Invoke <code>powermatch</code> to match generation to demand (load) and to quantify and cost dispatchable energy generation, storage and CO2-e emissions (see <a href="#powermatch">Powermatch</a>)</td>
+<td class="none">Invoke <code>powermatch</code> to match generation to demand (load) and to quantify and cost dispatchable energy generation, storage and CO2&#x2011;e emissions (see <a href="#powermatch">Powermatch</a>)</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="line.png" alt="powerplot">&nbsp;&nbsp;powerplot</td>
@@ -2743,7 +2745,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <ul>
 <li>The various plotting features allow you to visualise the renewable energy output and how it compares to demand</li>
 <li>The Financial Models option will invoke SAM Annual Output and Utility IPP/Commercial PPA Finance models. These enable a LCOE to be determined for the scenario</li>
-<li>Powermatch allows you to complete a costed renewable energy scenario. It will use dispatchable generation to meet shortfalls in the renewable energy generation mix to match generation with demand (load) to quantify and cost dispatchable energy generation, storage and CO2-e emissions</li>
+<li>Powermatch allows you to complete a costed renewable energy scenario. It will use dispatchable generation to meet shortfalls in the renewable energy generation mix to match generation with demand (load) to quantify and cost dispatchable energy generation, storage and CO2&#x2011;e emissions</li>
 </ul>
 <p><a href="#help">Back to top</a></p>
 <h3 id="popts">Power Model Options</h3>
@@ -2883,7 +2885,7 @@ By default the size of plots produced is determined by matplotlib, or by the <em
 </ul>
 <p><strong>Note:</strong> For cumulative (stacked) plots produced by Powerplot this feature may perform slowly so please be a little patient</p>
 <h4 id="powerplot"><u>Powerplot</u></h4>
-<p><code>powerplot.exe</code> is a standalone program that will produce either hourly or diurnal plots from a spreadsheet that conforms to certain constraints. It is intended to be used to plot (detailed) results either from Powermatch or some of the files produced by SIREN's PowerModels. The spreadsheet must have:</p>
+<p><code>powerplot</code> is a standalone program that will produce either hourly or diurnal plots from a spreadsheet that conforms to certain constraints. It is intended to be used to plot (detailed) results either from Powermatch or some of the files produced by SIREN's PowerModels. The spreadsheet must have:</p>
 <ol>
 <li>A header row that defines the content of the underlying rows (this need not be the first row)</li>
 <li>The first (header) column should be <em>Hour</em> and the second should be <em>Period</em> with a cell format of <em>yyyy-mm-dd hh:mm</em>. The program uses the year in the first period row to determine if the data is for a leap year</li>
@@ -2935,7 +2937,7 @@ If it's not a diurnal plot (i.e. Period is <em>&lt;None&gt;</em>) any occurence 
 <p>&nbsp;</p>
 <div class="experiment">
 <h4 id="flexiplot"><u>Flexiplot</u></h4>
-<p><code>flexiplot.exe</code> is a standalone program that can be used for &ldquo;prototyping&rdquo; a more conventional Excel spreadsheet where data is arranged in rows or columns. The program is very much experimental. If it proves useful it may be included as part of <code>powerplot.exe</code> in the future. The program has a similar window of options to <code>powerplot</code> with the exception of <em>Period</em> and <em>Target</em>. The default values are specified in the <a href="#p_flexiplot">[Flexiplot]</a> Section of the Preferences file. It has a number of options that differ to <code>powerplot</code>.
+<p><code>flexiplot</code> is a standalone program that can be used for &ldquo;prototyping&rdquo; a more conventional Excel spreadsheet where data is arranged in rows or columns. The program is very much experimental. If it proves useful it may be included as part of <code>powerplot</code> in the future. The program has a similar window of options to <code>powerplot</code> with the exception of <em>Period</em> and <em>Target</em>. The default values are specified in the <a href="#p_flexiplot">[Flexiplot]</a> Section of the Preferences file. It has a number of options that differ to <code>powerplot</code>.
 <table border="0" class="none">
 <tr><td class="top" style="width: 20%;"><dfn>Series</dfn></td>
 <td class="none">The location of the data series to be plotted. The range is specified as either Excel columns and rows, e.g. <em>B1:H1</em>, or as four numbers defining the row and columns range, e.g. <em>1,2,1,7</em>. The series can either be in rows or columns but is expected to be a single row (as in the examples) or column. You then choose which series you want plotted by moving them in the Column Order lists (<em>series</em>)</td></tr>
@@ -3051,7 +3053,7 @@ If it's not a diurnal plot (i.e. Period is <em>&lt;None&gt;</em>) any occurence 
 <li>As mentioned previously, <em>Include full grid path in LCOE?</em> may over-inflate grid costs as each station path to the load centre is traced individually</li>
 </ul><p><a href="#help">Back to top</a></p>
 <h3 id="powermatch">Powermatch</h3>
-<p>Running the SIREN models will produce hourly generation figures which identify generation shortfalls and excesses against load (demand). One of the outputs from SIREN is a table of these generation shortfalls which could be met by storage (charged by surplus renewable generation) and dispatchable energy generation. The Powermatch component of SIREN can be used to match generation with demand (load) to quantify and cost this dispatchable energy generation, storage and CO<sub>2</sub>-e emissions. This enables you to complete a costed renewable energy scenario.</p>
+<p>Running the SIREN models will produce hourly generation figures which identify generation shortfalls and excesses against load (demand). One of the outputs from SIREN is a table of these generation shortfalls which could be met by storage (charged by surplus renewable generation) and dispatchable energy generation. The Powermatch (<code>powermatch</code>) component of SIREN can be used to match generation with demand (load) to quantify and cost this dispatchable energy generation, storage and CO<sub>2</sub>-e emissions. This enables you to complete a costed renewable energy scenario.</p>
 <p>One of the outputs from Powermatch is calculated LCOE figures, overall and for each Generator. The LCOE figures are calculated based upon a Reference LCOE and Reference Capacity Factor (CF) for the generator or storage.
 In producing the LCOE figures you can choose to use LCOE figures that ignore any surplus generation or produce a corrected LCOE figure which adjusts the LCOE figure upwards to take into account the surplus generation (that is, the corrected LCOE figure includes the cost of surplus - spilled - generation). The default is to produce a corrected LCOE (<em>corrected_lcoe</em>)
 <p><strong>Note:</strong> The SIREN Powermatch component was in part derived from the Powerbalance worksheets developed by Ben Rose. For those who would prefer his spreadsheet approach an enhanced version, Powerbalance2, is available at <a href="https://cleanenergymodelling.com.au/powerbalance2/" target="_blank">https://cleanenergymodelling.com.au/powerbalance2/</a></p>
@@ -3360,7 +3362,7 @@ If the best and worse values are the same for a variable and that value is not a
 <td class="none">This file format is defined by SAM. It is possible to produce a subset of wind turbines by creating a copy of the file provided by SAM (remember to always retain the (three) header rows)</td>
 </tr><tr class="none">
 <td class="none"><dfn>scenario</dfn></td>
-<td class="none">An Excel (XLS) or CSV file containing stations for a scenario. The columns for the file are as defined in the Stations <a href="#objects">Simulation Objects</a>. The file names must start with the file name prefix specified in the <em>scenarios</em> Property in the <a href="#p_files">[Files]</a> Section of the Preferences file. It is possible to provide a brief description for the scenario in the first row of the file. This is indicated by a value of <em>Description:</em> in the top left cell followed by the description in the next cell</td>
+<td class="none">An Excel (XLS) or CSV file containing stations for a scenario. The columns for the file are as defined in the Stations <a href="#objects">Simulation Objects</a>. The file names must start with the file name prefix specified in the <em>scenarios</em> property in the <a href="#p_files">[Files]</a> Section of the Preferences file. It is possible to provide a brief description for the scenario in the first row of the file. This is indicated by a value of <em>Description:</em> in the top left cell followed by the description in the next cell</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>solar_files</dfn></td>
@@ -3410,7 +3412,7 @@ If the best and worse values are the same for a variable and that value is not a
 <h3 id="map">Obtaining a Suitable Map Image</h3>
 <p>Among other publicly available resources, OpenStreetMap provides a set of open map tiles (&ldquo;Slippy Map&rdquo; tiles. Refer <a href="http://wiki.openstreetmap.org/wiki/Slippy_Map" target="_blank">http://wiki.openstreetmap.org/wiki/Slippy_Map</a>) which can be stitched together into a single image. These produce a traditional map type.  A satellite map can be obtained from MapQuest (<a href="https://www.mapquestapi.com/staticmap/" target="_blank">https://www.mapquestapi.com/staticmap/</a> or you can save an image from another source such as Google Maps. Map data copyright (&copy;) OpenStreetMap contributors CC-BY-SA <a href="http://www.openstreetmap.org/copyright" target="_blank"> http://www.openstreetmap.org/copyright</a>. You can obtain a suitable image using <code>getmap</code>.</p>
 <h4>getmap</h4>
-<p><code>getmap.py</code> is a Python program that can be used to create a map image for any area of the globe. Using this program you can obtain a map from one of the two sources above. You specify:
+<p><code>getmap</code> is a program that can be used to create a map image for any area of the globe. Using this program you can obtain a map from one of the two sources above. You specify:
 <ul>
 <li>For both, the bounding coordinates for the chosen area, and a name for the file to create a suitable map image</li>
 <li>For OpenStreetMap, a zoom level and a URL template (Internet address) for the map tiles. The default value (<code>http://[abc].tile.openstreetmap.org/zoom/x/y.png</code>) represents the normal OpenStreetMap tiles</li>
@@ -3674,7 +3676,7 @@ wget --load-cookies ~/.urs_cookies --save-cookies ~/.urs_cookies --auth-no-chall
 <p><code>getmerra2</code> provides an easier alternate way of downloading MERRA-2 files than that described in <a href="#merra3">Obtaining data</a>. This approach uses <code>wget</code> but removes the need to manually follow those steps above. You still need to <a href="#merra2a">Register for access</a>.</p>
 <p>When you first execute <code>getmerra2</code> it will check for a <code>.netrc</code> file and if it can't find one it will prompt for the details required. If you've invoked <code>getmerra2</code> in a Windows terminal window and a <code>HOME</code> environment variable does not exist you will need to close and reopen a new terminal window to make the environment variable available to <code>getmerra2</code>.</p>
 <h5>getmerra2</h5>
-<p><code>getmerra2.py</code> is a Python program that can be used to download MERRA-2 files required to create weather files for SAM. You can invoke the program either by choosing <code>getmerra2</code> from the SIREN Tools menu or in Windows by running <code>getmerra2.exe</code> in the <em>siren</em> folder. The program accepts a SIREN Preferences file as an optional parameter. The window fields are:</p>
+<p><code>getmerra2</code> is a program that can be used to download MERRA-2 files required to create weather files for SAM. You can invoke the program either by choosing <code>getmerra2</code> from the SIREN Tools menu or in Windows by running <code>getmerra2.exe</code> in the <em>siren</em> folder. The program accepts a SIREN Preferences file as an optional parameter. The window fields are:</p>
 <ul>
 <li><em>Area of Interest</em>. Area of interest for files to be downloaded. There are three ways the area can be chosen:
 <ol>
@@ -3746,7 +3748,7 @@ You can alternate between these approaches to choose the desired area. If you ha
 <!-- Back to top< -->
 <h4 id="makeweather">Produce wind and solar weather files</h4>
 <h5>makeweatherfiles</h5>
-<p><code>makeweatherfiles.py</code> is a Python program that can be used to produce solar and/or wind weather files for input to SAM. The program generates SMW (preferred for SAM) or CSV format solar resource files and SRW format wind resource files. These file formats have been chosen as they're easier to generate than other formats. Using the program you specify the source folder for the MERRA-2 data files, the time zone for the area of interest, a file format and target folder for the weather files. The program will generate files for each of the MERRA-2 grid squares within the chosen MERRA-2 data files or optionally for a number of latitude and longitude positions. You can invoke the program either by choosing <code>makeweatherfiles</code> from the SIREN Tools menu or in Windows by running <code>makeweatherfiles.exe</code> in the <em>siren</em> (or <em>makeweatherfiles</em>) folder. Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
+<p><code>makeweatherfiles</code> is a program that can be used to produce solar and/or wind weather files for input to SAM. The program generates SMW (preferred for SAM) or CSV format solar resource files and SRW format wind resource files. These file formats have been chosen as they're easier to generate than other formats. Using the program you specify the source folder for the MERRA-2 data files, the time zone for the area of interest, a file format and target folder for the weather files. The program will generate files for each of the MERRA-2 grid squares within the chosen MERRA-2 data files or optionally for a number of latitude and longitude positions. You can invoke the program either by choosing <code>makeweatherfiles</code> from the SIREN Tools menu or in Windows by running <code>makeweatherfiles.exe</code> in the <em>siren</em> (or <em>makeweatherfiles</em>) folder. Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
 <ul>
 <li><em>Year</em>. Year of interest. The naming conventions for MERRA-2 files include the date so this defines the date range. The tool processes dates from the last day of the prior year through to the first day of the next year (ignoring 29 February)</li>
 <li><em>Wrap to prior year</em>. To enable you to use (more) recent weather data this option will indicate that weather data should wrap to the prior year. As an example, if you have downloaded MERRA-2 data up until April for the current year <code>makeweatherfiles</code> will use weather data from the prior year for May onwards to give a full year of data. The MERRA-2 data for both years must reside in the same folder (or the next sub-folder if yearly folders are used)</li>
@@ -4040,7 +4042,7 @@ MERRA-2 Variables
 <li>By using an index file. To use other files you need to create index files that contain the latitude, longitude and file name for each weather file, where the filename is relative to the location for the weather files. Index files for solar and wind are defined by the <em>solar_index</em> and <em>wind_index</em> properties. You can either create these files manually or use <em>indexweather</em> to create an index</li>
 </ol>
 <h5>indexweather</h5>
-<p><code>indexweather.py</code> is a Python program that can be used to create an index of solar and/or wind weather files for input to SAM. The program generates an index file that contains latitude, longitude and file name for each weather file. It does this by interrogating some of weather file formats supported by SAM - SAM CSV, SMW and SRW - to obtain the three variables. You can invoke the program either by choosing <code>indexweather</code> from the SIREN Tools menu or in Windows by running <code>indexweather.exe</code> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
+<p><code>indexweather</code> is a program that can be used to create an index of solar and/or wind weather files for input to SAM. The program generates an index file that contains latitude, longitude and file name for each weather file. It does this by interrogating some of weather file formats supported by SAM - SAM CSV, SMW and SRW - to obtain the three variables. You can invoke the program either by choosing <code>indexweather</code> from the SIREN Tools menu or in Windows by running <code>indexweather.exe</code> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
 <ul>
 <li><em>Solar files</em>. Location of solar weather files</li>
 <li><em>Solar index</em>. Name and location for solar index file</li>
@@ -4083,7 +4085,7 @@ MERRA-2 Variables
 <li>Hourly By Day. These files have hourly figures for each day. It provides hourly variances at the daily level. This is a spreadsheet for each day with a very approximate disk requirement of about 5.8Mb per cell (15Kb per day). It allows you to visualise the actual movement of weather events (sun, wind fronts) at the expense of significantly larger disk storage requirements</li>
 </ul>
 <h4>makegrid</h4>
-<p><code>makegrid.py</code> is a Python program that can be used to create the resource grid file used by SIREN. You can invoke the program either by choosing <code>makegrid</code> from the SIREN Tools menu or in Windows by running <code>makegrid.exe</code> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to allow you to define what file to create. The window fields are:</p>
+<p><code>makegrid</code> is a program that can be used to create the resource grid file used by SIREN. You can invoke the program either by choosing <code>makegrid</code> from the SIREN Tools menu or in Windows by running <code>makegrid.exe</code> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to allow you to define what file to create. The window fields are:</p>
 <ul>
 <li><em>Year</em>. Year of interest</li>
 <li><em>Update year</em>. If this is checked changes to the year selected will be propagated to the two Folder and Resource File fields</li>
@@ -4522,10 +4524,10 @@ MERRA-2 Variables
 <li>Identify the technology by giving it a name of <em>Other</em> plus a suffix, say <em>Other Tech</em>, and create a Section with that name in the Preferences file</li>
 <li>Create appropriate Properties for that technology and any other variables you want for it (see the <a href="#p_other">[Other]</a> Section in the Preferences file)</li>
 <li>There are standard Properties of <em>area</em>, <em>capital_cost</em>, <em>icon</em>, and <em>o_m_cost</em>.</li>
-<li>The formula is identified by the <em>formula</em> Property. Any calculated value will be capped at 1 to prevent a CF greater than 1</li>
-<li>Add the technology (lower case with spaces replaced by underscores, e.g. <em>other_tech</em>) as a colour Property in the <a href="#p_color">[Color]</a> Section of the Preferences file</li>
-<li>Add the technology (lower case with spaces replaced by underscores, e.g. <em>other_tech</em>) to the <em>technologies</em> Property in the <a href="#power">[Power]</a> Section of the Preferences file</li>
-<li>If the technology can be regarded as dispatchable you can also add it to the <em>dispatchable</em> Property in the <a href="#p_grid">[Grid]</a> Section of the Preferences file (lower case with spaces replaced by underscores, e.g. <em>other_tech</em>)</li>
+<li>The formula is identified by the <em>formula</em> property. Any calculated value will be capped at 1 to prevent a CF greater than 1</li>
+<li>Add the technology (lower case with spaces replaced by underscores, e.g. <em>other_tech</em>) as a colour property in the <a href="#p_color">[Color]</a> Section of the Preferences file</li>
+<li>Add the technology (lower case with spaces replaced by underscores, e.g. <em>other_tech</em>) to the <em>technologies</em> property in the <a href="#power">[Power]</a> Section of the Preferences file</li>
+<li>If the technology can be regarded as dispatchable you can also add it to the <em>dispatchable</em> property in the <a href="#p_grid">[Grid]</a> Section of the Preferences file (lower case with spaces replaced by underscores, e.g. <em>other_tech</em>)</li>
 </ol>
 </p>The following sample defines a technology, <em>Other Wave</em>, similar to the Wave model (above but with no cutout). It contains an additional property, <em>efficiency</em>.
 <pre>
@@ -4896,7 +4898,7 @@ MERRA-2 Variables
 <tr><td class="none"><dfn>kWh</dfn></td>
 <td class="none">Kilowatt hour</td></tr>
 <tr><td class="none"><dfn>LCOE</dfn></td>
-<td class="none">Levelised cost of electricity. &ldquo;The levelized cost of electricity (LCOE) is a measure of a power source which attempts to compare different methods of electricity generation on a consistent basis. It is an economic assessment of the average total cost to build and operate a power-generating asset over its lifetime divided by the total energy output of the asset over that lifetime. The LCOE can also be regarded as the average minimum price at which electricity must be sold in order to break-even over the lifetime of the project.&rdquo; (<a href="https://en.wikipedia.org/wiki/Cost_of_electricity_by_source" target="_blank">https://en.wikipedia.org/wiki/Cost_of_electricity_by_source</a>)</td></tr>
+<td class="none">Levelised cost of electricity. &ldquo;The levelized cost of electricity (LCOE) is a measure of a power source which attempts to compare different methods of electricity generation on a consistent basis. It is an economic assessment of the average total cost to build and operate a power-generating asset over its lifetime divided by the total energy output of the asset over that lifetime. The LCOE can also be regarded as the average minimum price at which electricity must be sold in order to break-even over the lifetime of the project.&rdquo; (<a href="https://en.wikipedia.org/wiki/Levelized_cost_of_energy" target="_blank">https://en.wikipedia.org/wiki/Levelized_cost_of_energy</a>)</td></tr>
 <tr><td class="none"><dfn>m/s</dfn></td>
 <td class="none">metres per second</td></tr>
 <tr><td class="none"><dfn>Mb</dfn></td>
