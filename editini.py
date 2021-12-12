@@ -60,7 +60,7 @@ class EdtDialog(QtWidgets.QDialog):
         self.cancelButton.clicked.connect(self.reject)
         self.widget = QtWidgets.QPlainTextEdit()
         highlight = inisyntax.IniHighlighter(self.widget.document())
-        if sys.platform == 'linux2':
+        if sys.platform == 'linux' or sys.platform == 'linux2':
             self.widget.setFont(QtGui.QFont('Ubuntu Mono 13', 12))
         else:
             self.widget.setFont(QtGui.QFont('Courier New', 12))

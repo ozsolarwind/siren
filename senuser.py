@@ -36,8 +36,7 @@ def getUser():
 
     elif sys.platform == 'darwin':   # osx64
         return os.environ.get("USERNAME")
-
-    elif sys.platform == 'linux2':   # linux
+    elif sys.platform == 'linux' or sys.platform == 'linux2':   # linux
         return pwd.getpwuid(os.geteuid()).pw_name
     else:
         return os.environ.get("USERNAME")
