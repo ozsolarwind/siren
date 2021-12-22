@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -46,6 +45,7 @@ pre {
 <li><em>siren_makeweatherfiles.exe</em> provides the files required to create SAM weather files without requiring any other parts of SIREN</li>
 </ul>
 <h2 id="libraries">Python Libraries</h2>
+<p>These libraries may need to be installed using either pip3 or your software installer.</p>
 <table><tr><td><strong>Library</strong></td><td><strong>Standard library?</strong></td><td><strong>Notes</strong></td</tr>
 <tr><td>configparser</td><td style="text-align:center">y</td></tr>
 <tr><td>csv</td><td style="text-align:center">y</td></tr>
@@ -73,6 +73,9 @@ pre {
 <tr><td>pylab</td></tr>
 <tr><td>pyproj</td><td>&nbsp;</td><td>Windows?</td></tr>
 <tr><td>PyQt5</td></tr>
+<tr><td>python3-pil</td></tr>
+<tr><td>python3-pil.imagetk</td></tr>
+<tr><td>python3-tk</td><td style="text-align:center">y</td></tr>
 <tr><td>random</td><td style="text-align:center">y</td></tr>
 <tr><td>scipy</td></tr>
 <tr><td>shutil</td><td style="text-align:center">y</td></tr>
@@ -90,6 +93,7 @@ pre {
 <tr><td>xml.etree.ElementTree</td><td style="text-align:center">y</td></tr>
 <tr><td>zipfile</td><td style="text-align:center">y</td></tr>
 </table>
+<p>
 <h2 id="source">SIREN Programs</h2>
 <p>This is a list of the Python source programs for SIREN. Where there is a dependency on the os environment the programs test <code>sys.platform</code>. These programs are highlighted in the list with an asterisk (*).</p>
 <table><tr><td><strong>Program</strong></td><td><strong>Purpose</strong></td></tr>
@@ -160,5 +164,5 @@ pre {
 </ul>
 <h3>opt_debug</h3>
 <p><code>opt_debug.py</code> can be used to debug the <code>powermatch</code> optimisation routine. It doesn't need to be packaged with SIREN.</p>
-<p>Angus King<br />July 2020</p>
+<p>Angus King<br />December 2021</p>
 </body>
