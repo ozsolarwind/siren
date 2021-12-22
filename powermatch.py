@@ -686,7 +686,28 @@ class powerMatch(QtWidgets.QWidget):
                 r += 1
                 self.grid.addWidget(QtWidgets.QLabel(self.file_labels[i] + ' Sheet:'), r, 0)
                 self.sheets[i] = QtWidgets.QComboBox()
-                self.sheets[i].addItem(self.isheets[i])
+                try:
+                    curfile = self.scenarios + self.ifiles[i]
+                    ts = xlrd.open_workbook(curfile, on_demand=True)
+                    ndx = 0
+                    j = -1
+                    for sht in ts.sheet_names():
+                        j += 1
+                        self.sheets[i].addItem(sht)
+                        if sht == self.isheets[i]:
+                            ndx = j
+                    self.sheets[i].setCurrentIndex(ndx)
+                    ws = ts.sheet_by_index(ndx)
+                    if i == C:
+                        self.getConstraints(ws)
+                    elif i == G:
+                        self.getGenerators(ws)
+                    elif i == O:
+                        self.getOptimisation(ws)
+                    ts.release_resources()
+                    del ts
+                except:
+                    self.sheets[i].addItem(self.isheets[i])
                 self.grid.addWidget(self.sheets[i], r, 1, 1, 2)
                 self.sheets[i].currentIndexChanged.connect(self.sheetChanged)
                 edit[i] = QtWidgets.QPushButton(self.file_labels[i], self)
@@ -772,15 +793,7 @@ class powerMatch(QtWidgets.QWidget):
         self.grid.addWidget(help, r, 5)
         help.clicked.connect(self.helpClicked)
         QtWidgets.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
-        try:
-            ts = xlrd.open_workbook(self.get_filename(self.files[G].text()))
-            ws = ts.sheet_by_name(self.isheets[G])
-            self.getGenerators(ws)
-            self.setOrder()
-            ts.release_resources()
-            del ts
-        except:
-            pass
+        self.setOrder()
         frame = QtWidgets.QFrame()
         frame.setLayout(self.grid)
         self.scroll = QtWidgets.QScrollArea()
@@ -1153,12 +1166,12 @@ class powerMatch(QtWidgets.QWidget):
                     warm_col = col
             strt_row = 1
         else:
-            self.setStatus('Not a ' + self.file_labels[it] + ' worksheet.')
+            self.setStatus('Not a ' + self.file_labels[C] + ' worksheet.')
             return
         try:
             cat_col = cat_col
         except:
-            self.setStatus('Not a ' + self.file_labels[it] + ' worksheet.')
+            self.setStatus('Not a ' + self.file_labels[C] + ' worksheet.')
             return
         self.constraints = {}
         for row in range(strt_row, ws.nrows):
