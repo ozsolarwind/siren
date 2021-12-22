@@ -556,6 +556,7 @@ class powerMatch(QtWidgets.QWidget):
         self.optimise_debug = False
         self.optimise_default = None
         self.remove_cost = True
+        self.save_tables = False
         self.surplus_sign = 1 # Note: Preferences file has it called shortfall_sign
         # it's easier for the user to understand while for the program logic surplus is easier
         target_keys = ['lcoe', 'load_pct', 'surplus_pct', 're_pct', 'cost', 'co2']
@@ -651,6 +652,9 @@ class powerMatch(QtWidgets.QWidget):
                  elif key == 'remove_cost':
                      if value.lower() in ['false', 'off', 'no']:
                          self.remove_cost = False
+                 elif key == 'save_tables':
+                     if value.lower() in ['true', 'on', 'yes']:
+                         self.save_tables = True
                  elif key == 'shortfall_sign':
                      if value[0] == '+' or value[0].lower() == 'p':
                          self.surplus_sign = -1
@@ -962,7 +966,14 @@ class powerMatch(QtWidgets.QWidget):
         dialr = EdtDialog(config_file)
         dialr.exec_()
      #   self.get_config()   # refresh config values
-        self.setStatus = config_file + ' edited. Reload may be required.'
+        config = configparser.RawConfigParser()
+        config.read(config_file)
+        st = config.get('Powermatch', 'save_tables')
+        if st.lower() in ['true', 'yes', 'on']:
+            self.save_tables = True
+        else:
+            self.save_tables = False
+        self.setStatus(config_file + ' edited. Reload may be required.')
 
     def editClicked(self):
         def update_dictionary(it, source):
@@ -2634,6 +2645,125 @@ class powerMatch(QtWidgets.QWidget):
                     pass
         ss.freeze_panes = 'B4'
         ss.activeCell = 'B4'
+        if self.save_tables:
+            gens = []
+            cons = []
+            for gen in re_order:
+                if gen == 'Load':
+                    continue
+                if pmss_details[gen][3] <= 0:
+                    continue
+                gens.append(gen)
+                cons.append(self.generators[gen].constraint)
+            for gen in dispatch_order:
+                gens.append(gen)
+                cons.append(self.generators[gen].constraint)
+            gs = ds.create_sheet(self.sheets[G].currentText())
+            fields = []
+            col = 1
+            row = 1
+            if hasattr(self.generators[list(self.generators.keys())[0]], 'name'):
+                fields.append('name')
+                gs.cell(row=row, column=col).value = 'Name'
+                col += 1
+            for prop in dir(self.generators[list(self.generators.keys())[0]]):
+                if prop[:2] != '__' and prop[-2:] != '__':
+                    if prop != 'name':
+                        fields.append(prop)
+                        txt = prop.replace('_', ' ').title()
+                        txt = txt.replace('Cf', 'CF')
+                        txt = txt.replace('Lcoe', 'LCOE')
+                        txt = txt.replace('Om', 'OM')
+                        gs.cell(row=row, column=col).value = txt
+                        if prop == 'capex':
+                            txt = txt + txt
+                        gs.column_dimensions[ss_col(col)].width = max(len(txt) * 1.4, 10)
+                        col += 1
+            nme_width = 4
+            con_width = 4
+            for key, value in self.generators.items():
+                if key in gens:
+                    row += 1
+                    col = 1
+                    for field in fields:
+                        gs.cell(row=row, column=col).value = getattr(value, field)
+                        if field in ['name', 'constraint']:
+                            txt = getattr(value, field)
+                            if field == 'name':
+                                if len(txt) > nme_width:
+                                    nme_width = len(txt)
+                                    gs.column_dimensions[ss_col(col)].width = nme_width * 1.4
+                            else:
+                                if len(txt) > con_width:
+                                    con_width = len(txt)
+                                    gs.column_dimensions[ss_col(col)].width = con_width * 1.4
+                        elif field in ['capex', 'fixed_om']:
+                            gs.cell(row=row, column=col).number_format = '$#,##0'
+                        elif field in ['variable_om', 'fuel']:
+                            gs.cell(row=row, column=col).number_format = '$#,##0.00'
+                        elif field in ['disc_rate']:
+                            gs.cell(row=row, column=col).number_format = '#,##0.00%'
+                        elif field in ['capacity', 'lcoe', 'lcoe_cf', 'initial']:
+                            gs.cell(row=row, column=col).number_format = '#,##0.00'
+                        elif field in ['emissions']:
+                            gs.cell(row=row, column=col).number_format = '#,##0.000'
+                        elif field in ['lifetime', 'order']:
+                            gs.cell(row=row, column=col).number_format = '#,##0'
+                        col += 1
+            for row in range(1, row + 1):
+                for col in range(1, len(fields) + 1):
+                    gs.cell(row=row, column=col).font = normal
+            gs.freeze_panes = 'B2'
+            gs.activeCell = 'B2'
+            fields = []
+            col = 1
+            row = 1
+            cs = ds.create_sheet(self.sheets[C].currentText())
+            if hasattr(self.constraints[list(self.constraints.keys())[0]], 'name'):
+                fields.append('name')
+                cs.cell(row=row, column=col).value = 'Name'
+                col += 1
+            for prop in dir(self.constraints[list(self.constraints.keys())[0]]):
+                if prop[:2] != '__' and prop[-2:] != '__':
+                    if prop != 'name':
+                        fields.append(prop)
+                        if prop == 'warm_time':
+                            cs.cell(row=row, column=col).value = 'Warmup Time'
+                        else:
+                            cs.cell(row=row, column=col).value = prop.replace('_', ' ').title()
+                        cs.column_dimensions[ss_col(col)].width = max(len(prop) * 1.4, 10)
+                        col += 1
+            nme_width = 4
+            cat_width = 4
+            for key, value in self.constraints.items():
+                if key in cons:
+                    row += 1
+                    col = 1
+                    for field in fields:
+                        cs.cell(row=row, column=col).value = getattr(value, field)
+                        if field in ['name', 'category']:
+                            txt = getattr(value, field)
+                            if field == 'name':
+                                if len(txt) > nme_width:
+                                    nme_width = len(txt)
+                                    cs.column_dimensions[ss_col(col)].width = nme_width * 1.4
+                            else:
+                                if len(txt) > cat_width:
+                                    cat_width = len(txt)
+                                    cs.column_dimensions[ss_col(col)].width = cat_width * 1.4
+                        elif field == 'warm_time':
+                            cs.cell(row=row, column=col).number_format = '#0.00'
+                        elif field != 'category':
+                            cs.cell(row=row, column=col).number_format = '#,##0%'
+                        col += 1
+            for row in range(1, row + 1):
+                for col in range(1, len(fields) + 1):
+                    try:
+                        cs.cell(row=row, column=col).font = normal
+                    except:
+                        pass
+            cs.freeze_panes = 'B2'
+            cs.activeCell = 'B2'
         ds.save(data_file)
         self.progressbar.setValue(10)
         j = data_file.rfind('/')

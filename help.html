@@ -1806,6 +1806,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">File name for Powermatch input (data) spreadsheet</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>discount_rate</dfn></td>
+<td class="none">The discount rate to be applied if LCOEs are being calculated using capital, operations and fuel costs rather than a Reference LCOE</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>generators_file</dfn></td>
 <td class="none">File name for generators (facilities) spreadsheet</td>
 </tr>
@@ -1860,6 +1864,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <tr class="none">
 <td class="none"><dfn>results_file</dfn></td>
 <td class="none">File name for Powermatch output (report) spreadsheet</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>save_tables</dfn></td>
+<td class="none">If set to True generators and constraints will be saved to the Powermatch results spreadsheet. Default is False</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>shortfall_sign</dfn></td>
@@ -3075,6 +3083,8 @@ In producing the LCOE figures you can choose to use LCOE figures that ignore any
 <td class="none">File name for Powermatch input (data) spreadsheet. Clicking on the field will allow you to choose another spreadsheet (<em>data_file</em>)</td></tr>
 <tr><td class="lr"><dfn>Results File</dfn></td>
 <td class="none">File name for Powermatch output (report) spreadsheet. Clicking on the field will allow you to choose the name for the report spreadsheet. <strong>Note:</strong> If the  <em>change_results</em> property of the <em>[Powermatch]</em> Section is set changes to the input spreadsheet name will cause this Results spreadsheet name to change (<em>results_file</em>)</td></tr>
+<tr><td class="lr"><dfn>Discount Rate</dfn></td>
+<td class="none">The default discount rate to be used if costs rather than a Reference LCOE are being used to calculate generation costs. <strong>Note:</strong> It is not uncommon to use WACC as a discount rate (<em>discount_rate</em>)</td></tr>
 <tr><td class="lr"><dfn>Carbon Price</dfn></td>
 <td class="none">If a carbon price is not included in LCOE figures you can use this option to set a carbon price between $0 and $200 (<em>carbon_price</em>)</td></tr>
 <tr><td class="lr"><dfn>Adjust Generators</dfn></td>
@@ -3087,23 +3097,30 @@ In producing the LCOE figures you can choose to use LCOE figures that ignore any
 <ul>
 <li><strong>Done</strong>. Exit Powermatch. Any changed options will be saved</li>
 <li><strong>Summary</strong>. Invoke Powermatch with (just) Summary Output. This option produces a summary table of the Powermatch outputs allowing you to examine and adjust inputs without having to access the Powermatch outputs spreadsheet. </li>
-<li><strong>Powermatch</strong>. Invoke Powermatch. This option produces a spreadsheet of the Powermatch outputs. It provides detail on how demand was met for each hour of the year</li>
+<li><strong>Powermatch</strong>. Invoke Powermatch. This option produces a spreadsheet of the Powermatch outputs. It provides detail on how demand was met for each hour of the year. If <em>save_tables</em> is set generators and constraints will be saved to spreadsheet</li>
 <li><strong>Optimise</strong>. Invoke the Optimise function. This will use an iterative approach to optimise the input generator capacities to produce a solution with (a) either a lower overall LCOE, or (b) the lowest weight for six variables, or (c) both. It will complete by displaying a plot of how the value for LCOE has converged to a minimum, and a three dimensional plot showing the three variables with the highest weightings for the multi-variable approach. Exiting the plot will then produce a summary table. It will also update the adjustment values for each generator to enable you to produce a Powermatch spreadsheet. See below for more details</li>
 <li><strong>Help</strong>. Display the Powermatch help</li>
 </ul>
-<p>The Constraints, Generators and Optimisation tables can be edited, updated and saved and the revised table(s) used as inputs for the <strong>Summary</strong>, <strong>Powermatch</strong> and <strong>Optimise</strong> options. During the edit process the revised values can be exported as a new spreadsheet. If the table(s) is saved but not exported the revised values will not be available once Powermatch is exited.</p>
+<p>The Constraints, Generators and Optimisation tables can be edited, updated and saved and the revised table(s) used as inputs for the <strong>Summary</strong>, <strong>Powermatch</strong> and <strong>Optimise</strong> options. During the edit process the revised values can be exported as a new spreadsheet. If the table(s) is saved but not exported the revised values will not be available once Powermatch is exited. You can also choose another sheet, however, if the sheet you choose is not the correct format you may get unusual behaviour.</p>
 <h4>Generators</h4>
-<p>To address the shortfall in generation encountered by a renewable scenario other dispatchable generation and storage facilities can be used. These are defined in a Generators table. The Generators table can also be used to define the Reference <em>LCOE</em> and <em>LCOE CF</em> figures for Renewable technologies. The fields are:
+<p>To address the shortfall in generation encountered by a renewable scenario other dispatchable generation and storage facilities can be used. These are defined in a Generators table. The Generators table can also be used to define the Reference <em>LCOE</em> and <em>LCOE CF</em> figures for Renewable technologies. The dispatchable facilities are dispatched after renewable generators. The fields are:
 <table border="0" class="none">
-<tr><td class="none"><dfn>Name</dfn></td><td class="none">Name of the Facility</td></tr>
-<tr><td class="none"><dfn>(Dispatch) Order</dfn></td><td class="none">Specifies the order in which the dispatchable facilities are used, with a value of 1 being the first in the order. Zero values are placed after those with a positive number</td></tr>
-<tr><td class="none"><dfn>Constraint</dfn></td><td class="none">Name of the Constraint that applies to this facility</td></tr>
-<tr><td class="none"><dfn>Capacity</dfn></td><td class="none">The capacity for the facility in MW for generators and MWh, that is total energy content, for storage</td></tr>
-<tr><td class="none"><dfn>Initial</dfn></td><td class="none">For storage this species the initial level of storage as a percentage of total capacity</td></tr>
-<tr><td class="none"><dfn>LCOE</dfn></td><td class="none">The Reference LCOE for the facility</td></tr>
-<tr><td class="none"><dfn>LCOE CF</dfn></td><td class="none">The Reference capacity factor (CF) at which the Reference LCOE was determined. A combination of <em>LCOE</em> and <em>LCOE CF</em> allows the cost of the generation or storage to be determined. In undertaking any calculations Powermatch adjusts the resulting LCOE to reflect the difference between this CF and the calculated CF. If the Reference CF is zero the resulting LCOE will be used (that is, resulting LCOE will be the same as reference LCOE)</td></tr>
-<tr><td class="none"><dfn>Emissions</dfn></td><td class="none">Specifies the carbon dioxide equivalent emissions in tonnes per unit of electricity (t CO<sub>2</sub>-e / MWh)</td></tr>
+<tr><td class="none"><dfn>Name (*)</dfn></td><td class="none">Name of the Facility</td></tr>
+<tr><td class="none"><dfn>Capacity (*)</dfn></td><td class="none">The capacity for the facility in MW for generators and MWh, that is total energy content, for storage</td></tr>
+<tr><td class="none"><dfn>Capex (or Capital) (c)</dfn></td><td class="none">The capital cost of the facility per MW for generators and MWh for storage</td></tr>
+<tr><td class="none"><dfn>Constraint (*)</dfn></td><td class="none">Name of the Constraint that applies to this facility</td></tr>
+<tr><td class="none"><dfn>Discount Rate (c)</dfn></td><td class="none">The discount rate to be applied if LCOEs are being calculated using capital, operations and fuel costs rather than a Reference LCOE. If not specified the default Discount Rate will be used</td></tr>
+<tr><td class="none"><dfn>Emissions (*)</dfn></td><td class="none">Specifies the carbon dioxide equivalent emissions in tonnes per unit of electricity (t CO<sub>2</sub>-e / MWh)</td></tr>
+<tr><td class="none"><dfn>Fixed OM (or FOM) (c)</dfn></td><td class="none">Fixed Operations and Maintenance costs per MW</td></tr>
+<tr><td class="none"><dfn>Fuel (c)</dfn></td><td class="none">Fuel costs per MWh. A cost per gigajoule can be calculated by multiplying the fuel cost by 3.6 and dividing by the generator efficiency</td></tr>
+<tr><td class="none"><dfn>Initial (*)</dfn></td><td class="none">For storage this species the initial level of storage as a percentage of total capacity</td></tr>
+<tr><td class="none"><dfn>LCOE (l)</dfn></td><td class="none">The Reference LCOE for the facility</td></tr>
+<tr><td class="none"><dfn>LCOE CF (l)</dfn></td><td class="none">The Reference capacity factor (CF) at which the Reference LCOE was determined. A combination of <em>LCOE</em> and <em>LCOE CF</em> allows the cost of the generation or storage to be determined. In undertaking any calculations Powermatch adjusts the resulting LCOE to reflect the difference between this CF and the calculated CF. If the Reference CF is zero the resulting LCOE will be used (that is, resulting LCOE will be the same as reference LCOE)</td></tr>
+<tr><td class="none"><dfn>Lifetime (c)</dfn></td><td class="none">The estimated lifetime of the facility in years</td></tr>
+<tr><td class="none"><dfn>(Dispatch) Order (*)</dfn></td><td class="none">Specifies the order in which the <u>dispatchable</u> facilities are used, with a value of 1 being the first in the order. Zero values are placed after those with a positive number</td></tr>
+<tr><td class="none"><dfn>Variable OM (or VOM) (c)</dfn></td><td class="none">Variable Operations and Maintenance costs per MW/h</td></tr>
 </table>
+<p>Powermatch will calculate costs in either of two ways, either by using a Reference LCOE and CF (<em>(l)</em> fields) or by using input costs (<em>(c)</em> fields) . If Capex is present it will use input costs otherwise it will use Reference LCOE. The option is chosen for each facility<em>(*)</em> fields are required for either method.</p>
 <h4>Constraints</h4>
 <p>Utilisation of each dispatchable generator and storage facility can be constrained by Powermatch in a number of ways. All figures are expressed as a percentage. In the tables the values will be displayed as a decimal fraction (0.00 to 1.00). All figures are hourly except for Parasitic Loss which is daily. The approach Powermatch uses is rather simplistic in that any losses need to cater for any loss of efficiency in storing energy or retrieving energy. The constraints are:
 <table border="0" class="none">
@@ -4951,6 +4968,8 @@ MERRA-2 Variables
 <td class="none">Watts</td></tr>
 <tr><td class="none"><dfn>WA</dfn></td>
 <td class="none">Western Australia or Western Australian</td></tr>
+<tr><td class="none"><dfn>WACC</dfn></td>
+<td class="none">Weighted Average Cost of Capital. The weighted average cost of capital (WACC) represents a firm's average cost of capital from all sources, including common stock, preferred stock, bonds, and other forms of debt</td></tr>
 <tr><td class="none"><dfn>WAsP</dfn></td>
 <td class="none">Wind Atlas Analysis and Application Program</td></tr>
 <tr><td class="none"><dfn>WEM</dfn></td>
