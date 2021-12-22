@@ -308,19 +308,24 @@ class Adjustments(QtWidgets.QDialog):
             self._adjust_typ[key] = typ
             if key != 'Load' and capacity is None:
                 continue
-            if key not in adjustin.keys():
-                continue
+         #   if key not in adjustin.keys():
+          #      continue
             self._data[key] = capacity
             self._adjust_rnd[key] = QtWidgets.QDoubleSpinBox()
             self._adjust_rnd[key].setRange(0, adjust_cap)
             self._adjust_rnd[key].setDecimals(4)
-            try:
-                self._adjust_mul[key] = adjustin[key] / capacity
-                self._adjust_rnd[key].setValue(round(self._adjust_mul[key], 4))
-            except:
-                self._adjust_mul[key] = 1.
-                self._adjust_rnd[key].setValue(1.)
-            self._adjust_cty[key] = adjustin[key]
+            if key in adjustin.keys():
+                self._adjust_cty[key] = adjustin[key]
+                try:
+                    self._adjust_mul[key] = adjustin[key] / capacity
+                    self._adjust_rnd[key].setValue(round(self._adjust_mul[key], 4))
+                except:
+                    self._adjust_mul[key] = 1.
+                    self._adjust_rnd[key].setValue(1.)
+            else:
+                self._adjust_cty[key] = 0.
+                self._adjust_mul[key] = 0.
+                self._adjust_rnd[key].setValue(0.)
             self._adjust_rnd[key].setSingleStep(.1)
             self._adjust_rnd[key].setObjectName(key)
             self.grid.addWidget(QtWidgets.QLabel(key), ctr, 0)
@@ -418,9 +423,11 @@ class Adjustments(QtWidgets.QDialog):
     def quitClicked(self):
         self.close()
 
-    def resetClicked(self):
+    def resetClicked(self, to):
+        if isinstance(to, bool):
+            to = 1.
         for key in self._adjust_rnd.keys():
-            self._adjust_rnd[key].setValue(1)
+            self._adjust_rnd[key].setValue(to)
 
     def restoreClicked(self):
         ini_file = QtWidgets.QFileDialog.getOpenFileName(self, 'Open Adjustments file',
@@ -433,7 +440,7 @@ class Adjustments(QtWidgets.QDialog):
                 adjustto = config.get('Powermatch', 'adjusted_capacities')
             except:
                 return
-            self.resetClicked()
+            self.resetClicked(to=0)
             bits = adjustto.split(',')
             for bit in bits:
                 bi = bit.split('=')
@@ -945,7 +952,6 @@ class powerMatch(QtWidgets.QWidget):
         self.setStatus = config_file + ' edited. Reload may be required.'
 
     def editClicked(self):
-
         def update_dictionary(it, source):
             new_keys = list(source.keys())
             # first we delete and add keys to match updated dictionary
