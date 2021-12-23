@@ -1725,7 +1725,7 @@ class powerMatch(QtWidgets.QWidget):
                 ss.cell(row=ss_row, column=4).number_format = '#,##0.00'
                 if gen not in self.generators:
                     continue
-                if self.generators[gen].capex > 0:
+                if self.generators[gen].capex > 0 or self.generators[gen].fixed_om > 0 or self.generators[gen].variable_om > 0:
                     disc_rate = self.generators[gen].disc_rate
                     if disc_rate == 0:
                         disc_rate = self.discount_rate
@@ -2129,7 +2129,7 @@ class powerMatch(QtWidgets.QWidget):
                     sto_sum += sp_data[sp][2]
                 elif gen not in tech_names:
                     ff_sum += sp_data[sp][2]
-                if self.generators[gen].capex > 0:
+                if self.generators[gen].capex > 0 or self.generators[gen].fixed_om > 0 or self.generators[gen].variable_om > 0:
                     if self.remove_cost and sp_data[sp][2] == 0:
                         sp_data[sp][4] = 0
                         continue
@@ -2292,7 +2292,7 @@ class powerMatch(QtWidgets.QWidget):
             ss.cell(row=ss_row, column=3).number_format = '#,##0'
             ss.cell(row=ss_row, column=4).value = '=Detail!' + ss_col(col + nc) + str(cf_row)
             ss.cell(row=ss_row, column=4).number_format = '#,##0.00'
-            if self.generators[gen].capex > 0:
+            if self.generators[gen].capex > 0 or self.generators[gen].fixed_om > 0 or self.generators[gen].variable_om > 0:
                 disc_rate = self.generators[gen].disc_rate
                 if disc_rate == 0:
                     disc_rate = self.discount_rate
