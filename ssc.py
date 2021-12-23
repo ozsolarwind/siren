@@ -18,10 +18,11 @@ from getmodels import getModelFile
 from parents import getParents
 from senuser import getUser
 
-c_number = c_float  # must be c_double or c_float depending on how defined in sscapi.h
+c_number = c_double   # must be c_double or c_float depending on how defined in sscapi.h
 
 
 class SSCAPI:
+        global c_number
         config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
                 config_file = sys.argv[1]
@@ -63,6 +64,8 @@ class SSCAPI:
 #               return _dll
         else:
                 print("Platform not supported ", sys.platform)
+        if _dll.ssc_version() <= 209: # need to check SAM version and if ealier than 210 use c_float
+            c_number = c_float
 
         @staticmethod
         def ssc_version():
