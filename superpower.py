@@ -227,22 +227,21 @@ class SuperPower():
         var_names = []
         ssc_info = ssc.Info(module)
         while ssc_info.get():
-            var_names.append(ssc_info.name() + ' ' + str(ssc_info.var_type()) + ' ' + str(ssc_info.data_type()))
+            var_names.append([ssc_info.name(), ssc_info.var_type(), ssc_info.data_type()])
         if status:
             status.log('SAM Variable list for ' + tech + ' - ' + name)
         else:
             print('SAM Variable list for ' + tech + ' - ' + name)
-        var_names = sorted(var_names, key=lambda s: s.lower())
+        var_names = sorted(var_names, key=lambda s: s[0].lower())
         info = []
         for fld in var_names:
-            bits = fld.split()
-            msg = bits[0] + ',' + var_typs[int(bits[1])] + ',' + data_typs[int(bits[2])] + ','
-            if bits[2] == '1':
-                msg += data.get_string(bits[0])
-            elif bits[2] == '2':
-                msg += str(data.get_number(bits[0]))
-            elif bits[2] == '3':
-                dat = data.get_array(bits[0])
+            msg = fld[0].decode() + ',' + var_typs[fld[1]] + ',' + data_typs[fld[2]] + ','
+            if fld[2] == 1:
+                msg += data.get_string(fld[0]).decode()
+            elif fld[2] == 2:
+                msg += str(data.get_number(fld[0]))
+            elif fld[2] == 3:
+                dat = data.get_array(fld[0])
                 if len(dat) == 0:
                     msg += '"[]"'
                 else:
@@ -257,8 +256,8 @@ class SuperPower():
                         msg += str(dat[i]) + ','
                     msg = msg[:-1]
                     msg += fin
-            elif bits[2] == '4':
-                msg += str(len(data.get_matrix(bits[0]))) + ' entries'
+            elif fld[2] == 4:
+                msg += str(len(data.get_matrix(fld[0]))) + ' entries'
             info.append(msg)
         if status:
             for msg in info:
