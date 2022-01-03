@@ -1866,6 +1866,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">File name for Powermatch output (report) spreadsheet</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>results_prefix</dfn></td>
+<td class="none">Prefix for results filename for Powermatch output files</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>save_tables</dfn></td>
 <td class="none">If set to True generators and constraints will be saved to the Powermatch results spreadsheet. Default is False</td>
 </tr>
@@ -3081,6 +3085,8 @@ In producing the LCOE figures you can choose to use LCOE figures that ignore any
 <td class="none">Worksheet name for optimisation table (<em>optimisation_sheet</em>). Click on the <strong>Optimisation</strong> button to display the Optimisation table. Values can be changed and the table Saved or Exported as a new file</td></tr>
 <tr><td class="lr"><dfn>Data File</dfn></td>
 <td class="none">File name for Powermatch input (data) spreadsheet. Clicking on the field will allow you to choose another spreadsheet (<em>data_file</em>)</td></tr>
+<tr><td class="lr"><dfn>Results Prefix</dfn></td>
+<td class="none">If set this value will be prefixed to the Results File name and to Summary and Adjust Generators filema,e if these are saved</td></tr>
 <tr><td class="lr"><dfn>Results File</dfn></td>
 <td class="none">File name for Powermatch output (report) spreadsheet. Clicking on the field will allow you to choose the name for the report spreadsheet. <strong>Note:</strong> If the  <em>change_results</em> property of the <em>[Powermatch]</em> Section is set changes to the input spreadsheet name will cause this Results spreadsheet name to change (<em>results_file</em>)</td></tr>
 <tr><td class="lr"><dfn>Discount Rate</dfn></td>
@@ -3760,6 +3766,7 @@ You can alternate between these approaches to choose the desired area. If you ha
 <ol class="none">
 <li>The first time you use <code>getmerra2</code> you should run it interactively to ensure the correct environment (e.g. <code>.netrc</code> file) is established</li>
 <li>If you invoke the program with collection, target folder, check and wget parameters <code>wget</code> will be launched to download more recent files into the target folder with the same area of interest as the existing files.</li>
+<li>Occasionally MERRA-2 datasets will be reprocessed, e.g. September 2020, which may result in a change to the location of the files on the NASA MERRA-2 server. This may require the filename property in the [getmerra2] section of the Preferences file used by <code>getmerra2</code>. For example, for September 2020 the string &lsquo;MERRA2_400&rsquo; needs to be changed to &lsquo;MERRA2_401&rsquo; to download files for that month.
 </ol>
 </p>
 <!-- Back to top< -->
@@ -4621,7 +4628,7 @@ MERRA-2 Variables
 </tr>
 </table>
 <h4>getfiles Preferences</h4>
-<p>The <code>getfiles</code> Preferences file contains preferences specifically for <code>worldwindow</code> and the programs using it. The file resides in the same folder as <code>worldwindow</code> itself.
+<p>The <code>getfiles</code> Preferences file contains preferences specifically for <code>worldwindow</code>, the programs using it and a number of the SIREN tools (<code>getmap</code>, <code>getmerra2</code>, <code>makeweatherfiles</code>, <code>sirenupd</code>, and <code>updateswis</code>). The file resides in the same folder as <code>worldwindow</code> itself.
 <table border="0", class="none">
 <tr>
 <th>Section</th>
@@ -4779,6 +4786,18 @@ MERRA-2 Variables
 <tr class="none"><td><dfn><strong>[Parents]</strong></dfn></td>
 <td>As per <a href="#p_parents">Parents</a></td>
 </tr>
+</td></tr><tr class="none"><td><dfn><strong>[sirenupd]</strong></dfn></td>
+<td>These properties are used by <code>sirenupd</code> to check for new versions of SIREN programs and to download them. Properties are:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>wget_cmd</dfn></td>
+<td class="none">The command used to invoke wget to download files</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>url</dfn></td>
+<td class="none">The location of the SIREN files on SourceForge</td>
+</tr>
+</table>
 <tr class="none"><td><dfn><strong>[updateswis]</strong></dfn></td>
 <td>These properties are used by <em>updateswis</em> to create requests to download AEMO data files. Normally they should not be changed. They're here just to document their content and purpose. Values enclosed in dollars signs ($) are substituted at execution time. Properties are:</p>
 <table border="0", class="none">

@@ -276,7 +276,7 @@ class Adjustments(QtWidgets.QDialog):
         mwstr = str(round(mw, dp))
         return mw, mwtxt, mwstr
 
-    def __init__(self, parent, data, adjustin, adjust_cap, save_folder=None):
+    def __init__(self, parent, data, adjustin, adjust_cap, prefix, save_folder=None):
         super(Adjustments, self).__init__()
         self._adjust_typ = {} # facility type = G, S or L
         self._adjust_mul = {} # (actual) adjust multiplier
@@ -304,6 +304,11 @@ class Adjustments(QtWidgets.QDialog):
             self._fmtstr = '{:,.0f}'
         else:
             self._fmtstr = '{:,.' + str(self._decpts) + 'f}'
+        self.grid.addWidget(QtWidgets.QLabel('Results Prefix:'), ctr, 0)
+        self.pfx_fld = QtWidgets.QLineEdit()
+        self.pfx_fld.setText(prefix)
+        self.grid.addWidget(self.pfx_fld, ctr, 1, 1, 2)
+        ctr += 1
         for key, typ, capacity in data:
             self._adjust_typ[key] = typ
             if key != 'Load' and capacity is None:
@@ -458,8 +463,11 @@ class Adjustments(QtWidgets.QDialog):
         if line != '':
             line = 'adjusted_capacities=' + line[:-1]
             updates = {'Powermatch': ['adjustments=', line]}
+            save_file = self._save_folder
+            if self.pfx_fld.text() != '':
+                save_file += '/' + self.pfx_fld.text()
             inifile = QtWidgets.QFileDialog.getSaveFileName(None, 'Save Adjustments to file',
-                      self._save_folder, 'Preferences Files (*.ini)')[0]
+                      save_file, 'Preferences Files (*.ini)')[0]
             if inifile != '':
                 if inifile[-4:] != '.ini':
                     inifile = inifile + '.ini'
@@ -473,6 +481,9 @@ class Adjustments(QtWidgets.QDialog):
 
     def getValues(self):
         return self._results
+
+    def getPrefix(self):
+        return self.pfx_fld.text()
 
 class powerMatch(QtWidgets.QWidget):
     log = QtCore.pyqtSignal()
@@ -556,6 +567,7 @@ class powerMatch(QtWidgets.QWidget):
         self.optimise_debug = False
         self.optimise_default = None
         self.remove_cost = True
+        self.results_prefix = ''
         self.save_tables = False
         self.surplus_sign = 1 # Note: Preferences file has it called shortfall_sign
         # it's easier for the user to understand while for the program logic surplus is easier
@@ -652,6 +664,8 @@ class powerMatch(QtWidgets.QWidget):
                  elif key == 'remove_cost':
                      if value.lower() in ['false', 'off', 'no']:
                          self.remove_cost = False
+                 elif key == 'results_prefix':
+                     self.results_prefix = value
                  elif key == 'save_tables':
                      if value.lower() in ['true', 'on', 'yes']:
                          self.save_tables = True
@@ -680,6 +694,13 @@ class powerMatch(QtWidgets.QWidget):
         edit = [None, None, None]
         r = 0
         for i in range(5):
+            if i == R:
+                self.grid.addWidget(QtWidgets.QLabel('Results Prefix:'), r, 0)
+                self.results_pfx_fld = QtWidgets.QLineEdit()
+                self.results_pfx_fld.setText(self.results_prefix)
+                self.results_pfx_fld.textChanged.connect(self.pfxChanged)
+                self.grid.addWidget(self.results_pfx_fld, r, 1, 1, 2)
+                r += 1
             self.grid.addWidget(QtWidgets.QLabel(self.file_labels[i] + ' File:'), r, 0)
             self.files[i] = ClickableQLabel()
             self.files[i].setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
@@ -885,6 +906,11 @@ class powerMatch(QtWidgets.QWidget):
                     self.files[R].setText(newfile)
             self.updated = True
 
+    def pfxChanged(self):
+        self.results_prefix = self.results_pfx_fld.text()
+        self.setStatus('Results filename will be ' + self.results_pfx_fld.text() + '_' + self.files[R].text())
+        self.updated = True
+
     def sheetChanged(self, i):
         try:
             for i in range(5):
@@ -949,6 +975,7 @@ class powerMatch(QtWidgets.QWidget):
             for key, value in self.targets.items():
                 line = 'optimise_{}={:.2f},{:.2f},{:.2f}'.format(key, value[1], value[2], value[3])
                 lines.append(line)
+            lines.append('results_prefix=' + self.results_prefix)
             updates['Powermatch'] = lines
             SaveIni(updates)
         self.close()
@@ -1517,7 +1544,7 @@ class powerMatch(QtWidgets.QWidget):
                     except:
                         typ = ''
                     adjustin.append([who, typ, self.generators[who].capacity])
-            adjust = Adjustments(self, adjustin, self.adjustto, self.adjust_cap,
+            adjust = Adjustments(self, adjustin, self.adjustto, self.adjust_cap, self.results_prefix,
                                  save_folder=self.scenarios)
             adjust.exec_()
             if adjust.getValues() is None:
@@ -1525,6 +1552,10 @@ class powerMatch(QtWidgets.QWidget):
                 self.progressbar.setHidden(True)
                 return
             self.adjustto = adjust.getValues()
+            results_prefix = adjust.getPrefix()
+            if results_prefix != self.results_prefix:
+                self.results_prefix = results_prefix
+                self.results_pfx_fld.setText(self.results_prefix)
             self.updated = True
             do_adjust = True
         ts.close()
@@ -1548,6 +1579,9 @@ class powerMatch(QtWidgets.QWidget):
             self.files[R].setText(data_file)
         else:
             data_file = self.get_filename(self.files[R].text())
+        if self.results_prefix != '':
+            j = data_file.rfind('/')
+            data_file = data_file[: j + 1] + self.results_prefix + '_' + data_file[j + 1:]
         self.progressbar.setValue(2)
         for itm in range(self.order.count()):
             gen = self.order.item(itm).text()
@@ -2264,7 +2298,11 @@ class powerMatch(QtWidgets.QWidget):
             list(map(list, list(zip(*sp_data))))
             sp_pts = [0, 2, 0, 2, 0, 2, 0, 2, 2]
             self.setStatus(self.sender().text() + ' completed')
-            dialog = displaytable.Table(sp_data, title=self.sender().text(), fields=headers,
+            if self.results_prefix != '':
+                title = self.results_prefix + '_' + self.sender().text()
+            else:
+                title = self.sender().text()
+            dialog = displaytable.Table(sp_data, title=title, fields=headers,
                      save_folder=self.scenarios, sortby='', decpts=sp_pts)
             dialog.exec_()
             self.progressbar.setValue(10)
@@ -2454,7 +2492,10 @@ class powerMatch(QtWidgets.QWidget):
         ns.row_dimensions[what_row].height = 30
         ns.freeze_panes = 'C' + str(hrows)
         ns.activeCell = 'C' + str(hrows)
-        ss.cell(row=1, column=1).value = 'Powermatch - Summary'
+        if self.results_prefix != '':
+            ss.cell(row=1, column=1).value = 'Powermatch - ' + self.results_prefix + ' Summary'
+        else:
+            ss.cell(row=1, column=1).value = 'Powermatch - Summary'
         ss.cell(row=1, column=1).font = bold
         ss_row +=1
         for col in range(1, 10):
