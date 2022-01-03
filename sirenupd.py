@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2017-2021 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2017-2022 Sustainable Energy Now Inc., Angus King
 #
 #  sirenupd.py - This file is part of SIREN.
 #
@@ -21,6 +21,7 @@
 
 import csv
 import os
+import configparser   # decode .ini file
 from PyQt5 import QtCore, QtGui, QtWidgets
 import subprocess
 import sys
@@ -41,16 +42,28 @@ def get_response(outputs):
 
 class UpdDialog(QtWidgets.QDialog):
 
-    def __init__(self, parent=None):
+    def __init__(self, ini_file='getfiles.ini', parent=None):
         self.debug = False
         QtWidgets.QDialog.__init__(self, parent)
         self.setWindowTitle('SIREN Update (' + credits.fileVersion() + ') - Check for new versions')
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
+        config = configparser.RawConfigParser()
+        config_file = ini_file
+        config.read(config_file)
+        self.wget_cmd = 'wget --no-check-certificate -O'
+        try:
+            self.wget_cmd = config.get('sirenupd', 'wget_cmd')
+        except:
+            pass
+        self.host = 'https://sourceforge.net/projects/sensiren/files/'
+        try:
+            self.host = config.get('sirenupd', 'url')
+        except:
+            pass
         row = 0
         newgrid = QtWidgets.QGridLayout()
-        host = 'https://sourceforge.net/projects/sensiren/files/'
         versions_file = 'siren_versions.csv'
-        command = 'wget -O %s %s%s' % (versions_file, host, versions_file)
+        command = '%s %s %s%s' % (self.wget_cmd, versions_file, self.host, versions_file)
         command = command.split()
         if self.debug:
             response = '200 OK'
@@ -71,6 +84,7 @@ class UpdDialog(QtWidgets.QDialog):
             programs = csv.DictReader(versions)
             for program in programs:
                 version = credits.fileVersion(program=program['Program'])
+             #   print(version, program['Program'], program['Version'])
                 if version != '?' and version != program['Version']:
                     cur = version.split('.')
                     new = program['Version'].split('.')
@@ -130,7 +144,6 @@ class UpdDialog(QtWidgets.QDialog):
         self.setLayout(newgrid)
 
     def doitClicked(self):
-        host = 'https://sourceforge.net/projects/sensiren/files/'
         default_suffix = sys.argv[0][sys.argv[0].rfind('.'):]
         for p in range(len(self.newbox)):
             if self.newbox[p].checkState() == QtCore.Qt.Checked:
@@ -141,8 +154,8 @@ class UpdDialog(QtWidgets.QDialog):
                     suffix = default_suffix
                 else:
                     suffix = ''
-                command = 'wget -O %snew%s %s%s%s' % (self.newprog[p], suffix, host,
-                          self.newprog[p], suffix)
+                command = '%s %snew%s %s%s%s' % (self.wget_cmd,
+                          self.newprog[p], suffix, self.host, self.newprog[p], suffix)
                 command = command.split()
                 if self.debug:
                     response = '200 OK'
@@ -177,8 +190,12 @@ class UpdDialog(QtWidgets.QDialog):
 
 
 if '__main__' == __name__:
+    ini_file = 'getfiles.ini'
+    if len(sys.argv) > 1:  # arguments
+        if sys.argv[1][-4:] == '.ini':
+            ini_file = sys.argv[1]
     app = QtWidgets.QApplication(sys.argv)
-    upddialog = UpdDialog()
+    upddialog = UpdDialog(ini_file=ini_file)
  #    app.exec_()
  #   app.deleteLater()
  #   sys.exit()
