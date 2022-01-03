@@ -1583,8 +1583,11 @@ class powerMatch(QtWidgets.QWidget):
                    pm_data_file, data_file):
         def calcLCOE(annual_output, capital_cost, annual_operating_cost, discount_rate, lifetime):
             # Compute levelised cost of electricity
-            annual_cost_capital = capital_cost * discount_rate * pow(1 + discount_rate, lifetime) / \
-                                  (pow(1 + discount_rate, lifetime) - 1)
+            if discount_rate > 0:
+                annual_cost_capital = capital_cost * discount_rate * pow(1 + discount_rate, lifetime) / \
+                                      (pow(1 + discount_rate, lifetime) - 1)
+            else:
+                annual_cost_capital = capital_cost / lifetime
             total_annual_cost = annual_cost_capital + annual_operating_cost
             return total_annual_cost / annual_output
 
