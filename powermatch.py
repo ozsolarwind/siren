@@ -1405,7 +1405,8 @@ class powerMatch(QtWidgets.QWidget):
             return
         ws = ts.active
         top_row = ws.max_row - 8760
-        if ws.cell(row=top_row, column=1).value != 'Hour' or ws.cell(row=top_row, column=2).value != 'Period':
+        if top_row < 1 or (ws.cell(row=top_row, column=1).value != 'Hour' \
+                           or ws.cell(row=top_row, column=2).value != 'Period'):
             self.setStatus('Not a Powermatch data spreadsheet')
             self.progressbar.setHidden(True)
             return
