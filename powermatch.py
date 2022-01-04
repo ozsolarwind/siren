@@ -1539,8 +1539,9 @@ class powerMatch(QtWidgets.QWidget):
             for i in range(self.order.count()):
                 if self.generators[self.order.item(i).text()].capacity > 0:
                     who = self.order.item(i).text()
+                    cst = self.generators[self.order.item(i).text()].constraint
                     try:
-                        typ = self.constraints[who].category
+                        typ = self.constraints[cst].category
                     except:
                         typ = ''
                     adjustin.append([who, typ, self.generators[who].capacity])
@@ -2970,7 +2971,7 @@ class powerMatch(QtWidgets.QWidget):
                     try:
                         pmss_details[gen][3] = capacity / pmss_details[gen][0]
                     except:
-                        print('(2664)', gen, capacity, pmss_details[gen][0])
+                        print('(2974)', gen, capacity, pmss_details[gen][0])
                 multi_value, op_data, extra = self.doDispatch(year, option, pmss_details, pmss_data, re_order,
                                               dispatch_order, pm_data_file, data_file)
                 if multi_value['load_pct'] < self.targets['load_pct'][3]:
@@ -3531,7 +3532,7 @@ class powerMatch(QtWidgets.QWidget):
             try:
                 best_score = np.min(lcoe_scores)
             except:
-                print('(3352)', lcoe_scores)
+                print('(3535)', lcoe_scores)
             best_ndx = lcoe_scores.index(best_score)
             lowest_chrom = population[best_ndx]
             self.setStatus('Starting LCOE: $%.2f' % best_score)
@@ -3854,7 +3855,7 @@ class powerMatch(QtWidgets.QWidget):
                     label = QtWidgets.QLabel(txt % amt)
                 except:
                     label = QtWidgets.QLabel('?')
-                    print('(3675)', key, txt, amt)
+                    print('(3858)', key, txt, amt)
                 label.setAlignment(QtCore.Qt.AlignCenter)
                 grid[h + 1].addWidget(label, rw, 0, 1, 2)
             rw += 1
