@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2018-2021 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2018-2022 Sustainable Energy Now Inc., Angus King
 #
 #  powermatch.py - This file is part of SIREN.
 #
@@ -674,6 +674,13 @@ class powerMatch(QtWidgets.QWidget):
                          self.surplus_sign = -1
         except:
             pass
+        self.restorewindows = False
+        try:
+            rw = config.get('Windows', 'restorewindows')
+            if rw.lower() in ['true', 'yes', 'on']:
+                self.restorewindows = True
+        except:
+            pass
         try:
             self.adjust_cap =  float(config.get('Power', 'adjust_cap'))
         except:
@@ -834,8 +841,17 @@ class powerMatch(QtWidgets.QWidget):
     #    self.tabs.addTab(tab5,'Details')
         self.setWindowTitle('SIREN - powermatch (' + fileVersion() + ') - Powermatch')
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
-        self.center()
-        self.resize(int(self.sizeHint().width()* 1.2), int(self.sizeHint().height() * 1.2))
+        if self.restorewindows:
+            try:
+                rw = config.get('Windows', 'powermatch_size').split(',')
+                self.resize(int(rw[0]), int(rw[1]))
+                mp = config.get('Windows', 'powermatch_pos').split(',')
+                self.move(int(mp[0]), int(mp[1]))
+            except:
+                pass
+        else:
+            self.center()
+            self.resize(int(self.sizeHint().width() * 1.2), int(self.sizeHint().height() * 1.2))
         self.show_FloatStatus() # status window
         self.show()
 
@@ -983,6 +999,14 @@ class powerMatch(QtWidgets.QWidget):
     def closeEvent(self, event):
         if self.floatstatus is not None:
             self.floatstatus.exit()
+        if self.restorewindows:
+            updates = {}
+            lines = []
+            add = int((self.frameSize().width() - self.size().width()) / 2)   # need to account for border
+            lines.append('powermatch_pos=%s,%s' % (str(self.pos().x() + add), str(self.pos().y() + add)))
+            lines.append('powermatch_size=%s,%s' % (str(self.width()), str(self.height())))
+            updates['Windows'] = lines
+            SaveIni(updates)
         event.accept()
 
     def editIniFile(self):
