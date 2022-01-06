@@ -65,6 +65,18 @@ def ss_col(col, base=1):
     c2 = col % 26
     return (col_letters[c1] + col_letters[c2 + 1]).strip()
 
+def niceSize(window): # works for Adjustments window (probable becaause less that 640*480)
+    print(dir(window))
+    height = window.frameSize().height() / 1.07
+    width = window.frameSize().width()
+    screen = QtWidgets.QDesktopWidget().availableGeometry()
+    if height > (screen.height() - 70):
+        height = screen.height() - 70
+    if width > (screen.width() - 70):
+        width = screen.width() - 70
+    size = QtCore.QSize(QtCore.QSize(int(width), int(height)))
+    window.resize(size)
+
 
 class ListWidget(QtWidgets.QListWidget):
     def decode_data(self, bytearray):
@@ -374,6 +386,7 @@ class Adjustments(QtWidgets.QDialog):
         self.scroll.setWidget(frame)
         self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
+        niceSize(self)
         self.setWindowTitle('SIREN - Powermatch - Adjust generators')
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
