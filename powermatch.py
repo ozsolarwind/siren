@@ -86,6 +86,7 @@ class ListWidget(QtWidgets.QListWidget):
         self.setDragDropMode(self.DragDrop)
         self.setSelectionMode(self.ExtendedSelection)
         self.setAcceptDrops(True)
+        self.updated = False
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls():
@@ -101,6 +102,7 @@ class ListWidget(QtWidgets.QListWidget):
             super(ListWidget, self).dragMoveEvent(event)
 
     def dropEvent(self, event):
+        self.updated = True
         if event.source() == self:
             event.setDropAction(QtCore.Qt.MoveAction)
             QtWidgets.QListWidget.dropEvent(self, event)
@@ -127,6 +129,27 @@ class ClickableQLabel(QtWidgets.QLabel):
     def mousePressEvent(self, event):
         QtWidgets.QApplication.widgetAt(event.globalPos()).setFocus()
         self.clicked.emit()
+
+
+class MyQDialog(QtWidgets.QDialog):
+    ignoreEnter = True
+
+    def keyPressEvent(self, qKeyEvent):
+        if qKeyEvent.key() == QtCore.Qt.Key_Return:
+            self.ignoreEnter = True
+        else:
+            self.ignoreEnter = False
+
+    def closeEvent(self, event):
+        if self.ignoreEnter:
+            self.ignoreEnter = False
+            event.ignore()
+        else:
+            event.accept()
+
+ #   def resizeEvent(self, event):
+  #      print(self.width(), self.height())
+  #      return super(Window, self).resizeEvent(event)
 
 
 class Constraint:
@@ -360,16 +383,19 @@ class Adjustments(MyQDialog):
             self._adjust_txt[key].setObjectName(key + 'label')
             self._adjust_txt[key].setText(mwtxt)
             self.grid.addWidget(self._adjust_txt[key], ctr, 2)
-            self._adjust_val[key] = QtWidgets.QLineEdit()
-            self._adjust_val[key].setObjectName(key)
-            self._adjust_val[key].setText(mwstr)
-            if self._decpts is None:
-                self._adjust_val[key].setValidator(QtGui.QIntValidator())
-            else:
-                self._adjust_val[key].setValidator(QtGui.QDoubleValidator())
-            self.grid.addWidget(self._adjust_val[key], ctr, 3)
-            self._adjust_val[key].textChanged.connect(self.adjustCap)
+            if self.show_multipliers:
+                self._adjust_cty[key].valueChanged.connect(self.adjustCap)
+                self._adjust_rnd[key].setSingleStep(.1)
+                self._adjust_rnd[key].setObjectName(key)
+                self.grid.addWidget(self._adjust_rnd[key], ctr, 3)
+                self._adjust_rnd[key].valueChanged.connect(self.adjustMult)
             ctr += 1
+            if key == 'Load':
+                self.grid.addWidget(QtWidgets.QLabel('Facility'), ctr, 0)
+                self.grid.addWidget(QtWidgets.QLabel('Capacity'), ctr, 1)
+                if self.show_multipliers:
+                    self.grid.addWidget(QtWidgets.QLabel('Multiplier'), ctr, 3)
+                ctr += 1
         quit = QtWidgets.QPushButton('Quit', self)
         self.grid.addWidget(quit, ctr, 0)
         quit.clicked.connect(self.quitClicked)
@@ -453,6 +479,7 @@ class Adjustments(MyQDialog):
         ini_file = QtWidgets.QFileDialog.getOpenFileName(self, 'Open Adjustments file',
                    self._save_folder, 'Preferences Files (*.ini)')[0]
         if ini_file != '':
+            self._ignore = True
             reshow = False
             config = configparser.RawConfigParser()
             config.read(ini_file)
