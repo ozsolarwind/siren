@@ -623,6 +623,7 @@ class powerMatch(QtWidgets.QWidget):
         self.show_multipliers = False
         self.surplus_sign = 1 # Note: Preferences file has it called shortfall_sign
         # it's easier for the user to understand while for the program logic surplus is easier
+        iorder = []
         target_keys = ['lcoe', 'load_pct', 'surplus_pct', 're_pct', 'cost', 'co2']
         target_names = ['LCOE', 'Load%', 'Surplus%', 'RE%', 'Cost', 'CO2']
         target_fmats = ['$%.2f', '%d%%', '%d%%', '%d%%', '$%.1fpwr_chr', '%.1fpwr_chr']
@@ -670,6 +671,8 @@ class powerMatch(QtWidgets.QWidget):
                          self.discount_rate = float(value)
                      except:
                          pass
+                 elif key == 'dispatch_order':
+                     iorder = value.split(',')
                  elif key == 'log_status':
                      if value.lower() in ['false', 'no', 'off']:
                          self.log_status = False
@@ -881,6 +884,30 @@ class powerMatch(QtWidgets.QWidget):
         help.clicked.connect(self.helpClicked)
         QtWidgets.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
         self.setOrder()
+        if len(iorder) > 0:
+            self.order.clear()
+            self.ignore.clear()
+            for gen in iorder:
+                self.order.addItem(gen)
+            for gen in self.generators.keys():
+                if gen in tech_names or gen in iorder:
+                    continue
+                self.ignore.addItem(gen)
+        if self.adjust_gen and self.adjustto is None:
+           self.adjustto = {}
+           self.adjustto['Load'] = 0
+           for gen in tech_names:
+               try:
+                   if self.generators[gen].capacity > 0:
+                       self.adjustto[gen] = self.generators[gen].capacity
+               except:
+                   pass
+           for gen in iorder:
+               try:
+                   if self.generators[gen].capacity > 0:
+                       self.adjustto[gen] = self.generators[gen].capacity
+               except:
+                   pass
         frame = QtWidgets.QFrame()
         frame.setLayout(self.grid)
         self.scroll = QtWidgets.QScrollArea()
@@ -1021,7 +1048,7 @@ class powerMatch(QtWidgets.QWidget):
         self.updated = True
 
     def quitClicked(self):
-        if self.updated:
+        if self.updated or self.order.updated or self.ignore.updated:
             updates = {}
             lines = []
             lines.append('adjust_generators=' + str(self.adjust.isChecked()))
@@ -1034,6 +1061,10 @@ class powerMatch(QtWidgets.QWidget):
                     lines.append('adjusted_capacities=' + line[:-1])
             lines.append('carbon_price=' + str(self.carbon_price))
             lines.append('discount_rate=' + str(self.discount_rate))
+            line = ''
+            for itm in range(self.order.count()):
+                line += self.order.item(itm).text() + ','
+            lines.append('dispatch_order=' + line[:-1])
             for i in range(len(self.file_labels)):
                 lines.append(self.file_labels[i].lower() + '_file=' + self.files[i].text())
             for i in range(D):
@@ -1621,15 +1652,18 @@ class powerMatch(QtWidgets.QWidget):
                             pass
             for i in range(self.order.count()):
                 if self.generators[self.order.item(i).text()].capacity > 0:
-                    who = self.order.item(i).text()
-                    cst = self.generators[self.order.item(i).text()].constraint
+                    gen = self.order.item(i).text()
                     try:
-                        typ = self.constraints[cst].category
+                        if self.generators[gen].constraint in self.constraints and \
+                           self.constraints[self.generators[gen].constraint].category == 'Generator':
+                            typ = 'G'
+                        else:
+                            typ = 'S'
                     except:
-                        typ = ''
-                    adjustin.append([who, typ, self.generators[who].capacity])
-            adjust = Adjustments(self, adjustin, self.adjustto, self.adjust_cap, self.results_prefix,
-                                 save_folder=self.scenarios)
+                        continue
+                    datain.append([gen, typ, self.generators[gen].capacity])
+            adjust = Adjustments(self, datain, self.adjustto, self.adjust_cap, self.results_prefix,
+                                 show_multipliers=self.show_multipliers, save_folder=self.scenarios)
             adjust.exec_()
             if adjust.getValues() is None:
                 self.setStatus('Execution aborted.')
@@ -2946,6 +2980,8 @@ class powerMatch(QtWidgets.QWidget):
 
     def exit(self):
         self.updated = False
+        self.order.updated = False
+        self.ignore.updated = False
         if self.floatstatus is not None:
             self.floatstatus.exit()
         self.close()
