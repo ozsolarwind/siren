@@ -65,18 +65,6 @@ def ss_col(col, base=1):
     c2 = col % 26
     return (col_letters[c1] + col_letters[c2 + 1]).strip()
 
-def niceSize(window): # works for Adjustments window (probable becaause less that 640*480)
-    print(dir(window))
-    height = window.frameSize().height() / 1.07
-    width = window.frameSize().width()
-    screen = QtWidgets.QDesktopWidget().availableGeometry()
-    if height > (screen.height() - 70):
-        height = screen.height() - 70
-    if width > (screen.width() - 70):
-        width = screen.width() - 70
-    size = QtCore.QSize(QtCore.QSize(int(width), int(height)))
-    window.resize(size)
-
 
 class ListWidget(QtWidgets.QListWidget):
     def decode_data(self, bytearray):
@@ -145,7 +133,7 @@ class Constraint:
     def __init__(self, name, category, capacity_min, capacity_max, rampup_max, rampdown_max,
                  recharge_max, recharge_loss, discharge_max, discharge_loss, parasitic_loss,
                  min_run_time, warm_time):
-        self.name = name
+        self.name = name.strip()
         self.category = category
         try:
             self.capacity_min = float(capacity_min) # minimum run_rate for generator; don't drain below for storage
@@ -217,7 +205,7 @@ class Facility:
 
 class Optimisation:
     def __init__(self, name, approach, values): #capacity=None, cap_min=None, cap_max=None, cap_step=None, caps=None):
-        self.name = name
+        self.name = name.strip()
         self.approach = approach
         if approach == 'Discrete':
             caps = values.split()
@@ -255,20 +243,18 @@ class Optimisation:
         self.capacity = 0.
 
 
-class Adjustments(QtWidgets.QDialog):
-    def setAdjValueText(self, key, typ, capacity):
+class Adjustments(MyQDialog):
+    def setAdjValueUnits(self, key, typ, capacity):
         if key != 'Load':
-            mw = capacity * self._adjust_mul[key]
-            if typ == 'Storage':
+            mw = capacity
+            if typ == 'S':
                 unit = 'MWh'
             else:
                 unit = 'MW'
-            fmtstr = self._fmtstr
             dp = self._decpts
+            div = 0
         else:
-            if self._adjust_rnd[key].value() <= 0:
-                return 0, '0 MW', '0'
-            dimen = log10(capacity * self._adjust_rnd[key].value())
+            dimen = log10(capacity)
             unit = 'MWh'
             if dimen > 11:
                 unit = 'PWh'
@@ -281,28 +267,42 @@ class Adjustments(QtWidgets.QDialog):
                 div = 3
             else:
                 div = 0
-            mw = (capacity * self._adjust_rnd[key].value()) / pow(10, div)
-            fmtstr = '{:,.0f}'
+            mw = capacity / pow(10, div)
             dp = None
-        mwtxt = fmtstr.format(mw) + ' ' + unit
-        mwstr = str(round(mw, dp))
-        return mw, mwtxt, mwstr
+        mwtxt = unit
+        mwcty = round(mw, dp)
+        return mw, mwtxt, mwcty, div
 
-    def __init__(self, parent, data, adjustin, adjust_cap, prefix, save_folder=None):
+    def niceSize(window, ctr): # works for Adjustments window (probably because less that 640*480)
+      #  print(dir(window))
+        height = window.frameSize().height() / 1.07
+        height = 65 + ctr * 32
+        width = window.frameSize().width()
+        screen = QtWidgets.QDesktopWidget().availableGeometry()
+        if height > (screen.height() - 70):
+            height = screen.height() - 70
+        if width > (screen.width() - 70):
+            width = screen.width() - 70
+        size = QtCore.QSize(QtCore.QSize(int(width), int(height)))
+        window.resize(size)
+
+    def __init__(self, parent, data, adjustin, adjust_cap, prefix, show_multipliers=False, save_folder=None):
         super(Adjustments, self).__init__()
+        self.ignoreEnter = False
         self._adjust_typ = {} # facility type = G, S or L
-        self._adjust_mul = {} # (actual) adjust multiplier
         self._adjust_cty = {} # (actual) adjust capacity
-        self._adjust_rnd = {} # multiplier widget (rounded to 4 digits)
-        self._adjust_txt = {} # string with calculated capacity
-        self._adjust_val = {} # adjust capacity input
+        self.show_multipliers = show_multipliers
+        if self.show_multipliers:
+            self._adjust_mul = {} # (actual) adjust multiplier
+            self._adjust_rnd = {} # multiplier widget (rounded to 4 digits)
+        self._adjust_txt = {} # string with capacity units
         self._save_folder = save_folder
         self._ignore = False
         self._results = None
         self.grid = QtWidgets.QGridLayout()
         self._data = {}
         ctr = 0
-        self._decpts = None
+        self._decpts = 1
         for key, typ, capacity in data:
             if key == 'Load' or capacity is None:
                 continue
@@ -312,45 +312,52 @@ class Adjustments(QtWidgets.QDialog):
                     self._decpts = 2
                 elif self._decpts != 2:
                     self._decpts = 1
-        if self._decpts is None:
-            self._fmtstr = '{:,.0f}'
-        else:
-            self._fmtstr = '{:,.' + str(self._decpts) + 'f}'
         self.grid.addWidget(QtWidgets.QLabel('Results Prefix:'), ctr, 0)
         self.pfx_fld = QtWidgets.QLineEdit()
         self.pfx_fld.setText(prefix)
         self.grid.addWidget(self.pfx_fld, ctr, 1, 1, 2)
         ctr += 1
+        # Note: relies on Load being first entry
         for key, typ, capacity in data:
             self._adjust_typ[key] = typ
             if key != 'Load' and capacity is None:
                 continue
-         #   if key not in adjustin.keys():
-          #      continue
-            self._data[key] = capacity
-            self._adjust_rnd[key] = QtWidgets.QDoubleSpinBox()
-            self._adjust_rnd[key].setRange(0, adjust_cap)
-            self._adjust_rnd[key].setDecimals(4)
+       #     if key not in adjustin.keys():
+       #         continue
+            try:
+                mw, mwtxt, mwcty, div = self.setAdjValueUnits(key, typ, adjustin[key])
+            except:
+                mw = 0
+                mwtxt = 'MW'
+                mwcty = 0
+                div = 0
+            self._data[key] = [capacity / pow(10, div), div]
+            self._adjust_cty[key] = QtWidgets.QDoubleSpinBox()
+            self._adjust_cty[key].setRange(0, capacity / pow(10, div) * adjust_cap)
+            self._adjust_cty[key].setDecimals(self._decpts)
+            if self.show_multipliers:
+                self._adjust_rnd[key] = QtWidgets.QDoubleSpinBox()
+                self._adjust_rnd[key].setRange(0, adjust_cap)
+                self._adjust_rnd[key].setDecimals(4)
             if key in adjustin.keys():
-                self._adjust_cty[key] = adjustin[key]
-                try:
-                    self._adjust_mul[key] = adjustin[key] / capacity
-                    self._adjust_rnd[key].setValue(round(self._adjust_mul[key], 4))
-                except:
-                    self._adjust_mul[key] = 1.
-                    self._adjust_rnd[key].setValue(1.)
+                self._adjust_cty[key].setValue(mwcty)
+                if self.show_multipliers:
+                    try:
+                        self._adjust_mul[key] = adjustin[key] / capacity
+                        self._adjust_rnd[key].setValue(round(self._adjust_mul[key], 4))
+                    except:
+                        self._adjust_mul[key] = 1.
+                        self._adjust_rnd[key].setValue(1.)
             else:
-                self._adjust_cty[key] = 0.
-                self._adjust_mul[key] = 0.
-                self._adjust_rnd[key].setValue(0.)
-            self._adjust_rnd[key].setSingleStep(.1)
-            self._adjust_rnd[key].setObjectName(key)
+                self._adjust_cty[key].setValue(0)
+                if self.show_multipliers:
+                    self._adjust_mul[key] = 0.
+                    self._adjust_rnd[key].setValue(0.)
+            self._adjust_cty[key].setObjectName(key)
             self.grid.addWidget(QtWidgets.QLabel(key), ctr, 0)
-            self.grid.addWidget(self._adjust_rnd[key], ctr, 1)
-            self._adjust_rnd[key].valueChanged.connect(self.adjustMult)
+            self.grid.addWidget(self._adjust_cty[key], ctr, 1)
             self._adjust_txt[key] = QtWidgets.QLabel('')
             self._adjust_txt[key].setObjectName(key + 'label')
-            mw, mwtxt, mwstr = self.setAdjValueText(key, typ, capacity)
             self._adjust_txt[key].setText(mwtxt)
             self.grid.addWidget(self._adjust_txt[key], ctr, 2)
             self._adjust_val[key] = QtWidgets.QLineEdit()
@@ -386,7 +393,7 @@ class Adjustments(QtWidgets.QDialog):
         self.scroll.setWidget(frame)
         self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
-        niceSize(self)
+        self.niceSize(ctr)
         self.setWindowTitle('SIREN - Powermatch - Adjust generators')
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
@@ -396,30 +403,22 @@ class Adjustments(QtWidgets.QDialog):
         key = self.sender().objectName()
         if not self._ignore:
             self._adjust_mul[key] = self._adjust_rnd[key].value()
-            self._adjust_cty[key] = self._data[key] * self._adjust_rnd[key].value()
-        mw, mwtxt, mwstr = self.setAdjValueText(key, self._adjust_typ[key], self._data[key])
+            self._adjust_cty[key].setValue(self._data[key][0] * self._adjust_rnd[key].value())
+        mw, mwtxt, mwstr, div = self.setAdjValueUnits(key, self._adjust_typ[key], self._data[key][0])
         self._adjust_txt[key].setText(mwtxt)
-        if not self._ignore:
-            self._adjust_val[key].setText(mwstr)
+     #   if not self._ignore:
+      #      self._adjust_val[key].setText(mwstr)
         self._ignore = False
 
     def adjustCap(self):
         if self._ignore:
             return
         key = self.sender().objectName()
-        if self._decpts is None:
-            value = int(self.sender().text())
-        else:
-            try:
-                value = float(self.sender().text())
-                value = round(value, self._decpts)
-            except:
-                value = 0
         if key != 'Load':
-            adj = value / self._data[key]
+            adj = self._adjust_cty[key].value() / self._data[key][0]
          #   self._adjust_rnd[key].setValue(adj)
         else:
-            dimen = log10(self._data[key])
+            dimen = log10(self._data[key][0])
             if dimen > 11:
                 mul = 9
             elif dimen > 8:
@@ -428,24 +427,27 @@ class Adjustments(QtWidgets.QDialog):
                 mul = 3
             else:
                 mul = 0
-            adj = (value * pow(10, mul)) / self._data[key]
+            adj = (self._adjust_cty[key].value() * pow(10, mul)) / self._data[key][0]
         self._adjust_mul[key] = adj
-        self._adjust_cty[key] = self._data[key] * adj
+      #  self._adjust_cty[key] = self._data[key] * adj
         self._ignore = True
         self._adjust_rnd[key].setValue(round(adj, 4))
         self._ignore = False
 
-    def closeEvent(self, event):
-        event.accept()
-
     def quitClicked(self):
+        self.ignoreEnter = False
         self.close()
 
     def resetClicked(self, to):
         if isinstance(to, bool):
             to = 1.
-        for key in self._adjust_rnd.keys():
-            self._adjust_rnd[key].setValue(to)
+        if self.show_multipliers:
+            for key in self._adjust_rnd.keys():
+                self._adjust_rnd[key].setValue(to)
+        else:
+            for key in self._adjust_cty.keys():
+                self._adjust_cty[key].setValue(self._data[key][0])
+
 
     def restoreClicked(self):
         ini_file = QtWidgets.QFileDialog.getOpenFileName(self, 'Open Adjustments file',
@@ -462,17 +464,25 @@ class Adjustments(QtWidgets.QDialog):
             bits = adjustto.split(',')
             for bit in bits:
                 bi = bit.split('=')
+                key = bi[0]
                 try:
-                    self._adjust_cty[bi[0]] = float(bi[1])
-                    self._adjust_mul[bi[0]] = self._adjust_cty[bi[0]] / self._data[bi[0]]
-                    self._adjust_rnd[bi[0]].setValue(round(self._adjust_mul[bi[0]], 4))
+                    mw, mwtxt, mwcty, div = self.setAdjValueUnits(key, self._adjust_typ[key],
+                                            float(bi[1]))
+                    self._adjust_cty[key].setValue(mwcty)
+                    if self.show_multipliers:
+                        self._adjust_mul[key] = float(bi[1]) / (self._data[key][0] * pow(10, self._data[key][1]))
+                        self._adjust_rnd[key].setValue(round(self._adjust_mul[key], 4))
                 except:
                     pass
+            self._ignore = False
 
     def saveClicked(self):
         line = ''
         for key, value in self._adjust_cty.items():
-            line += '{}={:.1f},'.format(key, value)
+            if self._decpts == 2:
+                line += '{}={:.2f},'.format(key, value.value() * pow(10, self._data[key][1]))
+            else:
+                line += '{}={:.1f},'.format(key, value.value() * pow(10, self._data[key][1]))
         if line != '':
             line = 'adjusted_capacities=' + line[:-1]
             updates = {'Powermatch': ['adjustments=', line]}
@@ -487,9 +497,10 @@ class Adjustments(QtWidgets.QDialog):
                 SaveIni(updates, ini_file=inifile)
 
     def showClicked(self):
+        self.ignoreEnter = False
         self._results = {}
         for key in list(self._adjust_cty.keys()):
-            self._results[key] = self._adjust_cty[key]
+            self._results[key] = self._adjust_cty[key].value() * pow(10, self._data[key][1])
         self.close()
 
     def getValues(self):
@@ -582,6 +593,7 @@ class powerMatch(QtWidgets.QWidget):
         self.remove_cost = True
         self.results_prefix = ''
         self.save_tables = False
+        self.show_multipliers = False
         self.surplus_sign = 1 # Note: Preferences file has it called shortfall_sign
         # it's easier for the user to understand while for the program logic surplus is easier
         target_keys = ['lcoe', 'load_pct', 'surplus_pct', 're_pct', 'cost', 'co2']
@@ -682,6 +694,9 @@ class powerMatch(QtWidgets.QWidget):
                  elif key == 'save_tables':
                      if value.lower() in ['true', 'on', 'yes']:
                          self.save_tables = True
+                 elif key == 'show_multipliers':
+                     if value.lower() in ['true', 'on', 'yes']:
+                         self.show_multipliers = True
                  elif key == 'shortfall_sign':
                      if value[0] == '+' or value[0].lower() == 'p':
                          self.surplus_sign = -1
@@ -785,7 +800,7 @@ class powerMatch(QtWidgets.QWidget):
         self.grid.addWidget(QtWidgets.QLabel('($/tCO2e. Use only if LCOE excludes carbon price)'), r, 2, 1, 2)
         r += 1
         self.grid.addWidget(QtWidgets.QLabel('Adjust Generators:'), r, 0)
-        self.adjust = QtWidgets.QCheckBox('(check to adjust/multiply generators capacity data)', self)
+        self.adjust = QtWidgets.QCheckBox('(check to adjust generators capacity data)', self)
         if self.adjust_gen:
             self.adjust.setCheckState(QtCore.Qt.Checked)
         self.grid.addWidget(self.adjust, r, 1, 1, 3)
@@ -1553,7 +1568,7 @@ class powerMatch(QtWidgets.QWidget):
             generated = 0
             for row in range(top_row + 1, ws.max_row + 1):
                 generated = generated + ws.cell(row=row, column=3).value
-            adjustin = []
+            datain = []
             for col in range(3, ws.max_column + 1):
                 try:
                     valu = ws.cell(row=typ_row, column=col).value.replace('-','')
@@ -1561,15 +1576,19 @@ class powerMatch(QtWidgets.QWidget):
                 except:
                     break
                 if valu == 'Load':
-                    adjustin.append([tech_names[i], '', generated])
+                    datain.append([tech_names[i], 'L', generated])
+                    if self.adjustto['Load'] == 0:
+                        self.adjustto['Load'] = generated
                 else:
                     try:
-                        typ = self.constraints[tech_names[i]].category
-                        adjustin.append([tech_names[i], typ,
+                        typ = self.constraints[tech_names[i]].category[0]
+                        if typ == '':
+                            typ = 'R'
+                        datain.append([tech_names[i], typ,
                                         float(ws.cell(row=icap_row, column=col).value)])
                     except:
                         try:
-                            adjustin.append([tech_names[i], '',
+                            datain.append([tech_names[i], 'R',
                                             float(ws.cell(row=icap_row, column=col).value)])
                         except:
                             pass
@@ -3843,17 +3862,33 @@ class powerMatch(QtWidgets.QWidget):
             grid.append(QtWidgets.QGridLayout())
             label = QtWidgets.QLabel('<b>' + chrom_hdrs[h] + '</b>')
             label.setAlignment(QtCore.Qt.AlignCenter)
-            grid[-1].addWidget(label, 0, 0, 1, 2)
+            grid[-1].addWidget(label, 0, 0, 1, 3)
         rw = 1
         for key, value in its.items():
             grid[0].addWidget(QtWidgets.QLabel(key), rw, 0)
-            for h in range(len(chrom_hdrs)):
-                label = QtWidgets.QLabel('{:.2f}'.format(value[h]))
-                label.setAlignment(QtCore.Qt.AlignRight)
-                grid[h + 1].addWidget(label, rw, 0)
-                label = QtWidgets.QLabel('({:,.2f})'.format(value[h] * pmss_details[key][0]))
-                label.setAlignment(QtCore.Qt.AlignRight)
-                grid[h + 1].addWidget(label, rw, 1)
+            if pmss_details[key][1] == 'S':
+                typ = ' MWh'
+            else:
+                typ = ' MW'
+            if self.show_multipliers:
+                for h in range(len(chrom_hdrs)):
+                    label = QtWidgets.QLabel('{:,.1f}'.format(value[h] * pmss_details[key][0]))
+                    label.setAlignment(QtCore.Qt.AlignRight)
+                    grid[h + 1].addWidget(label, rw, 0)
+                    label = QtWidgets.QLabel(typ)
+                    label.setAlignment(QtCore.Qt.AlignLeft)
+                    grid[h + 1].addWidget(label, rw, 1)
+                    label = QtWidgets.QLabel('({:.2f})'.format(value[h]))
+                    label.setAlignment(QtCore.Qt.AlignRight)
+                    grid[h + 1].addWidget(label, rw, 2)
+            else:
+                for h in range(len(chrom_hdrs)):
+                    label = QtWidgets.QLabel('{:,.1f}'.format(value[h] * pmss_details[key][0]))
+                    label.setAlignment(QtCore.Qt.AlignRight)
+                    grid[h + 1].addWidget(label, rw, 0, 1, 2)
+                    label = QtWidgets.QLabel(typ)
+                    label.setAlignment(QtCore.Qt.AlignLeft)
+                    grid[h + 1].addWidget(label, rw, 2)
             rw += 1
         max_amt = [0., 0.]
         if do_lcoe:
@@ -3892,16 +3927,16 @@ class powerMatch(QtWidgets.QWidget):
                     label = QtWidgets.QLabel(txt % amt)
                 except:
                     label = QtWidgets.QLabel('?')
-                    print('(3858)', key, txt, amt)
+                    print('(3943)', key, txt, amt)
                 label.setAlignment(QtCore.Qt.AlignCenter)
-                grid[h + 1].addWidget(label, rw, 0, 1, 2)
+                grid[h + 1].addWidget(label, rw, 0, 1, 3)
             rw += 1
         cshow = QtWidgets.QPushButton('Quit', self)
         grid[0].addWidget(cshow)
         cshow.clicked.connect(chooseDialog.close)
         for h in range(len(chrom_hdrs)):
             button = QtWidgets.QPushButton(chrom_hdrs[h], self)
-            grid[h + 1].addWidget(button, rw, 0, 1, 2)
+            grid[h + 1].addWidget(button, rw, 0, 1, 3)
             button.clicked.connect(chooseClicked) #(chrom_hdrs[h]))
         for gri in grid:
             frame = QtWidgets.QFrame()
