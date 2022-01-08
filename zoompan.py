@@ -20,7 +20,9 @@
 #
 # Based on: https://gist.github.com/tacaswell/3144287
 # and https://stackoverflow.com/questions/10374930/matplotlib-annotating-a-3d-scatter-plot
+from math import ceil, sqrt
 from mpl_toolkits.mplot3d import proj3d
+from matplotlib import __version__ as matplotlib_version
 #from matplotlib.lines import Line2D
 #from matplotlib.collections import PathCollection
 from mpl_toolkits.mplot3d.art3d import Path3DCollection
@@ -108,6 +110,32 @@ class ZoomPanX():
        #     ax.figure.canvas.draw() # force re-draw
             ax.figure.canvas.draw_idle() # force re-draw
 
+        def get_xyz_mouse_click(event, ax):
+            """
+            Get coordinates clicked by user
+            """
+            if ax.M is None:
+                return {}
+
+            xd, yd = event.xdata, event.ydata
+            p = (xd, yd)
+            edges = ax.tunit_edges()
+            ldists = [(proj3d._line2d_seg_dist(p0, p1, p), i) for \
+                        i, (p0, p1) in enumerate(edges)]
+            ldists.sort()
+            # nearest edge
+            edgei = ldists[0][1]
+            p0, p1 = edges[edgei]
+            # scale the z value to match
+            x0, y0, z0 = p0
+            x1, y1, z1 = p1
+            d0 = sqrt(pow(x0 - xd, 2) + pow(y0 - yd, 2))
+            d1 = sqrt(pow(x1 - xd, 2) + pow(y1 - yd, 2))
+            dt = d0 + d1
+            z = d1 / dt * z0 + d0 / dt * z1
+            x, y, z = proj3d.inv_transform(xd, yd, z, ax.M)
+            return x, y, z
+
         def onPress(event):
             if self.base_xlim is None:
                 self.base_xlim = ax.get_xlim()
@@ -117,6 +145,28 @@ class ZoomPanX():
                     self.d3 = True
                 except:
                     self.d3 = False
+
+            if self.d3 and matplotlib_version > '3.0.3':
+                x, y, z = get_xyz_mouse_click(event, ax)
+             #   print(f'Clicked at: x={x}, y={y}, z={z}')
+                self.datapoint = [[-1, x, y, z]]
+                self.msg = '{:d}: {}: {:.2f}\n{}: {:.2f}\n{}: {:.2f}'.format(self.datapoint[0][0],
+                            ax.get_xlabel(), self.datapoint[0][1], ax.get_ylabel(),
+                            self.datapoint[0][2], ax.get_zlabel(), self.datapoint[0][3])
+                # If we have previously displayed another label, remove it first
+                if hasattr(ax, 'label'):
+                    try:
+                        ax.label.remove()
+                    except:
+                        pass
+                x2, y2, zs = proj3d.inv_transform(self.datapoint[0][1], self.datapoint[0][2],
+                             self.datapoint[0][3], ax.get_proj())
+                ax.label = ax.annotate(self.msg, xy = (x2, y2), xytext = (0, 20),
+                           textcoords = 'offset points', ha = 'right', va = 'bottom',
+                           bbox = dict(boxstyle = 'round,pad=0.5', alpha = 0.5),
+                           arrowprops = dict(arrowstyle = '->',
+                                             connectionstyle = 'arc3,rad=0'))
+                return
           #  if self.tbar._active is not None:
            #     return
             if event.button == 3: # reset?
@@ -137,7 +187,7 @@ class ZoomPanX():
                 self.press = event.ydata
             elif self.axis == 'z':
                 self.cur_zlim = ax.get_zlim()
-                self.press = event.ydata
+                self.press = event.zdata
 
         def onRelease(event):
             self.press = None
@@ -434,15 +484,16 @@ class ZoomPanX():
         def onPick(event):
             if not isinstance(event.artist, Path3DCollection): # just 3D picking for the moment
                 return
+            if matplotlib_version > '3.0.3':
+                return
             self.datapoint = None
             if len(event.ind) > 0:
                 self.datapoint = []
                 if self.d3:
+                    x, y, z = event.artist._offsets3d # 2021-05-21
                     for n in event.ind:
                         self.datapoint.append([n, event.artist._offsets3d[0][n],
                             event.artist._offsets3d[1][n], event.artist._offsets3d[2][n]])
-             #       msg = '{:d}: x: {:.2f} y: {:.2f} z: {:.2f}'.format(self.datapoint[0][0],
-             #             self.datapoint[0][1], self.datapoint[0][2], self.datapoint[0][3])
                     self.msg = '{:d}: {}: {:.2f}\n{}: {:.2f}\n{}: {:.2f}'.format(self.datapoint[0][0],
                           ax.get_xlabel(), self.datapoint[0][1], ax.get_ylabel(),
                           self.datapoint[0][2], ax.get_zlabel(), self.datapoint[0][3])
@@ -452,7 +503,7 @@ class ZoomPanX():
                             ax.label.remove()
                         except:
                             pass
-                    x2, y2, _ = proj3d.proj_transform(self.datapoint[0][1], self.datapoint[0][2],
+                    x2, y2, zs = proj3d.inv_transform(self.datapoint[0][1], self.datapoint[0][2],
                                 self.datapoint[0][3], ax.get_proj())
                     ax.label = ax.annotate(self.msg, xy = (x2, y2), xytext = (0, 20),
                                 textcoords = 'offset points', ha = 'right', va = 'bottom',

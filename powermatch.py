@@ -3851,6 +3851,23 @@ class powerMatch(QtWidgets.QWidget):
         plt.show()
         if do_multi:
             pick = plot_multi(multi_best, multi_order, 'best of each generation')
+            if pick is not None:
+                if pick[0][0] < 0: # handle problem in matplotlib sometime after version 3.0.3
+                    best = [0, 999]
+                    for p in range(len(multi_best)):
+                        diff = 0
+                        for v in range(3):
+                            key = multi_order[v]
+                            valu = multi_best[p][key]
+                            if key[-4:] == '_pct':
+                                valu = valu * 100.
+                            diff += abs((valu - pick[0][v + 1]) / valu)
+                        if diff < best[1]:
+                            best = [p, diff]
+                    pick = [[best[0]]]
+                    for v in range(3):
+                        key = multi_order[v]
+                        pick[0].append(multi_best[p][key])
         else:
             pick = None
         headers = ['Facility', 'Capacity (MW/MWh)', 'Subtotal (MWh)', 'CF', 'Cost ($/yr)',
