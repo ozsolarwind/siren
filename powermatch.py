@@ -3370,7 +3370,6 @@ class powerMatch(QtWidgets.QWidget):
         self.optExit = False
         self.setStatus('Optimise processing started')
         err_msg = ''
-        optExit = False
         optDialog = QtWidgets.QDialog()
         grid = QtWidgets.QGridLayout()
         grid.addWidget(QtWidgets.QLabel('Adjust load'), 0, 0)
