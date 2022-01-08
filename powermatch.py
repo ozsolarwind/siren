@@ -3009,8 +3009,8 @@ class powerMatch(QtWidgets.QWidget):
             # Pick individuals for tournament
             fighter = [0, 0]
             fighter_fitness = [0, 0]
-            fighter[0] = random.randint(0, population_size-1)
-            fighter[1] = random.randint(0, population_size-1)
+            fighter[0] = random.randint(0, population_size - 1)
+            fighter[1] = random.randint(0, population_size - 1)
 
             # Get fitness score for each
             if len(argv) == 1:
@@ -3082,20 +3082,34 @@ class powerMatch(QtWidgets.QWidget):
                 self.chrom = 0
             for chromosome in population:
                 # now get random amount of generation per technology (both RE and non-RE)
-                for gen, value in opt_order.items():
-                    capacity = value[2]
-                    for c in range(value[0], value[1]):
-                        if chromosome[c]:
-                            capacity = capacity + capacities[c]
-                    try:
-                        pmss_details[gen][3] = capacity / pmss_details[gen][0]
-                    except:
-                        print('(2974)', gen, capacity, pmss_details[gen][0])
+                total_capacity = 0.
+                for i in range(2):
+                    for gen, value in opt_order.items():
+                        capacity = value[2]
+                        for c in range(value[0], value[1]):
+                            if chromosome[c]:
+                                capacity = capacity + capacities[c]
+                        try:
+                            pmss_details[gen][3] = capacity / pmss_details[gen][0]
+                        except:
+                            print('(3051)', gen, capacity, pmss_details[gen][0])
+                            pmss_details[gen][3] = 0
+                        total_capacity += capacity
+                    if total_capacity == 0:
+                        print('(3055)', total_capacity, pmss_details)
+                        chromosone = population[0]
+                    else:
+                        break
                 multi_value, op_data, extra = self.doDispatch(year, option, pmss_details, pmss_data, re_order,
                                               dispatch_order, pm_data_file, data_file)
                 if multi_value['load_pct'] < self.targets['load_pct'][3]:
-                    lcoe_fitness_scores.append(pow(multi_value['lcoe'],
-                        self.targets['load_pct'][3] / multi_value['load_pct']))
+                    if multi_value['load_pct'] == 0:
+                        print('(3040)', multi_value['lcoe'],
+                            self.targets['load_pct'][3], multi_value['load_pct'])
+                        lcoe_fitness_scores.append(1)
+                    else:
+                        lcoe_fitness_scores.append(pow(multi_value['lcoe'],
+                            self.targets['load_pct'][3] / multi_value['load_pct']))
                 else:
                     lcoe_fitness_scores.append(multi_value['lcoe'])
                 multi_values.append(multi_value)
@@ -3617,7 +3631,7 @@ class powerMatch(QtWidgets.QWidget):
         QtCore.QCoreApplication.processEvents()
         population = create_starting_population(population_size, chromosome_length)
         # calculate best score(s) in starting population
-        # if do_lcoe best_score = lowest lcoe
+        # if do_lcoe best_score = lowest non-zero lcoe
         # if do_multi best_multi = lowest weight and if not do_lcoe best_score also = best_weight
         if self.debug:
             filename = self.scenarios + 'opt_debug_' + \
@@ -3650,7 +3664,7 @@ class powerMatch(QtWidgets.QWidget):
             try:
                 best_score = np.min(lcoe_scores)
             except:
-                print('(3535)', lcoe_scores)
+                print('(3604)', lcoe_scores)
             best_ndx = lcoe_scores.index(best_score)
             lowest_chrom = population[best_ndx]
             self.setStatus('Starting LCOE: $%.2f' % best_score)
