@@ -1810,6 +1810,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">The discount rate to be applied if LCOEs are being calculated using capital, operations and fuel costs rather than a Reference LCOE</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>dispatch_order</dfn></td>
+<td class="none">To enable the dispatch order to be saved between executions</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>generators_file</dfn></td>
 <td class="none">File name for generators (facilities) spreadsheet</td>
 </tr>
@@ -1876,6 +1880,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <tr class="none">
 <td class="none"><dfn>shortfall_sign</dfn></td>
 <td class="none">An indicator as to whether shortfall values should be negative or positive. Surplus values will have the opposite sign. The default is negative, <em>-</em></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>show_multipliers</dfn></td>
+<td class="none">If set to True, technology multipliers will be shown on the Adjustment window. The default is False</em></td>
 </tr>
 </table>
 </td></tr>
@@ -2334,6 +2342,14 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <tr class="none">
 <td class="none"><dfn>menu_size</dfn></td>
 <td class="none">Size of floating menu window</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>powermatch_pos</dfn></td>
+<td class="none">Position of Powermatch main window</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>powermatch_size</dfn></td>
+<td class="none">Size of Powermatch main window</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>restorewindows</dfn></td>
@@ -3069,7 +3085,7 @@ If it's not a diurnal plot (i.e. Period is <em>&lt;None&gt;</em>) any occurence 
 <p>One of the outputs from Powermatch is calculated LCOE figures, overall and for each Generator. The LCOE figures are calculated based upon a Reference LCOE and Reference Capacity Factor (CF) for the generator or storage.
 In producing the LCOE figures you can choose to use LCOE figures that ignore any surplus generation or produce a corrected LCOE figure which adjusts the LCOE figure upwards to take into account the surplus generation (that is, the corrected LCOE figure includes the cost of surplus - spilled - generation). The default is to produce a corrected LCOE (<em>corrected_lcoe</em>)
 <p><strong>Note:</strong> The SIREN Powermatch component was in part derived from the Powerbalance worksheets developed by Ben Rose. For those who would prefer his spreadsheet approach an enhanced version, Powerbalance2, is available at <a href="https://cleanenergymodelling.com.au/powerbalance2/" target="_blank">https://cleanenergymodelling.com.au/powerbalance2/</a></p>
-<p>The Powermatch options are as set out here. The options are specified in the <a href="#p_pm">[Powermatch]</a> Section of the Preferences file. The associated property is indicated in brackets at the end of the description. All files are located in the SIREN Scenarios folder.</p>
+<p>The Powermatch options are as set out here. The options (Poperties) are specified in the <a href="#p_pm">[Powermatch]</a> Section of the Preferences file. The associated property is indicated in brackets at the end of the description. All files are located in the SIREN Scenarios folder.</p>
 <table border="0" class="none" cellpadding="2">
 <tr><td class="top" style="width: 15%;"><dfn>Constraints File</dfn></td>
 <td class="none">File name for constraints spreadsheet. Clicking on the field will allow you to choose another spreadsheet from the SIREN Scenarios folder (<em>constraints_file</em>)</td></tr>
@@ -3094,7 +3110,7 @@ In producing the LCOE figures you can choose to use LCOE figures that ignore any
 <tr><td class="lr"><dfn>Carbon Price</dfn></td>
 <td class="none">If a carbon price is not included in LCOE figures you can use this option to set a carbon price between $0 and $200 (<em>carbon_price</em>)</td></tr>
 <tr><td class="lr"><dfn>Adjust Generators</dfn></td>
-<td class="none">If this option is checked you will be presented with a table to enable you to adjust the input capacity data for each generator technology. You can specify a multiplier between 0 and the cap set by the <em>adjust_cap</em> property in the <a href="#power">[Power]</a> Section of the Preferences file; the default is 25. The original input values will be derived from the data sheet for renewables and the Generators table for dispatchable technologies. You can also Save and Restore the multipliers to use again later (<em>adjust_generators</em>)</td></tr>
+<td class="none">If this option is checked you will be presented with a table to enable you to adjust the input capacity data for each generator technology. You can specify the required capacity or, if the <em>show_multipliers</em> property is set, a multiplier between 0 and the cap set by the <em>adjust_cap</em> property in the <a href="#power">[Power]</a> Section of the Preferences file; the default multiplier is 25. The original input values will be derived from the data sheet for renewables and the Generators table for dispatchable technologies. You can also Save and Restore the capacities to use again later (<em>adjust_generators</em>)</td></tr>
 <tr><td class="lr"><dfn>Dispatch Order</dfn></td>
 <td class="none">The order in which the dispatchable technologies will be processed by Powermatch. You can change the order by clicking on each value and moving it up and down the list. The initial order is derived from the generators (facilities) table. If you want to exclude a generator you can drag it to the right hand list (and drag it back to the left to re-include)</td></tr>
 <tr><td class="bottom"><strong>Done, Constraints, Generators,<br />Summary, Powermatch,<br />Help</strong></td>
@@ -3242,6 +3258,7 @@ If the best and worse values are the same for a variable and that value is not a
 <li>If you want to access the same folders:- [Base] <em>year</em>, [Parents] Section properties, [Files] <em>scenario_prefix</em> and <em>scenarios</em> properties</li>
 <li>[Power] <em>adjust_cap</em> property if you want to use a different cap for Adjust Generators</li>
 <li>[Windows] <em>log_status</em> property to turn off the Session log</li>
+<li>[Windows] <em>restorewindows</em> property to turn remember the window layout of the Powermatch main window</li>
 <li>If you want to use <code>powermatch</code> and have access to the same colours, periods, and seasons as the main Preferences file then you might also want the appropriate properties from the [Colors], [Power] and [Powerplot] Sections and the [Map] <em>map_choice</em> property</li>
 </ul>
 <p><a href="#help">Back to top</a></p>
