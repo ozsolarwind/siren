@@ -303,6 +303,26 @@ class ZoomPanX():
                 ax.set_xlim([strt, strt + 168])
                 set_flex()
                 ax.figure.canvas.draw()
+            elif event_key == 't':
+                if self.axis != 'x':
+                    return
+                self.keys = 't'
+                if self.week is None:
+                    self.week = 0
+                else:
+                    self.week += 1
+                if self.month is None:
+                    if self.week >= ceil(self.base_xlim[1] / 168):
+                        self.week = 0
+                    strt = self.week * 168 # 24 * 7 hours per week
+                else:
+                    if self.week >= 5 or \
+                      (self.month == 1 and self.week >= 4 and self.mth_xlim[2] == 1416):
+                        self.week = 0
+                    strt = self.mth_xlim[self.month] + self.week * 168
+                ax.set_xlim([strt, strt + 168 * 2])
+                set_flex()
+                ax.figure.canvas.draw()
             elif event.key >= '0' and event.key <= '9':
                 if self.axis != 'x':
                     return
@@ -318,7 +338,7 @@ class ZoomPanX():
                     else:
                         self.month = int(event.key) - 1
                     self.keys += event.key
-                elif self.keys[-1] == 'w' or self.keys[-2] == 'w':
+                elif self.keys[-1] == 'w' or (len(self.keys) > 1 and self.keys[-2] == 'w'):
                     if self.keys[-1] == 'w':
                         wk = event_key
                     else:
@@ -338,6 +358,29 @@ class ZoomPanX():
                         strt = self.mth_xlim[self.month] + self.week * 168
                     self.keys += event.key
                     ax.set_xlim([strt, strt + 168])
+                    set_flex()
+                    ax.figure.canvas.draw()
+                    return
+                elif self.keys[-1] == 't' or (len(self.keys) > 1 and self.keys[-2] == 't'):
+                    if self.keys[-1] == 't':
+                        wk = event_key
+                    else:
+                        wk = self.keys[-1] + event_key
+                    if wk == '0':
+                        self.week = 0
+                    else:
+                        self.week = int(wk) - 1
+                    if self.month is None:
+                        if self.week >= ceil(self.base_xlim[1] / 168):
+                            self.week = 0
+                        strt = self.week * 168 # 24 * 7 hours per week
+                    else:
+                        if self.week >= 5 or \
+                          (self.month == 1 and self.week >= 4 and self.mth_xlim[2] == 1416):
+                            self.week = 0
+                        strt = self.mth_xlim[self.month] + self.week * 168
+                    self.keys += event.key
+                    ax.set_xlim([strt, strt + 168 * 2])
                     set_flex()
                     ax.figure.canvas.draw()
                     return
