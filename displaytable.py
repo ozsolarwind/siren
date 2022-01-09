@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2020 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2022 Sustainable Energy Now Inc., Angus King
 #
 #  displaytable.py - This file is part of SIREN.
 #
@@ -50,7 +50,7 @@ class FakeObject:
 
 class Table(QtWidgets.QDialog):
     def __init__(self, objects, parent=None, fields=None, fossil=True, sumby=None, sumfields=None, units='', title=None,
-                 save_folder='', edit=False, sortby=None, decpts=None, totfields=None, abbr=True):
+                 save_folder='', edit=False, sortby=None, decpts=None, totfields=None, abbr=True, txt_align=None):
         super(Table, self).__init__(parent)
         self.oclass = None
         if len(objects) == 0:
@@ -108,6 +108,7 @@ class Table(QtWidgets.QDialog):
         self.title = title
         self.edit_table = edit
         self.decpts = decpts
+        self.txt_align = txt_align
         self.recur = False
         self.replaced = None
         self.savedfile = None
@@ -539,9 +540,13 @@ class Table(QtWidgets.QDialog):
                             for i in range(1, len(value)):
                                 fld = fld + ',' + str(value[i])
                             self.table.setItem(rw, cl, QtWidgets.QTableWidgetItem(fld))
+                            if self.txt_align is not None:
+                                if self.txt_align == 'R':
+                                    self.table.item(rw, cl).setTextAlignment(130)  # x'82'
                         else:
                             self.table.setItem(rw, cl, QtWidgets.QTableWidgetItem(value))
-                            if self.labels[key] != 'str':
+                            if self.labels[key] != 'str' or \
+                               (self.txt_align is not None and self.txt_align == 'R'):
                                 self.table.item(rw, cl).setTextAlignment(130)   # x'82'
                     else:
                         self.table.setItem(rw, cl, QtWidgets.QTableWidgetItem(''))
@@ -909,4 +914,11 @@ class Table(QtWidgets.QDialog):
     def getValues(self):
         if self.edit_table:
             return self.replaced
+        return None
+
+    def getItem(self, col):
+        try:
+            return self.table.item(self.table.currentRow(), col).text()
+        except:
+            pass
         return None

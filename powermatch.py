@@ -51,6 +51,10 @@ except:
 
 tech_names = ['Load', 'Onshore Wind', 'Offshore Wind', 'Rooftop PV', 'Fixed PV', 'Single Axis PV',
               'Dual Axis PV', 'Biomass', 'Geothermal', 'Other1', 'CST', 'Shortfall']
+target_keys = ['lcoe', 'load_pct', 'surplus_pct', 're_pct', 'cost', 'co2']
+target_names = ['LCOE', 'Load%', 'Surplus%', 'RE%', 'Cost', 'CO2']
+target_fmats = ['$%.2f', '%d%%', '%d%%', '%d%%', '$%.1fpwr_chr', '%.1fpwr_chr']
+target_titles = ['LCOE ($)', '% Load met', 'Surplus %', 'RE %', 'Total Cost ($)', 'tCO2e']
 # same order as self.file_labels
 C = 0 # Constraints
 G = 1 # Generators
@@ -617,6 +621,8 @@ class powerMatch(QtWidgets.QWidget):
         self.optimise_stop = 0
         self.optimise_debug = False
         self.optimise_default = None
+        self.optimise_multiplot = True
+        self.optimise_multitable = False
         self.remove_cost = True
         self.results_prefix = ''
         self.save_tables = False
@@ -624,11 +630,7 @@ class powerMatch(QtWidgets.QWidget):
         self.surplus_sign = 1 # Note: Preferences file has it called shortfall_sign
         # it's easier for the user to understand while for the program logic surplus is easier
         iorder = []
-        target_keys = ['lcoe', 'load_pct', 'surplus_pct', 're_pct', 'cost', 'co2']
-        target_names = ['LCOE', 'Load%', 'Surplus%', 'RE%', 'Cost', 'CO2']
-        target_fmats = ['$%.2f', '%d%%', '%d%%', '%d%%', '$%.1fpwr_chr', '%.1fpwr_chr']
-        target_titles = ['LCOE ($)', '% Load met', 'Surplus %', 'RE %',
-                         'Total Cost ($)', 'tCO2e']
+
         self.targets = {}
         for t in range(len(target_keys)):
              if target_keys[t] in ['re_pct', 'surplus_pct']:
@@ -691,6 +693,12 @@ class powerMatch(QtWidgets.QWidget):
                          self.optimise_generations = int(value)
                      except:
                          pass
+                 elif key == 'optimise_multiplot':
+                     if value.lower() in ['false', 'off', 'no']:
+                         self.optimise_multiplot = False
+                 elif key == 'optimise_multitable':
+                     if value.lower() in ['true', 'on', 'yes']:
+                         self.optimise_multitable = True
                  elif key == 'optimise_mutation':
                      try:
                          self.optimise_mutation = float(value)
@@ -2994,8 +3002,8 @@ class powerMatch(QtWidgets.QWidget):
             population = np.zeros((individuals, chromosome_length))
             # Loop through each row (individual)
             for i in range(individuals):
-                # Choose a random number of ones to create
-                ones = random.randint(0, chromosome_length)
+                # Choose a random number of ones to create but at least one 1
+                ones = random.randint(1, chromosome_length)
                 # Change the required number of zeros to ones
                 population[i, 0:ones] = 1
                 # Sfuffle row
@@ -3082,24 +3090,15 @@ class powerMatch(QtWidgets.QWidget):
                 self.chrom = 0
             for chromosome in population:
                 # now get random amount of generation per technology (both RE and non-RE)
-                total_capacity = 0.
-                for i in range(2):
-                    for gen, value in opt_order.items():
-                        capacity = value[2]
-                        for c in range(value[0], value[1]):
-                            if chromosome[c]:
-                                capacity = capacity + capacities[c]
-                        try:
-                            pmss_details[gen][3] = capacity / pmss_details[gen][0]
-                        except:
-                            print('(3051)', gen, capacity, pmss_details[gen][0])
-                            pmss_details[gen][3] = 0
-                        total_capacity += capacity
-                    if total_capacity == 0:
-                        print('(3055)', total_capacity, pmss_details)
-                        chromosone = population[0]
-                    else:
-                        break
+                for gen, value in opt_order.items():
+                    capacity = value[2]
+                    for c in range(value[0], value[1]):
+                        if chromosome[c]:
+                            capacity = capacity + capacities[c]
+                    try:
+                        pmss_details[gen][3] = capacity / pmss_details[gen][0]
+                    except:
+                        print('(3093)', gen, capacity, pmss_details[gen][0])
                 multi_value, op_data, extra = self.doDispatch(year, option, pmss_details, pmss_data, re_order,
                                               dispatch_order, pm_data_file, data_file)
                 if multi_value['load_pct'] < self.targets['load_pct'][3]:
@@ -3309,18 +3308,87 @@ class powerMatch(QtWidgets.QWidget):
             f = zp.zoom_pan(mx, base_scale=1.2, annotate=True)
             plt.show()
             if zp.datapoint is not None: # user picked a point
+                if zp.datapoint[0][0] < 0: # handle problem in matplotlib sometime after version 3.0.3
+                    best = [0, 999]
+                    for p in range(len(multi_best)):
+                        diff = 0
+                        for v in range(3):
+                            key = multi_order[v]
+                            valu = multi_best[p][key]
+                            if key[-4:] == '_pct':
+                                valu = valu * 100.
+                            diff += abs((valu - zp.datapoint[0][v + 1]) / valu)
+                        if diff < best[1]:
+                            best = [p, diff]
+                    zp.datapoint = [[best[0]]]
+                    for v in range(3):
+                        key = multi_order[v]
+                        zp.datapoint[0].append(multi_best[p][key])
                 if self.more_details:
                     for p in zp.datapoint:
-                        msg = 'Generation ' + str(p[0]) + ': ' + \
+                        msg = 'iteration ' + str(p[0]) + ': ' + \
                               self.targets[multi_order[0]][6].replace('%', '%%') + ': ' + \
                               self.targets[multi_order[0]][5] + '; ' + \
                               self.targets[multi_order[1]][6].replace('%', '%%') + ': ' + \
                               self.targets[multi_order[1]][5] + '; ' + \
                               self.targets[multi_order[2]][6].replace('%', '%%') + ': ' + \
                               self.targets[multi_order[2]][5]
-                        msg = msg % (p[1], p[2], p[3])
+                        msg = msg % (p[1] * 100., p[2] * 100., p[3])
                         self.setStatus(msg)
             return zp.datapoint
+
+        def show_multitable(multi_best, multi_order, best_score_progress):
+            def pwr_chr(amt):
+                pwr_chrs = ' KMBTPEZY'
+                divisor = 1.
+                for pwr in range(len(pwr_chrs) - 1, -1, -1):
+                    if amt > pow(10, pwr * 3):
+                        pchr = pwr_chrs[pwr]
+                        divisor = 1. * pow(10, pwr * 3)
+                        break
+                return amt / divisor, pchr
+
+            def opt_fmat(amt, fmat):
+                tail = ' '
+                p = fmat.find('pwr_chr')
+                if p > 0:
+                    amt, tail = pwr_chr(amt)
+                    fmat = fmat.replace('pwr_chr', '')
+              #  d = fmat.find('d')
+             #   if d > 0:
+              #      amt = amt * 100.
+                fmat = fmat.replace('.1f', '.2f')
+                i = fmat.find('%')
+                fmt = fmat[:i] + '{:>,' + fmat[i:].replace('%', '').replace('d', '.2%') + '}' + tail
+                return fmt.format(amt)
+
+            best_table = []
+            best_fmate = []
+            for b in range(len(multi_best)):
+                bl = list(multi_best[b].values())
+                bl.insert(0, best_score_progress[b])
+                bl.insert(0, b + 1)
+                best_table.append(bl)
+                best_fmate.append([b + 1])
+                best_fmate[-1].insert(1, best_score_progress[b])
+                for f in range(2, len(best_table[-1])):
+                    if target_keys[f - 2] == 'load_pct':
+                        best_fmate[-1].append(opt_fmat(bl[f], '%d%%'))
+                    else:
+                        best_fmate[-1].append(opt_fmat(bl[f], target_fmats[f - 2]))
+            fields = target_names[:]
+            fields.insert(0, 'weight')
+            fields.insert(0, 'iteration')
+            dialog = displaytable.Table(best_fmate, fields=fields, txt_align='R', decpts=[0, 4], sortby='weight')
+            dialog.exec_()
+            b = int(dialog.getItem(0)) - 1
+            del dialog
+            pick = [b]
+            for fld in multi_order[:3]:
+                i = target_keys.index(fld)
+                pick.append(best_table[b][i + 2])
+            return [pick]
+
 
 #       optClicked mainline starts here
         year = in_year
@@ -3405,14 +3473,14 @@ class powerMatch(QtWidgets.QWidget):
         grid.addWidget(optPopn, rw, 1)
         grid.addWidget(QtWidgets.QLabel('Size of population'), rw, 2, 1, 3)
         rw += 1
-        grid.addWidget(QtWidgets.QLabel('No. of generations'), rw, 0, 1, 3)
+        grid.addWidget(QtWidgets.QLabel('No. of iterations'), rw, 0, 1, 3)
         optGenn = QtWidgets.QSpinBox()
         optGenn.setRange(10, 500)
         optGenn.setSingleStep(10)
         optGenn.setValue(self.optimise_generations)
         optGenn.valueChanged.connect(self.changes)
         grid.addWidget(optGenn, rw, 1)
-        grid.addWidget(QtWidgets.QLabel('Number of generations (iterations)'), rw, 2, 1, 3)
+        grid.addWidget(QtWidgets.QLabel('Number of iterations (generations)'), rw, 2, 1, 3)
         rw += 1
         grid.addWidget(QtWidgets.QLabel('Mutation probability'), rw, 0)
         optMutn = QtWidgets.QDoubleSpinBox()
@@ -3623,11 +3691,11 @@ class powerMatch(QtWidgets.QWidget):
         if do_multi:
             multi_best = [] # list of six variables for best weight
             multi_best_popn = [] # list of chromosomes for best weight
-        self.show_ProgressBar(maximum=optGenn.value(), msg='Process generations', title='SIREN - Powermatch Progress')
+        self.show_ProgressBar(maximum=optGenn.value(), msg='Process iterations', title='SIREN - Powermatch Progress')
         self.opt_progressbar.setVisible(True)
         start_time = time.time()
         # Create starting population
-        self.opt_progressbar.barProgress(1, 'Processing generation 1')
+        self.opt_progressbar.barProgress(1, 'Processing iteration 1')
         QtCore.QCoreApplication.processEvents()
         population = create_starting_population(population_size, chromosome_length)
         # calculate best score(s) in starting population
@@ -3716,7 +3784,7 @@ class powerMatch(QtWidgets.QWidget):
             else:
                 tim = ' (%s%s %.2f mins)' % (lcoe_status, multi_status, tim / 60.)
             self.opt_progressbar.barProgress(generation + 1,
-                'Processing generation ' + str(generation + 1) + tim)
+                'Processing iteration ' + str(generation + 1) + tim)
             QtWidgets.QApplication.processEvents()
             if not self.opt_progressbar.be_open:
                 break
@@ -3824,12 +3892,12 @@ class powerMatch(QtWidgets.QWidget):
             tim = '%.1f secs)' % tim
         else:
             tim = '%.2f mins)' % (tim / 60.)
-        msg = 'Optimise completed (%0d generations; %s' % (generation + 1, tim)
+        msg = 'Optimise completed (%0d iterations; %s' % (generation + 1, tim)
         if best_score > lowest_score:
-            msg += ' Try more generations.'
+            msg += ' Try more iterations.'
         # we'll keep two or three to save re-calculating_fitness
-        op_data = [[], [], []]
-        score_data = [None, None, None]
+        op_data = [[], [], [], []]
+        score_data = [None, None, None, None]
         if do_lcoe:
             op_data[0], score_data[0] = calculate_fitness([lowest_chrom])
         if do_multi:
@@ -3858,30 +3926,20 @@ class powerMatch(QtWidgets.QWidget):
         lx = plt.subplot(111)
         plt.title(titl)
         lx.plot(x, best_score_progress)
-        lx.set_xlabel('Optimise Cycle (' + str(len(best_score_progress)) + ' generations)')
+        lx.set_xlabel('Optimise Cycle (' + str(len(best_score_progress)) + ' iterations)')
         lx.set_ylabel(ylbl)
         zp = ZoomPanX()
         f = zp.zoom_pan(lx, base_scale=1.2, annotate=True)
         plt.show()
         if do_multi:
-            pick = plot_multi(multi_best, multi_order, 'best of each generation')
-            if pick is not None:
-                if pick[0][0] < 0: # handle problem in matplotlib sometime after version 3.0.3
-                    best = [0, 999]
-                    for p in range(len(multi_best)):
-                        diff = 0
-                        for v in range(3):
-                            key = multi_order[v]
-                            valu = multi_best[p][key]
-                            if key[-4:] == '_pct':
-                                valu = valu * 100.
-                            diff += abs((valu - pick[0][v + 1]) / valu)
-                        if diff < best[1]:
-                            best = [p, diff]
-                    pick = [[best[0]]]
-                    for v in range(3):
-                        key = multi_order[v]
-                        pick[0].append(multi_best[p][key])
+            if self.optimise_multiplot:
+                pick = plot_multi(multi_best, multi_order, 'best of each generation')
+            if self.optimise_multitable:
+                pick2 = show_multitable(multi_best, multi_order, best_score_progress)
+                try:
+                    pick = pick + pick2
+                except:
+                    pick = pick2
         else:
             pick = None
         headers = ['Facility', 'Capacity (MW/MWh)', 'Subtotal (MWh)', 'CF', 'Cost ($/yr)',
@@ -3918,26 +3976,48 @@ class powerMatch(QtWidgets.QWidget):
             ndxes.append(1)
         if pick is not None:
             # at present I'll calculate the best weight for the chosen picks. Could actually present all for user choice
-            picks = []
-            if len(pick) == 1:
+            if len(pick) <= 2:
                 multi_lowest_chrom = multi_best_popn[pick[0][0]]
+                op_data[2], score_data[2] = calculate_fitness([multi_lowest_chrom])
+                if self.more_details:
+                    list(map(list, list(zip(*op_data[2]))))
+                    dialog = displaytable.Table(op_data[2], title='Pick_' + self.sender().text(), fields=headers,
+                             save_folder=self.scenarios, sortby='', decpts=op_pts)
+                    dialog.exec_()
+                    del dialog
+                chrom_hdrs.append('Your pick')
+                chroms.append(multi_lowest_chrom)
+                ndxes.append(2)
+                if len(pick) == 2:
+                    multi_lowest_chrom = multi_best_popn[pick[1][0]]
+                    op_data[3], score_data[3] = calculate_fitness([multi_lowest_chrom])
+                    if self.more_details:
+                        list(map(list, list(zip(*op_data[3]))))
+                        dialog = displaytable.Table(op_data[3], title='Pick_' + self.sender().text(), fields=headers,
+                                 save_folder=self.scenarios, sortby='', decpts=op_pts)
+                        dialog.exec_()
+                        del dialog
+                    chrom_hdrs.append('Your 2nd pick')
+                    chroms.append(multi_lowest_chrom)
+                    ndxes.append(3)
             else:
+                picks = []
                 for pck in pick:
                     picks.append(multi_best_popn[pck[0]])
                 a, b, c = calculate_fitness(picks)
                 best_multi = np.min(b)
                 best_mndx = b.index(best_multi)
                 multi_lowest_chrom = picks[best_mndx]
-            op_data[2], score_data[2] = calculate_fitness([multi_lowest_chrom])
-            if self.more_details:
-                list(map(list, list(zip(*op_data[2]))))
-                dialog = displaytable.Table(op_data[2], title='Pick_' + self.sender().text(), fields=headers,
-                         save_folder=self.scenarios, sortby='', decpts=op_pts)
-                dialog.exec_()
-                del dialog
-            chrom_hdrs.append('Your pick')
-            chroms.append(multi_lowest_chrom)
-            ndxes.append(2)
+                op_data[2], score_data[2] = calculate_fitness([multi_lowest_chrom])
+                if self.more_details:
+                    list(map(list, list(zip(*op_data[2]))))
+                    dialog = displaytable.Table(op_data[2], title='Pick_' + self.sender().text(), fields=headers,
+                             save_folder=self.scenarios, sortby='', decpts=op_pts)
+                    dialog.exec_()
+                    del dialog
+                chrom_hdrs.append('Your pick')
+                chroms.append(multi_lowest_chrom)
+                ndxes.append(2)
         for chromosome in chroms:
             for gen, value in opt_order.items():
                 capacity = opt_order[gen][2]

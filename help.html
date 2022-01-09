@@ -1839,7 +1839,15 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>optimise_generations</dfn></td>
-<td class="none">Number of generations (iterations) for optimisation. The value can be between 10 and 500, with a default of 20</td>
+<td class="none">Number of iterations (generations) for optimisation. The value can be between 10 and 500, with a default of 20</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>optimise_multiplot</dfn></td>
+<td class="none">When running a multi optimisation you can choose to display a 3D plot of the best individuals from each iteration. Default is True</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>optimise_multitable</dfn></td>
+<td class="none">When running a multi optimisation you can choose to display a table of the best individuals from each iteration. Default is False</td
 </tr>
 <tr class="none">
 <td class="none"><dfn>optimise_mutation</dfn></td>
@@ -2562,7 +2570,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 </tr>
 <tr class="none">
 <td class="none"><img src="rainbow-icon.png" alt="Edit Colours">&nbsp;&nbsp;Edit Colours (Ctrl+U)</td>
-<td class="none">Edit colours for the current map. This will allow to change both the the colours for the current <em>map_choice</em> (left column) and the default colours (right column). You can delete colours for the current <em>map_choice</em> by right-clicking on the colour (it will be cleared and the item deleted when you Save & Exit)</td>
+<td class="none">Edit colours for the current map. This will allow to change both the colours for the current <em>map_choice</em> (left column) and the default colours (right column). You can delete colours for the current <em>map_choice</em> by right-clicking on the colour (it will be cleared and the item deleted when you Save & Exit)</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="arrow.png" alt="Edit Section">&nbsp;&nbsp;Edit Section</td>
@@ -3066,7 +3074,7 @@ If it's not a diurnal plot (i.e. Period is <em>&lt;None&gt;</em>) any occurence 
 <td class="none"> Not implemented yet  (<em>optimize_lcoe_wrt_ppa_escalation</em>)</td></tr>
 -->
 <tr><td class="lr"><dfn>Reduce power by Grid losses?</dfn></td>
-<td class="none">Reduce the power passed to the financial model by the amount of grid losses. This will slightly increase LCOE. If chosen this will reduce power by losses related to the line connecting the station into the grid. To reduce power by losses for the the full grid path length to the load centre you need to also choose the <em>Include full grid path ...</em> option (below)</td></tr>
+<td class="none">Reduce the power passed to the financial model by the amount of grid losses. This will slightly increase LCOE. If chosen this will reduce power by losses related to the line connecting the station into the grid. To reduce power by losses for the full grid path length to the load centre you need to also choose the <em>Include full grid path ...</em> option (below)</td></tr>
 <tr><td class="lr"><dfn>Include Grid costs in LCOE?</dfn></td>
 <td class="none">Increase station costs by the line costs to connect the station to the grid. This only includes the cost of the line to connect the station into the main grid and for the capacity of the station</td></tr>
 <tr><td class="lr"><dfn>Include full grid path in LCOE?</dfn></td>
@@ -3167,7 +3175,7 @@ In producing the LCOE figures you can choose to use LCOE figures that ignore any
 <ol>
 <li>A solution with the lowest LCOE for the input renewable and dispatchable technologies</li>
 <li>A solution with the best (lowest) weighting for six variables - lowest LCOE, lowest CO2 emissions, lowest Overall Cost, lowest surplus generation, highest RE percentage and maximising the percentage of load met</li>
-<li>A solution with the the lowest LCOE and weighting for six variables. Running both does use a single population and so there is some &ldquo;interaction&rdquo; between the the which may distort the result</li>
+<li>A solution with the lowest LCOE and weighting for six variables. Running both does use a single population and so there is some &ldquo;interaction&rdquo; between them which may distort the result</li>
 </ol>
 Genetic algorithms are inspired by the process of natural selection and simulate evolution of multiple generations that evolve to produce an optimal solution, in this case 1. lowest LCOE 2. lowest weighted solution, or 3. lowest in both (<strong>Note:</strong> This is a different approach to optimisation than in Power Model). The approach has a number of inputs:</p>
 <ul>
@@ -3178,14 +3186,14 @@ Genetic algorithms are inspired by the process of natural selection and simulate
 <td class="none">Adjust the load. You can specify a multiplier for Load, between 0 and the cap set by the <em>adjust_cap</em> property in the <a href="#power">[Power]</a> Section of the Preferences file; the default is 25. This variable is not saved</td></tr>
 <tr><td class="lr"><dfn>Population size</dfn></td>
 <td class="none">Size of population. Each member of the population has a chromsome made up of switches that are randomly on or off. The greater the population size the greater the chance that the initial state of the population will contain a chromosome representing the optimal solution, but the longer the optimisation process will take (<em>optimise_population</em>)</td></tr>
-<tr><td class="lr"><dfn>Number of generations</dfn></td>
-<td class="none">Number of generations (iterations); not to be confused with (electrical) generation. For each generation a competition is held between (each of two) members to identify which has the preferred characteristics, in this case lowest LCOE and/or weight. The winners are then used to generate the next generation. The greater the number of generations the better chance the solutions will converge to an optimum value, but the longer the optimisation process will take (<em>optimise_generations</em>)</td></tr>
+<tr><td class="lr"><dfn>Number of iterations</dfn></td>
+<td class="none">Number of iterations (generations; not to be confused with (electrical) generation). For each iteration a competition is held between (each of two) members to identify which has the preferred characteristics, in this case lowest LCOE and/or weight. The winners are then used to create the population for the next iteration. The greater the number of iterations the better chance the solutions will converge to an optimum value, but the longer the optimisation process will take (<em>optimise_iterations</em>)</td></tr>
 <tr><td class="lr"><dfn>Mutation probability</dfn></td>
 <td class="none">A probability of mutation. This is a genetic operator used to maintain genetic diversity from one generation of a population to the next. The solution may change entirely from the previous solution and come to a better solution. This probability should be set low. If it is set too high, the search will turn into a primitive random search.(<em>optimise_mutation)</em>)</td></tr>
 <tr><td class="lr"><dfn>Exit if stable</dfn></td>
-<td class="none">A stop option. To reduce the number of iterations it is possible to terminate the optimisation if there appears to be no change to the solution after a specified number of generations. The downside is that the optimisation may not have evolved on the correct path (i.e. moved towards a local minimum rather than true minimum) (<em>optimise_stop</em>)</td></tr>
+<td class="none">A stop option. To reduce the number of iterations it is possible to terminate the optimisation if there appears to be no change to the solution after a specified number of iterations. The downside is that the optimisation may not have evolved on the correct path (i.e. moved towards a local minimum rather than true minimum) (<em>optimise_stop</em>)</td></tr>
 <tr><td class="lr"><dfn>Optimisation choice</dfn></td>
-<td class="none">A choice as whether to run the lowest LCOE option, the multi-variable option, or both options together. Running both does use a single population and so there is some &ldquo;interaction&rdquo; between the the which may distort the result (<em>optimise_choice</em>)</td></tr>
+<td class="none">A choice as whether to run the lowest LCOE option, the multi-variable option, or both options together. Running both does use a single population and so there is some &ldquo;interaction&rdquo; between them which may distort the result (<em>optimise_choice</em>)</td></tr>
 <tr><td class="lr"><dfn>Multi-variable inputs</dfn></td>
 <td class="none">Some values for each of the six optimisation variables for the multi-variable solution:
 <ol>
@@ -3234,19 +3242,20 @@ If the best and worse values are the same for a variable and that value is not a
 <li>Using their chromosome and the Optimisation table determine the capacity for each technology</li>
 <li>Run Powermatch with this generation mix to calculate (1.) the LCOE (score) and (2.) the weighting</li>
 </ol>
-<li>For each generation</li>
+<li>For each iteration</li>
 <ol>
 <li>Select the best parents by competition</li>
 <li>Breed new population by random crossover of chromosomes for winners</li>
 <li>Randomly mutate the population</li>
 <li>Calculate fitness of population. Select either (1.) lowest LCOE that meets 100% of load (demand), (2.) lowest weighting, or (3.) lowest of both</li>
-<li>Exit loop if LCOE has remained the same for the specified number of generations</li>
-<li>Include either (1.) lowest LCOE, (2.) lowest weighting or (3.) lowest of both in the next generation
+<li>Exit loop if LCOE has remained the same for the specified number of iterations</li>
+<li>Include either (1.) lowest LCOE, (2.) lowest weighting or (3.) lowest of both in the next iteration
 </ol>
 <li>Produce
 <ol>
-<li>A plot showing the progression of LCOE over each generation</li>
-<li>A three dimensional plot showing the best individual for each generation. The three variables with the highest weighting are chosen for the plot. It is also possible to pick one of the solutions by clicking the mouse on that point - a small box showing the values for each of the three variables will be displayed. You can &ldquo;rotate<&rdquo; the plot around by holding down the left mouse button and then moving the mouse</li>
+<li>A plot showing the progression of LCOE over each iteration</li>
+<li>A three dimensional plot showing the best individual for each iteration. The three variables with the highest weighting are chosen for the plot. It is also possible to pick one of the solutions by clicking the mouse on that point - a small box showing the values for each of the three variables will be displayed. You can &ldquo;rotate&rdquo; the plot around by holding down the left mouse button and then moving the mouse (<em>optimise_multiplot</em>; default is True)</li>
+<li>Optionally, a table showing the best individual for each iteration. You can also choose an individual by clicking anywhere on the desired row. On entry the top row of the table will have the lowest weight and will be chosen on exit (<em>optimise_multitable</em>; default is False)</li>
 </ol>
 <li>Optionally, produce tables for best candidate (1.) with lowest LCOE and (2.) lowest weighting if the <em>more_details</em> property is set to True</li>
 <li>Present a table for the optimal solutions. The table shows the adjustment values and capacity for each generator followed by the estimated value for each of the six multi-variables prioritised by Weight. By pressing the appropriate button the adjustment values for the chosen solution will be made available for <strong>Summary</strong> and <strong>Powermatch</strong></li>

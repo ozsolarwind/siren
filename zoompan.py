@@ -147,7 +147,10 @@ class ZoomPanX():
                     self.d3 = False
 
             if self.d3 and matplotlib_version > '3.0.3':
-                x, y, z = get_xyz_mouse_click(event, ax)
+                try:
+                    x, y, z = get_xyz_mouse_click(event, ax)
+                except:
+                    return
              #   print(f'Clicked at: x={x}, y={y}, z={z}')
                 self.datapoint = [[-1, x, y, z]]
                 self.msg = '{:d}: {}: {:.2f}\n{}: {:.2f}\n{}: {:.2f}'.format(self.datapoint[0][0],
