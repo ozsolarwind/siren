@@ -3126,7 +3126,19 @@ In producing the LCOE figures you can choose to use LCOE figures that ignore any
 </table>
 <ul>
 <li><strong>Done</strong>. Exit Powermatch. Any changed options will be saved</li>
-<li><strong>Summary</strong>. Invoke Powermatch with (just) Summary Output. This option produces a summary table of the Powermatch outputs allowing you to examine and adjust inputs without having to access the Powermatch outputs spreadsheet. </li>
+<li><strong>Summary</strong>. Invoke Powermatch with (just) Summary Output. This option produces a summary table of the Powermatch outputs allowing you to examine and adjust inputs without having to access the Powermatch outputs spreadsheet. The table presents some figures that indicate the RE contribution to meeting demand:
+<table border="0" class="none">
+<tr><td class="none"><dfn>Corrected LCOE</dfn></td><td class="none">LCOE figure adjusted upwards to take into account surplus (spilled) generation</td></tr>
+<tr><td class="none"><dfn>RE %age</dfn></td><td class="none">The percentage of total generation from RE facilities</td></tr>
+<tr><td class="none"><dfn>RE %age with Storage</dfn></td><td class="none">The percentage of total generation from RE facilities plus demand met from storage</td></tr>
+<tr><td class="none"><dfn>Load met (xx%)</dfn></td><td class="none">The amount of load met from generation</td></tr>
+<tr><td class="none"><dfn>Shortfall (xx%)</dfn></td><td class="none">The amount of load not met from generation</td></tr>
+<tr><td class="none"><dfn>Total Load</dfn></td><td class="none">Total load</td></tr>
+<tr><td class="none"><dfn>Surplus (xx%)</dfn></td><td class="none">Generation not used to meet load (surplus)</td></tr>
+<tr><td class="none"><dfn>RE %age of load</dfn></td><td class="none">The percentage of load met by RE</td></tr>
+<tr><td class="none"><dfn>Largest Shortfall</dfn></td><td class="none">The largest shortfall and the period (hour) in which it occurs</td></tr>
+</table>
+</li>
 <li><strong>Powermatch</strong>. Invoke Powermatch. This option produces a spreadsheet of the Powermatch outputs. It provides detail on how demand was met for each hour of the year. If <em>save_tables</em> is set generators and constraints will be saved to spreadsheet</li>
 <li><strong>Optimise</strong>. Invoke the Optimise function. This will use an iterative approach to optimise the input generator capacities to produce a solution with (a) either a lower overall LCOE, or (b) the lowest weight for six variables, or (c) both. It will complete by displaying a plot of how the value for LCOE has converged to a minimum, and a three dimensional plot showing the three variables with the highest weightings for the multi-variable approach. Exiting the plot will then produce a summary table. It will also update the adjustment values for each generator to enable you to produce a Powermatch spreadsheet. See below for more details</li>
 <li><strong>Help</strong>. Display the Powermatch help</li>
