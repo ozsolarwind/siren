@@ -1786,6 +1786,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">Carbon price. Only use if carbon price not included in LCOE. Default is 0</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>carbon_price_max</dfn></td>
+<td class="none">Maximum carbon price. Default is 200</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>change_results</dfn></td>
 <td class="none">If True the name of the results file will be changed when the data file is changed. Default is True</td>
 </tr>
@@ -3116,7 +3120,7 @@ In producing the LCOE figures you can choose to use LCOE figures that ignore any
 <tr><td class="lr"><dfn>Discount Rate</dfn></td>
 <td class="none">The default discount rate to be used if costs rather than a Reference LCOE are being used to calculate generation costs. <strong>Note:</strong> It is not uncommon to use WACC as a discount rate (<em>discount_rate</em>)</td></tr>
 <tr><td class="lr"><dfn>Carbon Price</dfn></td>
-<td class="none">If a carbon price is not included in LCOE figures you can use this option to set a carbon price between $0 and $200 (<em>carbon_price</em>)</td></tr>
+<td class="none">If a carbon price is not included in LCOE figures you can use this option to set a carbon price between $0 and the maximum carbon price (<em>carbon_price_max</em>) (<em>carbon_price</em>)</td></tr>
 <tr><td class="lr"><dfn>Adjust Generators</dfn></td>
 <td class="none">If this option is checked you will be presented with a table to enable you to adjust the input capacity data for each generator technology. You can specify the required capacity or, if the <em>show_multipliers</em> property is set, a multiplier between 0 and the cap set by the <em>adjust_cap</em> property in the <a href="#power">[Power]</a> Section of the Preferences file; the default multiplier is 25. The original input values will be derived from the data sheet for renewables and the Generators table for dispatchable technologies. You can also Save and Restore the capacities to use again later (<em>adjust_generators</em>)</td></tr>
 <tr><td class="lr"><dfn>Dispatch Order</dfn></td>
@@ -3126,7 +3130,21 @@ In producing the LCOE figures you can choose to use LCOE figures that ignore any
 </table>
 <ul>
 <li><strong>Done</strong>. Exit Powermatch. Any changed options will be saved</li>
-<li><strong>Summary</strong>. Invoke Powermatch with (just) Summary Output. This option produces a summary table of the Powermatch outputs allowing you to examine and adjust inputs without having to access the Powermatch outputs spreadsheet. The table presents some figures that indicate the RE contribution to meeting demand:
+<li><strong>Summary</strong>. Invoke Powermatch with (just) Summary Output. This option produces a summary table of the Powermatch outputs allowing you to examine and adjust inputs without having to access the Powermatch outputs (Detail) spreadsheet. The table columns are:
+<table border="0" class="none">
+<tr><td class="none"><dfn>Facility</dfn></td><td class="none">Name of the facility (generator or storage)</td></tr>
+<tr><td class="none"><dfn>Capacity</dfn></td><td class="none">The capacity of facility in MW for generators and MWh for storage</td></tr>
+<tr><td class="none"><dfn>Subtotal</dfn></td><td class="none">The generation for a generator or contribution to meeting load for storage; MWh</td></tr>
+<tr><td class="none"><dfn>CF</dfn></td><td class="none">The capacity factor for the facility</td></tr>
+<tr><td class="none"><dfn>Cost</dfn></td><td class="none">Calculated cost for the facility</td></tr>
+<tr><td class="none"><dfn>Total Load</dfn></td><td class="none">Calculated LCOE for the facility</td></tr>
+<tr><td class="none"><dfn>Emissions</dfn></td><td class="none">Calculated emissions for the facility; tCO2&#x2011;e</td></tr>
+<tr><td class="none"><dfn>Max MWh</dfn></td><td class="none">The maximum generation or contribution to meeting load for the facility. This can be used to assess if the Capacity for a generator can be reduced</td></tr>
+<tr><td class="none"><dfn>Max Balance</dfn></td><td class="none">The maximum storage for the facilty. This can be used to assess whether the capacity for the facility can be reduced or the need for more generation capacity to &ldquo;fill&rldquo; the facility</td></tr>
+<tr><td class="none"><dfn>Reference LCOE</dfn></td><td class="none">The reference LCOE for a facility where costs are calculated using a Reference LCOE and CF</td></tr>
+<tr><td class="none"><dfn>Reference CF</dfn></td><td class="none">The reference CF</td></tr>
+</table>
+<br />The table also presents some figures that indicate the RE contribution to meeting demand:
 <table border="0" class="none">
 <tr><td class="none"><dfn>Corrected LCOE</dfn></td><td class="none">LCOE figure adjusted upwards to take into account surplus (spilled) generation</td></tr>
 <tr><td class="none"><dfn>RE %age</dfn></td><td class="none">The percentage of total generation from RE facilities</td></tr>
@@ -3135,11 +3153,15 @@ In producing the LCOE figures you can choose to use LCOE figures that ignore any
 <tr><td class="none"><dfn>Shortfall (xx%)</dfn></td><td class="none">The amount of load not met from generation</td></tr>
 <tr><td class="none"><dfn>Total Load</dfn></td><td class="none">Total load</td></tr>
 <tr><td class="none"><dfn>Surplus (xx%)</dfn></td><td class="none">Generation not used to meet load (surplus)</td></tr>
-<tr><td class="none"><dfn>RE %age of load</dfn></td><td class="none">The percentage of load met by RE</td></tr>
+<tr><td class="none"><dfn>RE %age of load</dfn></td><td class="none">The percentage of load met by RE, including the contribution from storage</td></tr>
 <tr><td class="none"><dfn>Largest Shortfall</dfn></td><td class="none">The largest shortfall and the period (hour) in which it occurs</td></tr>
 </table>
 </li>
-<li><strong>Powermatch</strong>. Invoke Powermatch. This option produces a spreadsheet of the Powermatch outputs. It provides detail on how demand was met for each hour of the year. If <em>save_tables</em> is set generators and constraints will be saved to spreadsheet</li>
+<li><strong>Powermatch</strong>. Invoke Powermatch. This option produces a spreadsheet of the Powermatch outputs. It provides detail on how demand was met for each hour of the year. If <em>save_tables</em> is set generators and constraints will be saved to spreadsheet. This option also produces a Summary worksheet as described above. This Detail worksheet allows for more detailed analysis on how each facility, for example, by using spreadsheet formulae.
+<ul>
+<li>Assuming a generator is listed in column L.<br />Calculate the percentage of time it is running below 55% of capacity - <code>=COUNTIF(L2:L8771,">"&L1*0.55)/8760</code></li>
+<li>Assuming a storage facility is listed in column I, it's balance will be in column J.<br />Calculate the percentage of time it is at full capacity - <code>=COUNTIF(J2:J8771,"="&I1)/8760</code><br />and at less than or equal to 10% capacity - <code>=COUNTIF(J2:J8771,"<="&I1*0.1)/8760</code></li>
+</ul>
 <li><strong>Optimise</strong>. Invoke the Optimise function. This will use an iterative approach to optimise the input generator capacities to produce a solution with (a) either a lower overall LCOE, or (b) the lowest weight for six variables, or (c) both. It will complete by displaying a plot of how the value for LCOE has converged to a minimum, and a three dimensional plot showing the three variables with the highest weightings for the multi-variable approach. Exiting the plot will then produce a summary table. It will also update the adjustment values for each generator to enable you to produce a Powermatch spreadsheet. See below for more details</li>
 <li><strong>Help</strong>. Display the Powermatch help</li>
 </ul>
