@@ -3984,9 +3984,11 @@ class powerMatch(QtWidgets.QWidget):
                     pick = pick2
         else:
             pick = None
-        headers = ['Facility', 'Capacity (MW/MWh)', 'Subtotal (MWh)', 'CF', 'Cost ($/yr)',
-                   'LCOE ($/MWh)', 'Emissions (tCO2e)','Reference LCOE','Reference CF']
-        op_pts = [0, 3, 0, 2, 0, 2, 0, 2, 2]
+        # headers should be the same as for doDispatch
+        headers = ['Facility', 'Capacity\n(Gen, MW;\nStor, MWh)', 'Subtotal\n(MWh)', 'CF', 'Cost ($/yr)',
+                   'LCOE\n($/MWh)', 'Emissions\n(tCO2e)','Max.\nMWH', 'Max.\nBalance', 'Reference\nLCOE','Reference\nCF']
+        op_pts = [0, 2, 0, 2, 0, 2, 0, 2, 2, 2, 2]
+        # was    [0, 3, ...]
         if self.more_details:
             if do_lcoe:
                 list(map(list, list(zip(*op_data[0]))))
