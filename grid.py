@@ -490,9 +490,6 @@ class Grid:
                 if self.dummy_fix:
                     dist = dust(lat, lon, self.lines[l].coordinates[i][0], self.lines[l].coordinates[i][1],
                            self.lines[l].coordinates[i + 1][0], self.lines[l].coordinates[i + 1][1])
-                elif self.kml_file == '' and self.dummy_fix:
-                    dist = dust(lat, lon, self.lines[l].coordinates[i][0], self.lines[l].coordinates[i][1],
-                           self.lines[l].coordinates[i + 1][0], self.lines[l].coordinates[i + 1][1])
                 else:
                     dist = self.DistancePointLine(lat, lon, self.lines[l].coordinates[i][0], self.lines[l].coordinates[i][1],
                            self.lines[l].coordinates[i + 1][0], self.lines[l].coordinates[i + 1][1])
