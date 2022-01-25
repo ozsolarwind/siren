@@ -1050,6 +1050,24 @@ class powerMatch(QtWidgets.QWidget):
                  title='Help for powermatch (' + fileVersion() + ')', section='powermatch')
         dialog.exec_()
 
+ #   def ldchanged(self):
+ #       pmss_details['Load'][3] = self.optLoad.value()
+ #       loadMWh = pmss_details['Load'][0] * pmss_details['Load'][3]
+ #       dimen = log10(loadMWh)
+ #       unit = 'MWh'
+ #       if dimen > 11:
+ #           unit = 'PWh'
+ #           div = 9
+ #       elif dimen > 8:
+ #           unit = 'TWh'
+ #           div = 6
+ #       elif dimen > 5:
+ #           unit = 'GWh'
+ #           div = 3
+ #       else:
+ #           div = 0
+ #       self.optLoadMWh.setText(('-> %.1f ' + unit) % (loadMWh / pow(10, div)))
+
     def drchanged(self):
         self.updated = True
         self.discount_rate = self.discount.value() / 100.
@@ -1635,6 +1653,8 @@ class powerMatch(QtWidgets.QWidget):
                     continue
                 dispatch_order.append(gen)
                 pmss_details[gen] = [self.generators[gen].capacity, typ, -1, 1]
+            if self.adjust.isChecked():
+                 pmss_details['Load'][3] = self.adjustto['Load'] / pmss_details['Load'][0]
             self.optClicked(year, option, pmss_details, pmss_data, re_order, dispatch_order,
                             None, None)
             return
@@ -3499,14 +3519,17 @@ class powerMatch(QtWidgets.QWidget):
         optDialog = QtWidgets.QDialog()
         grid = QtWidgets.QGridLayout()
         grid.addWidget(QtWidgets.QLabel('Adjust load'), 0, 0)
-        optLoad = QtWidgets.QDoubleSpinBox()
-        optLoad.setRange(-1, self.adjust_cap)
-        optLoad.setDecimals(3)
-        optLoad.setSingleStep(.1)
-        optLoad.setValue(pmss_details['Load'][3])
+        self.optLoad = QtWidgets.QDoubleSpinBox()
+        self.optLoad.setRange(-1, self.adjust_cap)
+        self.optLoad.setDecimals(4)
+        self.optLoad.setSingleStep(.1)
         rw = 0
-        grid.addWidget(optLoad, rw, 1)
+        grid.addWidget(self.optLoad, rw, 1)
+    #   self.optLoad.valueChanged.connect(self.ldchanged)
+    #    self.optLoadMWh = QtWidgets.QLabel('')
+    #    grid.addWidget(self.optLoadMWh, rw, 3)
         grid.addWidget(QtWidgets.QLabel('Multiplier for input Load'), rw, 2, 1, 3)
+        self.optLoad.setValue(pmss_details['Load'][3])
         rw += 1
         grid.addWidget(QtWidgets.QLabel('Population size'), rw, 0)
         optPopn = QtWidgets.QSpinBox()
@@ -3637,6 +3660,8 @@ class powerMatch(QtWidgets.QWidget):
                 self.targets[key][3] = maxim.value()
             except:
                 self.targets[key][3] = float(maxim.text())
+        # might want to save load value if changed
+        pmss_details['Load'][3] = self.optLoad.value()
         updates = {}
         lines = []
         lines.append('optimise_choice=' + self.optimise_choice)
@@ -4195,6 +4220,21 @@ class powerMatch(QtWidgets.QWidget):
             msg += txt + '; '
         self.setStatus(msg)
         list(map(list, list(zip(*op_data[h]))))
+        op_data[h].append(' ')
+        op_data[h].append('Optimisation Parameters')
+        op_data[h].append(['Population size', str(self.optimise_population)])
+        op_data[h].append(['No. of iterations', str(self.optimise_generations)])
+        op_data[h].append(['Mutation probability', '%0.4f' % self.optimise_mutation])
+        op_data[h].append(['Exit if stable', str(self.optimise_stop)])
+        op_data[h].append(['Optimisation choice', self.optimise_choice])
+        op_data[h].append(['Variable', 'Weight', 'Better', 'Worse'])
+        for i in range(len(target_keys)):
+            op_data[h].append([])
+            for j in range(4):
+                if j == 0:
+                    op_data[h][-1].append(self.targets[target_keys[i]][j])
+                else:
+                    op_data[h][-1].append('{:.2f}'.format(self.targets[target_keys[i]][j]))
         dialog = displaytable.Table(op_data[h], title='Chosen_' + self.sender().text(), fields=headers,
                  save_folder=self.scenarios, sortby='', decpts=op_pts)
         dialog.exec_()
