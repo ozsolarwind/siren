@@ -1217,7 +1217,9 @@ class powerMatch(QtWidgets.QWidget):
                 break
             for prop in dir(self.generators[key]):
                 if prop[:2] != '__' and prop[-2:] != '__':
-                    if prop == 'order':
+                    if prop == 'name':
+                        sp_pts.insert(0, 0)
+                    elif prop in ['capex', 'constraint', 'fixed_om', 'order']:
                         sp_pts.append(0)
                     elif prop == 'disc_rate' or prop == 'emissions':
                         sp_pts.append(3)
@@ -3139,12 +3141,12 @@ class powerMatch(QtWidgets.QWidget):
                     try:
                         pmss_details[gen][3] = capacity / pmss_details[gen][0]
                     except:
-                        print('(3152)', gen, capacity, pmss_details[gen][0])
+                        print('(3144)', gen, capacity, pmss_details[gen][0])
                 multi_value, op_data, extra = self.doDispatch(year, option, pmss_details, pmss_data, re_order,
                                               dispatch_order, pm_data_file, data_file)
                 if multi_value['load_pct'] < self.targets['load_pct'][3]:
                     if multi_value['load_pct'] == 0:
-                        print('(3157)', multi_value['lcoe'],
+                        print('(3149)', multi_value['lcoe'],
                             self.targets['load_pct'][3], multi_value['load_pct'])
                         lcoe_fitness_scores.append(1)
                     else:
@@ -3774,7 +3776,7 @@ class powerMatch(QtWidgets.QWidget):
             try:
                 best_score = np.min(lcoe_scores)
             except:
-                print('(3787)', lcoe_scores)
+                print('(3779)', lcoe_scores)
             best_ndx = lcoe_scores.index(best_score)
             lowest_chrom = population[best_ndx]
             self.setStatus('Starting LCOE: $%.2f' % best_score)
@@ -3801,6 +3803,7 @@ class powerMatch(QtWidgets.QWidget):
             multi_best.append(multi_values[best_mndx])
             self.setStatus('Starting Weight: %.4f' % best_multi)
             multi_best_weight = best_multi
+            best_multi_progress = [best_multi]
             if not do_lcoe:
                 best_score = best_multi
             last_multi_score = best_multi
@@ -3888,6 +3891,7 @@ class powerMatch(QtWidgets.QWidget):
                 multi_best_weight = best_multi
                 if not do_lcoe:
                     best_score = best_multi
+                best_multi_progress.append(best_multi)
             best_score_progress.append(best_score)
             if best_score < lowest_score:
                 lowest_score = best_score
@@ -3977,7 +3981,7 @@ class powerMatch(QtWidgets.QWidget):
             if self.optimise_multiplot:
                 pick = plot_multi(multi_best, multi_order, 'best of each iteration')
             if self.optimise_multitable:
-                pick2 = show_multitable(multi_best, multi_order, best_score_progress)
+                pick2 = show_multitable(multi_best, multi_order, best_multi_progress)
                 try:
                     pick = pick + pick2
                 except:
@@ -4144,7 +4148,7 @@ class powerMatch(QtWidgets.QWidget):
                     label = QtWidgets.QLabel(txt % amt)
                 except:
                     label = QtWidgets.QLabel('?')
-                    print('(4155)', key, txt, amt)
+                    print('(4151)', key, txt, amt)
                 label.setAlignment(QtCore.Qt.AlignCenter)
                 grid[h + 1].addWidget(label, rw, 0, 1, 3)
             rw += 1
