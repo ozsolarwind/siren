@@ -407,6 +407,7 @@ class Table(QtWidgets.QDialog):
                     continue
             values = {}
             for key, value in self.labels.items():
+                attr = ''
                 try:
                     if key == '#':
                         attr = obj
@@ -415,8 +416,13 @@ class Table(QtWidgets.QDialog):
                     else:
                         attr = getattr(self.objects[obj], key)
                     if value != 'str':
-                        fmat_str = '{: >' + str(self.lens[key][0] + self.lens[key][1] + 1) + ',.' + str(self.lens[key][1]) + 'f}'
-                        values[key] = fmat_str.format(attr)
+                        if isinstance(attr, str):
+                            if attr == '':
+                                continue
+                            values[key] = attr
+                        else:
+                            fmat_str = '{: >' + str(self.lens[key][0] + self.lens[key][1] + 1) + ',.' + str(self.lens[key][1]) + 'f}'
+                            values[key] = fmat_str.format(attr)
                     else:
                         values[key] = attr
                 except:
