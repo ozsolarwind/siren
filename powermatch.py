@@ -997,8 +997,9 @@ class powerMatch(QtWidgets.QWidget):
                 for sht in ts.sheet_names():
                     j += 1
                     self.sheets[i].addItem(sht)
-                    if sht == self.file_labels[i]:
-                        ndx = j
+                    if len(sht) >= len(self.file_labels[i]):
+                        if sht[:len(self.file_labels[i])].lower() == self.file_labels[i].lower():
+                            ndx = j
                 self.sheets[i].setCurrentIndex(ndx)
                 if i == G:
                     ws = ts.sheet_by_index(ndx)
