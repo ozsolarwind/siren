@@ -1782,6 +1782,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">Indicates whether to adjust generators capacity inputs or not. Default is False</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>adjusted_lcoe</dfn></td>
+<td class="none">In producing the reports and optimisation use the adjusted (corrected) LCOE or not. The default is True</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>carbon_price</dfn></td>
 <td class="none">Carbon price. Only use if carbon price not included in LCOE. Default is 0</td>
 </tr>
@@ -1800,10 +1804,6 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <tr class="none">
 <td class="none"><dfn>constraints_sheet</dfn></td>
 <td class="none">Worksheet name for constraints table</td>
-</tr>
-<tr class="none">
-<td class="none"><dfn>corrected_lcoe</dfn></td>
-<td class="none">In producing the reports and optimisation use the corrected LCOE or not. The default is True</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>data_file</dfn></td>
@@ -2663,7 +2663,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 </tr>
 <tr class="none">
 <td class="none"><img src="power.png" alt="powermatch">&nbsp;&nbsp;powermatch</td>
-<td class="none">Invoke <code>powermatch</code> to match generation to demand (load) and to quantify and cost dispatchable energy generation, storage and CO2&#x2011;e emissions (see <a href="#powermatch">Powermatch</a>)</td>
+<td class="none">Invoke <code>powermatch</code> to match generation to demand (load) and to quantify and cost dispatchable energy generation, storage and CO<sub>2</sub>&#x2011;e emissions (see <a href="#powermatch">Powermatch</a>)</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="line.png" alt="powerplot">&nbsp;&nbsp;powerplot</td>
@@ -2785,7 +2785,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <ul>
 <li>The various plotting features allow you to visualise the renewable energy output and how it compares to demand</li>
 <li>The Financial Models option will invoke SAM Annual Output and Utility IPP/Commercial PPA Finance models. These enable a LCOE to be determined for the scenario</li>
-<li>Powermatch allows you to complete a costed renewable energy scenario. It will use dispatchable generation to meet shortfalls in the renewable energy generation mix to match generation with demand (load) to quantify and cost dispatchable energy generation, storage and CO2&#x2011;e emissions</li>
+<li>Powermatch allows you to complete a costed renewable energy scenario. It will use dispatchable generation to meet shortfalls in the renewable energy generation mix to match generation with demand (load) to quantify and cost dispatchable energy generation, storage and CO<sub>2</sub>&#x2011;e emissions</li>
 </ul>
 <p><a href="#help">Back to top</a></p>
 <h3 id="popts">Power Model Options</h3>
@@ -3095,7 +3095,7 @@ If it's not a diurnal plot (i.e. Period is <em>&lt;None&gt;</em>) any occurence 
 <h3 id="powermatch">Powermatch</h3>
 <p>Running the SIREN models will produce hourly generation figures which identify generation shortfalls and excesses against load (demand). One of the outputs from SIREN is a table of these generation shortfalls which could be met by storage (charged by surplus renewable generation) and dispatchable energy generation. The Powermatch (<code>powermatch</code>) component of SIREN can be used to match generation with demand (load) to quantify and cost this dispatchable energy generation, storage and CO<sub>2</sub>-e emissions. This enables you to complete a costed renewable energy scenario.</p>
 <p>One of the outputs from Powermatch is calculated LCOE figures, overall and for each Generator. The LCOE figures are calculated based upon either Capital (Capex), Operations (Opex) and fuel costs or a Reference LCOE and Reference Capacity Factor (CF) for the generator or storage.
-In producing the LCOE figures you can choose to use LCOE figures that ignore any surplus generation or produce a corrected LCOE figure which adjusts the LCOE figure upwards to take into account the surplus generation (that is, the corrected LCOE figure includes the cost of surplus - spilled - generation). The default is to produce a corrected LCOE (<em>corrected_lcoe</em>)
+In producing the LCOE figures you can choose to use LCOE figures that ignore any surplus generation or produce an adjusted LCOE figure which adjusts the LCOE figure upwards to take into account the surplus generation (that is, the adjusted LCOE figure includes the cost of surplus - spilled - generation). The default is to produce an adjusted LCOE (<em>adjusted_lcoe</em>)
 <p><strong>Note:</strong> The SIREN Powermatch component was in part derived from the Powerbalance worksheets developed by Ben Rose. For those who would prefer his spreadsheet approach an enhanced version, Powerbalance2, is available at <a href="https://cleanenergymodelling.com.au/powerbalance2/" target="_blank">https://cleanenergymodelling.com.au/powerbalance2/</a></p>
 <p>The Powermatch options are as set out here. The options (Poperties) are specified in the <a href="#p_pm">[Powermatch]</a> Section of the Preferences file. The associated property is indicated in brackets at the end of the description. All files are located in the SIREN Scenarios folder.</p>
 <table border="0" class="none" cellpadding="2">
@@ -3134,26 +3134,28 @@ In producing the LCOE figures you can choose to use LCOE figures that ignore any
 <table border="0" class="none">
 <tr><td class="none"><dfn>Facility</dfn></td><td class="none">Name of the facility (generator or storage)</td></tr>
 <tr><td class="none"><dfn>Capacity</dfn></td><td class="none">The capacity of facility in MW for generators and MWh for storage</td></tr>
-<tr><td class="none"><dfn>Subtotal</dfn></td><td class="none">The generation for a generator or contribution to meeting load for storage; MWh</td></tr>
+<tr><td class="none"><dfn>To Meet Load</dfn></td><td class="none">Generation/Storage used to meet load. The generation for a generator or contribution to meeting load for storage; MWh</td></tr>
+<tr><td class="none"><dfn>Subtotal</dfn></td><td class="none">The full generation for a generator, including surplus generation and generation used to recharge storage; MWh</td></tr>
 <tr><td class="none"><dfn>CF</dfn></td><td class="none">The capacity factor for the facility</td></tr>
 <tr><td class="none"><dfn>Cost</dfn></td><td class="none">Calculated cost for the facility</td></tr>
-<tr><td class="none"><dfn>Total Load</dfn></td><td class="none">Calculated LCOE for the facility</td></tr>
-<tr><td class="none"><dfn>Emissions</dfn></td><td class="none">Calculated emissions for the facility; tCO2&#x2011;e</td></tr>
+<tr><td class="none"><dfn>LCOE</dfn></td><td class="none">Calculated LCOE for the facility</td></tr>
+<tr><td class="none"><dfn>Emissions</dfn></td><td class="none">Calculated emissions for the facility; tCO<sub>2</sub>&#x2011;e</td></tr>
 <tr><td class="none"><dfn>Max MWh</dfn></td><td class="none">The maximum generation or contribution to meeting load for the facility. This can be used to assess if the Capacity for a generator can be reduced</td></tr>
-<tr><td class="none"><dfn>Max Balance</dfn></td><td class="none">The maximum storage for the facilty. This can be used to assess whether the capacity for the facility can be reduced or the need for more generation capacity to &ldquo;fill&rldquo; the facility</td></tr>
+<tr><td class="none"><dfn>Max Balance</dfn></td><td class="none">The maximum storage for the facilty. This can be used to assess whether the capacity for the facility can be reduced or the need for more generation capacity to recharge the facility</td></tr>
 <tr><td class="none"><dfn>Reference LCOE</dfn></td><td class="none">The reference LCOE for a facility where costs are calculated using a Reference LCOE and CF</td></tr>
 <tr><td class="none"><dfn>Reference CF</dfn></td><td class="none">The reference CF</td></tr>
 </table>
-<br />The table also presents some figures that indicate the RE contribution to meeting demand:
+<br />The table also presents some additional figures that, in the main, indicate the RE contribution to meeting demand:
 <table border="0" class="none">
-<tr><td class="none"><dfn>Corrected LCOE</dfn></td><td class="none">LCOE figure adjusted upwards to take into account surplus (spilled) generation</td></tr>
+<tr><td class="none"><dfn>Adjusted LCOE</dfn></td><td class="none">Overall LCOE figure adjusted upwards to take into account surplus (spilled) generation</td></tr>
 <tr><td class="none"><dfn>RE %age</dfn></td><td class="none">The percentage of total generation from RE facilities</td></tr>
-<tr><td class="none"><dfn>RE %age with Storage</dfn></td><td class="none">The percentage of total generation from RE facilities plus demand met from storage</td></tr>
+<tr><td class="none"><dfn>Storage %age</dfn></td><td class="none">The percentage of demand met from storage</td></tr>
 <tr><td class="none"><dfn>Load met (xx%)</dfn></td><td class="none">The amount of load met from generation</td></tr>
 <tr><td class="none"><dfn>Shortfall (xx%)</dfn></td><td class="none">The amount of load not met from generation</td></tr>
 <tr><td class="none"><dfn>Total Load</dfn></td><td class="none">Total load</td></tr>
 <tr><td class="none"><dfn>Surplus (xx%)</dfn></td><td class="none">Generation not used to meet load (surplus)</td></tr>
-<tr><td class="none"><dfn>RE %age of load</dfn></td><td class="none">The percentage of load met by RE, including the contribution from storage</td></tr>
+<tr><td class="none"><dfn><strong>RE %age of load</strong></dfn></td><td class="none">The percentage of load met by RE, including the contribution from storage</td></tr>
+<tr><td class="none"><dfn>Storage losses</dfn></td><td class="none">Storage losses in MWh</td></tr>
 <tr><td class="none"><dfn>Largest Shortfall</dfn></td><td class="none">The largest shortfall and the period (hour) in which it occurs</td></tr>
 </table>
 </li>
@@ -3208,7 +3210,7 @@ In producing the LCOE figures you can choose to use LCOE figures that ignore any
 <p>In an attempt to simplify the process of determining the optimal generation mix, Powermatch has an optimisation function. The function uses a genetic algorithm to identify three possible optimal solutions:
 <ol>
 <li>A solution with the lowest LCOE for the input renewable and dispatchable technologies</li>
-<li>A solution with the best (lowest) weighting for six variables - lowest LCOE, lowest CO2 emissions, lowest Overall Cost, lowest surplus generation, highest RE percentage and maximising the percentage of load met</li>
+<li>A solution with the best (lowest) weighting for six variables - lowest LCOE, lowest CO<sub>2</sub> emissions, lowest Overall Cost, lowest surplus generation, highest RE percentage and maximising the percentage of load met</li>
 <li>A solution with the lowest LCOE and weighting for six variables. Running both does use a single population and so there is some &ldquo;interaction&rdquo; between them which may distort the result</li>
 </ol>
 Genetic algorithms are inspired by the process of natural selection and simulate evolution of multiple generations that evolve to produce an optimal solution, in this case 1. lowest LCOE 2. lowest weighted solution, or 3. lowest in both (<strong>Note:</strong> This is a different approach to optimisation than in Power Model). The approach has a number of inputs:</p>
@@ -3247,7 +3249,7 @@ If the best and worse values are the same for a variable and that value is not a
 <tr><td class="lr"><dfn>Cost</dfn></td>
 <td class="none">Overall cost. A lower value is better. This may just be a &ldquo;proxy&rdquo; for LCOE (<em>optimise_cost</em>)</td></tr>
 <tr><td class="lr"><dfn>CO2</dfn></td>
-<td class="none">The estimated CO2 emissions. A lower value is better (<em>optimise_co2</em>)</td></tr>
+<td class="none">The estimated CO<sub>2</sub> emissions. A lower value is better (<em>optimise_co2</em>)</td></tr>
 <tr><td class="bottom"><strong>Quit, Proceed</strong></td>
 <td class="none">Either quit or proceed with the optimisation</td></tr>
 </table>
