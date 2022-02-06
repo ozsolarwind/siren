@@ -611,7 +611,7 @@ class powerMatch(QtWidgets.QWidget):
         self.adjust_cap = 25
         self.adjust_gen = False
         self.change_res = True
-        self.corrected_lcoe = True
+        self.adjusted_lcoe = True
         self.carbon_price = 0.
         self.carbon_price_max = 200.
         self.discount_rate = 0.
@@ -671,9 +671,9 @@ class powerMatch(QtWidgets.QWidget):
                  elif key == 'change_results':
                      if value.lower() in ['false', 'off', 'no']:
                          self.change_res = False
-                 elif key == 'corrected_lcoe':
+                 elif key == 'adjusted_lcoe' or key == 'corrected_lcoe':
                      if value.lower() in ['false', 'no', 'off']:
-                         self.corrected_lcoe = False
+                         self.adjusted_lcoe = False
                  elif key == 'discount_rate':
                      try:
                          self.discount_rate = float(value)
@@ -2387,7 +2387,7 @@ class powerMatch(QtWidgets.QWidget):
                 cs = ''
             if gen_sum > 0:
                 gs = cost_sum / gen_sum
-                gsw = cost_sum / sp_load # corrected LCOE
+                gsw = cost_sum / sp_load # adjusted LCOE
             else:
                 gs = ''
                 gsw = ''
@@ -2405,8 +2405,8 @@ class powerMatch(QtWidgets.QWidget):
              #   if (sf_sums[2] - sf_sums[0]) / op_load_tot < 1:
               #      lcoe = 500
                # el
-                if self.corrected_lcoe:
-                    lcoe = gsw # target is corrected lcoe
+                if self.adjusted_lcoe:
+                    lcoe = gsw # target is adjusted lcoe
                 else:
                     lcoe = gs
                 if gen_sum == 0:
@@ -2434,11 +2434,11 @@ class powerMatch(QtWidgets.QWidget):
                 else:
                     extra = [gsw, op_load_tot, sto_sum, re_sum, re_pct, sf_sums]
                     return multi_value, sp_data, extra
-            if self.corrected_lcoe:
-                sp_data.append(['Corrected LCOE', '', '', '', '', gsw, ''])
+            if self.adjusted_lcoe:
+                sp_data.append(['Adjusted LCOE', '', '', '', '', gsw, ''])
             if self.carbon_price > 0:
                 cc = co2_sum * self.carbon_price
-                if self.corrected_lcoe:
+                if self.adjusted_lcoe:
                     cs = (cost_sum + cc) / sp_load
                 else:
                     cs = (cost_sum + cc) / gen_sum
@@ -2701,9 +2701,9 @@ class powerMatch(QtWidgets.QWidget):
         ss.cell(row=ss_row, column=7).value = '=SUM(G4:G' + str(ss_row - 1) + ')'
         ss.cell(row=ss_row, column=7).number_format = '#,##0'
         ss.cell(row=ss_row, column=1).value = 'Total'
-        if self.corrected_lcoe:
+        if self.adjusted_lcoe:
             ss_row +=1
-            ss.cell(row=ss_row, column=1).value = 'Corrected LCOE'
+            ss.cell(row=ss_row, column=1).value = 'Adjusted LCOE'
             ss.cell(row=ss_row, column=1).font = bold
         lcoe_row = ss_row
         for column_cells in ss.columns:
@@ -2727,7 +2727,7 @@ class powerMatch(QtWidgets.QWidget):
                 ss.column_dimensions[cel].width = max(length, 10) * 1.2
         last_col = ss_col(ns.max_column)
         r = 1
-        if self.corrected_lcoe:
+        if self.adjusted_lcoe:
             r += 1
         if self.carbon_price > 0:
             ss_row += 1
@@ -2740,7 +2740,7 @@ class powerMatch(QtWidgets.QWidget):
             ss.cell(row=ss_row, column=2).number_format = '$#,##0.00'
             ss.cell(row=ss_row, column=5).value = '=G' + str(ss_row - r) + '*B' + str(ss_row)
             ss.cell(row=ss_row, column= 5).number_format = '$#,##0'
-            if not self.corrected_lcoe:
+            if not self.adjusted_lcoe:
                 ss.cell(row=ss_row, column=6).value = '=(E' + str(ss_row - r) + \
                         '+E'  + str(ss_row) + ')/C' + str(ss_row - r)
                 ss.cell(row=ss_row, column=6).number_format = '$#,##0.00'
@@ -2795,8 +2795,8 @@ class powerMatch(QtWidgets.QWidget):
         ss.cell(row=ss_row, column=8).value = '=Detail!C' + str(max_row)
         ss.cell(row=ss_row, column=8).number_format = '#,##0.00'
         ss.cell(row=ss_row, column=8).font = bold
-        # values for corrected LCOE and Carbon Cost LCOE
-        if self.corrected_lcoe:
+        # values for adjusted LCOE and Carbon Cost LCOE
+        if self.adjusted_lcoe:
             ss.cell(row=lcoe_row, column=6).value = '=F' + str(lcoe_row-1) + '*C' + str(lcoe_row-1) + \
                     '/C' + str(ss_row)
             ss.cell(row=lcoe_row, column=6).number_format = '$#,##0.00'
@@ -3241,11 +3241,11 @@ class powerMatch(QtWidgets.QWidget):
             # a real fudge for the moment
                 cap_sum, gen_sum, cs, cost_sum, gs, co2_sum = op_data[-1][1:]
                 gsw, op_load_tot, sto_sum, re_sum, re_pct, sf_sums = extra
-                if self.corrected_lcoe:
-                    op_data.append(['Corrected LCOE', '', '', '', '', gsw, ''])
+                if self.adjusted_lcoe:
+                    op_data.append(['Adjusted LCOE', '', '', '', '', gsw, ''])
                 if self.carbon_price > 0:
                     cc = co2_sum * self.carbon_price
-                    if self.corrected_lcoe:
+                    if self.adjusted_lcoe:
                         cs = (cost_sum + cc) / op_load_tot
                     else:
                         cs = (cost_sum + cc) / gen_sum
