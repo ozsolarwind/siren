@@ -64,6 +64,7 @@ G = 1 # Generators
 O = 2 # Optimisation
 D = 3 # Data
 R = 4 # Results
+B = 5 # Batch input
 col_letters = ' ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 def ss_col(col, base=1):
     if base == 1:
@@ -602,8 +603,8 @@ class powerMatch(QtWidgets.QWidget):
                 self.log_status = False
         except:
             pass
-        self.file_labels = ['Constraints', 'Generators', 'Optimisation', 'Data', 'Results']
-        self.ifiles = [''] * 5
+        self.file_labels = ['Constraints', 'Generators', 'Optimisation', 'Data', 'Results', 'Batch']
+        self.ifiles = [''] * len(self.file_labels)
         self.isheets = self.file_labels[:]
         del self.isheets[-2:]
         self.more_details = False
@@ -769,13 +770,13 @@ class powerMatch(QtWidgets.QWidget):
    #     tab4 = QtGui.QWidget()
    #     tab5 = QtGui.QWidget()
         self.grid = QtWidgets.QGridLayout()
-        self.files = [None] * 5
+        self.files = [None] * len(self.file_labels)
         self.sheets = self.file_labels[:]
         del self.sheets[-2:]
         self.updated = False
         edit = [None, None, None]
         r = 0
-        for i in range(5):
+        for i in range(len(self.file_labels)):
             if i == R:
                 self.grid.addWidget(QtWidgets.QLabel('Results Prefix:'), r, 0)
                 self.results_pfx_fld = QtWidgets.QLineEdit()
@@ -788,7 +789,7 @@ class powerMatch(QtWidgets.QWidget):
             self.files[i].setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
             self.files[i].setText(self.ifiles[i])
             self.files[i].clicked.connect(self.fileChanged)
-            self.grid.addWidget(self.files[i], r, 1, 1, 3)
+            self.grid.addWidget(self.files[i], r, 1, 1, 5)
             if i < D:
                 r += 1
                 self.grid.addWidget(QtWidgets.QLabel(self.file_labels[i] + ' Sheet:'), r, 0)
@@ -815,13 +816,13 @@ class powerMatch(QtWidgets.QWidget):
                     del ts
                 except:
                     self.sheets[i].addItem(self.isheets[i])
-                self.grid.addWidget(self.sheets[i], r, 1, 1, 2)
+                self.grid.addWidget(self.sheets[i], r, 1, 1, 3)
                 self.sheets[i].currentIndexChanged.connect(self.sheetChanged)
                 edit[i] = QtWidgets.QPushButton(self.file_labels[i], self)
-                self.grid.addWidget(edit[i], r, 3)
+                self.grid.addWidget(edit[i], r, 4, 1, 2)
                 edit[i].clicked.connect(self.editClicked)
             r += 1
-        wdth = edit[1].fontMetrics().boundingRect(edit[1].text()).width() + 9
+      #  wdth = edit[1].fontMetrics().boundingRect(edit[1].text()).width() + 9
         self.grid.addWidget(QtWidgets.QLabel('Discount Rate:'), r, 0)
         self.discount = QtWidgets.QDoubleSpinBox()
         self.discount.setRange(0, 100)
@@ -832,7 +833,7 @@ class powerMatch(QtWidgets.QWidget):
             self.discount.setValue(0.)
         self.grid.addWidget(self.discount, r, 1)
         self.discount.valueChanged.connect(self.drchanged)
-        self.grid.addWidget(QtWidgets.QLabel('(%. Only required if using input costs rather than reference LCOE'), r, 2, 1, 2)
+        self.grid.addWidget(QtWidgets.QLabel('(%. Only required if using input costs rather than reference LCOE'), r, 2, 1, 4)
         r += 1
         self.grid.addWidget(QtWidgets.QLabel('Carbon Price:'), r, 0)
         self.carbon = QtWidgets.QDoubleSpinBox()
@@ -844,27 +845,27 @@ class powerMatch(QtWidgets.QWidget):
             self.carbon.setValue(0.)
         self.grid.addWidget(self.carbon, r, 1)
         self.carbon.valueChanged.connect(self.cpchanged)
-        self.grid.addWidget(QtWidgets.QLabel('($/tCO2e. Use only if LCOE excludes carbon price)'), r, 2, 1, 2)
+        self.grid.addWidget(QtWidgets.QLabel('($/tCO2e. Use only if LCOE excludes carbon price)'), r, 2, 1, 4)
         r += 1
         self.grid.addWidget(QtWidgets.QLabel('Adjust Generators:'), r, 0)
         self.adjust = QtWidgets.QCheckBox('(check to adjust generators capacity data)', self)
         if self.adjust_gen:
             self.adjust.setCheckState(QtCore.Qt.Checked)
-        self.grid.addWidget(self.adjust, r, 1, 1, 3)
+        self.grid.addWidget(self.adjust, r, 1, 1, 4)
         r += 1
         self.grid.addWidget(QtWidgets.QLabel('Dispatch Order:\n(move to right\nto exclude)'), r, 0)
         self.order = ListWidget(self) #QtWidgets.QListWidget()
       #  self.order.setDragDropMode(QtGui.QAbstractItemView.InternalMove)
-        self.grid.addWidget(self.order, r, 1, 1, 2)
+        self.grid.addWidget(self.order, r, 1, 1, 3)
         self.ignore = ListWidget(self) # QtWidgets.QListWidget()
       #  self.ignore.setDragDropMode(QtGui.QAbstractItemView.InternalMove)
-        self.grid.addWidget(self.ignore, r, 3, 1, 2)
+        self.grid.addWidget(self.ignore, r, 4, 1, 3)
         r += 1
         self.log = QtWidgets.QLabel('')
         msg_palette = QtGui.QPalette()
         msg_palette.setColor(QtGui.QPalette.Foreground, QtCore.Qt.red)
         self.log.setPalette(msg_palette)
-        self.grid.addWidget(self.log, r, 1, 1, 4)
+        self.grid.addWidget(self.log, r, 1, 1, 6)
         r += 1
         self.progressbar = QtWidgets.QProgressBar()
         self.progressbar.setMinimum(0)
@@ -872,7 +873,7 @@ class powerMatch(QtWidgets.QWidget):
         self.progressbar.setValue(0)
         self.progressbar.setStyleSheet('QProgressBar {border: 1px solid grey; border-radius: 2px; text-align: center;}' \
                                        + 'QProgressBar::chunk { background-color: #6891c6;}')
-        self.grid.addWidget(self.progressbar, r, 1, 1, 4)
+        self.grid.addWidget(self.progressbar, r, 1, 1, 6)
         self.progressbar.setHidden(True)
         r += 1
         r += 1
@@ -887,19 +888,23 @@ class powerMatch(QtWidgets.QWidget):
      #   pm.setMaximumWidth(wdth)
         self.grid.addWidget(pm, r, 2)
         pm.clicked.connect(self.pmClicked)
+        btch = QtWidgets.QPushButton('Batch', self)
+        self.grid.addWidget(btch, r, 3)
+        btch.clicked.connect(self.pmClicked)
         opt = QtWidgets.QPushButton('Optimise', self)
-        self.grid.addWidget(opt, r, 3)
+        self.grid.addWidget(opt, r, 4)
         opt.clicked.connect(self.pmClicked)
         editini = QtWidgets.QPushButton('Preferences', self)
-        editini.setMaximumWidth(wdth)
-        self.grid.addWidget(editini, r, 4)
+     #   editini.setMaximumWidth(wdth)
+        self.grid.addWidget(editini, r, 5)
         editini.clicked.connect(self.editIniFile)
         help = QtWidgets.QPushButton('Help', self)
-        help.setMaximumWidth(wdth)
-        quit.setMaximumWidth(wdth)
-        self.grid.addWidget(help, r, 5)
+     #   help.setMaximumWidth(wdth)
+      #  quit.setMaximumWidth(wdth)
+        self.grid.addWidget(help, r, 6)
         help.clicked.connect(self.helpClicked)
         QtWidgets.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
+     #   self.grid.setColumnStretch(0, 2)
         self.setOrder()
         if len(iorder) > 0:
             self.order.clear()
@@ -963,7 +968,7 @@ class powerMatch(QtWidgets.QWidget):
 
     def fileChanged(self):
         self.setStatus('')
-        for i in range(5):
+        for i in range(len(self.file_labels)):
             if self.files[i].hasFocus():
                 break
         curfile = self.scenarios + self.files[i].text()
@@ -1459,6 +1464,55 @@ class powerMatch(QtWidgets.QWidget):
                 pass
         return
 
+    def getBatch(self, ws):
+        if ws is None:
+            self.setStatus(self.file_labels[B] + ' worksheet missing.')
+            return False
+        istrt = 0
+        for row in range(3):
+            if ws.cell_value(row, 0) in ['Model', 'Model Label', 'Technology']:
+                istrt = row + 1
+                break
+        else:
+            self.setStatus('Not a ' + self.file_labels[B] + ' worksheet.')
+            return False
+        self.batch_models = {}
+        self.batch_report = [['Capacity (MW)', 1]]
+        self.batch_tech = []
+        istop = ws.nrows
+        inrows = False
+        for row in range(istrt, ws.nrows):
+            tech = ws.cell_value(row, 0)
+            if tech != '':
+                inrows = True
+                if tech[:8] != 'Capacity':
+                    if tech != 'Total' and tech not in self.generators.keys():
+                        self.setStatus('Unknown technology - ' + tech + ' - in batch file.')
+                        return False
+                    self.batch_tech.append(ws.cell_value(row, 0))
+                else:
+                    self.batch_report[0][1] = row + 1
+            elif inrows:
+                istop = row
+                break
+            if tech[:5] == 'Total':
+                istop = row + 1
+                break
+        for row in range(istop, ws.nrows):
+            if ws.cell_value(row, 0) != '':
+                self.batch_report.append([ws.cell_value(row, 0), row + 1])
+        for col in range(1, ws.ncols):
+            model = ws.cell_value(0, col)
+            self.batch_models[model] = {}
+            for row in range(1, istop):
+                tech = ws.cell_value(row, 0)
+                try:
+                    if ws.cell_value(row, col) > 0:
+                        self.batch_models[model][tech] = ws.cell_value(row, col)
+                except:
+                    pass
+        return True
+
     def setOrder(self):
         self.order.clear()
         self.ignore.clear()
@@ -1495,12 +1549,13 @@ class powerMatch(QtWidgets.QWidget):
         self.setStatus(self.sender().text() + ' processing started')
         if self.sender().text() == 'Powermatch': # detailed spreadsheet?
             option = 'P'
+        elif self.sender().text() == 'Optimise': # do optimisation?
+            option = 'O'
+            self.optExit = False #??
+        elif self.sender().text() == 'Batch': # do batch processsing
+            option = 'B'
         else:
-            if self.sender().text() == 'Optimise': # do optimisation?
-                option = 'O'
-                self.optExit = False #??
-            else:
-                option = 'S'
+            option = 'S'
         if option != 'O':
             self.progressbar.setMinimum(0)
             self.progressbar.setMaximum(10)
@@ -1538,6 +1593,19 @@ class powerMatch(QtWidgets.QWidget):
                 else:
                     err_msg = 'Error accessing Generators'
                 self.getGenerators(None)
+        if option == 'B':
+            try:
+                ts = xlrd.open_workbook(self.get_filename(self.files[B].text()))
+                ws = ts.sheet_by_index(0)
+                ok = self.getBatch(ws)
+                ts.release_resources()
+                del ts
+                if not ok:
+                    return
+            except FileNotFoundError:
+                err_msg = 'Batch file not found - ' + self.files[B].text()
+            except:
+                err_msg = 'Error accessing Batch file'
         if option == 'O' and self.optimisation is None:
             try:
                 ts = xlrd.open_workbook(self.get_filename(self.files[O].text()))
@@ -1662,7 +1730,7 @@ class powerMatch(QtWidgets.QWidget):
             self.optClicked(year, option, pmss_details, pmss_data, re_order, dispatch_order,
                             None, None)
             return
-        if self.adjust.isChecked():
+        if self.adjust.isChecked() and option != 'B':
             generated = 0
             for row in range(top_row + 1, ws.max_row + 1):
                 generated = generated + ws.cell(row=row, column=3).value
@@ -1761,6 +1829,190 @@ class powerMatch(QtWidgets.QWidget):
                 continue
             dispatch_order.append(gen)
             pmss_details[gen] = [self.generators[gen].capacity, typ, -1, 1]
+        if option == 'B':
+            batch_details = {'Capacity (MW)': [1, '#,##0.00'], 'To Meet Load (MWh)': [2, '#,##0'],
+                             'Generation (MWh)': [3, '#,##0'], 'Capacity Factor': [4, '#,##0.00'],
+                             'Cost ($/Yr)': [5, '#,##0'], 'LCOE ($/MWh)': [6, '#,##0.00'],
+                             'Emissions (tCO2e)': [7, '#,##0']}
+            batch_extra = {'RE': ['#,##0.00', ['RE %age', 1], ['Storage %age', 1], ['RE %age of Total Load', 1]],
+                           'Load Analysis': ['#,##0', ['Load met', 2], ['Load met %age', 1], ['Shortfall', 2], ['Total Load', 2],
+                           ['Largest Shortfall', 1], ['Storage losses', 3], ['Surplus', 3], ['Surplus %age', 1]],
+                           'Carbon': ['#,##0.00', ['Carbon Price', 1], ['Carbon Cost', 5], ['LCOE (incl. CO2)', 6]],
+                           'Optimisation Parameters': ['#,##0.00', ['Population size', 1], ['No. of iterations', 1],
+                           ['Mutation probability', 1], ['Exit if stable', 1], ['Optimisation choice', 1],
+                           ['Variable', 1], ['LCOE', 1], ['Load%', 1], ['Surplus%', 1], ['RE%', 1],
+                           ['Cost', 1], ['CO2', 1]]}
+            batch_extra['LCOE ($/MWh)'] = ['#,##0.00']
+            for tech in self.batch_tech:
+                batch_extra['LCOE ($/MWh)'].append([tech])
+            batch_extra['LCOE ($/MWh)'].append(['Adjusted LCOE', 6])
+            ds = oxl.Workbook()
+            bs = ds.active
+            bs.title = 'Batch Results'
+            normal = oxl.styles.Font(name='Arial')
+            bold = oxl.styles.Font(name='Arial', bold=True)
+            bs.cell(row=1, column=1).value = 'Model Label'
+            bs.cell(row=1, column=1).font = bold
+            column = 1
+            gndx = self.batch_report[0][1] # Capacity group starting row
+            for g in range(len(self.batch_report)):
+                self.batch_report[g][1] = gndx
+                bs.cell(row=gndx, column=1).value = self.batch_report[g][0]
+                bs.cell(row=gndx, column=1).font = bold
+                if self.batch_report[g][0] in batch_extra.keys():
+                    key = self.batch_report[g][0]
+                    for sp in range(1, len(batch_extra[key])):
+                        bs.cell(row=gndx + sp, column=1).value = batch_extra[key][sp][0]
+                        if batch_extra[key][sp][0] == 'RE %age of Total Load' or \
+                          batch_extra[key][sp][0].find('LCOE') >= 0:
+                            bs.cell(row=gndx + sp, column=1).font = bold
+                        else:
+                            bs.cell(row=gndx + sp, column=1).font = normal
+                    gndx += len(batch_extra[key]) + 1
+                else:
+                    for sp in range(len(self.batch_tech)):
+                        if self.batch_report[g][0] == 'To Meet Load (MWh)' and sp == 0:
+                            bs.cell(row=gndx + sp + 1, column=1).value = 'RE Contribution To Load'
+                        elif self.batch_report[g][0] != 'Capacity Factor' or self.batch_tech[sp] != 'Total':
+                            bs.cell(row=gndx + sp + 1, column=1).value = self.batch_tech[sp]
+                        bs.cell(row=gndx + sp + 1, column=1).font = normal
+                    gndx += len(self.batch_tech) + 2
+                    if self.batch_report[g][0] == 'LCOE ($/MWh)':
+                        gndx += 1
+                    elif self.batch_report[g][0] == 'Capacity Factor':
+                        gndx -= 1
+            incr = 10 / len(self.batch_models)
+            prgv = incr
+            for model, capacities in self.batch_models.items():
+                self.progressbar.setValue(int(prgv))
+                prgv += incr
+                column += 1
+                bs.cell(row=1, column=column).value = model
+                bs.cell(row=1, column=column).font = bold
+                for gen, details in pmss_details.items():
+                    if gen == 'Load':
+                        continue
+                    try:
+                        pmss_details[gen][3] = capacities[gen] / pmss_details[gen][0]
+                    except:
+                        pmss_details[gen][3] = 0
+               #     batch_results[-1][self.batch_tech.index(gen)] = pmss_details[gen][3]
+                sp_data = self.doDispatch(year, option, pmss_details, pmss_data, re_order, dispatch_order,
+                           pm_data_file, data_file, title=model)
+                # first the Faciliy/technology table at the top of sp_data
+                for sp in range(len(self.batch_tech) + 1):
+                    if sp_data[sp][0] in self.batch_tech:
+                        tndx = self.batch_tech.index(sp_data[sp][0]) + 1
+                        for group in self.batch_report:
+                            if group[0] in batch_details.keys():
+                                 gndx = group[1]
+                                 col = batch_details[group[0]][0]
+                                 if group[0] == 'Capacity Factor' and sp_data[sp][0] == 'Total':
+                                     continue
+                                 bs.cell(row=gndx + tndx, column=column).value = sp_data[sp][col]
+                                 bs.cell(row=gndx + tndx, column=column).number_format = batch_details[group[0]][1]
+                                 bs.cell(row=gndx + tndx, column=column).font = normal
+                    elif sp_data[sp][0] == 'RE Contribution To Load':
+                        try:
+                            for group in self.batch_report:
+                                if group[0] ==  'To Meet Load (MWh)':
+                                    gndx = group[1]
+                            tndx = 1
+                            col = batch_details['To Meet Load (MWh)'][0]
+                            bs.cell(row=gndx + tndx, column=column).value = sp_data[sp][col]
+                            bs.cell(row=gndx + tndx, column=column).number_format = batch_details['To Meet Load (MWh)'][1]
+                            bs.cell(row=gndx + tndx, column=column).font = normal
+                        except:
+                            pass
+                    if sp_data[0] == 'Total':
+                        break
+                # now the other stuff in sp_data
+                for sp in range(sp + 1, len(sp_data)):
+                    if sp_data[sp][0] == '':
+                        continue
+                    i = sp_data[sp][0].find(' (')
+                    if i >= 0:
+                        tgt = sp_data[sp][0][: i]
+                    else:
+                        tgt = sp_data[sp][0]
+                    for key, details in batch_extra.items():
+                        try:
+                            x = [x for x in details if tgt in x][0]
+                            for group in self.batch_report:
+                                if group[0] == key:
+                                    gndx = group[1]
+                                    break
+                            tndx = details.index(x)
+                            col = x[1]
+                            bs.cell(row=gndx + tndx, column=column).value = sp_data[sp][col]
+                            bs.cell(row=gndx + tndx, column=column).font = normal
+                            if key == 'RE':
+                                bs.cell(row=gndx + tndx, column=column).alignment = oxl.styles.Alignment(horizontal='right')
+                            else:
+                                bs.cell(row=gndx + tndx, column=column).number_format = details[0]
+                            if sp_data[sp][0] == 'RE %age of Total Load' or \
+                                sp_data[sp][0].find('LCOE') >= 0:
+                                bs.cell(row=gndx + tndx, column=column).font = bold
+                            else:
+                                bs.cell(row=gndx + tndx, column=column).font = normal
+                            if key == 'Load Analysis':
+                                if x[0] in ['Load met', 'Surplus']:
+                                    tndx += 1
+                                    col = batch_extra['Load Analysis'][tndx][1]
+                                    bs.cell(row=gndx + tndx, column=column).value = sp_data[sp][col]
+                                    bs.cell(row=gndx + tndx, column=column).alignment = oxl.styles.Alignment(horizontal='right')
+                                    bs.cell(row=gndx + tndx, column=column).font = normal
+                            elif key == 'Carbon': # handle differently
+                                tndx += 1
+                                col = details[2][1]
+                                bs.cell(row=gndx + tndx, column=column).value = sp_data[sp][col]
+                                bs.cell(row=gndx + tndx, column=column).number_format = '#,##0'
+                                bs.cell(row=gndx + tndx, column=column).font = normal
+                                tndx += 1
+                                col = details[3][1]
+                                bs.cell(row=gndx + tndx, column=column).value = sp_data[sp][col]
+                                bs.cell(row=gndx + tndx, column=column).number_format = '#,##0.00'
+                                bs.cell(row=gndx + tndx, column=column).font = bold
+                        except:
+                            pass
+            for group in self.batch_report:
+                if group[0] in ['Generation (MWh)', 'To Meet Load (MWh)']:
+                    # remove storage or RE
+                    gndx = group[1]
+                    if group[0] == 'Generation (MWh)':
+                        tst = 'S'
+                    else:
+                        tst = 'R'
+                    for row in range(gndx, gndx + len(self.batch_tech)):
+                        gen = bs.cell(row=row, column=1).value
+                        try:
+                            if pmss_details[gen][1] == tst:
+                                bs.delete_rows(row, 1)
+                        except:
+                            pass
+            for column_cells in bs.columns:
+                length = 0
+                for cell in column_cells:
+                    try:
+                        value = str(round(cell.value, 2))
+                    except:
+                        value = cell.value
+                    if value is None:
+                        continue
+                    if len(value) > length:
+                        length = len(value)
+                if isinstance(cell.column, int):
+                    cel = ss_col(cell.column)
+                else:
+                    cel = cell.column
+                bs.column_dimensions[cel].width = max(length * 1.3, 10)
+            bs.freeze_panes = 'B2'
+            bs.activeCell = 'B2'
+            self.progressbar.setValue(10)
+            i = self.files[B].text().rfind('.')
+            ds.save(self.get_filename(self.files[B].text()[:i] + '_batch' + self.files[B].text()[i:]))
+            self.setStatus(self.sender().text() + ' completed (' + str(len(self.batch_models)) + ' models)')
+            return
         if do_adjust:
             if self.adjustto is not None:
                 for gen, value in self.adjustto.items():
@@ -2067,7 +2319,7 @@ class powerMatch(QtWidgets.QWidget):
                     tml += pmss_data[0][h] * pmss_details['Load'][3] - shortfall[h]
             if tml > 0:
                 sp_data.append(['RE Contribution To Load', '', tml])
-        if option != 'O' and option != '1':
+        if option not in ['O', '1', 'B']:
             self.progressbar.setValue(3)
         storage_names = []
         # find any minimum generation for generators
@@ -2355,7 +2607,7 @@ class powerMatch(QtWidgets.QWidget):
                     if capacity == 0:
                         continue
                     sp_data.append([gen, capacity, gen_can, gen_can, '', '', '', '', gen_max, '', '', ''])
-        if option != 'O' and option != '1':
+        if option not in ['O', '1', 'B']:
             self.progressbar.setValue(4)
         if option != 'P':
          #   if min_after[2] >= 0:
@@ -2459,39 +2711,42 @@ class powerMatch(QtWidgets.QWidget):
                 if self.carbon_price == int(self.carbon_price):
                    cp = str(int(self.carbon_price))
                 else:
-                   cp = '{:.2f}'.format(self.carbon_price)
-                sp_data.append(['Carbon Cost ($' + cp + ')', '', '', '', '', cc, cs])
+                   cp = '${:.2f}'.format(self.carbon_price)
+                sp_data.append(['Carbon Price', self.carbon_price, '', '', '', cc, cs])
        #     sp_data.append(['RE %age', round(re_sum * 100. / gen_sum, 1)])
-            sp_data.append(['RE %age', round((tml_sum - sto_sum - ff_sum) * 100. / tml_sum, 1)])
+            sp_data.append(['RE %age', '{:.1f}%'.format((tml_sum - sto_sum - ff_sum) * 100. / tml_sum)])
             if sto_sum > 0:
-                sp_data.append(['Storage %age', round(sto_sum * 100. / tml_sum, 1)])
+                sp_data.append(['Storage %age', '{:.1f}%'.format(sto_sum * 100. / tml_sum)])
        #     sp_data.append(['RE %age of Total Load', round((sp_load - sf_sums[0] - ff_sum) * \
         #                   100. / sp_load, 1)])
             sp_data.append(' ')
             sp_data.append('Load Analysis')
             pct = '{:.1%})'.format((sf_sums[2] - sf_sums[0]) / sp_load)
-            sp_data.append(['Load met (' + pct, '', sf_sums[2] - sf_sums[0]])
+        #    sp_data.append(['Load met (' + pct, '', sf_sums[2] - sf_sums[0]])
+            sp_data.append(['Load met', '{:.1f}%'.format((sf_sums[2] - sf_sums[0]) * 100 / sp_load), sf_sums[2] - sf_sums[0]])
             pct = '{:.1%})'.format(sf_sums[0] / sp_load)
-            sp_data.append(['Shortfall (' + pct, '', sf_sums[0]])
+          #  sp_data.append(['Shortfall (' + pct, '', sf_sums[0]])
+            sp_data.append(['Shortfall', '{:.1f}%'.format(sf_sums[0] * 100 / sp_load), sf_sums[0]])
             sp_data.append(['Total Load', '', sp_load, '', '', '', '', '', load_max])
-            sp_data.append(['RE %age of Total Load', round((sp_load - sf_sums[0] - ff_sum) * 100. / sp_load, 1)])
+            sp_data.append(['RE %age of Total Load', '{:.1f}%'.format((sp_load - sf_sums[0] - ff_sum) * 100. / sp_load)])
             sp_data.append(' ')
             if tot_sto_loss != 0:
                 sp_data.append(['Storage losses', '', '', tot_sto_loss])
             pct = '{:.1%})'.format( -sf_sums[1] / sp_load)
-            sp_data.append(['Net Surplus (' + pct, '', '', -sf_sums[1]])
+          #  sp_data.append(['Surplus (' + pct, '', '', -sf_sums[1]])
+            sp_data.append(['Surplus', '{:.1f}%'.format(-sf_sums[1] * 100 / sp_load), '', -sf_sums[1]])
          #       pct = '{:.1%})'.format( (-sf_sums[1] + tot_sto_loss) / sp_load)
-           #     sp_data.append(['Net surplus (' + pct, '', -sf_sums[1] + tot_sto_loss])
+           #     sp_data.append(['surplus (' + pct, '', -sf_sums[1] + tot_sto_loss])
             max_short = [0, 0]
             for h in range(len(shortfall)):
                 if shortfall[h] > max_short[1]:
                     max_short[0] = h
                     max_short[1] = shortfall[h]
             if max_short[1] > 0:
-                sp_data.append(['Largest Shortfall ' + format_period(max_short[0]),
+                sp_data.append(['Largest Shortfall (' + format_period(max_short[0]) + ')',
                                 round(max_short[1], 2)])
-   #         if option == 'B':
-    #            return sp_data
+            if option == 'B':
+                return sp_data
             if option == 'O' or option == '1':
                 op_load_tot = pmss_details['Load'][0] * pmss_details['Load'][3]
              #   if (sf_sums[2] - sf_sums[0]) / op_load_tot < 1:
@@ -2528,6 +2783,7 @@ class powerMatch(QtWidgets.QWidget):
                     return multi_value, sp_data, extra
             list(map(list, list(zip(*sp_data))))
             sp_pts = [0, 2, 0, 0, 2, 0, 2, 0, 2, 2, 2, 2]
+        #    if option != 'B':
             self.setStatus(self.sender().text() + ' completed')
             if title is not None:
                 atitle = title
@@ -2792,7 +3048,7 @@ class powerMatch(QtWidgets.QWidget):
                cp = str(int(self.carbon_price))
             else:
                cp = '{:.2f}'.format(self.carbon_price)
-            ss.cell(row=ss_row, column=1).value = 'Carbon Cost ($/tCO2e)'
+            ss.cell(row=ss_row, column=1).value = 'Carbon Price ($/tCO2e)'
             ss.cell(row=ss_row, column=2).value = self.carbon_price
             ss.cell(row=ss_row, column=2).number_format = '$#,##0.00'
             ss.cell(row=ss_row, column=6).value = '=H' + str(ss_row - r) + '*B' + str(ss_row)
@@ -3225,12 +3481,12 @@ class powerMatch(QtWidgets.QWidget):
                     try:
                         pmss_details[gen][3] = capacity / pmss_details[gen][0]
                     except:
-                        print('(3144)', gen, capacity, pmss_details[gen][0])
+                        print('(3438)', gen, capacity, pmss_details[gen][0])
                 multi_value, op_data, extra = self.doDispatch(year, option, pmss_details, pmss_data, re_order,
                                               dispatch_order, pm_data_file, data_file)
                 if multi_value['load_pct'] < self.targets['load_pct'][3]:
                     if multi_value['load_pct'] == 0:
-                        print('(3149)', multi_value['lcoe'],
+                        print('(3443)', multi_value['lcoe'],
                             self.targets['load_pct'][3], multi_value['load_pct'])
                         lcoe_fitness_scores.append(1)
                     else:
@@ -3833,7 +4089,7 @@ class powerMatch(QtWidgets.QWidget):
             try:
                 best_score = np.min(lcoe_scores)
             except:
-                print('(3779)', lcoe_scores)
+                print('(4046)', lcoe_scores)
             best_ndx = lcoe_scores.index(best_score)
             lowest_chrom = population[best_ndx]
             self.setStatus('Starting LCOE: $%.2f' % best_score)
@@ -4202,7 +4458,7 @@ class powerMatch(QtWidgets.QWidget):
                     label = QtWidgets.QLabel(txt % amt)
                 except:
                     label = QtWidgets.QLabel('?')
-                    print('(4151)', key, txt, amt)
+                    print('(4415)', key, txt, amt)
                 label.setAlignment(QtCore.Qt.AlignCenter)
                 grid[h + 1].addWidget(label, rw, 0, 1, 3)
             rw += 1

@@ -3125,7 +3125,7 @@ In producing the LCOE figures you can choose to use LCOE figures that ignore any
 <td class="none">If this option is checked you will be presented with a table to enable you to adjust the input capacity data for each generator technology. You can specify the required capacity or, if the <em>show_multipliers</em> property is set, a multiplier between 0 and the cap set by the <em>adjust_cap</em> property in the <a href="#power">[Power]</a> Section of the Preferences file; the default multiplier is 25. The original input values will be derived from the data sheet for renewables and the Generators table for dispatchable technologies. You can also Save and Restore the capacities to use again later (<em>adjust_generators</em>)</td></tr>
 <tr><td class="lr"><dfn>Dispatch Order</dfn></td>
 <td class="none">The order in which the dispatchable technologies will be processed by Powermatch. You can change the order by clicking on each value and moving it up and down the list. The initial order is derived from the generators (facilities) table. If you want to exclude a generator you can drag it to the right hand list (and drag it back to the left to re-include)</td></tr>
-<tr><td class="bottom"><strong>Done, Constraints, Generators,<br />Summary, Powermatch,<br />Help</strong></td>
+<tr><td class="bottom"><strong>Done, Constraints, Generators,<br />Summary, Powermatch, Batch, Optimise,<br />Help</strong></td>
 <td class="none">As well as the buttons beside the sheet options there are a number of buttons at the bottom of the menu, as described below:</td></tr>
 </table>
 <ul>
@@ -3164,6 +3164,7 @@ In producing the LCOE figures you can choose to use LCOE figures that ignore any
 <li>Assuming a generator is listed in column L.<br />Calculate the percentage of time it is running below 55% of capacity - <code>=COUNTIF(L2:L8771,">"&L1*0.55)/8760</code></li>
 <li>Assuming a storage facility is listed in column I, it's balance will be in column J.<br />Calculate the percentage of time it is at full capacity - <code>=COUNTIF(J2:J8771,"="&I1)/8760</code><br />and at less than or equal to 10% capacity - <code>=COUNTIF(J2:J8771,"<="&I1*0.1)/8760</code></li>
 </ul>
+<li><strong>Batch</strong>. Invoke Powermatch for a number of &ldquo;models&rdquo; with different capacities for each technology. This option produces a spreadsheet containing selected details from the Summary Output with one column per model. An input spreadsheet contains a column with the capacities for each model. A list of the desired details from the Summary Table can be specified below the list of technologies (capacities). The details can include any of: 'Capacity (MW)', 'To Meet Load (MWh)', 'Generation (MWh)', 'Capacity Factor', 'Cost ($/Yr)', 'LCOE ($/MWh)', 'Emissions (tCO2e)', 'Carbon', 'RE', and 'Load Analysis'. 'Capacity (MW)' is required and must be the first entry</li>
 <li><strong>Optimise</strong>. Invoke the Optimise function. This will use an iterative approach to optimise the input generator capacities to produce a solution with (a) either a lower overall LCOE, or (b) the lowest weight for six variables, or (c) both. It will complete by displaying a plot of how the value for LCOE has converged to a minimum, and a either a three dimensional plot showing the three variables with the highest weightings or a table of all variables for the multi-variable approach. Exiting the plot will then produce a summary table; the summary table will also contain details on the Optimisation parameters used. It will also update the adjustment values for each generator to enable you to produce a Powermatch spreadsheet. See below for more details</li>
 <li><strong>Help</strong>. Display the Powermatch help</li>
 </ul>
@@ -3421,7 +3422,7 @@ If the best and worse values are the same for a variable and that value is not a
 </tr>
 <tr class="none">
 <td class="none"><dfn>pm_template</dfn></td>
-<td class="none">A template file defining the layout for a Powermatch scenario file. This can only be an Excel (XLSX) file</td>
+<td class="none">A template file defining the layout for a Powermatch scenario file. This can only be an Excel (XLSX) file. The template file only allows defined technology types for RE inputs. These are:<br />(Load), Onshore Wind, Offshore Wind, Rooftop PV, Fixed PV, Single Axis PV, Dual Axis PV, Biomass, Geothermal, Other 1, and CST.</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>pow_files</dfn></td>
