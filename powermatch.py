@@ -2104,10 +2104,10 @@ class powerMatch(QtWidgets.QWidget):
             ns.cell(row=cost_row, column=2).value = headers[5].replace('\n', ' ')
             ss.cell(row=3, column=6).value = headers[5]
             lcoe_row = 6
-            ns.cell(row=lcoe_row, column=2).value = headers[5].replace('\n', ' ')
+            ns.cell(row=lcoe_row, column=2).value = headers[6].replace('\n', ' ')
             ss.cell(row=3, column=7).value = headers[6]
             emi_row = 7
-            ns.cell(row=emi_row, column=2).value = headers[6].replace('\n', ' ')
+            ns.cell(row=emi_row, column=2).value = headers[7].replace('\n', ' ')
             ss.cell(row=3, column=8).value = headers[7]
             ss.cell(row=3, column=9).value = headers[8]
             ss.cell(row=3, column=10).value = headers[9]
@@ -3135,7 +3135,7 @@ class powerMatch(QtWidgets.QWidget):
             ss.cell(row=ss_row, column=1).value = 'Storage Losses'
             ss.cell(row=ss_row, column=4).value = '=' + loss_sum[1:]
             ss.cell(row=ss_row, column=4).number_format = '#,##0'
-        ss_row += 1
+            ss_row += 1
         ss.cell(row=ss_row, column=1).value = 'Surplus'
         sf_text = 'SUMIF(Detail!' + last_col + str(hrows) + ':Detail!' + last_col \
                   + str(hrows + 8759) + ',"' + sf_test[1] + '0",Detail!' + last_col + str(hrows) \
