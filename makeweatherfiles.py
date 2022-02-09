@@ -23,6 +23,7 @@ import gzip
 from math import *
 import os
 import sys
+import time
 from netCDF4 import Dataset
 import configparser   # decode .ini file
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -647,7 +648,8 @@ class makeWeather():
                 self.log += 'Error with Coordinates field'
                 self.return_code = 2
                 return
-            self.log += 'Processing %s, %s\n' % (self.src_lat, self.src_lon)
+            now = datetime.now()
+            self.log += now.strftime('%Y-%m-%d %H:%M:%S') + '. Processing %s, %s\n' % (self.src_lat, self.src_lon)
         else:
             self.src_lat = None
             self.src_lon = None
@@ -720,7 +722,8 @@ class makeWeather():
         else:
             yrs = 1
         for mt in range(len(dys)):
-            txt = 'Processing month %s wind\n' % str(mt + 1)
+            now = datetime.now()
+            txt = now.strftime('%Y-%m-%d %H:%M:%S') + '. Processing month %s wind\n' % str(mt + 1)
             self.log += txt
             if self.show_progress:
                 self.caller.progresslabel.setText(txt[:-1])
@@ -782,7 +785,8 @@ class makeWeather():
                 self.caller.progresslabel.setText('Creating wind weather files')
                 QtCore.QCoreApplication.processEvents()
             target_dir = self.tgt_dir
-            self.log += 'Target directory is %s\n' % target_dir
+            now = datetime.now()
+            self.log += now.strftime('%Y-%m-%d %H:%M:%S') + '. Target directory is %s\n' % target_dir
             if not os.path.exists(target_dir):
                 self.log += 'mkdir %s\n' % target_dir
                 os.makedirs(target_dir)
@@ -977,7 +981,8 @@ class makeWeather():
         else:
             yrs = 1
         for mt in range(len(dys)):
-            txt = 'Processing month %s solar\n' % str(mt + 1)
+            now = datetime.now()
+            txt = now.strftime('%Y-%m-%d %H:%M:%S') + '. Processing month %s solar\n' % str(mt + 1)
             self.log += txt
             if self.show_progress:
                 self.caller.progress((mt + 24) / 36.)
@@ -1025,7 +1030,8 @@ class makeWeather():
             self.caller.progresslabel.setText('Creating solar weather files')
             QtCore.QCoreApplication.processEvents()
         target_dir = self.tgt_dir
-        self.log += 'Target directory is %s\n' % target_dir
+        now = datetime.now()
+        self.log += now.strftime('%Y-%m-%d %H:%M:%S') + '. Target directory is %s\n' % target_dir
         if not os.path.exists(target_dir):
             self.log += 'mkdir %s\n' % target_dir
             os.makedirs(target_dir)
