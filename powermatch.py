@@ -1938,7 +1938,7 @@ class powerMatch(QtWidgets.QWidget):
                             bs.cell(row=gndx + tndx, column=column).font = normal
                         except:
                             pass
-                    if sp_data[0] == 'Total':
+                    if sp_data[sp][0] == 'Total':
                         break
                 # now the other stuff in sp_data
                 for sp in range(sp + 1, len(sp_data)):
