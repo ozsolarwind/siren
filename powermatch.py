@@ -1840,10 +1840,12 @@ class powerMatch(QtWidgets.QWidget):
             batch_report_file = self.get_filename(self.files[B].text()[:i] + '_batch' + self.files[B].text()[i:])
             if os.path.exists(batch_report_file):
                 batch_report_file = QtWidgets.QFileDialog.getSaveFileName(None, 'Save Batch Report file',
-                          batch_report_file, 'Excel Files (*.xls*)')[0]
+                          batch_report_file, 'Excel Files (*.xlsx)')[0]
                 if batch_report_file == '':
                     self.setStatus(self.sender().text() + ' aborted')
                     return
+                if batch_report_file[-5:] != '.xlsx':
+                    batch_report_file += '.xlsx'
             batch_details = {'Capacity (MW)': [1, '#,##0.00'], 'To Meet Load (MWh)': [2, '#,##0'],
                              'Generation (MWh)': [3, '#,##0'], 'Capacity Factor': [4, '#,##0.00'],
                              'Cost ($/Yr)': [5, '#,##0'], 'LCOE ($/MWh)': [6, '#,##0.00'],
