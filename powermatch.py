@@ -911,10 +911,13 @@ class powerMatch(QtWidgets.QWidget):
             self.ignore.clear()
             for gen in iorder:
                 self.order.addItem(gen)
-            for gen in self.generators.keys():
-                if gen in tech_names or gen in iorder:
-                    continue
-                self.ignore.addItem(gen)
+            try:
+                for gen in self.generators.keys():
+                    if gen in tech_names or gen in iorder:
+                        continue
+                    self.ignore.addItem(gen)
+            except:
+                pass
         if self.adjust_gen and self.adjustto is None:
            self.adjustto = {}
            self.adjustto['Load'] = 0
@@ -1146,7 +1149,10 @@ class powerMatch(QtWidgets.QWidget):
      #   self.get_config()   # refresh config values
         config = configparser.RawConfigParser()
         config.read(config_file)
-        st = config.get('Powermatch', 'save_tables')
+        try:
+            st = config.get('Powermatch', 'save_tables')
+        except:
+            st = 'False'
         if st.lower() in ['true', 'yes', 'on']:
             self.save_tables = True
         else:
