@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2019 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2022 Sustainable Energy Now Inc., Angus King
 #
 #  senuser.py - This file is part of SIREN.
 #
@@ -47,13 +47,14 @@ def techClean(tech, full=False):
     cleantech = cleantech.replace('Ccgt', 'CCGT')
     cleantech = cleantech.replace('Ccg', 'CCG')
     cleantech = cleantech.replace('Cst', 'CST')
+    cleantech = cleantech.replace('Lng', 'LNG')
     cleantech = cleantech.replace('Ocgt', 'OCGT')
     cleantech = cleantech.replace('Ocg', 'OCG')
     cleantech = cleantech.replace('Phs', 'PHS')
     cleantech = cleantech.replace('Pv', 'PV')
     if full:
         alll = [['Cf', 'CF'], ['hi ', 'HI '], ['Lcoe', 'LCOE'], ['Mw', 'MW'],
-                ['ni ', 'NI '], ['Npv', 'NPV'], ['Tco2E', 'tCO2e']]
+                ['ni ', 'NI '], ['Npv', 'NPV'], ['Re', 'RE'], ['Tco2E', 'tCO2e']]
         for each in alll:
             cleantech = cleantech.replace(each[0], each[1])
     return cleantech

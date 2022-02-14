@@ -1786,6 +1786,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">In producing the reports and optimisation use the adjusted (corrected) LCOE or not. The default is True</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>batch_new_file</dfn></td>
+<td class="none">Batch report file. If set to True a new report file will be produced for Batch. The default is to append a new worksheet to the input file. Default is False</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>carbon_price</dfn></td>
 <td class="none">Carbon price. Only use if carbon price not included in LCOE. Default is 0</td>
 </tr>
@@ -3117,6 +3121,8 @@ In producing the LCOE figures you can choose to use LCOE figures that ignore any
 <td class="none">If set this value will be prefixed to the Results File name and to Summary and Adjust Generators filema,e if these are saved</td></tr>
 <tr><td class="lr"><dfn>Results File</dfn></td>
 <td class="none">File name for Powermatch output (report) spreadsheet. Clicking on the field will allow you to choose the name for the report spreadsheet. <strong>Note:</strong> If the  <em>change_results</em> property of the <em>[Powermatch]</em> Section is set changes to the input spreadsheet name will cause this Results spreadsheet name to change (<em>results_file</em>)</td></tr>
+<tr><td class="lr"><dfn>Batch File</dfn></td>
+<td class="none">File name for Batch option. Clicking on the field will allow you to choose another spreadsheet from the SIREN Scenarios folder (<em>batch_file</em>)</td></tr>
 <tr><td class="lr"><dfn>Discount Rate</dfn></td>
 <td class="none">The default discount rate to be used if costs rather than a Reference LCOE are being used to calculate generation costs. <strong>Note:</strong> It is not uncommon to use WACC as a discount rate (<em>discount_rate</em>)</td></tr>
 <tr><td class="lr"><dfn>Carbon Price</dfn></td>
@@ -3164,11 +3170,11 @@ In producing the LCOE figures you can choose to use LCOE figures that ignore any
 <li>Assuming a generator is listed in column L.<br />Calculate the percentage of time it is running below 55% of capacity - <code>=COUNTIF(L2:L8771,">"&L1*0.55)/8760</code></li>
 <li>Assuming a storage facility is listed in column I, it's balance will be in column J.<br />Calculate the percentage of time it is at full capacity - <code>=COUNTIF(J2:J8771,"="&I1)/8760</code><br />and at less than or equal to 10% capacity - <code>=COUNTIF(J2:J8771,"<="&I1*0.1)/8760</code></li>
 </ul>
-<li><strong>Batch</strong>. Invoke Powermatch for a number of &ldquo;models&rdquo; with different capacities for each technology. This option produces a spreadsheet containing selected details from the Summary Output with one column per model. An input spreadsheet contains a column with the capacities for each model. A list of the desired details from the Summary Table can be specified below the list of technologies (capacities). The details can include any of: 'Capacity (MW)', 'To Meet Load (MWh)', 'Generation (MWh)', 'Capacity Factor', 'Cost ($/Yr)', 'LCOE ($/MWh)', 'Emissions (tCO2e)', 'Carbon', 'RE', and 'Load Analysis'. 'Capacity (MW)' is required and must be the first entry</li>
+<li><strong>Batch</strong>. Invoke Powermatch for a number of &ldquo;models&rdquo; with different capacities for each technology. This option produces a worksheet containing selected details from the Summary Output with one column per model. An input spreadsheet contains a column with the capacities for each model. A list of the desired details from the Summary Table can be specified below the list of technologies (capacities). The details can include any of: 'Capacity (MW)', 'Capacity Factor', 'Carbon', 'Carbon Price', 'Cost ($/Yr)', 'Emissions (tCO2e)', 'Generation (MWh)', 'LCOE ($/MWh)' 'Load Analysis', 'RE', and 'To Meet Load (MWh)'. 'Capacity (MW)' is required and must be the first entry. 'Carbon Price' allows you to input a different Carbon Price for each Model. By default the resulting output will be appended as a new worksheet to the input file. You can create a new spreadsheet by setting the <em>batch_new_file</em> property to True</li>
 <li><strong>Optimise</strong>. Invoke the Optimise function. This will use an iterative approach to optimise the input generator capacities to produce a solution with (a) either a lower overall LCOE, or (b) the lowest weight for six variables, or (c) both. It will complete by displaying a plot of how the value for LCOE has converged to a minimum, and a either a three dimensional plot showing the three variables with the highest weightings or a table of all variables for the multi-variable approach. Exiting the plot will then produce a summary table; the summary table will also contain details on the Optimisation parameters used. It will also update the adjustment values for each generator to enable you to produce a Powermatch spreadsheet. See below for more details</li>
 <li><strong>Help</strong>. Display the Powermatch help</li>
 </ul>
-<p>The Constraints, Generators and Optimisation tables can be edited, updated and saved and the revised table(s) used as inputs for the <strong>Summary</strong>, <strong>Powermatch</strong> and <strong>Optimise</strong> options. During the edit process the revised values can be exported as a new spreadsheet. If the table(s) is saved but not exported the revised values will not be available once Powermatch is exited. You can also choose another sheet, however, if the sheet you choose is not the correct format you may get unusual behaviour.</p>
+<p>The Constraints, Generators and Optimisation tables can be edited, updated and saved and the revised table(s) used as inputs for the <strong>Summary</strong>, <strong>Powermatch</strong>, <strong>Batch</strong> and <strong>Optimise</strong> options. During the edit process the revised values can be exported as a new spreadsheet. If the table(s) is saved but not exported the revised values will not be available once Powermatch is exited. You can also choose another sheet, however, if the sheet you choose is not the correct format you may get unusual behaviour.</p>
 <h4>Generators</h4>
 <p>To address the shortfall in generation encountered by a renewable scenario other dispatchable generation and storage facilities can be used. These are defined in a Generators table. The Generators table can also be used to define the Reference <em>LCOE</em> and <em>LCOE CF</em> figures for Renewable technologies. The dispatchable facilities are dispatched after renewable generators. The fields are:
 <table border="0" class="none">

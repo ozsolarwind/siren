@@ -37,7 +37,7 @@ import openpyxl as oxl
 import random
 # from openpyxl.utils import get_column_letter
 from parents import getParents
-from senuser import getUser
+from senuser import getUser, techClean
 from editini import EdtDialog, SaveIni
 from floaters import ProgressBar, FloatStatus
 from getmodels import getModelFile
@@ -607,6 +607,7 @@ class powerMatch(QtWidgets.QWidget):
         self.ifiles = [''] * len(self.file_labels)
         self.isheets = self.file_labels[:]
         del self.isheets[-2:]
+        self.batch_new_file = False
         self.more_details = False
         self.constraints = None
         self.generators = None
@@ -656,6 +657,9 @@ class powerMatch(QtWidgets.QWidget):
                  elif key == 'adjust_generators':
                      if value.lower() in ['true', 'on', 'yes']:
                          self.adjust_gen = True
+                 elif key == 'batch_new_file':
+                     if value.lower() in ['true', 'on', 'yes']:
+                         self.batch_new_file = True
                  elif key == 'adjusted_capacities':
                      self.adjustto = {}
                      bits = value.split(',')
@@ -1483,7 +1487,7 @@ class powerMatch(QtWidgets.QWidget):
             self.setStatus('Not a ' + self.file_labels[B] + ' worksheet.')
             return False
         self.batch_models = {}
-        self.batch_report = [['Capacity (MW)', 1]]
+        self.batch_report = [['Capacity (MW/MWh)', 1]]
         self.batch_tech = []
         istop = ws.nrows
         inrows = False
@@ -1491,7 +1495,7 @@ class powerMatch(QtWidgets.QWidget):
             tech = ws.cell_value(row, 0)
             if tech != '':
                 inrows = True
-                if tech[:8] != 'Capacity':
+                if tech[:8].lower() != 'capacity':
                     if tech != 'Total' and tech not in self.generators.keys():
                         self.setStatus('Unknown technology - ' + tech + ' - in batch file.')
                         return False
@@ -1504,9 +1508,12 @@ class powerMatch(QtWidgets.QWidget):
             if tech[:5] == 'Total':
                 istop = row + 1
                 break
+        carbon_row = -1
         for row in range(istop, ws.nrows):
             if ws.cell_value(row, 0) != '':
-                self.batch_report.append([ws.cell_value(row, 0), row + 1])
+                if ws.cell_value(row, 0).lower() == 'carbon price':
+                    carbon_row = row
+                self.batch_report.append([techClean(ws.cell_value(row, 0), full=True), row + 1])
         for col in range(1, ws.ncols):
             model = ws.cell_value(0, col)
             self.batch_models[model] = {}
@@ -1517,6 +1524,9 @@ class powerMatch(QtWidgets.QWidget):
                         self.batch_models[model][tech] = ws.cell_value(row, col)
                 except:
                     pass
+            if carbon_row >= 0:
+                if isinstance(ws.cell_value(carbon_row, col), float):
+                    self.batch_models[model]['Carbon Price'] = ws.cell_value(carbon_row, col)
         return True
 
     def setOrder(self):
@@ -1836,17 +1846,7 @@ class powerMatch(QtWidgets.QWidget):
             dispatch_order.append(gen)
             pmss_details[gen] = [self.generators[gen].capacity, typ, -1, 1]
         if option == 'B':
-            i = self.files[B].text().rfind('.')
-            batch_report_file = self.get_filename(self.files[B].text()[:i] + '_batch' + self.files[B].text()[i:])
-            if os.path.exists(batch_report_file):
-                batch_report_file = QtWidgets.QFileDialog.getSaveFileName(None, 'Save Batch Report file',
-                          batch_report_file, 'Excel Files (*.xlsx)')[0]
-                if batch_report_file == '':
-                    self.setStatus(self.sender().text() + ' aborted')
-                    return
-                if batch_report_file[-5:] != '.xlsx':
-                    batch_report_file += '.xlsx'
-            batch_details = {'Capacity (MW)': [1, '#,##0.00'], 'To Meet Load (MWh)': [2, '#,##0'],
+            batch_details = {'Capacity (MW/MWh)': [1, '#,##0.00'], 'To Meet Load (MWh)': [2, '#,##0'],
                              'Generation (MWh)': [3, '#,##0'], 'Capacity Factor': [4, '#,##0.00'],
                              'Cost ($/Yr)': [5, '#,##0'], 'LCOE ($/MWh)': [6, '#,##0.00'],
                              'Emissions (tCO2e)': [7, '#,##0']}
@@ -1862,16 +1862,36 @@ class powerMatch(QtWidgets.QWidget):
             for tech in self.batch_tech:
                 batch_extra['LCOE ($/MWh)'].append([tech])
             batch_extra['LCOE ($/MWh)'].append(['Adjusted LCOE', 6])
-            ds = oxl.Workbook()
-            bs = ds.active
-            bs.title = 'Batch Results'
+            if self.batch_new_file:
+                i = self.files[B].text().rfind('.')
+                batch_report_file = self.get_filename(self.files[B].text()[:i] + '_report' + self.files[B].text()[i:])
+                if os.path.exists(batch_report_file):
+                    batch_report_file = QtWidgets.QFileDialog.getSaveFileName(None, 'Save Batch Report file',
+                              batch_report_file, 'Excel Files (*.xlsx)')[0]
+                    if batch_report_file == '':
+                        self.setStatus(self.sender().text() + ' aborted')
+                        return
+                    if batch_report_file[-5:] != '.xlsx':
+                        batch_report_file += '.xlsx'
+                ds = oxl.Workbook()
+                bs = ds.active
+                bs.title = 'Batch Results'
+            else:
+                batch_report_file = self.get_filename(self.files[B].text())
+                ds = oxl.load_workbook(batch_report_file)
+                bs = ds.create_sheet('Results_' + QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),
+                                'yyyy-MM-dd_hhmm'))
             normal = oxl.styles.Font(name='Arial')
             bold = oxl.styles.Font(name='Arial', bold=True)
             bs.cell(row=1, column=1).value = 'Model Label'
             bs.cell(row=1, column=1).font = bold
             column = 1
             gndx = self.batch_report[0][1] # Capacity group starting row
+            batch_carbon_row = 0
             for g in range(len(self.batch_report)):
+                if self.batch_report[g][0] == 'Carbon Price':
+                    batch_carbon_row = self.batch_report[g][1]
+                    continue
                 self.batch_report[g][1] = gndx
                 bs.cell(row=gndx, column=1).value = self.batch_report[g][0]
                 bs.cell(row=gndx, column=1).font = bold
@@ -1898,7 +1918,7 @@ class powerMatch(QtWidgets.QWidget):
                     elif self.batch_report[g][0] == 'Capacity Factor':
                         gndx -= 1
             incr = 10 / len(self.batch_models)
-            prgv = incr
+            prgv = incr               
             for model, capacities in self.batch_models.items():
                 self.progressbar.setValue(int(prgv))
                 prgv += incr
@@ -1913,9 +1933,14 @@ class powerMatch(QtWidgets.QWidget):
                     except:
                         pmss_details[gen][3] = 0
                #     batch_results[-1][self.batch_tech.index(gen)] = pmss_details[gen][3]
+                if 'Carbon Price' in capacities.keys():
+                    save_carbon_price = self.carbon_price
+                    self.carbon_price = capacities['Carbon Price']
                 sp_data = self.doDispatch(year, option, pmss_details, pmss_data, re_order, dispatch_order,
                            pm_data_file, data_file, title=model)
-                # first the Faciliy/technology table at the top of sp_data
+                if 'Carbon Price' in capacities.keys():
+                    self.carbon_price = save_carbon_price
+                # first the Facility/technology table at the top of sp_data
                 for sp in range(len(self.batch_tech) + 1):
                     if sp_data[sp][0] in self.batch_tech:
                         tndx = self.batch_tech.index(sp_data[sp][0]) + 1
@@ -1961,11 +1986,14 @@ class powerMatch(QtWidgets.QWidget):
                             tndx = details.index(x)
                             col = x[1]
                             bs.cell(row=gndx + tndx, column=column).value = sp_data[sp][col]
-                            bs.cell(row=gndx + tndx, column=column).font = normal
                             if key == 'RE':
-                                bs.cell(row=gndx + tndx, column=column).alignment = oxl.styles.Alignment(horizontal='right')
+                                pct = float(sp_data[sp][col].strip('%')) / 100.                                
+                                bs.cell(row=gndx + tndx, column=column).value = pct
+                                bs.cell(row=gndx + tndx, column=column).number_format = '0.0%'
                             else:
+                                bs.cell(row=gndx + tndx, column=column).value = sp_data[sp][col]
                                 bs.cell(row=gndx + tndx, column=column).number_format = details[0]
+                            bs.cell(row=gndx + tndx, column=column).font = normal
                             if sp_data[sp][0] == 'RE %age of Total Load' or \
                                 sp_data[sp][0].find('LCOE') >= 0:
                                 bs.cell(row=gndx + tndx, column=column).font = bold
@@ -1975,8 +2003,9 @@ class powerMatch(QtWidgets.QWidget):
                                 if x[0] in ['Load met', 'Surplus']:
                                     tndx += 1
                                     col = batch_extra['Load Analysis'][tndx][1]
-                                    bs.cell(row=gndx + tndx, column=column).value = sp_data[sp][col]
-                                    bs.cell(row=gndx + tndx, column=column).alignment = oxl.styles.Alignment(horizontal='right')
+                                    pct = float(sp_data[sp][col].strip('%')) / 100.                                
+                                    bs.cell(row=gndx + tndx, column=column).value = pct
+                                    bs.cell(row=gndx + tndx, column=column).number_format = '0.0%'
                                     bs.cell(row=gndx + tndx, column=column).font = normal
                             elif key == 'Carbon': # handle differently
                                 tndx += 1
