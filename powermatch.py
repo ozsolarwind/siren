@@ -2020,6 +2020,7 @@ class powerMatch(QtWidgets.QWidget):
                                 bs.cell(row=gndx + tndx, column=column).font = bold
                         except:
                             pass
+            del_rows = []
             for group in self.batch_report:
                 if group[0] in ['Generation (MWh)', 'To Meet Load (MWh)']:
                     # remove storage or RE
@@ -2029,12 +2030,13 @@ class powerMatch(QtWidgets.QWidget):
                     else:
                         tst = 'R'
                     for row in range(gndx, gndx + len(self.batch_tech)):
-                        gen = bs.cell(row=row, column=1).value
                         try:
-                            if pmss_details[gen][1] == tst:
-                                bs.delete_rows(row, 1)
+                            if pmss_details[bs.cell(row=row, column=1).value][1] == tst:
+                                del_rows.append(row)
                         except:
                             pass
+            for row in sorted(del_rows, reverse=True):
+                bs.delete_rows(row, 1)   
             for column_cells in bs.columns:
                 length = 0
                 for cell in column_cells:
