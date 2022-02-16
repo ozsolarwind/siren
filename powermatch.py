@@ -2775,7 +2775,7 @@ class powerMatch(QtWidgets.QWidget):
             sp_data.append(['Total', cap_sum, tml_sum, gen_sum, cs, cost_sum, gs, co2_sum])
             if self.adjusted_lcoe:
                 sp_data.append(['Adjusted LCOE', '', '', '', '', '', gsw, ''])
-            if self.carbon_price > 0:
+            if self.carbon_price > 0 or option == 'B':
                 cc = co2_sum * self.carbon_price
                 if self.adjusted_lcoe:
                     cs = (cost_sum + cc) / sp_load
