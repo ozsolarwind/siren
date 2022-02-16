@@ -18,6 +18,8 @@
 #  Public License along with SIREN.  If not, see
 #  <http://www.gnu.org/licenses/>.
 #
+# Note: Batch process is all rather messy.
+from copy import copy
 import os
 import sys
 import time
@@ -305,7 +307,6 @@ class Adjustments(MyQDialog):
         return mw, mwtxt, mwcty, div
 
     def niceSize(window, ctr): # works for Adjustments window (probably because less that 640*480)
-      #  print(dir(window))
         height = window.frameSize().height() / 1.07
         height = 65 + ctr * 32
         width = window.frameSize().width()
@@ -648,7 +649,10 @@ class powerMatch(QtWidgets.QWidget):
         try:
              items = config.items('Powermatch')
              for key, value in items:
-                 if key[-5:] == '_file':
+                 if key == 'batch_new_file':
+                     if value.lower() in ['true', 'on', 'yes']:
+                         self.batch_new_file = True
+                 elif key[-5:] == '_file':
                      ndx = self.file_labels.index(key[:-5].title())
                      self.ifiles[ndx] = value
                  elif key[-6:] == '_sheet':
@@ -657,9 +661,6 @@ class powerMatch(QtWidgets.QWidget):
                  elif key == 'adjust_generators':
                      if value.lower() in ['true', 'on', 'yes']:
                          self.adjust_gen = True
-                 elif key == 'batch_new_file':
-                     if value.lower() in ['true', 'on', 'yes']:
-                         self.batch_new_file = True
                  elif key == 'adjusted_capacities':
                      self.adjustto = {}
                      bits = value.split(',')
@@ -1862,7 +1863,10 @@ class powerMatch(QtWidgets.QWidget):
             for tech in self.batch_tech:
                 batch_extra['LCOE ($/MWh)'].append([tech])
             batch_extra['LCOE ($/MWh)'].append(['Adjusted LCOE', 6])
+            ds = oxl.load_workbook(self.get_filename(self.files[B].text()))
+            batch_input_sheet = ds.active
             if self.batch_new_file:
+                ds.close()
                 i = self.files[B].text().rfind('.')
                 batch_report_file = self.get_filename(self.files[B].text()[:i] + '_report' + self.files[B].text()[i:])
                 if os.path.exists(batch_report_file):
@@ -1875,16 +1879,39 @@ class powerMatch(QtWidgets.QWidget):
                         batch_report_file += '.xlsx'
                 ds = oxl.Workbook()
                 bs = ds.active
-                bs.title = 'Batch Results'
+                bs.title = 'Results_' + QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),
+                           'yyyy-MM-dd_hhmm')
             else:
                 batch_report_file = self.get_filename(self.files[B].text())
-                ds = oxl.load_workbook(batch_report_file)
                 bs = ds.create_sheet('Results_' + QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),
-                                'yyyy-MM-dd_hhmm'))
+                                     'yyyy-MM-dd_hhmm'))
             normal = oxl.styles.Font(name='Arial')
             bold = oxl.styles.Font(name='Arial', bold=True)
-            bs.cell(row=1, column=1).value = 'Model Label'
-            bs.cell(row=1, column=1).font = bold
+            # copy header rows to new worksheet
+            done = False
+            for row in range(1, self.batch_report[0][1] + 1):
+                merge_cells = None
+                for col in range(1, len(self.batch_models) + 2):
+                    cell = batch_input_sheet.cell(row=row, column=col)
+                    if type(cell).__name__ == 'MergedCell':
+                        if merge_cells is None:
+                            merge_cells = [col - 1, col]
+                        else:
+                            merge_cells[1] = col
+                        continue
+                    new_cell = bs.cell(row=row, column=col, value=cell.value)
+                    if cell.has_style:
+                        new_cell.font = copy(cell.font)
+                        new_cell.border = copy(cell.border)
+                        new_cell.fill = copy(cell.fill)
+                        new_cell.number_format = copy(cell.number_format)
+                        new_cell.protection = copy(cell.protection)
+                        new_cell.alignment = copy(cell.alignment)
+                    if merge_cells is not None:
+                        bs.merge_cells(start_row=row, start_column=merge_cells[0], end_row=row, end_column=merge_cells[1])
+                        merge_cells = None
+                if merge_cells is not None:
+                        bs.merge_cells(start_row=row, start_column=merge_cells[0], end_row=row, end_column=merge_cells[1])
             column = 1
             gndx = self.batch_report[0][1] # Capacity group starting row
             batch_carbon_row = 0
@@ -1918,7 +1945,7 @@ class powerMatch(QtWidgets.QWidget):
                     elif self.batch_report[g][0] == 'Capacity Factor':
                         gndx -= 1
             incr = 10 / len(self.batch_models)
-            prgv = incr               
+            prgv = incr
             for model, capacities in self.batch_models.items():
                 self.progressbar.setValue(int(prgv))
                 prgv += incr
@@ -1987,7 +2014,7 @@ class powerMatch(QtWidgets.QWidget):
                             col = x[1]
                             bs.cell(row=gndx + tndx, column=column).value = sp_data[sp][col]
                             if key == 'RE':
-                                pct = float(sp_data[sp][col].strip('%')) / 100.                                
+                                pct = float(sp_data[sp][col].strip('%')) / 100.
                                 bs.cell(row=gndx + tndx, column=column).value = pct
                                 bs.cell(row=gndx + tndx, column=column).number_format = '0.0%'
                             else:
@@ -2003,7 +2030,7 @@ class powerMatch(QtWidgets.QWidget):
                                 if x[0] in ['Load met', 'Surplus']:
                                     tndx += 1
                                     col = batch_extra['Load Analysis'][tndx][1]
-                                    pct = float(sp_data[sp][col].strip('%')) / 100.                                
+                                    pct = float(sp_data[sp][col].strip('%')) / 100.
                                     bs.cell(row=gndx + tndx, column=column).value = pct
                                     bs.cell(row=gndx + tndx, column=column).number_format = '0.0%'
                                     bs.cell(row=gndx + tndx, column=column).font = normal
@@ -2036,7 +2063,7 @@ class powerMatch(QtWidgets.QWidget):
                         except:
                             pass
             for row in sorted(del_rows, reverse=True):
-                bs.delete_rows(row, 1)   
+                bs.delete_rows(row, 1)
             for column_cells in bs.columns:
                 length = 0
                 for cell in column_cells:
@@ -2053,8 +2080,8 @@ class powerMatch(QtWidgets.QWidget):
                 else:
                     cel = cell.column
                 bs.column_dimensions[cel].width = max(length * 1.3, 10)
-            bs.freeze_panes = 'B2'
-            bs.activeCell = 'B2'
+            bs.freeze_panes = 'B' + str(self.batch_report[0][1])
+            bs.activeCell = 'B' + str(self.batch_report[0][1])
             self.progressbar.setValue(10)
             ds.save(batch_report_file)
             self.setStatus(self.sender().text() + ' completed (' + str(len(self.batch_models)) + ' models)')
@@ -3527,12 +3554,12 @@ class powerMatch(QtWidgets.QWidget):
                     try:
                         pmss_details[gen][3] = capacity / pmss_details[gen][0]
                     except:
-                        print('(3438)', gen, capacity, pmss_details[gen][0])
+                        print('(3559)', gen, capacity, pmss_details[gen][0])
                 multi_value, op_data, extra = self.doDispatch(year, option, pmss_details, pmss_data, re_order,
                                               dispatch_order, pm_data_file, data_file)
                 if multi_value['load_pct'] < self.targets['load_pct'][3]:
                     if multi_value['load_pct'] == 0:
-                        print('(3443)', multi_value['lcoe'],
+                        print('(3564)', multi_value['lcoe'],
                             self.targets['load_pct'][3], multi_value['load_pct'])
                         lcoe_fitness_scores.append(1)
                     else:
@@ -4135,7 +4162,7 @@ class powerMatch(QtWidgets.QWidget):
             try:
                 best_score = np.min(lcoe_scores)
             except:
-                print('(4046)', lcoe_scores)
+                print('(4167)', lcoe_scores)
             best_ndx = lcoe_scores.index(best_score)
             lowest_chrom = population[best_ndx]
             self.setStatus('Starting LCOE: $%.2f' % best_score)
@@ -4504,7 +4531,7 @@ class powerMatch(QtWidgets.QWidget):
                     label = QtWidgets.QLabel(txt % amt)
                 except:
                     label = QtWidgets.QLabel('?')
-                    print('(4415)', key, txt, amt)
+                    print('(4536)', key, txt, amt)
                 label.setAlignment(QtCore.Qt.AlignCenter)
                 grid[h + 1].addWidget(label, rw, 0, 1, 3)
             rw += 1
