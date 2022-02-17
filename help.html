@@ -1126,6 +1126,10 @@ Options for <a href="#flexiplot">Flexiplot</a>. Properties for individual files 
 <td class="none">The type of plot. Options are Bar Graph, Cumulative, Linegraph, or Step Plot. The default is Bar Graph</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>random_colors, or<br />random_colours</dfn></td>
+<td class="none">If a colour for the series has not been defined a random colour will be generated. Setting this value to False will enable a new colour to be defined, and saved, for each series. The default is True</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>series (&ast;)</dfn></td>
 <td class="none">The series to be included in the plot defined as a set of Excel cells. A number of ranges can be defined</td>
 </tr>
@@ -2988,7 +2992,7 @@ If it's not a diurnal plot (i.e. Period is <em>&lt;None&gt;</em>) any occurence 
 <tr><td class="lr"><dfn>Series Label</dfn></td>
 <td class="none">The label for the Series (y values) (<em>ylabel</em>)</td></tr>
 <tr><td class="lr"><dfn>X Values</dfn></td>
-<td class="none">The data values to be plotted. The range is specified as either Excel columns and rows, e.g. <em>A2:A29</em> or as four numbers defining the row and columns range, e.g. <em>2,1,2,29</em>. The series can either be in rows or columns but is expected to be a single row or column (as in the examples). The first column (A) is taken as the X labels and the data series chosen will be plotted (<em>xlabels</em>)</td></tr>
+<td class="none">The data values to be plotted. The range is specified as either Excel columns and rows, e.g. <em>A2:A29</em> or as four numbers defining the row and columns range, e.g. <em>2,1,2,29</em>. The series can either be in rows or columns but is expected to be a single row or column (as in the examples). The first column (A) is taken as the X labels and the data series chosen will be plotted (<em>xvalues</em>)</td></tr>
 <tr><td class="lr"><dfn>X Label</dfn></td>
 <td class="none">The label for the X Axis (x values) (<em>xlabel</em>)</td></tr>
 <tr><td class="bottom"><strong>Preferences</strong></td>
@@ -3326,7 +3330,7 @@ If the best and worse values are the same for a variable and that value is not a
 </tr>
 <tr class="none">
 <td class="none"><dfn>Batch</dfn></td>
-<td class="none">A table of input capacities and report options as described above. The first column contains a list of Generators followed by the desired report details. Each subsequent column contains the details for a model. Each row contains capacity details for a Generator. The table can also have up to five &ldquo;header&rdquo; rows which will be copied to the output report worksheet</td>
+<td class="none">The first worksheet in the file gives a table of input capacities and report options as described above. The first column contains a list of Generators followed by the desired report details. Each subsequent column contains the details for a model. Each row contains capacity details for a Generator. The table can also have up to five &ldquo;header&rdquo; rows which will be copied to the output report worksheet</td>
 </tr>
 </table>
 <h4>Minimal Preferences file for Powermatch</h4>

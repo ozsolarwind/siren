@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2020 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2022 Sustainable Energy Now Inc., Angus King
 #
 #  colours.py - This file is part of SIREN.
 #
@@ -28,7 +28,7 @@ from senuser import techClean
 
 class Colours(QtWidgets.QDialog):
 
-    def __init__(self, ini_file=None, section='Colors', add_colour=False, palette=None):
+    def __init__(self, ini_file=None, section='Colors', add_colour=False, palette=None, underscore=False):
         super(Colours, self).__init__()
         config = configparser.RawConfigParser()
         if ini_file is not None:
@@ -38,6 +38,7 @@ class Colours(QtWidgets.QDialog):
         else:
             self.config_file = getModelFile('SIREN.ini')
         self.section = section
+        self.underscore = underscore
         config.read(self.config_file)
         groups = ['Fossil Technologies', 'Grid', 'Map', 'Plot', 'Resource', 'Technologies', 'The Rest']
         map_colours = ['background', 'border', 'fossil', 'fossil_name', 'station', 'station_name',
@@ -102,9 +103,15 @@ class Colours(QtWidgets.QDialog):
                     for c in range(3):
                         colr.append(int(col[0].getRgb()[c] + inc[c] * i))
                     QtGui.QColor.setRgb(col[1], colr[0], colr[1], colr[2])
-                    self.colours[palette[i].lower().replace(' ', '_')] = ['', col[1].name()]
+                    if self.underscore:
+                        self.colours[palette[i].lower()] = ['', col[1].name()]
+                    else:
+                        self.colours[palette[i].lower().replace(' ', '_')] = ['', col[1].name()]
             else:
-                self.colours[palette[0].lower().replace(' ', '_')] = ['', col[0].name()]
+                if self.underscore:
+                    self.colours[palette[0].lower()] = ['', col[0].name()]
+                else:
+                    self.colours[palette[0].lower().replace(' ', '_')] = ['', col[0].name()]
         group_colours = False
         try:
             gc = config.get('View', 'group_colours')
@@ -159,7 +166,10 @@ class Colours(QtWidgets.QDialog):
                 self.add_item(key, value, i)
                 i += 1
         if add_colour:
-            key = add_colour.lower().replace(' ', '_')
+            if self.underscore:
+                key = add_colour.lower()
+            else:
+                key = add_colour.lower().replace(' ', '_')
             self.colours[key] = ['', '']
             self.add_item(key, ['', ''], -1)
             self.showDialog(colour=key)
@@ -304,7 +314,10 @@ class Colours(QtWidgets.QDialog):
     def addClicked(self):
         text, ok = QtWidgets.QInputDialog.getText(self, 'Add Colour Item', 'Enter name for colour item:')
         if ok:
-            key = text.lower().replace(' ', '_')
+            if self.underscore:
+                key = text.lower()
+            else:
+                key = text.lower().replace(' ', '_')
             self.colours[key] = ['', '']
             self.add_item(key, ['', ''], -1)
 

@@ -28,6 +28,7 @@ import matplotlib
 from matplotlib.font_manager import FontProperties
 import pylab as plt
 import pyexcel as pxl
+import random
 import displayobject
 from colours import Colours
 from credits import fileVersion
@@ -438,6 +439,7 @@ class FlexiPlot(QtWidgets.QWidget):
         self.constrained_layout = False
         self.palette = True
         self.sparse_ticks = []
+        self.random_colours = True
         config = configparser.RawConfigParser()
         config.read(self.config_file)
         try: # get defaults and list of files if any
@@ -464,6 +466,9 @@ class FlexiPlot(QtWidgets.QWidget):
                 elif key == 'palette':
                     if value.lower() in ['false', 'no', 'off']:
                         self.palette = False
+                elif key == 'random_colours' or key == 'random_colors':
+                    if value.lower() in ['false', 'no', 'off']:
+                        self.random_colours = False
                 elif key == 'sparse_ticks':
                     try:
                         self.sparse_ticks = [int(value)]
@@ -830,7 +835,7 @@ class FlexiPlot(QtWidgets.QWidget):
             for item in self.ignore.selectedItems():
                 palette.append(item.text())
         dialr = Colours(section='Plot Colors', ini_file=self.config_file, add_colour=color,
-                        palette=palette)
+                        palette=palette, underscore=True)
         dialr.exec_()
         self.colours = {}
         config = configparser.RawConfigParser()
@@ -859,7 +864,14 @@ class FlexiPlot(QtWidgets.QWidget):
         colr = colour.lower()
         if colr in self.colours.keys():
             return True
-        colr2 = colr.replace(' ', '_')
+        elif self.random_colours:
+            # new approach to generate random colour if not in [Plot Colors]
+            r = lambda: random.randint(0,255)
+            new_colr = '#%02X%02X%02X' % (r(),r(),r())
+            self.colours[colr] = new_colr
+            return True
+        # previous approach may ask for new colours to be stored in .ini file
+        colr2 = colr.replace('_', ' ')
         if config is not None:
             try:
                 amap = config.get('Map', 'map_choice')
