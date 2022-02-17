@@ -405,10 +405,10 @@ class FlexiPlot(QtWidgets.QWidget):
         self.log.setPalette(msg_palette)
         self.grid.addWidget(self.log, rw, 1, 1, 4)
         rw += 1
-        quit = QtWidgets.QPushButton('Done', self)
-        self.grid.addWidget(quit, rw, 0)
-        quit.clicked.connect(self.quitClicked)
-        QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
+        done = QtWidgets.QPushButton('Done', self)
+        self.grid.addWidget(done, rw, 0)
+        done.clicked.connect(self.doneClicked)
+        QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.doneClicked)
         pp = QtWidgets.QPushButton('Plot', self)
         self.grid.addWidget(pp, rw, 1)
         pp.clicked.connect(self.ppClicked)
@@ -717,7 +717,7 @@ class FlexiPlot(QtWidgets.QWidget):
         for row in range(roco[0], roco[2] + 1):
             for col in range(roco[1], roco[3] + 1):
                 try:
-                    column = ws[row, col].replace('\n',' ')
+                    column = str(ws[row, col]).replace('\n', ' ')
                 except:
                     continue
                 self.columns.append(column) # need order of columns
@@ -747,7 +747,7 @@ class FlexiPlot(QtWidgets.QWidget):
                  title='Help for flexiplot (' + fileVersion() + ')', section='flexiplot')
         dialog.exec_()
 
-    def quitClicked(self):
+    def doneClicked(self):
         if self.book is not None:
             pxl.free_resources()
         if not self.updated and not self.colours_updated:
@@ -776,7 +776,10 @@ class FlexiPlot(QtWidgets.QWidget):
         if self.updated:
             config = configparser.RawConfigParser()
             config.read(self.config_file)
-            choice = self.history[0]
+            try:
+                choice = self.history[0]
+            except:
+                choice = ''
             save_file = self.file.text().replace(getUser(), '$USER$')
             try:
                 self.max_files = int(config.get('Flexiplot', 'file_choices'))
@@ -784,18 +787,21 @@ class FlexiPlot(QtWidgets.QWidget):
                 pass
             lines = []
             fix_history = []
-            if len(self.history) > 0:
-                check_history = []
-                line = ''
-                for i in range(len(self.history)):
-                    itm = self.history[i]
-                    if self.files.itemText(i) in check_history:
-                        fix_history.append([i, itm])
-                    else:
-                        check_history.append(self.files.itemText(i))
-                        line += itm + ','
-                line = line[:-1]
-                lines.append('file_history=' + line)
+            try:
+                if len(self.history) > 0:
+                    check_history = []
+                    line = ''
+                    for i in range(len(self.history)):
+                        itm = self.history[i]
+                        if self.files.itemText(i) in check_history:
+                            fix_history.append([i, itm])
+                        else:
+                            check_history.append(self.files.itemText(i))
+                            line += itm + ','
+                    line = line[:-1]
+                    lines.append('file_history=' + line)
+            except:
+                pass
             cols = 'columns' + choice + '='
             for col in range(self.order.count()):
                 try:
