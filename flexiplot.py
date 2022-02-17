@@ -218,6 +218,16 @@ class FlexiPlot(QtWidgets.QWidget):
         else:
             self.config_file = getModelFile('flexiplot.ini')
         config.read(self.config_file)
+        if not config.has_section('Flexiplot'): # new file set windows section
+            self.restorewindows = True
+        else:
+            self.restorewindows = False
+        try:
+            rw = config.get('Windows', 'restorewindows')
+            if rw.lower() in ['true', 'yes', 'on']:
+                self.restorewindows = True
+        except:
+            pass
         parents = []
         self.colours = {}
         try:
@@ -422,8 +432,17 @@ class FlexiPlot(QtWidgets.QWidget):
         self.layout.addWidget(self.scroll)
         self.setWindowTitle('SIREN - flexiplot (' + fileVersion() + ') - FlexiPlot')
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
-        self.center()
-        self.resize(int(self.sizeHint().width() * 1.07), int(self.sizeHint().height() * 1.07))
+        if self.restorewindows:
+            try:
+                rw = config.get('Windows', 'flexiplot_size').split(',')
+                self.resize(int(rw[0]), int(rw[1]))
+                mp = config.get('Windows', 'flexiplot_pos').split(',')
+                self.move(int(mp[0]), int(mp[1]))
+            except:
+                pass
+        else:
+            self.center()
+            self.resize(int(self.sizeHint().width() * 1.2), int(self.sizeHint().height() * 1.2))
         self.log.setText('Preferences file: ' + self.config_file)
         self.show()
 
@@ -736,6 +755,17 @@ class FlexiPlot(QtWidgets.QWidget):
         self.saveConfig()
         self.close()
 
+    def closeEvent(self, event):
+        if self.restorewindows:
+            updates = {}
+            lines = []
+            add = int((self.frameSize().width() - self.size().width()) / 2)   # need to account for border
+            lines.append('flexiplot_pos=%s,%s' % (str(self.pos().x() + add), str(self.pos().y() + add)))
+            lines.append('flexiplot_size=%s,%s' % (str(self.width()), str(self.height())))
+            updates['Windows'] = lines
+            SaveIni(updates, ini_file=self.config_file)
+        event.accept()
+
     def editIniFile(self):
         curfldr = self.file.text()[:self.file.text().rfind('/')]
         dialr = EditSect('Flexiplot', curfldr, ini_file=self.config_file)
@@ -816,6 +846,8 @@ class FlexiPlot(QtWidgets.QWidget):
                 for prop in props:
                     lines.append(prop + fix_history[i][1] + '=')
             updates['Flexiplot'] = lines
+            if self.restorewindows and not config.has_section('Windows'): # new file set windows section
+                updates['Windows'] = ['restorewindows=True']
         if self.colours_updated:
             lines = []
             for key, value in self.colours.items():
