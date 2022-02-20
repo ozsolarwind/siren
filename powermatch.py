@@ -2074,11 +2074,12 @@ class powerMatch(QtWidgets.QWidget):
                         continue
                     if len(value) > length:
                         length = len(value)
+              #         length = len(u"{0}".format(cell.value))
                 if isinstance(cell.column, int):
                     cel = ss_col(cell.column)
                 else:
                     cel = cell.column
-                bs.column_dimensions[cel].width = max(length * 1.3, 10)
+                bs.column_dimensions[cel].width = max(length * 1.05, 10)
             bs.freeze_panes = 'B' + str(self.batch_report[0][1])
             bs.activeCell = 'B' + str(self.batch_report[0][1])
             self.progressbar.setValue(10)
