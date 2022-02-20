@@ -972,6 +972,7 @@ class FlexiPlot(QtWidgets.QWidget):
         x = []
         xlabels = []
         rocox = get_range(self.xvalues[0])
+      #  print(rocox)
         data_in_cols = True
         if rocox[1] == rocox[3]:
             pass
