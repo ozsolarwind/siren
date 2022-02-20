@@ -1824,7 +1824,6 @@ class powerMatch(QtWidgets.QWidget):
         if self.results_prefix != '':
             j = data_file.rfind('/')
             data_file = data_file[: j + 1] + self.results_prefix + '_' + data_file[j + 1:]
-        self.progressbar.setValue(2)
         for itm in range(self.order.count()):
             gen = self.order.item(itm).text()
             if self.generators[gen].capacity <= 0:
@@ -1846,6 +1845,7 @@ class powerMatch(QtWidgets.QWidget):
             dispatch_order.append(gen)
             pmss_details[gen] = [self.generators[gen].capacity, typ, -1, 1]
         if option == 'B':
+            start_time = time.time() # just for fun
             batch_details = {'Capacity (MW/MWh)': [1, '#,##0.00'], 'To Meet Load (MWh)': [2, '#,##0'],
                              'Generation (MWh)': [3, '#,##0'], 'Capacity Factor': [4, '#,##0.00'],
                              'Cost ($/Yr)': [5, '#,##0'], 'LCOE ($/MWh)': [6, '#,##0.00'],
@@ -2084,7 +2084,13 @@ class powerMatch(QtWidgets.QWidget):
             bs.activeCell = 'B' + str(self.batch_report[0][1])
             self.progressbar.setValue(10)
             ds.save(batch_report_file)
-            self.setStatus(self.sender().text() + ' completed (' + str(len(self.batch_models)) + ' models)')
+            tim = (time.time() - start_time)
+            if tim < 60:
+                tim = '%.1f secs' % tim
+            else:
+                tim = '%.2f mins' % tim / 60.
+            self.setStatus('%s completed (%d models; %s)' % (self.sender().text(),
+                           len(self.batch_models), tim))
             return
         if do_adjust:
             if self.adjustto is not None:
