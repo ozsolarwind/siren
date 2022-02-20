@@ -1911,6 +1911,11 @@ class powerMatch(QtWidgets.QWidget):
                         merge_cells = None
                 if merge_cells is not None:
                     bs.merge_cells(start_row=row, start_column=merge_cells[0], end_row=row, end_column=merge_cells[1])
+            try:
+                normal = oxl.styles.Font(name=cell.font.name, sz=cell.font.sz)
+                bold = oxl.styles.Font(name=cell.font.name, sz=cell.font.sz, bold=True)
+            except:
+                pass
             column = 1
             gndx = self.batch_report[0][1] # Capacity group starting row
             batch_carbon_row = 0
