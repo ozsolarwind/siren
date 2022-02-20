@@ -1516,17 +1516,17 @@ class powerMatch(QtWidgets.QWidget):
                 self.batch_report.append([techClean(ws.cell_value(row, 0), full=True), row + 1])
         for col in range(1, ws.ncols):
             model = ws.cell_value(istrt - 1, col)
-            self.batch_models[model] = {}
+            self.batch_models[col] = {'name': model}
             for row in range(1, istop):
                 tech = ws.cell_value(row, 0)
                 try:
                     if ws.cell_value(row, col) > 0:
-                        self.batch_models[model][tech] = ws.cell_value(row, col)
+                        self.batch_models[col][tech] = ws.cell_value(row, col)
                 except:
                     pass
             if carbon_row >= 0:
                 if isinstance(ws.cell_value(carbon_row, col), float):
-                    self.batch_models[model]['Carbon Price'] = ws.cell_value(carbon_row, col)
+                    self.batch_models[col]['Carbon Price'] = ws.cell_value(carbon_row, col)
         return True
 
     def setOrder(self):
@@ -1961,7 +1961,7 @@ class powerMatch(QtWidgets.QWidget):
                     save_carbon_price = self.carbon_price
                     self.carbon_price = capacities['Carbon Price']
                 sp_data = self.doDispatch(year, option, pmss_details, pmss_data, re_order, dispatch_order,
-                           pm_data_file, data_file, title=model)
+                           pm_data_file, data_file, title=capacities['name'])
                 if 'Carbon Price' in capacities.keys():
                     self.carbon_price = save_carbon_price
                 # first the Facility/technology table at the top of sp_data
