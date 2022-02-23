@@ -2162,7 +2162,7 @@ class powerMatch(QtWidgets.QWidget):
                 chs = None
                 in_chart = False
                 cht_cells = ['N', 'B']
-                cht_row = -20
+                cht_row = -27
                 tndx_rows = max(9, len(self.batch_tech) + 4)
                 cats = None
                 chart_group = ''
@@ -2179,7 +2179,7 @@ class powerMatch(QtWidgets.QWidget):
                             if cats is not None:
                                 charts[-1].set_categories(cats)
                             if len(charts) % 2:
-                                cht_row += 25
+                                cht_row += 30
                             if chart_group != '':
                                 cht_col = col_letters.index(cht_cells[len(charts) % 2])
                                 chs.cell(row=cht_row - 1, column=cht_col).value = chart_group
@@ -2250,7 +2250,7 @@ class powerMatch(QtWidgets.QWidget):
                     if cats is not None:
                         charts[-1].set_categories(cats)
                     if len(charts) % 2:
-                        cht_row += 25
+                        cht_row += 30
                     chs.add_chart(charts[-1], cht_cells[len(charts) % 2] + str(cht_row))
             self.progressbar.setValue(10)
             ds.save(batch_report_file)
