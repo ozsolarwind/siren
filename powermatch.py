@@ -2165,6 +2165,7 @@ class powerMatch(QtWidgets.QWidget):
                 cht_row = -20
                 tndx_rows = max(9, len(self.batch_tech) + 4)
                 cats = None
+                chart_group = ''
                 for row in range(self.batch_report[-1][1], batch_input_sheet.max_row + 1):
                     if batch_input_sheet.cell(row=row, column=1).value is None:
                         continue
@@ -2179,6 +2180,9 @@ class powerMatch(QtWidgets.QWidget):
                                 charts[-1].set_categories(cats)
                             if len(charts) % 2:
                                 cht_row += 25
+                            if chart_group != '':
+                                cht_col = col_letters.index(cht_cells[len(charts) % 2])
+                                chs.cell(row=cht_row - 1, column=cht_col).value = chart_group
                             chs.add_chart(charts[-1], cht_cells[len(charts) % 2] + str(cht_row))
                         in_chart = True
                         if chs is None:
@@ -2189,6 +2193,7 @@ class powerMatch(QtWidgets.QWidget):
                         if batch_input_sheet.cell(row=row, column=2).value is None or len(merged_cells) == 0:
                             min_col = 2
                             max_col = bs.max_column
+                            chart_group = ''
                         else:
                             merge_group = get_value(batch_input_sheet, row, 2)
                             for i in range(len(merged_cells) -1, -1, -1):
@@ -2196,6 +2201,7 @@ class powerMatch(QtWidgets.QWidget):
                                 if merge_value == merge_group:
                                     min_col = merged_cells[i][1]
                                     max_col = merged_cells[i][2]
+                                    chart_group = merge_group
                                     break
                     elif not in_chart:
                         continue
