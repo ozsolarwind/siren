@@ -3135,6 +3135,8 @@ In producing the LCOE figures you can choose to use LCOE figures that ignore any
 <td class="none">File name for Powermatch output (report) spreadsheet. Clicking on the field will allow you to choose the name for the report spreadsheet. <strong>Note:</strong> If the  <em>change_results</em> property of the <em>[Powermatch]</em> Section is set changes to the input spreadsheet name will cause this Results spreadsheet name to change (<em>results_file</em>)</td></tr>
 <tr><td class="lr"><dfn>Batch File</dfn></td>
 <td class="none">File name for Batch option. Clicking on the field will allow you to choose another spreadsheet from the SIREN Scenarios folder (<em>batch_file</em>)</td></tr>
+<tr><td class="lr"><dfn>Replace Last</dfn></td>
+<td class="none">By checking this option you can choose to replace the latest Results and Charts worksheets when running the Batch option</td></tr>
 <tr><td class="lr"><dfn>Discount Rate</dfn></td>
 <td class="none">The default discount rate to be used if costs rather than a Reference LCOE are being used to calculate generation costs. <strong>Note:</strong> It is not uncommon to use WACC as a discount rate (<em>discount_rate</em>)</td></tr>
 <tr><td class="lr"><dfn>Carbon Price</dfn></td>
@@ -3182,7 +3184,8 @@ In producing the LCOE figures you can choose to use LCOE figures that ignore any
 <li>Assuming a generator is listed in column L.<br />Calculate the percentage of time it is running below 55% of capacity - <code>=COUNTIF(L2:L8771,">"&L1*0.55)/8760</code></li>
 <li>Assuming a storage facility is listed in column I, it's balance will be in column J.<br />Calculate the percentage of time it is at full capacity - <code>=COUNTIF(J2:J8771,"="&I1)/8760</code><br />and at less than or equal to 10% capacity - <code>=COUNTIF(J2:J8771,"<="&I1*0.1)/8760</code></li>
 </ul>
-<li><strong>Batch</strong>. Invoke Powermatch for a number of &ldquo;models&rdquo; with different capacities for each technology. This option produces a worksheet containing selected details from the Summary Output with one column per model. An input spreadsheet contains a column with the capacities for each model. A list of the desired details from the Summary Table can be specified below the list of technologies (capacities). The details can include any of: 'Capacity (MW)', 'Capacity Factor', 'Carbon', 'Carbon Price', 'Cost ($/Yr)', 'Emissions (tCO2e)', 'Generation (MWh)', 'LCOE ($/MWh)' 'Load Analysis', 'RE', and 'To Meet Load (MWh)'. 'Capacity (MW)' is required and must be the first entry. 'Carbon Price' allows you to input a different Carbon Price for each Model. By default the resulting output will be appended as a new worksheet to the input file. You can create a new spreadsheet by setting the <em>batch_new_file</em> property to True</li>
+<li><strong>Batch</strong>. Invoke Powermatch for a number of &ldquo;models&rdquo; with different capacities for each technology. This option produces a worksheet containing selected details from the Summary Output with one column per model. An input spreadsheet contains a column with the capacities for each model. A list of the desired details from the Summary Table can be specified below the list of technologies (capacities). The details can include any of: 'Capacity (MW)', 'Capacity Factor', 'Carbon', 'Carbon Price', 'Cost ($/Yr)', 'Emissions (tCO2e)', 'Generation (MWh)', 'LCOE ($/MWh)' 'Load Analysis', 'RE', and 'To Meet Load (MWh)'. 'Capacity (MW)' is required and must be the first entry. 'Carbon Price' allows you to input a different Carbon Price for each Model. By default the resulting output will be appended as a new worksheet to the input file. You can create a new spreadsheet by setting the <em>batch_new_file</em> property to True
+<br />The Batch option also has a prototype chart facility that can be used to do sensitivity analysis on a suite of batch models - see <a href="#pm_batch_graphs">below</a></li>
 <li><strong>Optimise</strong>. Invoke the Optimise function. This will use an iterative approach to optimise the input generator capacities to produce a solution with (a) either a lower overall LCOE, or (b) the lowest weight for six variables, or (c) both. It will complete by displaying a plot of how the value for LCOE has converged to a minimum, and a either a three dimensional plot showing the three variables with the highest weightings or a table of all variables for the multi-variable approach. Exiting the plot will then produce a summary table; the summary table will also contain details on the Optimisation parameters used. It will also update the adjustment values for each generator to enable you to produce a Powermatch spreadsheet. See below for more details</li>
 <li><strong>Help</strong>. Display the Powermatch help</li>
 </ul>
@@ -3316,9 +3319,57 @@ If the best and worse values are the same for a variable and that value is not a
 <li>Present a table for the optimal solutions. The table shows the adjustment values and capacity for each generator followed by the estimated value for each of the six multi-variables prioritised by Weight. By pressing the appropriate button the adjustment values for the chosen solution will be made available for <strong>Summary</strong> and <strong>Powermatch</strong></li>
 </ol>
 </div>
+<div class="experiment">
+<h4 id="pm_batch_graphs">Batch graphs</h4>
+<p>With the Batch option there is a possibility to produce a set of charts (graphs) to display impacts of a range of models. The facility is somewhat limited and should be considered as useful for creating protoype charts rather than fully formatted ones. The specifications for charts can be included in the input worksheet after the desired report details. Charts are created in a worksheet placed after the results worksheet. Charts are specified by a number of rows of information in the first three columns of the input worksheet. The first column is the chart parameter, the second contains the report area as in the report outputs, the third contains the row (e.g. technology) of interest.
+<table border="0", class="none">
+<tr>
+<th>Parameter</th>
+<th>Details</th>
+<th>Item</th>
+<th>Description</th>
+</tr>
+<tr class="none">
+<td>Chart</td>
+<td>Group</td>
+<td>&nbsp;</td>
+<td>The group of interest, or all models. The group of interest can be defined by merged cells above the model names</td>
+</tr>
+<tr class="none">
+<td>Title</td>
+<td>Title</td>
+<td>&nbsp;</td>
+<td>The chart title</td>
+</tr>
+<tr class="none">
+<td>X-Title</td>
+<td>X axis title</td>
+<td>&nbsp;</td>
+<td>The title for the X (horizontal) axis</td>
+</tr>
+<tr class="none">
+<td>Y-Title</td>
+<td>Y axis title</td>
+<td>&nbsp;</td>
+<td>The title for the Y (vertical) axis</td>
+</tr>
+<tr class="none">
+<td>Categories</td>
+<td>Group</td>
+<td>Item</td>
+<td>Category (X axis) labels</td>
+</tr>
+<tr class="none">
+<td>Data</td>
+<td>Group</td>
+<td>Item</td>
+<td>Data row. This can be repeated for multiple rows of data</td>
+</tr>
+</table>
+<p>As the Batch report can contains repeating items, one for each report area, Powermatch uses the Report group to identify the row of interest</p>
+</div>
 <h4>Powermatch input file formats</h4>
 <p>Powermatch has a number of input files which are generally in the form of a simple table stored in an Excel spreadsheet, in most instances in either XLS or XLSX format. Constraints, Generators and Optimisation tables can be stored as separate worksheets in the same Excel file (workbook). Further details on some of the file formats can be found above. The input files are:
-
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><dfn>Constraints</dfn></td>

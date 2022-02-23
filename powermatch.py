@@ -36,8 +36,12 @@ from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.ticker import LinearLocator, FormatStrFormatter
 import numpy as np
 import openpyxl as oxl
+from openpyxl.chart import (
+    LineChart,
+    Reference,
+    Series
+)
 import random
-# from openpyxl.utils import get_column_letter
 from parents import getParents
 from senuser import getUser, techClean
 from editini import EdtDialog, SaveIni
@@ -75,6 +79,50 @@ def ss_col(col, base=1):
     c2 = col % 26
     return (col_letters[c1] + col_letters[c2 + 1]).strip()
 
+def get_value(ws, row, col):
+    def get_range(text, alphabet=None, base=1):
+        if len(text) < 1:
+            return None
+        if alphabet is None:
+            alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+        if alphabet[0] == ' ':
+            alphabet = alphabet[1:]
+        alphabet = alphabet.upper()
+        bits = ['', '']
+        b = 0
+        in_char = True
+        for char in text:
+            if char.isdigit():
+                if in_char:
+                    in_char = False
+                    b += 1
+            else:
+                if alphabet.find(char.upper()) < 0:
+                    continue
+                if not in_char:
+                    in_char = True
+                    b += 1
+            if b >= len(bits):
+                break
+            bits[b] += char.upper()
+        try:
+            bits[1] = int(bits[1]) - (1 - base)
+        except:
+            pass
+        row = 0
+        ndx = 1
+        for c in range(len(bits[0]) -1, -1, -1):
+            ndx1 = alphabet.index(bits[0][c]) + 1
+            row = row + ndx1 * ndx
+            ndx = ndx * len(alphabet)
+        bits[0] = row - (1 - base)
+        for c in bits:
+            if c == '':
+                return None
+        return [bits[1], bits[0]]
+    while ws.cell(row=row, column=col).value[0] == '=':
+        row, col = get_range(ws.cell(row=row, column=col).value)
+    return ws.cell(row=row, column=col).value
 
 class ListWidget(QtWidgets.QListWidget):
     def decode_data(self, bytearray):
@@ -827,6 +875,11 @@ class powerMatch(QtWidgets.QWidget):
                 edit[i].clicked.connect(self.editClicked)
             r += 1
       #  wdth = edit[1].fontMetrics().boundingRect(edit[1].text()).width() + 9
+        self.grid.addWidget(QtWidgets.QLabel('Replace Last:'), r, 0)
+        self.replace_last = QtWidgets.QCheckBox('(check to replace last Results worksheet in Batch spreadsheet)', self)
+        self.replace_last.setCheckState(QtCore.Qt.Unchecked)
+        self.grid.addWidget(self.replace_last, r, 1, 1, 4)
+        r += 1
         self.grid.addWidget(QtWidgets.QLabel('Discount Rate:'), r, 0)
         self.discount = QtWidgets.QDoubleSpinBox()
         self.discount.setRange(0, 100)
@@ -1511,6 +1564,9 @@ class powerMatch(QtWidgets.QWidget):
         carbon_row = -1
         for row in range(istop, ws.nrows):
             if ws.cell_value(row, 0) != '':
+                if ws.cell_value(row, 0).lower() in ['chart', 'graph', 'plot']:
+                    self.batch_report.append(['Chart', row + 1])
+                    break
                 if ws.cell_value(row, 0).lower() == 'carbon price':
                     carbon_row = row
                 self.batch_report.append([techClean(ws.cell_value(row, 0), full=True), row + 1])
@@ -1882,21 +1938,28 @@ class powerMatch(QtWidgets.QWidget):
                            'yyyy-MM-dd_hhmm')
             else:
                 batch_report_file = self.get_filename(self.files[B].text())
+                if self.replace_last.isChecked():
+                    ws = ds.worksheets[-1]
+                    if ws.title[:7] == 'Charts_':
+                        ds.remove(ws)
+                        ws = ds.worksheets[-1]
+                    if ws.title[:8] == 'Results_':
+                        ds.remove(ws)
                 bs = ds.create_sheet('Results_' + QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),
                                      'yyyy-MM-dd_hhmm'))
             normal = oxl.styles.Font(name='Arial')
             bold = oxl.styles.Font(name='Arial', bold=True)
             # copy header rows to new worksheet
-            done = False
+            merged_cells = []
+            merge_cells = None
             for row in range(1, self.batch_report[0][1] + 2):
-                merge_cells = None
                 for col in range(1, batch_input_sheet.max_column + 1):
                     cell = batch_input_sheet.cell(row=row, column=col)
                     if type(cell).__name__ == 'MergedCell':
                         if merge_cells is None:
-                            merge_cells = [col - 1, col]
+                            merge_cells = [row, col - 1, col]
                         else:
-                            merge_cells[1] = col
+                            merge_cells[2] = col
                         continue
                     new_cell = bs.cell(row=row, column=col, value=cell.value)
                     if cell.has_style:
@@ -1907,10 +1970,13 @@ class powerMatch(QtWidgets.QWidget):
                         new_cell.protection = copy(cell.protection)
                         new_cell.alignment = copy(cell.alignment)
                     if merge_cells is not None:
-                        bs.merge_cells(start_row=row, start_column=merge_cells[0], end_row=row, end_column=merge_cells[1])
+                        bs.merge_cells(start_row=row, start_column=merge_cells[1], end_row=row, end_column=merge_cells[2])
+                        merged_cells.append(merge_cells)
                         merge_cells = None
                 if merge_cells is not None:
-                    bs.merge_cells(start_row=row, start_column=merge_cells[0], end_row=row, end_column=merge_cells[1])
+                    bs.merge_cells(start_row=row, start_column=merge_cells[1], end_row=row, end_column=merge_cells[2])
+                    merged_cells.append(merge_cells)
+                    merge_cells = None
             try:
                 normal = oxl.styles.Font(name=cell.font.name, sz=cell.font.sz)
                 bold = oxl.styles.Font(name=cell.font.name, sz=cell.font.sz, bold=True)
@@ -1920,6 +1986,8 @@ class powerMatch(QtWidgets.QWidget):
             gndx = self.batch_report[0][1] # Capacity group starting row
             batch_carbon_row = 0
             for g in range(len(self.batch_report)):
+                if self.batch_report[g][0] == 'Chart':
+                    continue
                 if self.batch_report[g][0] == 'Carbon Price':
                     batch_carbon_row = self.batch_report[g][1]
                     continue
@@ -2087,6 +2155,97 @@ class powerMatch(QtWidgets.QWidget):
                 bs.column_dimensions[cel].width = max(length * 1.05, 10)
             bs.freeze_panes = 'B' + str(self.batch_report[0][1])
             bs.activeCell = 'B' + str(self.batch_report[0][1])
+            # check if any charts/graphs
+            if self.batch_report[-1][0] == 'Chart':
+                min_col = 2
+                max_col = bs.max_column
+                chs = None
+                in_chart = False
+                cht_cells = ['N', 'B']
+                cht_row = -20
+                tndx_rows = max(9, len(self.batch_tech) + 4)
+                cats = None
+                for row in range(self.batch_report[-1][1], batch_input_sheet.max_row + 1):
+                    if batch_input_sheet.cell(row=row, column=1).value is None:
+                        continue
+                    if batch_input_sheet.cell(row=row, column=1).value.lower() in ['chart', 'graph', 'plot']:
+                        if in_chart:
+                            charts[-1].width = 20
+                            charts[-1].height = 12
+                            for s in range(len(charts[-1].series)):
+                                ser = charts[-1].series[s]
+                                ser.marker.symbol = 'circle' #‘dot’, ‘plus’, ‘triangle’, ‘x’, ‘picture’, ‘star’, ‘diamond’, ‘square’, ‘circle’, ‘dash’, ‘auto’
+                            if cats is not None:
+                                charts[-1].set_categories(cats)
+                            if len(charts) % 2:
+                                cht_row += 25
+                            chs.add_chart(charts[-1], cht_cells[len(charts) % 2] + str(cht_row))
+                        in_chart = True
+                        if chs is None:
+                            txt = bs.title.replace('Results', 'Charts')
+                            chs = ds.create_sheet(txt)
+                            charts = []
+                        charts.append(LineChart())
+                        if batch_input_sheet.cell(row=row, column=2).value is None or len(merged_cells) == 0:
+                            min_col = 2
+                            max_col = bs.max_column
+                        else:
+                            merge_group = get_value(batch_input_sheet, row, 2)
+                            for i in range(len(merged_cells) -1, -1, -1):
+                                merge_value = get_value(batch_input_sheet, merged_cells[i][0], merged_cells[i][1])
+                                if merge_value == merge_group:
+                                    min_col = merged_cells[i][1]
+                                    max_col = merged_cells[i][2]
+                                    break
+                    elif not in_chart:
+                        continue
+                    elif batch_input_sheet.cell(row=row, column=1).value.lower() == 'title':
+                        charts[-1].title = batch_input_sheet.cell(row=row, column=2).value
+                    elif batch_input_sheet.cell(row=row, column=1).value.lower() == 'x-title':
+                        charts[-1].x_axis.title = get_value(batch_input_sheet, row, 2)
+                    elif batch_input_sheet.cell(row=row, column=1).value.lower() == 'y-title':
+                        charts[-1].y_axis.title = batch_input_sheet.cell(row=row, column=2).value
+                    elif batch_input_sheet.cell(row=row, column=1).value.lower() in ['categories', 'y-labels', 'data']:
+                        dgrp = get_value(batch_input_sheet, row, 2)
+                        if batch_input_sheet.cell(row=row, column=1).value.lower() == 'categories' \
+                          and dgrp.lower() in ['model', 'model label', 'technology']: # models as categories
+                            rw = self.batch_report[0][1] - 1
+                            cats = Reference(bs, min_col=min_col, min_row=rw, max_col=max_col, max_row=rw)
+                            continue
+                        if dgrp.lower() in ['capacity (mw)', 'capacity (mw/mwh)']:
+                            gndx = self.batch_report[0][1]
+                        else:
+                            for group in self.batch_report:
+                                if group[0].lower() == dgrp.lower():
+                                    gndx = group[1]
+                                    break
+                            else:
+                                 continue
+                        ditm = get_value(batch_input_sheet, row, 3)
+                        for tndx in range(tndx_rows):
+                            if bs.cell(row=gndx + tndx, column=1).value is None:
+                                break
+                            if bs.cell(row=gndx + tndx, column=1).value.lower() == ditm.lower():
+                                if batch_input_sheet.cell(row=row, column=1).value.lower() == 'data':
+                                 #   values = Reference(bs, min_col=1, min_row=gndx + tndx, max_col=max_col, max_row=gndx + tndx)
+                                 #   charts[-1].add_data(values, titles_from_data=True, from_rows=True)
+                                    values = Reference(bs, min_col=min_col, min_row=gndx + tndx, max_col=max_col, max_row=gndx + tndx)
+                                    series = Series(values, title=bs.cell(row=gndx+tndx, column=1).value)
+                                    charts[-1].append(series)
+                                else:
+                                    cats = Reference(bs, min_col=min_col, min_row=gndx + tndx, max_col=max_col, max_row=gndx + tndx)
+                                break
+                if in_chart:
+                    charts[-1].width = 20
+                    charts[-1].height = 12
+                    for s in range(len(charts[-1].series)):
+                        ser = charts[-1].series[s]
+                        ser.marker.symbol = 'circle' #‘dot’, ‘plus’, ‘triangle’, ‘x’, ‘picture’, ‘star’, ‘diamond’, ‘square’, ‘circle’, ‘dash’, ‘auto’
+                    if cats is not None:
+                        charts[-1].set_categories(cats)
+                    if len(charts) % 2:
+                        cht_row += 25
+                    chs.add_chart(charts[-1], cht_cells[len(charts) % 2] + str(cht_row))
             self.progressbar.setValue(10)
             ds.save(batch_report_file)
             tim = (time.time() - start_time)
