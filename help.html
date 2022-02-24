@@ -250,7 +250,7 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 <li><em>source</em> contains the Python source programs for SIREN</li>
 </ul>
 <p>The first time you open SIREN (without passing a target file or folder) it will present a window titled &lsquo;Choose location for SIREN model (preferences) files&rsquo; to allow you to choose the location for your SIREN Models. SIREN stores this location (in <em>siren_models_location.txt</em> in the <em>siren</em> folder) and uses this as the location of the SIREN Models whenever you invoke SIREN without a target file or location.</p>
-<p>When you open SIREN you will be presented with a list of SIREN Models (Preferences files). Choose the SIREN Model you want by clicking on your choice. It is also possible to launch tools for the model by right-clicking on your choice - the tools are as described in <a href="#tools">Tools</a>. You can sort the list presented in order of either Preferences File, SIREN Model or Date modified (last time the Preferences file was saved) by right-clicking the appropriate column header. If want to use a specific Preferences file you can open the simulation passing the alternate file name, or a folder, as a parameter, as in these examples:</p>
+<p>When you open SIREN you will be presented with a list of SIREN Models (Preferences files). Choose the SIREN Model you want by clicking on your choice. It is also possible to launch tools for the model by right-clicking on your choice - the tools are as described in <a href="#tools">Tools</a>. You can sort the list presented in order of either Preferences File, SIREN Model or Date modified (last time the Preferences file was saved) by right-clicking the appropriate column header. If want to use a specific Preferences file you can open the simulation passing the alternate filename, or a folder, as a parameter, as in these examples:</p>
 <pre>
       siren.exe
       siren.exe SIREN_NWIS.ini
@@ -356,7 +356,7 @@ You can also use TMY files such as those provided with SAM. If you have a number
 <p>The simulation has two main objects, stations and grid lines. Stations can be saved as scenarios in either an Excel or CSV file format while grid lines are constructed during the simulation rather than being saved to a file (unless you have manually created the grid line).</p>
 <h3 id="stations">Stations</h3>
 <p>Stations represent either existing generation stations on the grid or new ones you have created during a simulation session. The station files can be updated outside of the simulation. The fields for a station are:</p>
-<table border="0", class="none">
+<table border="0", class="none" style="margin-left:35px">
 <tr class="none">
 <td class="none" width="10%"><dfn>Station Name</dfn></td>
 <td class="none">The name you assigned to the station. They must be unique within a simulation session. If you add a new scenario with a station that has the same name as one already active the program will append a number to make the name(s) unique</td>
@@ -418,7 +418,7 @@ You can also use TMY files such as those provided with SAM. If you have a number
 <p>When you display a Station with SIREN it will also show the Scenario the Station is in. For new Stations (i.e. not Existing) it is possible to update this value to one of the other scenarios that are currently &ldquo;open&ldquo;. This will move the Station into that scenario and, if the scenario is saved move it permanently into that Scenario.</p>
 <h3 id="gridlines">Grid Lines</h3>
 <p>Grid lines connect new stations to either existing or other new grid lines. By default the grid line will connect a station to the nearest point on the grid. You can edit a grid line if you wish to connect it elsewhere in the grid. Grid lines are recalculated when you add or modify stations but are not normally saved. You can, however, list the (new) grid lines and save the table listed. The fields for a grid are:</p>
-<table border="0", class="none">
+<table border="0", class="none" style="margin-left:35px">
 <tr class="none">
 <td class="none"><dfn>Name</dfn></td>
 <td class="none">The name of the station the grid line connects from</td>
@@ -462,7 +462,7 @@ You can also use TMY files such as those provided with SAM. If you have a number
 </table>
 <h3 id="grid">Types of Grid Lines</h3>
 <p>A grid is built up of a number of different types of line to enable differing loads to be carried. Each line has a maximum carrying capacity. Greater loads require additional lines to be added; so in this simulation one line may represent multiple grid lines as described in the <em>Line Table</em> for the line. For dispatchable transmission we need an extra path for backup purposes (N-1) while no such backup is required for non-dispatchable loads (N-0). For a line carrying both we'll use a criteria of N-0 for total load plus N-1 for dispatchable load. Within this simulation line types and costs can be specified (somewhat cryptically) in the <a href="#p_grid">[Grid]</a> Section of the Preferences file. The default set of lines are:</p>
-<table border="0", class="none">
+<table border="0", class="none" style="margin-left:35px">
 <tr class="none">
 <th>&nbsp;</td>
 <th colspan="3">non-Dispatchable</th>
@@ -909,19 +909,19 @@ as embedded solar - Rooftop PV - installed on the grid but not registered with A
 </tr>
 <tr class="none">
 <td class="none"><dfn>scenario_prefix</dfn></td>
-<td class="none">File name prefix for scenarios of additional/proposed renewable power stations. If specified, all scenarios must start with this value. You can either use this property to specify the prefix or use the tail of the scenarios property </td>
+<td class="none">filename prefix for scenarios of additional/proposed renewable power stations. If specified, all scenarios must start with this value. You can either use this property to specify the prefix or use the tail of the scenarios property </td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>scenarios</dfn></td>
-<td class="none">Location of scenarios of additional/proposed renewable power stations. You can also use this property to specify the file name prefix for scenarios. In this case, the value should end with an <em>*</em> (e.g. <em>Scenario*</em> and all scenarios must start with this value (less the *)</td>
+<td class="none">Location of scenarios of additional/proposed renewable power stations. You can also use this property to specify the filename prefix for scenarios. In this case, the value should end with an <em>*</em> (e.g. <em>Scenario*</em> and all scenarios must start with this value (less the *)</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>solar_files</dfn></td>
-<td class="none">Location of solar (.smw) weather files. If there is no <em>solar_index</em> file the file name must includes the geographic location of the file to enable a search for the file nearest to a location. The format is &lt;location_latitude_longitude_year.smw&gt;</td>
+<td class="none">Location of solar (.smw) weather files. If there is no <em>solar_index</em> file the filename must includes the geographic location of the file to enable a search for the file nearest to a location. The format is &lt;location_latitude_longitude_year.smw&gt;</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>solar_index</dfn>
-<td class="none">An index of file names and geographic locations for solar weather files. If specified this will be used to find the nearest solar weather file to a location</td>
+<td class="none">An index of filenames and geographic locations for solar weather files. If specified this will be used to find the nearest solar weather file to a location</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>towns</dfn></td>
@@ -933,11 +933,11 @@ as embedded solar - Rooftop PV - installed on the grid but not registered with A
 </tr>
 <tr class="none">
 <td class="none"><dfn>wind_files</dfn></td>
-<td class="none">Location of wind (.srw) weather files. If there is no <em>wind_index</em> file the file name includes the geographic location of the file - &lt;location_latitude_longitude_year.srw&gt;</td>
+<td class="none">Location of wind (.srw) weather files. If there is no <em>wind_index</em> file the filename includes the geographic location of the file - &lt;location_latitude_longitude_year.srw&gt;</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>wind_index</dfn></td>
-<td class="none">An index of file names and geographic locations for wind weather files.</td>
+<td class="none">An index of filenames and geographic locations for wind weather files.</td>
 </tr>
 <tr class="none">
 </table>
@@ -1087,7 +1087,7 @@ Options for <a href="#flexiplot">Flexiplot</a>. Properties for individual files 
 <td class="none">Produce a plot layout with no whitespace around the graph. Default is False</td>
 <tr class="none">
 <td class="none"><dfn>file (&ast;)</dfn></td>
-<td class="none">Spreadsheet file name</td>
+<td class="none">Spreadsheet filename</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>file_choices</dfn></td>
@@ -1718,7 +1718,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>file (&ast;)</dfn></td>
-<td class="none">Spreadsheet file name</td>
+<td class="none">Spreadsheet filename</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>file_choices</dfn></td>
@@ -1775,7 +1775,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </table>
 </td></tr>
 <tr class="none" id="p_pm"><td><dfn><strong>[Powermatch]</strong></dfn></td>
-<td>File names, worksheet names and other variables used by <a href="#powermatch">Powermatch</a>. Properties are:</p>
+<td>Filenames, worksheet names and other variables used by <a href="#powermatch">Powermatch</a>. Properties are:</p>
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><dfn>adjust_capacities</dfn></td>
@@ -1807,7 +1807,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>constraints_file</dfn></td>
-<td class="none">File name for constraints spreadsheet</td>
+<td class="none">Filename for constraints spreadsheet</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>constraints_sheet</dfn></td>
@@ -1815,7 +1815,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>data_file</dfn></td>
-<td class="none">File name for Powermatch input (data) spreadsheet</td>
+<td class="none">Filename for Powermatch input (data) spreadsheet</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>discount_rate</dfn></td>
@@ -1827,7 +1827,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>generators_file</dfn></td>
-<td class="none">File name for generators (facilities) spreadsheet</td>
+<td class="none">Filename for generators (facilities) spreadsheet</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>generators_sheet</dfn></td>
@@ -1843,7 +1843,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>optimisation_file</dfn></td>
-<td class="none">File name for optimisation spreadsheet</td>
+<td class="none">Filename for optimisation spreadsheet</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>optimisation_sheet</dfn></td>
@@ -1887,7 +1887,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>results_file</dfn></td>
-<td class="none">File name for Powermatch output (report) spreadsheet</td>
+<td class="none">Filename for Powermatch output (report) spreadsheet</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>results_prefix</dfn></td>
@@ -2715,7 +2715,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <p><a href="#help">Back to top</a></p>
 <h3 id="mouse">Right Mouse Click</h3>
 <p>Clicking the right mouse button allows various actions for the nearest station. Dependent on the nearest station some options will not be available. The full list is as follows:</p>
-<table border="0", class="none">
+<table border="0", class="none" style="margin-left:35px">
 <!--
 <tr class="none">
 <td class="none"><img src="gears_run.png" alt="Run SAM API">&nbsp;&nbsp;Run SAM API</td>
@@ -3016,9 +3016,9 @@ If it's not a diurnal plot (i.e. Period is <em>&lt;None&gt;</em>) any occurence 
 <!-- Back to top< -->
 <h3 id="tables">Tables</h3>
 <ul>
-<li><em>Save Hourly Data Output</em> option will save generation in MWh for each chosen station for each hour of the year (8,760 hours) as calculated by SAM. This can be used in detailed analysis or as an option to avoid having to reprocess the station in the future, by updating a Station's </em>Power File</em> field. The default file name can be set using the <em>data_file</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file; otherwise it will in the format of <em>Power_Table_yyyy-mm-dd_hhmm...</em></li>
-<li><em>Save (adjusted) Hourly Data Output by Station</em> option will save generation in MWh for each station and other options for each hour of the year (8,760 hours). This is the hourly output calculated by the SAM model multiplied by any adjustments. If appropriate Power Model options are chosen data for Generation, Excess, Load and Storage will also be saved. The default file name can be set using the <em>data_file</em> property of the [Files] Section of the Preferences file; otherwise it will in the format of <em>Power_Detail_yyyy-mm-dd_hhmm...</em></li>
-<li><em>Save (adjusted) Hourly Data Output by Technology</em> option will save generation in MWh for each technology and other options for each hour of the year (8,760 hours). This is the hourly output calculated by the SAM model multiplied by any adjustments. If appropriate Power Model options are chosen data for Generation, Excess, Load and Storage will also be saved. The default file name can be set using the <em>data_file</em> property of the [Files] Section of the Preferences file; otherwise it will in the format of <em>Power_Detail_Technology_yyyy-mm-dd_hhmm...</em></li>
+<li><em>Save Hourly Data Output</em> option will save generation in MWh for each chosen station for each hour of the year (8,760 hours) as calculated by SAM. This can be used in detailed analysis or as an option to avoid having to reprocess the station in the future, by updating a Station's </em>Power File</em> field. The default filename can be set using the <em>data_file</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file; otherwise it will in the format of <em>Power_Table_yyyy-mm-dd_hhmm...</em></li>
+<li><em>Save (adjusted) Hourly Data Output by Station</em> option will save generation in MWh for each station and other options for each hour of the year (8,760 hours). This is the hourly output calculated by the SAM model multiplied by any adjustments. If appropriate Power Model options are chosen data for Generation, Excess, Load and Storage will also be saved. The default filename can be set using the <em>data_file</em> property of the [Files] Section of the Preferences file; otherwise it will in the format of <em>Power_Detail_yyyy-mm-dd_hhmm...</em></li>
+<li><em>Save (adjusted) Hourly Data Output by Technology</em> option will save generation in MWh for each technology and other options for each hour of the year (8,760 hours). This is the hourly output calculated by the SAM model multiplied by any adjustments. If appropriate Power Model options are chosen data for Generation, Excess, Load and Storage will also be saved. The default filename can be set using the <em>data_file</em> property of the [Files] Section of the Preferences file; otherwise it will in the format of <em>Power_Detail_Technology_yyyy-mm-dd_hhmm...</em></li>
 <li><em>Save Powermatch data</em> option will save save the input data for Powermatch (or Powerbalance). There are two possible output formats:
 <ol>
 <li>Powermatch uses scenario worksheets. If the <em>pm_template</em> property of the <em>[Files]</em> Section is set, SIREN will save the inputs in this format. The file can (only) be saved as an <em>.xlsx</em> format file</li>
@@ -3026,8 +3026,8 @@ If it's not a diurnal plot (i.e. Period is <em>&lt;None&gt;</em>) any occurence 
 </ol>
 <li><em>Show Summary/Other Tables</em> option will cause various tables to be presented:
 <ul>
-<li>A brief summary table of Capacity and Output for each selected station. The default file name will in the format of <em>powermodel_Table_yyyy-mm-dd_hhmm</em></li>
-<li>If Storage values are specified a storage table is produced showing hourly figures for Load, Generation, Storage Used, Storage Losses (determined by Discharge and Recharge loss percentages), Storage Balance, Shortfall and Excess. Shortfall indicates the shortfall against Load (Load less Generation, Storage Used and Losses); Excess indicates excess generation that could not be stored due to either the Storage Capacity limit or Recharge cap. The default file name will in the format of <em>Storage_Table_yyyy-mm-dd_hhmm</em></li>
+<li>A brief summary table of Capacity and Output for each selected station. The default filename will in the format of <em>powermodel_Table_yyyy-mm-dd_hhmm</em></li>
+<li>If Storage values are specified a storage table is produced showing hourly figures for Load, Generation, Storage Used, Storage Losses (determined by Discharge and Recharge loss percentages), Storage Balance, Shortfall and Excess. Shortfall indicates the shortfall against Load (Load less Generation, Storage Used and Losses); Excess indicates excess generation that could not be stored due to either the Storage Capacity limit or Recharge cap. The default filename will in the format of <em>Storage_Table_yyyy-mm-dd_hhmm</em></li>
 <li><em>Generation Summary</em> table is a brief summary of the overall generation for the current execution of the Power model. The figures are summations of the 8,760 hourly figures. Some comments on the table:
 <ul>
 <li>The Multiplier column indicates any multipliers from the adjust generation option (plus load if load is grown)</li>
@@ -3111,30 +3111,31 @@ If it's not a diurnal plot (i.e. Period is <em>&lt;None&gt;</em>) any occurence 
 <h3 id="powermatch">Powermatch</h3>
 <p>Running the SIREN models will produce hourly generation figures which identify generation shortfalls and excesses against load (demand). One of the outputs from SIREN is a table of these generation shortfalls which could be met by storage (charged by surplus renewable generation) and dispatchable energy generation. The Powermatch (<code>powermatch</code>) component of SIREN can be used to match generation with demand (load) to quantify and cost this dispatchable energy generation, storage and CO<sub>2</sub>-e emissions. This enables you to complete a costed renewable energy scenario.</p>
 <p>One of the outputs from Powermatch is calculated LCOE figures, overall and for each Generator. The LCOE figures are calculated based upon either Capital (Capex), Operations (Opex) and fuel costs or a Reference LCOE and Reference Capacity Factor (CF) for the generator or storage.
+Be aware that if a facility is not used it will have no costs associated with it (this is based upon the premise that the facility would not be included in any detailed modelling).
 In producing the LCOE figures you can choose to use LCOE figures that ignore any surplus generation or produce an adjusted LCOE figure which adjusts the LCOE figure upwards to take into account the surplus generation (that is, the adjusted LCOE figure includes the cost of surplus - spilled - generation). The default is to produce an adjusted LCOE (<em>adjusted_lcoe</em>)
 <p><strong>Note:</strong> The SIREN Powermatch component was in part inspired by the Powerbalance worksheets developed by Ben Rose. For those who would prefer his spreadsheet approach an enhanced version, Powerbalance2, is available at <a href="https://cleanenergymodelling.com.au/powerbalance2/" target="_blank">https://cleanenergymodelling.com.au/powerbalance2/</a></p>
-<p>The Powermatch options are as set out here. The options (Poperties) are specified in the <a href="#p_pm">[Powermatch]</a> Section of the Preferences file. The associated property is indicated in brackets at the end of the description. All files are located in the SIREN Scenarios folder.</p>
+<p>The Powermatch options are as set out here. The options (Properties) are specified in the <a href="#p_pm">[Powermatch]</a> Section of the Preferences file. The associated property is indicated in brackets at the end of the description. All files are located in the SIREN Scenarios folder.</p>
 <table border="0" class="none" cellpadding="2">
-<tr><td class="top" style="width: 15%;"><dfn>Constraints File</dfn></td>
-<td class="none">File name for constraints spreadsheet. Clicking on the field will allow you to choose another spreadsheet from the SIREN Scenarios folder (<em>constraints_file</em>)</td></tr>
+<tr><td class="top" style="width: 20%;"><dfn>Constraints File</dfn></td>
+<td class="none">Filename for constraints spreadsheet. Clicking on the field will allow you to choose another spreadsheet from the SIREN Scenarios folder (<em>constraints_file</em>)</td></tr>
 <tr><td class="lr"><dfn>Constraints Sheet</dfn>&nbsp;&nbsp;<strong>Constraints</strong></td>
 <td class="none">Worksheet name for constraints table (<em>constraints_sheet</em>). Click on the <strong>Constraints</strong> button to display the Constraints table. Values can be changed and the table Saved or Exported as a new file</td></tr>
 <tr><td class="lr"><dfn>Generators file</dfn></td>
-<td class="none">File name for generators (facilities; includes generators and storage) spreadsheet. Clicking on the field will allow you to choose another spreadsheet (<em>generators_file</em>)</td></tr>
+<td class="none">Filename for generators (facilities; includes generators and storage) spreadsheet. Clicking on the field will allow you to choose another spreadsheet (<em>generators_file</em>)</td></tr>
 <tr><td class="lr"><dfn>Generators Sheet</dfn>&nbsp;&nbsp;<strong>Generators</strong></td>
 <td class="none">Worksheet name for generators (facilities) table (<em>generators_sheet</em>). Click on the <strong>Generators</strong> button to display the Generators (facilities) table. Values can be changed and the table Saved or Exported as a new file</td></tr>
 <tr><td class="lr"><dfn>Optimisation File</dfn></td>
-<td class="none">File name for optimisation spreadsheet. Clicking on the field will allow you to choose another spreadsheet from the SIREN Scenarios folder (<em>optimisation_file</em>)</td></tr>
+<td class="none">Filename for optimisation spreadsheet. Clicking on the field will allow you to choose another spreadsheet from the SIREN Scenarios folder (<em>optimisation_file</em>)</td></tr>
 <tr><td class="lr"><dfn>Optimisation Sheet</dfn>&nbsp;&nbsp;<strong>Optimisation</strong></td>
 <td class="none">Worksheet name for optimisation table (<em>optimisation_sheet</em>). Click on the <strong>Optimisation</strong> button to display the Optimisation table. Values can be changed and the table Saved or Exported as a new file</td></tr>
 <tr><td class="lr"><dfn>Data File</dfn></td>
-<td class="none">File name for Powermatch input (data) spreadsheet. Clicking on the field will allow you to choose another spreadsheet (<em>data_file</em>)</td></tr>
+<td class="none">Filename for Powermatch input (data) spreadsheet. Clicking on the field will allow you to choose another spreadsheet (<em>data_file</em>)</td></tr>
 <tr><td class="lr"><dfn>Results Prefix</dfn></td>
-<td class="none">If set this value will be prefixed to the Results File name and to Summary and Adjust Generators filema,e if these are saved</td></tr>
+<td class="none">If set this value will be prefixed to the Results filename and to Summary and Adjust Generators filename if these are saved</td></tr>
 <tr><td class="lr"><dfn>Results File</dfn></td>
-<td class="none">File name for Powermatch output (report) spreadsheet. Clicking on the field will allow you to choose the name for the report spreadsheet. <strong>Note:</strong> If the  <em>change_results</em> property of the <em>[Powermatch]</em> Section is set changes to the input spreadsheet name will cause this Results spreadsheet name to change (<em>results_file</em>)</td></tr>
+<td class="none">Filename for Powermatch output (report) spreadsheet. Clicking on the field will allow you to choose the name for the report spreadsheet. <strong>Note:</strong> If the  <em>change_results</em> property of the <em>[Powermatch]</em> Section is set changes to the input spreadsheet name will cause this Results spreadsheet name to change (<em>results_file</em>)</td></tr>
 <tr><td class="lr"><dfn>Batch File</dfn></td>
-<td class="none">File name for Batch option. Clicking on the field will allow you to choose another spreadsheet from the SIREN Scenarios folder (<em>batch_file</em>)</td></tr>
+<td class="none">Filename for Batch option. Clicking on the field will allow you to choose another spreadsheet from the SIREN Scenarios folder (<em>batch_file</em>)</td></tr>
 <tr><td class="lr"><dfn>Replace Last</dfn></td>
 <td class="none">By checking this option you can choose to replace the latest Results and Charts worksheets when running the Batch option</td></tr>
 <tr><td class="lr"><dfn>Discount Rate</dfn></td>
@@ -3151,7 +3152,7 @@ In producing the LCOE figures you can choose to use LCOE figures that ignore any
 <ul>
 <li><strong>Done</strong>. Exit Powermatch. Any changed options will be saved</li>
 <li><strong>Summary</strong>. Invoke Powermatch with (just) Summary Output. This option produces a summary table of the Powermatch outputs allowing you to examine and adjust inputs without having to access the Powermatch outputs (Detail) spreadsheet. The table columns are:
-<table border="0" class="none">
+<table border="0" class="none" style="margin-left:35px">
 <tr><td class="none"><dfn>Facility</dfn></td><td class="none">Name of the facility (generator or storage)</td></tr>
 <tr><td class="none"><dfn>Capacity</dfn></td><td class="none">The capacity of facility in MW for generators and MWh for storage</td></tr>
 <tr><td class="none"><dfn>To Meet Load</dfn></td><td class="none">Generation/Storage used to meet load. The generation for a generator or contribution to meeting load for storage; MWh</td></tr>
@@ -3166,7 +3167,7 @@ In producing the LCOE figures you can choose to use LCOE figures that ignore any
 <tr><td class="none"><dfn>Reference CF</dfn></td><td class="none">The reference CF</td></tr>
 </table>
 <br />The table also presents some additional figures that, in the main, indicate the RE contribution to meeting demand:
-<table border="0" class="none">
+<table border="0" class="none" style="margin-left:35px">
 <tr><td class="none"><dfn>Adjusted LCOE</dfn></td><td class="none">Overall LCOE figure adjusted upwards to take into account surplus (spilled) generation</td></tr>
 <tr><td class="none"><dfn>RE %age</dfn></td><td class="none">The percentage of total generation from RE facilities</td></tr>
 <tr><td class="none"><dfn>Storage %age</dfn></td><td class="none">The percentage of demand met from storage</td></tr>
@@ -3179,12 +3180,26 @@ In producing the LCOE figures you can choose to use LCOE figures that ignore any
 <tr><td class="none"><dfn>Largest Shortfall</dfn></td><td class="none">The largest shortfall and the period (hour) in which it occurs</td></tr>
 </table>
 </li>
-<li><strong>Powermatch</strong>. Invoke Powermatch. This option produces a spreadsheet of the Powermatch outputs. It provides detail on how demand was met for each hour of the year. If <em>save_tables</em> is set generators and constraints will be saved to spreadsheet. This option also produces a Summary worksheet as described above. This Detail worksheet allows for more detailed analysis on how each facility, for example, by using spreadsheet formulae.
+<li><strong>Powermatch</strong>. Invoke Powermatch. This option produces a spreadsheet of the Powermatch outputs. It provides detail on how demand was met for each hour of the year. If <em>save_tables</em> is set generators and constraints will be saved to spreadsheet. This option also produces a Summary worksheet as described above. This Detail worksheet allows for more detailed analysis on how each facility is utilised, for example, by using spreadsheet formulae:-
 <ul>
 <li>Assuming a generator is listed in column L.<br />Calculate the percentage of time it is running below 55% of capacity - <code>=COUNTIF(L2:L8771,">"&L1*0.55)/8760</code></li>
 <li>Assuming a storage facility is listed in column I, it's balance will be in column J.<br />Calculate the percentage of time it is at full capacity - <code>=COUNTIF(J2:J8771,"="&I1)/8760</code><br />and at less than or equal to 10% capacity - <code>=COUNTIF(J2:J8771,"<="&I1*0.1)/8760</code></li>
 </ul>
-<li><strong>Batch</strong>. Invoke Powermatch for a number of &ldquo;models&rdquo; with different capacities for each technology. This option produces a worksheet containing selected details from the Summary Output with one column per model. An input spreadsheet contains a column with the capacities for each model. A list of the desired details from the Summary Table can be specified below the list of technologies (capacities). The details can include any of: 'Capacity (MW)', 'Capacity Factor', 'Carbon', 'Carbon Price', 'Cost ($/Yr)', 'Emissions (tCO2e)', 'Generation (MWh)', 'LCOE ($/MWh)' 'Load Analysis', 'RE', and 'To Meet Load (MWh)'. 'Capacity (MW)' is required and must be the first entry. 'Carbon Price' allows you to input a different Carbon Price for each Model. By default the resulting output will be appended as a new worksheet to the input file. You can create a new spreadsheet by setting the <em>batch_new_file</em> property to True
+<li><strong>Batch</strong>. Invoke Powermatch for a number of &ldquo;models&rdquo; with different capacities for each technology. This option produces a worksheet containing selected details from the Summary Output with one column per model. An input spreadsheet contains a column with the capacities for each model. A list of the desired details from the Summary Table can be specified below the list of technologies (capacities). The details can include any of the following Report Groups. Most groups will have rows pertaining to each group for each facility plus additional rows specific to each group.
+<table border="0" class="none" style="margin-left:35px">
+<tr><td class="none"><dfn>Capacity (MW)<dfn></td><td class="none">The input capacity for each facility</td></tr>
+<tr><td class="none"><dfn>Capacity Factor<dfn></td><td class="none">The calculated capacity factor for each facility</td></tr>
+<tr><td class="none"><dfn>Carbon<dfn></td><td class="none">If there is a carbon price this group will contain details on carbon costs and LCOE including this costs </td></tr>
+<tr><td class="none"><dfn>Carbon Price<dfn></td><td class="none">This is not strictly an output but allows a differnt carbon price to be set for each input Model</td></tr>
+<tr><td class="none"><dfn>Cost ($/Yr)<dfn></td><td class="none">The calculated cost for each facility</td></tr>
+<tr><td class="none"><dfn>Emissions (tCO2e)<dfn></td><td class="none">The estimated emissions for each facility</td></tr>
+<tr><td class="none"><dfn>Generation (MWh)<dfn></td><td class="none">Generation for each generator</td></tr>
+<tr><td class="none"><dfn>LCOE ($/MWh)<dfn></td><td class="none">LCOE for each facility</td></tr>
+<tr><td class="none"><dfn>Load Analysis<dfn></td><td class="none">Details on how much of the load was met, shortfalls, storage losses, and surpluses</td></tr>
+<tr><td class="none"><dfn>RE<dfn></td><td class="none">The percentage of RE and storage used to meet the load</td></tr>
+<tr><td class="none"><dfn>To Meet Load (MWh)<dfn></td><td class="none">How much generation or storage output was used to meet the load. It has rows for each non-RE generator, storage and a combined figure for RE</td></tr>
+</table>
+<dfn>Capacity (MW)</dfn> is required and must be the first entry. 'Carbon Price' allows you to input a different Carbon Price for each Model. By default the resulting output will be appended as a new worksheet to the input file. You can create a new spreadsheet by setting the <em>batch_new_file</em> property to True
 <br />The Batch option also has a prototype chart facility that can be used to do sensitivity analysis on a suite of batch models - see <a href="#pm_batch_graphs">below</a></li>
 <li><strong>Optimise</strong>. Invoke the Optimise function. This will use an iterative approach to optimise the input generator capacities to produce a solution with (a) either a lower overall LCOE, or (b) the lowest weight for six variables, or (c) both. It will complete by displaying a plot of how the value for LCOE has converged to a minimum, and a either a three dimensional plot showing the three variables with the highest weightings or a table of all variables for the multi-variable approach. Exiting the plot will then produce a summary table; the summary table will also contain details on the Optimisation parameters used. It will also update the adjustment values for each generator to enable you to produce a Powermatch spreadsheet. See below for more details</li>
 <li><strong>Help</strong>. Display the Powermatch help</li>
@@ -3192,7 +3207,7 @@ In producing the LCOE figures you can choose to use LCOE figures that ignore any
 <p>The Constraints, Generators and Optimisation tables can be edited, updated and saved and the revised table(s) used as inputs for the <strong>Summary</strong>, <strong>Powermatch</strong>, <strong>Batch</strong> and <strong>Optimise</strong> options. During the edit process the revised values can be exported as a new spreadsheet. If the table(s) is saved but not exported the revised values will not be available once Powermatch is exited. You can also choose another sheet, however, if the sheet you choose is not the correct format you may get unusual behaviour.</p>
 <h4>Generators</h4>
 <p>To address the shortfall in generation encountered by a renewable scenario other dispatchable generation and storage facilities can be used. These are defined in a Generators table. The Generators table can also be used to define the Reference <em>LCOE</em> and <em>LCOE CF</em> figures for Renewable technologies. The dispatchable facilities are dispatched after renewable generators. The fields are:
-<table border="0" class="none">
+<table border="0" class="none" style="margin-left:35px">
 <tr><td class="none"><dfn>Name (*)</dfn></td><td class="none">Name of the Facility</td></tr>
 <tr><td class="none"><dfn>Capacity (*)</dfn></td><td class="none">The capacity for the facility in MW for generators and MWh, that is total energy content, for storage</td></tr>
 <tr><td class="none"><dfn>Capex (or Capital) (c)</dfn></td><td class="none">The capital cost of the facility per MW for generators and MWh for storage</td></tr>
@@ -3211,7 +3226,7 @@ In producing the LCOE figures you can choose to use LCOE figures that ignore any
 <p>Powermatch will calculate costs in either of two ways, either by using a Reference LCOE and CF (<em>(l)</em> fields) or by using input costs (<em>(c)</em> fields) . If Capex is present it will use input costs otherwise it will use Reference LCOE. The option is chosen for each facility<em>(*)</em> fields are required for either method.</p>
 <h4>Constraints</h4>
 <p>Utilisation of each dispatchable generator and storage facility can be constrained by Powermatch in a number of ways. All figures are expressed as a percentage. In the tables the values will be displayed as a decimal fraction (0.00 to 1.00). All figures are hourly except for Parasitic Loss which is daily. The approach Powermatch uses is rather simplistic in that any losses need to cater for any loss of efficiency in storing energy or retrieving energy. The constraints are:
-<table border="0" class="none">
+<table border="0" class="none" style="margin-left:35px">
 <tr><td class="none"><dfn>Name</dfn></td><td class="none">Name of the Constraint</td></tr>
 <tr><td class="none"><dfn>Constraint</dfn></td><td class="none">Name of the Constraint (same as Name)</td></tr>
 <tr><td class="none"><dfn>Category</dfn></td><td class="none">The category of the constraint. Values are either Storage or Generator</td></tr>
@@ -3227,6 +3242,60 @@ In producing the LCOE figures you can choose to use LCOE figures that ignore any
 <tr><td class="none"><dfn>Min Run Time</dfn></td><td class="none">For Storage some technologies may be better deployed if they can run for a number of hours. To simulate this Powermatch will not use the technology unless there are projected shortfalls for at least the desired number of hours</td></tr>
 <tr><td class="none"><dfn>Warmup Time</dfn></td><td class="none">For Storage some technologies may require a warmup period before they become operational. You can set a time period for this to occur, either in minutes or part of an hour (if an Initial value is set for the Storage it is assumed the warmup period has occurred prior to the first hour of the year). Also known as Ramp time (The amount of time it takes from the moment a generator is turned on to the moment it can start providing energy to the grid at its lower operating limit)</td></tr>
 </table>
+<div class="experiment">
+<h4 id="pm_batch_graphs">Batch graphs</h4>
+<p>With the Batch option there is a possibility to produce a set of charts (graphs) to display impacts of a range of models. The functionality is somewhat limited and should be considered as useful for creating protoype charts rather than fully formatted ones. The specifications for charts can be included in the input worksheet after the desired report details. Charts are created in a worksheet placed after the results worksheet. Charts are specified by a number of rows of information in the first three columns of the input worksheet. The first column is the chart parameter, the second contains the report group as in the report outputs, the third contains the row (e.g. technology) of interest. These are the chart parameters:
+<table border="0", class="none" style="margin-left:35px">
+<tr>
+<th>Parameter</th>
+<th width="8%">Details</th>
+<th width="8%">Item</th>
+<th>Description</th>
+</tr>
+<tr class="none">
+<td>Chart</td>
+<td>Model Group</td>
+<td>&nbsp;</td>
+<td>Defining a chart and the model group of interest, or all models. The group of interest is defined by merged cells above the model names. In this example, 'Merged Group' will include 'Model 1', 'Model 2' and 'Model 3'.
+<table border="0", class="none">
+<tr><td>&nbsp;</td><td colspan="3">Merged Group</td><td>&nbsp;</td></tr>
+<tr><td>Model Label</td><td>Model 1</td><td>Model 2</td><td>Model 3</td><td>Model 4</td></tr>
+</table>
+</td>
+</tr>
+<tr class="none">
+<td>Title</td>
+<td>Title</td>
+<td>&nbsp;</td>
+<td>The chart title</td>
+</tr>
+<tr class="none">
+<td>X-Title</td>
+<td>X axis title</td>
+<td>&nbsp;</td>
+<td>The title for the X (horizontal) axis</td>
+</tr>
+<tr class="none">
+<td>Y-Title</td>
+<td>Y axis title</td>
+<td>&nbsp;</td>
+<td>The title for the Y (vertical) axis</td>
+</tr>
+<tr class="none">
+<td>Categories</td>
+<td>Report Group</td>
+<td>Item</td>
+<td>Category (X axis) labels</td>
+</tr>
+<tr class="none">
+<td>Data</td>
+<td>Report Group</td>
+<td>Item</td>
+<td>Data row. This can be repeated for multiple rows of data</td>
+</tr>
+</table>
+<p>As the Batch report contain repeating item values, one for each report group, Powermatch uses the Report group to identify the row of interest.</p>
+</div>
 <div class="experiment">
 <h4>Optimise and Optimisation</h4>
 <p>In an attempt to simplify the process of determining the optimal generation mix, Powermatch has an optimisation function. The function uses a genetic algorithm to identify three possible optimal solutions:
@@ -3278,7 +3347,7 @@ If the best and worse values are the same for a variable and that value is not a
 </li>
 </ul>
 <p>The Powermatch optimisation approach uses the Optimisation table to define the range of possible values for each of the renewable technologies and dispatchable and storage facilities. Entries are required for all Renewable technologies and dispatchable and storage facilities. The fields are:
-<table border="0" class="none">
+<table border="0" class="none" style="margin-left:35px" >
 <tr><td class="none"><dfn>Name</dfn></td><td class="none">Name of the Technology (matches either RE or generator)</td></tr>
 <tr><td class="none"><dfn>Approach</dfn></td><td class="none">Approach for how this generator will be treated. There are two options:
 <ul>
@@ -3319,58 +3388,9 @@ If the best and worse values are the same for a variable and that value is not a
 <li>Present a table for the optimal solutions. The table shows the adjustment values and capacity for each generator followed by the estimated value for each of the six multi-variables prioritised by Weight. By pressing the appropriate button the adjustment values for the chosen solution will be made available for <strong>Summary</strong> and <strong>Powermatch</strong></li>
 </ol>
 </div>
-<div class="experiment">
-<h4 id="pm_batch_graphs">Batch graphs</h4>
-<p>With the Batch option there is a possibility to produce a set of charts (graphs) to display impacts of a range of models. The facility is somewhat limited and should be considered as useful for creating protoype charts rather than fully formatted ones. The specifications for charts can be included in the input worksheet after the desired report details. Charts are created in a worksheet placed after the results worksheet. Charts are specified by a number of rows of information in the first three columns of the input worksheet. The first column is the chart parameter, the second contains the report area as in the report outputs, the third contains the row (e.g. technology) of interest.
-<table border="0", class="none">
-<tr>
-<th>Parameter</th>
-<th>Details</th>
-<th>Item</th>
-<th>Description</th>
-</tr>
-<tr class="none">
-<td>Chart</td>
-<td>Group</td>
-<td>&nbsp;</td>
-<td>The group of interest, or all models. The group of interest can be defined by merged cells above the model names</td>
-</tr>
-<tr class="none">
-<td>Title</td>
-<td>Title</td>
-<td>&nbsp;</td>
-<td>The chart title</td>
-</tr>
-<tr class="none">
-<td>X-Title</td>
-<td>X axis title</td>
-<td>&nbsp;</td>
-<td>The title for the X (horizontal) axis</td>
-</tr>
-<tr class="none">
-<td>Y-Title</td>
-<td>Y axis title</td>
-<td>&nbsp;</td>
-<td>The title for the Y (vertical) axis</td>
-</tr>
-<tr class="none">
-<td>Categories</td>
-<td>Group</td>
-<td>Item</td>
-<td>Category (X axis) labels</td>
-</tr>
-<tr class="none">
-<td>Data</td>
-<td>Group</td>
-<td>Item</td>
-<td>Data row. This can be repeated for multiple rows of data</td>
-</tr>
-</table>
-<p>As the Batch report contain repeating item values, one for each report area, Powermatch uses the Report group to identify the row of interest.</p>
-</div>
 <h4>Powermatch input file formats</h4>
 <p>Powermatch has a number of input files which are generally in the form of a simple table stored in an Excel spreadsheet, in most instances in either XLS or XLSX format. Constraints, Generators and Optimisation tables can be stored as separate worksheets in the same Excel file (workbook). Further details on some of the file formats can be found above. The input files are:
-<table border="0", class="none">
+<table border="0", class="none" style="margin-left:35px">
 <tr class="none">
 <td class="none"><dfn>Constraints</dfn></td>
 <td class="none">A table of constraints. The columns in the table are described above. Each row contains details for a constraint</td>
@@ -3447,7 +3467,7 @@ If the best and worse values are the same for a variable and that value is not a
 <ol>
 <li>Choose the <em>Save Hourly Data Output</em> (<em>save_data</em>) Power Model option</li>
 <li>Save the data file. This file contains power output for all stations in the current simulation. It should be located in the same folder as your scenario files (<em>scenarios</em> property of the <em>[Files]</em> Section). The data is saved as MWh with 4 decimal places because SAM uses kWh</li>
-<li>With your spreadsheet application (Excel) update the scenarios and stations that you want to use the saved data with. Either add or use the column headed <em>Power File</em> to specify the file name you've selected for the power output. For each station enter the full name and extension of the file, for example, <em>Power_Table_Saved.xls</em></li>
+<li>With your spreadsheet application (Excel) update the scenarios and stations that you want to use the saved data with. Either add or use the column headed <em>Power File</em> to specify the filename you've selected for the power output. For each station enter the full name and extension of the file, for example, <em>Power_Table_Saved.xls</em></li>
 <li>When you next run the simulation it will load this saved data rather than invoking the SAM module for each station that has an <em>Power File</em> entry</li>
 <li>If the file is not found the SAM module will be re-invoked. So you can simply delete or rename the Power data file and re-run the simulation to get a new set of data points</li>
 </ol>
@@ -3473,7 +3493,7 @@ If the best and worse values are the same for a variable and that value is not a
 <p>SIREN accepts a number of file formats for each of the data files it uses. Due to the initial source for each data file the format for each is different. For Excel and CSV files the first cell for each column is usually taken as the column name.</p>
 <p><strong>Note:</strong> Other than the Powermatch file, all Excel files output by SIREN are in XLS format (XLSX files require a different Python library to create them).</p>
 <p>The files and formats are:</p>
-<table border="0", class="none">
+<table border="0", class="none" style="margin-left:35px">
 <tr class="none">
 <td class="none"><dfn>actual_power</dfn></td>
 <td class="none">An Excel (XLS or XLSX) or CSV file containing a column of hourly generation in MWh for each (existing) station for each hour of the year (8,760 hours)</td>
@@ -3542,11 +3562,11 @@ If the best and worse values are the same for a variable and that value is not a
 <td class="none">This file format is defined by SAM. It is possible to produce a subset of wind turbines by creating a copy of the file provided by SAM (remember to always retain the (three) header rows)</td>
 </tr><tr class="none">
 <td class="none"><dfn>scenario</dfn></td>
-<td class="none">An Excel (XLS) or CSV file containing stations for a scenario. The columns for the file are as defined in the Stations <a href="#objects">Simulation Objects</a>. The file names must start with the file name prefix specified in the <em>scenarios</em> property in the <a href="#p_files">[Files]</a> Section of the Preferences file. It is possible to provide a brief description for the scenario in the first row of the file. This is indicated by a value of <em>Description:</em> in the top left cell followed by the description in the next cell</td>
+<td class="none">An Excel (XLS) or CSV file containing stations for a scenario. The columns for the file are as defined in the Stations <a href="#objects">Simulation Objects</a>. The filenames must start with the filename prefix specified in the <em>scenarios</em> property in the <a href="#p_files">[Files]</a> Section of the Preferences file. It is possible to provide a brief description for the scenario in the first row of the file. This is indicated by a value of <em>Description:</em> in the top left cell followed by the description in the next cell</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>solar_files</dfn></td>
-<td class="none">These are solar weather files in one of the formats defined by SAM. SIREN uses the file name to define the location and year for the file by separating the file name by an underscore as follows:- <em>anything_anything_latitude_longitude_year.filetype</em></td>
+<td class="none">These are solar weather files in one of the formats defined by SAM. SIREN uses the filename to define the location and year for the file by separating the filename by an underscore as follows:- <em>anything_anything_latitude_longitude_year.filetype</em></td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>solar_index</dfn></td>
@@ -3554,7 +3574,7 @@ If the best and worse values are the same for a variable and that value is not a
 <ul>
 <li><em>Latitude</em>. Weather file latitude</li>
 <li><em>Longitude</em>. Weather file longitude</li>
-<li><em>Filename</em>. Weather file name</li>
+<li><em>Filename</em>. Weather filename</li>
 </ul></td>
 </tr>
 <tr class="none">
@@ -3576,14 +3596,14 @@ If the best and worse values are the same for a variable and that value is not a
 </tr>
 <tr class="none">
 <td class="none"><dfn>wind_files</dfn></td>
-<td class="none">These are wind weather files in one of the formats defined by SAM. SIREN uses the file name to define the location and year for the file by separating the file name by an underscore as follows:- <em>anything_anything_latitude_longitude_year.filetype</em></td>
+<td class="none">These are wind weather files in one of the formats defined by SAM. SIREN uses the filename to define the location and year for the file by separating the filename by an underscore as follows:- <em>anything_anything_latitude_longitude_year.filetype</em></td>
 </tr><tr class="none">
 <td class="none"><dfn>wind_index</dfn></td>
 <td class="none">Using this file you can specify a list of wind weather files to be used by SIREN. This option allows you to use filenames that don't conform to SIREN's convention, such as the TMY files provided by SAM. The file can be either CSV or Excel (XLS) and contains three columns:
 <ul>
 <li><em>Latitude</em>. Weather file latitude</li>
 <li><em>Longitude</em>. Weather file longitude</li>
-<li><em>Filename</em>. Weather file name</li>
+<li><em>Filename</em>. Weather filename</li>
 </ul></td>
 </tr>
 </table>
@@ -3612,7 +3632,7 @@ You can alternate between both approaches to choose the desired area. If you hav
 <li><em>URL template</em>. The URL template for the location of the map tiles. The default value, <code>http://[abc].tile.openstreetmap.org/zoom/x/y.png</code>, is for OSM &lsquo;standard&rsquo; style maps. You can override this value to specify a different source (for example, <code>http://tile.stamen.com/terrain-background/zoom/x/y.png</code> for Migurski's Terrain; US-only)</li>
 <li><em>Image Width</em>. The width of the image to be created (for MapQuest)</li>
 <li><em>Image Height</em>. The height of the image to be created (for MapQuest)</li>
-<li><em>Image File name</em>. Use this to specify the name and location for the map file. If you click on the field it will allow you to specify an alternative name and location for the file (you can't type into the field itself). If you specify a filetype it must be a suitable image format. The default format is <em>.png</em></li>
+<li><em>Image Filename</em>. Use this to specify the name and location for the map file. If you click on the field it will allow you to specify an alternative name and location for the file (you can't type into the field itself). If you specify a filetype it must be a suitable image format. The default format is <em>.png</em></li>
 <li><em>Properties</em>. This is a read only field that is filled in when a map is created. These properties should be copied into the <a href="#p_map">[Map]</a> Section of the Preferences file. For OpenStreetMap images the <strong>coordinates</strong> are correct while they <strong>are likely to be incorrect for MapQuest - this is a work-in-progress.</strong></li>
 </ul>
 <p>There are six buttons:</p>
@@ -3688,8 +3708,8 @@ Load data can also be downloaded for prior years to a filename defined by the <e
 <li>Existing Stations (Facilities)
 <ul>
 <li><em>File location</em>. The location of the file on the AEMO Market Data website</li>
-<li><em>Target file</em>. The target file for the existing stations. The tool will examine and existing file and evaluate what changes have been made. The file name is derived from the <em>grid_stations</em> property</li>
-<li><em>Excel file</em>. Setting a file name here will cause an additional file to be created in SIREN scenario format</li>
+<li><em>Target file</em>. The target file for the existing stations. The tool will examine and existing file and evaluate what changes have been made. The filename is derived from the <em>grid_stations</em> property</li>
+<li><em>Excel file</em>. Setting a filename here will cause an additional file to be created in SIREN scenario format</li>
 </ul>
 </li>
 <li>System Load
@@ -3697,7 +3717,7 @@ Load data can also be downloaded for prior years to a filename defined by the <e
 <li><em>Year</em>. The year you want load data for</li>
 <li><em>Wrap to prior year</em>. To enable you to use (more) recent load data you can check this option to indicate load data should wrap to the prior year. As an example, if load data is available up until April of the current year <code>updateswis</code> will use load data from the prior year for May onwards to give a full year of data</li>
 <li><em>Load File location</em>. The location of the file on the AEMO Market Data website. The year will be updated when you update the Year field so you shouldn't need to change this field</li>
-<li><em>Target load file</em>. The target file for the load data. The file name is derived from the <em>load</em> property. The year will be updated when you update the Year field so you shouldn't need to change this field</li>
+<li><em>Target load file</em>. The target file for the load data. The filename is derived from the <em>load</em> property. The year will be updated when you update the Year field so you shouldn't need to change this field</li>
 </ul>
 </li>
 </ul>
@@ -3965,7 +3985,7 @@ You can alternate between these approaches to choose the desired area. If you ha
 <li><em>1.</em> Successful execution, however, the time zone chosen does not match the time zone(s) suggested by the MERRA-2 data files. If you chose <em>auto</em> or <em>best</em> this indicates more than one time zone is suggested by the MERRA-2 data files</li>
 <li><em>2.</em> Error with coordinates field</li>
 <li><em>3.</em> Invalid output file format specified. It must be one of <em>csv</em>, <em>smw</em>, <em>srw</em>, or <em>wind</em></li>
-<li><em>4.</em> MERRA-2 data file not found. The program requires file name(s) to be in a specific format so either the file name doesn't match that format or the source folder is incorrect</li>
+<li><em>4.</em> MERRA-2 data file not found. The program requires filename(s) to be in a specific format so either the filename doesn't match that format or the source folder is incorrect</li>
 <li><em>5.</em> Error with MERRA-2 data file. If you encounter an error &ldquo;Regridder Error. File generation error: Failed to create working directory.&rdquo; you might attempt to obtain a valid copy of the file in error by entering it's URL entry from the MERRA-2 search results into your browser</li>
 </ul>
 <p>You can also run the program on the command line. In this case the parameters are passed to the program as follows:</p>
@@ -3994,7 +4014,7 @@ You can alternate between these approaches to choose the desired area. If you ha
 <li>The string <em>MERRA</em> being part of the filename</li>
 <li>Filenames contain <em>tavg1_2d_slv_Nx.YYYYMMDD</em> for wind and <em>tavg1_2d_rad_Nx.YYYYMMDD</em> for solar, where <em>YYYYMMDD</em> indicates the data file for that day</li>
 <li>All files of the same type (solar or wind) being in the same folder</em>
-<li>If you download two copies of the same file wget will append a number to the scond copy file name, e.g. ...nc4.1. At present these will be ignored</li>
+<li>If you download two copies of the same file wget will append a number to the second copy filename, e.g. ...nc4.1. At present these will be ignored</li>
 </ul>
 <li>A packaged version of <code>makeweatherfiles</code> for Windows is available as a self-extracting zip file from <a href="https://sourceforge.net/projects/sensiren/" target="_blank">https://sourceforge.net/projects/sensiren/</a>. The file is <a href="https://sourceforge.net/projects/sensiren/files/sen_makeweather_getmerra2.exe/download" target="_blank">sen_makeweather_getmerra2.exe</a> (the package has been created with PyInstaller) and contains both <code>makeweatherfiles</code> and <code>getmerra2</code> which enables MERRA-2 files to be downloaded. This package allows you to create SAM weather files from MERRA-2 files without requiring any other parts of SIREN</a></li>
 </ol>
@@ -4219,11 +4239,11 @@ MERRA-2 Variables
 <p>The use of MERRA-2 data for the weather files is not necessary but provides a way of obtaining (gridded) weather data for any geographic area. Any weather files suitable for SAM can be used by SIREN. <a href="https://sam.nrel.gov/weather" target="_blank">Weather Data</a> describes these file formats and <a href="https://sam.nrel.gov/content/weather-data-non-us-locations" target="_blank">Weather Data for non-U.S. Locations</a> gives some details on where non-U.S. weather data may be obtained.</p>
 <p>SIREN has two approaches for obtaining weather files:</p>
 <ol>
-<li>Having the geographic location of the file as part of the file name. This option uses file name formats of &lt;location_latitude_longitude_year&gt; and includes files created from MERRA-2 data by <code>makeweatherfiles</code>. The location for weather files for solar and wind are defined by the <em>solar_files</em> and <em>wind_files</em> properties in the <a href="#p_files">[Files]</a> Section of the Preferences file</li>
-<li>By using an index file. To use other files you need to create index files that contain the latitude, longitude and file name for each weather file, where the filename is relative to the location for the weather files. Index files for solar and wind are defined by the <em>solar_index</em> and <em>wind_index</em> properties. You can either create these files manually or use <em>indexweather</em> to create an index</li>
+<li>Having the geographic location of the file as part of the filename. This option uses filename formats of &lt;location_latitude_longitude_year&gt; and includes files created from MERRA-2 data by <code>makeweatherfiles</code>. The location for weather files for solar and wind are defined by the <em>solar_files</em> and <em>wind_files</em> properties in the <a href="#p_files">[Files]</a> Section of the Preferences file</li>
+<li>By using an index file. To use other files you need to create index files that contain the latitude, longitude and filename for each weather file, where the filename is relative to the location for the weather files. Index files for solar and wind are defined by the <em>solar_index</em> and <em>wind_index</em> properties. You can either create these files manually or use <em>indexweather</em> to create an index</li>
 </ol>
 <h5>indexweather</h5>
-<p><code>indexweather</code> is a program that can be used to create an index of solar and/or wind weather files for input to SAM. The program generates an index file that contains latitude, longitude and file name for each weather file. It does this by interrogating some of weather file formats supported by SAM - SAM CSV, SMW and SRW - to obtain the three variables. You can invoke the program either by choosing <code>indexweather</code> from the SIREN Tools menu or in Windows by running <code>indexweather.exe</code> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
+<p><code>indexweather</code> is a program that can be used to create an index of solar and/or wind weather files for input to SAM. The program generates an index file that contains latitude, longitude and filename for each weather file. It does this by interrogating some of weather file formats supported by SAM - SAM CSV, SMW and SRW - to obtain the three variables. You can invoke the program either by choosing <code>indexweather</code> from the SIREN Tools menu or in Windows by running <code>indexweather.exe</code> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
 <ul>
 <li><em>Solar files</em>. Location of solar weather files</li>
 <li><em>Solar index</em>. Name and location for solar index file</li>
@@ -4277,7 +4297,7 @@ MERRA-2 Variables
 <div class="experiment">
 <li><em>Rain Folder</em>. Source folder for the rain weather files (experimental)</li>
 </div>
-<li><em>Resource File</em>. Target file. This can be either a CSV or Excel file. For an Excel file if you append <em>$MM$</em> to the year in the file name hourly variable values will be produced</li>
+<li><em>Resource File</em>. Target file. This can be either a CSV or Excel file. For an Excel file if you append <em>$MM$</em> to the year in the filename hourly variable values will be produced</li>
 <li><em>Properties</em>. This is a read only field that is filled in when the file is created. This property should be copied into the <a href="#p_files">[Files]</a> Section of the Preferences file</li>
 </ul>
 <p>There are three buttons:</p>
@@ -5048,6 +5068,8 @@ MERRA-2 Variables
 <td class="none">Enhanced Geothermal Systems geothermal energy</td></tr>
 <tr><td class="none"><dfn>EOS</dfn></td>
 <td class="none">Earth Observing System</td></tr>
+<tr><td class="none"><dfn>Facility</dfn></td>
+<td class="none">In the context of this help file the term facility may be used to represent either a generator or storage facility</td></tr>
 <tr><td class="none"><dfn>FTP</dfn></td>
 <td class="none">File Transfer Protocol. A standard network protocol used to transfer computer files between a client and server on a computer network</td></tr>
 <tr><td class="none"><dfn>GMT</dfn></td>
