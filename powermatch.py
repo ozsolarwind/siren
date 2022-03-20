@@ -1031,7 +1031,10 @@ class powerMatch(QtWidgets.QWidget):
         for i in range(len(self.file_labels)):
             if self.files[i].hasFocus():
                 break
-        curfile = self.scenarios + self.files[i].text()
+        if self.files[i].text() == '':
+            curfile = self.scenarios[:-1]
+        else:
+            curfile = self.scenarios + self.files[i].text()
         if i == R:
             if self.files[i].text() == '':
                 curfile = self.scenarios + self.files[D].text()
