@@ -242,7 +242,7 @@ class TabDialog(QtWidgets.QDialog):
         do_new = makeNew(self.siren_dir)
         do_new.exec_()
         if do_new.ini_file != '':
-            self.invoke(do_new.ini_file)
+            self.invoke('sirenm', do_new.ini_file)
             self.quit()
 
     def editIniFile(self, ini=None):
