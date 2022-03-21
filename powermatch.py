@@ -1834,17 +1834,20 @@ class powerMatch(QtWidgets.QWidget):
                         except:
                             pass
             for i in range(self.order.count()):
-                if self.generators[self.order.item(i).text()].capacity > 0:
-                    gen = self.order.item(i).text()
-                    try:
-                        if self.generators[gen].constraint in self.constraints and \
-                           self.constraints[self.generators[gen].constraint].category == 'Generator':
-                            typ = 'G'
-                        else:
-                            typ = 'S'
-                    except:
-                        continue
-                    datain.append([gen, typ, self.generators[gen].capacity])
+                try:
+                    if self.generators[self.order.item(i).text()].capacity > 0:
+                        gen = self.order.item(i).text()
+                        try:
+                            if self.generators[gen].constraint in self.constraints and \
+                               self.constraints[self.generators[gen].constraint].category == 'Generator':
+                                typ = 'G'
+                            else:
+                                typ = 'S'
+                        except:
+                            continue
+                        datain.append([gen, typ, self.generators[gen].capacity])
+                except:
+                    pass
             adjust = Adjustments(self, datain, self.adjustto, self.adjust_cap, self.results_prefix,
                                  show_multipliers=self.show_multipliers, save_folder=self.scenarios)
             adjust.exec_()
@@ -2966,9 +2969,10 @@ class powerMatch(QtWidgets.QWidget):
                    cp = '${:.2f}'.format(self.carbon_price)
                 sp_data.append(['Carbon Price', self.carbon_price, '', '', '', cc, cs])
        #     sp_data.append(['RE %age', round(re_sum * 100. / gen_sum, 1)])
-            sp_data.append(['RE %age', '{:.1f}%'.format((tml_sum - sto_sum - ff_sum) * 100. / tml_sum)])
-            if sto_sum > 0:
-                sp_data.append(['Storage %age', '{:.1f}%'.format(sto_sum * 100. / tml_sum)])
+            if tml_sum > 0:
+                sp_data.append(['RE %age', '{:.1f}%'.format((tml_sum - sto_sum - ff_sum) * 100. / tml_sum)])
+                if sto_sum > 0:
+                    sp_data.append(['Storage %age', '{:.1f}%'.format(sto_sum * 100. / tml_sum)])
        #     sp_data.append(['RE %age of Total Load', round((sp_load - sf_sums[0] - ff_sum) * \
         #                   100. / sp_load, 1)])
             sp_data.append(' ')
