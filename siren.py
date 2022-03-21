@@ -625,6 +625,8 @@ class makeNew(QtWidgets.QDialog):
             adj_dir = adj_dir.replace(self.parents['$YEAR$'], '$YEAR$')
         if self.parents['$USER$'] in my_dir:
             adj_dir = adj_dir.replace(self.parents['$USER$'], '$USER$')
+        if sys.platform == 'win32' or sys.platform == 'cygwin':
+            adj_dir = adj_dir.replace('\\', '/')
         for field in self.fields:
             if field[0] == 'section':
                 continue
@@ -656,6 +658,8 @@ class makeNew(QtWidgets.QDialog):
             my_dir = os.getcwd()
             my_dir = my_dir.replace(self.parents['$YEAR$'], '$YEAR$')
             my_dir = my_dir.replace(self.parents['$USER$'], '$USER$')
+            if sys.platform == 'win32' or sys.platform == 'cygwin':
+                my_dir = my_dir.replace('\\', '/')
             for p in range(len(updates['[Parents]'])):
                 i = updates['[Parents]'][p].find('=')
                 value = updates['[Parents]'][p][i + 1:]
