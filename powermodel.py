@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2021 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2022 Sustainable Energy Now Inc., Angus King
 #
 #  powermodel.py - This file is part of SIREN.
 #
@@ -2331,6 +2331,13 @@ class PowerModel():
                     self.load_key = ''
                 if (self.plots['show_load'] or self.plots['save_match'] or self.plots['shortfall'] \
                     or self.plots['shortfall_detail']) and self.can_do_load:
+                    other_load_year = False
+                    if self.load_year != self.base_year and self.load_growth == 0: # see if other load file
+                        load_file = self.load_file.replace(self.base_year, self.load_year)
+                        if os.path.exists(load_file):
+                            self.load_file = load_file
+                            other_load_year = True
+                            self.load_data = None
                     if self.load_data is None:
                         tf = open(self.load_file, 'r')
                         lines = tf.readlines()
@@ -2351,7 +2358,7 @@ class PowerModel():
                         else:
                             for i in range(1, len(lines)):
                                 self.load_data.append(float(lines[i].rstrip()))
-                    if self.load_multiplier != 0:
+                    if self.load_multiplier != 0 or other_load_year:
                         key = 'Load ' + self.load_year
                     else:
                         key = 'Load'  # lines[0].rstrip()
