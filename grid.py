@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2021 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2022 Sustainable Energy Now Inc., Angus King
 #
 #  grid.py - This file is part of SIREN.
 #
@@ -79,7 +79,7 @@ def dust(pyd, pxd, y1d, x1d, y2d, x2d):   # debug
 
 class Line:
     def __init__(self, name, style, coordinates, length=0., connector=-1, dispatchable=None, line_cost=None, peak_load=None,
-                 peak_dispatchable=None, peak_loss=None, line_table=None, substation_cost=None):
+                 peak_dispatchable=None, peak_loss=None, line_table=None, substation_cost=None, initial=None):
         self.name = name
         self.style = style
         self.coordinates = []
@@ -87,6 +87,7 @@ class Line:
             self.coordinates.append([])
             for j in range(len(coordinates[i])):
                 self.coordinates[-1].append(round(coordinates[i][j], 6))
+        self.initial = initial
         self.connector = connector
         self.length = length
         self.dispatchable = dispatchable
@@ -455,6 +456,10 @@ class Grid:
                     else:
                         try:
                             self.lines.append(Line(line_name, style[styl], coords, length=grid_len))
+                            try:
+                                self.lines[-1].initial = styl[2:].replace('kv', 'kV')
+                            except:
+                                pass
                         except:
                             style[styl] = '#FFFFFF'
                             self.lines.append(Line(line_name, style[styl], coords, length=grid_len))

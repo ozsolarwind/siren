@@ -2501,11 +2501,11 @@ class MainWindow(QtWidgets.QMainWindow):
                                     cost = value
                 self.view.scene().lines.lines[i].substation_cost = cost
         dialog = displaytable.Table(self.view.scene().lines.lines,
-                 fields=['name', 'line_table', 'length', 'line_cost', 'substation_cost', 'peak_load', 'peak_dispatchable',
+                 fields=['name', 'initial', 'line_table', 'length', 'line_cost', 'substation_cost', 'peak_load', 'peak_dispatchable',
                          'peak_loss', 'coordinates', 'connector'],
                  units='length=Km line_cost=$ substation_cost=$ peak_load=MW peak_dispatchable=MW peak_loss=MW',
                  sumfields=['length', 'line_cost', 'substation_cost'],
-                 decpts=[0, 0, 2, 1, 1, 3, 2, 3],
+                 decpts=[0, 0, 0, 2, 1, 1, 3, 2, 3, 0, 0],
                  save_folder=self.scenarios)  # '#', 'connector',
         dialog.exec_()
         comment = 'Grid displayed'

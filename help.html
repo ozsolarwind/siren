@@ -432,6 +432,10 @@ You can also use TMY files such as those provided with SAM. If you have a number
 <td class="none">If the grid connects &ldquo;dispatchable&rdquo; technology this will be set to <em>Y</em></td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>Initial</dfn></td>
+<td class="none">If the grid line is part of the initial (existing) grid and the information is available this will display the capacity in kV for the line</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>Length</dfn></td>
 <td class="none">The length of the grid line</td>
 </tr>
@@ -1850,6 +1854,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">Worksheet name for optimisation table</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>optimise_default</dfn></td>
+<td class="none">If an Optimisation entry is missing for a facility this defines a default value for a new entry. The default isF no (new) entry</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>optimise_generations</dfn></td>
 <td class="none">Number of iterations (generations) for optimisation. The value can be between 10 and 500, with a default of 20</td>
 </tr>
@@ -1872,6 +1880,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <tr class="none">
 <td class="none"><dfn>optimise_stop</dfn></td>
 <td class="none">Stop iterations for optimisation if the solution should remain the same. The value can be between 0 and 50, with a default of 0 (meaning there will be no check)</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>optimise_to_batch</dfn></td>
+<td class="none">When running an optimisation you can choose to add the picked (capacity) results to the batch file. Default is False</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>optimise_&lt;details&gt;</dfn></td>
@@ -2538,7 +2550,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <td class="none">Display the existing grid network (True)</td>
 </tr>
 <tr class="none">
-<td class="none"><img src="check-mark.png" alt="Show Existing Grid">&nbsp;&nbsp;Show Existing Grid (Ctrl+2)</td>
+<td class="none"><img src="check-mark.png" alt="Show Existing Grid2">&nbsp;&nbsp;Show Existing Grid2 (Ctrl+2)</td>
 <td class="none">Display the existing detailed grid network if one is available (this grid is not utilised by SIREN; True)</td>
 </tr>
 <tr class="none">
@@ -2828,7 +2840,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <tr><td class="lr"><dfn>Add Existing Rooftop PV to Load (Gross Load)</dfn></td>
 <td class="none">Create additional load curve which includes Rooftop PV. This increases the Load curve by the amount of Rooftop PV in an attempt to simulate it's contribution to load reduction (<em>gross_load</em>)</td></tr>
 <tr><td class="lr"><dfn>Growth options</dfn></td>
-<td class="none">Options to set an annual load (demand) growth target and project a number of years into the future. This takes the existing load and increases it by the specified percentage for the number of years into the future</td></tr>
+<td class="none">Options to set an annual load (demand) growth target and project a number of years into the future. This takes the existing load and increases it by the specified percentage for the number of years into the future. If you specify zero growth and a (future) year which has a load file the program will use that load file</td></tr>
 <tr><td class="lr"><strong>Storage</strong></td>
 <td class="none">Options related to (generic) storage within the network</td></tr>
 <tr><td class="lr"><dfn>Storage Capacity</dfn></td>
@@ -3200,8 +3212,8 @@ In producing the LCOE figures you can choose to use LCOE figures that ignore any
 <tr><td class="none"><dfn>To Meet Load (MWh)<dfn></td><td class="none">How much generation or storage output was used to meet the load. It has rows for each non-RE generator, storage and a combined figure for RE</td></tr>
 </table>
 <dfn>Capacity (MW)</dfn> is required and must be the first entry. 'Carbon Price' allows you to input a different Carbon Price for each Model. By default the resulting output will be appended as a new worksheet to the input file. You can create a new spreadsheet by setting the <em>batch_new_file</em> property to True
-<br />The Batch option also has a prototype chart facility that can be used to do sensitivity analysis on a suite of batch models - see <a href="#pm_batch_graphs">below</a></li>
-<li><strong>Optimise</strong>. Invoke the Optimise function. This will use an iterative approach to optimise the input generator capacities to produce a solution with (a) either a lower overall LCOE, or (b) the lowest weight for six variables, or (c) both. It will complete by displaying a plot of how the value for LCOE has converged to a minimum, and a either a three dimensional plot showing the three variables with the highest weightings or a table of all variables for the multi-variable approach. Exiting the plot will then produce a summary table; the summary table will also contain details on the Optimisation parameters used. It will also update the adjustment values for each generator to enable you to produce a Powermatch spreadsheet. See below for more details</li>
+<br /<br />The Batch option also has a prototype chart facility that can be used to do sensitivity analysis on a suite of batch models - see <a href="#pm_batch_graphs">below</a></li>
+<li><strong>Optimise</strong>. Invoke the Optimise function. This will use an iterative approach to optimise the input generator capacities to produce a solution with (a) either a lower overall LCOE, or (b) the lowest weight for six variables, or (c) both. It will complete by displaying a plot of how the value for LCOE has converged to a minimum, and a either a three dimensional plot showing the three variables with the highest weightings or a table of all variables for the multi-variable approach. Exiting the plot will then produce a summary table; the summary table will also contain details on the Optimisation parameters used. It will also update the adjustment values for each generator to enable you to produce a Powermatch spreadsheet. If you choose a solution this can be added to a batch input file. See below for more details on optimisation</li>
 <li><strong>Help</strong>. Display the Powermatch help</li>
 </ul>
 <p>The Constraints, Generators and Optimisation tables can be edited, updated and saved and the revised table(s) used as inputs for the <strong>Summary</strong>, <strong>Powermatch</strong>, <strong>Batch</strong> and <strong>Optimise</strong> options. During the edit process the revised values can be exported as a new spreadsheet. If the table(s) is saved but not exported the revised values will not be available once Powermatch is exited. You can also choose another sheet, however, if the sheet you choose is not the correct format you may get unusual behaviour.</p>
