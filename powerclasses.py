@@ -115,6 +115,7 @@ class PowerSummary:
             self.transmitted = int(round(transmitted))
         else:
             self.transmitted = None
+        self.zone = None
 
 
 class ColumnData:

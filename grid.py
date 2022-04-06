@@ -717,3 +717,190 @@ class Grid_Boundary:
             zf.close()
         else:
             kml_data.close()
+
+
+class Grid_Zones:
+    def get_config(self):
+        config = configparser.RawConfigParser()
+        if len(sys.argv) > 1:
+            config_file = sys.argv[1]
+        else:
+            config_file = getModelFile('SIREN.ini')
+        config.read(config_file)
+        try:
+            self.base_year = config.get('Base', 'year')
+        except:
+            self.base_year = '2012'
+        parents = []
+        try:
+            parents = getParents(config.items('Parents'))
+        except:
+            pass
+        try:
+            self.kml_file = config.get('Files', 'grid_zones')
+            for key, value in parents:
+                self.kml_file = self.kml_file.replace(key, value)
+            self.kml_file = self.kml_file.replace('$USER$', getUser())
+            self.kml_file = self.kml_file.replace('$YEAR$', self.base_year)
+        except:
+            self.kml_file = ''
+        self.colour = '#00FF00'
+        try:
+            mapc = config.get('Map', 'map_choice')
+        except:
+            mapc = ''
+        try:
+            self.colour = config.get('Colors', 'grid_zones')
+        except:
+            pass
+        if mapc != '':
+            try:
+                self.colour = config.get('Colors' + mapc, 'grid_zones')
+            except:
+                pass
+        upper_left = [0., 0.]
+        lower_right = [-90., 180.]
+        try:
+             upper_left = config.get('Map', 'upper_left' + mapc).split(',')
+             upper_left[0] = float(upper_left[0].strip())
+             upper_left[1] = float(upper_left[1].strip())
+             lower_right = config.get('Map', 'lower_right' + mapc).split(',')
+             lower_right[0] = float(lower_right[0].strip())
+             lower_right[1] = float(lower_right[1].strip())
+        except:
+             try:
+                 lower_left = config.get('Map', 'lower_left' + mapc).split(',')
+                 upper_right = config.get('Map', 'upper_right' + mapc).split(',')
+                 upper_left[0] = float(upper_right[0].strip())
+                 upper_left[1] = float(lower_left[1].strip())
+                 lower_right[0] = float(lower_left[0].strip())
+                 lower_right[1] = float(upper_right[1].strip())
+             except:
+                 pass
+        self.map_polygon = [upper_left, [upper_left[0], lower_right[1]], lower_right,
+           [lower_right[0], upper_left[1]], upper_left]
+
+    def __init__(self):
+        self.get_config()
+        self.lines = []
+        if not os.path.exists(self.kml_file):
+            return
+        style = {}
+        styl = ''
+        zipped = False
+        if self.kml_file[-4:] == '.kmz': # zipped file?
+            zipped = True
+            zf = zipfile.ZipFile(kml_file, 'r')
+            inner_file = ''
+            for name in zf.namelist():
+                if name[-4:] == '.kml':
+                    inner_file = name
+                    break
+            if inner_file == '':
+                return
+            memory_file = io.BytesIO()
+            memory_file.write(zf.open(inner_file).read())
+            root = ElementTree(fromstring(memory_file.getvalue()))
+        else:
+            kml_data = open(self.kml_file, 'rb')
+            root = ElementTree(fromstring(kml_data.read()))
+         # Create an iterator
+        if sys.version_info[1] < 9: # before python 3.9
+            iterat = root.getiterator()
+        else:
+            iterat = root.iter()
+        for element in iterat:
+            elem = element.tag[element.tag.find('}') + 1:]
+            if elem == 'Style':
+                for name, value in list(element.items()):
+                    if name == 'id':
+                        styl = value
+            elif elem == 'color':
+                style[styl] = self.colour
+            elif elem == 'name':
+                line_name = element.text
+            elif elem == 'styleUrl':
+                styl = element.text[1:]
+            elif elem == 'coordinates':
+                coords = []
+                coordinates = ' '.join(element.text.split()).split()
+                for i in range(len(coordinates)):
+                    coords.append([round(float(coordinates[i].split(',')[1]), 6),
+                      round(float(coordinates[i].split(',')[0]), 6)])
+                i = int(len(coords) / 2)
+                if within_map(coords[0][0], coords[0][1], self.map_polygon) and \
+                   within_map(coords[i][0], coords[i][1], self.map_polygon):
+                    try:
+                        self.lines.append(Line(line_name, style[styl], coords))
+                    except:
+                        self.lines.append(Line(line_name, self.colour, coords))
+        if zipped:
+            memory_file.close()
+            zf.close()
+        else:
+            kml_data.close()
+
+    def getZone(self, coords1, coords2):
+        if len(self.lines) < 1:
+            return 'No zones defined'
+        for line in self.lines:
+            if within_map(coords1, coords2, line.coordinates):
+                return(line.name)
+        # find nearest zone
+        nearest = self.nearestZone(coords1, coords2)
+        return self.lines[nearest[3]].name
+
+    def nearestZone(self, lat, lon):
+        shortest = [99999, -1., -1., -1]
+        for l in range(len(self.lines)):
+            for i in range(len(self.lines[l].coordinates) - 1):
+                dist = self.DistancePointLine(lat, lon, self.lines[l].coordinates[i][0], self.lines[l].coordinates[i][1],
+                       self.lines[l].coordinates[i + 1][0], self.lines[l].coordinates[i + 1][1])
+                if dist[0] >= 0 and dist[0] < shortest[0]:
+                    shortest = dist[:]
+                    shortest.append(l)
+        if shortest[0] == 99999:
+             shortest[0] = -1
+        return shortest   # length, lat, lon, line#
+
+    def DistancePointLine(self, pyd, pxd, y1d, x1d, y2d, x2d):
+        px = radians(pxd)
+        py = radians(pyd)
+        x1 = radians(x1d)
+        y1 = radians(y1d)
+        x2 = radians(x2d)
+        y2 = radians(y2d)
+        b13 = self.Bearing(y1, x1, py, px)
+        b12 = self.Bearing(y1, x1, y2, x2)
+        d13 = self.Distance(y1, x1, py, px)
+        d23 = self.Distance(y2, x2, py, px)
+        dxt = asin(sin(d13) * sin(b13 - b12))
+        dat = acos(cos(d13) / cos(dxt))
+        iy = asin(sin(y1) * cos(dat) + cos(y1) * sin(dat) * cos(b12))
+        ix = x1 + atan2(sin(b12) * sin(dat) * cos(y1), cos(dat) - sin(y1) * sin(iy))
+        if abs(ix - x1) > abs(x1 - x2) or abs(iy - y1) > abs(y1 - y2):
+            dst = d13
+            ix = x1
+            iy = y1
+        else:
+            dst = self.Distance(iy, ix, py, px)
+            if d13 < dst:   # must be another way but this'll do for now
+                dst = d13
+                ix = x1
+                iy = y1
+        if d23 < dst:   # must be another way but this'll do for now
+            dst = d23
+            ix = x2
+            iy = y2
+        return [round(abs(dst) * RADIUS, 2), round(degrees(iy), 6), round(degrees(ix), 6)]
+
+    def Bearing(self, y1, x1, y2, x2):
+# find the bearing between the coordinates
+        return atan2(sin(x2 - x1) * cos(y2), cos(y1) * sin(y2) - sin(y1) * cos(y2) * cos(x2 - x1))
+
+    def Distance(self, y1, x1, y2, x2):
+# find the differences between the coordinates
+        dy = y2 - y1
+        dx = x2 - x1
+        ra13 = pow(sin(dy / 2.), 2) + cos(y1) * cos(y2) * pow(sin(dx / 2.), 2)
+        return 2 * asin(min(1, sqrt(ra13)))

@@ -34,7 +34,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from mpl_toolkits.basemap import pyproj as pyproj
 from towns import Towns
 from getmodels import getModelFile
-from grid import Grid, Grid_Boundary, Line
+from grid import Grid, Grid_Boundary, Grid_Zones, Line
 from parents import getParents
 from senuser import getUser, techClean
 from station import Station, Stations
@@ -162,6 +162,7 @@ class WAScene(QtWidgets.QGraphicsScene):
         self.colors['background'] = 'darkBlue'
         self.colors['border'] = ''
         self.colors['grid_boundary'] = 'blue'
+        self.colors['grid_zones'] = '#00FF00'
         self.colors['grid_trace'] = 'white'
         self.colors['ruler'] = 'white'
         self.colors['station'] = '#00FF00'
@@ -318,6 +319,17 @@ class WAScene(QtWidgets.QGraphicsScene):
             self.existing_grid2 = True
         except:
             self.existing_grid2 = False
+        try:
+            grid_zones = config.get('Files', 'grid_zones')
+            self.grid_zones = True
+            try:
+                grid_zones = config.get('View', 'grid_zones')
+                if grid_zones.lower() in ['false', 'no', 'off']:
+                    self.grid_zones = False
+            except:
+                pass
+        except:
+            self.grid_zones = False
         self.trace_grid = True
         try:
             trace_grid = config.get('View', 'trace_grid')
@@ -501,12 +513,15 @@ class WAScene(QtWidgets.QGraphicsScene):
         self._setupCoordTransform()
         self._gridGroup = QtWidgets.QGraphicsItemGroup()
         self._gridGroup2 = QtWidgets.QGraphicsItemGroup()
+        self._gridGroupz = QtWidgets.QGraphicsItemGroup()
         self._setupGrid()
         self.addItem(self._gridGroup)
         if not self.existing_grid:
             self._gridGroup.setVisible(False)
         if self.existing_grid2:
             self.addItem(self._gridGroup2)
+        if self.grid_zones:
+            self.addItem(self._gridGroupz)
         self._coordGroup = QtWidgets.QGraphicsItemGroup()
         self._setupCoordGrid()
         self.addItem(self._coordGroup)
@@ -767,7 +782,7 @@ class WAScene(QtWidgets.QGraphicsScene):
             self._scenarios.append([scen_filter, False, description])
 
     def _setupGrid(self):
-        def do_them(lines, width=self.line_width, grid2=False):
+        def do_them(lines, width=self.line_width, grid2=False, gridz=False):
             for line in lines:
                 color = QtGui.QColor()
                 color.setNamedColor(line.style)
@@ -784,6 +799,8 @@ class WAScene(QtWidgets.QGraphicsScene):
                     self.addItem(ln)
                     if grid2:
                         self._gridGroup2.addToGroup(ln)
+                    elif gridz:
+                        self._gridGroupz.addToGroup(ln)
                     else:
                         self._gridGroup.addToGroup(ln)
                     start = end
@@ -798,10 +815,19 @@ class WAScene(QtWidgets.QGraphicsScene):
         if self.existing_grid2:
             lines2 = Grid(grid2=True)
             do_them(lines2.lines, grid2=True)
+        if self.grid_zones:
+            self.linesz = Grid_Zones()
+            if len(self.linesz.lines) > 0:
+                do_them(self.linesz.lines, gridz=True)
 
     def addStation(self, st):
         self._stationGroups[st.name] = []
         p = self.mapFromLonLat(QtCore.QPointF(st.lon, st.lat))
+        try:
+            if len(self.linesz.lines) > 0:
+                st.zone = self.linesz.getZone(st.lat, st.lon)
+        except:
+            pass
         size = -1
         if self.station_square:
             if self.scale:

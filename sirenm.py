@@ -1113,6 +1113,10 @@ class MainWindow(QtWidgets.QMainWindow):
             self.showOldg2.setShortcut('Ctrl+2')
             self.showOldg2.setStatusTip('Show Existing Grid 2')
             self.showOldg2.triggered.connect(self.show_OldGrid2)
+        if self.view.scene().grid_zones:
+            self.showZones = QtWidgets.QAction(QtGui.QIcon('check-mark.png'), 'Show Grid Zones', self)
+            self.showZones.setStatusTip('Show Grid Zones')
+            self.showZones.triggered.connect(self.show_Zones)
         self.hideTrace = QtWidgets.QAction(QtGui.QIcon('blank.png'), 'Clear Grid Trace', self)
         self.hideTrace.setStatusTip('Clear Grid Trace')
         self.hideTrace.triggered.connect(self.clear_Trace)
@@ -1150,6 +1154,8 @@ class MainWindow(QtWidgets.QMainWindow):
         viewMenu.addAction(self.showOldg)
         if self.view.scene().existing_grid2:
             viewMenu.addAction(self.showOldg2)
+        if self.view.scene().grid_zones:
+            viewMenu.addAction(self.showZones)
         viewMenu.addAction(self.hideTrace)
         viewMenu.addAction(self.showGrid)
         viewMenu.addAction(self.refreshGrid)
@@ -2073,6 +2079,7 @@ class MainWindow(QtWidgets.QMainWindow):
         act11 = 'Position legend here'
         act14 = 'Show weather for here'
         act15 = 'Show details for nearest grid line'
+        act16 = 'Show Zone for here'
         subPwr = []
         if station is not None:  # a stations
             noAction = menu.addAction(titl)
@@ -2106,6 +2113,8 @@ class MainWindow(QtWidgets.QMainWindow):
         addsAction.setIconVisibleInMenu(True)
         linAction = menu.addAction(QtGui.QIcon('line.png'), act15)
         linAction.setIconVisibleInMenu(True)
+        zoneAction = menu.addAction(QtGui.QIcon('zone.png'), act16)
+        zoneAction.setIconVisibleInMenu(True)
         sunAction = menu.addAction(QtGui.QIcon('weather.png'), act14)
         sunAction.setIconVisibleInMenu(True)
         subWthr = []
@@ -2192,6 +2201,9 @@ class MainWindow(QtWidgets.QMainWindow):
                                     (self.view.scene().lines.lines[shortest[3]].name,
                                      '{:,.1f}'.format(grid_path_len),
                                      msg))
+        elif action == zoneAction:
+            zone = self.view.scene().linesz.getZone(where.y(), where.x())
+            self.view.statusmsg.emit('Zone: ' + zone)
         elif action == sunAction:
             PlotWeather(where.y(), where.x(), self.base_year)
             self.view.statusmsg.emit('Weather displayed')
@@ -2446,7 +2458,7 @@ class MainWindow(QtWidgets.QMainWindow):
             comment = 'No Stations to display'
             self.view.statusmsg.emit(comment)
             return
-        fields = ['name', 'technology', 'capacity']
+        fields = ['name', 'zone', 'technology', 'capacity']
         units = 'capacity=MW'
         sumfields = ['capacity']
         if ctr[1] > 1:
@@ -2457,7 +2469,7 @@ class MainWindow(QtWidgets.QMainWindow):
         dialog = displaytable.Table(self.view.scene()._stations.stations,
                  fossil=self.view.scene().show_fossil, fields=fields,
                  units=units, sumby='technology', sumfields=sumfields,
-                 decpts=[0, 0, 3, 0], save_folder=self.scenarios)
+                 decpts=[0, 0, 0, 3, 0], save_folder=self.scenarios)
         dialog.exec_()
         comment = 'Stations displayed'
         self.view.statusmsg.emit(comment)
@@ -2781,6 +2793,20 @@ class MainWindow(QtWidgets.QMainWindow):
             self.showOldg2.setIcon(QtGui.QIcon('check-mark.png'))
             self.view.scene().existing_grid2 = True
             self.view.scene()._gridGroup2.setVisible(True)
+            comment += ' On'
+        self.view.statusmsg.emit(comment)
+
+    def show_Zones(self):
+        comment = 'Grid Zones Toggled'
+        if self.view.scene().grid_zones:
+            self.showZones.setIcon(QtGui.QIcon('blank.png'))
+            self.view.scene().grid_zones = False
+            self.view.scene()._gridGroupz.setVisible(False)
+            comment += ' Off'
+        else:
+            self.showZones.setIcon(QtGui.QIcon('check-mark.png'))
+            self.view.scene().grid_zones = True
+            self.view.scene()._gridGroupz.setVisible(True)
             comment += ' On'
         self.view.statusmsg.emit(comment)
 

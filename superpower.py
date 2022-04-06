@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2021 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2022 Sustainable Energy Now Inc., Angus King
 #
 #  superpower.py - This file is part of SIREN.
 #
@@ -583,6 +583,8 @@ class SuperPower():
         elif self.plots['visualise']:
             self.stn_outs = []
             self.stn_pows = []
+        if self.plots['save_zone']:
+            self.stn_zone = []
         len_x = 8760
         for i in range(len_x):
             self.x.append(i)
@@ -643,6 +645,8 @@ class SuperPower():
                     key = 'Existing Rooftop PV'
                 else:
                     key = stn.technology
+            if self.plots['save_zone']:
+                key = stn.zone + '_' + key
             if self.plots['save_data'] or self.plots['financials'] or self.plots['save_detail']:
                 self.stn_outs.append(stn.name)
                 self.stn_tech.append(stn.technology)
@@ -662,6 +666,8 @@ class SuperPower():
             elif self.plots['visualise']:
                 self.stn_outs.append(stn.name)
                 self.stn_pows.append([])
+            if self.plots['save_zone']:
+                self.stn_zone.append(stn.zone)
             power = self.getStationPower(stn)
             total_power = 0.
             total_energy = 0.
@@ -693,6 +699,8 @@ class SuperPower():
                 pt = PowerSummary(stn.name, stn.technology, total_power, stn.capacity, total_energy)
             else:
                 pt = PowerSummary(stn.name, stn.technology, total_power, stn.capacity)
+            if self.plots['save_zone']:
+                pt.zone = stn.zone
             self.power_summary.append(pt)
         if show_progress:
             self.progress.barProgress(-1)
@@ -1189,6 +1197,9 @@ class SuperPower():
 
     def getStnPows(self):
         return self.stn_outs, self.stn_pows
+
+    def getStnZones(self):
+        return self.stn_zone
 
     def getVisual(self):
         return self.model.getVisual()

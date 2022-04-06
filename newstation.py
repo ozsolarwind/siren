@@ -139,13 +139,10 @@ class AnObject(QtWidgets.QDialog):
         else:
             self.scenarios = None
         dialog.setObjectName('Dialog')
-        self.initUI()
-
-    def initUI(self):
         self.save = False
         self.field = ['name', 'technology', 'lat', 'lon', 'capacity', 'turbine', 'rotor',
                       'no_turbines', 'area', 'scenario', 'power_file', 'grid_line', 'storage_hours',
-                      'direction', 'tilt']
+                      'direction', 'tilt', 'zone']
         self.label = []
         self.edit = []
         self.field_type = []
@@ -359,6 +356,14 @@ class AnObject(QtWidgets.QDialog):
                     self.edit.append(QtWidgets.QLineEdit(str(self.tilt)))
                 else:
                     self.edit.append(QtWidgets.QLineEdit(''))
+            elif self.field[i] == 'zone':
+                self.zone = attr
+                self.show_hide['zone'] = len(self.edit)
+                if attr is not None:
+                    self.edit.append(QtWidgets.QLineEdit(str(self.zone)))
+                else:
+                    self.edit.append(QtWidgets.QLineEdit(''))
+                self.edit[-1].setEnabled(False)
             try:
                 if metrics[1].boundingRect(self.edit[-1].text()).width() > widths[1]:
                     widths[1] = metrics[1].boundingRect(self.edit[-1].text()).width()

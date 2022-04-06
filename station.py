@@ -51,7 +51,8 @@ def within_map(x, y, poly):
 
 class Station:
     def __init__(self, name, technology, lat, lon, capacity, turbine, rotor, no_turbines, area, scenario, generation=None,
-                 power_file=None, grid_line=None, grid_len=None, grid_path_len=None, direction=None, tilt=None, storage_hours=None):
+                 power_file=None, grid_line=None, grid_len=None, grid_path_len=None, direction=None, tilt=None,
+                 storage_hours=None, zone=None):
         self.name = name
         self.technology = technology
         self.lat = lat
@@ -71,6 +72,7 @@ class Station:
         self.storage_hours = storage_hours
         if tilt is not None:
             self.tilt = tilt
+        self.zone = zone
 
 
 class Stations:

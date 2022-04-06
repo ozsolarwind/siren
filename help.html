@@ -201,7 +201,7 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 <li><code>siren_toolkit.exe</code> contains the full SIREN toolkit, It contains the contents of three other files in this list</li>
 <li><code>siren_application.exe</code> contains the packaged Windows version of the SIREN application</li>
 <li><code>siren_sample.exe</code> contains the files and data for the sample SIREN simulation of the SWIS</li>
-<li>(<code>sen_makeweather_getmerra2.exe</code> is a package containing both <code>makeweatherfiles</code>, a standalone program to produce SAM weather files, and <code>getmerra2</code> which enables MERRA-2 files to be downloaded. This package allows you to create SAM weather files from MERRA-2 files without requiring any other parts of SIREN. See <a href="makeweatherfiles.html" target="_blank">makeweatherfiles.html</a>)</li>
+<li>(<code>sen_makeweather_getmerra2.exe</code> is a package containing both <code>getmerra2</code>, which enables MERRA-2 files to be downloaded, and <code>makeweatherfiles</code>, a standalone program to produce SAM weather files. This package allows you to create SAM weather files from MERRA-2 files without requiring any other parts of SIREN. See <a href="makeweatherfiles.html" target="_blank">makeweatherfiles.html</a>)</li>
 </ul>
 <p>Occasionally new versions of some of the SIREN programs will be uploaded to SourceForge. You can check for new versions and download them by selecting the <code>sirenupd</code> option in SIREN. (Major new releases can also be indicated but these will require a complete new SIREN version to be installed.)</p>
 <p>To install the required package you can just open/launch it and extract it to your desired location. It may be necessary to execute the program as Administrator.</p>
@@ -339,9 +339,10 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 <li>Names, technologies and locations of existing power stations (identified by <em>grid_stations</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file). This is either a CSV or Excel file which contains details of existing Facilities (Stations) registered with the local electricity regulator (AEMO in the case of the SWIS) augmented by geographic location of the station and details on turbines for wind farms. The CSV file may be either a specific format or a normal scenario file. You can update this file for the SWIS as described in <a href="#swisupd">Obtaining Current SWIS Facilities</a>.
 <br>
 You can also create additional stations, such as Rooftop PV, to be included in the list of existing stations by creating an additional Stations file and setting the <em>grid_stations2</em> property in the <a href="#p_files">[Files]</a> Section of the Preferences file</li>
-<li>A layout of the existing electrical grid. A KML file showing the layout of the major power lines in the grid and an outline of the network (SWIS) boundary. This should be a simplified version of the grid network with all lines connecting exactly for SIREN to correctly connect new stations into the grid
+<li>A layout of the existing electrical grid. A KML file showing the layout of the major power lines in the grid and another with the outline of the network (SWIS) boundary. This should be a simplified version of the grid network with all lines connecting exactly for SIREN to correctly connect new stations into the grid
 <br>
 <strong>Note:</strong> The intention of these two files is to describe the existing fossil and renewable Stations on the electricity network</li>
+<li>Optionally, the network can be divided into zones. This enables different renewable energy potential between zones to be analysed and utilised by <a href="#powermatch">Powermatch</a></li>
 <li>Hourly load details for the electricity grid. A simple CSV file with a single column of electrical load data for the 8,760 hours in the year of interest (identified by <em>load</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file). Each value is for one hour of load commencing on that hour.</li>
 <li>Hourly solar and weather details for the area of interest (identified by <em>solar_files</em> and <em>wind_files</em> properties of the <a href="#p_files">[Files]</a> Section of the Preferences file). This data is in formats required for input to SAM and contains entries for the 8,760 hours in the year of interest. A SAM weather file is a text file that contains one (calendar) year's worth of data describing the solar resource, wind speed, temperature, and other weather characteristics at a particular location. The approach we have adopted is to use NASA MERRA-2 data for the desired geographic area and year to create appropriately formatted weather files. This is described in <a href="#merra">Obtaining and Using NASA MERRA-2 Data for SAM weather files</a>. To enable more recent (part-year) data to be used it is possible to &ldquo;wrap&rdquo; the data by using the weather data for the prior year for the remaining part of the year.
 <br>
@@ -739,6 +740,9 @@ The format is similar to a Windows INI file. If you want to create a new Model y
 <tr class="none">
 <td class="none"><dfn>grid2_&lt;line_capacity&gt;</dfn> for the detailed grid network not used by SIREN</td>
 </tr>
+<tr class="none">
+<td class="none"><dfn>grid_zones</dfn> to display grid zones</td>
+</tr>
 </table>
 <p>There are colours used for the resource grids:</p>
 <table border="0", class="none">
@@ -878,6 +882,10 @@ The format is similar to a Windows INI file. If you want to create a new Model y
 <td class="none"><dfn>grid_stations2</dfn></td>
 <td class="none">Additional power stations you want to include in the set of Existing stations. This can cater for such things
 as embedded solar - Rooftop PV - installed on the grid but not registered with AEMO</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>grid_zones
+<td class="none">File (KML or KMZ file) defining zones within the grid boundary. This allows generation by zone to be calculated</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>help</dfn></td>
@@ -1642,6 +1650,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">If True this property will allow you to save individual images of visualised generation. The default value is False</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>save_zone</dfn></td>
+<td class="none">Save generation data by zone. If True and zones are defined this property will indicate to output generation by zone. The default value is False</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>season</dfn></td>
 <td class="none">Display plots of the average 24 hour period for the seasons defined by the <em>season&lt;n&gt;</em> properties
 </td>
@@ -1855,7 +1867,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>optimise_default</dfn></td>
-<td class="none">If an Optimisation entry is missing for a facility this defines a default value for a new entry. The default isF no (new) entry</td>
+<td class="none">If an Optimisation entry is missing for a facility this defines a default value for a new entry. The default is no (new) entry</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>optimise_generations</dfn></td>
@@ -2175,6 +2187,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <tr class="none">
 <td class="none"><dfn>fossil</dfn></td>
 <td class="none">Show fossil generators</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>grid_zones</dfn></td>
+<td class="none">Display grid zones if available. The default is True</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>group_colours</dfn></td>
@@ -2554,6 +2570,10 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <td class="none">Display the existing detailed grid network if one is available (this grid is not utilised by SIREN; True)</td>
 </tr>
 <tr class="none">
+<td class="none"><img src="check-mark.png" alt="Show Grid Zones">&nbsp;&nbsp;Show Grid Zones</td>
+<td class="none">Display grid zones if available</td>
+</tr>
+<tr class="none">
 <td class="none"><img src="blank.png" alt="Clear Grid Trace">&nbsp;&nbsp;Clear Grid Trace</td>
 <td class="none">Clear any grid trace</td>
 </tr>
@@ -2781,6 +2801,10 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <td class="none">The nearest grid line will be highlighted and some details displayed in the Status line. Details will include the line name, length, an indication if it carries Dispatchable generation, and the peak load on the line</td>
 </tr>
 <tr class="none">
+<td class="none"><img src="zone.png" alt="Show Zone">&nbsp;&nbsp;Show Zone for here</td>
+<td class="none">Display the zone for the chosen location</td>
+</tr>
+<tr class="none">
 <td class="none"><img src="weather.png" alt="Weather">&nbsp;&nbsp;Show weather for here</td>
 <td class="none">Present a menu to allow you to plot weather values (DHI, DNI, GHI, temperature, wind speed) for this location. You select the weather values you want to display and one of a series of plots to display either by hour or the average for a period. There is also an option to display chosen plots one at a time or all together, that is, display them all and allow you to navigate between them</td>
 </tr>
@@ -2889,6 +2913,8 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <td class="none">Choose what tables to present</td></tr>
 <tr><td class="lr"><dfn>Show Summary/Other Tables</dfn></td>
 <td class="none">Present a brief summary table of Capacity and Output for each selected station (<em>summary</em>) plus other tables dependent on options chosen</td></tr>
+<tr><td class="lr"><dfn>Generation by Zone</dfn></td>
+<td class="none">If a zones file is defined choosing this option will cause generation figures to be calculated by zone (<em>save_zone</em>)</td></tr>
 <tr><td class="lr"><dfn>Save Hourly Data Output</dfn></td>
 <td class="none">Save the hourly data for each renewable station. This is the hourly output calculated by the SAM model (<em>save_data</em>)</td></tr>
 <tr><td class="lr"><dfn>Save (adjusted) Hourly Data Output by Station</dfn></td>
@@ -3121,7 +3147,7 @@ If it's not a diurnal plot (i.e. Period is <em>&lt;None&gt;</em>) any occurence 
 <li>As mentioned previously, <em>Include full grid path in LCOE?</em> may over-inflate grid costs as each station path to the load centre is traced individually</li>
 </ul><p><a href="#help">Back to top</a></p>
 <h3 id="powermatch">Powermatch</h3>
-<p>Running the SIREN models will produce hourly generation figures which identify generation shortfalls and excesses against load (demand). One of the outputs from SIREN is a table of these generation shortfalls which could be met by storage (charged by surplus renewable generation) and dispatchable energy generation. The Powermatch (<code>powermatch</code>) component of SIREN can be used to match generation with demand (load) to quantify and cost this dispatchable energy generation, storage and CO<sub>2</sub>-e emissions. This enables you to complete a costed renewable energy scenario.</p>
+<p>Running the SIREN models will produce hourly generation figures which identify generation shortfalls and excesses against load (demand). One of the outputs from SIREN is a table of these generation shortfalls which could be met by storage (charged by surplus renewable generation) and dispatchable energy generation. The Powermatch (<code>powermatch</code>) component of SIREN can be used to match generation with demand (load) to quantify and cost this dispatchable energy generation, storage and CO<sub>2</sub>-e emissions. This enables you to complete a costed renewable energy scenario. If the input data spreadsheet has zones (of generation) the calculations will be performed for each zone.</p>
 <p>One of the outputs from Powermatch is calculated LCOE figures, overall and for each Generator. The LCOE figures are calculated based upon either Capital (Capex), Operations (Opex) and fuel costs or a Reference LCOE and Reference Capacity Factor (CF) for the generator or storage.
 Be aware that if a facility is not used it will have no costs associated with it (this is based upon the premise that the facility would not be included in any detailed modelling).
 In producing the LCOE figures you can choose to use LCOE figures that ignore any surplus generation or produce an adjusted LCOE figure which adjusts the LCOE figure upwards to take into account the surplus generation (that is, the adjusted LCOE figure includes the cost of surplus - spilled - generation). The default is to produce an adjusted LCOE (<em>adjusted_lcoe</em>)
@@ -3212,8 +3238,14 @@ In producing the LCOE figures you can choose to use LCOE figures that ignore any
 <tr><td class="none"><dfn>To Meet Load (MWh)<dfn></td><td class="none">How much generation or storage output was used to meet the load. It has rows for each non-RE generator, storage and a combined figure for RE</td></tr>
 </table>
 <dfn>Capacity (MW)</dfn> is required and must be the first entry. 'Carbon Price' allows you to input a different Carbon Price for each Model. By default the resulting output will be appended as a new worksheet to the input file. You can create a new spreadsheet by setting the <em>batch_new_file</em> property to True
-<br /<br />The Batch option also has a prototype chart facility that can be used to do sensitivity analysis on a suite of batch models - see <a href="#pm_batch_graphs">below</a></li>
-<li><strong>Optimise</strong>. Invoke the Optimise function. This will use an iterative approach to optimise the input generator capacities to produce a solution with (a) either a lower overall LCOE, or (b) the lowest weight for six variables, or (c) both. It will complete by displaying a plot of how the value for LCOE has converged to a minimum, and a either a three dimensional plot showing the three variables with the highest weightings or a table of all variables for the multi-variable approach. Exiting the plot will then produce a summary table; the summary table will also contain details on the Optimisation parameters used. It will also update the adjustment values for each generator to enable you to produce a Powermatch spreadsheet. If you choose a solution this can be added to a batch input file. See below for more details on optimisation</li>
+<br />It is also possible to perform batch runs on zone data, but if so both the input data file and the batch file must have input capacities by zone. In this case the name for each facility identifies both the zone and technology in the form <em>zone.technology</em>.
+<br />The Batch option also has a prototype chart facility that can be used to do sensitivity analysis on a suite of batch models - see <a href="#pm_batch_graphs">below</a></li>
+<li><strong>Optimise</strong>. Invoke the Optimise function. This will use an iterative approach to optimise the input generator capacities to produce a solution with (a) either a lower overall LCOE, (b) the lowest weight for six variables, or (c) both. It will complete by displaying a plot of how the value for LCOE has converged to a minimum, and either (if <em>optimise_multitable</em> and <em>more_details</em> are set) a three dimensional plot showing the three variables with the highest weightings or (if <em>optimise_multitable</em> is set) a table of all variables for the multi-variable approach. Depending on which options are specified you will be presented with a number of &ldquo;best picks&rdquo; where you can choose your preferred choice. This will then produce a summary table which will also contain details on the Optimisation parameters used. It will also update the adjustment values for each generator to enable you to produce a Powermatch spreadsheet. If you choose a solution this can be added to a batch input file (if <em>optimise_to_batch</em> is set).
+<ul>
+<li>If you are using generator adjustments it may be useful to invoke <strong>Summary</strong> to set or reset the starting capacities for the optimsation (using <strong>Reset</strong> to set initial values or <strong>Restore</strong> to restore previously saved values)</li>
+<li>If you optimise with zones you want to ensure <em>optimise_default</em> is defined to ensure optimisation entries are created for each <em>zone.technology</em> combination. You can then update these entries to the desired range and step increment and save them to a new optimisation spreadsheet if required</li>
+</ul>
+See below for more details on optimisation.</li>
 <li><strong>Help</strong>. Display the Powermatch help</li>
 </ul>
 <p>The Constraints, Generators and Optimisation tables can be edited, updated and saved and the revised table(s) used as inputs for the <strong>Summary</strong>, <strong>Powermatch</strong>, <strong>Batch</strong> and <strong>Optimise</strong> options. During the edit process the revised values can be exported as a new spreadsheet. If the table(s) is saved but not exported the revised values will not be available once Powermatch is exited. You can also choose another sheet, however, if the sheet you choose is not the correct format you may get unusual behaviour.</p>
@@ -3371,7 +3403,14 @@ If the best and worse values are the same for a variable and that value is not a
 <tr><td class="none"><dfn>Capacity Min</dfn></td><td class="none">The minimum capacity for a Range</td></tr>
 <tr><td class="none"><dfn>Capacity Step</dfn></td><td class="none">The size of each capacity step for a Range</td></tr>
 </table>
-<p>The capacity fields can be a single field, <dfn>Values</dfn>, as a string of numbers separated by spaces. For Discrete this will be a string of capacities and for Range it will be three Capacity numbers - Max, Min and Step.</p>
+<p>The capacity fields can be a single field, <dfn>Values</dfn>, as a string of numbers separated by spaces. For Discrete this will be a string of capacities and for Range it will be three Capacity numbers - Min, Max and Step. If <em>optimise_default</em> is set this can be used to set optimisation table entries for missing facilities. The default entry can have two or three options separated by commas, as follows:
+<ul>
+<li>Two entries: minimum capacity is zero; the first entry is maximum capacity; the second entry is the number of steps</li>
+<li>Three entries: match the same as Range - minimum capacity, maximum capacity, step capacity</li>
+<li>Entry ends with <em>d</em>: the entry is multiplied by the default capacity for the facility</li>
+<li>Entry ends with <em>c</em>: the entry is multiplied by the adjusted capacity (capacity x multiplier)</li>
+</ul>
+</p>
 <p>Powermatch optimisation approach is as follows:
 <ol>
 <li>Generate a chromosome as defined by the Optimisation table</li>
@@ -3397,7 +3436,7 @@ If the best and worse values are the same for a variable and that value is not a
 <li>Optionally, a table showing the best individual for each iteration. You can also choose an individual by clicking anywhere on the desired row. On entry the top row of the table will have the lowest weight and will be chosen on exit (<em>optimise_multitable</em>; default is False)</li>
 </ol>
 <li>Optionally, produce tables for best candidate (1.) with lowest LCOE and (2.) lowest weighting if the <em>more_details</em> property is set to True</li>
-<li>Present a table for the optimal solutions. The table shows the adjustment values and capacity for each generator followed by the estimated value for each of the six multi-variables prioritised by Weight. By pressing the appropriate button the adjustment values for the chosen solution will be made available for <strong>Summary</strong> and <strong>Powermatch</strong></li>
+<li>Optionally, present a table for the optimal solutions (<em>optimise_to_batch</em>; default is False). The table shows the adjustment values and capacity for each generator followed by the estimated value for each of the six multi-variables prioritised by Weight. By pressing the appropriate button the adjustment values for the chosen solution will be made available for <strong>Summary</strong> and <strong>Powermatch</strong></li>
 </ol>
 </div>
 <h4>Powermatch input file formats</h4>
@@ -3533,6 +3572,10 @@ If the best and worse values are the same for a variable and that value is not a
 <tr class="none">
 <td class="none"><dfn>grid_stations2
 <td class="none">A file defining additional stations on the grid. This can be either a CSV file or Excel (XLS or XLSX) file in the same format as <em>scenario</em> files. This additional file allows you to specify stations that you want to include that are not part of the existing grid, such as Rooftop PV stations</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>grid_zones
+<td class="none">A KML (or KMZ) file defining zones within the grid boundary. Any string of &lt;coordinates&gt; in a &lt;LinearRing&gt; is used to draw a zone within the grid boundary. Multiple zones can be defined. Colour for the grid boundary can be set by the <em>grid_zones</em> Colour option</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>helio_positions</dfn></td>
