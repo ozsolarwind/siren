@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2016-2021 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2016-2022 Sustainable Energy Now Inc., Angus King
 #
 #  siren.py - This file is part of SIREN.
 #
@@ -39,6 +39,42 @@ from senuser import getUser
 
 class TabDialog(QtWidgets.QDialog):
 
+    def check_file(self, fil, errors=''):
+        ok = True
+        try:
+            self.config.read(self.siren_dir + fil)
+        except configparser.DuplicateOptionError as err:
+            errors += 'DuplicateOptionError ' + str(err) + '\n'
+            i = str(err).find('[line')
+            if i >= 0:
+                j = str(err).find(']', i)
+                txt = ' ' + str(err)[i:j + 1]
+            else:
+                txt = ''
+            model_name = 'Duplicate Option Error' + txt
+            ok = False
+        except configparser.DuplicateSectionError as err:
+            errors += 'DuplicateSectionError ' + str(err) + '\n'
+            i = str(err).find('[line')
+            if i >= 0:
+                j = str(err).find(']', i)
+                txt = ' ' + str(err)[i:j + 1]
+            else:
+                txt = ''
+            model_name = 'Duplicate Section Error' + txt
+            ok = False
+        except:
+            err = sys.exc_info()[0]
+            errors += 'Error: ' + str(err) + ' While reading from ' + self.siren_dir + fil + '\n'
+            model_name = 'Error reading file'
+            ok = False
+        if ok:
+            try:
+                model_name = self.config.get('Base', 'name')
+            except:
+                model_name = ''
+        return ok, model_name, errors
+
     def __init__(self, parent=None):
         QtWidgets.QDialog.__init__(self, parent)
         self.siren_dir = '.'
@@ -59,7 +95,7 @@ class TabDialog(QtWidgets.QDialog):
         fils = os.listdir(self.siren_dir)
         self.help = ''
         self.about = ''
-        config = configparser.RawConfigParser()
+        self.config = configparser.RawConfigParser()
         ignore = ['flexiplot.ini', 'getfiles.ini', 'powerplot.ini', 'siren_default.ini',
                   'siren_windows_default.ini']
         errors = ''
@@ -69,34 +105,8 @@ class TabDialog(QtWidgets.QDialog):
                     continue
                 mod_time = time.strftime('%Y-%m-%d %H:%M:%S',
                            time.localtime(os.path.getmtime(self.siren_dir + fil)))
-                try:
-                    config.read(self.siren_dir + fil)
-                except configparser.DuplicateOptionError as err:
-                    errors += 'DuplicateOptionError ' + str(err) + '\n'
-                    continue
-                except:
-                    err = sys.exc_info()[0]
-                    errors += 'Error: ' + str(err) + ' While reading from ' + self.siren_dir + fil + '\n'
-                    continue
-                try:
-                    model_name = config.get('Base', 'name')
-                except:
-                    model_name = ''
-                self.entries.append([fil, model_name, mod_time])
-                if self.about == '':
-                    try:
-                        self.about = config.get('Files', 'about')
-                        if not os.path.exists(self.about):
-                            self.about = ''
-                    except:
-                        pass
-                if self.help == '':
-                    try:
-                        self.help = config.get('Files', 'help')
-                        if not os.path.exists(self.help):
-                            self.help = ''
-                    except:
-                        pass
+                ok, model_name, errors = self.check_file(fil, errors)
+                self.entries.append([fil, model_name, mod_time, ok])
         if len(errors) > 0:
             dialog = displayobject.AnObject(QtWidgets.QDialog(), errors,
                      title='SIREN (' + fileVersion() + ') - Preferences file errors')
@@ -136,7 +146,7 @@ class TabDialog(QtWidgets.QDialog):
                 ln += len(self.entries[rw][cl])
             if ln > max_row:
                 max_row = ln
-        self.sort_asc = True # start in date descending order
+        self.sort_desc = False # start in date descending order
         self.sort_col = 2
         self.order(2)
         self.table.resizeColumnsToContents()
@@ -223,9 +233,35 @@ class TabDialog(QtWidgets.QDialog):
                     action = menu.exec_(self.mapToGlobal(event.pos()))
                     if action is not None:
                         if action.text()[:8] == 'Execute ':
+                            if not self.entries[self.table.currentRow()][3]:
+                                ok, model_name, errors = self.check_file(ent)
+                                if len(errors) > 0:
+                                    dialog = displayobject.AnObject(QtWidgets.QDialog(), errors,
+                                    title='SIREN (' + fileVersion() + ') - Preferences file errors')
+                                    dialog.exec_()
+                                    return QtCore.QObject.event(source, event)
                             self.invoke(action.text()[8:], self.siren_dir + ent)
                         elif action.text()[-11:] == 'Preferences':
-                            self.editIniFile(self.siren_dir + ent)
+                            i = self.table.item(self.table.currentRow(), 1).text().find('[line ')
+                            if i >= 0:
+                                j = self.table.item(self.table.currentRow(), 1).text().find(']', i)
+                                line = int(self.table.item(self.table.currentRow(), 1).text()[i + 5:j].strip()) - 1
+                            else:
+                                line = None
+                            self.editIniFile(self.siren_dir + ent, line=line)
+                            ok, model_name, errors = self.check_file(ent)
+                            if model_name != self.entries[self.table.currentRow()][1]:
+                                self.entries[self.table.currentRow()][1] = model_name
+                                self.table.setItem(self.table.currentRow(), 1, QtWidgets.QTableWidgetItem(model_name))
+                            if len(errors) > 0:
+                                self.entries[self.table.currentRow()][3] = False
+                                dialog = displayobject.AnObject(QtWidgets.QDialog(), errors,
+                                title='SIREN (' + fileVersion() + ') - Preferences file errors')
+                                dialog.exec_()
+                                return QtCore.QObject.event(source, event)
+                            else:
+                                self.entries[self.table.currentRow()][3] = True
+
         return QtCore.QObject.event(source, event)
 
     def invoke(self, program, ent):
@@ -245,8 +281,8 @@ class TabDialog(QtWidgets.QDialog):
             self.invoke('sirenm', do_new.ini_file)
             self.quit()
 
-    def editIniFile(self, ini=None):
-        dialr = EdtDialog(ini)
+    def editIniFile(self, ini=None, line=None):
+        dialr = EdtDialog(ini, line=line)
         dialr.exec_()
         return
 
@@ -284,19 +320,19 @@ class TabDialog(QtWidgets.QDialog):
 
     def order(self, col):
         rw = 0
-        step = 1
         if col == self.sort_col:
-            if self.sort_asc:
-                rw = self.table.rowCount() - 1
-                step = -1
-                self.sort_asc = False
+            if self.sort_desc:
+                self.sort_desc = False
+            else:
+                self.sort_desc = True
         else:
-            self.sort_asc = True
+            self.sort_desc = False
             self.sort_col = col
-        for item in sorted(self.entries, key=lambda x: x[col]):
+        self.entries = sorted(self.entries, key=lambda x: x[col], reverse=self.sort_desc)
+        for item in self.entries:
             for cl in range(3):
                 self.table.setItem(rw, cl, QtWidgets.QTableWidgetItem(item[cl]))
-            rw += step
+            rw += 1
 
     def quit(self):
         self.close()
@@ -320,9 +356,6 @@ class makeNew(QtWidgets.QDialog):
         self.siren_dir = siren_dir
         self.help = help
         self.ini_file = ''
-        self.initUI()
-
-    def initUI(self):
         if sys.platform == 'win32' or sys.platform == 'cygwin':
             ini_file = 'siren_windows_default.ini'
         else:
@@ -400,7 +433,7 @@ class makeNew(QtWidgets.QDialog):
                     self.fields[row][4].setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
                     self.grid.addWidget(self.fields[row][4], row, 2, 1, 3)
                     self.fields[row][4].clicked.connect(self.itemClicked)
-        for section, props in iter(sections.items()):
+        for section, props in sections.items():
             if section == '[Base]' or section == '[Parents]':
                 continue
             elif section == '[Map]':
@@ -537,7 +570,7 @@ class makeNew(QtWidgets.QDialog):
         for i in range(len(self.fields)):
             if self.fields[i][4].hasFocus():
                 upd_field = self.fields[i][4].text()
-                for key, value in iter(self.parents.items()):
+                for key, value in self.parents.items():
                     upd_field = upd_field.replace(key, value)
                 if self.fields[i][1] == 'dir':
                     curdir = upd_field
@@ -549,7 +582,7 @@ class makeNew(QtWidgets.QDialog):
                             self.parents[self.fields[i][2]] = newone
                         else:
                             longest = [0, '']
-                            for key, value in iter(self.parents.items()):
+                            for key, value in self.parents.items():
                                 if len(newone) > len(value) and len(value) > longest[0]:
                                     if newone[:len(value)] == value:
                                         longest = [len(value), key]
@@ -567,7 +600,7 @@ class makeNew(QtWidgets.QDialog):
                     if newone != '':
                         newone = QtCore.QDir.toNativeSeparators(newone)
                         longest = [0, '']
-                        for key, value in iter(self.parents.items()):
+                        for key, value in self.parents.items():
                             if len(newone) > len(value) and len(value) > longest[0]:
                                 if newone[:len(value)] == value:
                                     longest = [len(value), key]

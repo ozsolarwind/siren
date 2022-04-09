@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2020 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2022 Sustainable Energy Now Inc., Angus King
 #
 #  inisyntax.py - This file is part of SIREN.
 #
@@ -55,8 +55,9 @@ class IniHighlighter (QSyntaxHighlighter):
     group = ['^\[']
     operators = ['\=']
 
-    def __init__(self, document):
+    def __init__(self, document, line=None):
         QSyntaxHighlighter.__init__(self, document)
+        self.line = line
         rules = []
         rules += [(r'%s' % c, 0, STYLES['comment'])
             for c in self.comment]
@@ -71,7 +72,7 @@ class IniHighlighter (QSyntaxHighlighter):
     def highlightBlock(self, text):
         """Apply syntax highlighting to the given block of text.
         """
-         # Do other syntax formatting
+        # Do other syntax formatting
         for expression, nth, format in self.rules:
             index = expression.indexIn(text, 0)
             if index == 0:
@@ -80,4 +81,9 @@ class IniHighlighter (QSyntaxHighlighter):
             if index > 0:
                 self.setFormat(0, index, format)
                 break
+        if self.currentBlock().blockNumber() == self.line:
+            line = self.currentBlock().blockNumber()
+            fmt = QTextCharFormat()
+            fmt.setBackground(QColor("yellow"))
+            self.setFormat(0, len(text), fmt)
         self.setCurrentBlockState(0)

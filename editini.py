@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2021 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2022 Sustainable Energy Now Inc., Angus King
 #
-#  Editini.py - This file is part of SIREN.
+#  editini.py - This file is part of SIREN.
 #
 #  SIREN is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Affero General Public License as
@@ -32,7 +32,7 @@ from senuser import techClean
 
 
 class EdtDialog(QtWidgets.QDialog):
-    def __init__(self, in_file, parent=None):
+    def __init__(self, in_file, parent=None, line=None):
         self.in_file = in_file
         try:
             s = open(self.in_file, 'r').read()
@@ -59,7 +59,7 @@ class EdtDialog(QtWidgets.QDialog):
         self.saveButton.clicked.connect(self.accept)
         self.cancelButton.clicked.connect(self.reject)
         self.widget = QtWidgets.QPlainTextEdit()
-        highlight = inisyntax.IniHighlighter(self.widget.document())
+        highlight = inisyntax.IniHighlighter(self.widget.document(), line=line)
         if sys.platform == 'linux' or sys.platform == 'linux2':
             self.widget.setFont(QtGui.QFont('Ubuntu Mono 13', 12))
         else:
