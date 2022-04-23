@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2016-2020 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2016-2022 Sustainable Energy Now Inc., Angus King
 #
 #  visualise.py - This file is part of SIREN.
 #
@@ -155,7 +155,7 @@ class Visualise(QtWidgets.QDialog):
         nextt.clicked.connect(self.nextClicked)
         row += 1
         self.viewSpin = QtWidgets.QSpinBox()
-        self.viewSpin.setRange(0, 100)
+        self.viewSpin.setRange(0, 8760)
         self.viewSpin.setValue(0)
         if self.viewDo:
             self.grid.addWidget(QtWidgets.QLabel('Save Views:'), row, 0)
