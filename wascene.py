@@ -330,6 +330,7 @@ class WAScene(QtWidgets.QGraphicsScene):
                 pass
         except:
             self.grid_zones = False
+        self.line_group = True
         self.trace_grid = True
         try:
             trace_grid = config.get('View', 'trace_grid')
@@ -511,11 +512,13 @@ class WAScene(QtWidgets.QGraphicsScene):
         self.setSceneRect(-w * 0.05, -h * 0.05, w * 1.1, h * 1.1)
         self._positions = {}
         self._setupCoordTransform()
-        self._gridGroup = QtWidgets.QGraphicsItemGroup()
-        self._gridGroup2 = QtWidgets.QGraphicsItemGroup()
-        self._gridGroupz = QtWidgets.QGraphicsItemGroup()
+        self._gridGroup = QtWidgets.QGraphicsItemGroup() # normal grid group
+        self._gridGroup2 = QtWidgets.QGraphicsItemGroup() # extra grid group
+        self._gridGroupz = QtWidgets.QGraphicsItemGroup() # zone group
+        self._lineGroup = QtWidgets.QGraphicsItemGroup() # stations lines group
         self._setupGrid()
         self.addItem(self._gridGroup)
+        self.addItem(self._lineGroup)
         if not self.existing_grid:
             self._gridGroup.setVisible(False)
         if self.existing_grid2:
@@ -1086,6 +1089,7 @@ class WAScene(QtWidgets.QGraphicsScene):
                     ln.setZValue(0)
                     self.addItem(ln)
                     self._stationGroups[st.name].append(ln)
+                    self._lineGroup.addToGroup(ln)
                     start = end
             if grid_len > 0:
                 st.grid_len = grid_len

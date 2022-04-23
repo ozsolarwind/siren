@@ -1117,6 +1117,9 @@ class MainWindow(QtWidgets.QMainWindow):
             self.showZones = QtWidgets.QAction(QtGui.QIcon('check-mark.png'), 'Show Grid Zones', self)
             self.showZones.setStatusTip('Show Grid Zones')
             self.showZones.triggered.connect(self.show_Zones)
+        self.showLines = QtWidgets.QAction(QtGui.QIcon('check-mark.png'), 'Show Station Connections', self)
+        self.showLines.setStatusTip('Show Station Connections')
+        self.showLines.triggered.connect(self.show_Lines)
         self.hideTrace = QtWidgets.QAction(QtGui.QIcon('blank.png'), 'Clear Grid Trace', self)
         self.hideTrace.setStatusTip('Clear Grid Trace')
         self.hideTrace.triggered.connect(self.clear_Trace)
@@ -1156,6 +1159,7 @@ class MainWindow(QtWidgets.QMainWindow):
             viewMenu.addAction(self.showOldg2)
         if self.view.scene().grid_zones:
             viewMenu.addAction(self.showZones)
+        viewMenu.addAction(self.showLines)
         viewMenu.addAction(self.hideTrace)
         viewMenu.addAction(self.showGrid)
         viewMenu.addAction(self.refreshGrid)
@@ -2810,6 +2814,20 @@ class MainWindow(QtWidgets.QMainWindow):
             comment += ' On'
         self.view.statusmsg.emit(comment)
 
+    def show_Lines(self):
+        comment = 'Station connections Toggled'
+        if self.view.scene().line_group:
+            self.showLines.setIcon(QtGui.QIcon('blank.png'))
+            self.view.scene().line_group = False
+            self.view.scene()._lineGroup.setVisible(False)
+            comment += ' Off'
+        else:
+            self.showLines.setIcon(QtGui.QIcon('check-mark.png'))
+            self.view.scene().line_group = True
+            self.view.scene()._lineGroup.setVisible(True)
+            comment += ' On'
+        self.view.statusmsg.emit(comment)
+
     def clear_Trace(self):
         self.view.clear_Trace()
         self.view.statusmsg.emit('Grid Trace cleared')
@@ -2993,6 +3011,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.view.scene()._fnameGroup.setVisible(False)
             self.view.scene()._current_name.setText('') # Clear current station name if names toggled off
             comment += ' Off'
+            self.view.scene()._lineGroup.setVisible(False)
         else:
             self.showName.setIcon(QtGui.QIcon('check-mark.png'))
             self.view.scene().show_station_name = True
@@ -3000,6 +3019,7 @@ class MainWindow(QtWidgets.QMainWindow):
             if self.view.scene().show_fossil:
                 self.view.scene()._fnameGroup.setVisible(True)
             comment += ' On'
+            self.view.scene()._lineGroup.setVisible(True)
         self.view.statusmsg.emit(comment)
 
     def exit(self):
