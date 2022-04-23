@@ -2540,14 +2540,17 @@ class PowerModel():
         if self.plots['summary']:
             fields = ['name', 'technology', 'capacity', 'cf', 'generation']
             sumfields = ['capacity', 'generation']
+            decpts = [0, 0, 1, 1, 2, 0, 1]
             if getattr(self.power_summary[0], 'transmitted') != None:
                 fields.append('transmitted')
                 sumfields.append('transmitted')
+                decpts.append([0, 1])
             if self.plots['save_zone']:
                 fields.insert(1, 'zone')
+                decpts.insert(1, 0)
             dialog = displaytable.Table(self.power_summary, sumfields=sumfields,
                      units='capacity=MW generation=MWh transmitted=MWh', sumby='technology',
-                     fields=fields, save_folder=self.scenarios)
+                     decpts=decpts, fields=fields, save_folder=self.scenarios)
             dialog.exec_()
             del dialog
         if self.plots['financials']:
