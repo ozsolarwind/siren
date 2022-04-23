@@ -2991,6 +2991,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.view.scene().show_station_name = False
             self.view.scene()._nameGroup.setVisible(False)
             self.view.scene()._fnameGroup.setVisible(False)
+            self.view.scene()._current_name.setText('') # Clear current station name if names toggled off
             comment += ' Off'
         else:
             self.showName.setIcon(QtGui.QIcon('check-mark.png'))
