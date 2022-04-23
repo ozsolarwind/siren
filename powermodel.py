@@ -2511,6 +2511,8 @@ class PowerModel():
               self.stn_path = self.model.getStnOuts()
         elif self.plots['save_tech'] or self.plots['save_match']:
             self.stn_outs, self.stn_tech = self.model.getStnTech()
+            if self.plots['visualise']:
+                _, self.stn_pows = self.model.getStnPows()
         elif self.plots['visualise']:
             self.stn_outs, self.stn_pows = self.model.getStnPows()
         self.suffix = ''

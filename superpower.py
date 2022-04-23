@@ -580,6 +580,8 @@ class SuperPower():
         elif self.plots['save_tech'] or self.plots['save_match']:
             self.stn_outs = []
             self.stn_tech = []
+            if self.plots['visualise']:
+                self.stn_pows = []
         elif self.plots['visualise']:
             self.stn_outs = []
             self.stn_pows = []
@@ -663,6 +665,8 @@ class SuperPower():
             elif self.plots['save_tech'] or self.plots['save_match']:
                 self.stn_outs.append(stn.name)
                 self.stn_tech.append(stn.technology)
+                if self.plots['visualise']:
+                    self.stn_pows.append([])
             elif self.plots['visualise']:
                 self.stn_outs.append(stn.name)
                 self.stn_pows.append([])
