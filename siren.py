@@ -24,7 +24,6 @@ import datetime
 from functools import partial
 import os
 from PyQt5 import QtCore, QtGui, QtWidgets
-from shutil import copy
 import subprocess
 import sys
 import time
@@ -93,8 +92,8 @@ class TabDialog(QtWidgets.QDialog):
             self.siren_dir = getModelFile()
         self.entries = []
         fils = os.listdir(self.siren_dir)
-        self.help = ''
-        self.about = ''
+        self.help = 'help.html'
+        self.about = 'about.html'
         self.config = configparser.RawConfigParser()
         ignore = ['flexiplot.ini', 'getfiles.ini', 'powerplot.ini', 'siren_default.ini',
                   'siren_windows_default.ini']
