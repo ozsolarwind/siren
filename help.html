@@ -2574,6 +2574,10 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <td class="none">Display grid zones if available</td>
 </tr>
 <tr class="none">
+<td class="none"><img src="check-mark.png" alt="Show Station Connections">&nbsp;&nbsp;Show Station Connections</td>
+<td class="none">Display transmission lines that connect stations into the grid</td>
+</tr>
+<tr class="none">
 <td class="none"><img src="blank.png" alt="Clear Grid Trace">&nbsp;&nbsp;Clear Grid Trace</td>
 <td class="none">Clear any grid trace</td>
 </tr>
@@ -5022,12 +5026,16 @@ MERRA-2 Variables
 <td>These properties are used by <code>sirenupd</code> to check for new versions of SIREN programs and to download them. Properties are:</p>
 <table border="0", class="none">
 <tr class="none">
-<td class="none"><dfn>wget_cmd</dfn></td>
-<td class="none">The command used to invoke wget to download files</td>
+<td class="none"><dfn>local</dfn></td>
+<td class="none">This option allows a &ldquo;local&rdquo; folder to be used to contain updated programs</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>url</dfn></td>
 <td class="none">The location of the SIREN files on SourceForge</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>wget_cmd</dfn></td>
+<td class="none">The command used to invoke wget to download files</td>
 </tr>
 </table>
 <tr class="none"><td><dfn><strong>[updateswis]</strong></dfn></td>

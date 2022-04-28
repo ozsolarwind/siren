@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2021 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2022 Sustainable Energy Now Inc., Angus King
 #
 #  credits.py - This file is part of SIREN.
 #
@@ -37,9 +37,7 @@ def fileVersion(program=None, year=False):
         check = sys.argv[0]
     else:
         s = program.rfind('.')
-        if s > 0 and program[s:] == '.html':
-            check = program
-        elif s < len(program) - 4:
+        if s < 0:
             check = program + sys.argv[0][sys.argv[0].rfind('.'):]
         else:
             check = program
@@ -50,7 +48,7 @@ def fileVersion(program=None, year=False):
             ver_yr = '%04d' % modtime.year
         except:
             pass
-    elif check[-5:] == '.html':
+    elif check[-5:] != '.exe':
         try:
             modtime = datetime.fromtimestamp(os.path.getmtime(check))
             ver = '3.0.%04d.%d%02d' % (modtime.year, modtime.month, modtime.day)
