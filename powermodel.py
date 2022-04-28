@@ -677,7 +677,6 @@ class PowerModel():
                           'Biomass', 'Geothermal', 'Other1', 'CST']
             tech_names2 = [''] * len(tech_names)
             tech_names2[tech_names.index('Wind')] = 'Onshore Wind'
-            tech_names2[tech_names.index('Tracking PV')] = 'Dual Axis PV'
             tech_names2[tech_names.index('CST')] = 'Solar Thermal'
             if self.plots['save_zone']:
                 zone_techs = []
@@ -880,7 +879,7 @@ class PowerModel():
                 row = type_row[type_tags.index('zone')]
                 lst_zone = ws.cell(row=row, column=tech_col[1]).value
                 lst_col = tech_col[1]
-                for col in range(tech_col[2], tech_col[-1] + 1):
+                for col in range(tech_col[1], tech_col[-1] + 1):
                     if ws.cell(row=row, column=col).value != lst_zone:
                         if col - lst_col > 1:
                             ws.merge_cells(start_row=row, start_column=lst_col, end_row=row, end_column=col - 1)
