@@ -714,7 +714,7 @@ class powerMatch(QtWidgets.QWidget):
                          self.batch_new_file = True
                  elif key[-5:] == '_file':
                      ndx = self.file_labels.index(key[:-5].title())
-                     self.ifiles[ndx] = value
+                     self.ifiles[ndx] = value.replace('$USER$', getUser())
                  elif key[-6:] == '_sheet':
                      ndx = self.file_labels.index(key[:-6].title())
                      self.isheets[ndx] = value
@@ -1168,7 +1168,7 @@ class powerMatch(QtWidgets.QWidget):
                 line += self.order.item(itm).text() + ','
             lines.append('dispatch_order=' + line[:-1])
             for i in range(len(self.file_labels)):
-                lines.append(self.file_labels[i].lower() + '_file=' + self.files[i].text())
+                lines.append(self.file_labels[i].lower() + '_file=' + self.files[i].text().replace(getUser(), '$USER$'))
             for i in range(D):
                 lines.append(self.file_labels[i].lower() + '_sheet=' + self.sheets[i].currentText())
             lines.append('optimise_choice=' + self.optimise_choice)
@@ -3070,12 +3070,6 @@ class powerMatch(QtWidgets.QWidget):
                 cs = gen_sum / cap_sum / 8760
             else:
                 cs = ''
-            if gen_sum > 0:
-                gs = cost_sum / gen_sum
-                gsw = cost_sum / sp_load # adjusted LCOE
-            else:
-                gs = ''
-                gsw = ''
             sf_sums = [0., 0., 0.]
             for sf in range(len(shortfall)):
                 if shortfall[sf] > 0:
@@ -3084,13 +3078,21 @@ class powerMatch(QtWidgets.QWidget):
                 else:
                     sf_sums[1] += shortfall[sf]
                     sf_sums[2] += pmss_data[0][sf] * pmss_details['Load'].multiplier
+            if gen_sum > 0:
+                gs = cost_sum / gen_sum
+            else:
+                gs = ''
+            if tml_sum > 0:
+                gsw = cost_sum / tml_sum # adjusted LCOE
+            else:
+                gsw = ''
             sp_data.append(['Total', cap_sum, tml_sum, gen_sum, cs, cost_sum, gs, co2_sum])
             if self.adjusted_lcoe:
                 sp_data.append(['Adjusted LCOE', '', '', '', '', '', gsw, ''])
             if self.carbon_price > 0 or option == 'B':
                 cc = co2_sum * self.carbon_price
-                if self.adjusted_lcoe:
-                    cs = (cost_sum + cc) / sp_load
+                if self.adjusted_lcoe and tml_sum > 0:
+                    cs = (cost_sum + cc) / tml_sum
                 else:
                     cs = (cost_sum + cc) / gen_sum
                 if self.carbon_price == int(self.carbon_price):
@@ -3865,12 +3867,12 @@ class powerMatch(QtWidgets.QWidget):
                     try:
                         pmss_details[fac].multiplier = capacity / pmss_details[fac].capacity
                     except:
-                        print('(3865)', gen, capacity, pmss_details[fac].capacity)
+                        print('(3870)', gen, capacity, pmss_details[fac].capacity)
                 multi_value, op_data, extra = self.doDispatch(year, option, pmss_details, pmss_data, re_order,
                                               dispatch_order, pm_data_file, data_file)
                 if multi_value['load_pct'] < self.targets['load_pct'][3]:
                     if multi_value['load_pct'] == 0:
-                        print('(3870)', multi_value['lcoe'],
+                        print('(3875)', multi_value['lcoe'],
                             self.targets['load_pct'][3], multi_value['load_pct'])
                         lcoe_fitness_scores.append(1)
                     else:
@@ -4482,7 +4484,7 @@ class powerMatch(QtWidgets.QWidget):
             try:
                 best_score = np.min(lcoe_scores)
             except:
-                print('(4473)', lcoe_scores)
+                print('(4487)', lcoe_scores)
             best_ndx = lcoe_scores.index(best_score)
             lowest_chrom = population[best_ndx]
             self.setStatus('Starting LCOE: $%.2f' % best_score)
@@ -4850,7 +4852,7 @@ class powerMatch(QtWidgets.QWidget):
                     label = QtWidgets.QLabel(txt % amt)
                 except:
                     label = QtWidgets.QLabel('?')
-                    print('(4842)', key, txt, amt)
+                    print('(4855)', key, txt, amt)
                 label.setAlignment(QtCore.Qt.AlignCenter)
                 grid[h + 1].addWidget(label, rw, 0, 1, 3)
             rw += 1
