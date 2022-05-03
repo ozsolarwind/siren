@@ -3231,7 +3231,7 @@ In producing the LCOE figures you can choose to use LCOE figures that ignore any
 <table border="0" class="none" style="margin-left:35px">
 <tr><td class="none"><dfn>Capacity (MW)<dfn></td><td class="none">The input capacity for each facility</td></tr>
 <tr><td class="none"><dfn>Capacity Factor<dfn></td><td class="none">The calculated capacity factor for each facility</td></tr>
-<tr><td class="none"><dfn>Carbon<dfn></td><td class="none">If there is a carbon price this group will contain details on carbon costs and LCOE including this costs </td></tr>
+<tr><td class="none"><dfn>Carbon<dfn></td><td class="none">If there is a carbon price this group will contain details on carbon costs and LCOE including this costs</td></tr>
 <tr><td class="none"><dfn>Carbon Price<dfn></td><td class="none">This is not strictly an output but allows a differnt carbon price to be set for each input Model</td></tr>
 <tr><td class="none"><dfn>Cost ($/Yr)<dfn></td><td class="none">The calculated cost for each facility</td></tr>
 <tr><td class="none"><dfn>Emissions (tCO2e)<dfn></td><td class="none">The estimated emissions for each facility</td></tr>
@@ -3240,6 +3240,8 @@ In producing the LCOE figures you can choose to use LCOE figures that ignore any
 <tr><td class="none"><dfn>Load Analysis<dfn></td><td class="none">Details on how much of the load was met, shortfalls, storage losses, and surpluses</td></tr>
 <tr><td class="none"><dfn>RE<dfn></td><td class="none">The percentage of RE and storage used to meet the load</td></tr>
 <tr><td class="none"><dfn>To Meet Load (MWh)<dfn></td><td class="none">How much generation or storage output was used to meet the load. It has rows for each non-RE generator, storage and a combined figure for RE</td></tr>
+<tr><td class="none"><dfn>Data Sources<dfn></td><td class="none">Display the data sources used for the batch run (provides: Scenarios folder, Powermatch data file, Constraints worksheet and Facility worksheet)</td></tr>
+<tr><td class="none"><dfn>Optimisation Parameters<dfn></td><td class="none">If the model was added via Optimisation this will list the optimisation parameters used. This should be the last group entry</td></tr>
 </table>
 <dfn>Capacity (MW)</dfn> is required and must be the first entry. 'Carbon Price' allows you to input a different Carbon Price for each Model. By default the resulting output will be appended as a new worksheet to the input file. You can create a new spreadsheet by setting the <em>batch_new_file</em> property to True
 <br />It is also possible to perform batch runs on zone data, but if so both the input data file and the batch file must have input capacities by zone. In this case the name for each facility identifies both the zone and technology in the form <em>zone.technology</em>.
@@ -3248,6 +3250,15 @@ In producing the LCOE figures you can choose to use LCOE figures that ignore any
 <ul>
 <li>If you are using generator adjustments it may be useful to invoke <strong>Summary</strong> to set or reset the starting capacities for the optimsation (using <strong>Reset</strong> to set initial values or <strong>Restore</strong> to restore previously saved values)</li>
 <li>If you optimise with zones you want to ensure <em>optimise_default</em> is defined to ensure optimisation entries are created for each <em>zone.technology</em> combination. You can then update these entries to the desired range and step increment and save them to a new optimisation spreadsheet if required</li>
+<li>If you use the option to add to a batch file the initial batch spreadsheet should include a single column including the groups you wish to have in the batch report. The column should begin with the following rows:
+<table border="0" class="none" style="margin-left:35px">
+<tr><td class="none"><dfn>&lt;Header rows&gt;<dfn></td><td class="none">&nbsp;</td></tr>
+<tr><td class="none"><dfn>Model Label<dfn></td><td class="none">Row for Model label or name</td></tr>
+<tr><td class="none"><dfn>Capacity (MW)<dfn></td><td class="none">&nbsp;</td></tr>
+<tr><td class="none"><dfn>Total<dfn></td><td class="none">&nbsp;</td></t&nbsp;r>
+<tr><td class="none"><dfn>To Meet Load (MWh)<dfn></td><td class="none">&nbsp;</td></tr>
+<tr><td class="none"><dfn>Optimisation Parameters<dfn></td><td class="none">If desired this should be the last group entry</td></tr>
+</table>
 </ul>
 See below for more details on optimisation.</li>
 <li><strong>Help</strong>. Display the Powermatch help</li>
@@ -3440,7 +3451,7 @@ If the best and worse values are the same for a variable and that value is not a
 <li>Optionally, a table showing the best individual for each iteration. You can also choose an individual by clicking anywhere on the desired row. On entry the top row of the table will have the lowest weight and will be chosen on exit (<em>optimise_multitable</em>; default is False)</li>
 </ol>
 <li>Optionally, produce tables for best candidate (1.) with lowest LCOE and (2.) lowest weighting if the <em>more_details</em> property is set to True</li>
-<li>Optionally, present a table for the optimal solutions (<em>optimise_to_batch</em>; default is False). The table shows the adjustment values and capacity for each generator followed by the estimated value for each of the six multi-variables prioritised by Weight. By pressing the appropriate button the adjustment values for the chosen solution will be made available for <strong>Summary</strong> and <strong>Powermatch</strong></li>
+<li>Optionally, present a table for the optimal solutions (<em>optimise_multitable</em>; default is False). The table shows the adjustment values and capacity for each generator followed by the estimated value for each of the six multi-variables prioritised by Weight. By pressing the appropriate button the adjustment values for the chosen solution will be made available for <strong>Summary</strong> and <strong>Powermatch</strong></li>
 </ol>
 </div>
 <h4>Powermatch input file formats</h4>
