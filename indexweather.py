@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2016-2020 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2016-2022 Sustainable Energy Now Inc., Angus King
 #
 #  indexweather.py - This file is part of SIREN.
 #
@@ -270,15 +270,15 @@ class getParms(QtWidgets.QWidget):
 
     def stgtChanged(self):
         curtgt = self.starget.text()
-        newtgt = str(QtWidgets.QFileDialog.getSaveFileName(self, 'Choose Solar Index',
-                 curtgt))[0]
+        newtgt = QtWidgets.QFileDialog.getSaveFileName(self, 'Choose Solar Index',
+                 curtgt, 'XLS Files (*.xls)')[0]
         if newtgt != '':
             self.starget.setText(newtgt)
 
     def wtgtChanged(self):
         curtgt = self.starget.text()
-        newtgt = str(QtWidgets.QFileDialog.getSaveFileName(self, 'Choose Wind Index',
-                 curtgt))[0]
+        newtgt = QtWidgets.QFileDialog.getSaveFileName(self, 'Choose Wind Index',
+                 curtgt, 'XLS Files (*.xls)')[0]
         if newtgt != '':
             self.wtarget.setText(newtgt)
 
