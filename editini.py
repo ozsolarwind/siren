@@ -83,8 +83,7 @@ class EdtDialog(QtWidgets.QDialog):
         size = self.geometry()
         self.setGeometry(1, 1, ln + 10, ln2 + 35)
         size = self.geometry()
-        self.move((screen.width() - size.width()) / 2,
-            (screen.height() - size.height()) / 2)
+        self.move(int((screen.width() - size.width()) / 2), int((screen.height() - size.height()) / 2))
         self.widget.show()
 
     def accept(self):
