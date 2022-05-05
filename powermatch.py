@@ -27,6 +27,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import displayobject
 import displaytable
 from credits import fileVersion
+import glob
 from math import log10
 import matplotlib
 matplotlib.use('TkAgg') # so PyQT5 and Matplotlib windows don't interfere
@@ -403,11 +404,12 @@ class Adjustments(MyQDialog):
                     self._decpts = 2
                 elif self._decpts != 2:
                     self._decpts = 1
-        self.grid.addWidget(QtWidgets.QLabel('Results Prefix:'), ctr, 0)
-        self.pfx_fld = QtWidgets.QLineEdit()
-        self.pfx_fld.setText(prefix)
-        self.grid.addWidget(self.pfx_fld, ctr, 1, 1, 2)
-        ctr += 1
+        if prefix is not None:
+            self.grid.addWidget(QtWidgets.QLabel('Results Prefix:'), ctr, 0)
+            self.pfx_fld = QtWidgets.QLineEdit()
+            self.pfx_fld.setText(prefix)
+            self.grid.addWidget(self.pfx_fld, ctr, 1, 1, 2)
+            ctr += 1
         # Note: relies on Load being first entry
         for key, typ, capacity in data:
             self._adjust_typ[key] = typ
@@ -458,7 +460,7 @@ class Adjustments(MyQDialog):
                 self.grid.addWidget(self._adjust_rnd[key], ctr, 3)
                 self._adjust_rnd[key].valueChanged.connect(self.adjustMult)
             ctr += 1
-            if key == 'Load':
+            if key == 'Load' and len(data) > 1:
                 self.grid.addWidget(QtWidgets.QLabel('Facility'), ctr, 0)
                 self.grid.addWidget(QtWidgets.QLabel('Capacity'), ctr, 1)
                 if self.show_multipliers:
@@ -473,12 +475,16 @@ class Adjustments(MyQDialog):
         reset = QtWidgets.QPushButton('Reset', self)
         self.grid.addWidget(reset, ctr, 2)
         reset.clicked.connect(self.resetClicked)
+        resetload = QtWidgets.QPushButton('Reset Load', self)
+        self.grid.addWidget(resetload, ctr, 3)
+        resetload.clicked.connect(self.resetloadClicked)
         if save_folder is not None:
+            ctr += 1
             save = QtWidgets.QPushButton('Save', self)
-            self.grid.addWidget(save, ctr, 3)
+            self.grid.addWidget(save, ctr, 2)
             save.clicked.connect(self.saveClicked)
             restore = QtWidgets.QPushButton('Restore', self)
-            self.grid.addWidget(restore, ctr, 4)
+            self.grid.addWidget(restore, ctr, 3)
             restore.clicked.connect(self.restoreClicked)
         frame = QtWidgets.QFrame()
         frame.setLayout(self.grid)
@@ -542,6 +548,13 @@ class Adjustments(MyQDialog):
             for key in self._adjust_cty.keys():
                 self._adjust_cty[key].setValue(self._data[key][0])
 
+    def resetloadClicked(self, to):
+        if isinstance(to, bool):
+            to = 1.
+        if self.show_multipliers:
+            self._adjust_rnd['Load'].setValue(to)
+        else:
+            self._adjust_cty['Load'].setValue(self._data['Load'][0])
 
     def restoreClicked(self):
         ini_file = QtWidgets.QFileDialog.getOpenFileName(self, 'Open Adjustments file',
@@ -617,6 +630,17 @@ class powerMatch(QtWidgets.QWidget):
         else: # subdirectory of scenarios
             return self.scenarios + filename
 
+    def get_load_years(self):
+        load_years = ['n/a']
+        i = self.load_files.find('$YEAR$')
+        if i < 0:
+            return load_years
+        j = len(self.load_files) - i - 6
+        files = glob.glob(self.load_files[:i] + '*' + self.load_files[i + 6:])
+        for fil in files:
+            load_years.append(fil[i:len(fil) - j])
+        return sorted(load_years, reverse=True)
+
     def __init__(self, help='help.html'):
         super(powerMatch, self).__init__()
         self.help = help
@@ -656,6 +680,13 @@ class powerMatch(QtWidgets.QWidget):
                 self.scenarios = '/'.join(me)
         except:
             self.scenarios = ''
+        try:
+            self.load_files = config.get('Files', 'load')
+            for key, value in parents:
+                self.load_files = self.load_files.replace(key, value)
+            self.load_files = self.load_files.replace('$USER$', getUser())
+        except:
+            self.load_files = ''
         self.log_status = True
         try:
             rw = config.get('Windows', 'log_status')
@@ -750,6 +781,13 @@ class powerMatch(QtWidgets.QWidget):
                          pass
                  elif key == 'dispatch_order':
                      iorder = value.split(',')
+                 elif key == 'load':
+                     try:
+                         self.load_files = value
+                         for ky, valu in parents:
+                             self.load_files = self.load_files.replace(ky, valu)
+                     except:
+                         pass
                  elif key == 'log_status':
                      if value.lower() in ['false', 'no', 'off']:
                          self.log_status = False
@@ -889,6 +927,17 @@ class powerMatch(QtWidgets.QWidget):
                 edit[i] = QtWidgets.QPushButton(self.file_labels[i], self)
                 self.grid.addWidget(edit[i], r, 4, 1, 2)
                 edit[i].clicked.connect(self.editClicked)
+            elif i == D and self.load_files != '':
+                r += 1
+                self.grid.addWidget(QtWidgets.QLabel('Load Year:'), r, 0)
+                self.load_years = self.get_load_years()
+                self.loadCombo = QtWidgets.QComboBox()
+                for choice in self.load_years:
+                    self.loadCombo.addItem(choice)
+                  #  if choice == self.load_year:
+                   #     loadCombo.setCurrentIndex(loadCombo.count() - 1)
+                self.grid.addWidget(self.loadCombo, r, 1)
+                self.grid.addWidget(QtWidgets.QLabel("(To to use a different load year to the data file. Otherwise choose 'n/a')"), r, 2, 1, 4)
             r += 1
       #  wdth = edit[1].fontMetrics().boundingRect(edit[1].text()).width() + 9
         self.grid.addWidget(QtWidgets.QLabel('Replace Last:'), r, 0)
@@ -906,7 +955,7 @@ class powerMatch(QtWidgets.QWidget):
             self.discount.setValue(0.)
         self.grid.addWidget(self.discount, r, 1)
         self.discount.valueChanged.connect(self.drchanged)
-        self.grid.addWidget(QtWidgets.QLabel('(%. Only required if using input costs rather than reference LCOE'), r, 2, 1, 4)
+        self.grid.addWidget(QtWidgets.QLabel('(%. Only required if using input costs rather than reference LCOE)'), r, 2, 1, 4)
         r += 1
         self.grid.addWidget(QtWidgets.QLabel('Carbon Price:'), r, 0)
         self.carbon = QtWidgets.QDoubleSpinBox()
@@ -1231,6 +1280,14 @@ class powerMatch(QtWidgets.QWidget):
             self.optimise_to_batch = True
         else:
             self.optimise_to_batch = False
+        try:
+            st = config.get('Powermatch', 'show_multipliers')
+        except:
+            st = 'False'
+        if st.lower() in ['true', 'yes', 'on']:
+            self.show_multipliers = True
+        else:
+            self.show_multipliers = False
         self.setStatus(config_file + ' edited. Reload may be required.')
 
     def editClicked(self):
@@ -1651,6 +1708,14 @@ class powerMatch(QtWidgets.QWidget):
         ss.cell(row=ss_row, column=2).value = pm_data_file
         ss.merge_cells('B' + str(ss_row) + ':I' + str(ss_row))
         ss_row += 1
+        if self.loadCombo.currentText() != 'n/a':
+            ss.cell(row=ss_row, column=1).value = 'Load file'
+            load_file = self.load_files.replace('$YEAR$', self.loadCombo.currentText())
+            if load_file[: len(self.scenarios)] == self.scenarios:
+                load_file = load_file[len(self.scenarios):]
+            ss.cell(row=ss_row, column=2).value = load_file
+            ss.merge_cells('B' + str(ss_row) + ':I' + str(ss_row))
+            ss_row += 1
         ss.cell(row=ss_row, column=1).value = 'Constraints worksheet'
         ss.cell(row=ss_row, column=2).value = str(self.files[C].text()) \
                + '.' + str(self.sheets[C].currentText())
@@ -1803,8 +1868,38 @@ class powerMatch(QtWidgets.QWidget):
         re_order = [] # order for re technology
         dispatch_order = [] # order for dispatchable technology
         load_col = -1
+        strt_col = 3
+        if self.loadCombo.currentText() != 'n/a':
+            year = self.loadCombo.currentText()
+            strt_col = 4
+            load_col = len(pmss_data)
+            typ = 'L'
+            capacity = 0
+            fctr = 1
+            pmss_details['Load'] = PM_Facility('Load', 'Load', 0, 'L', len(pmss_data), 1)
+            pmss_data.append([])
+            load_file = self.load_files.replace('$YEAR$', self.loadCombo.currentText())
+            tf = open(load_file, 'r')
+            lines = tf.readlines()
+            tf.close()
+            bit = lines[0].rstrip().split(',')
+            if len(bit) > 0: # multiple columns
+                for b in range(len(bit)):
+                    if bit[b][:4].lower() == 'load':
+                        if bit[b].lower().find('kwh') > 0: # kWh not MWh
+                            for i in range(1, len(lines)):
+                                bit = lines[i].rstrip().split(',')
+                                pmss_data[-1].append(float(bit[b]) * 0.001)
+                        else:
+                            for i in range(1, len(lines)):
+                                bit = lines[i].rstrip().split(',')
+                                pmss_data[-1].append(float(bit[b]))
+            else:
+                for i in range(1, len(lines)):
+                    pmss_data[-1].append(float(lines[i].rstrip()))
+            re_order.append('Load')
         zone = ''
-        for col in range(3, ws.max_column + 1):
+        for col in range(strt_col, ws.max_column + 1):
             try:
                 valu = ws.cell(row=typ_row, column=col).value.replace('-','')
                 i = tech_names.index(valu)
@@ -1890,22 +1985,19 @@ class powerMatch(QtWidgets.QWidget):
                             self.adjustto[gen] = self.generators[gen].capacity
                     except:
                        pass
-            generated = 0
-            for row in range(top_row + 1, ws.max_row + 1):
-                generated = generated + ws.cell(row=row, column=3).value
+            generated = sum(pmss_data[load_col])
             datain = []
-            for col in range(3, ws.max_column + 1):
+            datain.append(['Load', 'L', generated])
+            if self.adjustto['Load'] == 0:
+                self.adjustto['Load'] = generated
+            for col in range(4, ws.max_column + 1):
                 try:
                     valu = ws.cell(row=typ_row, column=col).value.replace('-','')
                     i = tech_names.index(valu)
                 except:
                     continue
                 key = tech_names[i]
-                if valu == 'Load':
-                    datain.append([tech_names[i], 'L', generated])
-                    if self.adjustto['Load'] == 0:
-                        self.adjustto['Load'] = generated
-                elif do_zone:
+                if do_zone:
                     cell = ws.cell(row=zone_row, column=col)
                     if type(cell).__name__ == 'MergedCell':
                         pass
@@ -1997,6 +2089,19 @@ class powerMatch(QtWidgets.QWidget):
             dispatch_order.append(gen)
             pmss_details[gen] = PM_Facility(gen, gen, self.generators[gen].capacity, typ, -1, 1)
         if option == 'B':
+            if self.adjust.isChecked():
+                generated = sum(pmss_data[load_col])
+                datain = [['Load', 'L', generated]]
+                adjustto = {'Load': generated}
+                adjust = Adjustments(self, datain, adjustto, self.adjust_cap, None,
+                                 show_multipliers=self.show_multipliers )
+                adjust.exec_()
+                if adjust.getValues() is None:
+                    self.setStatus('Execution aborted.')
+                    self.progressbar.setHidden(True)
+                    return
+                adjustto = adjust.getValues()
+                pmss_details['Load'].multiplier = adjustto['Load'] / pmss_details['Load'].capacity
             start_time = time.time() # just for fun
             batch_details = {'Capacity (MW/MWh)': [1, '#,##0.00'], 'To Meet Load (MWh)': [2, '#,##0'],
                              'Generation (MWh)': [3, '#,##0'], 'Capacity Factor': [4, '#,##0.00'],
@@ -2082,6 +2187,7 @@ class powerMatch(QtWidgets.QWidget):
             column = 1
             gndx = self.batch_report[0][1] # Capacity group starting row
             do_opt_parms = [False, 0, 0, 0]
+            total_load_row = 0
             batch_carbon_row = 0
             batch_data_sources_row = 0
             for g in range(len(self.batch_report)):
@@ -2090,9 +2196,11 @@ class powerMatch(QtWidgets.QWidget):
                 elif self.batch_report[g][0] == 'Carbon Price':
                     batch_carbon_row = self.batch_report[g][1]
                     continue
-                elif self.batch_report[g][0] == 'Data Sources':
+                elif self.batch_report[g][0].lower() == 'data sources':
                     batch_data_sources_row = gndx
                     gndx += 6
+                    if self.loadCombo.currentText() != 'n/a':
+                        gndx += 1
                     continue
                 if self.batch_report[g][0] not in batch_details.keys() and self.batch_report[g][0] not in batch_extra.keys():
                     continue
@@ -2115,6 +2223,8 @@ class powerMatch(QtWidgets.QWidget):
                         do_opt_parms[3] = row
                         continue
                     for sp in range(1, len(batch_extra[key])):
+                        if batch_extra[key][sp][0] == 'Total Load':
+                            total_load_row = gndx + sp
                         bs.cell(row=gndx + sp, column=1).value = batch_extra[key][sp][0]
                         if batch_extra[key][sp][0] == 'RE %age of Total Load' or \
                           batch_extra[key][sp][0].find('LCOE (') >= 0:
@@ -2253,6 +2363,15 @@ class powerMatch(QtWidgets.QWidget):
                                 bs.cell(row=gndx + tndx, column=column).font = bold
                         except:
                             pass
+            if total_load_row > 0:
+                load_mult = ''
+                try:
+                    mult = round(pmss_details['Load'].multiplier, 3)
+                    if mult != 1:
+                        load_mult = ' x ' + str(mult)
+                except:
+                    pass
+                bs.cell(row=total_load_row, column=1).value = 'Total Load - ' + year + load_mult
             if do_opt_parms[0]:
                 t_row = do_opt_parms[1]
                 for row in range(do_opt_parms[2], do_opt_parms[3] + 1):
@@ -3159,7 +3278,17 @@ class powerMatch(QtWidgets.QWidget):
             pct = '{:.1%})'.format(sf_sums[0] / sp_load)
           #  sp_data.append(['Shortfall (' + pct, '', sf_sums[0]])
             sp_data.append(['Shortfall', '{:.1f}%'.format(sf_sums[0] * 100 / sp_load), sf_sums[0]])
-            sp_data.append(['Total Load', '', sp_load, '', '', '', '', '', load_max])
+            if option == 'B':
+                sp_data.append(['Total Load', '', sp_load, '', '', '', '', '', load_max])
+            else:
+                load_mult = ''
+                try:
+                    mult = round(pmss_details['Load'].multiplier, 3)
+                    if mult != 1:
+                        load_mult = ' x ' + str(mult)
+                except:
+                    pass
+                sp_data.append(['Total Load - ' + year + load_mult, '', sp_load, '', '', '', '', '', load_max])
             sp_data.append(['RE %age of Total Load', '{:.1f}%'.format((sp_load - sf_sums[0] - ff_sum) * 100. / sp_load)])
             sp_data.append(' ')
             if tot_sto_loss != 0:
@@ -3528,7 +3657,14 @@ class powerMatch(QtWidgets.QWidget):
         ss.cell(row=ss_row, column=5).number_format = '#,##0.0%'
         ss_row += 1
         ld_row = ss_row
-        ss.cell(row=ss_row, column=1).value = 'Total Load'
+        load_mult = ''
+        try:
+            mult = round(pmss_details['Load'].multiplier, 3)
+            if mult != 1:
+                load_mult = ' x ' + str(mult)
+        except:
+            pass
+        ss.cell(row=ss_row, column=1).value = 'Total Load - ' + year + load_mult
         ss.cell(row=ss_row, column=1).font = bold
         ss.cell(row=ss_row, column=3).value = '=SUM(C' + str(ss_row - 2) + ':C' + str(ss_row - 1) + ')'
         ss.cell(row=ss_row, column=3).number_format = '#,##0'
