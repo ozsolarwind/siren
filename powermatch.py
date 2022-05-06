@@ -1098,8 +1098,10 @@ class powerMatch(QtWidgets.QWidget):
                 break
         if self.files[i].text() == '':
             curfile = self.scenarios[:-1]
-        else:
+        elif self.files[i].text().find('/') < 0:
             curfile = self.scenarios + self.files[i].text()
+        else:
+            curfile = self.files[i].text()
         if i == R:
             if self.files[i].text() == '':
                 curfile = self.scenarios + self.files[D].text()
@@ -1869,35 +1871,38 @@ class powerMatch(QtWidgets.QWidget):
         dispatch_order = [] # order for dispatchable technology
         load_col = -1
         strt_col = 3
-        if self.loadCombo.currentText() != 'n/a':
-            year = self.loadCombo.currentText()
-            strt_col = 4
-            load_col = len(pmss_data)
-            typ = 'L'
-            capacity = 0
-            fctr = 1
-            pmss_details['Load'] = PM_Facility('Load', 'Load', 0, 'L', len(pmss_data), 1)
-            pmss_data.append([])
-            load_file = self.load_files.replace('$YEAR$', self.loadCombo.currentText())
-            tf = open(load_file, 'r')
-            lines = tf.readlines()
-            tf.close()
-            bit = lines[0].rstrip().split(',')
-            if len(bit) > 0: # multiple columns
-                for b in range(len(bit)):
-                    if bit[b][:4].lower() == 'load':
-                        if bit[b].lower().find('kwh') > 0: # kWh not MWh
-                            for i in range(1, len(lines)):
-                                bit = lines[i].rstrip().split(',')
-                                pmss_data[-1].append(float(bit[b]) * 0.001)
-                        else:
-                            for i in range(1, len(lines)):
-                                bit = lines[i].rstrip().split(',')
-                                pmss_data[-1].append(float(bit[b]))
-            else:
-                for i in range(1, len(lines)):
-                    pmss_data[-1].append(float(lines[i].rstrip()))
-            re_order.append('Load')
+        try:
+            if self.loadCombo.currentText() != 'n/a':
+                year = self.loadCombo.currentText()
+                strt_col = 4
+                load_col = len(pmss_data)
+                typ = 'L'
+                capacity = 0
+                fctr = 1
+                pmss_details['Load'] = PM_Facility('Load', 'Load', 0, 'L', len(pmss_data), 1)
+                pmss_data.append([])
+                load_file = self.load_files.replace('$YEAR$', self.loadCombo.currentText())
+                tf = open(load_file, 'r')
+                lines = tf.readlines()
+                tf.close()
+                bit = lines[0].rstrip().split(',')
+                if len(bit) > 0: # multiple columns
+                    for b in range(len(bit)):
+                        if bit[b][:4].lower() == 'load':
+                            if bit[b].lower().find('kwh') > 0: # kWh not MWh
+                                for i in range(1, len(lines)):
+                                    bit = lines[i].rstrip().split(',')
+                                    pmss_data[-1].append(float(bit[b]) * 0.001)
+                            else:
+                                for i in range(1, len(lines)):
+                                    bit = lines[i].rstrip().split(',')
+                                    pmss_data[-1].append(float(bit[b]))
+                else:
+                    for i in range(1, len(lines)):
+                        pmss_data[-1].append(float(lines[i].rstrip()))
+                re_order.append('Load')
+        except:
+            pass
         zone = ''
         for col in range(strt_col, ws.max_column + 1):
             try:
