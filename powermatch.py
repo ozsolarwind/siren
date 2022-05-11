@@ -43,6 +43,7 @@ from openpyxl.chart import (
     Series
 )
 import random
+import shutil
 from parents import getParents
 from senuser import getUser, techClean
 from editini import EdtDialog, SaveIni
@@ -1735,6 +1736,34 @@ class powerMatch(QtWidgets.QWidget):
         ss.merge_cells('B' + str(ss_row) + ':I' + str(ss_row))
         return ss_row
 
+    def clean_batch_sheet(self):
+        msgbox = QtWidgets.QMessageBox()
+        msgbox.setWindowTitle('SIREN - Powermatch Batch')
+        msgbox.setText("Batch worksheet has more that 1,000 columns.\nSome may be invalid/empty. Would you like these to be removed")
+        msgbox.setIcon(QtWidgets.QMessageBox.Warning)
+        msgbox.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+        reply = msgbox.exec_()
+        if reply != QtWidgets.QMessageBox.Yes:
+            return
+        batch_report_file = self.get_filename(self.files[B].text())
+        if os.path.exists(batch_report_file + '~'):
+            os.remove(batch_report_file + '~')
+        shutil.copy2(batch_report_file, batch_report_file + '~')
+        ds = oxl.load_workbook(batch_report_file)
+        ws = ds.worksheets[0]
+        for row in range(1, 4):
+            try:
+                if ws.cell(row=row, column=1).value.lower() in ['model', 'model label', 'technology']:
+                    break
+            except:
+                pass
+        else:
+            return # bail out
+        for col in range(ws.max_column, 1, -1):
+            if ws.cell(row=row, column=col).value is None:
+               ws.delete_cols(col, 1)
+        ds.save(batch_report_file)
+
     def pmClicked(self):
         self.setStatus(self.sender().text() + ' processing started')
         if self.sender().text() == 'Powermatch': # detailed spreadsheet?
@@ -1787,6 +1816,11 @@ class powerMatch(QtWidgets.QWidget):
             try:
                 ts = xlrd.open_workbook(self.get_filename(self.files[B].text()))
                 ws = ts.sheet_by_index(0)
+                if ws.ncols > 1000:
+                    ts.release_resources()
+                    self.clean_batch_sheet()
+                    ts = xlrd.open_workbook(self.get_filename(self.files[B].text()))
+                    ws = ts.sheet_by_index(0)
                 ok = self.getBatch(ws)
                 ts.release_resources()
                 del ts
@@ -5112,6 +5146,9 @@ class powerMatch(QtWidgets.QWidget):
                     if op_data[h][o_r][0] != 'RE Contribution To Load':
                         check_list.append(o_r)
                 ds = oxl.load_workbook(self.get_filename(self.files[B].text()))
+                if ds.worksheets[0].max_column > 1000:
+                    self.clean_batch_sheet()
+                    ds = oxl.load_workbook(self.get_filename(self.files[B].text()))
                 batch_input_sheet = ds.worksheets[0]
                 batch_input_sheet.protection.sheet = False
                 normal = oxl.styles.Font(name='Arial')
