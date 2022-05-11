@@ -76,9 +76,12 @@ col_letters = ' ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 def ss_col(col, base=1):
     if base == 1:
         col -= 1
-    c1 = col // 26
-    c2 = col % 26
-    return (col_letters[c1] + col_letters[c2 + 1]).strip()
+    c1 = 0
+    c2, c3 = divmod(col, 26)
+    c3 += 1
+    if c2 > 26:
+        c1, c2 = divmod(c2, 26)
+    return (col_letters[c1] + col_letters[c2] + col_letters[c3]).strip()
 
 def get_value(ws, row, col):
     def get_range(text, alphabet=None, base=1):
