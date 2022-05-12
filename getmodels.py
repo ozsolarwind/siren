@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2020 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2020-2022 Sustainable Energy Now Inc., Angus King
 #
 #  getmodels.py - This file is part of SIREN.
 #
@@ -52,7 +52,7 @@ def getModelFile(*args):
             mydir = mydir[:mydir.rfind(fldr_div)]
             that_len = len(commonprefix([newdir, mydir], chr=fldr_div))
             if that_len > 0:
-                bits = newdir[that_len:].split(fldr_div)
+                bits = mydir[that_len:].split(fldr_div)
                 if that_len < len(mydir): # go up the tree
                     pfx = ('..' + fldr_div) * (len(bits) - 1)
                 else:
