@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2020 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2022 Sustainable Energy Now Inc., Angus King
 #
 #  powerclasses.py - This file is part of SIREN.
 #
@@ -105,10 +105,13 @@ class PowerSummary:
     def __init__(self, name, technology, generation, capacity, transmitted=None):
         self.name = name
         self.technology = technology
-        self.generation = int(round(generation))
+        try:
+            self.generation = int(round(generation))
+        except:
+            self.generation = 0
         self.capacity = capacity
         try:
-            self.cf = round(generation / (capacity * 8760), 2)
+            self.cf = round(self.generation / (capacity * 8760), 2)
         except:
             pass
         if transmitted is not None:

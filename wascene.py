@@ -25,13 +25,12 @@ from math import sin, cos, pi, sqrt, degrees, radians, asin, atan2
 import os
 import sys
 import xlrd
-
 import configparser   # decode .ini file
 from PyQt5 import QtCore, QtGui, QtWidgets
-#try:
-#    import mpl_toolkits.basemap.pyproj as pyproj   # Import the pyproj module
-#except:
-from mpl_toolkits.basemap import pyproj as pyproj
+try:
+    import mpl_toolkits.basemap.pyproj as pyproj   # Import the pyproj module
+except:
+    import pyproj
 from towns import Towns
 from getmodels import getModelFile
 from grid import Grid, Grid_Boundary, Grid_Zones, Line
@@ -492,7 +491,7 @@ class WAScene(QtWidgets.QGraphicsScene):
         else:
             ratio = abs(self.map_upper_left[1] - self.map_lower_right[1]) / \
                      abs(self.map_upper_left[0] - self.map_lower_right[0])
-            pixMap = QtGui.QPixmap(200 * ratio, 200)
+            pixMap = QtGui.QPixmap(int(200 * ratio), 200)
             if self.map != '':
                 painter = QtGui.QPainter(pixMap)
                 brush = QtGui.QBrush(QtGui.QColor('white'))

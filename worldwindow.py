@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2017-2019 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2017-2022 Sustainable Energy Now Inc., Angus King
 #
 #  worldwindow.py - This file is part of SIREN.
 #
@@ -22,16 +22,13 @@
 from math import asin, atan2, cos, degrees, pi, pow, radians, sin, sqrt
 import os
 import sys
-
 import configparser   # decode getfiles.ini file
 from PyQt5 import QtCore, QtGui, QtWidgets
-
-#try:
-#    from mpl_toolkits.basemap.pyproj import Proj  # Import the pyproj.Proj module
-#except:
-from mpl_toolkits.basemap import pyproj as pyproj
+try:
+    import mpl_toolkits.basemap.pyproj as pyproj   # Import the pyproj module
+except:
+    import pyproj
 from pyproj import Proj as Proj
-
 from colours import Colours
 from credits import fileVersion
 import displayobject
