@@ -2440,8 +2440,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.view.statusmsg.emit(comment)
 
     def get_SAMVer(self):
-        ssc_api = ssc.API()
-        comment = 'SAM SDK Core: Version = %s. Build info = %s.' % (ssc_api.version(), ssc_api.build_info().decode())
+        try:
+            ssc_api = ssc.API()
+            comment = 'SAM SDK Core: Version = %s. Build info = %s.' % (ssc_api.version(), ssc_api.build_info().decode())
+        except:
+            comment = 'Error accessing SAM SDK Core. Power modelling unavailable.'
         self.view.statusmsg.emit(comment)
 
     def list_Stations(self):
