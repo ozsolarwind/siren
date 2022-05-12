@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2016-2019 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2016-2020 Sustainable Energy Now Inc., Angus King
 #
 #  makerainfall2.py - This file is possibly part of SIREN.
 #
@@ -25,7 +25,7 @@ import os
 import sys
 from netCDF4 import Dataset
 import time
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 import displayobject
 from credits import fileVersion
 
@@ -149,7 +149,7 @@ class makeRainfall():
         self.log += unzip_file[i + 1:] + '\n'
         self.log += ' Format:\n    '
         try:
-            self.log += str(cdf_file.Format) + '\n'
+            self.log += cdf_file.Format + '\n'
         except:
             self.log += '\n'
         self.log += ' Dimensions:\n    '
@@ -161,7 +161,7 @@ class makeRainfall():
                 vals += keys[i] + ': ' + str(values[i]) + ', '
         else:
             for i in range(len(keys)):
-                bits = str(values[i]).strip().split(' ')
+                bits = str(values[i]).strip().split()
                 vals += keys[i] + ': ' + bits[-1] + ', '
         self.log += vals[:-2] + '\n'
         self.log += ' Variables:\n    '
@@ -414,16 +414,18 @@ class makeRainfall():
         return  # that's it
 
 
-class ClickableQLabel(QtGui.QLabel):
+class ClickableQLabel(QtWidgets.QLabel):
+    clicked = QtCore.pyqtSignal()
+
     def __init(self, parent):
         QLabel.__init__(self, parent)
 
     def mousePressEvent(self, event):
-        QtGui.QApplication.widgetAt(event.globalPos()).setFocus()
-        self.emit(QtCore.SIGNAL('clicked()'))
+        QtWidgets.QApplication.widgetAt(event.globalPos()).setFocus()
+        self.clicked.emit()
 
 
-class getParms(QtGui.QWidget):
+class getParms(QtWidgets.QWidget):
 
     def __init__(self, help='help.html'):
         super(getParms, self).__init__()
@@ -431,71 +433,71 @@ class getParms(QtGui.QWidget):
         self.initUI()
 
     def initUI(self):
-        self.yearSpin = QtGui.QSpinBox()
+        self.yearSpin = QtWidgets.QSpinBox()
         now = datetime.datetime.now()
         self.yearSpin.setRange(1979, now.year)
         self.yearSpin.setValue(now.year - 1)
-        self.zoneCombo = QtGui.QComboBox()
+        self.zoneCombo = QtWidgets.QComboBox()
         self.zoneCombo.addItem('Auto')
         for i in range(-12, 13):
             self.zoneCombo.addItem(str(i))
         self.zoneCombo.currentIndexChanged[str].connect(self.zoneChanged)
-        self.zone_lon = QtGui.QLabel(('Time zone calculated from MERRA data'))
-        self.grid = QtGui.QGridLayout()
-        self.grid.addWidget(QtGui.QLabel('Year:'), 0, 0)
+        self.zone_lon = QtWidgets.QLabel(('Time zone calculated from MERRA data'))
+        self.grid = QtWidgets.QGridLayout()
+        self.grid.addWidget(QtWidgets.QLabel('Year:'), 0, 0)
         self.grid.addWidget(self.yearSpin, 0, 1)
-        self.grid.addWidget(QtGui.QLabel('Time Zone:'), 1, 0)
+        self.grid.addWidget(QtWidgets.QLabel('Time Zone:'), 1, 0)
         self.grid.addWidget(self.zoneCombo, 1, 1)
         self.grid.addWidget(self.zone_lon, 1, 2, 1, 3)
-        self.grid.addWidget(QtGui.QLabel('Rainfall File Format:'), 2, 0)
-        self.fmatcombo = QtGui.QComboBox(self)
+        self.grid.addWidget(QtWidgets.QLabel('Rainfall File Format:'), 2, 0)
+        self.fmatcombo = QtWidgets.QComboBox(self)
         self.fmats = ['any', 'flx', 'lnd', 'mld']
         for i in range(len(self.fmats)):
             self.fmatcombo.addItem(self.fmats[i])
         self.fmatcombo.setCurrentIndex(0)
         self.grid.addWidget(self.fmatcombo, 2, 1)
-        self.grid.addWidget(QtGui.QLabel('Coordinates:'), 3, 0)
-        self.coords = QtGui.QPlainTextEdit()
+        self.grid.addWidget(QtWidgets.QLabel('Coordinates:'), 3, 0)
+        self.coords = QtWidgets.QPlainTextEdit()
         self.grid.addWidget(self.coords, 3, 1, 1, 3)
-        self.grid.addWidget(QtGui.QLabel('Copy folder down:'), 4, 0)
-        self.checkbox = QtGui.QCheckBox()
+        self.grid.addWidget(QtWidgets.QLabel('Copy folder down:'), 4, 0)
+        self.checkbox = QtWidgets.QCheckBox()
         self.checkbox.setCheckState(QtCore.Qt.Checked)
         self.grid.addWidget(self.checkbox, 4, 1)
-        self.grid.addWidget(QtGui.QLabel('If checked will copy rainfall folder changes down to others'), 4, 3)
+        self.grid.addWidget(QtWidgets.QLabel('If checked will copy rainfall folder changes down to others'), 4, 3)
         cur_dir = os.getcwd()
         self.dir_labels = ['Rainfall Source', 'Target']
         self.dirs = [None, None, None]
         for i in range(2):
-            self.grid.addWidget(QtGui.QLabel(self.dir_labels[i] + ' Folder:'), 5 + i, 0)
+            self.grid.addWidget(QtWidgets.QLabel(self.dir_labels[i] + ' Folder:'), 5 + i, 0)
             self.dirs[i] = ClickableQLabel()
             self.dirs[i].setText(cur_dir)
             self.dirs[i].setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
-            self.connect(self.dirs[i], QtCore.SIGNAL('clicked()'), self.dirChanged)
+            self.dirs[i].clicked.connect(self.dirChanged)
             self.grid.addWidget(self.dirs[i], 5 + i, 1, 1, 3)
-        quit = QtGui.QPushButton('Quit', self)
+        quit = QtWidgets.QPushButton('Quit', self)
         self.grid.addWidget(quit, 8, 0)
         quit.clicked.connect(self.quitClicked)
-        QtGui.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
-        dorain = QtGui.QPushButton('Produce Rainfall Files', self)
+        QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
+        dorain = QtWidgets.QPushButton('Produce Rainfall Files', self)
         wdth = dorain.fontMetrics().boundingRect(dorain.text()).width() + 9
         self.grid.addWidget(dorain, 8, 1)
         dorain.clicked.connect(self.dorainClicked)
-        help = QtGui.QPushButton('Help', self)
+        help = QtWidgets.QPushButton('Help', self)
         help.setMaximumWidth(wdth)
         self.grid.addWidget(help, 8, 2)
         help.clicked.connect(self.helpClicked)
-        QtGui.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
-        info = QtGui.QPushButton('File Info', self)
+        QtWidgets.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
+        info = QtWidgets.QPushButton('File Info', self)
         info.setMaximumWidth(wdth)
         self.grid.addWidget(info, 8, 3)
         info.clicked.connect(self.infoClicked)
       #   self.grid.setColumnStretch(4, 2)
-        frame = QtGui.QFrame()
+        frame = QtWidgets.QFrame()
         frame.setLayout(self.grid)
-        self.scroll = QtGui.QScrollArea()
+        self.scroll = QtWidgets.QScrollArea()
         self.scroll.setWidgetResizable(True)
         self.scroll.setWidget(frame)
-        self.layout = QtGui.QVBoxLayout(self)
+        self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
         self.setWindowTitle('SIREN - makerainfall2 (' + fileVersion() + ') - Make rainfall files from MERRA data')
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
@@ -505,8 +507,8 @@ class getParms(QtGui.QWidget):
 
     def center(self):
         frameGm = self.frameGeometry()
-        screen = QtGui.QApplication.desktop().screenNumber(QtGui.QApplication.desktop().cursor().pos())
-        centerPoint = QtGui.QApplication.desktop().availableGeometry(screen).center()
+        screen = QtWidgets.QApplication.desktop().screenNumber(QtWidgets.QApplication.desktop().cursor().pos())
+        centerPoint = QtWidgets.QApplication.desktop().availableGeometry(screen).center()
         frameGm.moveCenter(centerPoint)
         self.move(frameGm.topLeft())
 
@@ -532,8 +534,8 @@ class getParms(QtGui.QWidget):
             if self.dirs[i].hasFocus():
                 break
         curdir = self.dirs[i].text()
-        newdir = str(QtGui.QFileDialog.getExistingDirectory(self, 'Choose ' + self.dir_labels[i] + ' Folder',
-                 curdir, QtGui.QFileDialog.ShowDirsOnly))
+        newdir = QtWidgets.QFileDialog.getExistingDirectory(self, 'Choose ' + self.dir_labels[i] + ' Folder',
+                 curdir, QtWidgets.QFileDialog.ShowDirsOnly)
         if newdir != '':
             self.dirs[i].setText(newdir)
             if self.checkbox.isChecked():
@@ -541,7 +543,7 @@ class getParms(QtGui.QWidget):
                     self.dirs[1].setText(newdir)
 
     def helpClicked(self):
-        dialog = displayobject.AnObject(QtGui.QDialog(), self.help,
+        dialog = displayobject.AnObject(QtWidgets.QDialog(), self.help,
                  title='Help for makerainfall2 (' + fileVersion() + ')', section='merrar')
         dialog.exec_()
 
@@ -549,7 +551,7 @@ class getParms(QtGui.QWidget):
         self.close()
 
     def dorainClicked(self):
-        coords = str(self.coords.toPlainText())
+        coords = self.coords.toPlainText()
         if coords != '':
             if coords.find(' ') >= 0:
                 if coords.find(',') < 0:
@@ -560,17 +562,17 @@ class getParms(QtGui.QWidget):
             zone = 'auto'
         else:
             zone = str(self.zoneCombo.currentIndex() - 13)
-        rain = makeRainfall(str(self.yearSpin.value()), zone, str(self.dirs[0].text()),
-                            str(self.dirs[1].text()), str(self.fmatcombo.currentText()), coords)
-        dialr = RptDialog(str(self.yearSpin.value()), zone, str(self.dirs[0].text()),
-                          str(self.dirs[1].text()), str(self.fmatcombo.currentText()),
+        rain = makeRainfall(str(self.yearSpin.value()), zone, self.dirs[0].text(),
+                            self.dirs[1].text(), self.fmatcombo.currentText(), coords)
+        dialr = RptDialog(str(self.yearSpin.value()), zone, self.dirs[0].text(),
+                          self.dirs[1].text(), self.fmatcombo.currentText(),
                           coords, rain.returnCode(), rain.getLog())
         dialr.exec_()
         del rain
         del dialr
 
     def infoClicked(self):
-        coords = str(self.coords.toPlainText())
+        coords = self.coords.toPlainText()
         if coords != '':
             if coords.find(' ') >= 0:
                 if coords.find(',') < 0:
@@ -581,17 +583,17 @@ class getParms(QtGui.QWidget):
             zone = 'auto'
         else:
             zone = str(self.zoneCombo.currentIndex() - 13)
-        rain = makeRainfall(str(self.yearSpin.value()), zone, str(self.dirs[0].text()),
-                            str(self.dirs[1].text()), str(self.fmatcombo.currentText()), coords, info=True)
-        dialr = RptDialog(str(self.yearSpin.value()), zone, str(self.dirs[0].text()),
-                          str(self.dirs[1].text()), str(self.fmatcombo.currentText()),
+        rain = makeRainfall(str(self.yearSpin.value()), zone, self.dirs[0].text(),
+                            self.dirs[1].text(), self.fmatcombo.currentText(), coords, info=True)
+        dialr = RptDialog(str(self.yearSpin.value()), zone, self.dirs[0].text(),
+                          self.dirs[1].text(), self.fmatcombo.currentText(),
                           coords, rain.returnCode(), rain.getLog())
         dialr.exec_()
         del rain
         del dialr
 
 
-class RptDialog(QtGui.QDialog):
+class RptDialog(QtWidgets.QDialog):
     def __init__(self, year, zone, src_dir, tgt_dir, fmat, coords, return_code, output):
         super(RptDialog, self).__init__()
         self.parms = [str(year), str(zone), fmat, tgt_dir, src_dir]
@@ -610,32 +612,30 @@ class RptDialog(QtGui.QDialog):
         for i in range(line_cnt):
             max_line = max(max_line, len(lenem[i]))
         del lenem
-        QtGui.QDialog.__init__(self)
-        self.saveButton = QtGui.QPushButton(self.tr('&Save'))
-        self.cancelButton = QtGui.QPushButton(self.tr('Cancel'))
-        buttonLayout = QtGui.QHBoxLayout()
+        QtWidgets.QDialog.__init__(self)
+        self.saveButton = QtWidgets.QPushButton(self.tr('&Save'))
+        self.cancelButton = QtWidgets.QPushButton(self.tr('Cancel'))
+        buttonLayout = QtWidgets.QHBoxLayout()
         buttonLayout.addStretch(1)
         buttonLayout.addWidget(self.saveButton)
         buttonLayout.addWidget(self.cancelButton)
-        self.connect(self.saveButton, QtCore.SIGNAL('clicked()'), self,
-                     QtCore.SLOT('accept()'))
-        self.connect(self.cancelButton, QtCore.SIGNAL('clicked()'),
-                     self, QtCore.SLOT('reject()'))
-        self.widget = QtGui.QTextEdit()
+        self.saveButton.clicked.connect(self.accept)
+        self.cancelButton.clicked.connect(self.reject)
+        self.widget = QtWidgets.QTextEdit()
         self.widget.setFont(QtGui.QFont('Courier New', 11))
         fnt = self.widget.fontMetrics()
         ln = (max_line + 5) * fnt.maxWidth()
         ln2 = (line_cnt + 2) * fnt.height()
-        screen = QtGui.QDesktopWidget().availableGeometry()
+        screen = QtWidgets.QDesktopWidget().availableGeometry()
         if ln > screen.width() * .67:
             ln = int(screen.width() * .67)
         if ln2 > screen.height() * .67:
             ln2 = int(screen.height() * .67)
-        self.widget.setSizePolicy(QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding,
-            QtGui.QSizePolicy.Expanding))
+        self.widget.setSizePolicy(QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding,
+            QtWidgets.QSizePolicy.Expanding))
         self.widget.resize(ln, ln2)
         self.widget.setPlainText(self.lines)
-        layout = QtGui.QVBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.widget)
         layout.addLayout(buttonLayout)
         self.setLayout(layout)
@@ -669,10 +669,10 @@ class RptDialog(QtGui.QDialog):
                     save_filename += '_' + self.parms[k]
                     last_bit = self.parms[k]
         save_filename += '.txt'
-        fileName = QtGui.QFileDialog.getSaveFileName(self,
+        fileName = QtWidgets.QFileDialog.getSaveFileName(self,
                                          self.tr("QFileDialog.getSaveFileName()"),
                                          save_filename,
-                                         self.tr("All Files (*);;Text Files (*.txt)"))
+                                         self.tr("All Files (*);;Text Files (*.txt)"))[0]
         if fileName != '':
             s = open(fileName, 'w')
             s.write(self.lines)
@@ -681,7 +681,7 @@ class RptDialog(QtGui.QDialog):
 
 
 if "__main__" == __name__:
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     if len(sys.argv) > 1:   # arguments
         src_lat_lon = ''
         src_year = 2014
