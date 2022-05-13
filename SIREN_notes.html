@@ -16,16 +16,41 @@ pre {
 </head>
 </body>
 <h2>Building SIREN from github and SourceForge</h2>
-<p>This is a brief set of clues on how to get SIREN working using the source from github and packages from SourceForge. More may be forthcoming. The SIREN help file (<a href="help.html" target="_blank">help.html</a>) is worth a read. In terms of setup refer to :-
+<p>This is a brief set of clues on how to get SIREN working using the source from github and packages from SourceForge. More may be forthcoming. The SIREN help file (<a href="https://github.com/ozsolarwind/siren/blob/master/help.html" target="_blank">help.html</a>) is worth a read (You can also view the SIREN help file at <a href="https://rawgit.com/ozsolarwind/siren/master/help.html" target="_blank">https://rawgit.com/ozsolarwind/siren/master/help.html</a>). In terms of setup refer to :-
 <a href="help.html#install" target="_blank">Installation</a>, <a href="help.html#setup" target="_blank">Setting Up</a>, <a href="help.html#prefs" target="_blank">Preferences</a>, and <a href="help.html#files" target="_blank">SIREN File Formats</a>. To use SIREN refer to <a href="help.html#usage" target="_blank">Using the Simulation</a>.</p>
+<h2 id="windows">Windows package</h2>
 <p>SIREN is packaged for Windows to enable that user base to install and use it with minimal technical knowledge. This version has been created with PyInstaller (see below). It has also been executed successfully on Mac using <code>WineBottler</code>. To run it in other environments, or to run your own Windows version you need:
 <ul>
 <li>Python 3.?</li>
 <li>Some Python packages (see <a href="#libraries">Python Libraries</a>)</li>
 <li>The Python source programs for SIREN. These are available either from <a href="#github">github</a> or <a href="#forge">SourceForge</a>. Their purpose is briefly described in <a href="#source">SIREN Programs</a></li>
-<li>The SAM SDK. This included in a number of the SourceForge zip files (<em>siren_toolkit.exe</em> and <em>siren_application.exe</em>). It is also available from the SAM website - <a href="https://sam.nrel.gov/sdk" target="_blank">https://sam.nrel.gov/sdk</a>. SIREN currently uses <a href="https://github.com/NREL/ssc/releases/tag/2018.11.11.r2" target="_blank">Version 2019-02-09</a> (206)</li>
+<li>The SAM SDK. This included in a number of the SourceForge zip files (<em>siren_toolkit.exe</em> and <em>siren_application.exe</em>). It is also available from the SAM website - <a href="https://sam.nrel.gov/sdk" target="_blank">https://sam.nrel.gov/sdk</a>. SIREN currently uses <a href="https://github.com/NREL/ssc/releases/tag/2018.11.11.r2" target="_blank">Version 2019-02-09</a> (206). A useful version is <a href="https://github.com/NREL/ssc/releases/tag/2018.11.11.r4" target="_blank">SAM 2018.11.11 Revision 4 with ssc Revision 209</a> as this is the last version to come with prepackaged binaries (the zip file)</li>
 <li>Other data files as indicated in <a href="help.html#setup" target="_blank">Setting Up</a>. These are found in some of the SIREN SourceForge downloads with a small number also available on github</li>
 <li>If required, the sample SIREN simulation of the SWIS - <em>siren_sample.exe</em>
+</ul>
+<h3>Packaging for Windows</h3>
+<p>I use PyInstaller (currently Version 3.4) to package SIREN for Windows. I use the multi-package facility to create executables for <code>siren.py, sirenm.py</code> and the tools (<code>flexiplot.py, getmap.py, getmerra2.py, indexweather.py, makegrid.py, makeweatherfiles.py, powermatch.py, powerplot.py, sirenupd.py</code> and <code>updateswis.py</code>). <code>siren_application.spec</code> is the spec file (<code>pyinstaller.exe siren_application.spec</code> with options <code>--log-level ERROR</code> and/or <code>--noconfirm</code> ... <code>pyinstaller.exe --noconfirm --log-level ERROR siren_application.spec</code>). This enables all programs to be included in a single library for distribution. PyInstaller places them in individual directories - I use <code>package_siren.py</code> to copy all the executables into the <em>siren</em> directory and remove some unwanted files that are included as part of the packaging process.</p>
+<p>All these files have a version file where the version is <code>&lt;major&gt;,&lt;minor&gt;.&lt;yyyy&gt;.&lt;mmdd&gt;</code>. <code>&lt;major&gt;</code> and <code>&lt;minor&gt;</code> refer to the SIREN release. The date part is the date the program was last changed. The version numbering simulates Microsoft version numbers. <code>template_version</code> provides a template for the version files to enable new SIREN releases to be packaged. The current <code>major</code> version is <strong><code>3</code></strong> (<code>1</code> was the initial version, <code>2</code> for the change from Python2 to Python3, and <code>3</code> for the change from PyQt4 to PyQt5).</p>
+<p>To enable the modules to be built correctly most require <code>hiddenimports</code>, as identified in <code>siren_application.spec</code>, as often PyInstaller will fail to identify all imports from libraries used by the SIREN program.</p>
+<p><code>makeweather_getmerra2.spec</code> and <code>package_makeweatherfiles.py</code> package <code>makeweatherfiles.py</code> and <code>getmerra2.py</code> to provide a standalone tool to create SAM weather files from MERRA-2 datasets.</p>
+<h2 id="python">A Python version</h2>
+<p>A Python version of SIREN is a viable alternative for Linux and MacOS (and for Windows users who have Python installed). The following instructions may assist:</p>
+<ul>
+<li>Download SIREN from github (<a href="https://github.com/ozsolarwind/siren" target="_blank">https://github.com/ozsolarwind/siren</a>) by choosing Code->Download ZIP option</li>
+<li>Unzip the file (siren_master.zip) to your chosed location for SIREN; and optionally rename the directory to your desired virtual environment</li>
+<li>If you want to create a virtual environment for SIREN:
+<ul>
+<li>Run the command <code>python3 -m venv &lt;siren-master&gt;/</code> where <code>&lt;siren-master&gt;</code> is the directory you created for SIREN. If you use <code>python3 -m venv --system-site-packages &lt;siren-master&gt;/</code> it will use your site libraries and save space</li>
+<li>Change to the <code>&lt;siren-master&gt;</code> directory (e.g. <code>cd &lt;siren-master&gt;/</code>)</li>
+<li>Run the command <code>source bin/activate</code> to activate the virtual environment</code></li>
+</ul></li>
+<li>Run the command <code>pip install -r siren_requirements.txt</code> to install the packages used by SIREN that are not part of the standard installation</li>
+<li>Download the SAM SDK. A useful version is <a href="https://github.com/NREL/ssc/releases/tag/2018.11.11.r4" target="_blank">SAM 2018.11.11 Revision 4 with ssc Revision 209</a> as this is the last version to come with prepackaged binaries (the zip file) and unzip it to an appropriate location</li>
+<li>Run the command <code>python3 siren.py</code> to invoke SIREN. The first time you run it will present a file menu to locate the models directory. This creates a file <code>siren_models_location.txt</code> with the location of the models folder</li>
+<li>If you've created a virtual environment for SIREN:
+<ul>
+<li>Run the command <code>deactivate</code> to deactivate the virtual environment</li>
+</ul>
 </ul>
 <h2 id="github">github</h2>
 <p><a href="https://github.com/ozsolarwind/siren" target="_blank">https://github.com/ozsolarwind/siren</a> contains the Python source and associated image files for SIREN plus a few additional items:</p>
@@ -45,7 +70,7 @@ pre {
 <li><em>siren_makeweatherfiles.exe</em> provides the files required to create SAM weather files without requiring any other parts of SIREN</li>
 </ul>
 <h2 id="libraries">Python Libraries</h2>
-<p>These libraries may need to be installed using either pip3 or your software installer.</p>
+<p>These libraries may need to be installed using either pip or your software installer.</p>
 <table><tr><td><strong>Library</strong></td><td><strong>Standard library?</strong></td><td><strong>Notes</strong></td</tr>
 <tr><td>configparser</td><td style="text-align:center">y</td></tr>
 <tr><td>csv</td><td style="text-align:center">y</td></tr>
@@ -145,11 +170,6 @@ pre {
 <tr><td>worldwindow.py</td><td>Display a world map for getmap and getmerra2</td></tr>
 <tr><td>zoompan.py</td><td>Implement a more dynamic zoom and pan for hourly plots</td></tr>
 </table>
-<h2>Packaging for Windows</h2>
-<p>I use PyInstaller (currently Version 3.4) to package SIREN for Windows. I use the multi-package facility to create executables for <code>siren.py, sirenm.py</code> and the tools (<code>flexiplot.py, getmap.py, getmerra2.py, indexweather.py, makegrid.py, makeweatherfiles.py, powermatch.py, powerplot.py, sirenupd.py</code> and <code>updateswis.py</code>). <code>siren_application.spec</code> is the spec file (<code>pyinstaller.exe siren_application.spec</code> with options <code>--log-level ERROR</code> and/or <code>--noconfirm</code> ... <code>pyinstaller.exe --noconfirm --log-level ERROR siren_application.spec</code>). This enables all programs to be included in a single library for distribution. PyInstaller places them in individual directories - I use <code>package_siren.py</code> to copy all the executables into the <em>siren</em> directory and remove some unwanted files that are included as part of the packaging process.</p>
-<p>All these files have a version file where the version is <em>&lt;major&gt;,&lt;minor&gt;.&lt;yyyy&gt;.&lt;mmdd&gt;</em>. <em>&lt;major&gt;</em> and <em>&lt;minor&gt;</em> refer to the SIREN release. The date part is the date the program was last changed. The version numbering simulates Microsoft version numbers. <code>template_version</code> provides a template for the version files to enable new SIREN releases to be packaged. The current <em>major</em> version is <strong><em>3</em></strong> (<em>1</em> was the initial version, <em>2</em> for the change from Python2 to Python3, <em>3</em> for the change from PyQt4 to PyQt5).</p>
-<p>To enable the modules to be built correctly most require <em>hiddenimports</em>, as identified in <code>siren_application.spec</code>, as often PyInstaller will fail to identify all imports from libraries used by the SIREN program.</p>
-<p><code>makeweather_getmerra2.spec</code> and <code>package_makeweatherfiles.py</code> package <code>makeweatherfiles.py</code> and <code>getmerra2.py</code> to provide a standalone tool to create SAM weather files from MERRA-2 datasets.</p>
 <h2>Useful tools</h2>
 <h3>sam_models_list</h3>
 <p>The parameters and variables utilised by the SAM API often change between versions. <code>sam_models_list.py</code> can be run to list the SAM models and variables for different SAM versions. Usage:</p>
@@ -167,5 +187,5 @@ pre {
 </ul>
 <h3>opt_debug</h3>
 <p><code>opt_debug.py</code> can be used to debug the <code>powermatch</code> optimisation routine. It doesn't need to be packaged with SIREN.</p>
-<p>Angus King<br />December 2021</p>
+<p>Angus King<br />May 2022</p>
 </body>
