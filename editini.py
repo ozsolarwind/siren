@@ -22,13 +22,14 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QDesktopWidget
 import configparser   # decode .ini file
+import datetime
 import os
 import sys
 
 from displaytable import Table
-from getmodels import getModelFile
+from getmodels import getModelFile, commonprefix
 import inisyntax
-from senutils import techClean
+from senutils import ClickableQLabel, getParents, getUser, techClean
 
 
 class EdtDialog(QtWidgets.QDialog):
@@ -100,6 +101,240 @@ class EdtDialog(QtWidgets.QDialog):
         s.close()
         self.close()
 
+
+class EditFileSections(QtWidgets.QDialog):
+    def __init__(self, ini_file=None, parent=None):
+        QtWidgets.QDialog.__init__(self, parent)
+        file_sects = ['Parents', 'Files', 'SAM Modules']
+        dir_props = ['pow_files', 'sam_sdk', 'scenarios', 'solar_files', 'variable_files', 'wind_files']
+        field_props = ['check', 'scenario_prefix']
+        config = configparser.RawConfigParser()
+        if ini_file is not None:
+            self.config_file = ini_file
+        elif len(sys.argv) > 1:
+            self.config_file = sys.argv[1]
+        else:
+            self.config_file = getModelFile('SIREN.ini')
+        config.read(self.config_file)
+        sections = {}
+        for section in file_sects:
+            props = []
+            items = config.items(section)
+            for key, value in items:
+                props.append([key, value])
+            if len(props) > 0:
+                sections[section] = props
+        bgd = 'rgba({}, {}, {}, {})'.format(*self.palette().color(QtGui.QPalette.Window).getRgb())
+        bgd_style = 'background-color: ' + bgd + '; border: 1px inset grey; min-height: 22px; border-radius: 4px;'
+        bold = QtGui.QFont()
+        bold.setBold(True)
+        width0 = 0
+        width1 = 0
+        width2 = 0
+        row = 0
+        self.fields = []
+        self.fields.append(['section', 'typ', 'name', 'value', QtWidgets.QLineEdit()])
+        self.grid = QtWidgets.QGridLayout()
+        label = QtWidgets.QLabel('Working directory')
+        label.setFont(bold)
+        width0 = label.fontMetrics().boundingRect(label.text()).width() * 1.1
+        self.grid.addWidget(label, row, 0)
+        self.fields[row][4].setText(os.getcwd())
+        self.fields[row][4].setReadOnly(True)
+        self.fields[row][4].setStyleSheet(bgd_style)
+        width2 = self.fields[row][4].fontMetrics().boundingRect(self.fields[row][4].text()).width() * 1.1
+        self.grid.addWidget(self.fields[row][4], row, 2, 1, 3)
+        self.parents = {}
+        sections['Parents'].append(['$USER$', getUser()])
+        now = datetime.datetime.now()
+        sections['Parents'].append(['$YEAR$', str(now.year - 1)])
+        if 'Parents' in list(sections.keys()):
+            for key, value in sections['Parents']:
+                self.parents[key] = value
+                row += 1
+                self.fields.append(['Parents', '?', key, value, '?'])
+                if self.fields[row][0] != self.fields[row - 1][0]:
+                    label = QtWidgets.QLabel(self.fields[row][0])
+                    label.setFont(bold)
+                    width0 = max(width0, label.fontMetrics().boundingRect(label.text()).width() * 1.1)
+                    self.grid.addWidget(label, row, 0)
+                label = QtWidgets.QLabel(self.fields[row][2])
+                width1 = max(width1, label.fontMetrics().boundingRect(label.text()).width() * 1.1)
+                self.grid.addWidget(label, row, 1)
+                if key == '$USER$' or key == '$YEAR$':
+                    self.fields[row][1] = 'txt'
+                    self.fields[row][4] = QtWidgets.QLineEdit()
+                    self.fields[row][4].setText(self.fields[row][3])
+                    width2 = max(width2, self.fields[row][4].fontMetrics().boundingRect(self.fields[row][4].text()).width() * 1.1)
+                    self.fields[row][4].setReadOnly(True)
+                    self.fields[row][4].setStyleSheet(bgd_style)
+                    self.grid.addWidget(self.fields[row][4], row, 2, 1, 3)
+                else:
+                    self.fields[row][1] = 'dir'
+                    self.fields[row][4] = ClickableQLabel()
+                    self.fields[row][4].setText(self.fields[row][3])
+                    width2 = max(width2, self.fields[row][4].fontMetrics().boundingRect(self.fields[row][4].text()).width() * 1.1)
+                    self.fields[row][4].setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
+                    self.grid.addWidget(self.fields[row][4], row, 2, 1, 3)
+                    self.fields[row][4].clicked.connect(self.itemClicked)
+        for section, props in sections.items():
+            if section == 'Parents':
+                continue
+            for prop in props:
+                row += 1
+                self.fields.append([section, '?', prop[0], prop[1], '?'])
+                if self.fields[row][0] != self.fields[row - 1][0]:
+                    label = QtWidgets.QLabel(self.fields[row][0])
+                    label.setFont(bold)
+                    width0 = max(width0, label.fontMetrics().boundingRect(label.text()).width() * 1.1)
+                    self.grid.addWidget(label, row, 0)
+                label = QtWidgets.QLabel(self.fields[row][2])
+                width1 = max(width1, label.fontMetrics().boundingRect(label.text()).width() * 1.1)
+                self.grid.addWidget(label, row, 1)
+                self.fields[row][3] = prop[1]
+                if prop[0] in field_props:
+                    self.fields[row][1] = 'txt'
+                    self.fields[row][4] = QtWidgets.QLineEdit()
+                    self.fields[row][4].setText(self.fields[row][3])
+                    width2 = max(width2, self.fields[row][4].fontMetrics().boundingRect(self.fields[row][4].text()).width() * 1.1)
+                else:
+                    if prop[0] in dir_props:
+                        self.fields[row][1] = 'dir'
+                    else:
+                        self.fields[row][1] = 'fil'
+                    self.fields[row][4] = ClickableQLabel()
+                    self.fields[row][4].setText(self.fields[row][3])
+                    width2 = max(width2, self.fields[row][4].fontMetrics().boundingRect(self.fields[row][4].text()).width() * 1.1)
+                    self.fields[row][4].setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
+                    self.fields[row][4].clicked.connect(self.itemClicked)
+                self.grid.addWidget(self.fields[row][4], row, 2, 1, 3)
+        row += 1
+        quit = QtWidgets.QPushButton('Quit', self)
+        self.grid.addWidget(quit, row, 0)
+        quit.clicked.connect(self.quitClicked)
+        QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
+        save = QtWidgets.QPushButton('Save & Exit', self)
+        self.grid.addWidget(save, row, 1)
+        save.clicked.connect(self.saveClicked)
+        self.grid.setColumnStretch(2, 5)
+        frame = QtWidgets.QFrame()
+        frame.setLayout(self.grid)
+        self.scroll = QtWidgets.QScrollArea()
+        self.scroll.setWidgetResizable(True)
+        self.scroll.setWidget(frame)
+        self.layout = QtWidgets.QVBoxLayout(self)
+        self.layout.addWidget(self.scroll)
+        self.setWindowTitle('SIREN - Edit File Sections - ' + ini_file[ini_file.rfind('/') + 1:])
+        self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
+        self.resize(int(width0 + width1 + width2), int(self.sizeHint().height() * 1.1))
+        self.show()
+
+    def itemClicked(self):
+        for i in range(len(self.fields)):
+            if self.fields[i][4].hasFocus():
+                suffix = ''
+                has_user = False
+                has_year = False
+                upd_field = self.fields[i][4].text()
+                if upd_field[-1] == '*':
+                    j = upd_field.rfind('/')
+                    suffix = upd_field[j:]
+                    upd_field = upd_field[:j]
+                else:
+                    suffix = ''
+                if upd_field.find('$USER$') >= 0:
+                    has_user = True
+                if upd_field.find('$YEAR$') >= 0:
+                    has_year = True
+                parents = getParents(list(self.parents.items()))
+                for key, value in parents:
+                    upd_field = upd_field.replace(key, value)
+                if self.fields[i][1] == 'dir':
+                    curdir = upd_field
+                    newone = QtWidgets.QFileDialog.getExistingDirectory(self,
+                             'Choose ' + self.fields[i][2] + ' Folder', curdir,
+                             QtWidgets.QFileDialog.ShowDirsOnly)
+                    if newone != '':
+                        if self.fields[i][0] == 'Parents':
+                            self.parents[self.fields[i][2]] = newone
+                        else:
+                            longest = [0, '']
+                            for key, value in self.parents.items():
+                                if len(newone) > len(value) and len(value) > longest[0]:
+                                    if newone[:len(value)] == value:
+                                        longest = [len(value), key]
+                            if longest[0] > 0:
+                                newone = longest[1] + newone[longest[0]:]
+                            if has_year and self.parents['$YEAR$'] in newone:
+                                newone = newone.replace(self.parents['$YEAR$'], '$YEAR$')
+                            if has_user and self.parents['$USER$'] in newone:
+                                newone = newone.replace(self.parents['$USER$'], '$USER$')
+                        self.fields[i][4].setText(newone + suffix)
+                elif self.fields[i][1] == 'fil':
+                    curfil = upd_field
+                    newone = QtWidgets.QFileDialog.getOpenFileName(self,
+                             'Choose ' + self.fields[i][2] + ' File', curfil)[0]
+                    if newone != '':
+                        newone = QtCore.QDir.toNativeSeparators(newone)
+                        longest = [0, '']
+                        for key, value in self.parents.items():
+                            if len(newone) > len(value) and len(value) > longest[0]:
+                                if newone[:len(value)] == value:
+                                    longest = [len(value), key]
+                        if longest[0] > 0:
+                            newone = longest[1] + newone[longest[0]:]
+                        if has_year and self.parents['$YEAR$'] in newone:
+                            newone = newone.replace(self.parents['$YEAR$'], '$YEAR$')
+                        if has_user and self.parents['$USER$'] in newone:
+                            newone = newone.replace(self.parents['$USER$'], '$USER$')
+                        self.fields[i][4].setText(newone + suffix)
+                break
+
+    def quitClicked(self):
+        self.close()
+
+    def saveClicked(self):
+        updates = {}
+        lines = []
+        my_dir = adj_dir = os.getcwd()
+        if sys.platform == 'win32' or sys.platform == 'cygwin':
+            adj_dir = adj_dir.replace('\\', '/')
+        for field in self.fields:
+            if field[0] == 'section':
+                continue
+            if field[0] == 'Parents' and (field[2] == '$USER$' or field[2] == '$YEAR$'):
+                continue
+            if field[0] not in list(updates.keys()):
+                updates[field[0]] = []
+            fld = field[4].text()
+            if len(fld) > len(adj_dir):
+                if fld[:len(adj_dir)] == adj_dir:
+                    if field[1] == 'dir' and fld[len(adj_dir)] == '/':
+                        fld = fld[len(adj_dir) + 1:]
+                    elif field[1] == 'fil':
+                        if fld.find('/') >= 0:
+                            that_len = len(commonprefix([adj_dir, fld]))
+                            if that_len > 0:
+                                bits = adj_dir[that_len:].split('/')
+                                pfx = ('..' + '/') * (len(bits) - 1)
+                                fld = pfx + fld[that_len + 1:]
+            updates[field[0]].append(field[2] + '=' + fld)
+        if 'Parents' in list(updates.keys()):
+            my_dir = os.getcwd()
+            if sys.platform == 'win32' or sys.platform == 'cygwin':
+                my_dir = my_dir.replace('\\', '/')
+            for p in range(len(updates['Parents'])):
+                i = updates['Parents'][p].find('=')
+                value = updates['Parents'][p][i + 1:]
+                if value.find('/') >= 0:
+                    that_len = len(commonprefix([my_dir, value]))
+                    if that_len > 0:
+                        bits = my_dir[that_len:].split('/')
+                        pfx = ('../') * (len(bits) - 1)
+                        pfx = pfx[:-1]
+                        updates['Parents'][p] = updates['Parents'][p][:i + 1] + pfx + value[that_len + 1:]
+        SaveIni(updates, ini_file=self.config_file)
+        self.close()
 
 class EditSect():
     def __init__(self, section, save_folder, ini_file=None):

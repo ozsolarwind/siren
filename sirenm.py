@@ -46,7 +46,7 @@ from powermodel import PowerModel
 from senutils import getParents, getUser, techClean
 from station import Station, Stations
 from wascene import WAScene
-from editini import EdtDialog, EditTech, EditSect, SaveIni
+from editini import EdtDialog, EditFileSections, EditTech, EditSect, SaveIni
 from dijkstra_4 import Shortest
 from credits import Credits, fileVersion
 from getmodels import getModelFile
@@ -1180,6 +1180,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.editColour.setShortcut('Ctrl+U')
         self.editColour.setStatusTip('Edit Colours')
         self.editColour.triggered.connect(self.editColours)
+        self.editFSect = QtWidgets.QAction(QtGui.QIcon('arrow.png'), 'Edit File Sections', self)
+        self.editFSect.setStatusTip('Edit File Preferences Sections')
+        self.editFSect.triggered.connect(self.editFSects)
         self.editSect = QtWidgets.QAction(QtGui.QIcon('arrow.png'), 'Edit Section', self)
         self.editSect.setStatusTip('Edit Preferences Section')
         self.editSect.triggered.connect(self.editSects)
@@ -1197,6 +1200,7 @@ class MainWindow(QtWidgets.QMainWindow):
         editMenu = menubar.addMenu('P&references')
         editMenu.addAction(self.editIni)
         editMenu.addAction(self.editColour)
+        editMenu.addAction(self.editFSect)
         editMenu.addAction(self.editSect)
         editMenu.addAction(self.editTech)
         editMenu.addAction(self.showDtable)
@@ -1369,6 +1373,13 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def editIniFile(self):
         dialr = EdtDialog(self.config_file)
+        dialr.exec_()
+        self.get_config()   # refresh config values
+        comment = self.config_file + ' edited. Reload may be required.'
+        self.view.statusmsg.emit(comment)
+
+    def editFSects(self):
+        dialr = EditFileSections(self.config_file)
         dialr.exec_()
         self.get_config()   # refresh config values
         comment = self.config_file + ' edited. Reload may be required.'

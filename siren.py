@@ -31,7 +31,7 @@ import webbrowser
 
 import displayobject
 from credits import fileVersion
-from editini import EdtDialog
+from editini import EdtDialog, EditFileSections
 from getmodels import getModelFile, commonprefix
 from senutils import ClickableQLabel, getUser
 
@@ -158,7 +158,7 @@ class TabDialog(QtWidgets.QDialog):
             ln = int(screen.width() * .9)
         if ln2 > screen.height() * .9:
             ln2 = int(screen.height() * .9)
-        layout.addWidget(QtWidgets.QLabel('Click on row for Desired Model; Right click column header to sort'), 0, 0)
+        layout.addWidget(QtWidgets.QLabel('Left click on row for Desired Model or right click for Tools; Right click column header to sort'), 0, 0)
         layout.addWidget(self.table, 1, 0)
         layout.addWidget(buttons, 2, 0)
         menubar = QtWidgets.QMenuBar()
@@ -224,10 +224,16 @@ class TabDialog(QtWidgets.QDialog):
                     menu = QtWidgets.QMenu()
                     actions =  []
                     for i in range(len(self.model_tool)):
+                        if self.model_tool[i] == 'updateswis':
+                            mdl = self.table.item(self.table.currentRow(), 1).text()
+                            if mdl.find('SWIS') < 0:
+                                continue
                         actions.append(menu.addAction(QtGui.QIcon(self.model_icon[i]),
                                                      'Execute ' + self.model_tool[i]))
                         actions[-1].setIconVisibleInMenu(True)
                     actions.append(menu.addAction(QtGui.QIcon('edit.png'), 'Edit Preferences'))
+                    actions[-1].setIconVisibleInMenu(True)
+                    actions.append(menu.addAction(QtGui.QIcon('edit.png'), 'Edit File Preferences'))
                     actions[-1].setIconVisibleInMenu(True)
                     action = menu.exec_(self.mapToGlobal(event.pos()))
                     if action is not None:
@@ -247,7 +253,10 @@ class TabDialog(QtWidgets.QDialog):
                                 line = int(self.table.item(self.table.currentRow(), 1).text()[i + 5:j].strip()) - 1
                             else:
                                 line = None
-                            self.editIniFile(self.siren_dir + ent, line=line)
+                            if action.text()[-16:] == 'File Preferences':
+                                self.editIniFileSects(self.siren_dir + ent)
+                            else:
+                                self.editIniFile(self.siren_dir + ent, line=line)
                             ok, model_name, errors = self.check_file(ent)
                             if model_name != self.entries[self.table.currentRow()][1]:
                                 self.entries[self.table.currentRow()][1] = model_name
@@ -260,7 +269,6 @@ class TabDialog(QtWidgets.QDialog):
                                 return QtCore.QObject.event(source, event)
                             else:
                                 self.entries[self.table.currentRow()][3] = True
-
         return QtCore.QObject.event(source, event)
 
     def invoke(self, program, ent):
@@ -282,6 +290,11 @@ class TabDialog(QtWidgets.QDialog):
 
     def editIniFile(self, ini=None, line=None):
         dialr = EdtDialog(ini, line=line)
+        dialr.exec_()
+        return
+
+    def editIniFileSects(self, ini=None):
+        dialr = EditFileSections(ini)
         dialr.exec_()
         return
 
