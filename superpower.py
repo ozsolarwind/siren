@@ -31,8 +31,7 @@ import configparser  # decode .ini file
 from PyQt5 import Qt, QtCore, QtGui, QtWidgets
 
 from getmodels import getModelFile
-from senuser import getUser, techClean
-from parents import getParents
+from senutils import getParents, getUser, techClean
 from powerclasses import *
 # import Station
 from turbine import Turbine

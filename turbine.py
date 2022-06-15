@@ -27,8 +27,7 @@ import sys
 import configparser    # decode .ini file
 
 from getmodels import getModelFile
-from parents import getParents
-from senuser import getUser
+from senutils import getParents, getUser
 
 
 class Power_Curve:

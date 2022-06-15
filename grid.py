@@ -29,8 +29,7 @@ import configparser   # decode .ini file
 from xml.etree.ElementTree import ElementTree, fromstring
 
 from getmodels import getModelFile
-from parents import getParents
-from senuser import getUser
+from senutils import getParents, getUser
 
 RADIUS = 6367.   # radius of earth in km
 

@@ -33,7 +33,7 @@ import displayobject
 from credits import fileVersion
 from editini import EdtDialog
 from getmodels import getModelFile, commonprefix
-from senuser import getUser
+from senutils import ClickableQLabel, getUser
 
 
 class TabDialog(QtWidgets.QDialog):
@@ -335,17 +335,6 @@ class TabDialog(QtWidgets.QDialog):
 
     def quit(self):
         self.close()
-
-
-class ClickableQLabel(QtWidgets.QLabel):
-    clicked = QtCore.pyqtSignal()
-
-    def __init(self, parent):
-        QLabel.__init__(self, parent)
-
-    def mousePressEvent(self, event):
-        QtWidgets.QApplication.widgetAt(event.globalPos()).setFocus()
-        self.clicked.emit()
 
 
 class makeNew(QtWidgets.QDialog):

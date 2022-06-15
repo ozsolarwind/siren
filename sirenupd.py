@@ -35,7 +35,7 @@ import time
 import zipfile
 
 import credits
-from senuser import getUser
+from senutils import getUser
 
 def get_response(outputs):
     chk_str = 'HTTP request sent, awaiting response... '

@@ -24,7 +24,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import configparser  # decode .ini file
 from editini import SaveIni
 from getmodels import getModelFile
-from senuser import techClean
+from senutils import techClean
 
 class Colours(QtWidgets.QDialog):
 

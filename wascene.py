@@ -34,8 +34,7 @@ except:
 from towns import Towns
 from getmodels import getModelFile
 from grid import Grid, Grid_Boundary, Grid_Zones, Line
-from parents import getParents
-from senuser import getUser, techClean
+from senutils import getParents, getUser, techClean
 from station import Station, Stations
 from dijkstra_4 import Shortest
 

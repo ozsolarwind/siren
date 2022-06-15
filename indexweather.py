@@ -28,8 +28,7 @@ import xlwt
 import displayobject
 from credits import fileVersion
 from getmodels import getModelFile
-from parents import getParents
-from senuser import getUser
+from senutils import ClickableQLabel, getParents, getUser
 
 
 class makeIndex():
@@ -112,17 +111,6 @@ class makeIndex():
                 tf.write(line)
             tf.close()
         self.log += '%s created' % tgt_fil[tgt_fil.rfind('/') + 1:]
-
-
-class ClickableQLabel(QtWidgets.QLabel):
-    clicked = QtCore.pyqtSignal()
-
-    def __init(self, parent):
-        QLabel.__init__(self, parent)
-
-    def mousePressEvent(self, event):
-        QtWidgets.QApplication.widgetAt(event.globalPos()).setFocus()
-        self.clicked.emit()
 
 
 class getParms(QtWidgets.QWidget):

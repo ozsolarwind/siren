@@ -26,22 +26,10 @@ import sys
 import configparser  # decode .ini file
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-from parents import getParents
 from getmodels import getModelFile
-from senuser import getUser, techClean
+from senutils import ClickableQLabel, getParents, getUser, techClean
 from station import Station
 from turbine import Turbine
-
-
-class ClickableQLabel(QtWidgets.QLabel):
-    clicked = QtCore.pyqtSignal()
-
-    def __init(self, parent):
-        QLabel.__init__(self, parent)
-
-    def mousePressEvent(self, event):
-        QtWidgets.QApplication.widgetAt(event.globalPos()).setFocus()
-        self.clicked.emit()
 
 
 class AnObject(QtWidgets.QDialog):

@@ -31,8 +31,7 @@ import xlwt
 import displayobject
 from credits import fileVersion
 from getmodels import getModelFile
-from parents import getParents
-from senuser import getUser
+from senutils import ClickableQLabel, getParents, getUser
 from station import Stations
 
 the_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
@@ -352,17 +351,6 @@ class makeLoadFile():
         tf.close()
         self.log = '%s created%s' % (tgt_fil[tgt_fil.rfind('/') + 1:], self.log)
         return
-
-
-class ClickableQLabel(QtWidgets.QLabel):
-    clicked = QtCore.pyqtSignal()
-
-    def __init(self, parent):
-        QLabel.__init__(self, parent)
-
-    def mousePressEvent(self, event):
-        QtWidgets.QApplication.widgetAt(event.globalPos()).setFocus()
-        self.clicked.emit()
 
 
 class getParms(QtWidgets.QWidget):

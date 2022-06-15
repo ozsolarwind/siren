@@ -22,7 +22,7 @@
 import configparser   # decode .ini file
 import sys
 from getmodels import getModelFile
-from senuser import techClean
+from senutils import techClean
 
 
 class Icons:

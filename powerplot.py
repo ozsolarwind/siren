@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2019-2021 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2019-2022 Sustainable Energy Now Inc., Angus King
 #
 #  powerplot.py - This file is possibly part of SIREN.
 #
@@ -33,8 +33,7 @@ from colours import Colours
 from credits import fileVersion
 from editini import SaveIni
 from getmodels import getModelFile
-from parents import getParents
-from senuser import getUser, techClean
+from senutils import ClickableQLabel, getParents, getUser, techClean
 from zoompan import ZoomPanX
 
 def charSplit(string, char=',', dropquote=True):
@@ -112,17 +111,6 @@ class ListWidget(QtWidgets.QListWidget):
             if self.item(row).text() in items:
              #   r = self.row(item)
                 self.takeItem(row)
-
-
-class ClickableQLabel(QtWidgets.QLabel):
-    clicked = QtCore.pyqtSignal()
-
-    def __init(self, parent):
-        QLabel.__init__(self, parent)
-
-    def mousePressEvent(self, event):
-        QtWidgets.QApplication.widgetAt(event.globalPos()).setFocus()
-        self.clicked.emit()
 
 
 class PowerPlot(QtWidgets.QWidget):

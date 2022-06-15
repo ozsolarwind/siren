@@ -27,8 +27,7 @@ import xlrd
 from math import radians, cos, sin, asin, sqrt
 
 from getmodels import getModelFile
-from parents import getParents
-from senuser import getUser
+from senutils import getParents, getUser
 
 
 class Town:

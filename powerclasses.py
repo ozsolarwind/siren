@@ -28,12 +28,11 @@ import xlrd
 import configparser  # decode .ini file
 from PyQt5 import Qt, QtCore, QtGui, QtWidgets
 
-from senuser import getUser, techClean
+from senutils import getParents, getUser, techClean
 import displayobject
 from editini import SaveIni
 from getmodels import getModelFile
 from grid import Grid
-from parents import getParents
 from sirenicons import Icons
 
 the_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]

@@ -26,7 +26,7 @@ from PyQt5 import QtGui, QtWidgets
 
 import displayobject
 from sirenicons import Icons
-from senuser import techClean
+from senutils import techClean
 
 
 class FakeObject:

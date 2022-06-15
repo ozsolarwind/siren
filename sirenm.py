@@ -43,7 +43,7 @@ import displayobject
 import newstation
 from plotweather import PlotWeather
 from powermodel import PowerModel
-from senuser import getUser, techClean
+from senutils import getParents, getUser, techClean
 from station import Station, Stations
 from wascene import WAScene
 from editini import EdtDialog, EditTech, EditSect, SaveIni
@@ -51,7 +51,6 @@ from dijkstra_4 import Shortest
 from credits import Credits, fileVersion
 from getmodels import getModelFile
 from grid import dust
-from parents import getParents
 from viewresource import Resource
 from floaters import FloatLegend, FloatMenu, FloatStatus, ProgressBar
 from sirenicons import Icons

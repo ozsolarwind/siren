@@ -32,7 +32,7 @@ if sys.platform == 'win32' or sys.platform == 'cygwin':
 
 from credits import fileVersion
 from editini import SaveIni
-from senuser import getUser
+from senutils import ClickableQLabel, getUser
 from sammodels import getDNI, getDHI
 
 
@@ -1236,16 +1236,6 @@ class makeWeather():
                     else:
                         self.log += '%s created\n' % out_file[out_file.rfind('/') + 1:]
                     self.checkZone()
-
-class ClickableQLabel(QtWidgets.QLabel):
-    clicked = QtCore.pyqtSignal()
-
-    def __init(self, parent):
-        QLabel.__init__(self, parent)
-
-    def mousePressEvent(self, event):
-        QtWidgets.QApplication.widgetAt(event.globalPos()).setFocus()
-        self.clicked.emit()
 
 
 class getParms(QtWidgets.QWidget):

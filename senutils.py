@@ -2,7 +2,7 @@
 #
 #  Copyright (C) 2015-2022 Sustainable Energy Now Inc., Angus King
 #
-#  senuser.py - This file is part of SIREN.
+#  senutils.py - This file is part of SIREN.
 #
 #  SIREN is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Affero General Public License as
@@ -19,17 +19,43 @@
 #  <http://www.gnu.org/licenses/>.
 #
 
-#
-# return current userid
-
 import os
 try:
     import pwd
 except:
     pass
 import sys
+from PyQt5 import QtCore, QtWidgets
 
 
+class ClickableQLabel(QtWidgets.QLabel):
+    clicked = QtCore.pyqtSignal()
+
+    def __init(self, parent):
+        QLabel.__init__(self, parent)
+
+    def mousePressEvent(self, event):
+        QtWidgets.QApplication.widgetAt(event.globalPos()).setFocus()
+        self.clicked.emit()
+
+#
+# replace parent string in filenames
+def getParents(aparents):
+    parents = []
+    for key, value in aparents:
+        for key2, value2 in aparents:
+            if key2 == key:
+                continue
+            value = value.replace(key2, value2)
+        for key2, value2 in parents:
+            if key2 == key:
+                continue
+            value = value.replace(key2, value2)
+        parents.append((key, value))
+    return parents
+
+#
+# return current userid
 def getUser():
     if sys.platform == 'win32' or sys.platform == 'cygwin':   # windows
         return os.environ.get("USERNAME")
@@ -40,6 +66,8 @@ def getUser():
     else:
         return os.environ.get("USERNAME")
 
+#
+# clean up tech names
 def techClean(tech, full=False):
     cleantech = tech.replace('_', ' ').title()
     cleantech = cleantech.replace('Bm', 'BM')

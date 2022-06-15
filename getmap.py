@@ -28,6 +28,7 @@ import configparser   # decode .ini file
 from PyQt5 import QtCore, QtGui, QtWidgets
 import displayobject
 from credits import fileVersion
+from senutils import ClickableQLabel
 import worldwindow
 
 scale = {0: '1:500 million', 1: '1:250 million', 2: '1:150 million', 3: '1:70 million',
@@ -261,16 +262,6 @@ class retrieveMap():
 
     def getCoords(self):
         return [self.nt, self.wt, self.sb, self.eb]
-
-
-class ClickableQLabel(QtWidgets.QLabel):
-    clicked = QtCore.pyqtSignal()
-
-    def __init(self, parent):
-        QLabel.__init__(self, parent)
-
-    def mousePressEvent(self, event):
-        self.clicked.emit()
 
 
 class getMap(QtWidgets.QWidget):

@@ -33,8 +33,7 @@ from colours import Colours
 from credits import fileVersion
 import displayobject
 from editini import EdtDialog, EditSect, SaveIni
-from parents import getParents
-from senuser import getUser
+from senutils import getParents, getUser
 
 RADIUS = 6367.
 

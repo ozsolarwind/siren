@@ -31,7 +31,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from credits import fileVersion
 import displayobject
 from editini import SaveIni
-from senuser import getUser
+from senutils import ClickableQLabel, getUser
 import worldwindow
 
 def spawn(who, cwd, log):
@@ -323,17 +323,6 @@ class fileInfo:
             self.longitudes.append(val)
         cdf_file.close()
         self.ok = True
-
-
-class ClickableQLabel(QtWidgets.QLabel):
-    clicked = QtCore.pyqtSignal()
-
-    def __init(self, parent):
-        QLabel.__init__(self, parent)
-
-    def mousePressEvent(self, event):
-        QtWidgets.QApplication.widgetAt(event.globalPos()).setFocus()
-        self.clicked.emit()
 
 
 class subwindow(QtWidgets.QDialog):

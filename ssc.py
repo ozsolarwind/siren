@@ -15,8 +15,7 @@ from ctypes import *
 import os
 import configparser  # decode .ini file
 from getmodels import getModelFile
-from parents import getParents
-from senuser import getUser
+from senutils import getParents, getUser
 
 c_number = c_double   # must be c_double or c_float depending on how defined in sscapi.h
 

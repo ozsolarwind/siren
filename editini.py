@@ -28,7 +28,7 @@ import sys
 from displaytable import Table
 from getmodels import getModelFile
 import inisyntax
-from senuser import techClean
+from senutils import techClean
 
 
 class EdtDialog(QtWidgets.QDialog):

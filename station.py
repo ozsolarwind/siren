@@ -28,8 +28,7 @@ import xlrd
 import configparser   # decode .ini file
 
 from getmodels import getModelFile
-from parents import getParents
-from senuser import getUser, techClean
+from senutils import getParents, getUser, techClean
 
 
 def within_map(x, y, poly):

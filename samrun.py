@@ -25,7 +25,7 @@ import subprocess as sp
 
 import ssc   # contains all Python classes for accessing ssc
 
-from senuser import getUser
+from senutils import getUser
 
 def spaceSplit(string, dropquote=False):
     last = 0

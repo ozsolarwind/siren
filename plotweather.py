@@ -33,9 +33,8 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 import displaytable
 from getmodels import getModelFile
-from parents import getParents
 from zoompan import ZoomPanX
-from senuser import getUser
+from senutils import getParents, getUser
 from sammodels import getZenith
 
 the_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]

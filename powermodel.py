@@ -36,13 +36,12 @@ import xlwt
 import configparser  # decode .ini file
 from PyQt5 import Qt, QtCore, QtGui, QtWidgets
 
-from senuser import getUser, techClean
+from senutils import getParents, getUser, techClean
 import displayobject
 import displaytable
 from editini import SaveIni
 from getmodels import getModelFile
 from grid import Grid
-from parents import getParents
 from powerclasses import *
 from superpower import SuperPower
 from sirenicons import Icons

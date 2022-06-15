@@ -44,8 +44,7 @@ from openpyxl.chart import (
 )
 import random
 import shutil
-from parents import getParents
-from senuser import getUser, techClean
+from senutils import ClickableQLabel, getParents, getUser, techClean
 from editini import EdtDialog, SaveIni
 from floaters import ProgressBar, FloatStatus
 from getmodels import getModelFile
@@ -181,17 +180,6 @@ class ListWidget(QtWidgets.QListWidget):
             if self.item(row).text() in items:
              #   r = self.row(item)
                 self.takeItem(row)
-
-
-class ClickableQLabel(QtWidgets.QLabel):
-    clicked = QtCore.pyqtSignal()
-
-    def __init(self, parent):
-        QLabel.__init__(self, parent)
-
-    def mousePressEvent(self, event):
-        QtWidgets.QApplication.widgetAt(event.globalPos()).setFocus()
-        self.clicked.emit()
 
 
 class MyQDialog(QtWidgets.QDialog):
