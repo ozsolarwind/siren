@@ -3225,7 +3225,7 @@ In producing the LCOE figures you can choose to use LCOE figures that ignore any
 <td class="none">If this option is checked you will be presented with a table to enable you to adjust the input capacity data for each generator technology. You can specify the required capacity or, if the <em>show_multipliers</em> property is set, a multiplier between 0 and the cap set by the <em>adjust_cap</em> property in the <a href="#power">[Power]</a> Section of the Preferences file; the default multiplier is 25. The original input values will be derived from the data sheet for renewables and the Generators table for dispatchable technologies. You can also Save and Restore the capacities to use again later (<em>adjust_generators</em>)</td></tr>
 <tr><td class="lr"><dfn>Dispatch Order</dfn></td>
 <td class="none">The order in which the dispatchable technologies will be processed by Powermatch. You can change the order by clicking on each value and moving it up and down the list. The initial order is derived from the generators (facilities) table. If you want to exclude a generator you can drag it to the right hand list (and drag it back to the left to re-include)</td></tr>
-<tr><td class="bottom"><strong>Done, Constraints, Generators,<br />Summary, Powermatch, Batch, Optimise,<br />Help</strong></td>
+<tr><td class="bottom"><strong>Done, Constraints, Generators,<br />Summary, Detail, Batch, Optimise,<br />Help</strong></td>
 <td class="none">As well as the buttons beside the sheet options there are a number of buttons at the bottom of the menu, as described below:</td></tr>
 </table>
 <ul>
@@ -3259,7 +3259,7 @@ In producing the LCOE figures you can choose to use LCOE figures that ignore any
 <tr><td class="none"><dfn>Largest Shortfall</dfn></td><td class="none">The largest shortfall and the period (hour) in which it occurs</td></tr>
 </table>
 </li>
-<li><strong>Powermatch</strong>. Invoke Powermatch. This option produces a spreadsheet of the Powermatch outputs. It provides detail on how demand was met for each hour of the year. If <em>save_tables</em> is set generators and constraints will be saved to spreadsheet. This option also produces a Summary worksheet as described above. This Detail worksheet allows for more detailed analysis on how each facility is utilised, for example, by using spreadsheet formulae:-
+<li><strong>Detail</strong>. Invoke Powermatch to produce a detailed spreadsheet of the Powermatch outputs. It provides detail on how demand was met for each hour of the year. If <em>save_tables</em> is set generators and constraints will be saved to spreadsheet. This option also produces a Summary worksheet as described above. This Detail worksheet allows for more detailed analysis on how each facility is utilised, for example, by using spreadsheet formulae:-
 <ul>
 <li>Assuming a generator is listed in column L.<br />Calculate the percentage of time it is running below 55% of capacity - <code>=COUNTIF(L2:L8771,">"&L1*0.55)/8760</code></li>
 <li>Assuming a storage facility is listed in column I, it's balance will be in column J.<br />Calculate the percentage of time it is at full capacity - <code>=COUNTIF(J2:J8771,"="&I1)/8760</code><br />and at less than or equal to 10% capacity - <code>=COUNTIF(J2:J8771,"<="&I1*0.1)/8760</code></li>

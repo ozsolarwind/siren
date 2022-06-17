@@ -49,6 +49,8 @@ from editini import EdtDialog, SaveIni
 from floaters import ProgressBar, FloatStatus
 from getmodels import getModelFile
 import xlrd
+xlrd.xlsx.ensure_elementtree_imported(False, None)
+xlrd.xlsx.Element_has_iter = True
 import configparser  # decode .ini file
 from zoompan import ZoomPanX
 try:
@@ -723,129 +725,129 @@ class powerMatch(QtWidgets.QWidget):
 
         self.targets = {}
         for t in range(len(target_keys)):
-             if target_keys[t] in ['re_pct', 'surplus_pct']:
-                 self.targets[target_keys[t]] = [target_names[t], 0., -1, 0., 0, target_fmats[t],
+            if target_keys[t] in ['re_pct', 'surplus_pct']:
+                self.targets[target_keys[t]] = [target_names[t], 0., -1, 0., 0, target_fmats[t],
                                                  target_titles[t]]
-             else:
-                 self.targets[target_keys[t]] = [target_names[t], 0., 0., -1, 0, target_fmats[t],
+            else:
+                self.targets[target_keys[t]] = [target_names[t], 0., 0., -1, 0, target_fmats[t],
                                                  target_titles[t]]
         try:
-             items = config.items('Powermatch')
-             for key, value in items:
-                 if key == 'batch_new_file':
-                     if value.lower() in ['true', 'on', 'yes']:
-                         self.batch_new_file = True
-                 elif key[-5:] == '_file':
-                     ndx = self.file_labels.index(key[:-5].title())
-                     self.ifiles[ndx] = value.replace('$USER$', getUser())
-                 elif key[-6:] == '_sheet':
-                     ndx = self.file_labels.index(key[:-6].title())
-                     self.isheets[ndx] = value
-                 elif key == 'adjust_generators':
-                     if value.lower() in ['true', 'on', 'yes']:
-                         self.adjust_gen = True
-                 elif key == 'adjusted_capacities':
-                     self.adjustto = {}
-                     bits = value.split(',')
-                     for bit in bits:
-                         bi = bit.split('=')
-                         self.adjustto[bi[0]] = float(bi[1])
-                 elif key == 'carbon_price':
-                     try:
-                         self.carbon_price = float(value)
-                     except:
-                         pass
-                 elif key == 'carbon_price_max':
-                     try:
-                         self.carbon_price_max = float(value)
-                     except:
-                         pass
-                 elif key == 'change_results':
-                     if value.lower() in ['false', 'off', 'no']:
-                         self.change_res = False
-                 elif key == 'adjusted_lcoe' or key == 'corrected_lcoe':
-                     if value.lower() in ['false', 'no', 'off']:
-                         self.adjusted_lcoe = False
-                 elif key == 'discount_rate':
-                     try:
-                         self.discount_rate = float(value)
-                     except:
-                         pass
-                 elif key == 'dispatch_order':
-                     iorder = value.split(',')
-                 elif key == 'load':
-                     try:
-                         self.load_files = value
-                         for ky, valu in parents:
-                             self.load_files = self.load_files.replace(ky, valu)
-                     except:
-                         pass
-                 elif key == 'log_status':
-                     if value.lower() in ['false', 'no', 'off']:
-                         self.log_status = False
-                 elif key == 'more_details':
-                     if value.lower() in ['true', 'yes', 'on']:
-                         self.more_details = True
-                 elif key == 'optimise_debug':
-                     if value.lower() in ['true', 'on', 'yes']:
-                         self.optimise_debug = True
-                 elif key == 'optimise_default':
-                     self.optimise_default = value
-                 elif key == 'optimise_choice':
-                     self.optimise_choice = value
-                 elif key == 'optimise_generations':
-                     try:
-                         self.optimise_generations = int(value)
-                     except:
-                         pass
-                 elif key == 'optimise_multiplot':
-                     if value.lower() in ['false', 'off', 'no']:
-                         self.optimise_multiplot = False
-                 elif key == 'optimise_multitable':
-                     if value.lower() in ['true', 'on', 'yes']:
-                         self.optimise_multitable = True
-                 elif key == 'optimise_mutation':
-                     try:
-                         self.optimise_mutation = float(value)
-                     except:
-                         pass
-                 elif key == 'optimise_population':
-                     try:
-                         self.optimise_population = int(value)
-                     except:
-                         pass
-                 elif key == 'optimise_stop':
-                     try:
-                         self.optimise_stop = int(value)
-                     except:
-                         pass
-                 elif key == 'optimise_to_batch':
-                     if value.lower() in ['true', 'on', 'yes']:
-                         self.optimise_to_batch = True
-                 elif key[:9] == 'optimise_':
-                     try:
-                         bits = value.split(',')
-                         t = target_keys.index(key[9:])
-                         # name, weight, minimum, maximum, widget index
-                         self.targets[key[9:]] = [target_names[t], float(bits[0]), float(bits[1]),
-                                                  float(bits[2]), 0, target_fmats[t],
-                                                  target_titles[t]]
-                     except:
-                         pass
-                 elif key == 'remove_cost':
-                     if value.lower() in ['false', 'off', 'no']:
-                         self.remove_cost = False
-                 elif key == 'results_prefix':
-                     self.results_prefix = value
-                 elif key == 'save_tables':
-                     if value.lower() in ['true', 'on', 'yes']:
-                         self.save_tables = True
-                 elif key == 'show_multipliers':
-                     if value.lower() in ['true', 'on', 'yes']:
-                         self.show_multipliers = True
-                 elif key == 'shortfall_sign':
-                     if value[0] == '+' or value[0].lower() == 'p':
-                         self.surplus_sign = -1
+            items = config.items('Powermatch')
+            for key, value in items:
+                if key == 'batch_new_file':
+                    if value.lower() in ['true', 'on', 'yes']:
+                        self.batch_new_file = True
+                elif key[-5:] == '_file':
+                    ndx = self.file_labels.index(key[:-5].title())
+                    self.ifiles[ndx] = value.replace('$USER$', getUser())
+                elif key[-6:] == '_sheet':
+                    ndx = self.file_labels.index(key[:-6].title())
+                    self.isheets[ndx] = value
+                elif key == 'adjust_generators':
+                    if value.lower() in ['true', 'on', 'yes']:
+                        self.adjust_gen = True
+                elif key == 'adjusted_capacities':
+                    self.adjustto = {}
+                    bits = value.split(',')
+                    for bit in bits:
+                        bi = bit.split('=')
+                        self.adjustto[bi[0]] = float(bi[1])
+                elif key == 'carbon_price':
+                    try:
+                        self.carbon_price = float(value)
+                    except:
+                        pass
+                elif key == 'carbon_price_max':
+                    try:
+                        self.carbon_price_max = float(value)
+                    except:
+                        pass
+                elif key == 'change_results':
+                    if value.lower() in ['false', 'off', 'no']:
+                        self.change_res = False
+                elif key == 'adjusted_lcoe' or key == 'corrected_lcoe':
+                    if value.lower() in ['false', 'no', 'off']:
+                        self.adjusted_lcoe = False
+                elif key == 'discount_rate':
+                    try:
+                        self.discount_rate = float(value)
+                    except:
+                        pass
+                elif key == 'dispatch_order':
+                    iorder = value.split(',')
+                elif key == 'load':
+                    try:
+                        self.load_files = value
+                        for ky, valu in parents:
+                            self.load_files = self.load_files.replace(ky, valu)
+                    except:
+                        pass
+                elif key == 'log_status':
+                    if value.lower() in ['false', 'no', 'off']:
+                        self.log_status = False
+                elif key == 'more_details':
+                    if value.lower() in ['true', 'yes', 'on']:
+                        self.more_details = True
+                elif key == 'optimise_debug':
+                    if value.lower() in ['true', 'on', 'yes']:
+                        self.optimise_debug = True
+                elif key == 'optimise_default':
+                    self.optimise_default = value
+                elif key == 'optimise_choice':
+                    self.optimise_choice = value
+                elif key == 'optimise_generations':
+                    try:
+                        self.optimise_generations = int(value)
+                    except:
+                        pass
+                elif key == 'optimise_multiplot':
+                    if value.lower() in ['false', 'off', 'no']:
+                        self.optimise_multiplot = False
+                elif key == 'optimise_multitable':
+                    if value.lower() in ['true', 'on', 'yes']:
+                        self.optimise_multitable = True
+                elif key == 'optimise_mutation':
+                    try:
+                        self.optimise_mutation = float(value)
+                    except:
+                        pass
+                elif key == 'optimise_population':
+                    try:
+                        self.optimise_population = int(value)
+                    except:
+                        pass
+                elif key == 'optimise_stop':
+                    try:
+                        self.optimise_stop = int(value)
+                    except:
+                        pass
+                elif key == 'optimise_to_batch':
+                    if value.lower() in ['true', 'on', 'yes']:
+                        self.optimise_to_batch = True
+                elif key[:9] == 'optimise_':
+                    try:
+                        bits = value.split(',')
+                        t = target_keys.index(key[9:])
+                        # name, weight, minimum, maximum, widget index
+                        self.targets[key[9:]] = [target_names[t], float(bits[0]), float(bits[1]),
+                                                float(bits[2]), 0, target_fmats[t],
+                                                 target_titles[t]]
+                    except:
+                        pass
+                elif key == 'remove_cost':
+                    if value.lower() in ['false', 'off', 'no']:
+                        self.remove_cost = False
+                elif key == 'results_prefix':
+                    self.results_prefix = value
+                elif key == 'save_tables':
+                    if value.lower() in ['true', 'on', 'yes']:
+                        self.save_tables = True
+                elif key == 'show_multipliers':
+                    if value.lower() in ['true', 'on', 'yes']:
+                        self.show_multipliers = True
+                elif key == 'shortfall_sign':
+                    if value[0] == '+' or value[0].lower() == 'p':
+                        self.surplus_sign = -1
         except:
             pass
         self.restorewindows = False
@@ -998,7 +1000,7 @@ class powerMatch(QtWidgets.QWidget):
         pms = QtWidgets.QPushButton('Summary', self)
         self.grid.addWidget(pms, r, 1)
         pms.clicked.connect(self.pmClicked)
-        pm = QtWidgets.QPushButton('Powermatch', self)
+        pm = QtWidgets.QPushButton('Detail', self)
      #   pm.setMaximumWidth(wdth)
         self.grid.addWidget(pm, r, 2)
         pm.clicked.connect(self.pmClicked)
@@ -1754,7 +1756,7 @@ class powerMatch(QtWidgets.QWidget):
 
     def pmClicked(self):
         self.setStatus(self.sender().text() + ' processing started')
-        if self.sender().text() == 'Powermatch': # detailed spreadsheet?
+        if self.sender().text() == 'Detail': # detailed spreadsheet?
             option = 'P'
         elif self.sender().text() == 'Optimise': # do optimisation?
             option = 'O'
@@ -1801,6 +1803,7 @@ class powerMatch(QtWidgets.QWidget):
                     err_msg = 'Error accessing Generators'
                 self.getGenerators(None)
         if option == 'B':
+            ts = xlrd.open_workbook(self.get_filename(self.files[B].text()))
             try:
                 ts = xlrd.open_workbook(self.get_filename(self.files[B].text()))
                 ws = ts.sheet_by_index(0)
@@ -1816,8 +1819,8 @@ class powerMatch(QtWidgets.QWidget):
                     return
             except FileNotFoundError:
                 err_msg = 'Batch file not found - ' + self.files[B].text()
-            except:
-                err_msg = 'Error accessing Batch file'
+            except Exception as e:
+                err_msg = 'Error accessing Batch file ' + str(e)
         if option == 'O' and self.optimisation is None:
             try:
                 ts = xlrd.open_workbook(self.get_filename(self.files[O].text()))
