@@ -212,64 +212,70 @@ class TabDialog(QtWidgets.QDialog):
         self.resize(size)
 
     def eventFilter(self, source, event):
-        print('215)', event.type(), self.table.selectedIndexes())
         if self.table.selectedIndexes() != []:
-            if event.type() == QtCore.QEvent.MouseButtonRelease:
-                if event.button() == QtCore.Qt.LeftButton:
-                    ent = self.table.item(self.table.currentRow(), 0).text()
-                    self.table.viewport().removeEventFilter(self)
-                    self.invoke('sirenm', self.siren_dir + ent)
-                    self.quit()
-                elif event.button() == QtCore.Qt.RightButton:
-                    ent = self.table.item(self.table.currentRow(), 0).text()
-                    menu = QtWidgets.QMenu()
-                    actions =  []
-                    for i in range(len(self.model_tool)):
-                        if self.model_tool[i] == 'updateswis':
-                            mdl = self.table.item(self.table.currentRow(), 1).text()
-                            if mdl.find('SWIS') < 0:
-                                continue
-                        actions.append(menu.addAction(QtGui.QIcon(self.model_icon[i]),
-                                                     'Execute ' + self.model_tool[i]))
-                        actions[-1].setIconVisibleInMenu(True)
-                    actions.append(menu.addAction(QtGui.QIcon('edit.png'), 'Edit Preferences'))
+            if event.type() == QtCore.QEvent.MouseButtonRelease and \
+              event.button() == QtCore.Qt.LeftButton:
+                ent = self.table.item(self.table.currentRow(), 0).text()
+                self.table.viewport().removeEventFilter(self)
+                self.invoke('sirenm', self.siren_dir + ent)
+                self.quit()
+            if (event.type() == QtCore.QEvent.MouseButtonPress or event.type() == QtCore.QEvent.MouseButtonRelease) and \
+              event.button() == QtCore.Qt.RightButton:
+                ent = self.table.item(self.table.currentRow(), 0).text()
+                index = self.table.indexAt(event.pos())
+                selectionModel = self.table.selectionModel()
+                selectionModel.select(self.table.model().index(self.table.currentRow(), 0),
+                    selectionModel.Deselect|selectionModel.Rows)
+                selectionModel.select(self.table.model().index(index.row(), 0),
+                    selectionModel.Rows)
+                menu = QtWidgets.QMenu()
+                actions =  []
+                for i in range(len(self.model_tool)):
+                    if self.model_tool[i] == 'updateswis':
+                        mdl = self.table.item(self.table.currentRow(), 1).text()
+                        if mdl.find('SWIS') < 0:
+                            continue
+                    actions.append(menu.addAction(QtGui.QIcon(self.model_icon[i]),
+                                                 'Execute ' + self.model_tool[i]))
                     actions[-1].setIconVisibleInMenu(True)
-                    actions.append(menu.addAction(QtGui.QIcon('edit.png'), 'Edit File Preferences'))
-                    actions[-1].setIconVisibleInMenu(True)
-                    action = menu.exec_(self.mapToGlobal(event.pos()))
-                    if action is not None:
-                        if action.text()[:8] == 'Execute ':
-                            if not self.entries[self.table.currentRow()][3]:
-                                ok, model_name, errors = self.check_file(ent)
-                                if len(errors) > 0:
-                                    dialog = displayobject.AnObject(QtWidgets.QDialog(), errors,
-                                    title='SIREN (' + fileVersion() + ') - Preferences file errors')
-                                    dialog.exec_()
-                                    return QtCore.QObject.event(source, event)
-                            self.invoke(action.text()[8:], self.siren_dir + ent)
-                        elif action.text()[-11:] == 'Preferences':
-                            i = self.table.item(self.table.currentRow(), 1).text().find('[line ')
-                            if i >= 0:
-                                j = self.table.item(self.table.currentRow(), 1).text().find(']', i)
-                                line = int(self.table.item(self.table.currentRow(), 1).text()[i + 5:j].strip()) - 1
-                            else:
-                                line = None
-                            if action.text()[-16:] == 'File Preferences':
-                                self.editIniFileSects(self.siren_dir + ent)
-                            else:
-                                self.editIniFile(self.siren_dir + ent, line=line)
+                actions.append(menu.addAction(QtGui.QIcon('edit.png'), 'Edit Preferences'))
+                actions[-1].setIconVisibleInMenu(True)
+                actions.append(menu.addAction(QtGui.QIcon('edit.png'), 'Edit File Preferences'))
+                actions[-1].setIconVisibleInMenu(True)
+                action = menu.exec_(self.mapToGlobal(event.pos()))
+                if action is not None:
+                    if action.text()[:8] == 'Execute ':
+                        if not self.entries[self.table.currentRow()][3]:
                             ok, model_name, errors = self.check_file(ent)
-                            if model_name != self.entries[self.table.currentRow()][1]:
-                                self.entries[self.table.currentRow()][1] = model_name
-                                self.table.setItem(self.table.currentRow(), 1, QtWidgets.QTableWidgetItem(model_name))
                             if len(errors) > 0:
-                                self.entries[self.table.currentRow()][3] = False
                                 dialog = displayobject.AnObject(QtWidgets.QDialog(), errors,
                                 title='SIREN (' + fileVersion() + ') - Preferences file errors')
                                 dialog.exec_()
                                 return QtCore.QObject.event(source, event)
-                            else:
-                                self.entries[self.table.currentRow()][3] = True
+                        self.invoke(action.text()[8:], self.siren_dir + ent)
+                    elif action.text()[-11:] == 'Preferences':
+                        i = self.table.item(self.table.currentRow(), 1).text().find('[line ')
+                        if i >= 0:
+                            j = self.table.item(self.table.currentRow(), 1).text().find(']', i)
+                            line = int(self.table.item(self.table.currentRow(), 1).text()[i + 5:j].strip()) - 1
+                        else:
+                            line = None
+                        if action.text()[-16:] == 'File Preferences':
+                            self.editIniFileSects(self.siren_dir + ent)
+                        else:
+                            self.editIniFile(self.siren_dir + ent, line=line)
+                        ok, model_name, errors = self.check_file(ent)
+                        if model_name != self.entries[self.table.currentRow()][1]:
+                            self.entries[self.table.currentRow()][1] = model_name
+                            self.table.setItem(self.table.currentRow(), 1, QtWidgets.QTableWidgetItem(model_name))
+                        if len(errors) > 0:
+                            self.entries[self.table.currentRow()][3] = False
+                            dialog = displayobject.AnObject(QtWidgets.QDialog(), errors,
+                            title='SIREN (' + fileVersion() + ') - Preferences file errors')
+                            dialog.exec_()
+                            return QtCore.QObject.event(source, event)
+                        else:
+                            self.entries[self.table.currentRow()][3] = True
         return QtCore.QObject.event(source, event)
 
     def invoke(self, program, ent):
