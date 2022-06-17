@@ -212,6 +212,7 @@ class TabDialog(QtWidgets.QDialog):
         self.resize(size)
 
     def eventFilter(self, source, event):
+        print('215)', event.type(), self.table.selectedIndexes())
         if self.table.selectedIndexes() != []:
             if event.type() == QtCore.QEvent.MouseButtonRelease:
                 if event.button() == QtCore.Qt.LeftButton:

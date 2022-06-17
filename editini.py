@@ -119,7 +119,10 @@ class EditFileSections(QtWidgets.QDialog):
         sections = {}
         for section in file_sects:
             props = []
-            items = config.items(section)
+            try:
+                items = config.items(section)
+            except:
+                continue
             for key, value in items:
                 props.append([key, value])
             if len(props) > 0:
