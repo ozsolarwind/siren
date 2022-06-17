@@ -25,9 +25,12 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import sys
 from math import log10, ceil
 import matplotlib
+matplotlib.use('TkAgg')
 from matplotlib.font_manager import FontProperties
 import pylab as plt
 import xlrd
+xlrd.xlsx.ensure_elementtree_imported(False, None)
+xlrd.xlsx.Element_has_iter = True
 import displayobject
 from colours import Colours
 from credits import fileVersion
@@ -922,7 +925,7 @@ class PowerPlot(QtWidgets.QWidget):
                     fig.suptitle(self.suptitle.text(), fontsize=16)
                 if gridtype != '':
                     plt.grid(axis=gridtype)
-                ax = fig.add_subplot(111)
+                ax = plt.subplot(111)
                 plt.title(titl)
                 for c in range(len(data)):
                     ax.plot(x, data[c], linewidth=1.5, label=label[c], color=self.colours[label[c].lower()])
@@ -964,7 +967,7 @@ class PowerPlot(QtWidgets.QWidget):
                     fig.suptitle(self.suptitle.text(), fontsize=16)
                 if gridtype != '':
                     plt.grid(axis=gridtype)
-                bx = fig.add_subplot(111)
+                bx = plt.subplot(111)
                 plt.title(titl)
                 if self.percentage.isChecked():
                     totals = [0.] * len(x)
@@ -1003,8 +1006,8 @@ class PowerPlot(QtWidgets.QWidget):
                         else:
                             bx.step(x, top, color='white')
                     else:
-                        pattern = ['-', '+', 'x', '\\', '*', 'o', 'O', '.']
-                        pat = 0
+                 #       pattern = ['-', '+', 'x', '\\', '*', 'o', 'O', '.']
+                 #       pat = 0
                         full = []
                         for h in range(len(load)):
                            full.append(min(load[h], data[0][h]))
@@ -1094,7 +1097,7 @@ class PowerPlot(QtWidgets.QWidget):
                     fig.suptitle(self.suptitle.text(), fontsize=16)
                 if gridtype != '':
                     plt.grid(axis=gridtype)
-                fx = fig.add_subplot(111)
+                fx = plt.subplot(111)
                 plt.title(titl)
                 if self.percentage.isChecked():
                     miny = 0
@@ -1248,7 +1251,7 @@ class PowerPlot(QtWidgets.QWidget):
                     fig.suptitle(self.suptitle.text(), fontsize=16)
                 if gridtype != '':
                     plt.grid(axis=gridtype)
-                cx = fig.add_subplot(111)
+                cx = plt.subplot(111)
                 plt.title(titl)
                 for c in range(len(data)):
                     cx.plot(x, data[c], linewidth=1.5, label=label[c], color=self.colours[label[c].lower()])
@@ -1282,13 +1285,15 @@ class PowerPlot(QtWidgets.QWidget):
                     step = None
                 else:
                     step = 'pre'
+          ##      fig, dx = plt.subplots(constrained_layout=self.constrained_layout)
+          ##      fig.canvas.manager.set_window_title('cumulative_' + self.period.currentText().lower() + '_' + str(year))
                 fig = plt.figure('cumulative_' + self.period.currentText().lower() + '_' + str(year),
                                  constrained_layout=self.constrained_layout)
                 if self.suptitle.text() != '':
                     fig.suptitle(self.suptitle.text(), fontsize=16)
                 if gridtype != '':
                     plt.grid(axis=gridtype)
-                dx = fig.add_subplot(111)
+                dx = plt.subplot(111)
                 plt.title(titl)
                 if self.percentage.isChecked():
                     totals = [0.] * len(x)
@@ -1316,8 +1321,8 @@ class PowerPlot(QtWidgets.QWidget):
                                 maxy = max(maxy, data[c][h])
                             dx.fill_between(x, data[c - 1], data[c], label=label[c], color=self.colours[label[c].lower()], step=step)
                     else:
-                        pattern = ['-', '+', 'x', '\\', '*', 'o', 'O', '.']
-                        pat = 0
+                #        pattern = ['-', '+', 'x', '\\', '*', 'o', 'O', '.']
+                #        pat = 0
                         full = []
                         for h in range(len(load)):
                            full.append(min(load[h], data[0][h]))
@@ -1337,9 +1342,9 @@ class PowerPlot(QtWidgets.QWidget):
                                 maxy = max(maxy, data[c][h])
                                 full.append(max(min(load[h], data[c][h]), data[c - 1][h]))
                             dx.fill_between(x, data[c - 1], full, label=label[c], color=self.colours[label[c].lower()], step=step)
-                            pat += 1
-                            if pat >= len(pattern):
-                                pat = 0
+                 #           pat += 1
+                 #           if pat >= len(pattern):
+                 #               pat = 0
                             for h in range(len(full)):
                                 if data[c][h] > full[h] + self.margin_of_error:
                                     if self.spill_label.text() != '':
@@ -1404,7 +1409,7 @@ class PowerPlot(QtWidgets.QWidget):
                     fig.suptitle(self.suptitle.text(), fontsize=16)
                 if gridtype != '':
                     plt.grid(axis=gridtype)
-                ex = fig.add_subplot(111)
+                ex = plt.subplot(111)
                 plt.title(titl)
                 if self.percentage.isChecked():
                     miny = 0
