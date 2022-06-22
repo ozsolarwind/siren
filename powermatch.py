@@ -2758,12 +2758,15 @@ class powerMatch(QtWidgets.QWidget):
                     disc_rate = self.generators[gen].disc_rate
                     if disc_rate == 0:
                         disc_rate = self.discount_rate
-                    pwr_calc = 'POWER(1+' + str(disc_rate) + ',' + str(self.generators[gen].lifetime) + ')'
+                    if disc_rate == 0:
+                        cst_calc = '/' + str(self.generators[gen].lifetime)
+                    else:
+                        pwr_calc = 'POWER(1+' + str(disc_rate) + ',' + str(self.generators[gen].lifetime) + ')'
+                        cst_calc = '*' + str(disc_rate) + '*' + pwr_calc + '/SUM(' + pwr_calc + ',-1)'
                     ns.cell(row=cost_row, column=col).value = '=IF(' + ss_col(col) + str(cf_row) + \
                             '>0,' + ss_col(col) + str(cap_row) + '*' + str(self.generators[gen].capex) + \
-                            '*' + str(disc_rate) + '*' + pwr_calc + '/SUM(' + pwr_calc + ',-1)+' + \
-                            ss_col(col) + str(cap_row) + '*' + str(self.generators[gen].fixed_om) + \
-                            '+' + ss_col(col) + str(sum_row) + '*(' + \
+                            cst_calc + '+' + ss_col(col) + str(cap_row) + '*' + \
+                            str(self.generators[gen].fixed_om) + '+' + ss_col(col) + str(sum_row) + '*(' + \
                             str(self.generators[gen].variable_om) + '+' + str(self.generators[gen].fuel) + \
                             '),0)'
                     ns.cell(row=cost_row, column=col).number_format = '$#,##0'
@@ -3432,12 +3435,15 @@ class powerMatch(QtWidgets.QWidget):
                 disc_rate = self.generators[gen].disc_rate
                 if disc_rate == 0:
                     disc_rate = self.discount_rate
-                pwr_calc = 'POWER(1+' + str(disc_rate) + ',' + str(self.generators[gen].lifetime) + ')'
+                if disc_rate == 0:
+                    cst_calc = '/' + str(self.generators[gen].lifetime)
+                else:
+                    pwr_calc = 'POWER(1+' + str(disc_rate) + ',' + str(self.generators[gen].lifetime) + ')'
+                    cst_calc = '*' + str(disc_rate) + '*' + pwr_calc + '/SUM(' + pwr_calc + ',-1)'
                 ns.cell(row=cost_row, column=col + nc).value = '=IF(' + ss_col(col + nc) + str(cf_row) + \
                         '>0,' + ss_col(col + nc) + str(cap_row) + '*' + str(self.generators[gen].capex) + \
-                        '*' + str(disc_rate) + '*' + pwr_calc + '/SUM(' + pwr_calc + ',-1)+' + \
-                        ss_col(col + nc) + str(cap_row) + '*' + str(self.generators[gen].fixed_om) + \
-                        '+' + ss_col(col + nc) + str(sum_row) + '*(' + \
+                        cst_calc + '+' + ss_col(col + nc) + str(cap_row) + '*' + \
+                        str(self.generators[gen].fixed_om) + '+' + ss_col(col + nc) + str(sum_row) + '*(' + \
                         str(self.generators[gen].variable_om) + '+' + str(self.generators[gen].fuel) + \
                         '),0)'
                 ns.cell(row=cost_row, column=col + nc).number_format = '$#,##0'
@@ -3713,13 +3719,12 @@ class powerMatch(QtWidgets.QWidget):
         ss.cell(row=ss_row, column=9).font = bold
         # values for adjusted LCOE and Carbon Cost LCOE
         if self.adjusted_lcoe:
-            ss.cell(row=lcoe_row, column=7).value = '=G' + str(lcoe_row-1) + '*D' + str(lcoe_row-1) + \
-                    '/C' + str(ss_row)
+            ss.cell(row=lcoe_row, column=7).value = '=F' + str(lcoe_row - 1) + '/C' + str(lcoe_row - 1)
             ss.cell(row=lcoe_row, column=7).number_format = '$#,##0.00'
             ss.cell(row=lcoe_row, column=7).font = bold
             if self.carbon_price > 0:
                 ss.cell(row=lcoe_row + 1, column=7).value = '=(F' + str(lcoe_row - 1) + \
-                        '+F'  + str(lcoe_row + 1) + ')/C' + str(ss_row)
+                        '+F'  + str(lcoe_row + 1) + ')/C' + str(lcoe_row - 1)
                 ss.cell(row=lcoe_row + 1, column=7).number_format = '$#,##0.00'
         ss_row += 1
         ss.cell(row=ss_row, column=1).value = 'RE %age of Total Load'
