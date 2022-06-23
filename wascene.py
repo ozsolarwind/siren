@@ -25,6 +25,8 @@ from math import sin, cos, pi, sqrt, degrees, radians, asin, atan2
 import os
 import sys
 import xlrd
+xlrd.xlsx.ensure_elementtree_imported(False, None)
+xlrd.xlsx.Element_has_iter = True
 import configparser   # decode .ini file
 from PyQt5 import QtCore, QtGui, QtWidgets
 try:
