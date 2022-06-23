@@ -52,6 +52,7 @@ pre {
 <li>Run the command <code>deactivate</code> to deactivate the virtual environment</li>
 </ul>
 </ul>
+<p>New versions of SIREN programs can be obtained using <code>sirenupd</code>. For programs packaged for Windows this will contain any changes to Python programs <code>include</code>d by the program. For Python the same approach can be used by creating a zip file that contains both the target Python program, e.g. powermatch.py, plus other <code>include</code>d Python programs that have been updated.</p>
 <h2 id="github">github</h2>
 <p><a href="https://github.com/ozsolarwind/siren" target="_blank">https://github.com/ozsolarwind/siren</a> contains the Python source and associated image files for SIREN plus a few additional items:</p>
 <ul>
@@ -142,10 +143,8 @@ pre {
 <tr><td>inisyntax.py</td><td>Syntax highlighting for Preferences Edit window</td></tr>
 <tr><td>makegrid.py</td><td>Create weather grid files</td></tr>
 <tr><td><del>makerainfall2.py</del></td><td><del>Create rainfall files from MERRA-2 data</del></td></tr>
-<tr><td><del>makeweather2.py</del></td><td><del>Create weather files from MERRA-2 data</del></td></tr>
 <tr><td>makeweatherfiles.py (*)</td><td>Standalone program to create weather files from MERRA-2 data</td></tr>
 <tr><td>newstation.py</td><td>Create/edit a new power station</td></tr>
-<tr><td>parents.py (*)</td><td>Adjust file names from Parents properties in config (.ini) file</td></tr>
 <tr><td>plotweather.py (*)</td><td>Plot (graph) weather data</td></tr>
 <tr><td>powerclasses.py</td><td>Classes used by PowerModel (powermodel.py)</td></tr>
 <tr><td>powermatch.py</td><td>Match generation to load. Produce costed scenarios</td></tr>
@@ -153,7 +152,7 @@ pre {
 <tr><td>powerplot.py</td><td>A standalone program that will produce either hourly or diurnal plots from a spreadsheet that conforms to certain constraints</td></tr>
 <tr><td>sammodels.py</td><td>Routines for SAM/NREL models for DHI, DNI and Zenith angle</td></tr>
 <tr><td>samrun.py</td><td>Run a SAM model</td></tr>
-<tr><td>senuser.py (*)</td><td>Obtain current userid details</td></tr>
+<tr><td>senutils.py (*)</td><td>Some common functions. Adjust file names from [Parents] properties in config (.ini) file; Obtain current userid details; &ldquo;Clean&rdquo; tech names; ClickableQLabel</td></tr>
 <tr><td>siren.py (*)</td><td>Display a menu of SIREN Models (invokes sirenm.py for the chosen Model)</td></tr>
 <tr><td>sirenicons.py</td><td>Get a technology icon</td></tr>
 <tr><td>sirenm.py (*)</td><td>Main SIREN program</td></tr>
@@ -187,5 +186,5 @@ pre {
 </ul>
 <h3>opt_debug</h3>
 <p><code>opt_debug.py</code> can be used to debug the <code>powermatch</code> optimisation routine. It doesn't need to be packaged with SIREN.</p>
-<p>Angus King<br />May 2022</p>
+<p>Angus King<br />June 2022</p>
 </body>
