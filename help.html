@@ -3445,7 +3445,7 @@ If the best and worse values are the same for a variable and that value is not a
 <p><strong>Notes on multi-variable inputs</strong></p>
 <ul>
 <li>There is some &ldquo;overlap&rdquo; between the six variables, for example, LCOE and (overall) Cost</li>
-<li>Load % is significant in that &ldquo;unusual&rdquo; outcomes can occur if the load percentage achieved is very low. You can get the situation whereby a Load % of zero can also come up with the lowest LCOE of $0</li>
+<li>In most cases, optimisation will be attempting to meet the load profile. The suggestion is to give Load % the highest weighting, and to choose a range for Load % between 1 and 0.98. &ldquo;Unusual&rdquo; outcomes can occur if the load percentage achieved is very low</li>
 <li>If you choose the optimisation choice of Both there is interaction between both results</li>
 </ul>
 <p>The Powermatch optimisation approach uses the Optimisation table to define the range of possible values for each of the renewable technologies and dispatchable and storage facilities. Entries are required for all Renewable technologies and dispatchable and storage facilities. The fields are:
