@@ -3394,7 +3394,7 @@ See below for more details on optimisation.</li>
 </div>
 <div class="experiment">
 <h4>Optimise and Optimisation</h4>
-<p>In an attempt to simplify the process of determining the optimal generation mix, Powermatch has an optimisation function. The function uses a genetic algorithm to identify three possible optimal solutions:
+<p>In an attempt to simplify the process of determining the optimal generation mix, Powermatch has an optimisation function. This function can assist in providing a starting point for determining the optimal mix rather than the optimal mix itself. The function uses a genetic algorithm to identify three possible optimal solutions:
 <ol>
 <li>A solution with the lowest LCOE for the input renewable and dispatchable technologies</li>
 <li>A solution with the best (lowest) weighting for six variables - lowest LCOE, lowest CO<sub>2</sub> emissions, lowest Overall Cost, lowest surplus generation, highest RE percentage and maximising the percentage of load met</li>
@@ -3441,6 +3441,12 @@ If the best and worse values are the same for a variable and that value is not a
 <td class="none">Either quit or proceed with the optimisation</td></tr>
 </table>
 </li>
+</ul>
+<p><strong>Notes on multi-variable inputs</strong></p>
+<ul>
+<li>There is some &ldquo;overlap&rdquo; between the six variables, for example, LCOE and (overall) Cost</li>
+<li>Load % is significant in that &ldquo;unusual&rdquo; outcomes can occur if the load percentage achieved is very low. You can get the situation whereby a Load % of zero can also come up with the lowest LCOE of $0</li>
+<li>If you choose the optimisation choice of Both there is interaction between both results</li>
 </ul>
 <p>The Powermatch optimisation approach uses the Optimisation table to define the range of possible values for each of the renewable technologies and dispatchable and storage facilities. Entries are required for all Renewable technologies and dispatchable and storage facilities. The fields are:
 <table border="0" class="none" style="margin-left:35px" >
