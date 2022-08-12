@@ -647,7 +647,7 @@ class SuperPower():
                 else:
                     key = stn.technology
             if self.plots['save_zone']:
-                key = stn.zone + '_' + key
+                key = stn.zone + '.' + key
             if self.plots['save_data'] or self.plots['financials'] or self.plots['save_detail']:
                 self.stn_outs.append(stn.name)
                 self.stn_tech.append(stn.technology)
