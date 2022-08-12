@@ -174,6 +174,7 @@ class PowerPlot(QtWidgets.QWidget):
         self.book = None
         self.toprow = None
         self.rows = None
+        self.zone_row = -1
         self.leapyear = False
         iper = '<none>'
         imax = 0
@@ -599,9 +600,12 @@ class PowerPlot(QtWidgets.QWidget):
             return
         tech_row = -1
         row = 0
+        self.zone_row = -1
         while row < ws.nrows:
             if ws.cell_value(row, 0) == 'Technology':
                 tech_row = row
+            elif ws.cell_value(row, 0) == 'Zone':
+                self.zone_row = row
             elif ws.cell_value(row, 0) == 'Hour':
                 if ws.cell_value(row, 1) != 'Period':
                     self.log.setText(isheet + ' sheet format incorrect')
@@ -626,6 +630,8 @@ class PowerPlot(QtWidgets.QWidget):
                     the_row = row
                 for col in range(ws.ncols -1, 1, -1):
                     column = ws.cell_value(the_row, col).replace('\n',' ')
+                    if self.zone_row > 0 and ws.cell_value(self.zone_row, col) != '':
+                        column = ws.cell_value(self.zone_row, col).replace('\n',' ') + '.' + column
                     if column in oldcolumns:
                         columns.append(column)
                     if self.targets.findText(column, QtCore.Qt.MatchExactly) >= 0:
@@ -845,10 +851,13 @@ class PowerPlot(QtWidgets.QWidget):
         if self.toprow is None:
             tech_row = -1
             row = 0
+            self.zone_row =  -1
             while row < ws.nrows:
                 print('(848)', row, ws.cell_value(row, 0), ws.cell_value(row, 1))
                 if ws.cell_value(row, 0) == 'Technology':
                     tech_row = row
+                elif ws.cell_value(row, 0) == 'Zone':
+                   self.zone_row = row
                 elif ws.cell_value(row, 0) == 'Hour':
                     if ws.cell_value(row, 1) != 'Period':
                         self.log.setText(isheet + ' sheet format incorrect')
@@ -905,6 +914,8 @@ class PowerPlot(QtWidgets.QWidget):
                 col = self.order.item(c).text()
                 for c2 in range(2, ws.ncols):
                     column = ws.cell_value(self.toprow[0], c2).replace('\n',' ')
+                    if self.zone_row > 0 and ws.cell_value(self.zone_row, c2) != '':
+                        column = ws.cell_value(self.zone_row, c2).replace('\n',' ') + '.' + column
                     if column == col:
                         data.append([])
                         label.append(column)
@@ -1207,6 +1218,8 @@ class PowerPlot(QtWidgets.QWidget):
                 col = self.order.item(c).text()
                 for c2 in range(2, ws.ncols):
                     column = ws.cell_value(self.toprow[0], c2).replace('\n',' ')
+                    if self.zone_row > 0 and ws.cell_value(self.zone_row, c2) != '':
+                        column = ws.cell_value(self.zone_row, c2).replace('\n',' ') + '.' + column
                     if column == col:
                         data.append([])
                         data[-1] = [0] * len(hs)
