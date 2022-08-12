@@ -186,6 +186,7 @@ class PowerPlot(QtWidgets.QWidget):
         self.history = None
         self.max_files = 10
         self.seasons = {}
+        self.interval = 24
         ifiles = {}
         try:
             items = config.items('Powerplot')
@@ -606,10 +607,14 @@ class PowerPlot(QtWidgets.QWidget):
                 tech_row = row
             elif ws.cell_value(row, 0) == 'Zone':
                 self.zone_row = row
-            elif ws.cell_value(row, 0) == 'Hour':
+            elif ws.cell_value(row, 0) in ['Hour', 'Interval', 'Trading Interval']:
                 if ws.cell_value(row, 1) != 'Period':
                     self.log.setText(isheet + ' sheet format incorrect')
                     return
+                if ws.cell_value(row, 0) in ['Interval', 'Trading Interval']:
+                    self.interval = 48
+                else:
+                    self.interval = 24
                 if tech_row >= 0:
                     self.toprow = [tech_row, row]
                 else:
@@ -853,12 +858,12 @@ class PowerPlot(QtWidgets.QWidget):
             row = 0
             self.zone_row =  -1
             while row < ws.nrows:
-                print('(848)', row, ws.cell_value(row, 0), ws.cell_value(row, 1))
+                print('(854)', row, ws.cell_value(row, 0), ws.cell_value(row, 1))
                 if ws.cell_value(row, 0) == 'Technology':
                     tech_row = row
                 elif ws.cell_value(row, 0) == 'Zone':
-                   self.zone_row = row
-                elif ws.cell_value(row, 0) == 'Hour':
+                    self.zone_row = row
+                elif ws.cell_value(row, 0) in ['Hour', 'Interval', 'Trading Interval']:
                     if ws.cell_value(row, 1) != 'Period':
                         self.log.setText(isheet + ' sheet format incorrect')
                         return
@@ -910,6 +915,12 @@ class PowerPlot(QtWidgets.QWidget):
             titl = titl.replace('Diurnal ', '')
             titl = titl.replace('Diurnal', '')
             titl = titl.replace('$SHEET$', isheet)
+            for c2 in range(2, ws.ncols):
+                column = ws.cell_value(self.toprow[0], c2).replace('\n',' ')
+                if self.zone_row > 0 and ws.cell_value(self.zone_row, c2) != '':
+                    column = ws.cell_value(self.zone_row, c2).replace('\n',' ') + '.' + column
+                if column == self.target:
+                    tgt_col = c2
             for c in range(self.order.count() -1, -1, -1):
                 col = self.order.item(c).text()
                 for c2 in range(2, ws.ncols):
@@ -924,8 +935,6 @@ class PowerPlot(QtWidgets.QWidget):
                             maxy = max(maxy, data[-1][-1])
                             miny = min(miny, data[-1][-1])
                         break
-                    elif column == self.target:
-                        tgt_col = c2
             if tgt_col >= 0:
                 for row in range(self.toprow[1] + 1, self.toprow[1] + self.rows + 1):
                     load.append(ws.cell_value(row, tgt_col))
@@ -957,7 +966,7 @@ class PowerPlot(QtWidgets.QWidget):
                           prop=lbl_font)
                 plt.ylim([miny, maxy])
                 plt.xlim([0, len(x)])
-                xticks = list(range(0, len(x), 24 * days_per_label))
+                xticks = list(range(0, len(x), self.interval * days_per_label))
                 plt.xticks(xticks)
                 ax.set_xticklabels(day_labels[:len(xticks)], rotation='vertical')
                 ax.set_xlabel('Period')
@@ -1093,7 +1102,7 @@ class PowerPlot(QtWidgets.QWidget):
                 bx.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 2), prop=lbl_font)
                 plt.ylim([miny, maxy])
                 plt.xlim([0, len(x)])
-                xticks = list(range(0, len(x), 24 * days_per_label))
+                xticks = list(range(0, len(x), self.interval * days_per_label))
                 plt.xticks(xticks)
                 bx.set_xticklabels(day_labels[:len(xticks)], rotation='vertical')
                 bx.set_xlabel('Period')
@@ -1161,7 +1170,7 @@ class PowerPlot(QtWidgets.QWidget):
                 fx.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 2), prop=lbl_font)
                 plt.ylim([miny, maxy])
                 plt.xlim([0, len(x)])
-                xticks = list(range(0, len(x), 24 * days_per_label))
+                xticks = list(range(0, len(x), self.interval * days_per_label))
                 plt.xticks(xticks)
                 fx.set_xticklabels(day_labels[:len(xticks)], rotation='vertical')
                 fx.set_xlabel('Period')
@@ -1171,8 +1180,12 @@ class PowerPlot(QtWidgets.QWidget):
                 del zp
         else: # diurnal average
             hr_labels = ['0:00', '4:00', '8:00', '12:00', '16:00', '20:00', '23:00']
-            ticks = list(range(0, 21, 4))
-            ticks.append(23)
+            if self.interval == 24:
+                ticks = list(range(0, 21, 4))
+                ticks.append(23)
+            else:
+                ticks = list(range(0, 41, 8))
+                ticks.append(47)
             titl = self.title.text().replace('$YEAR$', str(year))
             titl = titl.replace('$SHEET$', isheet)
             if self.period.currentText() == 'Year':
@@ -1191,19 +1204,19 @@ class PowerPlot(QtWidgets.QWidget):
                         m = 0
                         strt_row.append(0)
                         while m < s:
-                            strt_row[-1] = strt_row[-1] + the_days[m] * 24
+                            strt_row[-1] = strt_row[-1] + the_days[m] * self.interval
                             m += 1
                         strt_row[-1] = strt_row[-1] + self.toprow[1]
-                        todo_rows.append(the_days[s] * 24)
+                        todo_rows.append(the_days[s] * self.interval)
                 else:
                     i = mth_labels.index(self.period.currentText())
                     m = 0
                     strt_row = 0
                     while m < i:
-                        strt_row = strt_row + the_days[m] * 24
+                        strt_row = strt_row + the_days[m] * self.interval
                         m += 1
                     strt_row = [self.toprow[1] + strt_row]
-                    todo_rows = [the_days[i] * 24]
+                    todo_rows = [the_days[i] * self.interval]
             load = []
             tgt_col = -1
             data = []
@@ -1211,9 +1224,15 @@ class PowerPlot(QtWidgets.QWidget):
             miny = 0
             maxy = 0
             hs = []
-            for h in range(24):
+            for h in range(self.interval):
                 hs.append(h)
             x = hs[:]
+            for c2 in range(2, ws.ncols):
+                column = ws.cell_value(self.toprow[0], c2).replace('\n',' ')
+                if self.zone_row > 0 and ws.cell_value(self.zone_row, c2) != '':
+                    column = ws.cell_value(self.zone_row, c2).replace('\n',' ') + '.' + column
+                if column == self.target:
+                    tgt_col = c2
             for c in range(self.order.count() -1, -1, -1):
                 col = self.order.item(c).text()
                 for c2 in range(2, ws.ncols):
@@ -1233,16 +1252,14 @@ class PowerPlot(QtWidgets.QWidget):
                                 except:
                                     break # part period
                                 h += 1
-                                if h >= 24:
+                                if h >= self.interval:
                                     h = 0
                             tot_rows += todo_rows[s]
-                        for h in range(24):
-                            data[-1][h] = data[-1][h] / (tot_rows / 24)
+                        for h in range(self.interval):
+                            data[-1][h] = data[-1][h] / (tot_rows / self.interval)
                             maxy = max(maxy, data[-1][h])
                             miny = min(miny, data[-1][h])
                         break
-                    elif column == self.target:
-                        tgt_col = c2
             if tgt_col >= 0:
                 load = [0] * len(hs)
                 tot_rows = 0
@@ -1251,11 +1268,11 @@ class PowerPlot(QtWidgets.QWidget):
                     for row in range(strt_row[s] + 1, strt_row[s] + todo_rows[s] + 1):
                         load[h] = load[h] + ws.cell_value(row, tgt_col)
                         h += 1
-                        if h >= 24:
+                        if h >= self.interval:
                            h = 0
                     tot_rows += todo_rows[s]
-                for h in range(24):
-                    load[h] = load[h] / (tot_rows / 24)
+                for h in range(self.interval):
+                    load[h] = load[h] / (tot_rows / self.interval)
                     maxy = max(maxy, load[h])
             if self.plottype.currentText() == 'Linegraph':
                 fig = plt.figure('linegraph_' + self.period.currentText().lower() + '_' + str(year),
@@ -1284,7 +1301,7 @@ class PowerPlot(QtWidgets.QWidget):
                 cx.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 1),
                               prop=lbl_font)
                 plt.ylim([miny, maxy])
-                plt.xlim([0, 23])
+                plt.xlim([0, self.interval - 1])
                 plt.xticks(ticks)
                 cx.set_xticklabels(hr_labels)
                 cx.set_xlabel('Hour of the Day')
@@ -1407,7 +1424,7 @@ class PowerPlot(QtWidgets.QWidget):
                 lbl_font.set_size('small')
                 dx.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 2), prop=lbl_font)
                 plt.ylim([miny, maxy])
-                plt.xlim([0, 23])
+                plt.xlim([0, self.interval- 1])
                 plt.xticks(ticks)
                 dx.set_xticklabels(hr_labels)
                 dx.set_xlabel('Hour of the Day')
@@ -1474,7 +1491,7 @@ class PowerPlot(QtWidgets.QWidget):
                 lbl_font.set_size('small')
                 ex.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 2), prop=lbl_font)
             #    plt.ylim([miny, maxy])
-                plt.xlim([0, 23])
+                plt.xlim([0, self.interval - 1])
                 plt.xticks(ticks)
                 ex.set_xticklabels(hr_labels)
                 ex.set_xlabel('Hour of the Day')
