@@ -1634,6 +1634,7 @@ class powerMatch(QtWidgets.QWidget):
                 istop = row + 1
                 break
         carbon_row = -1
+        discount_row = -1
         for row in range(istop, ws.nrows):
             if ws.cell_value(row, 0) != '':
                 if ws.cell_value(row, 0).lower() in ['chart', 'graph', 'plot']:
@@ -1641,6 +1642,8 @@ class powerMatch(QtWidgets.QWidget):
                     break
                 if ws.cell_value(row, 0).lower() == 'carbon price':
                     carbon_row = row
+                if ws.cell_value(row, 0).lower() == 'discount rate' or ws.cell_value(row, 0).lower() == 'wacc':
+                    discount_row = row
                 self.batch_report.append([techClean(ws.cell_value(row, 0), full=True), row + 1])
         for col in range(1, ws.ncols):
             model = ws.cell_value(istrt - 1, col)
@@ -1655,6 +1658,9 @@ class powerMatch(QtWidgets.QWidget):
             if carbon_row >= 0:
                 if isinstance(ws.cell_value(carbon_row, col), float):
                     self.batch_models[col]['Carbon Price'] = ws.cell_value(carbon_row, col)
+            if discount_row >= 0:
+                if isinstance(ws.cell_value(discount_row, col), float):
+                    self.batch_models[col]['Discount Rate'] = ws.cell_value(discount_row, col)
         return True
 
     def setOrder(self):
@@ -2225,12 +2231,16 @@ class powerMatch(QtWidgets.QWidget):
             do_opt_parms = [False, 0, 0, 0]
             total_load_row = 0
             batch_carbon_row = 0
+            batch_disc_row = -1
             batch_data_sources_row = 0
             for g in range(len(self.batch_report)):
                 if self.batch_report[g][0] == 'Chart':
                     continue
                 elif self.batch_report[g][0] == 'Carbon Price':
-                    batch_carbon_row = self.batch_report[g][1]
+       #             batch_carbon_row = self.batch_report[g][1]
+                    continue
+                elif self.batch_report[g][0] == 'Discount Rate' or self.batch_report[g][0].lower() == 'wacc':
+                    batch_disc_row = self.batch_report[g][1]
                     continue
                 elif self.batch_report[g][0].lower() == 'data sources':
                     batch_data_sources_row = gndx
@@ -2280,11 +2290,15 @@ class powerMatch(QtWidgets.QWidget):
                         elif self.batch_report[g][0] != 'Capacity Factor' or self.batch_tech[sp] != 'Total':
                             bs.cell(row=gndx + sp + 1, column=1).value = self.batch_tech[sp]
                         bs.cell(row=gndx + sp + 1, column=1).font = normal
+                    if self.batch_report[g][0] == 'Cost ($/Yr)' and batch_disc_row >= 0:
+                        bs.cell(row=gndx + sp + 2, column=1).value = 'Discount Rate'
                     gndx += len(self.batch_tech) + 2
                     if self.batch_report[g][0] == 'LCOE ($/MWh)':
                         gndx += 1
                     elif self.batch_report[g][0] == 'Capacity Factor':
                         gndx -= 1
+                    elif self.batch_report[g][0] == 'Cost ($/Yr)' and batch_disc_row >= 0:
+                        gndx += 1
             try:
                 incr = 10 / len(self.batch_models)
             except:
@@ -2296,7 +2310,7 @@ class powerMatch(QtWidgets.QWidget):
                 column += 1
                 dispatch_order = []
                 for key, capacity in capacities.items(): # cater for zones
-                    if key in ['name', 'Carbon Price']:
+                    if key in ['name', 'Carbon Price', 'Discount Rate']:
                         continue
                     if key not in re_order and key != 'Total':
                         dispatch_order.append(key)
@@ -2318,6 +2332,9 @@ class powerMatch(QtWidgets.QWidget):
                 if 'Carbon Price' in capacities.keys():
                     save_carbon_price = self.carbon_price
                     self.carbon_price = capacities['Carbon Price']
+                if 'Discount Rate' in capacities.keys():
+                    save_discount_rate = self.discount_rate
+                    self.discount_rate = capacities['Discount Rate']
                 sp_data = self.doDispatch(year, option, pmss_details, pmss_data, re_order, dispatch_order,
                            pm_data_file, data_file, title=capacities['name'])
                 if 'Carbon Price' in capacities.keys():
@@ -2335,6 +2352,10 @@ class powerMatch(QtWidgets.QWidget):
                                  bs.cell(row=gndx + tndx, column=column).value = sp_data[sp][col]
                                  bs.cell(row=gndx + tndx, column=column).number_format = batch_details[group[0]][1]
                                  bs.cell(row=gndx + tndx, column=column).font = normal
+                                 if group[0] == 'Cost ($/Yr)' and batch_disc_row >= 0:
+                                    bs.cell(row=gndx + tndx + 1, column=column).value = self.discount_rate
+                                    bs.cell(row=gndx + tndx + 1, column=column).number_format = '#0.00%'
+                                    bs.cell(row=gndx + tndx + 1, column=column).font = normal
                     elif sp_data[sp][0] == 'RE Contribution To Load':
                         try:
                             for group in self.batch_report:
@@ -2349,6 +2370,8 @@ class powerMatch(QtWidgets.QWidget):
                             pass
                     if sp_data[sp][0] == 'Total':
                         break
+                if 'Discount Rate' in capacities.keys():
+                    self.discount_rate = save_discount_rate
                 # now the other stuff in sp_data
                 for sp in range(sp + 1, len(sp_data)):
                     if sp_data[sp][0] == '':
@@ -4070,12 +4093,12 @@ class powerMatch(QtWidgets.QWidget):
                     try:
                         pmss_details[fac].multiplier = capacity / pmss_details[fac].capacity
                     except:
-                        print('(3893)', gen, capacity, pmss_details[fac].capacity)
+                        print('(4096)', gen, capacity, pmss_details[fac].capacity)
                 multi_value, op_data, extra = self.doDispatch(year, option, pmss_details, pmss_data, re_order,
                                               dispatch_order, pm_data_file, data_file)
                 if multi_value['load_pct'] < self.targets['load_pct'][3]:
                     if multi_value['load_pct'] == 0:
-                        print('(3898)', multi_value['lcoe'], self.targets['load_pct'][3], multi_value['load_pct'])
+                        print('(4101)', multi_value['lcoe'], self.targets['load_pct'][3], multi_value['load_pct'])
                         lcoe_fitness_scores.append(1)
                     else:
                         lcoe_fitness_scores.append(pow(multi_value['lcoe'],
@@ -4687,7 +4710,7 @@ class powerMatch(QtWidgets.QWidget):
             try:
                 best_score = np.min(lcoe_scores)
             except:
-                print('(4510)', lcoe_scores)
+                print('(4713)', lcoe_scores)
             best_ndx = lcoe_scores.index(best_score)
             lowest_chrom = population[best_ndx]
             self.setStatus('Starting LCOE: $%.2f' % best_score)
@@ -5055,7 +5078,7 @@ class powerMatch(QtWidgets.QWidget):
                     label = QtWidgets.QLabel(txt % amt)
                 except:
                     label = QtWidgets.QLabel('?')
-                    print('(4878)', key, txt, amt)
+                    print('(5081)', key, txt, amt)
                 label.setAlignment(QtCore.Qt.AlignCenter)
                 grid[h + 1].addWidget(label, rw, 0, 1, 3)
             rw += 1
