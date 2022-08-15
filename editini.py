@@ -33,15 +33,18 @@ from senutils import ClickableQLabel, getParents, getUser, techClean
 
 
 class EdtDialog(QtWidgets.QDialog):
-    def __init__(self, in_file, parent=None, line=None):
+    def __init__(self, in_file, parent=None, line=None, section=None):
         self.in_file = in_file
         try:
             s = open(self.in_file, 'r').read()
             bits = s.split('\n')
             ln = 0
-            for lin in bits:
-                if len(lin) > ln:
-                    ln = len(lin)
+            for l in range(len(bits)):
+                if len(bits[l]) > ln:
+                    ln = len(bits[l])
+                if section != None:
+                    if bits[l] == section:
+                        line = l
             ln2 = len(bits)
         except:
             if self.in_file[self.in_file.rfind('.'):] == '.ini':

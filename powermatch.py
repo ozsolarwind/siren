@@ -1247,7 +1247,7 @@ class powerMatch(QtWidgets.QWidget):
             config_file = sys.argv[1]
         else:
             config_file = getModelFile('SIREN.ini')
-        dialr = EdtDialog(config_file)
+        dialr = EdtDialog(config_file, section='[Powermatch]')
         dialr.exec_()
      #   self.get_config()   # refresh config values
         config = configparser.RawConfigParser()
