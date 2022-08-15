@@ -687,7 +687,7 @@ class PowerModel():
                             te = tech_names2.index(stn.technology)
                         except:
                             continue
-                    zone_tech = '%s_%02d' % (stn.zone, te)
+                    zone_tech = '%s.%02d' % (stn.zone, te)
                     if zone_tech not in zone_techs:
                         zone_techs.append(zone_tech)
                 zone_techs.sort()
@@ -849,7 +849,7 @@ class PowerModel():
                             te = tech_names2.index(self.power_summary[i].technology)
                         except:
                             continue
-                    key = '%s_%02d' % (self.power_summary[i].zone, te)
+                    key = '%s.%02d' % (self.power_summary[i].zone, te)
                     if key not in datas.keys():
                         datas[key] = [0., 0., 0.]
                     datas[key][0] += self.power_summary[i].capacity
@@ -858,7 +858,7 @@ class PowerModel():
                         datas[key][2] += self.power_summary[i].transmitted
                 for key, value in iter(datas.items()):
                     zt = zone_techs.index(key)
-                    bits = key.split('_')
+                    bits = key.split('.')
                     ws.cell(row=type_row[type_tags.index('zone')], column=tech_col[zt]).value = bits[0]
                     i = int(bits[1])
                     if tech_names2[i] != '':
@@ -939,13 +939,13 @@ class PowerModel():
                                 te = tech_names2.index(self.stn_tech[k])
                             except:
                                 continue
-                        zk = '%s_%02d' % (self.stn_zone[k], te)
+                        zk = '%s.%02d' % (self.stn_zone[k], te)
                         te = zone_techs.index(zk)
                         ly_keys[te].append(key)
                         k += 1
                 else:
                     for key in self.ly.keys():
-                        bits = key.split('_')
+                        bits = key.split('.')
                         try:
                             te = tech_names.index(bits[1])
                         except:
@@ -953,7 +953,7 @@ class PowerModel():
                                 te = tech_names2.index(bits[1])
                             except:
                                 continue
-                        zk = '%s_%02d' % (bits[0], te)
+                        zk = '%s.%02d' % (bits[0], te)
                         te = zone_techs.index(zk)
                         ly_keys[te].append(key)
                 for te in range(len(zone_techs)):
