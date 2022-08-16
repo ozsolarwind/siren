@@ -28,7 +28,10 @@ import csv
 import openpyxl as oxl
 import os
 import sys
-import ssc
+try:
+    import ssc
+except:
+    pass
 import time
 import xlrd
 import xlwt

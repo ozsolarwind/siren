@@ -124,7 +124,10 @@ class WAScene(QtWidgets.QGraphicsScene):
         try:
             scale = config.get('Map', 'scale' + self.map)
         except:
-            scale = config.get('Map', 'scale')
+            try:
+                scale = config.get('Map', 'scale')
+            except:
+                scale = 'false'
         if scale.lower() in ['true', 'yes', 'on']:
             self.scale = True
         try:
@@ -169,7 +172,10 @@ class WAScene(QtWidgets.QGraphicsScene):
         self.colors['station_name'] = 'white'
         self.colors['town'] = 'red'
         self.colors['town_name'] = 'lightGray'
-        technologies = config.get('Power', 'technologies')
+        try:
+            technologies = config.get('Power', 'technologies')
+        except:
+            technologies = ''
         technologies = technologies.split()
         try:
             colours = config.items('Colors')

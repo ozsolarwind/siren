@@ -22,7 +22,10 @@
 import numpy as np
 import os
 import sys
-import ssc
+try:
+    import ssc
+except:
+    pass
 import xlrd
 
 import configparser  # decode .ini file
