@@ -34,10 +34,7 @@ from functools import partial
 
 import configparser  # decode .ini file
 from PyQt5 import QtCore, QtGui, QtWidgets
-try:
-    import ssc
-except:
-    pass
+import ssc
 import subprocess
 
 from colours import Colours

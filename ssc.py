@@ -59,12 +59,18 @@ class SSCAPI:
 #               return _dll
         elif sys.platform == 'linux2' or sys.platform == 'linux':
          #       _dll = CDLL("../../linux64/ssc.so")
-                _dll = CDLL(sam_sdk + "/linux64/ssc.so")
+                try:
+                    _dll = CDLL(sam_sdk + "/linux64/ssc.so")
+                except:
+                    print('SAM SDK library not found')
 #               return _dll
         else:
                 print("Platform not supported ", sys.platform)
-        if _dll.ssc_version() <= 209: # need to check SAM version and if ealier than 210 use c_float
-            c_number = c_float
+        try:
+            if _dll.ssc_version() <= 209: # need to check SAM version and if ealier than 210 use c_float
+                c_number = c_float
+        except:
+            pass
 
         @staticmethod
         def ssc_version():

@@ -23,10 +23,7 @@ from math import asin, ceil, cos, fabs, pow, radians, sin, sqrt
 import csv
 import os
 import sys
-try:
-    import ssc
-except:
-    pass
+import ssc
 import time
 import xlrd
 
