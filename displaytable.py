@@ -50,7 +50,8 @@ class FakeObject:
 
 class Table(QtWidgets.QDialog):
     def __init__(self, objects, parent=None, fields=None, fossil=True, sumby=None, sumfields=None, units='', title=None,
-                 save_folder='', edit=False, sortby=None, decpts=None, totfields=None, abbr=True, txt_align=None):
+                 save_folder='', edit=False, sortby=None, decpts=None, totfields=None, abbr=True, txt_align=None,
+                 reverse=False):
         super(Table, self).__init__(parent)
         self.oclass = None
         if len(objects) == 0:
@@ -212,6 +213,8 @@ class Table(QtWidgets.QDialog):
             self.order(-1)
         else:
             self.order(self.fields.index(sortby))
+            if reverse:
+                self.order(self.fields.index(sortby))
 
         if self.sumfields is not None:
             for i in range(len(self.sumfields) -1, -1, -1): # make sure sumfield has a field
