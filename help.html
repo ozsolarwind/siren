@@ -1788,6 +1788,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">Maximum value for Power (y) axis. Default is 0 (meaning dynamic y axis)</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>overlay (&ast;)</dfn></td>
+<td class="none">Include an overlay (of storage recharge) on the plot</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>palette</dfn></td>
 <td class="none">Invoke the Colours editor to create a palette of colours for selected columns. Default is True</td>
 </tr>
@@ -3036,6 +3040,10 @@ The program displays a window of options. The default values are specified in th
 <td class="none">A pull-down list for a full year or a month. If an option other than <em>&lt;None&gt;</em> is chosen the resulting plot will present an average diurnal plot for the chosen period (<em>period</em>)</td></tr>
 <tr><td class="lr"><dfn>Target</dfn></td>
 <td class="none">A pull-down list of column names. If the plot is intended to show how the chosen columns meet a target column, typically Load, this enables you to choose that column. Choosing <em>&lt;None&gt;</em> means no target field. If a target field is chosen the plot will show excess generation as lightly shaded areas above the target values (<em>target</em>)</td></tr>
+
+<tr><td class="lr"><dfn>Overlay</dfn></td>
+<td class="none">This option allows the total of energy used to recharge storage to be shown as an overlay on the plot; it provides an indication of how and when excess energy has been used for recharge. If a Target, e.g. Load, is chosen the target values will be added to the figure to indicate the use of excess energy above teh target. It presents a pull-down list of options. At present the only options are <em>&lt;none&gt;</em> and <em>Charge</em> (<em>overlay</em>)
+</tr>
 <tr><td class="lr"><dfn>Title</dfn></td>
 <td class="none">Specify a title for the plot. There are two special strings which will be replaced in the title:
 <ul>

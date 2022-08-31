@@ -182,6 +182,7 @@ class PowerPlot(QtWidgets.QWidget):
         self.margin_of_error = .0001
         self.constrained_layout = False
         self.target = ''
+        self.overlay = '<none>'
         self.palette = True
         self.history = None
         self.max_files = 10
@@ -279,6 +280,14 @@ class PowerPlot(QtWidgets.QWidget):
         self.grid.addWidget(self.targets, rw, 1, 1, 2)
         self.grid.addWidget(QtWidgets.QLabel('(e.g. Load)'), rw, 3, 1, 2)
         rw += 1
+        self.grid.addWidget(QtWidgets.QLabel('Overlay:'), rw, 0)
+        self.overlays = QtWidgets.QComboBox()
+        self.overlays.addItem('<none>')
+        self.overlays.addItem('Charge')
+        self.overlays.setCurrentIndex(0)
+        self.grid.addWidget(self.overlays, rw, 1, 1, 2)
+        self.grid.addWidget(QtWidgets.QLabel('(e.g. Charge)'), rw, 3, 1, 2)
+        rw += 1
         self.grid.addWidget(QtWidgets.QLabel('Header:'), rw, 0)
         self.suptitle = QtWidgets.QLineEdit('')
         self.grid.addWidget(self.suptitle, rw, 1, 1, 2)
@@ -336,6 +345,7 @@ class PowerPlot(QtWidgets.QWidget):
         self.files.currentIndexChanged.connect(self.targetChanged)
         self.sheet.currentIndexChanged.connect(self.sheetChanged)
         self.targets.currentIndexChanged.connect(self.targetChanged)
+        self.overlays.currentIndexChanged.connect(self.overlayChanged)
         self.suptitle.textChanged.connect(self.somethingChanged)
         self.title.textChanged.connect(self.somethingChanged)
         self.maxSpin.valueChanged.connect(self.somethingChanged)
@@ -404,6 +414,16 @@ class PowerPlot(QtWidgets.QWidget):
                     ifile = value.replace('$USER$', getUser())
                 elif key == 'grid' + choice:
                     self.gridtype.setCurrentIndex(self.gridtype.findText(value))
+                elif key == 'overlay' + choice:
+                    try:
+                        i = self.overlays.findText(value, QtCore.Qt.MatchExactly)
+                        if i >= 0:
+                            self.overlays.setCurrentIndex(i)
+                        else:
+                            self.overlays.setCurrentIndex(0)
+                        self.overlay = value
+                    except:
+                        pass
                 elif key == 'percentage' + choice:
                     if value.lower() in ['true', 'yes', 'on']:
                         self.percentage.setCheckState(QtCore.Qt.Checked)
@@ -411,7 +431,7 @@ class PowerPlot(QtWidgets.QWidget):
                         self.percentage.setCheckState(QtCore.Qt.Unchecked)
                 elif key == 'period' + choice:
                     i = self.period.findText(value, QtCore.Qt.MatchExactly)
-                    if i >=0 :
+                    if i >= 0 :
                         self.period.setCurrentIndex(i)
                     else:
                         self.period.setCurrentIndex(0)
@@ -565,6 +585,13 @@ class PowerPlot(QtWidgets.QWidget):
         self.setColumns(isheet)
         self.updated = True
 
+    def overlayChanged(self):
+        self.log.setText('')
+        overlay = self.overlays.currentText()
+        if overlay != self.overlay:
+            self.overlay = overlay
+            self.updated = True
+
     def targetChanged(self):
         self.log.setText('')
         target = self.targets.currentText()
@@ -702,6 +729,11 @@ class PowerPlot(QtWidgets.QWidget):
             lines.append('file' + choice + '=' + self.file.text().replace(getUser(), '$USER$'))
             lines.append('grid' + choice + '=' + self.gridtype.currentText())
             lines.append('sheet' + choice + '=' + self.sheet.currentText())
+            if self.overlay == '<none>':
+                overlay = ''
+            else:
+                overlay = self.overlay
+            lines.append('overlay' + choice + '=' + overlay)
             lines.append('period' + choice + '=')
             if self.period.currentText() != '<none>':
                 lines[-1] = lines[-1] + self.period.currentText()
@@ -858,7 +890,6 @@ class PowerPlot(QtWidgets.QWidget):
             row = 0
             self.zone_row =  -1
             while row < ws.nrows:
-                print('(854)', row, ws.cell_value(row, 0), ws.cell_value(row, 1))
                 if ws.cell_value(row, 0) == 'Technology':
                     tech_row = row
                 elif ws.cell_value(row, 0) == 'Zone':
@@ -904,6 +935,8 @@ class PowerPlot(QtWidgets.QWidget):
                 x.append(i)
             load = []
             tgt_col = -1
+            overlay_cols = []
+            overlay = []
             data = []
             label = []
             maxy = 0
@@ -921,6 +954,9 @@ class PowerPlot(QtWidgets.QWidget):
                     column = ws.cell_value(self.zone_row, c2).replace('\n',' ') + '.' + column
                 if column == self.target:
                     tgt_col = c2
+                if self.overlay != '<none>':
+                    if column == self.target or column[:len(self.overlay)] == self.overlay:
+                        overlay_cols.append(c2)
             for c in range(self.order.count() -1, -1, -1):
                 col = self.order.item(c).text()
                 for c2 in range(2, ws.ncols):
@@ -939,6 +975,13 @@ class PowerPlot(QtWidgets.QWidget):
                 for row in range(self.toprow[1] + 1, self.toprow[1] + self.rows + 1):
                     load.append(ws.cell_value(row, tgt_col))
                     maxy = max(maxy, load[-1])
+            if len(overlay_cols) > 0:
+                for row in range(self.toprow[1] + 1, self.toprow[1] + self.rows + 1):
+                    overlay.append(0.)
+                for row in range(self.toprow[1] + 1, self.toprow[1] + self.rows + 1):
+                    for col in overlay_cols:
+                        overlay[row - self.toprow[1] - 1] += ws.cell_value(row, col)
+                    maxy = max(maxy, overlay[row - self.toprow[1] - 1])
             if self.plottype.currentText() == 'Linegraph':
                 fig = plt.figure('linegraph_' + str(year), constrained_layout=self.constrained_layout)
                 if self.suptitle.text() != '':
@@ -951,6 +994,8 @@ class PowerPlot(QtWidgets.QWidget):
                     ax.plot(x, data[c], linewidth=1.5, label=label[c], color=self.colours[label[c].lower()])
                 if len(load) > 0:
                     ax.plot(x, load, linewidth=2.5, label=self.target, color=self.colours[self.target.lower()])
+                if len(overlay) > 0:
+                    ax.plot(x, overlay, linewidth=1.5, label=self.overlay, color='black', linestyle='dotted')
                 if self.maxSpin.value() > 0:
                     maxy = self.maxSpin.value()
                 else:
@@ -1087,6 +1132,11 @@ class PowerPlot(QtWidgets.QWidget):
                             bx.plot(x, load, linewidth=2.5, label=self.target, color=self.colours[self.target.lower()])
                         else:
                             bx.step(x, load, linewidth=2.5, label=self.target, color=self.colours[self.target.lower()])
+                    if len(overlay) > 0:
+                        if self.plottype.currentText() == 'Cumulative':
+                            bx.plot(x, overlay, linewidth=1.5, label=self.overlay, color='black', linestyle='dotted')
+                        else:
+                            bx.step(x, overlay, linewidth=1.5, label=self.overlay, color='black', linestyle='dotted')
                     if self.maxSpin.value() > 0:
                         maxy = self.maxSpin.value()
                     else:
@@ -1155,6 +1205,8 @@ class PowerPlot(QtWidgets.QWidget):
                                 maxy = max(maxy, data[c][h])
                             fx.bar(x, data[c], bottom=bottoms, label=label[c], color=self.colours[label[c].lower()])
                         fx.plot(x, load, linewidth=2.5, label=self.target, color=self.colours[self.target.lower()])
+                    if len(overlay) > 0:
+                        bx.plot(x, overlay, linewidth=1.5, label=self.overlay, color='black', linestyle='dotted')
                     if self.maxSpin.value() > 0:
                         maxy = self.maxSpin.value()
                     else:
@@ -1219,6 +1271,8 @@ class PowerPlot(QtWidgets.QWidget):
                     todo_rows = [the_days[i] * self.interval]
             load = []
             tgt_col = -1
+            overlay_cols = []
+            overlay = []
             data = []
             label = []
             miny = 0
@@ -1233,6 +1287,9 @@ class PowerPlot(QtWidgets.QWidget):
                     column = ws.cell_value(self.zone_row, c2).replace('\n',' ') + '.' + column
                 if column == self.target:
                     tgt_col = c2
+                if self.overlay != '<none>':
+                    if column == self.target or column[:len(self.overlay)] == self.overlay:
+                        overlay_cols.append(c2)
             for c in range(self.order.count() -1, -1, -1):
                 col = self.order.item(c).text()
                 for c2 in range(2, ws.ncols):
@@ -1274,6 +1331,21 @@ class PowerPlot(QtWidgets.QWidget):
                 for h in range(self.interval):
                     load[h] = load[h] / (tot_rows / self.interval)
                     maxy = max(maxy, load[h])
+            if len(overlay_cols) > 0:
+                overlay = [0] * len(hs)
+                tot_rows = 0
+                for s in range(len(strt_row)):
+                    h = 0
+                    for row in range(strt_row[s] + 1, strt_row[s] + todo_rows[s] + 1):
+                        for col in overlay_cols:
+                            overlay[h] += ws.cell_value(row, col)
+                        h += 1
+                        if h >= self.interval:
+                           h = 0
+                    tot_rows += todo_rows[s]
+                for h in range(self.interval):
+                    overlay[h] = overlay[h] / (tot_rows / self.interval)
+                    maxy = max(maxy, overlay[h])
             if self.plottype.currentText() == 'Linegraph':
                 fig = plt.figure('linegraph_' + self.period.currentText().lower() + '_' + str(year),
                                  constrained_layout=self.constrained_layout)
@@ -1287,6 +1359,8 @@ class PowerPlot(QtWidgets.QWidget):
                     cx.plot(x, data[c], linewidth=1.5, label=label[c], color=self.colours[label[c].lower()])
                 if len(load) > 0:
                     cx.plot(x, load, linewidth=2.5, label=self.target, color=self.colours[self.target.lower()])
+                if len(overlay) > 0:
+                    cx.plot(x, overlay, linewidth=1.5, label=self.overlay, color='black', linestyle='dotted')
                 if self.maxSpin.value() > 0:
                     maxy = self.maxSpin.value()
                 else:
@@ -1408,8 +1482,12 @@ class PowerPlot(QtWidgets.QWidget):
                             dx.fill_between(x, data[c], short, label='Shortfall', color=self.colours['shortfall'], step=step)
                         if self.plottype.currentText() == 'Cumulative':
                             dx.plot(x, load, linewidth=2.5, label=self.target, color=self.colours[self.target.lower()])
+                            if len(overlay) > 0:
+                                dx.plot(x, overlay, linewidth=1.5, label=self.overlay, color='black', linestyle='dotted')
                         else:
                             dx.step(x, load, linewidth=2.5, label=self.target, color=self.colours[self.target.lower()])
+                            if len(overlay) > 0:
+                                dx.step(x, overlay, linewidth=1.5, label=self.overlay, color='black', linestyle='dotted')
                     if self.maxSpin.value() > 0:
                         maxy = self.maxSpin.value()
                     else:
@@ -1499,7 +1577,6 @@ class PowerPlot(QtWidgets.QWidget):
                 f = zp.zoom_pan(ex, base_scale=1.2) # enable scrollable zoom
                 plt.show()
                 del zp
-
 
 
 if "__main__" == __name__:
