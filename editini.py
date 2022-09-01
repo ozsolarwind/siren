@@ -42,7 +42,7 @@ class EdtDialog(QtWidgets.QDialog):
             for l in range(len(bits)):
                 if len(bits[l]) > ln:
                     ln = len(bits[l])
-                if section != None:
+                if section is not None:
                     if bits[l] == section:
                         line = l
             ln2 = len(bits)
@@ -78,6 +78,11 @@ class EdtDialog(QtWidgets.QDialog):
             ln2 = int(screen.height() * .67)
         self.widget.resize(ln, ln2)
         self.widget.setPlainText(s)
+        if section is not None:
+            where = self.widget.find(section)
+        elif line is not None:
+            for l in range(line):
+                self.widget.moveCursor(QtGui.QTextCursor.NextBlock)
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.widget)
         layout.addLayout(buttonLayout)
