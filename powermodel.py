@@ -2533,6 +2533,9 @@ class PowerModel():
             else:
                 data_file = self.data_file
             stnsh = {}
+            # if load
+            if self.plots['show_load']:
+                stnsh['Load'] = self.load_data[:]
             for i in range(len(self.stn_outs)):
                 stnsh[self.stn_outs[i]] = self.stn_pows[i][:]
             self.save_detail(data_file, stnsh)
