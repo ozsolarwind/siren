@@ -354,9 +354,9 @@ class Grid:
             kml_file = self.kml_file
         if not os.path.exists(kml_file):
             if grid2:
-                self.kml_file = ''
-            else:
                 self.kml_file2 = ''
+            else:
+                self.kml_file = ''
             return
         style = {}
         styl = ''
