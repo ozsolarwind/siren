@@ -1549,7 +1549,8 @@ class MainWindow(QtWidgets.QMainWindow):
             pass
         for i in range(len(self.view.scene().lines.lines) - 1, -1, -1):
             if self.view.scene().lines.lines[i].name == st.name:
-                del self.view.scene().lines.lines[i]
+                if self.view.scene().lines.lines[i].initial is None:
+                    del self.view.scene().lines.lines[i]
 
     def saveScenariod(self):
         for i in range(len(self.view.scene()._scenarios)):
