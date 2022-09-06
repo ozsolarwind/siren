@@ -19,6 +19,7 @@
 #  <http://www.gnu.org/licenses/>.
 #
 
+import math
 import os
 try:
     import pwd
@@ -85,3 +86,90 @@ def techClean(tech, full=False):
         for each in alll:
             cleantech = cleantech.replace(each[0], each[1])
     return cleantech
+
+#
+# add another windspeed height
+def extrapolateWind(wind_file, tgt_height, law='logarithmic', replace=False):
+    if not os.path.exists(wind_file):
+        if replace:
+            return False
+        else:
+            return None
+    if wind_file[-4:] != '.srw':
+        if replace:
+            return False
+        else:
+            return None
+    tf = open(wind_file, 'r')
+    lines = tf.readlines()
+    tf.close()
+    fst_row = 5
+    units = lines[3].rstrip(',\n').split(',')
+    hghts = lines[4].rstrip(',\n').split(',')
+    col = -1
+    heights_ms = []
+    heights_dirn = []
+    for j in range(len(units)):
+        if units[j] == 'm/s':
+             heights_ms.append([int(hghts[j]), j])
+             if heights_ms[-1][0] == tgt_height:
+                 if replace:
+                     return False
+                 else:
+                     return None
+        elif units[j] == 'degrees':
+             heights_dirn.append([int(hghts[j]), j])
+    lines[2] = lines[2].rstrip(',\n') + ',Direction,Speed\n'
+    lines[3] = lines[3].rstrip(',\n') + ',degrees,m/s\n'
+    lines[4] = lines[4].rstrip(',\n') + ',' + str(tgt_height) + ',' + str(tgt_height) + '\n'
+    heights_ms.sort(key=lambda x: x[0], reverse=True)
+    heights_dirn.sort(key=lambda x: x[0], reverse=True)
+    height = float(heights_ms[0][0])
+    col = heights_ms[0][1]
+    height0 = float(heights_ms[1][0])
+    if height0 == height:
+        if replace:
+            return False
+        else:
+            return None
+    col0 = heights_ms[1][1]
+    cold = heights_dirn[0][1]
+    for i in range(fst_row, len(lines)):
+        bits = lines[i].rstrip(',\n').split(',')
+        speed = float(bits[col])
+        speed0 = float(bits[col0])
+        if speed0 > speed:
+            alpha = 1. / 7. # one-seventh power law
+        else:
+            alpha = (math.log(speed)-math.log(speed0))/(math.log(height)-math.log(height0))
+        z0 = math.exp(((pow(height0, alpha) * math.log(height)) - pow(height, alpha) * math.log(height0)) \
+                      / ( pow(height0, alpha) - pow(height, alpha)))
+        if z0 == 0:
+            z0 = 0.03
+        if law.lower()[0] == 'l': # law == 'logarithmic'
+            speedz = math.log(tgt_height / z0) / math.log(height0 / z0) * speed0
+            lines[i] = lines[i].strip() + ',' + bits[cold] + ',' + str(round(speedz, 4)) + '\n'
+        else: # law == 'hellmann'
+            speeda = pow(tgt_height / height0, alpha) * speed0
+            lines[i] = lines[i].strip() + ',' + bits[cold] + ',' + str(round(speeda, 4)) + '\n'
+    if replace:
+        if os.path.exists(wind_file + '~'):
+            os.remove(wind_file + '~')
+        os.rename(wind_file, wind_file + '~')
+        nf = open(wind_file, 'w')
+        for line in lines:
+            nf.write(line)
+        nf.close()
+        return True
+    else:
+        return lines
+        array = [] # this doesn't work yet
+        for i in range(4):
+            bits = lines[i].split(',')
+            array.append(bits)
+        for i in range(fst_row, len(lines)):
+            bits = lines[i].split(',')
+            for j in range(len(bits)):
+                bits[j] = float(bits[j])
+            array.append(bits)
+        return array

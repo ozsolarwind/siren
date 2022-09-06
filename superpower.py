@@ -19,7 +19,7 @@
 #  <http://www.gnu.org/licenses/>.
 #
 
-from math import asin, ceil, cos, fabs, pow, radians, sin, sqrt
+from math import asin, ceil, cos, fabs, pow, radians, sin, sqrt, floor
 import csv
 import os
 import sys
@@ -31,10 +31,12 @@ import configparser  # decode .ini file
 from PyQt5 import Qt, QtCore, QtGui, QtWidgets
 
 from getmodels import getModelFile
-from senutils import getParents, getUser, techClean
+from senutils import getParents, getUser, techClean, extrapolateWind
 from powerclasses import *
 # import Station
 from turbine import Turbine
+
+import tempfile # for wind extrapolate
 
 the_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
@@ -363,6 +365,8 @@ class SuperPower():
         self.wind_row_spacing = [8, 8]
         self.wind_offset_spacing = [4, 4]
         self.wind_farm_losses_percent = [2, 2]
+        self.wind_hub_formula = [None, None]
+        self.wind_law = ['l', 'l']
         try:
             self.wind_turbine_spacing[0] = int(config.get('Wind', 'turbine_spacing'))
         except:
@@ -392,6 +396,20 @@ class SuperPower():
             except:
                 pass
         try:
+            self.wind_law[0] = config.get('Wind', 'extrapolate')
+        except:
+            try:
+                self.wind_law[0] = config.get('Onshore Wind', 'extrapolate')
+            except:
+                pass
+        try:
+            self.wind_hub_formula[0] = config.get('Wind', 'hub_formula')
+        except:
+            try:
+                self.wind_hub_formula[0] = config.get('Onshore Wind', 'hub_formula')
+            except:
+                pass
+        try:
             self.wind_turbine_spacing[1] = int(config.get('Offshore Wind', 'turbine_spacing'))
         except:
             pass
@@ -405,6 +423,14 @@ class SuperPower():
             pass
         try:
             self.wind_farm_losses_percent[1] = int(config.get('Offshore Wind', 'wind_farm_losses_percent').strip('%'))
+        except:
+            pass
+        try:
+            self.wind_law[1] = config.get('Offshore Wind', 'extrapolate')
+        except:
+            pass
+        try:
+            self.wind_hub_formula[1] = config.get('Offshore Wind', 'hub_formula')
         except:
             pass
         self.st_gross_net = 0.87
@@ -836,10 +862,25 @@ class SuperPower():
             else:
                 wtyp = 0
             closest = self.find_closest(station.lat, station.lon, wind=True)
-            self.data.set_string(b'wind_resource_filename', (self.wind_files + '/' + closest).encode('utf-8'))
             turbine = Turbine(station.turbine)
             if not hasattr(turbine, 'capacity'):
                 return None
+            wind_file = self.wind_files + '/' + closest
+            if turbine.rotor > 88 and self.wind_hub_formula[wtyp] is not None: # if a hub height is specified
+                formula = self.wind_hub_formula[wtyp].replace('rotor', str(turbine.rotor))
+                try:
+                    hub_hght = eval(formula)
+                    temp_dir = tempfile.gettempdir()
+                    temp_file = 'windfile.srw'
+                    wind_data = extrapolateWind(self.wind_files + '/' + closest, hub_hght, law=self.wind_law[wtyp])
+                    wf = open(temp_dir + '/' + temp_file, 'w')
+                    for line in wind_data:
+                        wf.write(line)
+                    wf.close()
+                    wind_file = temp_dir + '/' + temp_file
+                except:
+                    self.wind_hub_formula[wtyp] = None
+            self.data.set_string(b'wind_resource_filename', wind_file.encode('utf-8'))
             no_turbines = int(station.no_turbines)
             if station.scenario == 'Existing' and (no_turbines * turbine.capacity) != (station.capacity * 1000):
                 loss = round(1. - (station.capacity * 1000) / (no_turbines * turbine.capacity), 2)
@@ -875,6 +916,8 @@ class SuperPower():
             self.data.set_number(b'wind_turbine_cutin', turbine.cutin)
             self.do_defaults(station)
             farmpwr = do_module('windpower', station, 'gen')
+            if turbine.rotor > 88 and self.wind_hub_formula[wtyp] is not None: # if a hub height is specified
+                os.remove(temp_dir + '/' + temp_file)
             return farmpwr
         elif station.technology == 'CST':
             closest = self.find_closest(station.lat, station.lon)

@@ -1485,6 +1485,14 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">Capital cost per peak MW. A suffix of K indicates thousands and M millions</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>extrapolate</dfn></td>
+<td class="none">The law (model) to extrapolate wind speed data. This can be either <em>Hellmann</em> or <em>logarithmic</em>. Default is logarithmic</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>hub_formula</dfn></td>
+<td class="none">Provide a formula to calculate hub height for larger turbines to extrapolate wind speed data. Default is None</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>icon</dfn></td>
 <td class="none">Icon to display for this technology. Default is wind_g.png</td>
 </tr>
@@ -2343,6 +2351,14 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">Capital cost per peak MW. A suffix of K indicates thousands and M millions</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>extrapolate</dfn></td>
+<td class="none">The law (model) to extrapolate wind speed data. This can be either <em>Hellmann</em> or <em>logarithmic</em>. Default is logarithmic</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>hub_formula</dfn></td>
+<td class="none">Provide a formula to calculate hub height for larger turbines to extrapolate wind speed data. Default is None</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>icon</dfn></td>
 <td class="none">Icon to display for this technology. Default is wind_g.png</td>
 </tr>
@@ -2882,6 +2898,12 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <li>The Financial Models option will invoke SAM Annual Output and Utility IPP/Commercial PPA Finance models. These enable a LCOE to be determined for the scenario</li>
 <li>Powermatch allows you to complete a costed renewable energy scenario. It will use dispatchable generation to meet shortfalls in the renewable energy generation mix to match generation with demand (load) to quantify and cost dispatchable energy generation, storage and CO<sub>2</sub>&#x2011;e emissions</li>
 </ul>
+<h4>Notes on Wind Stations</h4>
+<p>With increasing hub heights associated with larger turbines the SAM models are impacted by the lack of suitable wind speed data at greater heights. The MERRA-2 weather data has a maximum wind speed height of 50 metres which will cope with hub heights up to around 85 metres. To overcome the wind data limitation SIREN can extrapolate wind speeds to greater heights. To enable this you can use the <em>hub_formula</em> property of the <a href="#p_wind">[Wind]</a> and <a href="#p_offw">[Offshore Wind]</a> Sections of the Preferences file. This formula can be used to calculate a hub height (for rotor lengths greater than 88) to extrapolate wind speed using either of two commonly used laws (models). The law to be used can be specified in the <em>extrapolate</em> property of the appropriate wind Section(s) and can be either <em>logarithmic</em>, the default, or <em>Hellmann</em>. This additional data will be added to the normal wind file and passed to the SAM windpower model.</p>
+<p>From &lsquo;Do we really need rotor equivalent wind speed?&rsquo; (Van Sark etal, <a href="https://onlinelibrary.wiley.com/doi/full/10.1002/we.2319#:~:text=For%20situations%20where%20the%20ratio,and%20the%20wind%20speed%20at">https://onlinelibrary.wiley.com/doi/full/10.1002/we.2319#:~:text=For%20situations%20where%20the%20ratio,and%20the%20wind%20speed%20at</a>) a possible formula for calculating hub height is - <code>H = 0.789 D + 14.9 m</code>. For the <em>hub_formula property</em> this can be set as:</p>
+<p><code>int(floor((0.789 * rotor + 14.9) / 10) * 10)</code></p>
+<p>SIREN will replace <code>rotor</code> with the rotor diameter for the station turbine and perform the calculation which will round the calculated hub height down to the nearest 10 metres.</p>
+<p>Discussions on the two wind profile laws can be found at <a href="https://en.wikipedia.org/wiki/Wind_profile_power_law">Wind profile power law</a> (aka Hellmann law) and <a href="https://en.wikipedia.org/wiki/Log_wind_profile">Log wind profile</a> (aka logarithmic law). The Hellmann law tends to give slightly higher wind speeds. &lsquo;Methodologies Used in the Extrapolation of Wind Speed Data at Different Heights and Its Impact in the Wind Energy Resource Assessment in a Region&rsquo; (<a href="https://www.researchgate.net/publication/221912731_Methodologies_Used_in_the_Extrapolation_of_Wind_Speed_Data_at_Different_Heights_and_Its_Impact_in_the_Wind_Energy_Resource_Assessment_in_a_Region">https://www.researchgate.net/publication/221912731_Methodologies_Used_in_the_Extrapolation_of_Wind_Speed_Data_at_Different_Heights_and_Its_Impact_in_the_Wind_Energy_Resource_Assessment_in_a_Region</a>) provides a fuller discussion on the topic.</p>
 <p><a href="#help">Back to top</a></p>
 <h3 id="popts">Power Model Options</h3>
 <p>The Power Model options menu are as set out here. The default values are specified in the <a href="#power">[Power]</a> Section of the Preferences file. The associated property is indicated in brackets at the end of the description. If you hover over the window title bar or press F1 a help for the Options will be displayed.</p>
@@ -3022,11 +3044,12 @@ By default the size of plots produced is determined by matplotlib, or by the <em
 </ul>
 <p><strong>Note:</strong> For cumulative (stacked) plots produced by Powerplot this feature may perform slowly so please be a little patient</p>
 <h4 id="powerplot"><u>Powerplot</u></h4>
-<p><code>powerplot</code> is a standalone program that will produce either hourly or diurnal plots from a spreadsheet that conforms to certain constraints. It is intended to be used to plot (detailed) results either from Powermatch or some of the files produced by SIREN's PowerModels. The spreadsheet must have:</p>
+<p><code>powerplot</code> is a standalone program that will produce either hourly, half-hourly or diurnal plots from a spreadsheet that conforms to certain constraints. It is intended to be used to plot (detailed) results either from Powermatch or some of the files produced by SIREN's PowerModels.
+<p>The spreadsheet must have:</p>
 <ol>
 <li>A header row that defines the content of the underlying rows (this need not be the first row)</li>
-<li>The first (header) column should be <em>Hour</em> and the second should be <em>Period</em> with a cell format of <em>yyyy-mm-dd hh:mm</em>. The program uses the year in the first period row to determine if the data is for a leap year</li>
-<li>The rows immediately following the header row should contain data for each hour of the year (8,760 for a normal year and 8,784 for a leap; or a smaller number for an incomplete year)</li>
+<li>The first (header) column should be <em>Hour</em> for hourly data or <em>Interval</em> for half-hourly data, and the second should be <em>Period</em> with a cell format of <em>yyyy-mm-dd hh:mm</em>. The program uses the year in the first period row to determine if the data is for a leap year</li>
+<li>The rows immediately following the header row should contain data for each hour or half-hour of the year (either 8,760 or 17,520 for a normal year and 8,784 or 17,568 for a leap; or a smaller number for an incomplete year)</li>
 </ol>
 The program displays a window of options. The default values are specified in the <a href="#p_pp">[Powerplot]</a> Section of the Preferences file. It is possible to have a number of entries for files (<em>file_choices</em>) listed in recent order (<em>file_history</em>).
 <table border="0" class="none">
@@ -3037,12 +3060,13 @@ The program displays a window of options. The default values are specified in th
 <tr><td class="lr"><dfn>Sheet</dfn></td>
 <td class="none">A pull-down list to enable you to choose the desired worksheet (<em>sheet</em>)</td></tr>
 <tr><td class="lr"><dfn>Period</dfn></td>
-<td class="none">A pull-down list for a full year or a month. If an option other than <em>&lt;None&gt;</em> is chosen the resulting plot will present an average diurnal plot for the chosen period (<em>period</em>)</td></tr>
+<td class="none">A pull-down list for a full year, a month or other defined seasons or periods that may be defined in the Preferences file. If an option other than <em>&lt;None&gt;</em> is chosen the resulting plot will present an average diurnal plot for the chosen period (<em>period</em>)
+</td></tr>
 <tr><td class="lr"><dfn>Target</dfn></td>
-<td class="none">A pull-down list of column names. If the plot is intended to show how the chosen columns meet a target column, typically Load, this enables you to choose that column. Choosing <em>&lt;None&gt;</em> means no target field. If a target field is chosen the plot will show excess generation as lightly shaded areas above the target values (<em>target</em>)</td></tr>
-
+<td class="none">A pull-down list of column names. If the plot is intended to show how the chosen columns meet a target column, typically Load, this enables you to choose that column. Choosing <em>&lt;None&gt;</em> means no target field. If a target field is chosen the plot will show excess generation as lightly shaded areas above the target values (<em>target</em>)
+</td></tr>
 <tr><td class="lr"><dfn>Overlay</dfn></td>
-<td class="none">This option allows the total of energy used to recharge storage to be shown as an overlay on the plot; it provides an indication of how and when excess energy has been used for recharge. If a Target, e.g. Load, is chosen the target values will be added to the figure to indicate the use of excess energy above teh target. It presents a pull-down list of options. At present the only options are <em>&lt;none&gt;</em> and <em>Charge</em> (<em>overlay</em>)
+<td class="none">This option allows the total of energy used to recharge storage to be shown as an overlay on the plot; it provides an indication of how and when excess energy has been used for recharge. If a Target, e.g. Load, is chosen the target values will be added to the figure to indicate the use of excess energy above the target. It presents a pull-down list of options. At present the only options are <em>&lt;none&gt;</em> and <em>Charge</em> (<em>overlay</em>)
 </tr>
 <tr><td class="lr"><dfn>Title</dfn></td>
 <td class="none">Specify a title for the plot. There are two special strings which will be replaced in the title:
@@ -3063,7 +3087,8 @@ If it's not a diurnal plot (i.e. Period is <em>&lt;None&gt;</em>) any occurence 
 <tr><td class="lr"><dfn>Show Grid</dfn></td>
 <td class="none">The gridlines to be included on the plot. Options are <em>Both</em>, <em>Horizontal</em>, <em>Vertical</em> and <em>None</em>. The default is <em>None</em> (<em>grid</em>)</td></tr>
 <tr><td class="lr"><dfn>Column Order</dfn></td>
-<td class="none">To produce the plot you select those columns to be included. This field consists of two tables (lists) of columns. Those in the left hand list will be included in the plot while those on the right will be excluded. The included columns will be plotted in the chosen order. You can drag individual or a number of columns between the two lists to get the desired configuration. The plot colour for the column will be displayed as the background color for the column (<em>columns</em>)</td></tr>
+<td class="none">To produce the plot you select those columns to be included. This field consists of two tables (lists) of columns. Those in the left hand list will be included in the plot while those on the right will be excluded. The included columns will be plotted in the chosen order. You can drag individual or a number of columns between the two lists to get the desired configuration. The plot colour for the column will be displayed as the background color for the column (<em>columns</em>)
+</td></tr>
 <tr><td class="bottom"><strong>Done, Plot, Colours, Help</strong></td>
 <td class="none">At the bottom of the window are a number of buttons:
 <ul>
@@ -4084,6 +4109,7 @@ You can alternate between these approaches to choose the desired area. If you ha
 <li><em>Time Zone</em>. The (solar) time zone for the area of interest. This is used to create suitable weather files where the first hour in the file is the first hour of the year in the local time zone. A value of <em>auto</em> will cause the program to use the (first) longitude and a value of <em>best</em> will cause the program to use the time zone with the most longitude values in the MERRA-2 data files to calculate the time zone</li>
 <li><em>Solar Format</em>. The solar option can produce weather files in either of two formats - SMW or CSV format. This option allows you to choose your preferred one. SMW format is suitable for SAM while it may have trouble with the CSV format</li>
 <li><em>Solar Variable</em>. There are two MERRA-2 solar variables to use to create weather files - swgdn or swgnt</li>
+<li><em>Hub height</em>. To extrapolate wind data above the 50 metre maximum in the MERRA-2 data. This can be used to cater for wind turbines with higher hub heights</li>
 <li><em>Coordinates</em>. Rather than producing weather files for each grid cell in the chosen area you can restrict it by passing a string of comma-separated latitude and longitude values. The tool will then generate files for just these coordinates.
 <ul>
 <li>For latitudes and longitudes that don't match cell dimensions in the MERRA-2 files values will be calculated from ratios of values for the surrounding cells</li>
@@ -4094,11 +4120,12 @@ You can alternate between these approaches to choose the desired area. If you ha
 <li><em>Wind Folder</em>. Use this to specify the location for the MERRA-2 wind (<em>tavg1_2d_slv_Nx</em>) source files. To change the location you need to click on the field and navigate to the correct folder (you can't type into the field). This location is used for both solar and wind files so you need to specify it in all cases</li>
 <li><em>Target Folder</em>. Use this to specify the location for the weather files produced by the tool. To change the location you need to click on the field and navigate to the correct folder (you can't type into the field)</li>
 </ul>
-<p>There are five buttons:</p>
+<p>There are six buttons:</p>
 <ul>
 <li><em>Done</em> will exit the program</li>
 <li><em>Produce Solar Files</em> will produce solar weather files</li>
 <li><em>Produce Wind Files</em> will produce wind weather files</li>
+<li><em>Update Wind Files</em> will update existing wind weather files with extrapolated wind speed</li>
 <li><em>Help</em> Display this help</li>
 <li><em>File Info</em> Display details about the weather file dimensions and variables</li>
 </ul>
@@ -4117,16 +4144,18 @@ You can alternate between these approaches to choose the desired area. If you ha
 </pre>
 <p>Parameters are as described above and can be passed to the program as follows:</p>
 <ul>
-<li><em>year=</em> Year of interest</li>
-<li><em>wrap=</em> A value starting with <em>y</em> (yes) or <em>t</em> (true) indicates to wrap back to the prior year</li>
-<li><em>zone=</em> or <em>timezone=</em> The (solar) time zone for the area of interest</li>
-<li><em>fmat=</em> Weather file format</li>
 <li><em>coords=</em> or <em>latlon=</em> A string of comma-separated latitude and longitude values</li>
+<li><em>extrapolate=</em> or <em>law=</em> The law (model) to extrapolate wind speed data</li>
+<li><em>fmat=</em> Weather file format</li>
+<li><em>gaps=</em> A value starting with <em>y</em> (yes) or <em>t</em> (true) indicates to create files with data gaps</li>
+<li><em>hub_height=</em> A hub height to extrapolate wind speeds</li>
 <li><em>solar=</em> Location of the MERRA-2 solar (<em>tavg1_2d_rad_Nx</em>) files</li>
 <li><em>swg=</em> Solar variable - swgdn or swgnt. Default is swgnt</li>
-<li><em>wind=</em> Location of the MERRA-2 wind (<em>tavg1_2d_slv_Nx</em>) files</li>
 <li><em>target=</em> or <em>tgtdir=</em> Location for the weather files produced</li>
-<li><em>gaps=</em> A value starting with <em>y</em> (yes) or <em>t</em> (true) indicates to create files with data gaps</li>
+<li><em>wind=</em> Location of the MERRA-2 wind (<em>tavg1_2d_slv_Nx</em>) files</li>
+<li><em>wrap=</em> A value starting with <em>y</em> (yes) or <em>t</em> (true) indicates to wrap back to the prior year</li>
+<li><em>year=</em> Year of interest</li>
+<li><em>zone=</em> or <em>timezone=</em> The (solar) time zone for the area of interest</li>
 </ul>
 </p>
 <p><strong>Notes:</strong>
@@ -4140,6 +4169,8 @@ You can alternate between these approaches to choose the desired area. If you ha
 <li>If you download two copies of the same file wget will append a number to the second copy filename, e.g. ...nc4.1. At present these will be ignored</li>
 </ul>
 <li>A packaged version of <code>makeweatherfiles</code> for Windows is available as a self-extracting zip file from <a href="https://sourceforge.net/projects/sensiren/" target="_blank">https://sourceforge.net/projects/sensiren/</a>. The file is <a href="https://sourceforge.net/projects/sensiren/files/sen_makeweather_getmerra2.exe/download" target="_blank">sen_makeweather_getmerra2.exe</a> (the package has been created with PyInstaller) and contains both <code>makeweatherfiles</code> and <code>getmerra2</code> which enables MERRA-2 files to be downloaded. This package allows you to create SAM weather files from MERRA-2 files without requiring any other parts of SIREN</a></li>
+<li>With increasing hub heights associated with larger turbines the SAM models are impacted by the lack of suitable wind speed data at greater heights. The MERRA-2 weather data has a maximum wind speed height of 50 metres which will cope with hub heights up to around 85 metres. To overcome the wind data limitation the Hub height parameter can be used to extrapolate wind speeds to a greater (hub) height. <code>makeweatherfiles</code> will extrapolate wind speed using either of two commonly used laws (models). The law to be used can be specified in the <em>extrapolate</em> property of the [makeweatherfiles] Section of the <a href="#getfiles">getfiles.ini</a> Preferences file, and can be either <em>logarithmic</em>, the default, or <em>Hellmann</em>. This additional data will be added to the normal wind file.
+<p>Discussions on the two wind profile laws can be found at &lsquo;Wind profile power law&rsquo; (aka Hellmann law; <a href="https://en.wikipedia.org/wiki/Wind_profile_power_law">https://en.wikipedia.org/wiki/Wind_profile_power_law</a>) and &lsquo;Log wind profile&rsquo; (aka logarithmic law; <a href="https://en.wikipedia.org/wiki/Log_wind_profile">https://en.wikipedia.org/wiki/Log_wind_profile</a>). The Hellmann law tends to give slightly higher wind speeds. &lsquo;Methodologies Used in the Extrapolation of Wind Speed Data at Different Heights and Its Impact in the Wind Energy Resource Assessment in a Region&rsquo; (<a href="https://www.researchgate.net/publication/221912731_Methodologies_Used_in_the_Extrapolation_of_Wind_Speed_Data_at_Different_Heights_and_Its_Impact_in_the_Wind_Energy_Resource_Assessment_in_a_Region">https://www.researchgate.net/publication/221912731_Methodologies_Used_in_the_Extrapolation_of_Wind_Speed_Data_at_Different_Heights_and_Its_Impact_in_the_Wind_Energy_Resource_Assessment_in_a_Region</a>) provides a fuller discussion on the topic.</p></li>
 </ol>
 <p>
 <h4 id="usage">Using getmerra2 and makeweatherfiles</h4>
@@ -4927,7 +4958,7 @@ MERRA-2 Variables
 </td>
 </tr>
 </table>
-<h4>getfiles Preferences</h4>
+<h4 id="getfiles">getfiles Preferences</h4>
 <p>The <code>getfiles</code> Preferences file contains preferences specifically for <code>worldwindow</code>, the programs using it and a number of the SIREN tools (<code>getmap</code>, <code>getmerra2</code>, <code>makeweatherfiles</code>, <code>sirenupd</code>, and <code>updateswis</code>). The file resides in the same folder as <code>worldwindow</code> itself.
 <table border="0", class="none">
 <tr>
@@ -5053,6 +5084,20 @@ MERRA-2 Variables
 <tr class="none">
 <td class="none"><dfn>url_template</dfn></td>
 <td class="none">URL template for openstreetmap requests</td>
+</tr>
+</tr>
+</table>
+</td></tr>
+<tr class="none"><td><dfn><strong>[makeweatherfiles]</strong></dfn></td>
+<td>These properties are used by <code>makeweatherfiles</code> to produce wind files with extrapolated wind speeds. Properties are:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>hub_height</dfn></td>
+<td class="none">A Hub height to extrapolate wind speeds above the limitations of MERRA-2 data
+</tr>
+<tr class="none">
+<td class="none"><dfn>extrapolate</dfn></td>
+<td class="none">The law (model) to extrapolate wind speed data. This can be either <em>Hellmann</em> or <em>logarithmic</em>. Default is logarithmic</td>
 </tr>
 </tr>
 </table>
@@ -5241,6 +5286,8 @@ MERRA-2 Variables
 <td class="none">Kilowatt hour</td></tr>
 <tr><td class="none"><dfn>LCOE</dfn></td>
 <td class="none">Levelised cost of electricity. &ldquo;The levelized cost of electricity (LCOE) is a measure of a power source which attempts to compare different methods of electricity generation on a consistent basis. It is an economic assessment of the average total cost to build and operate a power-generating asset over its lifetime divided by the total energy output of the asset over that lifetime. The LCOE can also be regarded as the average minimum price at which electricity must be sold in order to break-even over the lifetime of the project.&rdquo; (<a href="https://en.wikipedia.org/wiki/Levelized_cost_of_energy" target="_blank">https://en.wikipedia.org/wiki/Levelized_cost_of_energy</a>)</td></tr>
+<tr><td class="none"><dfn>LOL</dfn></td>
+<td class="none">Lower Operating Limit. The (safe) lower limit a generator can run at.
 <tr><td class="none"><dfn>m/s</dfn></td>
 <td class="none">metres per second</td></tr>
 <tr><td class="none"><dfn>Mb</dfn></td>

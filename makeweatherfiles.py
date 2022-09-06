@@ -32,7 +32,7 @@ if sys.platform == 'win32' or sys.platform == 'cygwin':
 
 from credits import fileVersion
 from editini import SaveIni
-from senutils import ClickableQLabel, getUser
+from senutils import ClickableQLabel, getUser, extrapolateWind
 from sammodels import getDNI, getDHI
 
 
@@ -85,10 +85,18 @@ class ShowHelp(QtWidgets.QDialog):
         i = -1
         grid = QtWidgets.QGridLayout()
         self.web = QtWidgets.QTextEdit()
+        self.web.acceptRichText = True
         if os.path.exists(self.anobject):
             htf = open(self.anobject, 'r')
             html = htf.read()
             htf.close()
+            if self.section is not None:
+                b = html.find('<body')
+                s = html.find('id="' + self.section)
+                s = html[:s].rfind('<h')
+                e = html[s + 1:].find(html[s:s+3]) + s
+                html = html[:b] + '<body>' + html[s:e] + '</body></html>'
+      #      print('(92)', b, s, e, html[s:s+3], len(html))
             self.web.setHtml(html)
         else:
             html = self.anobject
@@ -515,7 +523,7 @@ class makeWeather():
         return
 
     def __init__(self, caller, src_year, src_zone, src_dir_s, src_dir_w, tgt_dir, fmat, swg='swgnt',
-                 wrap=None, gaps=None, src_lat_lon=None, info=False):
+                 wrap=None, gaps=None, src_lat_lon=None, info=False, hub_height=0, law='l'):
       #  self.last_time = datetime.now()
         if caller is None:
             self.show_progress = False
@@ -538,6 +546,8 @@ class makeWeather():
         self.tgt_dir = tgt_dir
         self.fmat = fmat
         self.swg = swg
+        self.hub_height = hub_height
+        self.law = law
         self.wrap = False
         if wrap is None or wrap == '':
             pass
@@ -875,6 +885,10 @@ class makeWeather():
                                 str(self.valu(self.s50m[hr], lat1, lon1, lat_rat, lon_rat)) + '\n')
                     tf.close()
                     self.log += '%s created\n' % out_file[out_file.rfind('/') + 1:]
+                    if self.hub_height > 0:
+                        ok = extrapolateWind(out_file, self.hub_height, law=self.law, replace=True)
+                        if ok:
+                            self.log += '%s updated\n' % out_file[out_file.rfind('/') + 1:]
             else: # all locations
                 if self.show_progress:
                     self.caller.daybar.setMaximum(len(self.lats) * len(self.lons))
@@ -960,6 +974,10 @@ class makeWeather():
                             continue
                         else:
                             self.log += '%s created\n' % out_file[out_file.rfind('/') + 1:]
+                        if self.hub_height > 0:
+                            ok = extrapolateWind(out_file, self.hub_height, law=self.law, replace=True)
+                            if ok:
+                                self.log += '%s updated\n' % out_file[out_file.rfind('/') + 1:]
             return  # that's it for wind
          # get variable from solar files
         if self.src_zone > 0:
@@ -1247,7 +1265,15 @@ class getParms(QtWidgets.QWidget):
         self.config = configparser.RawConfigParser()
         self.config_file = self.ini_file
         self.config.read(self.config_file)
+        try:
+            self.help = self.config.get('Files', 'help')
+        except:
+            pass
         self.ignore = False
+        try:
+            self.law = self.config.get('makeweatherfiles', 'extrapolate')
+        except:
+            self.law = 'l'
         rw = 0
         self.grid = QtWidgets.QGridLayout()
         self.grid.addWidget(QtWidgets.QLabel('Year:'), 0, 0)
@@ -1298,6 +1324,18 @@ class getParms(QtWidgets.QWidget):
         self.swgcombo.setCurrentIndex(0) # default is swgdn
         self.grid.addWidget(self.swgcombo, rw, 1)
         rw += 1
+        self.grid.addWidget(QtWidgets.QLabel('Hub height:'), rw, 0)
+        self.hub_height = QtWidgets.QSpinBox()
+        self.hub_height.setRange(0, 200)
+        self.hub_height.setSingleStep(10)
+        try:
+            self.hub_height.setValue(int(self.config.get('makeweatherfiles', 'hub_height')))
+        except:
+            pass
+        self.grid.addWidget(self.hub_height, rw, 1)
+        self.hub_height.valueChanged.connect(self.hub_heightChanged)
+        self.grid.addWidget(QtWidgets.QLabel('To extrapolate wind data above 50 metres'), rw, 2, 1, 3)
+        rw += 1
         self.grid.addWidget(QtWidgets.QLabel('Coordinates:'), rw, 0)
         self.coords = QtWidgets.QPlainTextEdit()
         self.grid.addWidget(self.coords, rw, 1, 1, 4)
@@ -1315,9 +1353,12 @@ class getParms(QtWidgets.QWidget):
             self.grid.addWidget(QtWidgets.QLabel(self.dir_labels[i] + ' Folder:'), rw, 0)
             self.dirs[i] = ClickableQLabel()
             try:
-                self.dirs[i].setText(self.config.get('Files', self.dir_labels[i].lower() + '_files').replace('$USER$', getUser()))
+                self.dirs[i].setText(self.config.get('makeweatherfiles', self.dir_labels[i].lower() + '_files').replace('$USER$', getUser()))
             except:
-                self.dirs[i].setText(cur_dir)
+                try:
+                    self.dirs[i].setText(self.config.get('Files', self.dir_labels[i].lower() + '_files').replace('$USER$', getUser()))
+                except:
+                    self.dirs[i].setText(cur_dir)
             self.dirs[i].setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
             self.dirs[i].clicked.connect(self.dirChanged)
             self.grid.addWidget(self.dirs[i], rw, 1, 1, 4)
@@ -1350,21 +1391,32 @@ class getParms(QtWidgets.QWidget):
         QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
         dosolar = QtWidgets.QPushButton('Produce Solar Files', self)
         wdth = dosolar.fontMetrics().boundingRect(dosolar.text()).width() + 9
+        quit.setMaximumWidth(wdth)
+        dosolar.setMaximumWidth(wdth)
         self.grid.addWidget(dosolar, rw, 1)
         dosolar.clicked.connect(self.dosolarClicked)
         dowind = QtWidgets.QPushButton('Produce Wind Files', self)
         dowind.setMaximumWidth(wdth)
         self.grid.addWidget(dowind, rw, 2)
         dowind.clicked.connect(self.dowindClicked)
+        updwind = QtWidgets.QPushButton('Update Wind Files', self)
+        updwind.setMaximumWidth(wdth)
+        self.grid.addWidget(updwind, rw, 3)
+        updwind.clicked.connect(self.updwindClicked)
         info = QtWidgets.QPushButton('File Info', self)
         info.setMaximumWidth(wdth)
-        self.grid.addWidget(info, rw, 3)
+        self.grid.addWidget(info, rw, 4)
         info.clicked.connect(self.infoClicked)
         help = QtWidgets.QPushButton('Help', self)
         help.setMaximumWidth(wdth)
-        self.grid.addWidget(help, rw, 4)
+        self.grid.addWidget(help, rw, 5)
         help.clicked.connect(self.helpClicked)
         QtWidgets.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
+        self.yearSpin.setMaximumWidth(wdth)
+        self.zoneCombo.setMaximumWidth(wdth)
+        self.fmatcombo.setMaximumWidth(wdth)
+        self.swgcombo.setMaximumWidth(wdth)
+        self.hub_height.setMaximumWidth(wdth)
       #   self.grid.setColumnStretch(4, 2)
         frame = QtWidgets.QFrame()
         frame.setLayout(self.grid)
@@ -1378,6 +1430,7 @@ class getParms(QtWidgets.QWidget):
         self.center()
         self.resize(int(self.sizeHint().width()* 1.27), int(self.sizeHint().height() * 1.07))
         self.updated = False
+        self.hubupdated = False
         self.show()
 
     def center(self):
@@ -1386,6 +1439,14 @@ class getParms(QtWidgets.QWidget):
         centerPoint = QtWidgets.QApplication.desktop().availableGeometry(screen).center()
         frameGm.moveCenter(centerPoint)
         self.move(frameGm.topLeft())
+
+    def hub_heightChanged(self):
+        self.hubupdated = True
+        if self.hub_height.value() > 0 and self.hub_height.value() < 80:
+            if self.hub_height.value() == 70:
+                self.hub_height.setValue(0)
+            else:
+                self.hub_height.setValue(80)
 
     def yearChanged(self):
         yr = str(self.yearSpin.value())
@@ -1433,13 +1494,18 @@ class getParms(QtWidgets.QWidget):
         dialog.exec_()
 
     def quitClicked(self):
-        if self.updated:
+        if self.updated or self.hubupdated:
             updates = {}
             lines = []
-            for i in range(3):
-                lines.append(self.dir_labels[i].lower() + '_files=' + \
-                             self.dirs[i].text().replace(getUser(), '$USER$'))
-            updates['Files'] = lines
+            if self.updated:
+                for i in range(3):
+                    lines.append(self.dir_labels[i].lower() + '_files=' + \
+                                 self.dirs[i].text().replace(getUser(), '$USER$'))
+            if self.hubupdated:
+                lines.append('hub_height=')
+                if self.hub_height.value() > 0:
+                    lines[-1] += str(self.hub_height.value())
+            updates['makeweatherfiles'] = lines
             SaveIni(updates, ini_file=self.config_file)
         self.close()
 
@@ -1509,9 +1575,11 @@ class getParms(QtWidgets.QWidget):
             zone = 'best'
         else:
             zone = str(self.zoneCombo.currentIndex() - 14)
+        if  self.hub_height.value() > 0:
+            hub_height = self.hub_height.value()
         wind = makeWeather(self, str(self.yearSpin.value()), zone, self.dirs[0].text(), \
                            self.dirs[1].text(), self.dirs[2].text(), \
-                            'wind', '', wrap, gaps, coords)
+                            'wind', '', wrap, gaps, coords, hub_height=hub_height, law=self.law)
         dialr = RptDialog(str(self.yearSpin.value()), zone, self.dirs[0].text(), \
                           self.dirs[1].text(), self.dirs[2].text(), 'srw', \
                           '', wrap, gaps, coords, wind.returnCode(), wind.getLog())
@@ -1524,6 +1592,28 @@ class getParms(QtWidgets.QWidget):
         self.daybar.setMaximum(31)
         self.daybar.setValue(0)
         self.daybar.setHidden(True)
+
+    def updwindClicked(self):
+        if self.hub_height.value() < 80:
+            return
+        self.progresslabel.setHidden(False)
+        self.progresslabel.setText('Updating wind weather files')
+        fils = os.listdir(self.dirs[2].text())
+        for f in range(len(fils) -1, -1, -1):
+            if fils[f][-4:] != '.srw':
+                del fils[f]
+        ctr = 0
+        for f in range(len(fils)):
+            ok = extrapolateWind(self.dirs[2].text() + '/' + fils[f], self.hub_height.value(), law=self.law, replace=True)
+            if ok:
+                self.progresslabel.setText('Updated ' + fils[f])
+                ctr += 1
+            QtCore.QCoreApplication.processEvents()
+        if ctr < len(fils):
+            msg = '{:d} (of {:d})'.format(ctr, len(fils))
+        else:
+            msg = str(ctr)
+        self.progresslabel.setText('Updated ' + msg + ' wind weather files')
 
     def infoClicked(self):
         coords = self.coords.toPlainText()
@@ -1673,6 +1763,8 @@ if "__main__" == __name__:
         src_dir_s = ''
         src_dir_w = ''
         tgt_dir = ''
+        hub_height = 0
+        law = 'l'
         for i in range(1, len(sys.argv)):
             if sys.argv[i][:5] == 'year=':
                 src_year = int(sys.argv[i][5:])
@@ -1690,6 +1782,12 @@ if "__main__" == __name__:
                 fmat = sys.argv[i][5:]
             elif sys.argv[i][:7] == 'format=':
                 fmat = sys.argv[i][7:]
+            elif sys.argv[i][:11] == 'hub_height=':
+                hub_height = int(sys.argv[i][11:])
+            elif sys.argv[i][:12] == 'extrapolate=':
+                law = sys.argv[i][12:]
+            elif sys.argv[i][:4] == 'law=':
+                law = sys.argv[i][4:]
             elif sys.argv[i][:4] == 'swg=':
                 swg = sys.argv[i][4:]
             elif sys.argv[i][:6] == 'solar=':
@@ -1704,7 +1802,7 @@ if "__main__" == __name__:
             fmat = 'smw'
         if fmat in ['csv', 'smw'] and src_dir_s == '':
             src_dir_s = src_dir_w
-        files = makeWeather(None, src_year, src_zone, src_dir_s, src_dir_w, tgt_dir, fmat, swg, wrap, gaps, src_lat_lon)
+        files = makeWeather(None, src_year, src_zone, src_dir_s, src_dir_w, tgt_dir, fmat, swg, wrap, gaps, src_lat_lon, hub_height=hub_height, law=law)
         dialr = RptDialog(str(src_year), src_zone, src_dir_s, src_dir_w, tgt_dir, fmat, swg, wrap, gaps, src_lat_lon, files.returnCode(), files.getLog())
         dialr.exec_()
     else:
