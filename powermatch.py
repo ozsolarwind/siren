@@ -719,6 +719,7 @@ class powerMatch(QtWidgets.QWidget):
         self.results_prefix = ''
         self.save_tables = False
         self.show_multipliers = False
+        self.show_correlation = False
         self.surplus_sign = 1 # Note: Preferences file has it called shortfall_sign
         # it's easier for the user to understand while for the program logic surplus is easier
         iorder = []
@@ -842,6 +843,9 @@ class powerMatch(QtWidgets.QWidget):
                 elif key == 'save_tables':
                     if value.lower() in ['true', 'on', 'yes']:
                         self.save_tables = True
+                elif key == 'show_correlation':
+                    if value.lower() in ['true', 'on', 'yes']:
+                        self.show_correlation = True
                 elif key == 'show_multipliers':
                     if value.lower() in ['true', 'on', 'yes']:
                         self.show_multipliers = True
@@ -2153,6 +2157,8 @@ class powerMatch(QtWidgets.QWidget):
                            'Load Analysis': ['#,##0', ['Load met', 2], ['Load met %age', 1], ['Shortfall', 2], ['Total Load', 2],
                            ['Largest Shortfall', 1], ['Storage losses', 3], ['Surplus', 3], ['Surplus %age', 1]],
                            'Carbon': ['#,##0.00', ['Carbon Price', 1], ['Carbon Cost', 5], ['LCOE (incl. CO2)', 6]],
+                           'Correlation To Load': ['0.0000', ['RE Contribution', 1], ['RE plus Storage', 1],
+                           ['To Meet Load', 1]] ,
                            'Optimisation Parameters': ['#,##0.00', ['Population size', 1], ['No. of iterations', 1],
                            ['Mutation probability', 1], ['Exit if stable', 1], ['Optimisation choice', 1],
                            ['Variable', 1], ['LCOE', 1], ['Load%', 1], ['Surplus%', 1], ['RE%', 1],
@@ -2487,6 +2493,7 @@ class powerMatch(QtWidgets.QWidget):
                 i = self.data_sources(bs, batch_data_sources_row - len(del_rows), pm_data_file)
             bs.freeze_panes = 'B' + str(self.batch_report[0][1])
             bs.activeCell = 'B' + str(self.batch_report[0][1])
+            ds.active = bs
             # check if any charts/graphs
             if self.batch_report[-1][0] == 'Chart':
                 min_col = 2
@@ -2645,8 +2652,6 @@ class powerMatch(QtWidgets.QWidget):
                 break
         for fac in re_order:
             col = pmss_details[fac].col
-       #     if gen == 'Load':
-        #        lc = col
             if pmss_details[fac].multiplier == 1:
                 if fac == 'Load':
                     for h in range(len(pmss_data[col])):
@@ -2661,6 +2666,33 @@ class powerMatch(QtWidgets.QWidget):
                 else:
                     for h in range(len(pmss_data[col])):
                         shortfall[h] -= pmss_data[col][h] * pmss_details[fac].multiplier
+        if self.show_correlation:
+            col = pmss_details['Load'].col
+            if pmss_details['Load'].multiplier == 1:
+                df1 = pmss_data[col]
+            else:
+                tgt = []
+                for h in range(len(pmss_data[col])):
+                    tgt.append(pmss_data[col][h] * pmss_details['Load'].multiplier)
+                df1 = tgt
+            corr_src = []
+            for h in range(len(shortfall)):
+                if shortfall[h] < 0:
+                    corr_src.append(pmss_data[col][h])
+                else:
+                    corr_src.append(pmss_data[col][h] - shortfall[h])
+            try:
+                corr = np.corrcoef(df1, corr_src)
+                if np.isnan(corr.item((0, 1))):
+                    corr = 0
+            except:
+                corr = 0
+            else:
+                corr = corr.item((0, 1))
+            corr_data = [['Correlation To Load']]
+            corr_data.append(['RE Contribution', corr])
+        else:
+            corr_data = None
         if option == 'P':
             ds = oxl.Workbook()
             ns = ds.active
@@ -2887,9 +2919,22 @@ class powerMatch(QtWidgets.QWidget):
             ns.cell(row=what_row, column=col).alignment = oxl.styles.Alignment(wrap_text=True,
                     vertical='bottom', horizontal='center')
             for row in range(hrows, 8760 + hrows):
-                ns.cell(row=row, column=col).value = '=IF(' + ss_col(shrt_col) + str(row) + '>0,' + \
-                                           ss_col(3) + str(row) + ',' + ss_col(3) + str(row) + \
-                                           '+' + ss_col(shrt_col) + str(row) + ')'
+                if shortfall[row - hrows] < 0:
+                    if pmss_details['Load'].multiplier == 1:
+                        rec = pmss_data[load_col][row - hrows]
+                    else:
+                        rec = pmss_data[load_col][row - hrows] * pmss_details['Load'].multiplier
+                else:
+                    if pmss_details['Load'].multiplier == 1:
+                        rec = pmss_data[load_col][row - hrows] - shortfall[row - hrows]
+                    else:
+                        rec = pmss_data[load_col][row - hrows] * pmss_details['Load'].multiplier - \
+                              shortfall[row - hrows]
+                ns.cell(row=row, column=col).value = rec
+               # the following formula will do the same computation
+               # ns.cell(row=row, column=col).value = '=IF(' + ss_col(shrt_col) + str(row) + '>0,' + \
+               #                            ss_col(3) + str(row) + ',' + ss_col(3) + str(row) + \
+               #                            '+' + ss_col(shrt_col) + str(row) + ')'
                 ns.cell(row=row, column=col).number_format = '#,##0.00'
             shrt_col += 1
             col = shrt_col + 1
@@ -3027,6 +3072,8 @@ class powerMatch(QtWidgets.QWidget):
                         storage_losses += can_use * recharge[1]
                         storage_carry -= (can_use * (1 - recharge[1]))
                         shortfall[row] -= can_use
+                        if corr_data is not None:
+                            corr_src[row] += can_use
                     else: # shortfall
                         if min_run_time > 0 and shortfall[row] > 0:
                             if not in_run[0]:
@@ -3052,6 +3099,8 @@ class powerMatch(QtWidgets.QWidget):
                             storage_carry -= can_use
                             can_use = can_use - storage_loss
                             shortfall[row] -= can_use
+                            if corr_data is not None:
+                                corr_src[row] += can_use
                             if storage_carry < 0:
                                 storage_carry = 0
                         else:
@@ -3215,6 +3264,45 @@ class powerMatch(QtWidgets.QWidget):
                     sp_data.append([gen, capacity, gen_can, gen_can, '', '', '', '', gen_max, '', '', ''])
         if option not in ['O', '1', 'B']:
             self.progressbar.setValue(4)
+        if corr_data is not None:
+            try:
+                corr = np.corrcoef(df1, corr_src)
+                if np.isnan(corr.item((0, 1))):
+                    corr = 0
+            except:
+                    corr = 0
+            else:
+                corr = corr.item((0, 1))
+            corr_data.append(['RE plus Storage', corr])
+            col = pmss_details['Load'].col
+            corr_src = []
+            for h in range(len(shortfall)):
+                if shortfall[h] < 0:
+                    corr_src.append(pmss_data[col][h])
+                else:
+                    corr_src.append(pmss_data[col][h] - shortfall[h])
+            try:
+                corr = np.corrcoef(df1, corr_src)
+                if np.isnan(corr.item((0, 1))):
+                    corr = 0
+            except:
+                    corr = 0
+            else:
+                corr = corr.item((0, 1))
+            corr_data.append(['To Meet Load', corr])
+            for c in range(1, len(corr_data)):
+                if abs(corr_data[c][1]) < 0.1:
+                    corr_data[c].append('None')
+                elif abs(corr_data[c][1]) < 0.3:
+                    corr_data[c].append('Little if any')
+                elif abs(corr_data[c][1]) < 0.5:
+                    corr_data[c].append('Low')
+                elif abs(corr_data[c][1]) < 0.7:
+                    corr_data[c].append('Moderate')
+                elif abs(corr_data[c][1]) < 0.9:
+                    corr_data[c].append('High')
+                else:
+                    corr_data[c].append('Very high')
         if option != 'P':
          #   if min_after[2] >= 0:
           #      min_after[2] = format_period(min_after[2])
@@ -3371,6 +3459,9 @@ class powerMatch(QtWidgets.QWidget):
             if max_short[1] > 0:
                 sp_data.append(['Largest Shortfall (' + format_period(max_short[0]) + ')',
                                 round(max_short[1], 2)])
+            if corr_data is not None:
+                sp_data.append(' ')
+                sp_data = sp_data + corr_data
             if option == 'B':
                 return sp_data
             if option == 'O' or option == '1':
@@ -3409,6 +3500,8 @@ class powerMatch(QtWidgets.QWidget):
                     return multi_value, sp_data, extra
             list(map(list, list(zip(*sp_data))))
             sp_pts = [0, 2, 0, 0, 2, 0, 2, 0, 2, 2, 2, 2]
+            if corr_data is not None:
+                sp_pts[1] = 3 # compromise between capacity (2) and correlation (4)
         #    if option != 'B':
             self.setStatus(self.sender().text() + ' completed')
             if title is not None:
@@ -3796,6 +3889,15 @@ class powerMatch(QtWidgets.QWidget):
                 ss.column_dimensions['B'].width = 17.4
             ss.cell(row=ss_row, column=3).value = '=Detail!' + last_col + str(hrows + max_short[0])
             ss.cell(row=ss_row, column=3).number_format = '#,##0.00'
+        if corr_data is not None:
+            ss_row += 2
+            for corr in corr_data:
+                ss.cell(row=ss_row, column=1).value = corr[0]
+                if len(corr) > 1:
+                    ss.cell(row=ss_row, column=2).value = corr[1]
+                    ss.cell(row=ss_row, column=2).number_format = '#0.0000'
+                    ss.cell(row=ss_row, column=3).value = corr[2]
+                ss_row += 1
         ss_row += 2
         ss_row = self.data_sources(ss, ss_row, pm_data_file)
         self.progressbar.setValue(7)
@@ -4093,12 +4195,12 @@ class powerMatch(QtWidgets.QWidget):
                     try:
                         pmss_details[fac].multiplier = capacity / pmss_details[fac].capacity
                     except:
-                        print('(4096)', gen, capacity, pmss_details[fac].capacity)
+                        print('(4171)', gen, capacity, pmss_details[fac].capacity)
                 multi_value, op_data, extra = self.doDispatch(year, option, pmss_details, pmss_data, re_order,
                                               dispatch_order, pm_data_file, data_file)
                 if multi_value['load_pct'] < self.targets['load_pct'][3]:
                     if multi_value['load_pct'] == 0:
-                        print('(4101)', multi_value['lcoe'], self.targets['load_pct'][3], multi_value['load_pct'])
+                        print('(4176)', multi_value['lcoe'], self.targets['load_pct'][3], multi_value['load_pct'])
                         lcoe_fitness_scores.append(1)
                     else:
                         lcoe_fitness_scores.append(pow(multi_value['lcoe'],
@@ -4710,7 +4812,7 @@ class powerMatch(QtWidgets.QWidget):
             try:
                 best_score = np.min(lcoe_scores)
             except:
-                print('(4713)', lcoe_scores)
+                print('(4788)', lcoe_scores)
             best_ndx = lcoe_scores.index(best_score)
             lowest_chrom = population[best_ndx]
             self.setStatus('Starting LCOE: $%.2f' % best_score)
@@ -4921,8 +5023,7 @@ class powerMatch(QtWidgets.QWidget):
                     pick = pick + pick2
                 except:
                     pick = pick2
-        op_pts = [0, 2, 0, 0, 2, 0, 2, 0, 2, 2, 2, 2]
-        # was    [0, 3, ...]
+        op_pts = [0, 3, 0, 0, 2, 0, 2, 0, 2, 2, 2, 2]
         if self.more_details:
             if do_lcoe:
                 list(map(list, list(zip(*op_data[0]))))
@@ -5078,7 +5179,7 @@ class powerMatch(QtWidgets.QWidget):
                     label = QtWidgets.QLabel(txt % amt)
                 except:
                     label = QtWidgets.QLabel('?')
-                    print('(5081)', key, txt, amt)
+                    print('(5156)', key, txt, amt)
                 label.setAlignment(QtCore.Qt.AlignCenter)
                 grid[h + 1].addWidget(label, rw, 0, 1, 3)
             rw += 1

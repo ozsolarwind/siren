@@ -27,6 +27,8 @@ from math import log10, ceil
 import matplotlib
 matplotlib.use('TkAgg')
 from matplotlib.font_manager import FontProperties
+import numpy as np
+import openpyxl as oxl
 import pylab as plt
 import xlrd
 xlrd.xlsx.ensure_elementtree_imported(False, None)
@@ -34,6 +36,7 @@ xlrd.xlsx.Element_has_iter = True
 import displayobject
 from colours import Colours
 from credits import fileVersion
+from displaytable import Table
 from editini import SaveIni
 from getmodels import getModelFile
 from senutils import ClickableQLabel, getParents, getUser, techClean
@@ -116,6 +119,77 @@ class ListWidget(QtWidgets.QListWidget):
                 self.takeItem(row)
 
 
+class WorkBook(object):
+    def __init__(self):
+        self._book = None
+        self._sheet = None
+        self._sheet_names = []
+        self._type = None
+        self._nrows = 0
+        self._ncols = 0
+
+    def open_workbook(self, filename=None, on_demand=False):
+        if not os.path.exists(filename):
+            raise Exception('File not found')
+        self._type = filename[filename.rfind('.') + 1:]
+        try:
+            if self._type == 'xls':
+                self._book = xlrd.open_workbook(filename, on_demand=True)
+                self._sheet_names = self._book.sheet_names()
+            elif self._type == 'xlsx':
+                self._book = oxl.load_workbook(filename) # to ignore formulae add data_only=True
+                self._sheet_names = self._book.sheetnames
+        except:
+            raise Exception('Error opening file')
+
+    def release_resources(self):
+        if self._type == 'xls':
+            self._book.release_resources()
+
+    def sheet_names(self):
+        return self._sheet_names[:]
+
+    def sheet_by_index(self, sheetx):
+        return self.get_sheet(sheetx)
+
+    def sheet_by_name(self, sheet_name):
+        try:
+            sheetx = self._sheet_names.index(sheet_name)
+        except ValueError:
+            raise Exception('No sheet named <%r>' % sheet_name)
+        return self.sheet_by_index(sheetx)
+
+    def get_sheet(self, sheetx):
+        self._sheet = self.WorkSheet(sheetx, self._type)
+        try:
+            if self._type == 'xls':
+                self._sheet._sheet = self._book.sheet_by_index(sheetx)
+                self._sheet.name = self._book.sheet_names()[sheetx]
+                self._sheet.nrows = self._sheet._sheet.nrows
+                self._sheet.ncols = self._sheet._sheet.ncols
+            elif self._type == 'xlsx':
+                self._sheet._sheet = self._book.worksheets[sheetx]
+                self._sheet.name = self._book.sheetnames[sheetx]
+                self._sheet.nrows = self._sheet._sheet.max_row
+                self._sheet.ncols = self._sheet._sheet.max_column
+        except:
+            raise Exception('Error accessing sheet')
+        return self._sheet
+
+    class WorkSheet(object):
+        def __init__(self, sheet, typ):
+            self._sheet = None
+            self.name = sheet
+            self.nrows = 0
+            self.ncols = 0
+            self._type = typ
+
+        def cell_value(self, row, col):
+            if self._type == 'xls':
+                return self._sheet.cell_value(row, col)
+            elif self._type == 'xlsx':
+                return self._sheet.cell(row=row + 1, column=col + 1).value
+
 class PowerPlot(QtWidgets.QWidget):
 
     def __init__(self, help='help.html'):
@@ -188,6 +262,8 @@ class PowerPlot(QtWidgets.QWidget):
         self.max_files = 10
         self.seasons = {}
         self.interval = 24
+        self.show_contribution = False
+        self.show_correlation = False
         ifiles = {}
         try:
             items = config.items('Powerplot')
@@ -238,6 +314,18 @@ class PowerPlot(QtWidgets.QWidget):
                     self.seasons[per] = list(map(lambda x: int(x) - 1, mths[1:]))
         except:
             pass
+        try:
+            value = config.get('Powermatch', 'show_contribution')
+            if value.lower() in ['true', 'yes', 'on']:
+                self.show_contribution = True
+        except:
+            pass
+        try:
+            value = config.get('Powermatch', 'show_correlation')
+            if value.lower() in ['true', 'yes', 'on']:
+                self.show_correlation = True
+        except:
+            pass
         if len(ifiles) > 0:
             if self.history is None:
                 self.history = sorted(ifiles.keys(), reverse=True)
@@ -272,8 +360,13 @@ class PowerPlot(QtWidgets.QWidget):
             self.period.addItem(mth)
         for per in sorted(self.seasons.keys()):
             self.period.addItem(per)
-        self.grid.addWidget(self.period, rw, 1, 1, 2)
-        self.grid.addWidget(QtWidgets.QLabel('(Diurnal profile for Period)'), rw, 3, 1, 2)
+        self.grid.addWidget(self.period, rw, 1, 1, 1)
+        self.cperiod = QtWidgets.QComboBox()
+        self.cperiod.addItem('<none>')
+        for mth in mth_labels:
+            self.cperiod.addItem(mth)
+        self.grid.addWidget(self.cperiod, rw, 2, 1, 1)
+        self.grid.addWidget(QtWidgets.QLabel('(Diurnal profile for Period; Correlation range)'), rw, 3, 1, 2)
         rw += 1
         self.grid.addWidget(QtWidgets.QLabel('Target:'), rw, 0)
         self.targets = QtWidgets.QComboBox()
@@ -342,6 +435,7 @@ class PowerPlot(QtWidgets.QWidget):
         self.files.currentIndexChanged.connect(self.filesChanged)
         self.file.clicked.connect(self.fileChanged)
         self.period.currentIndexChanged.connect(self.somethingChanged)
+        self.cperiod.currentIndexChanged.connect(self.somethingChanged)
         self.files.currentIndexChanged.connect(self.targetChanged)
         self.sheet.currentIndexChanged.connect(self.sheetChanged)
         self.targets.currentIndexChanged.connect(self.targetChanged)
@@ -371,6 +465,14 @@ class PowerPlot(QtWidgets.QWidget):
         cb = QtWidgets.QPushButton('Colours', self)
         self.grid.addWidget(cb, rw, 2)
         cb.clicked.connect(self.editColours)
+        if self.show_contribution or self.show_correlation:
+            if self.show_contribution:
+                co = 'Contribution'
+            else:
+                co = 'Correlation'
+            corr = QtWidgets.QPushButton(co, self)
+            self.grid.addWidget(corr, rw, 3)
+            corr.clicked.connect(self.corrClicked)
         help = QtWidgets.QPushButton('Help', self)
         self.grid.addWidget(help, rw, 4)
         help.clicked.connect(self.helpClicked)
@@ -403,6 +505,7 @@ class PowerPlot(QtWidgets.QWidget):
         config.read(self.config_file)
         columns = []
         self.period.setCurrentIndex(0)
+        self.cperiod.setCurrentIndex(0)
         self.gridtype.setCurrentIndex(0)
         self.plottype.setCurrentIndex(0)
         try: # get list of files if any
@@ -410,6 +513,12 @@ class PowerPlot(QtWidgets.QWidget):
             for key, value in items:
                 if key == 'columns' + choice:
                     columns = charSplit(value)
+                elif key == 'cperiod' + choice:
+                    i = self.cperiod.findText(value, QtCore.Qt.MatchExactly)
+                    if i >= 0 :
+                        self.cperiod.setCurrentIndex(i)
+                    else:
+                        self.cperiod.setCurrentIndex(0)
                 elif key == 'file' + choice:
                     ifile = value.replace('$USER$', getUser())
                 elif key == 'grid' + choice:
@@ -559,7 +668,8 @@ class PowerPlot(QtWidgets.QWidget):
     def setSheet(self, ifile, isheet):
         if self.book is None:
             try:
-                self.book = xlrd.open_workbook(ifile, on_demand=True)
+                self.book = WorkBook()
+                self.book.open_workbook(ifile, on_demand=True)
             except:
                 self.log.setText("Can't open file - " + ifile)
                 return
@@ -577,7 +687,8 @@ class PowerPlot(QtWidgets.QWidget):
         self.log.setText('')
         self.toprow = None
         if self.book is None:
-            self.book = xlrd.open_workbook(newfile, on_demand=True)
+            self.book = WorkBook()
+            self.book.open_workbook(newfile, on_demand=True)
         isheet = self.sheet.currentText()
         if isheet not in self.book.sheet_names():
             self.log.setText("Can't find sheet - " + isheet)
@@ -737,6 +848,9 @@ class PowerPlot(QtWidgets.QWidget):
             lines.append('period' + choice + '=')
             if self.period.currentText() != '<none>':
                 lines[-1] = lines[-1] + self.period.currentText()
+            lines.append('cperiod' + choice + '=')
+            if self.cperiod.currentText() != '<none>':
+                lines[-1] = lines[-1] + self.cperiod.currentText()
             lines.append('spill_label' + choice + '=' + self.spill_label.text())
             lines.append('suptitle' + choice + '=' + self.suptitle.text())
             lines.append('target' + choice + '=' + self.target)
@@ -1577,6 +1691,276 @@ class PowerPlot(QtWidgets.QWidget):
                 f = zp.zoom_pan(ex, base_scale=1.2) # enable scrollable zoom
                 plt.show()
                 del zp
+
+    def corrClicked(self):
+        if self.show_contribution:
+            corrtxt = ['month', 'contribution']
+            sortby = ''
+        else:
+            corrtxt = ['coefficient', 'correlation']
+            sortby = corrtxt[0]
+        if self.book is None:
+            self.log.setText('Error accessing Workbook.')
+            return
+        if self.order.count() == 0:
+            self.log.setText('No columns chosen.')
+            return
+        isheet = self.sheet.currentText()
+        if isheet == '':
+            self.log.setText('Sheet not set.')
+            return
+        if self.target == '<none>':
+            self.log.setText('Target not set.')
+            return
+        ws = self.book.sheet_by_name(isheet)
+        if self.toprow is None:
+            tech_row = -1
+            row = 0
+            self.zone_row =  -1
+            while row < ws.nrows:
+                if ws.cell_value(row, 0) == 'Technology':
+                    tech_row = row
+                elif ws.cell_value(row, 0) == 'Zone':
+                    self.zone_row = row
+                elif ws.cell_value(row, 0) in ['Hour', 'Interval', 'Trading Interval']:
+                    if ws.cell_value(row, 1) != 'Period':
+                        self.log.setText(isheet + ' sheet format incorrect')
+                        return
+                    if tech_row >= 0:
+                        self.toprow = [tech_row, row]
+                    else:
+                        self.toprow = [row, row]
+                    self.rows = ws.nrows - (row + 1)
+                    break
+        try:
+            year = int(ws.cell_value(self.toprow[1] + 1, 1)[:4])
+            if year % 4 == 0 and year % 100 != 0 or year % 400 == 0:
+                self.leapyear = True
+            else:
+                self.leapyear = False
+        except:
+            self.leapyear = False
+            year = ''
+        the_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+        if self.leapyear: #rows == 8784: # leap year
+            the_days[1] = 29
+        mth_labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+        periods = []
+        objects = []
+        per1 = self.period.currentText()
+        per2 = self.cperiod.currentText()
+        if self.show_contribution and per1 in  ['<none>', 'Year']:
+            per1 = 'Jan'
+            per2 = 'Dec'
+        if per1 in ['<none>', 'Year']: # full year of hourly figures
+            strt_row = [self.toprow[1]]
+            todo_rows = [self.rows]
+            per2 = ''
+            if self.show_contribution:
+                periods = mth_labels[:]
+        else:
+            strt_row = []
+            todo_rows = []
+            if per1 in self.seasons.keys():
+                strt_row = []
+                todo_rows = []
+                for s in self.seasons[per1]:
+                    m = 0
+                    strt_row.append(0)
+                    while m < s:
+                        strt_row[-1] = strt_row[-1] + the_days[m] * self.interval
+                        m += 1
+                    strt_row[-1] = strt_row[-1] + self.toprow[1]
+                    todo_rows.append(the_days[s] * self.interval)
+                    if self.show_contribution:
+                        periods.append(mth_labels[m])
+                per2 = ''
+            else:
+                i = mth_labels.index(per1)
+                todo_mths = [i]
+                if per2 != '<none>':
+                    j = mth_labels.index(per2)
+                    if j == i:
+                        pass
+                    elif j > i:
+                        for k in range(i + 1, j + 1):
+                            todo_mths.append(k)
+                    else:
+                        for k in range(i + 1, 12):
+                            todo_mths.append(k)
+                        for k in range(j + 1):
+                            todo_mths.append(k)
+                for s in todo_mths:
+                    m = 0
+                    strt_row.append(0)
+                    while m < s:
+                        strt_row[-1] = strt_row[-1] + the_days[m] * self.interval
+                        m += 1
+                    strt_row[-1] = strt_row[-1] + self.toprow[1]
+                    todo_rows.append(the_days[s] * self.interval)
+                    if self.show_contribution:
+                        periods.append(mth_labels[m])
+        tgt = []
+        tgt_col = -1
+        data = []
+        best_corr = 0
+        best_fac = ''
+        total_tgt = 0
+        total_data = []
+        for c2 in range(2, ws.ncols):
+            column = ws.cell_value(self.toprow[0], c2).replace('\n',' ')
+            if self.zone_row > 0 and ws.cell_value(self.zone_row, c2) != '':
+                column = ws.cell_value(self.zone_row, c2).replace('\n',' ') + '.' + column
+            if column == self.target:
+                tgt_col = c2
+        if tgt_col < 0:
+            self.log.setText('Target not found.')
+            return
+        base_tgt = []
+        for row in range(self.toprow[1] + 1, self.toprow[1] + self.rows + 1):
+            base_tgt.append(ws.cell_value(row, tgt_col))
+        table = []
+        if self.show_contribution:
+            fields = ['month']
+            decpts = [0]
+        else:
+            fields = ['aggregation', 'object'] + corrtxt
+            decpts = [0, 0, 4]
+        rows = []
+        if self.rows > 8784:
+            mult = 2
+        else:
+            mult = 1
+        if self.show_contribution:
+            aggregates = {'Month': 24 * 31 * mult}
+        else:
+            aggregates = {'Hour': 1, 'Day': 24 * mult, 'Week': 24 * 7 * mult,
+                          'Fortnight': 24 * 14 * mult, 'Month': 24 * 31 * mult}
+        debug = False
+        if debug:
+            cf = open('debug_corr.csv', 'w')
+        for key, agg in aggregates.items():
+            tgt = []
+            tagg = 0
+            atgt = 0
+            for s in range(len(strt_row)):
+                strt = strt_row[s] - self.toprow[1]
+                for row in range(strt, strt + todo_rows[s]):
+                    atgt += base_tgt[row]
+                    tagg += 1
+                    if tagg == agg:
+                        tgt.append(atgt) # / tagg)
+                        tagg = 0
+                        atgt = 0
+                if tagg > 0:
+                    tgt.append(atgt) # / tagg)
+                    tagg = 0
+                    atgt = 0
+            if not self.show_contribution and len(tgt) < 2:
+                continue
+            data = []
+            for c in range(self.order.count() -1, -1, -1):
+                col = self.order.item(c).text()
+                for c2 in range(2, ws.ncols):
+                    column = ws.cell_value(self.toprow[0], c2).replace('\n',' ')
+                    if self.zone_row > 0 and ws.cell_value(self.zone_row, c2) != '':
+                        column = ws.cell_value(self.zone_row, c2).replace('\n',' ') + '.' + column
+                    if column == col:
+                        data.append([])
+                        total_data.append(0.)
+                        sagg = 0
+                        asrc = 0
+                        for s in range(len(strt_row)):
+                            for row in range(strt_row[s] + 1, strt_row[s] + todo_rows[s] + 1):
+                                asrc += ws.cell_value(row, c2)
+                                sagg += 1
+                                if sagg == agg:
+                                    data[-1].append(asrc) # / tagg)
+                                    sagg = 0
+                                    asrc = 0
+                            if sagg > 0:
+                                data[-1].append(asrc) # / tagg)
+                                sagg = 0
+                                asrc = 0
+                        if self.show_contribution:
+                            fields.append(col.lower())
+                            decpts.append(4)
+                            continue
+                            tgt_total = 0
+                            src_total = 0
+                            for value in tgt:
+                                tgt_total += value
+                            for value in data[-1]:
+                                src_total += value
+                            try:
+                                corr = src_total / tgt_total
+                            except:
+                                corr = 0
+                        else:
+                            try:
+                                corr = np.corrcoef(tgt, data[-1])
+                                if np.isnan(corr.item((0, 1))):
+                                    cor = 'n/a'
+                                    corr = 0
+                            except:
+                                cor = 'n/a'
+                                corr = 0
+                            else:
+                                corr = corr.item((0, 1))
+                        if corr == 0:
+                            cor = 'n/a'
+                        elif abs(corr) < 0.1:
+                            cor = 'None'
+                        elif abs(corr) < 0.3:
+                            cor = 'Little if any'
+                        elif abs(corr) < 0.5:
+                            cor = 'Low'
+                        elif abs(corr) < 0.7:
+                            cor = 'Moderate'
+                        elif abs(corr) < 0.9:
+                            cor = 'High'
+                        else:
+                            cor = 'Very high'
+                        if abs(corr) > best_corr:
+                            best_corr = corr
+                            best_fac = key + ': ' + self.order.item(c).text()
+                        if self.show_contribution:
+                            rows.append([self.order.item(c).text(), corr, cor])
+                        else:
+                            rows.append([key, self.order.item(c).text(), corr, cor])
+                       #     break
+            if debug:
+                for i in range(len(tgt)):
+                    line = '%s,%d,%0.2f,' % (key, agg, tgt[i])
+                    for d in range(len(data)):
+                        line += '%0.2f,' % data[d][i]
+                    cf.write(line + '\n')
+        if self.show_contribution:
+            for m in range(len(periods)):
+                if debug:
+                    line = periods[m] + ',' + str(tgt[m]) + ','
+                total_tgt += tgt[m]
+                rows.append([periods[m]])
+                for o in range(len(fields) - 1):
+                    if debug:
+                        line += str(data[o][m]) + ','
+                    total_data[o] += data[o][m]
+                    pct = '{:.1f}%'.format(data[o][m] * 100. / tgt[m])
+                    rows[-1].append(pct)
+                if debug:
+                    cf.write(line + '\n')
+            rows.append(['Total'])
+            for o in range(len(fields) - 1):
+                pct = '{:.1f}%'.format(total_data[o] * 100. / total_tgt)
+                rows[-1].append(pct)
+        if debug:
+            cf.close()
+        title = '%s %s %s' % (corrtxt[1].title(), self.target, per1)
+        if per2 != '' and per2 != '<none>':
+            title += ' to ' + per2
+        dialog = Table(rows, fields=fields, title=title, decpts=decpts, sortby=sortby, reverse=True, save_folder=self.scenarios)
+        dialog.exec_()
+        self.log.setText('Best %s: %s %.4f' % (corrtxt[1], best_fac, best_corr))
 
 
 if "__main__" == __name__:
