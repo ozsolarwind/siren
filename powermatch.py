@@ -66,7 +66,7 @@ target_fmats = ['$%.2f', '%d%%', '%d%%', '%d%%', '$%.1fpwr_chr', '%.1fpwr_chr']
 target_titles = ['LCOE ($)', '% Load met', 'Surplus %', 'RE %', 'Total Cost ($)', 'tCO2e']
 headers = ['Facility', 'Capacity\n(Gen, MW;\nStor, MWh)', 'To meet\nLoad (MWh)',
            'Subtotal\n(MWh)', 'CF', 'Cost ($/yr)', 'LCOE\n($/MWh)', 'Emissions\n(tCO2e)',
-           'Max.\nMWH', 'Max.\nBalance', 'Reference\nLCOE','Reference\nCF']
+           'Max.\nMWH', 'Max.\nBalance', 'Capital Cost', 'Reference\nLCOE','Reference\nCF']
 # same order as self.file_labels
 C = 0 # Constraints
 G = 1 # Generators
@@ -2152,7 +2152,7 @@ class powerMatch(QtWidgets.QWidget):
             batch_details = {'Capacity (MW/MWh)': [1, '#,##0.00'], 'To Meet Load (MWh)': [2, '#,##0'],
                              'Generation (MWh)': [3, '#,##0'], 'Capacity Factor': [4, '#,##0.00'],
                              'Cost ($/Yr)': [5, '#,##0'], 'LCOE ($/MWh)': [6, '#,##0.00'],
-                             'Emissions (tCO2e)': [7, '#,##0']}
+                             'Emissions (tCO2e)': [7, '#,##0'], 'Capital Cost': [10, '#,##0']}
             batch_extra = {'RE': ['#,##0.00', ['RE %age', 1], ['Storage %age', 1], ['RE %age of Total Load', 1]],
                            'Load Analysis': ['#,##0', ['Load met', 2], ['Load met %age', 1], ['Shortfall', 2], ['Total Load', 2],
                            ['Largest Shortfall', 1], ['Storage losses', 3], ['Surplus', 3], ['Surplus %age', 1]],
@@ -2731,6 +2731,7 @@ class powerMatch(QtWidgets.QWidget):
             ss.cell(row=3, column=10).value = headers[9]
             ss.cell(row=3, column=11).value = headers[10]
             ss.cell(row=3, column=12).value = headers[11]
+            ss.cell(row=3, column=13).value = headers[12]
             ss_row = 3
             fall_row = 8
             ns.cell(row=fall_row, column=2).value = 'Shortfall periods'
@@ -2837,6 +2838,9 @@ class powerMatch(QtWidgets.QWidget):
                     ns.cell(row=lcoe_row, column=col).number_format = '$#,##0.00'
                     ss.cell(row=ss_row, column=7).value = '=Detail!' + ss_col(col) + str(lcoe_row)
                     ss.cell(row=ss_row, column=7).number_format = '$#,##0.00'
+                    ss.cell(row=ss_row, column=11).value = self.generators[gen].capex * pmss_details[fac].capacity \
+                                                           * pmss_details[fac].multiplier
+                    ss.cell(row=ss_row, column=11).number_format = '$#,##0'
                 elif self.generators[gen].lcoe > 0:
                     ns.cell(row=cost_row, column=col).value = '=IF(' + ss_col(col) + str(cf_row) + \
                             '>0,' + ss_col(col) + str(sum_row) + '*Summary!J' + str(ss_row) + \
@@ -2854,10 +2858,10 @@ class powerMatch(QtWidgets.QWidget):
                     ns.cell(row=lcoe_row, column=col).number_format = '$#,##0.00'
                     ss.cell(row=ss_row, column=7).value = '=Detail!' + ss_col(col) + str(lcoe_row)
                     ss.cell(row=ss_row, column=7).number_format = '$#,##0.00'
-                    ss.cell(row=ss_row, column=11).value = self.generators[gen].lcoe
-                    ss.cell(row=ss_row, column=11).number_format = '$#,##0.00'
-                    ss.cell(row=ss_row, column=12).value = self.generators[gen].lcoe_cf
-                    ss.cell(row=ss_row, column=12).number_format = '#,##0.00'
+                    ss.cell(row=ss_row, column=12).value = self.generators[gen].lcoe
+                    ss.cell(row=ss_row, column=12).number_format = '$#,##0.00'
+                    ss.cell(row=ss_row, column=13).value = self.generators[gen].lcoe_cf
+                    ss.cell(row=ss_row, column=13).number_format = '#,##0.00'
                 ss.cell(row=ss_row, column=9).value = '=Detail!' + ss_col(col) + str(max_row)
                 ss.cell(row=ss_row, column=9).number_format = '#,##0.00'
                 if self.generators[gen].emissions > 0:
@@ -2959,7 +2963,7 @@ class powerMatch(QtWidgets.QWidget):
                 mx = max(pmss_data[pmss_details[fac].col]) * pmss_details[fac].multiplier
                 gx = sum(pmss_data[pmss_details[fac].col]) * pmss_details[fac].multiplier
                 sp_data.append([fac, pmss_details[fac].capacity * pmss_details[fac].multiplier,
-                               '', gx, '', '', '', '', mx, '', '', ''])
+                               '', gx, '', '', '', '', mx, '', '', '', ''])
             for h in range(len(shortfall)):
                 if shortfall[h] < 0:
                     tml += pmss_data[0][h] * pmss_details['Load'].multiplier
@@ -3172,7 +3176,7 @@ class powerMatch(QtWidgets.QWidget):
                     if storage[0] == 0:
                         continue
                #     tml_tot += storage_can
-                    sp_data.append([gen, storage[0], storage_can, '', '', '', '', '', use_max[0], sto_max, '', ''])
+                    sp_data.append([gen, storage[0], storage_can, '', '', '', '', '', use_max[0], sto_max, '', '', ''])
             else: # generator
                 try:
                     if self.constraints[self.generators[gen].constraint].capacity_max > 0:
@@ -3317,6 +3321,7 @@ class powerMatch(QtWidgets.QWidget):
             sto_sum = 0.
             cost_sum = 0.
             co2_sum = 0.
+            capex_sum = 0.
             for sp in range(len(sp_data)):
                 gen = sp_data[sp][0]
                 try:
@@ -3352,6 +3357,7 @@ class powerMatch(QtWidgets.QWidget):
                         sp_data[sp][5] = 0
                         continue
                     capex = sp_data[sp][1] * self.generators[gen].capex
+                    capex_sum += capex
                     opex = sp_data[sp][1] * self.generators[gen].fixed_om \
                            + sp_data[sp][ndx] * self.generators[gen].variable_om \
                            + sp_data[sp][ndx] * self.generators[gen].fuel
@@ -3362,6 +3368,7 @@ class powerMatch(QtWidgets.QWidget):
                     sp_data[sp][6] = calcLCOE(sp_data[sp][ndx], capex, opex, disc_rate, lifetime)
                     sp_data[sp][5] = sp_data[sp][ndx] * sp_data[sp][6]
                     cost_sum += sp_data[sp][5]
+                    sp_data[sp][10] = capex
                 elif self.generators[gen].lcoe > 0:
                     if self.remove_cost and sp_data[sp][ndx] == 0:
                         sp_data[sp][5] = 0
@@ -3374,8 +3381,8 @@ class powerMatch(QtWidgets.QWidget):
                     if sp_data[sp][1] > 0 and sp_data[sp][4] > 0:
                         sp_data[sp][6] = sp_data[sp][5] / 8760 / sp_data[sp][4] / sp_data[sp][1]
                     cost_sum += sp_data[sp][5]
-                    sp_data[sp][10] = self.generators[gen].lcoe
-                    sp_data[sp][11] = lcoe_cf
+                    sp_data[sp][11] = self.generators[gen].lcoe
+                    sp_data[sp][12] = lcoe_cf
                 if self.generators[gen].emissions > 0:
                     sp_data[sp][7] = sp_data[sp][ndx] * self.generators[gen].emissions
                     co2_sum += sp_data[sp][7]
@@ -3399,7 +3406,7 @@ class powerMatch(QtWidgets.QWidget):
                 gsw = cost_sum / tml_sum # adjusted LCOE
             else:
                 gsw = ''
-            sp_data.append(['Total', cap_sum, tml_sum, gen_sum, cs, cost_sum, gs, co2_sum])
+            sp_data.append(['Total', cap_sum, tml_sum, gen_sum, cs, cost_sum, gs, co2_sum, '', '', capex_sum])
             if self.adjusted_lcoe:
                 sp_data.append(['Adjusted LCOE', '', '', '', '', '', gsw, ''])
             if self.carbon_price > 0 or option == 'B':
@@ -3499,7 +3506,7 @@ class powerMatch(QtWidgets.QWidget):
                     extra = [gsw, op_load_tot, sto_sum, re_sum, re_pct, sf_sums]
                     return multi_value, sp_data, extra
             list(map(list, list(zip(*sp_data))))
-            sp_pts = [0, 2, 0, 0, 2, 0, 2, 0, 2, 2, 2, 2]
+            sp_pts = [0, 2, 0, 0, 2, 0, 2, 0, 2, 2, 0, 2, 2]
             if corr_data is not None:
                 sp_pts[1] = 3 # compromise between capacity (2) and correlation (4)
         #    if option != 'B':
@@ -3575,6 +3582,9 @@ class powerMatch(QtWidgets.QWidget):
                 ns.cell(row=lcoe_row, column=col + nc).number_format = '$#,##0.00'
                 ss.cell(row=ss_row, column=7).value = '=Detail!' + ss_col(col + nc) + str(lcoe_row)
                 ss.cell(row=ss_row, column=7).number_format = '$#,##0.00'
+                ss.cell(row=ss_row, column=11).value = self.generators[gen].capex * pmss_details[fac].capacity \
+                                                       * pmss_details[fac].multiplier
+                ss.cell(row=ss_row, column=11).number_format = '$#,##0'
             elif self.generators[fac].lcoe > 0:
                 ns.cell(row=cost_row, column=col + nc).value = '=IF(' + ss_col(col + nc) + str(cf_row) + \
                         '>0,' + ss_col(col + nc) + str(sum_row) + '*Summary!J' + str(ss_row) + \
@@ -3592,13 +3602,13 @@ class powerMatch(QtWidgets.QWidget):
                 ns.cell(row=lcoe_row, column=col + nc).number_format = '$#,##0.00'
                 ss.cell(row=ss_row, column=7).value = '=Detail!' + ss_col(col + nc) + str(lcoe_row)
                 ss.cell(row=ss_row, column=7).number_format = '$#,##0.00'
-                ss.cell(row=ss_row, column=11).value = self.generators[gen].lcoe
-                ss.cell(row=ss_row, column=11).number_format = '$#,##0.00'
+                ss.cell(row=ss_row, column=12).value = self.generators[gen].lcoe
+                ss.cell(row=ss_row, column=12).number_format = '$#,##0.00'
                 if self.generators[gen].lcoe_cf == 0:
-                    ss.cell(row=ss_row, column=12).value = '=D' + str(ss_row)
+                    ss.cell(row=ss_row, column=13).value = '=D' + str(ss_row)
                 else:
-                    ss.cell(row=ss_row, column=12).value = self.generators[gen].lcoe_cf
-                ss.cell(row=ss_row, column=12).number_format = '#,##0.00'
+                    ss.cell(row=ss_row, column=13).value = self.generators[gen].lcoe_cf
+                ss.cell(row=ss_row, column=13).number_format = '#,##0'
             if self.generators[gen].emissions > 0:
                 ns.cell(row=emi_row, column=col + nc).value = '=' + ss_col(col + nc) + str(sum_row) \
                         + '*' + str(self.generators[gen].emissions)
@@ -3730,6 +3740,8 @@ class powerMatch(QtWidgets.QWidget):
         ss.cell(row=ss_row, column=7).number_format = '$#,##0.00'
         ss.cell(row=ss_row, column=8).value = '=SUM(H4:H' + str(ss_row - 1) + ')'
         ss.cell(row=ss_row, column=8).number_format = '#,##0'
+        ss.cell(row=ss_row, column=11).value = '=SUM(K4:K' + str(ss_row - 1) + ')'
+        ss.cell(row=ss_row, column=11).number_format = '$#,##0'
         ss.cell(row=ss_row, column=1).value = 'Total'
         if self.adjusted_lcoe:
             ss_row +=1
