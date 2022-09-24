@@ -161,6 +161,9 @@ ul {
 </ul>
 <li><a href="#feedback">Feedback</a></li>
 <li><a href="#files">SIREN File Formats</a></li>
+<ul class="none">
+<li><a href="#samwind">SAM Wind Turbines</a></li>
+</ul>
 <li><a href="#notes">Supporting Notes</a></li>
 <ul class="none">
 <li><a href="#map">Obtaining a Suitable Map Image</a></li>
@@ -2495,13 +2498,13 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><img src="plus.png" alt="Add">&nbsp;&nbsp;Add (Ctrl+A)</td>
-<td class="none">Add an existing scenario to the current session</td>
+<td class="none">Add all the stations from an existing scenario to the current session</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="minus.png" alt="Remove">&nbsp;&nbsp;Remove
 <br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...Scenario(s)</td>
-<td class="none">Remove one of the open scenarios from the current model.
+<td class="none">Remove one of the open scenarios stations from the current model.
 The <em>Existing</em> scenario allows you to remove existing stations from your session</td>
 </tr>
 <tr class="none">
@@ -2542,7 +2545,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <td class="none">Run SAM models for the current model or list details on new infrastructure in the model</p>
 <table border="0", class="none">
 <tr class="none">
-<td class="none"><img src="power.png" alt="Get Generation">&nbsp;&nbsp;Run SAM Power Models (Ctrl+P)</td>
+<td class="none"><img src="power.png" alt="Get Generation">&nbsp;&nbsp;Power for yyyy (Ctrl+P)</td>
 <td class="none">Run SAM models for the base year for each station in the current model and display power curves for the full model</td>
 </tr>
 <tr class="none">
@@ -2553,7 +2556,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 </tr>
 <tr class="none">
 <td class="none"><img src="power-plant-icon.png" alt="List Stations">&nbsp;&nbsp;List Stations (Ctrl+L)</td>
-<td class="none">List all stations in the current model. By right-clicking a column header you can sort by that column in ascending and then descending order. By left or right-clicking a station you can display the details for that station</td>
+<td class="none">List stations in the current model. This will list either all renewable stations or, if 'Display fossil-fuelled stations' is set, all stations including fossil-fuelled stations. By right-clicking a column header you can sort by that column in ascending and then descending order. By left or right-clicking a station you can display the details for that station</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="network.png" alt="List Grid">&nbsp;&nbsp;List Grid (Wires; Ctrl+W)</td>
@@ -2994,7 +2997,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <td class="none">Save adjusted data outputs produced by the model for each station and other options (<em>save_detail</em>)</td></tr>
 <tr><td class="lr"><dfn>Save (adjusted) Hourly Data Output by Technology</dfn></td>
 <td class="none">Save adjusted data outputs produced by the model for each technology and other options (<em>save_tech</em>)</td></tr>
-<tr><td class="lr"><dfn>Save Powermatch data</dfn></td>
+<tr><td class="lr"><dfn>Save Powermatch Inputs</dfn></td>
 <td class="none">Save the input data for Powermatch (or Powerbalance). If you check this option it will check two options that are required for Powermatch (&lsquo;Generation - show Load&rsquo; and &lsquo;Generation - reduce generation by grid losses&rsquo;). (<em>save_match</em>)</td></tr>
 <tr><td class="lr"><dfn>Run Financial Models</dfn></td>
 <td class="none">Run SAM financial models on the power results for each station and produces a summary table showing additional financial outputs (<em>financials</em>)</td></tr>
@@ -3779,6 +3782,10 @@ If the best and worse values are the same for a variable and that value is not a
 </ul></td>
 </tr>
 </table>
+</p>
+<h3 id="samwind">SAM Wind Turbines</h3>
+<p>SAM provides a file, <em>Wind Turbines.csv</em>, which is used to create power curves for wind turbines. The first four columns of data are self-explanatory; the last has generation output in .25 m/s increments used to produce the power curve. <em>Wind Turbines Subset.csv</em>, distributed with SIREN, has a subset of the to enable a shorter list to be displayed. You can create your own subset of files for SAM's file.</p>
+<p>To augment this list, to cater for both older turbines (e.g. 'Vestas V27-225Kw') and more recent ones (or those not in SAM's list; e.g. 'Vestas V150-4.2Mw'), SIREN also accepts <em>.pow</em> files as described above.</p>
 <p><a href="#help">Back to top</a></p>
 <h2 id="notes">Supporting Notes</h2>
 <h3 id="map">Obtaining a Suitable Map Image</h3>
