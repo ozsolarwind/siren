@@ -82,7 +82,8 @@ def techClean(tech, full=False):
     cleantech = cleantech.replace('Pv', 'PV')
     if full:
         alll = [['Cf', 'CF'], ['hi ', 'HI '], ['Lcoe', 'LCOE'], ['Mw', 'MW'],
-                ['ni ', 'NI '], ['Npv', 'NPV'], ['Re', 'RE'], ['Tco2E', 'tCO2e']]
+                ['ni ', 'NI '], ['Npv', 'NPV'], ['Re', 'RE'], ['Tco2E', 'tCO2e'],
+                ['REference', 'Reference']]
         for each in alll:
             cleantech = cleantech.replace(each[0], each[1])
     return cleantech
@@ -138,7 +139,7 @@ def extrapolateWind(wind_file, tgt_height, law='logarithmic', replace=False):
         bits = lines[i].rstrip(',\n').split(',')
         speed = float(bits[col])
         speed0 = float(bits[col0])
-        if speed0 > speed:
+        if speed0 >= speed:
             alpha = 1. / 7. # one-seventh power law
         else:
             alpha = (math.log(speed)-math.log(speed0))/(math.log(height)-math.log(height0))

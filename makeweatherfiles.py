@@ -1597,6 +1597,9 @@ class getParms(QtWidgets.QWidget):
         if self.hub_height.value() < 80:
             return
         self.progresslabel.setHidden(False)
+        if not os.path.exists(self.dirs[2].text()):
+            self.progresslabel.setText("Target folder doesn't exist")
+            return
         self.progresslabel.setText('Updating wind weather files')
         fils = os.listdir(self.dirs[2].text())
         for f in range(len(fils) -1, -1, -1):

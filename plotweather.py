@@ -275,9 +275,9 @@ class PlotWeather():
                     i += 1
                     lw = 2.0
                     if self.two_axes and key in self.ylabel2[0]:
-                        px2.plot(x24, data[i][p], linewidth=lw, label=key, color=self.colours[key])
+                        px2.plot(x24, data[i][p], linewidth=lw, label=self.labels[key], color=self.colours[key])
                     else:
-                        px.plot(x24, data[i][p], linewidth=lw, label=key, color=self.colours[key])
+                        px.plot(x24, data[i][p], linewidth=lw, label=self.labels[key], color=self.colours[key])
                     plt.title(per_labels[p])
                 plt.xlim([1, 24])
                 plt.xticks(list(range(4, 25, 4)))
@@ -297,7 +297,7 @@ class PlotWeather():
             if self.two_axes:
                 lines = []
                 for key in self.ly:
-                    lines.append(mlines.Line2D([], [], color=self.colours[key], label=key))
+                    lines.append(mlines.Line2D([], [], color=self.colours[key], label=self.labels[key]))
                 px.legend(handles=lines, loc='best')
             else:
                 px.legend(loc='best')
@@ -532,9 +532,9 @@ class PlotWeather():
             for key, value in iter(sorted(self.ly.items())):
                 lw = 2.0
                 if self.two_axes and key in self.ylabel2[0]:
-                    hx2.plot(x, value, linewidth=lw, label=key, color=self.colours[key])
+                    hx2.plot(x, value, linewidth=lw, label=self.labels[key], color=self.colours[key])
                 else:
-                    hx.plot(x, value, linewidth=lw, label=key, color=self.colours[key])
+                    hx.plot(x, value, linewidth=lw, label=self.labels[key], color=self.colours[key])
                     maxy = max(maxy, max(value))
                 if self.plots['save_plot']:
                     vals.append(key)
@@ -556,7 +556,7 @@ class PlotWeather():
                 hx2.set_ylim(0, ylim[1])
                 lines = []
                 for key in self.ly:
-                    lines.append(mlines.Line2D([], [], color=self.colours[key], label=key))
+                    lines.append(mlines.Line2D([], [], color=self.colours[key], label=self.labels[key]))
                 hx.legend(handles=lines, loc='best')
                 hx2.set_ylabel(self.ylabel2[1])
             if self.maximise:
@@ -596,9 +596,9 @@ class PlotWeather():
             for key, value in iter(sorted(self.ly.items())):
                 i += 1
                 if self.two_axes and key in self.ylabel2[0]:
-                    tx2.plot(x24, l24[i], linewidth=lw, label=key, color=self.colours[key])
+                    tx2.plot(x24, l24[i], linewidth=lw, label=self.labels[key], color=self.colours[key])
                 else:
-                    tx.plot(x24, l24[i], linewidth=lw, label=key, color=self.colours[key])
+                    tx.plot(x24, l24[i], linewidth=lw, label=self.labels[key], color=self.colours[key])
                     maxy = max(maxy, max(l24[i]))
                 if self.plots['save_plot']:
                     vals.append(key)
@@ -624,7 +624,7 @@ class PlotWeather():
                 tx2.set_ylim(0, ylim[1])
                 lines = []
                 for key in self.ly:
-                    lines.append(mlines.Line2D([], [], color=self.colours[key], label=key))
+                    lines.append(mlines.Line2D([], [], color=self.colours[key], label=self.labels[key]))
                 tx.legend(handles=lines, loc='best')
                 tx2.set_ylabel(self.ylabel2[1])
             if self.maximise:
@@ -678,9 +678,9 @@ class PlotWeather():
                 i += 1
                 lw = 2.0
                 if self.two_axes and key in self.ylabel2[0]:
-                    tx2.step(x24[:14], t12[i], linewidth=lw, label=key, color=self.colours[key])
+                    tx2.step(x24[:14], t12[i], linewidth=lw, label=self.labels[key], color=self.colours[key])
                 else:
-                    tx.step(x24[:14], t12[i], linewidth=lw, label=key, color=self.colours[key])
+                    tx.step(x24[:14], t12[i], linewidth=lw, label=self.labels[key], color=self.colours[key])
                     maxy = max(maxy, max(t12[i]) + 1)
                 if self.plots['save_plot']:
                     vals.append(key)
@@ -709,7 +709,7 @@ class PlotWeather():
                 tx2.set_ylim(0, ylim[1])
                 lines = []
                 for key in self.ly:
-                    lines.append(mlines.Line2D([], [], color=self.colours[key], label=key))
+                    lines.append(mlines.Line2D([], [], color=self.colours[key], label=self.labels[key]))
                 tx.legend(handles=lines, loc='best')
                 tx2.set_ylabel(self.ylabel2[1])
             if self.maximise:
@@ -748,9 +748,9 @@ class PlotWeather():
             for key, value in iter(sorted(self.ly.items())):
                 i += 1
                 if self.two_axes and key in self.ylabel2[0]:
-                    tx2.plot(x24[:12], m12[i], linewidth=lw, label=key, color=self.colours[key])
+                    tx2.plot(x24[:12], m12[i], linewidth=lw, label=self.labels[key], color=self.colours[key])
                 else:
-                    tx.plot(x24[:12], m12[i], linewidth=lw, label=key, color=self.colours[key])
+                    tx.plot(x24[:12], m12[i], linewidth=lw, label=self.labels[key], color=self.colours[key])
                     maxy = max(maxy, max(m12[i]) + 1)
                 if self.plots['save_plot']:
                     vals.append(key)
@@ -776,7 +776,7 @@ class PlotWeather():
                 tx2.set_ylim(0, ylim[1])
                 lines = []
                 for key in self.ly:
-                    lines.append(mlines.Line2D([], [], color=self.colours[key], label=key))
+                    lines.append(mlines.Line2D([], [], color=self.colours[key], label=self.labels[key]))
                 tx.legend(handles=lines, loc='best')
                 tx2.set_ylabel(self.ylabel2[1])
             if self.maximise:
@@ -897,6 +897,7 @@ class PlotWeather():
                 'block': 'Show plots one at a time',
                 'pdf': 'Probability Density Function',
                 'save_plot': 'Save plot data to a file'}
+        self.labels = {'dhi': 'DHI', 'dni': 'DNI', 'ghi': 'GHI', 'rain': 'Rain', 'temp': 'Temp.', 'wind': 'Wind', 'wind2': 'Wind 2'}
         if rain:
              self.hdrs['rain'] = 'Rainfall - mm'
              self.hdrs['monthly'] = 'Monthly totals'
@@ -1015,7 +1016,7 @@ class PlotWeather():
                     lines = tf.readlines()
                     tf.close()
                     fst_row = len(lines) - 8760
-                    self.ly['wind'] = []  # we'll override and wind from the solar file
+                    self.ly['wind'] = []  # we'll override any wind from the solar file
                     if self.windy is None:
                         pass
                     else:
@@ -1023,16 +1024,34 @@ class PlotWeather():
                     if self.wind_file[-4:] == '.srw':
                         units = lines[3].strip().split(',')
                         heights = lines[4].strip().split(',')
+                        cols = []
+                        col2 = -1
                         col = -1
                         for j in range(len(units)):
                             if units[j] == 'm/s':
-                               if heights[j] == '50':
-                                   col = j
-                                   break
+                               try:
+                                   h = int(heights[j])
+                                   cols.append([h, j])
+                               except:
+                                   pass
+                        if len(cols) > 1:
+                            cols.sort(key=lambda x: x[1], reverse=True)
+                            if cols[0][0] > 50:
+                                col = cols[1][1]
+                                self.labels['wind'] = 'Wind {:d}m'.format(cols[1][0])
+                                col2 = cols[0][1]
+                                self.labels['wind2'] = 'Wind {:d}m'.format(cols[0][0])
+                                self.ly['wind2'] = []
+                            else:
+                                col = cols[0][1]
+                        else:
+                            col = col[0][1]
                         for i in range(fst_row, len(lines)):
                             bits = lines[i].split(',')
                             self.ly['wind'].append(float(bits[col]))
-                            if self.windy is None:
+                            if col2 > 0:
+                                self.ly['wind2'].append(float(bits[col2]))
+                            elif self.windy is None:
                                 pass
                             else:
                                 self.ly['wind2'].append(float(bits[col]) * (self.windy[1] / self.windy[0]) ** 0.143)
@@ -1070,15 +1089,15 @@ class PlotWeather():
                 self.ylabel2 = [['temp'], 'Temperature. (oC)', 'Temp. (oC)']
             if self.plots['wind']:
                 if self.two_axes:
-                    self.ylabel2 = [['temp', 'wind'], 'Wind (m/s) & Temp. (oC)', 'Wind & Temp.']
+                    self.ylabel2 = [['temp', 'wind', 'wind2'], 'Wind (m/s) & Temp. (oC)', 'Wind & Temp.']
                 else:
                     self.two_axes = True
-                    self.ylabel2 = [['wind'], 'Wind Speed (m/s)', 'Wind (m/s)']
+                    self.ylabel2 = [['wind', 'wind2'], 'Wind Speed (m/s)', 'Wind (m/s)']
         elif self.plots['temp']:
             self.ylabel = ['Temperature. (oC)', 'Temp. (oC)']
             if self.plots['wind']:
                 self.two_axes = True
-                self.ylabel2 = [['wind'], 'Wind Speed (m/s)', 'Wind (m/s)']
+                self.ylabel2 = [['wind', 'wind2'], 'Wind Speed (m/s)', 'Wind (m/s)']
         elif self.plots['wind']:
             self.ylabel = ['Wind Speed (m/s)', 'Wind (m/s)']
         elif self.plots['rain']:
