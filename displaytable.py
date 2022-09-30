@@ -335,7 +335,11 @@ class Table(QtWidgets.QDialog):
                         elif isinstance(attr, float):
                             self.labels[prop] = 'float'
                         else:
-                            self.labels[prop] = 'str'
+                            try:
+                                at = float(attr.strip('%'))
+                                self.labels[prop] = 'float'
+                            except:
+                                self.labels[prop] = 'str'
                     if isinstance(attr, int):
                         if self.labels[prop] == 'str':
                             self.labels[prop] = 'int'
@@ -794,23 +798,59 @@ class Table(QtWidgets.QDialog):
             for rw in range(self.table.rowCount()):
                 for cl in range(self.table.columnCount()):
                     if self.table.item(rw, cl) is not None:
-                        valu = self.table.item(rw, cl).text()
+                        valu = self.table.item(rw, cl).text().strip()
+                        if len(valu) < 1:
+                            continue
+                        style = dec_fmts[cl]
+                        if valu[-1] == '%':
+                            is_pct = True
+                            i = valu.rfind('.')
+                            if i >= 0:
+                                dec_pts = (len(valu) - i - 2)
+                                style = xlwt.XFStyle()
+                                try:
+                                    style.num_format_str = '#,##0.' + '0' * dec_pts + '%'
+                                except:
+                                    pass
+                            else:
+                                 dec_pts = 0
+                                 style.num_format_str = '#,##0%'
+                        else:
+                            is_pct = False
                         if hdr_types[cl] == 'int':
                             try:
-                                val1 = self.table.item(rw, cl).text().strip()
+                                val1 = valu
+                                if is_pct:
+                                    val1 = val1.strip('%')
                                 val1 = val1.replace(',', '')
-                                valu = int(val1)
+                                if is_pct:
+                                    valu = round(int(val1) / 100., dec_pts + 2)
+                                else:
+                                    valu = int(val1)
                             except:
                                 pass
                         elif hdr_types[cl] == 'float':
                             try:
-                                val1 = self.table.item(rw, cl).text().strip()
+                                val1 = valu
+                                if is_pct:
+                                    val1 = val1.strip('%')
                                 val1 = val1.replace(',', '')
-                                valu = float(val1)
+                                if is_pct:
+                                    valu = round(float(val1) / 100., dec_pts + 2)
+                                else:
+                                    valu = float(val1)
                             except:
                                 pass
+                        else:
+                            if is_pct:
+                                try:
+                                    val1 = valu.strip('%')
+                                    val1 = val1.replace(',', '')
+                                    valu = round(float(val1) / 100., dec_pts + 2)
+                                except:
+                                    pass
                         xl_lens[cl] = max(xl_lens[cl], len(str(valu)))
-                        ws.write(rw + 1, cl, valu, dec_fmts[cl])
+                        ws.write(rw + 1, cl, valu, style)
             for cl in range(self.table.columnCount()):
                 if xl_lens[cl] * 275 > ws.col(cl).width:
                     ws.col(cl).width = xl_lens[cl] * 275
