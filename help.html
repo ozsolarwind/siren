@@ -1973,15 +1973,15 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><div class="experiment"><dfn>show_contribution</dfn></div></td>
-<td class="none"><div class="experiment">If set to True, show the percentage contribution of chosen components in meeting the target, e.g. Load. The default is False</em></div></td>
+<td class="none"><div class="experiment">If set to True, show the percentage contribution of chosen components in meeting the target, e.g. Load. The default is False <Strong>Note:</strong> This Property is used by <code>Powerplot</code> and not <code>Powermatch</code></div></td>
 </tr>
 <tr class="none">
 <td class="none"><div class="experiment"><dfn>show_correlation</dfn></div></td>
-<td class="none"><div class="experiment">If set to True, a linear correlation between Load and three components used to meet Load will be calculated. The default is False</em></div></td>
+<td class="none"><div class="experiment">If set to True, a linear correlation between Load and three components used to meet Load will be calculated. The default is False</div></td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>show_multipliers</dfn></td>
-<td class="none">If set to True, technology multipliers will be shown on the Adjustment window. The default is False</em></td>
+<td class="none">If set to True, technology multipliers will be shown on the Adjustment window. The default is False</td>
 </tr>
 </table>
 </td></tr>
@@ -3245,9 +3245,9 @@ If it's not a diurnal plot (i.e. Period is <em>&lt;None&gt;</em>) any occurence 
 </ul><p><a href="#help">Back to top</a></p>
 <h3 id="powermatch">Powermatch</h3>
 <p>Running the SIREN models will produce hourly generation figures which identify generation shortfalls and excesses against load (demand). One of the outputs from SIREN is a table of these generation shortfalls which could be met by storage (charged by surplus renewable generation) and dispatchable energy generation. The Powermatch (<code>powermatch</code>) component of SIREN can be used to match generation with demand (load) to quantify and cost this dispatchable energy generation, storage and CO<sub>2</sub>-e emissions. This enables you to complete a costed renewable energy scenario. If the input data spreadsheet has zones (of generation) the calculations will be performed for each zone.</p>
-<p>One of the outputs from Powermatch is calculated LCOE figures, overall and for each Generator. The LCOE figures are calculated based upon either Capital (Capex), Operations (Opex) and fuel costs or a Reference LCOE and Reference Capacity Factor (CF) for the generator or storage.
+<p>One of the outputs from Powermatch is calculated Levelised Cost figures for each Generator, LCOG, and Storage, LCOS, and an overall LCOE. The Levelised Costs are calculated based upon either Capital (Capex), Operations (Opex) and fuel costs or a Reference LCOE and Reference Capacity Factor (CF) for the generator or storage.
 Be aware that if a facility is not used it will have no costs associated with it (this is based upon the premise that the facility would not be included in any detailed modelling).
-In producing the LCOE figures you can choose to use LCOE figures that ignore any surplus generation or produce an adjusted LCOE figure which adjusts the LCOE figure upwards to take into account the surplus generation (that is, the adjusted LCOE figure includes the cost of surplus - spilled - generation). The default is to produce an adjusted LCOE (<em>adjusted_lcoe</em>)
+Surplus - spilled or curtailed - generation is normally used in the calculation of the (overall) LCOE. You can choose to ignore this in calculating the LCOE. The default, and recommendation, is to  include the surplus (<em>adjusted_lcoe</em>)
 <p><strong>Note:</strong> The SIREN Powermatch component was in part inspired by the Powerbalance worksheets developed by Ben Rose. For those who would prefer his spreadsheet approach an enhanced version, Powerbalance2, is available at <a href="https://cleanenergymodelling.com.au/powerbalance2/" target="_blank">https://cleanenergymodelling.com.au/powerbalance2/</a></p>
 <p>The Powermatch options are as set out here. The options (Properties) are specified in the <a href="#p_pm">[Powermatch]</a> Section of the Preferences file. The associated property is indicated in brackets at the end of the description. All files are located in the SIREN Scenarios folder.</p>
 <table border="0" class="none" cellpadding="2">
@@ -3280,7 +3280,7 @@ In producing the LCOE figures you can choose to use LCOE figures that ignore any
 <tr><td class="lr"><dfn>Carbon Price</dfn></td>
 <td class="none">If a carbon price is not included in LCOE figures you can use this option to set a carbon price between $0 and the maximum carbon price (<em>carbon_price_max</em>) (<em>carbon_price</em>)</td></tr>
 <tr><td class="lr"><dfn>Adjust Generators</dfn></td>
-<td class="none">If this option is checked you will be presented with a table to enable you to adjust the input capacity data for each generator technology. You can specify the required capacity or, if the <em>show_multipliers</em> property is set, a multiplier between 0 and the cap set by the <em>adjust_cap</em> property in the <a href="#power">[Power]</a> Section of the Preferences file; the default multiplier is 25. The original input values will be derived from the data sheet for renewables and the Generators table for dispatchable technologies. You can also Save and Restore the capacities to use again later (<em>adjust_generators</em>)</td></tr>
+<td class="none">If this option is checked you will be presented with a table to enable you to adjust the input capacity data for each generator technology. You can specify the required capacity or, if the <em>show_multipliers</em> property is set, a multiplier between 0 and the cap set by the <em>adjust_cap</em> property in the <a href="#power">[Power]</a> Section of the Preferences file; the default multiplier is 25. The original input values will be derived from the data sheet for renewables and the Generators table for dispatchable technologies. You can also <strong>Save</strong> and <strong>Restore</strong> the capacities to use again later or <strong>List</strong> saved capacities. With the list of saved capacities you can right-click on the desired list before you exit the list and capacities will be set to those values (<em>adjust_generators</em>)</td></tr>
 <tr><td class="lr"><dfn>Dispatch Order</dfn></td>
 <td class="none">The order in which the dispatchable technologies will be processed by Powermatch. You can change the order by clicking on each value and moving it up and down the list. The initial order is derived from the generators (facilities) table. If you want to exclude a generator you can drag it to the right hand list (and drag it back to the left to re-include)</td></tr>
 <tr><td class="bottom"><strong>Done, Constraints, Generators,<br />Summary, Detail, Batch, Optimise,<br />Help</strong></td>
@@ -3292,21 +3292,25 @@ In producing the LCOE figures you can choose to use LCOE figures that ignore any
 <table border="0" class="none" style="margin-left:35px">
 <tr><td class="none"><dfn>Facility</dfn></td><td class="none">Name of the facility (generator or storage)</td></tr>
 <tr><td class="none"><dfn>Capacity</dfn></td><td class="none">The capacity of facility in MW for generators and MWh for storage</td></tr>
-<tr><td class="none"><dfn>To Meet Load</dfn></td><td class="none">Generation/Storage used to meet load. The generation for a generator or contribution to meeting load for storage; MWh</td></tr>
-<tr><td class="none"><dfn>Subtotal</dfn></td><td class="none">The full generation for a generator, including surplus generation and generation used to recharge storage; MWh</td></tr>
+<tr><td class="none"><dfn>To Meet Load</dfn></td><td class="none">Generation/Storage used to meet load (yearly figure). The generation for a generator or contribution to meeting load for storage; MWh</td></tr>
+<tr><td class="none"><dfn>Subtotal</dfn></td><td class="none">The full (yearly) generation for a generator, including surplus generation and generation used to recharge storage; MWh</td></tr>
 <tr><td class="none"><dfn>CF</dfn></td><td class="none">The capacity factor for the facility</td></tr>
-<tr><td class="none"><dfn>Cost</dfn></td><td class="none">Calculated cost for the facility</td></tr>
-<tr><td class="none"><dfn>LCOE</dfn></td><td class="none">Calculated LCOE for the facility</td></tr>
-<tr><td class="none"><dfn>Emissions</dfn></td><td class="none">Calculated emissions for the facility; tCO<sub>2</sub>&#x2011;e</td></tr>
+<tr><td class="none"><dfn>Cost</dfn></td><td class="none">Calculated (yearly) cost for the facility</td></tr>
+<tr><td class="none"><dfn>Levelised Cost</dfn></td><td class="none">Calculated Levelised Cost for the facility</td></tr>
+<tr><td class="none"><dfn>Emissions</dfn></td><td class="none">Calculated (yearly) emissions for the facility; tCO<sub>2</sub>&#x2011;e</td></tr>
+<tr><td class="none"><dfn>Emissions Cost</dfn></td><td class="none">Calculated (yearly) cost of emissions for the facility</td></tr>
 <tr><td class="none"><dfn>Max MWh</dfn></td><td class="none">The maximum generation or contribution to meeting load for the facility. This can be used to assess if the Capacity for a generator can be reduced</td></tr>
 <tr><td class="none"><dfn>Max Balance</dfn></td><td class="none">The maximum storage for the facilty. This can be used to assess whether the capacity for the facility can be reduced or the need for more generation capacity to recharge the facility</td></tr>
 <tr><td class="none"><dfn>Capital Cost</dfn></td><td class="none">The capital cost for the facility. This is the total capital cost for the facility and not an annual cost. It will only be shown for facilities with Capex figures and not for those with a Reference LCOE</td></tr>
+<tr><td class="none"><dfn>Lifetime Cost</dfn></td><td class="none">The lifetime cost for the facility. This is the total (annual) cost multiplied by the longest lifetime for all chosen Generators</td></tr>
+<tr><td class="none"><dfn>Lifetime Emissions</dfn></td><td class="none">The lifetime emissions for the facility; tCO<sub>2</sub>&#x2011;e</td></tr>
+<tr><td class="none"><dfn>Lifetime Emissions Cost</dfn></td><td class="none">The lifetime cost of emissions for the facility</td></tr>
 <tr><td class="none"><dfn>Reference LCOE</dfn></td><td class="none">The reference LCOE for a facility where costs are calculated using a Reference LCOE and CF</td></tr>
 <tr><td class="none"><dfn>Reference CF</dfn></td><td class="none">The reference CF</td></tr>
 </table>
 <br />The table also presents some additional figures that, in the main, indicate the RE contribution to meeting demand:
 <table border="0" class="none" style="margin-left:35px">
-<tr><td class="none"><dfn>Adjusted LCOE</dfn></td><td class="none">Overall LCOE figure adjusted upwards to take into account surplus (spilled) generation</td></tr>
+<tr><td class="none"><dfn>LCOE</dfn></td><td class="none">Overall LCOE figure (takes into account surplus (spilled) generation</td></tr>
 <tr><td class="none"><dfn>RE %age</dfn></td><td class="none">The percentage of total generation from RE facilities</td></tr>
 <tr><td class="none"><dfn>Storage %age</dfn></td><td class="none">The percentage of demand met from storage</td></tr>
 <tr><td class="none"><dfn>Load met (xx%)</dfn></td><td class="none">The amount of load met from generation</td></tr>
@@ -3316,6 +3320,7 @@ In producing the LCOE figures you can choose to use LCOE figures that ignore any
 <tr><td class="none"><dfn><strong>RE %age of load</strong></dfn></td><td class="none">The percentage of load met by RE, including the contribution from storage</td></tr>
 <tr><td class="none"><dfn>Storage losses</dfn></td><td class="none">Storage losses in MWh</td></tr>
 <tr><td class="none"><dfn>Largest Shortfall</dfn></td><td class="none">The largest shortfall and the period (hour) in which it occurs</td></tr>
+<tr><td class="none"><dfn>Static Variables</dfn></td><td class="none">The values for Carbon Price, Lifetime and default Discount Rate used for the execution. <strong>Note:</strong> Individual technologies may have different Discount Rates to the static value</td></tr>
 <tr><td class="none"><div class="experiment"<dfn>Correlation To Load</dfn></div></td><td class="none"><div class="experiment">If <em>show_correlation</em> is set there will be a number of additional lines giving a linear correlation between Load and three components used to meet Load - RE contribution, RE plus Storage (includes any minimum generation constraints), and the Total</td></div></tr>
 </table>
 </li>
@@ -3326,25 +3331,36 @@ In producing the LCOE figures you can choose to use LCOE figures that ignore any
 </ul>
 <li><strong>Batch</strong>. Invoke Powermatch for a number of &ldquo;models&rdquo; with different capacities for each technology. This option produces a worksheet containing selected details from the Summary Output with one column per model. An input spreadsheet contains a column with the capacities for each model. A list of the desired details from the Summary Table can be specified below the list of technologies (capacities). The details can include any of the following Report Groups. Most groups will have rows pertaining to each group for each facility plus additional rows specific to each group.
 <table border="0" class="none" style="margin-left:35px">
-<tr><td class="none"><dfn>Capacity (MW)<dfn></td><td class="none">The input capacity for each facility</td></tr>
+<tr><td class="none"><dfn>Capacity (MW)<dfn></td><td class="none">The input capacity for each facility. The dispatch order for the facilties is defined by the row order</td></tr>
 <tr><td class="none"><dfn>Capacity Factor<dfn></td><td class="none">The calculated capacity factor for each facility</td></tr>
 <tr><td class="none"><dfn>Capital Cost</dfn></td><td class="none">The capital cost for the facility</td></tr>
+<tr><td class="none"><dfn>Carbon<dfn></td><td class="none">Details on Carbon impacts. This will include lifetime carbon costs if the <em>Lifetime Cost</em> Report Group is specified</td></tr>
 <tr><td class="none"><dfn>Carbon Price<dfn></td><td class="none">This is not strictly an output but allows a different carbon price to be set for each input Model</td></tr>
 <tr><td class="none"><dfn>Cost ($/Yr)<dfn></td><td class="none">The calculated cost for each facility</td></tr>
-<tr><td class="none"><dfn>Discount Rate<dfn><br />(or <dfn>WACC</dfn>)</td><td class="none">This is not strictly an output but allows a different discount rate to be set for each input Model</td></tr>
+<tr><td class="none"><dfn>Discount Rate</dfn><br />(or <dfn>WACC</dfn>)</td><td class="none">This is not strictly an output but allows a different discount rate to be set for each input Model</td></tr>
 <tr><td class="none"><dfn>Emissions (tCO2e)<dfn></td><td class="none">The estimated emissions for each facility</td></tr>
 <tr><td class="none"><dfn>Generation (MWh)<dfn></td><td class="none">Generation for each generator</td></tr>
-<tr><td class="none"><dfn>LCOE ($/MWh)<dfn></td><td class="none">LCOE for each facility</td></tr>
+<tr><td class="none"><dfn>LCOE ($/MWh)</dfn><br />(or <dfn>Levelised Cost<dfn></td><td class="none">Levelised Cost for each facility</td></tr>
+<tr><td class="none"><dfn>Lifetime Cost</dfn></td><td class="none">The lifetime cost for each facility</td></tr>
+<tr><td class="none"><dfn>Lifetime Emissions</dfn></td><td class="none">The lifetime emissions for each facility</td></tr>
+<tr><td class="none"><dfn>Lifetime Emissions Cost</dfn></td><td class="none">The lifetime cost of emissions for each facility</td></tr>
 <tr><td class="none"><dfn>Load Analysis<dfn></td><td class="none">Details on how much of the load was met, shortfalls, storage losses, and surpluses</td></tr>
 <tr><td class="none"><dfn>RE<dfn></td><td class="none">The percentage of RE and storage used to meet the load</td></tr>
 <tr><td class="none"><dfn>To Meet Load (MWh)<dfn></td><td class="none">How much generation or storage output was used to meet the load. It has rows for each non-RE generator, storage and a combined figure for RE</td></tr>
+<tr><td class="none"><dfn>Static Variables</dfn></td><td class="none">The values for Carbon Price, Lifetime and default Discount Rate used for the Model</td></tr>
 <tr><td class="none"><dfn>Data Sources<dfn></td><td class="none">Display the data sources used for the batch run (provides: Scenarios folder, Powermatch data file, Constraints worksheet and Facility worksheet)</td></tr>
 <tr><td class="none"><dfn>Optimisation Parameters<dfn></td><td class="none">If the model was added via Optimisation this will list the optimisation parameters used. This should be the last group entry</td></tr>
 </table>
 <dfn>Capacity (MW)</dfn> is required and must be the first entry. The other Report Groups can be <strong>in any order</strong>. <dfn>Carbon Price</dfn> allows you to input a different Carbon Price for each Model. <dfn>Discount Rate</dfn> allows you to input a different discount rate for each Model. If Carbon Price and/or Discount Rate are to be included they must appear immediately below the Total row for the Capacity inputs.
 <br />By default the resulting output will be appended as a new worksheet to the input file. You can create a new spreadsheet by setting the <em>batch_new_file</em> property to True
 <br />It is also possible to perform batch runs on zone data, but if so both the input data file and the batch file must have input capacities by zone. In this case the name for each facility identifies both the zone and technology in the form <em>zone.technology</em>.
-<br />The Batch option also has a prototype chart facility that can be used to do sensitivity analysis on a suite of batch models - see <a href="#pm_batch_graphs">below</a></li>
+<br />The Batch option also has a prototype chart facility that can be used to do sensitivity analysis on a suite of batch models - see <a href="#pm_batch_graphs">below</a>
+<br /><strong>Usage notes:</strong>
+<ul>
+<li>If you want to include a Total row in the outputs you need to have a Total row (as the last row) in the <em>Capacity (MW)</em> Report Group</li>
+<li>(At present) The same Load data is used for all models in a Batch execution</li>
+</ul>
+</li>
 <li><strong>Optimise</strong>. Invoke the Optimise function. This will use an iterative approach to optimise the input generator capacities to produce a solution with (a) either a lower overall LCOE, (b) the lowest weight for six variables, or (c) both. It will complete by displaying a plot of how the value for LCOE has converged to a minimum, and either (if <em>optimise_multitable</em> and <em>more_details</em> are set) a three dimensional plot showing the three variables with the highest weightings or (if <em>optimise_multitable</em> is set) a table of all variables for the multi-variable approach. Depending on which options are specified you will be presented with a number of &ldquo;best picks&rdquo; where you can choose your preferred choice. This will then produce a summary table which will also contain details on the Optimisation parameters used. It will also update the adjustment values for each generator to enable you to produce a Powermatch spreadsheet. If you choose a solution this can be added to a batch input file (if <em>optimise_to_batch</em> is set).
 <ul>
 <li>If you are using generator adjustments it may be useful to invoke <strong>Summary</strong> to set or reset the starting capacities for the optimsation (using <strong>Reset</strong> to set initial values or <strong>Restore</strong> to restore previously saved values)</li>
@@ -3590,7 +3606,7 @@ If the best and worse values are the same for a variable and that value is not a
 <li>[Power] <em>adjust_cap</em> property if you want to use a different cap for Adjust Generators</li>
 <li>[Windows] <em>log_status</em> property to turn off the Session log</li>
 <li>[Windows] <em>restorewindows</em> property to turn remember the window layout of the Powermatch main window</li>
-<li>If you want to use <code>powermatch</code> and have access to the same colours, periods, and seasons as the main Preferences file then you might also want the appropriate properties from the [Colors], [Power] and [Powerplot] Sections and the [Map] <em>map_choice</em> property</li>
+<li>If you want to use <code>powerplot</code> and have access to the same colours, periods, and seasons as the main Preferences file then you might also want the appropriate properties from the [Colors], [Power] and [Powerplot] Sections and the [Map] <em>map_choice</em> property</li>
 </ul>
 <p><a href="#help">Back to top</a></p>
 <h3 id="resourcegrid">Resource Grids</h3>
@@ -5317,6 +5333,10 @@ MERRA-2 Variables
 <td class="none">Kilowatt hour</td></tr>
 <tr><td class="none"><dfn>LCOE</dfn></td>
 <td class="none">Levelised cost of electricity. &ldquo;The levelized cost of electricity (LCOE) is a measure of a power source which attempts to compare different methods of electricity generation on a consistent basis. It is an economic assessment of the average total cost to build and operate a power-generating asset over its lifetime divided by the total energy output of the asset over that lifetime. The LCOE can also be regarded as the average minimum price at which electricity must be sold in order to break-even over the lifetime of the project.&rdquo; (<a href="https://en.wikipedia.org/wiki/Levelized_cost_of_energy" target="_blank">https://en.wikipedia.org/wiki/Levelized_cost_of_energy</a>)</td></tr>
+<tr><td class="none"><dfn>LCOG</dfn></td>
+<td class="none">Levelised cost of generation. &ldquo;The weighted average cost of generation assuming no curtailment for all technologies that contributed to electricity generation during a given year.&rdquo; (<a href="https://publications.csiro.au/rpr/download?pid=csiro:EP187001&dsid=DS3" target="_blank">Review of alternative methods for extending LCOE to include balancing costs</a>; from <a href="http://iceds.anu.edu.au/files/ANU-100-percent-renewable-electricity-future-in-australia-report.pdf" target="_blank">100% renewable electricity in Australia</a>)</td></tr>
+<tr><td class="none"><dfn>LCOS</dfn></td>
+<td class="none">Levelised cost of storage. &ldquo;The cost of kWh or MWh electricity discharged from a storage device  when accounting for all cost incurred and energy produced throughout the lifetime of the device.&rdquo; (<a href="https://www.storage-lab.com/levelized-cost-of-storage" target="_blank">https://www.storage-lab.com/levelized-cost-of-storage</a>)</td></tr>
 <tr><td class="none"><dfn>LOL</dfn></td>
 <td class="none">Lower Operating Limit. The (safe) lower limit a generator can run at.
 <tr><td class="none"><dfn>m/s</dfn></td>
