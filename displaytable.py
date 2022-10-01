@@ -760,6 +760,9 @@ class Table(QtWidgets.QDialog):
             tf.close()
         else:
             wb = xlwt.Workbook()
+            for ch in ['\\' , '/' , '*' , '?' , ':' , '[' , ']']:
+                if ch in iam:
+                    iam = iam.replace(ch, '_')
             ws = wb.add_sheet(iam)
             hdr_types = []
             dec_fmts = []
