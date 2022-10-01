@@ -2376,8 +2376,8 @@ class powerMatch(QtWidgets.QWidget):
                             bs.cell(row=gndx + sp, column=1).value = 'LCOE incl. Carbon Cost'
                         else:
                             bs.cell(row=gndx + sp, column=1).value = batch_extra[key][sp][0]
-                        if batch_extra[key][sp][0] == 'RE %age of Total Load' or \
-                          batch_extra[key][sp][0].find('LCOE (') >= 0 or batch_extra[key][sp][0] == 'LCOE':
+                        if batch_extra[key][sp][0] in ['RE %age of Total Load', 'Total incl. Carbon Cost'] or \
+                          batch_extra[key][sp][0].find('LCOE') >= 0:
                             bs.cell(row=gndx + sp, column=1).font = bold
                         else:
                             bs.cell(row=gndx + sp, column=1).font = normal
@@ -2395,7 +2395,10 @@ class powerMatch(QtWidgets.QWidget):
                         bs.cell(row=gndx + sp + 1, column=1).font = normal
                     if self.batch_report[g][0] == 'Cost ($/Yr)' and batch_disc_row >= 0:
                         bs.cell(row=gndx + sp + 2, column=1).value = 'Discount Rate'
-                    gndx += len(self.batch_tech) + 2
+                    if self.batch_report[g][0] == 'Capacity Factor' and self.batch_tech[-1] == 'Total':
+                        gndx += len(self.batch_tech) + 1
+                    else:
+                        gndx += len(self.batch_tech) + 2
                     if self.batch_report[g][0] == 'LCOE ($/MWh)':
                         gndx += 1
                     elif self.batch_report[g][0] == 'Cost ($/Yr)' and batch_disc_row >= 0:
@@ -2515,7 +2518,7 @@ class powerMatch(QtWidgets.QWidget):
                                 bs.cell(row=gndx + tndx, column=column).number_format = details[0]
                             bs.cell(row=gndx + tndx, column=column).font = normal
                             if sp_data[sp][st_fac] == 'RE %age of Total Load' or \
-                                sp_data[sp][st_fac].find('LCOE (') >= 0:
+                                sp_data[sp][st_fac].find('LCOE') >= 0:
                                 bs.cell(row=gndx + tndx, column=column).font = bold
                             else:
                                 bs.cell(row=gndx + tndx, column=column).font = normal
@@ -2543,7 +2546,10 @@ class powerMatch(QtWidgets.QWidget):
                                     col = details[tndx][1]
                                     bs.cell(row=gndx + tndx, column=column).value = sp_data[sp][col]
                                     bs.cell(row=gndx + tndx, column=column).number_format = details[0]
-                                    bs.cell(row=gndx + tndx, column=column).font = normal
+                                    if tndx == 3:
+                                        bs.cell(row=gndx + tndx, column=column).font = bold
+                                    else:
+                                        bs.cell(row=gndx + tndx, column=column).font = normal
                         except:
                             pass
             if total_load_row > 0:
