@@ -2637,7 +2637,7 @@ class powerMatch(QtWidgets.QWidget):
                             charts[-1].height = 12
                             for s in range(len(charts[-1].series)):
                                 ser = charts[-1].series[s]
-                                ser.marker.symbol = 'circle' #‘dot’, ‘plus’, ‘triangle’, ‘x’, ‘picture’, ‘star’, ‘diamond’, ‘square’, ‘circle’, ‘dash’, ‘auto’
+                                ser.marker.symbol = 'circle' #'dot', 'plus', 'triangle', 'x', 'picture', 'star', 'diamond', 'square', 'circle', 'dash', 'auto'
                             if cats is not None:
                                 charts[-1].set_categories(cats)
                             if len(charts) % 2:
@@ -2651,7 +2651,9 @@ class powerMatch(QtWidgets.QWidget):
                             txt = bs.title.replace('Results', 'Charts')
                             chs = wb.create_sheet(txt)
                             charts = []
+                            charts2 = []
                         charts.append(LineChart())
+                        charts2.append(None)
                         if batch_input_sheet.cell(row=row, column=2).value is None or len(merged_cells) == 0:
                             min_col = 2
                             max_col = bs.max_column
@@ -2673,7 +2675,12 @@ class powerMatch(QtWidgets.QWidget):
                         charts[-1].x_axis.title = get_value(batch_input_sheet, row, 2)
                     elif batch_input_sheet.cell(row=row, column=1).value.lower() == 'y-title':
                         charts[-1].y_axis.title = batch_input_sheet.cell(row=row, column=2).value
-                    elif batch_input_sheet.cell(row=row, column=1).value.lower() in ['categories', 'y-labels', 'data']:
+                    elif batch_input_sheet.cell(row=row, column=1).value.lower() == 'y-title2':
+                        if charts2[-1] is None:
+                            charts2[-1] = LineChart()
+                        charts2[-1].y_axis.axId = 200
+                        charts2[-1].y_axis.title = batch_input_sheet.cell(row=row, column=2).value
+                    elif batch_input_sheet.cell(row=row, column=1).value.lower() in ['categories', 'y-labels', 'data', 'data2']:
                         dgrp = get_value(batch_input_sheet, row, 2)
                         if batch_input_sheet.cell(row=row, column=1).value.lower() == 'categories' \
                           and dgrp.lower() in ['model', 'model label', 'technology']: # models as categories
@@ -2689,6 +2696,14 @@ class powerMatch(QtWidgets.QWidget):
                                     break
                             else:
                                  continue
+                            # backup a bit in case rows deleted
+                            for r in range(len(del_rows)):
+                                try:
+                                    if bs.cell(row=gndx, column=1).value.lower() == group[0]:
+                                        break
+                                except:
+                                    pass
+                                gndx -= 1
                         ditm = get_value(batch_input_sheet, row, 3)
                         for tndx in range(tndx_rows):
                             if bs.cell(row=gndx + tndx, column=1).value is None:
@@ -2700,6 +2715,12 @@ class powerMatch(QtWidgets.QWidget):
                                     values = Reference(bs, min_col=min_col, min_row=gndx + tndx, max_col=max_col, max_row=gndx + tndx)
                                     series = Series(values, title=bs.cell(row=gndx+tndx, column=1).value)
                                     charts[-1].append(series)
+                                elif batch_input_sheet.cell(row=row, column=1).value.lower() == 'data2':
+                                    if charts2[-1] is None:
+                                        charts2[-1] = LineChart()
+                                    values = Reference(bs, min_col=min_col, min_row=gndx + tndx, max_col=max_col, max_row=gndx + tndx)
+                                    series = Series(values, title=bs.cell(row=gndx+tndx, column=1).value)
+                                    charts2[-1].append(series)
                                 else:
                                     cats = Reference(bs, min_col=min_col, min_row=gndx + tndx, max_col=max_col, max_row=gndx + tndx)
                                 break
@@ -2708,7 +2729,13 @@ class powerMatch(QtWidgets.QWidget):
                     charts[-1].height = 12
                     for s in range(len(charts[-1].series)):
                         ser = charts[-1].series[s]
-                        ser.marker.symbol = 'circle' #‘dot’, ‘plus’, ‘triangle’, ‘x’, ‘picture’, ‘star’, ‘diamond’, ‘square’, ‘circle’, ‘dash’, ‘auto’
+                        ser.marker.symbol = 'circle' #'dot', 'plus', 'triangle', 'x', 'picture', 'star', 'diamond', 'square', 'circle', 'dash', 'auto'
+                    if charts2[-1] is not None:
+                        for s in range(len(charts2[-1].series)):
+                            ser = charts2[-1].series[s]
+                            ser.marker.symbol = 'triangle'
+                        charts2[-1].y_axis.crosses = 'max'
+                        charts[-1] += charts2[-1]
                     if cats is not None:
                         charts[-1].set_categories(cats)
                     if len(charts) % 2:
@@ -4553,12 +4580,12 @@ class powerMatch(QtWidgets.QWidget):
                     try:
                         pmss_details[fac].multiplier = capacity / pmss_details[fac].capacity
                     except:
-                        print('(4547)', gen, capacity, pmss_details[fac].capacity)
+                        print('(4583)', gen, capacity, pmss_details[fac].capacity)
                 multi_value, op_data, extra = self.doDispatch(year, option, pmss_details, pmss_data, re_order,
                                               dispatch_order, pm_data_file, data_file)
                 if multi_value['load_pct'] < self.targets['load_pct'][3]:
                     if multi_value['load_pct'] == 0:
-                        print('(4552)', multi_value['lcoe'], self.targets['load_pct'][3], multi_value['load_pct'])
+                        print('(4588)', multi_value['lcoe'], self.targets['load_pct'][3], multi_value['load_pct'])
                         lcoe_fitness_scores.append(1)
                     else:
                         lcoe_fitness_scores.append(pow(multi_value['lcoe'],
@@ -5169,7 +5196,7 @@ class powerMatch(QtWidgets.QWidget):
             try:
                 best_score = np.min(lcoe_scores)
             except:
-                print('(5163)', lcoe_scores)
+                print('(5199)', lcoe_scores)
             best_ndx = lcoe_scores.index(best_score)
             lowest_chrom = population[best_ndx]
             self.setStatus('Starting LCOE: $%.2f' % best_score)
@@ -5539,7 +5566,7 @@ class powerMatch(QtWidgets.QWidget):
                     label = QtWidgets.QLabel(txt % amt)
                 except:
                     label = QtWidgets.QLabel('?')
-                    print('(5533)', key, txt, amt)
+                    print('(5569)', key, txt, amt)
                 label.setAlignment(QtCore.Qt.AlignCenter)
                 grid[h + 1].addWidget(label, rw, 0, 1, 3)
             rw += 1
