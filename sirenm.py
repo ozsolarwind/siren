@@ -461,7 +461,7 @@ class MapView(QtWidgets.QGraphicsView):
         self.legend_pos = pos
         if where is not None:
             p = self.mapFromLonLat(QtCore.QPointF(where.x(), where.y()))
-            p = QtCore.QPoint(p.x(), p.y())
+            p = QtCore.QPoint(int(p.x()), int(p.y()))
         tech_sizes = {}
         tot_capacity = 0.
         tot_stns = 0
