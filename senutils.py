@@ -145,7 +145,7 @@ def extrapolateWind(wind_file, tgt_height, law='logarithmic', replace=False):
             alpha = (math.log(speed)-math.log(speed0))/(math.log(height)-math.log(height0))
         z0 = math.exp(((pow(height0, alpha) * math.log(height)) - pow(height, alpha) * math.log(height0)) \
                       / ( pow(height0, alpha) - pow(height, alpha)))
-        if z0 == 0:
+        if z0 < 1e-308:
             z0 = 0.03
         if law.lower()[0] == 'l': # law == 'logarithmic'
             speedz = math.log(tgt_height / z0) / math.log(height0 / z0) * speed0
