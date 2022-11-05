@@ -672,11 +672,12 @@ class PowerModel():
             ws = ts.worksheets[0]
             type_tags = ['name', 'zone', 'tech', 'cap', 'cf', 'gen', 'tmit', 'hrly']
             tech_tags = ['load', 'wind', 'offw', 'roof', 'fixed', 'single', 'dual', 'biomass', 'geotherm', 'other1', 'cst']
-            tech_names = ['Load', 'Wind', 'Offshore Wind', 'Rooftop PV', 'Fixed PV', 'Tracking PV', 'Dual Axis PV',
+            tech_names = ['Load', 'Wind', 'Offshore Wind', 'Rooftop PV', 'Fixed PV', 'Single Axis PV', 'Dual Axis PV',
                           'Biomass', 'Geothermal', 'Other1', 'CST']
             tech_names2 = [''] * len(tech_names)
             tech_names2[tech_names.index('Wind')] = 'Onshore Wind'
             tech_names2[tech_names.index('CST')] = 'Solar Thermal'
+            tech_names2[tech_names.index('Dual Axis PV')] = 'Tracking PV'
             if self.plots['save_zone']:
                 zone_techs = []
                 for stn in self.stations:
