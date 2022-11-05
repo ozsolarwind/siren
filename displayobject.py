@@ -223,11 +223,11 @@ class AnObject(QtWidgets.QDialog):
                 if prop[:2] != '__' and prop[-2:] != '__':
                     attr = getattr(self.anobject, prop)
                     if isinstance(attr, int):
-                         self.field_type.append('int')
+                        self.field_type.append('int')
                     elif isinstance(attr, float):
-                         self.field_type.append('float')
+                        self.field_type.append('float')
                     else:
-                         self.field_type.append('str')
+                        self.field_type.append('str')
                     label.append(QtWidgets.QLabel(prop.title() + ':'))
                     if self.field_type[-1] != "str":
                         self.edit.append(QtWidgets.QLineEdit(str(attr)))
