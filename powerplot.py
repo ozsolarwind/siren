@@ -39,32 +39,8 @@ from credits import fileVersion
 from displaytable import Table
 from editini import SaveIni
 from getmodels import getModelFile
-from senutils import ClickableQLabel, getParents, getUser, techClean
+from senutils import ClickableQLabel, getParents, getUser, strSplit, techClean
 from zoompan import ZoomPanX
-
-def charSplit(string, char=',', dropquote=True):
-    last = 0
-    splits = []
-    inQuote = None
-    for i, letter in enumerate(string):
-        if inQuote:
-            if (letter == inQuote):
-                inQuote = None
-                if dropquote:
-                    splits.append(string[last:i])
-                    last = i + 1
-                    continue
-        elif (letter == '"' or letter == "'"):
-            inQuote = letter
-            if dropquote:
-                last += 1
-        elif letter == char:
-            if last != i:
-                splits.append(string[last:i])
-            last = i + 1
-    if last < len(string):
-        splits.append(string[last:])
-    return splits
 
 
 class ListWidget(QtWidgets.QListWidget):
@@ -512,7 +488,7 @@ class PowerPlot(QtWidgets.QWidget):
             items = config.items('Powerplot')
             for key, value in items:
                 if key == 'columns' + choice:
-                    columns = charSplit(value)
+                    columns = strSplit(value)
                 elif key == 'cperiod' + choice:
                     i = self.cperiod.findText(value, QtCore.Qt.MatchExactly)
                     if i >= 0 :

@@ -174,3 +174,28 @@ def extrapolateWind(wind_file, tgt_height, law='logarithmic', replace=False):
                 bits[j] = float(bits[j])
             array.append(bits)
         return array
+
+# split a string
+def strSplit(string, char=',', dropquote=True):
+    last = 0
+    splits = []
+    inQuote = None
+    for i, letter in enumerate(string):
+        if inQuote:
+            if (letter == inQuote):
+                inQuote = None
+                if dropquote:
+                    splits.append(string[last:i])
+                    last = i + 1
+                    continue
+        elif (letter == '"' or letter == "'"):
+            inQuote = letter
+            if dropquote:
+                last += 1
+        elif letter == char:
+            if last != i:
+                splits.append(string[last:i])
+            last = i + 1
+    if last < len(string):
+        splits.append(string[last:])
+    return splits

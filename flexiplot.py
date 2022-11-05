@@ -34,32 +34,8 @@ from colours import Colours
 from credits import fileVersion
 from editini import EditSect, SaveIni
 from getmodels import getModelFile
-from senutils import ClickableQLabel, getParents, getUser, techClean
+from senutils import ClickableQLabel, getParents, getUser, strSplit, techClean
 from zoompan import ZoomPanX
-
-def charSplit(string, char=',', dropquote=True):
-    last = 0
-    splits = []
-    inQuote = None
-    for i, letter in enumerate(string):
-        if inQuote:
-            if (letter == inQuote):
-                inQuote = None
-                if dropquote:
-                    splits.append(string[last:i])
-                    last = i + 1
-                    continue
-        elif (letter == '"' or letter == "'"):
-            inQuote = letter
-            if dropquote:
-                last += 1
-        elif letter == char:
-            if last != i:
-                splits.append(string[last:i])
-            last = i + 1
-    if last < len(string):
-        splits.append(string[last:])
-    return splits
 
 def get_range(text, alphabet=None, base=0):
     if len(text) < 1:
@@ -510,7 +486,7 @@ class FlexiPlot(QtWidgets.QWidget):
             items = config.items('Flexiplot')
             for key, value in items:
                 if key == 'columns' + choice:
-                    columns = charSplit(value)
+                    columns = strSplit(value)
                 elif key == 'file' + choice:
                     ifile = value.replace('$USER$', getUser())
                 elif key == 'grid' + choice:
@@ -524,7 +500,7 @@ class FlexiPlot(QtWidgets.QWidget):
                     self.plottype.setCurrentIndex(self.plottype.findText(value))
                 elif key == 'series' + choice:
                     self.seriesi.clear()
-                    self.series = charSplit(value)
+                    self.series = strSplit(value)
                     for series in self.series:
                         self.seriesi.addItem(series)
                 elif key == 'maximum' + choice:
@@ -540,7 +516,7 @@ class FlexiPlot(QtWidgets.QWidget):
                     self.xlabel.setText(value)
                 elif key == 'xvalues' + choice:
                     self.xvaluesi.clear()
-                    self.xvalues = charSplit(value)
+                    self.xvalues = strSplit(value)
                     for xvalues in self.xvalues:
                         self.xvaluesi.addItem(xvalues)
                 elif key == 'ylabel' + choice:
