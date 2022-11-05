@@ -401,7 +401,10 @@ class whatPlots(QtWidgets.QDialog):
             else:
                 power_lines.append(key + '=False')
         power_lines.append('load_growth=%s%%' % str(self.percentSpin.value()))
-        power_lines.append('shortfall_iterations=%s' % str(self.iterSpin.value()))
+        try:
+            power_lines.append('shortfall_iterations=%s' % str(self.iterSpin.value()))
+        except:
+            pass
         power_lines.append('save_balance=') # remove old key
         updates['Power'] = power_lines
         SaveIni(updates)
