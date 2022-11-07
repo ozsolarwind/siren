@@ -487,7 +487,7 @@ class Visualise(QtWidgets.QDialog):
         p = QtCore.QPointF(self.scene.upper_left[0] + fh / 2, self.scene.upper_left[1] + fh / 2)
         frll = self.scene.mapToLonLat(p)
         p = self.scene.mapFromLonLat(QtCore.QPointF(frll.x(), frll.y()))
-        p = QtCore.QPoint(p.x(), p.y())
+        p = QtCore.QPoint(int(p.x()), int(p.y()))
         itm.setPos(p.x(), p.y())
         itm.setZValue(1)
         self.visual_items.append(itm)
