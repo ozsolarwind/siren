@@ -151,7 +151,7 @@ ul {
 <ul class="none">
 <li><a href="#popts">Power Model Options</a></li>
 <ul class="none">
-<li><a href="#plots">Plots</a></li>
+<li><a href="#charts">Charts</a></li>
 <li><a href="#tables">Tables</a></li>
 </ul>
 <li><a href="#fopts">Financial Model Options</a></li>
@@ -272,7 +272,7 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><img src="line.png" alt="flexiplot">&nbsp;&nbsp;flexiplot&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
-<td class="none">Invoke <code>flexiplot</code> to create plots from Excel columns or rows (see <a href="#flexiplot">Flexiplot</a>)</td>
+<td class="none">Invoke <code>flexiplot</code> to create charts from Excel columns or rows (see <a href="#flexiplot">Flexiplot</a>)</td>
 </tr>
 </table>
 </div>
@@ -291,7 +291,7 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 </tr>
 <tr class="none">
 <td class="none"><img src="line.png" alt="powerplot">&nbsp;&nbsp;powerplot</td>
-<td class="none">Invoke <code>powerplot</code> to create plots from PowerModel and Powermatch outputs (see <a href="#powerplot">Powerplot</a>)</td>
+<td class="none">Invoke <code>powerplot</code> to create charts from PowerModel and Powermatch outputs (see <a href="#powerplot">Powerplot</a>)</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="download.png" alt="sirenupd">&nbsp;&nbsp;sirenupd</td>
@@ -745,7 +745,7 @@ The format is similar to a Windows INI file. If you want to create a new Model y
 </tr>
 <tr class="none">
 <td class="none"><dfn>wind</dfn></td>
-<td class="none">&nbsp;Also used as the storage colour for the Augmented power plot</td>
+<td class="none">&nbsp;Also used as the storage colour for the Augmented power chart</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>fossil</dfn></td>
@@ -817,22 +817,22 @@ The format is similar to a Windows INI file. If you want to create a new Model y
 <td class="none"><dfn>wind50_low</dfn></td>
 </tr>
 </table>
-<p>There are colours used for non-technology plot items:</p>
+<p>There are colours used for non-technology chart items:</p>
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><dfn>cumulative</dfn></td>
-<td class="none">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Also used as the used renewable generation colour for the Augmented power plot</td>
+<td class="none">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Also used as the used renewable generation colour for the Augmented power chart</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>gross_load</dfn></td>
-<td class="none">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Also used as the total renewable generation for the Augmented power plot</td>
+<td class="none">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Also used as the total renewable generation for the Augmented power chart</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>load</dfn></td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>shortfall</dfn></td>
-<td class="none">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Also used as the augmented generation colour for the Augmented power plot</td>
+<td class="none">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Also used as the augmented generation colour for the Augmented power chart</td>
 </tr>
 </table>
 </td></tr>
@@ -1118,19 +1118,19 @@ as embedded solar - Rooftop PV - installed on the grid but not registered with A
 </td></tr>
 <tr class="none" id="p_flexiplot"><td><div class="experiment"><dfn><strong>[Flexiplot]</strong></dfn><br />(experimental)</div></td>
 <td><div class="experiment">
-Options for <a href="#flexiplot">Flexiplot</a>. Properties for individual files (columns, file, grid, maximum, percentage, period, plot, series, sheet, title, xlabel, xvalues, and ylabel; marked with an asterisk, &ast;, below) can be repeated a number of times to allow a history of recent files to be accessed. These are suffixed with a number. Properties are as follows:</p>
+Options for <a href="#flexiplot">Flexiplot</a>. Properties for individual files (columns, file, grid, maximum, percentage, period, chart (plot), series, sheet, title, xlabel, xvalues, and ylabel; marked with an asterisk, &ast;, below) can be repeated a number of times to allow a history of recent files to be accessed. These are suffixed with a number. Properties are as follows:</p>
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><dfn>alpha</dfn></td>
-<td class="none">Opacity of plot fill for values above target. Range is 1.0 (opaque) to 0.0 (translucent). Default value is 0.25</td>
+<td class="none">Opacity of chart fill for values above target. Range is 1.0 (opaque) to 0.0 (translucent). Default value is 0.25</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>columns (&ast;)</dfn></td>
-<td class="none">List (and order) for columns to be plotted</td>
+<td class="none">List (and order) for columns to be charted</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>constrained_layout</dfn></td>
-<td class="none">Produce a plot layout with no whitespace around the graph. Default is False</td>
+<td class="none">Produce a chart layout with no whitespace around the graph. Default is False</td>
 <tr class="none">
 <td class="none"><dfn>file (&ast;)</dfn></td>
 <td class="none">Spreadsheet filename</td>
@@ -1145,11 +1145,11 @@ Options for <a href="#flexiplot">Flexiplot</a>. Properties for individual files 
 </tr>
 <tr class="none">
 <td class="none"><dfn>grid (&ast;)</dfn></td>
-<td class="none">The gridlines to be included on the plot. Options are Both, Horizontal, Vertical and None. The default is None</td>
+<td class="none">The gridlines to be included on the chart. Options are Both, Horizontal, Vertical and None. The default is None</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>label_font</dfn></td>
-<td class="none">Font properties for plot labels</td>
+<td class="none">Font properties for chart labels</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>maximum (&ast;)</dfn></td>
@@ -1157,7 +1157,7 @@ Options for <a href="#flexiplot">Flexiplot</a>. Properties for individual files 
 </tr>
 <tr class="none">
 <td class="none"><dfn>legend_font</dfn></td>
-<td class="none">Font properties for plot legend</td>
+<td class="none">Font properties for chart legend</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>palette</dfn></td>
@@ -1165,11 +1165,11 @@ Options for <a href="#flexiplot">Flexiplot</a>. Properties for individual files 
 </tr>
 <tr class="none">
 <td class="none"><dfn>percentage (&ast;)</dfn></td>
-<td class="none">Produce a percentages plot</td>
+<td class="none">Produce a percentages chart</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>plot (&ast;)</dfn></td>
-<td class="none">The type of plot. Options are Bar Graph, Cumulative, Linegraph, or Step Plot. The default is Bar Graph</td>
+<td class="none">The type of chart. Options are Bar Chart, Cumulative, Line Chart, or Step Chart. The default is Bar Chart</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>random_colors, or<br />random_colours</dfn></td>
@@ -1177,11 +1177,11 @@ Options for <a href="#flexiplot">Flexiplot</a>. Properties for individual files 
 </tr>
 <tr class="none">
 <td class="none"><dfn>series (&ast;)</dfn></td>
-<td class="none">The series to be included in the plot defined as a set of Excel cells. A number of ranges can be defined</td>
+<td class="none">The series to be included in the chart defined as a set of Excel cells. A number of ranges can be defined</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>sheet (&ast;)</dfn></td>
-<td class="none">Worksheet name for plot</td>
+<td class="none">Worksheet name for chart</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>sparse_ticks</dfn></td>
@@ -1189,7 +1189,7 @@ Options for <a href="#flexiplot">Flexiplot</a>. Properties for individual files 
 </tr>
 <tr class="none">
 <td class="none"><dfn>target (&ast;)</dfn></td>
-<td class="none">Target field to plot against, e.g. Load</td>
+<td class="none">Target field to chart against, e.g. Load</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>ticks_font</dfn></td>
@@ -1201,7 +1201,7 @@ Options for <a href="#flexiplot">Flexiplot</a>. Properties for individual files 
 </tr>
 <tr class="none">
 <td class="none"><dfn>title_font</dfn></td>
-<td class="none">Font properties for plot title. Default fontsize is x-large</td>
+<td class="none">Font properties for chart title. Default fontsize is x-large</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>xlabel</dfn></td>
@@ -1209,7 +1209,7 @@ Options for <a href="#flexiplot">Flexiplot</a>. Properties for individual files 
 </tr>
 <tr class="none">
 <td class="none"><dfn>xvalues</dfn></td>
-<td class="none">The list of values to be included in the plot defined as a set of Excel cells. A number of ranges can be defined. The values specify the row or column that defines the column or row headings</td>
+<td class="none">The list of values to be included in the chart defined as a set of Excel cells. A number of ranges can be defined. The values specify the row or column that defines the column or row headings</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>ylabel</dfn></td>
@@ -1560,7 +1560,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td>Colours for <a href="#powerplot">Powerplot</a>. These may be populated from the other Colors Sections</td>
 </tr>
 <tr class="none" id="power"><td><dfn><strong>[Power]</strong></dfn></td>
-<td>What processing, output and plots to produce for power model processing. Properties are True or False. Power options can be changed and saved when the Power Models menu option is selected. Properties are:</p>
+<td>What processing, output and charts to produce for power model processing. Properties are True or False. Power options can be changed and saved when the Power Models menu option is selected. Properties are:</p>
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><dfn>adjust_cap</dfn></td>
@@ -1572,31 +1572,31 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>augment</dfn></td>
-<td class="none">Display plots of hourly results showing renewable generation with shortfalls filled by storage and augmented generation</td>
+<td class="none">Display charts of hourly results showing renewable generation with shortfalls filled by storage and augmented generation</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>block</dfn></td>
-<td class="none">If True, plots will be displayed individually. Each plot will have to be closed before the next one will display</td>
+<td class="none">If True, charts will be displayed individually. Each chart will have to be closed before the next one will display</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>by_day</dfn></td>
-<td class="none">Display plots of daily results, that is, a figure for each day</td>
+<td class="none">Display charts of daily results, that is, a figure for each day</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>by_month</dfn></td>
-<td class="none">Display plots of monthly results, that is, a figure for each month</td>
+<td class="none">Display charts of monthly results, that is, a figure for each month</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>by_period</dfn></td>
-<td class="none">Display plots of period results. The periods are defined by the <em>period&lt;n&gt;</em> properties. These are typically two six month periods, however, you can define a different number of periods. As SAM data files cover a calendar year one period may include the first n month(s) and last m month(s) of the year. Each month covers the first to last day of the month. </td>
+<td class="none">Display charts of period results. The periods are defined by the <em>period&lt;n&gt;</em> properties. These are typically two six month periods, however, you can define a different number of periods. As SAM data files cover a calendar year one period may include the first n month(s) and last m month(s) of the year. Each month covers the first to last day of the month. </td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>by_season</dfn></td>
-<td class="none">Display plots of seasonal results, that is, a figure for each season. The seasons are defined by the <em>season&lt;n&gt;</em> properties. These are typically the four three month seasons. You can define a different number of seasons. As SAM data files cover a calendar year the summer or winter figures will include the first n month(s) and last m month(s) of the year</td>
+<td class="none">Display charts of seasonal results, that is, a figure for each season. The seasons are defined by the <em>season&lt;n&gt;</em> properties. These are typically the four three month seasons. You can define a different number of seasons. As SAM data files cover a calendar year the summer or winter figures will include the first n month(s) and last m month(s) of the year</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>by_station</dfn></td>
-<td class="none">Display plots for individual stations</td>
+<td class="none">Display charts for individual stations</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>cumulative</dfn></td>
@@ -1620,7 +1620,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>grid_losses</dfn></td>
-<td class="none">Reduce plot figures by the amount of grid losses</td>
+<td class="none">Reduce chart figures by the amount of grid losses</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>gross_load</dfn></td>
@@ -1628,7 +1628,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>hour</dfn></td>
-<td class="none">Display plots of hourly results</td>
+<td class="none">Display charts of hourly results</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>load_growth</dfn></td>
@@ -1636,27 +1636,27 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>maximise</dfn></td>
-<td class="none">Maximise plot windows</td>
+<td class="none">Maximise chart windows</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>month</dfn></td>
-<td class="none">Display plots of the average 24 hour period for each month</td>
+<td class="none">Display charts of the average 24 hour period for each month</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>orientation</dfn></td>
-<td class="none">Orientation for plots. Set to <em>landscape</em> to produce landscape figures. Default is either portrait or automatic as determined by the plot routine. This is only utilised if the <em>papersize</em> options is specified</td>
+<td class="none">Orientation for charts. Set to <em>landscape</em> to produce landscape figures. Default is either portrait or automatic as determined by the plot routine. This is only utilised if the <em>papersize</em> options is specified</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>other_width</dfn></td>
-<td class="none">Line width for non-technology plot items (Cumulative generation, Load and Shortfall). Default value is 2.0 (twice normal width)</td>
+<td class="none">Line width for non-technology chart items (Cumulative generation, Load and Shortfall). Default value is 2.0 (twice normal width)</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>papersize</dfn></td>
-<td class="none">Specify the papersize for plots. This can be either a specific size, such as A4 or letter, or two numbers <em>width,length</em> where both figures are in inches. This option along with <em>save_format</em> allows plots to be saved in a specific size and format</td>
+<td class="none">Specify the papersize for charts. This can be either a specific size, such as A4 or letter, or two numbers <em>width,length</em> where both figures are in inches. This option along with <em>save_format</em> allows charts to be saved in a specific size and format</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>period</dfn></td>
-<td class="none">Display plots of the average 24 hour period for the periods defined by the <em>period&lt;n&gt;</em> properties.</td>
+<td class="none">Display charts of the average 24 hour period for the periods defined by the <em>period&lt;n&gt;</em> properties.</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>period&lt;n&gt;</dfn></td>
@@ -1677,11 +1677,11 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>save_format</dfn></td>
-<td class="none">Specify the file format to save plots as. This can be one of the values supported by the Python plot routine - <em>eps, jpeg, jpeg, pdf, pgf </em>(requires LaTex)<em>, png, ps, raw, rgba, svg, svgz, tif,</em> or <em>tiff</em>. The default format is <em>png</em></td>
+<td class="none">Specify the file format to save charts as. This can be one of the values supported by the Python plot routine - <em>eps, jpeg, jpeg, pdf, pgf </em>(requires LaTex)<em>, png, ps, raw, rgba, svg, svgz, tif,</em> or <em>tiff</em>. The default format is <em>png</em></td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>save_plot</dfn></td>
-<td class="none">Save data values for plots</td>
+<td class="none">Save data values for charts</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>save_tech</dfn></td>
@@ -1697,7 +1697,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>season</dfn></td>
-<td class="none">Display plots of the average 24 hour period for the seasons defined by the <em>season&lt;n&gt;</em> properties
+<td class="none">Display charts of the average 24 hour period for the seasons defined by the <em>season&lt;n&gt;</em> properties
 </td>
 </tr>
 <tr class="none">
@@ -1711,23 +1711,23 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>shortfall_detail</dfn></td>
-<td class="none">Display additional shortfall graphs and data to assist detailed analysis of generation shortfall</td>
+<td class="none">Display additional shortfall charts and data to assist detailed analysis of generation shortfall</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>shortfall_iterations</dfn></td>
-<td class="none">Choose the number of iterations for the additional shortfall graphs</td>
+<td class="none">Choose the number of iterations for the additional shortfall charts</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>show_load</dfn></td>
-<td class="none">Show generation as a percentage of load on plots where possible</td>
+<td class="none">Show generation as a percentage of load on charts where possible</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>show_menu</dfn></td>
-<td class="none">Present a menu to specify what processing and plots to produce. This option should also be set to True to enable choices on plots, tables and financial options</td>
+<td class="none">Present a menu to specify what processing and charts to produce. This option should also be set to True to enable choices on charts, tables and financial options</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>show_pct</dfn></td>
-<td class="none">Display network load on plots</td>
+<td class="none">Display network load on charts</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>summary</dfn></td>
@@ -1739,7 +1739,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>total</dfn></td>
-<td class="none">Display plots of the average 24 hour period for the full year</td>
+<td class="none">Display charts of the average 24 hour period for the full year</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>visualise</dfn></td>
@@ -1764,15 +1764,15 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </div>
 </td></tr>
 <tr class="none" id="p_pp"><td><dfn><strong>[Powerplot]</strong></dfn></td>
-<td>Options for <a href="#powerplot">Powerplot</a>. Properties for individual files (columns, file, grid, maximum, percentage, period, plot, sheet, spill_label, target, and title; marked with an asterisk, &ast;, below) can be repeated a number of times to allow a history of recent files to be accessed. These are suffixed with a number. Properties are as follows:</p>
+<td>Options for <a href="#powerplot">Powerplot</a>. Properties for individual files (columns, file, grid, maximum, percentage, period, chart (plot), sheet, spill_label, target, and title; marked with an asterisk, &ast;, below) can be repeated a number of times to allow a history of recent files to be accessed. These are suffixed with a number. Properties are as follows:</p>
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><dfn>alpha</dfn></td>
-<td class="none">Opacity of plot fill for values above target. Range is 1.0 (opaque) to 0.0 (translucent). Default value is 0.25</td>
+<td class="none">Opacity of chart fill for values above target. Range is 1.0 (opaque) to 0.0 (translucent). Default value is 0.25</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>columns (&ast;)</dfn></td>
-<td class="none">List (and order) for columns to be plotted</td>
+<td class="none">List (and order) for columns to be charted</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>file (&ast;)</dfn></td>
@@ -1788,11 +1788,11 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>grid (&ast;)</dfn></td>
-<td class="none">The gridlines to be included on the plot. Options are Both, Horizontal, Vertical and None. The default is None</td>
+<td class="none">The gridlines to be included on the chart. Options are Both, Horizontal, Vertical and None. The default is None</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>margin_of_error</dfn></td>
-<td class="none">In doing a plot with a target column there may be very minor differences that could cause a Shortfall or Spill legend item to be created. This setting will allow these small differences to be ignored. The default value is .0001</td>
+<td class="none">In doing a chart with a target column there may be very minor differences that could cause a Shortfall or Spill legend item to be created. This setting will allow these small differences to be ignored. The default value is .0001</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>maximum (&ast;)</dfn></td>
@@ -1800,7 +1800,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>overlay (&ast;)</dfn></td>
-<td class="none">Include an overlay (of storage recharge) on the plot</td>
+<td class="none">Include an overlay (of storage recharge) on the chart</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>palette</dfn></td>
@@ -1808,19 +1808,19 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>percentage (&ast;)</dfn></td>
-<td class="none">Produce a percentages plot</td>
+<td class="none">Produce a percentages chart</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>period (&ast;)</dfn></td>
-<td class="none">Chosen period for diurnal plot</td>
+<td class="none">Chosen period for diurnal chart</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>plot (&ast;)</dfn></td>
-<td class="none">The type of plot. Options are Bar Graph, Cumulative, Linegraph, or Step Plot. The default is Bar Graph</td>
+<td class="none">The type of chart. Options are Bar Chart, Cumulative, Line Chart, or Step Chart. The default is Bar Chart</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>sheet (&ast;)</dfn></td>
-<td class="none">Worksheet name for plot</td>
+<td class="none">Worksheet name for chart</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>spill_label (&ast;)</dfn></td>
@@ -1901,7 +1901,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>more_details</dfn></td>
-<td class="none">If set to True a number of additional tables and an additional plot will produced during Powermatch optimisation. Default is False</td>
+<td class="none">If set to True a number of additional tables and an additional chart will produced during Powermatch optimisation. Default is False</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>optimisation_file</dfn></td>
@@ -2572,7 +2572,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 </tr>
 <tr class="none">
 <td class="none"><img src="power.png" alt="Show Load">&nbsp;&nbsp;Load for <em>yyyy</em></td>
-<td class="none">Display load curves for the base year. An options menu is displayed to enable you to choose which plots you want. The options are as described in <strong>Choose plots</strong> in <a href="#popts">Power Model Options</a>.</td>
+<td class="none">Display load curves for the base year. An options menu is displayed to enable you to choose which charts you want. The options are as described in <strong>Choose charts</strong> in <a href="#popts">Power Model Options</a>.</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="blank.png" alt="Load for year">&nbsp;&nbsp;Load for year
@@ -2785,7 +2785,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 </tr>
 <tr class="none">
 <td class="none"><img src="line.png" alt="powerplot">&nbsp;&nbsp;powerplot</td>
-<td class="none">Invoke <code>powerplot</code> to create plots from PowerModel and Powermatch outputs (see <a href="#powerplot">Powerplot</a>)</td>
+<td class="none">Invoke <code>powerplot</code> to create charts from PowerModel and Powermatch outputs (see <a href="#powerplot">Powerplot</a>)</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="list.png" alt="updateswis">&nbsp;&nbsp;updateswis</td>
@@ -2876,7 +2876,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 </tr>
 <tr class="none">
 <td class="none"><img src="weather.png" alt="Weather">&nbsp;&nbsp;Show weather for here</td>
-<td class="none">Present a menu to allow you to plot weather values (DHI, DNI, GHI, temperature, wind speed) for this location. You select the weather values you want to display and one of a series of plots to display either by hour or the average for a period. There is also an option to display chosen plots one at a time or all together, that is, display them all and allow you to navigate between them</td>
+<td class="none">Present a menu to allow you to chart weather values (DHI, DNI, GHI, temperature, wind speed) for this location. You select the weather values you want to display and one of a series of charts to display either by hour or the average for a period. There is also an option to display chosen charts one at a time or all together, that is, display them all and allow you to navigate between them</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="blank.png" alt="Weather for year">&nbsp;&nbsp;Weather for year
@@ -2903,9 +2903,9 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <p>To add a new station simply right-click on the map at the desired location and then update the details for the station (Name, Technology, Capacity and so forth) and press <em>Save &amp; Exit</em>. You can also copy an existing station and other options as specified above. </p>
 <p>As you build your scenario, the simulation adds additional infrastructure to connect the new generation plants to the grid. The colours for the majority of the items on the map are as you specify in the Preferences file. You navigate around the map using normal mouse movements to scroll, zoom, etc. and interact with it as described previously (<a href="#menus">Menus</a>). Using the various menu options you can model your whole scenario, or by right-clicking you can deal with an individual station. There are a number of additional windows, such as menu options, that can be opened to assist with using SIREN (see <a href="#windows">Windows</a>)</p>
 <p>You can save multiple scenarios and add them and remove them as you wish. When you exit the simulation normally or <em>Save</em> scenarios (Ctrl+S) any modified scenarios will be saved. When you add new stations to your model they will be added as a new scenario which includes the date and time in its name, for example, Scenario_2015-06-09_1000. You can save all open scenarios as a single new scenario by using the <em>Save As...</em> option.</p>
-<p>The strength of the simulation is in running the SAM Power Models (e.g. Ctrl+P). This will run the appropriate SAM model for each station you have chosen or for all renewable stations in your current simulation. SAM calculates a list of power outputs for each hour of the year (8,760 points). If the <em>show_menu</em> property is True you will be presented with a menu to specify what processing and plots to produce (see below). If you choose to run the Financial Models or Powermatch you will be presented with an additional menu of options.</p>
+<p>The strength of the simulation is in running the SAM Power Models (e.g. Ctrl+P). This will run the appropriate SAM model for each station you have chosen or for all renewable stations in your current simulation. SAM calculates a list of power outputs for each hour of the year (8,760 points). If the <em>show_menu</em> property is True you will be presented with a menu to specify what processing and charts to produce (see below). If you choose to run the Financial Models or Powermatch you will be presented with an additional menu of options.</p>
 <ul>
-<li>The various plotting features allow you to visualise the renewable energy output and how it compares to demand</li>
+<li>The various charting features allow you to visualise the renewable energy output and how it compares to demand</li>
 <li>The Financial Models option will invoke SAM Annual Output and Utility IPP/Commercial PPA Finance models. These enable a LCOE to be determined for the scenario</li>
 <li>Powermatch allows you to complete a costed renewable energy scenario. It will use dispatchable generation to meet shortfalls in the renewable energy generation mix to match generation with demand (load) to quantify and cost dispatchable energy generation, storage and CO<sub>2</sub>&#x2011;e emissions</li>
 </ul>
@@ -2922,17 +2922,17 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <tr><td style="width: 25%;" class="top"><dfn>Check / Uncheck all</dfn></td>
 <td class="none">A button to check or uncheck all option buttons</td></tr>
 <tr><td class="lr"><strong>Show in Plot</strong></td>
-<td class="none">Choose what to show in the plots</td></tr>
+<td class="none">Choose what to show in the charts</td></tr>
 <tr><td class="lr"><dfn>Generation - use actual generation figures</dfn></td>
 <td class="none">Use actual generation figures rather than invoking a SAM module. For example, you may have actual generation (e.g. SCADA) data that you wish to use rather than using a SAM model (<em>actual</em>)</td></tr>
 <tr><td class="lr"><dfn>Generation - total (cumulative renewables)</dfn></td>
 <td class="none">Include a cumulative curve for renewables (<em>cumulative</em>)</td></tr>
 <tr><td class="lr"><dfn>Generation - from chosen stations</dfn></td>
-<td class="none">Display plots for individual stations. An option to to select any number of individual stations to process. This will cause an additional menu to be presented after you press the <em>Proceed</em> button (<em>by_station</em>)</td></tr>
+<td class="none">Display charts for individual stations. An option to to select any number of individual stations to process. This will cause an additional menu to be presented after you press the <em>Proceed</em> button (<em>by_station</em>)</td></tr>
 <tr><td class="lr"><dfn>Generation - adjust generation</dfn></td>
 <td class="none">This option allows you to adjust the generation figures for either technologies or specific stations by a defined multiplier of between 0 and the defined adjustment cap. The cap is set by the <em>adjust_cap</em> property in the <a href="#power">[Power]</a> Section of the Preferences file; the default is 25 times. The option multiplies the figures calculated by SAM to enable analysis of changes to the technology mix to the overall simulation result without having to modify individual station(s). See <a href="#optimise">Adjust Generation</a> (below) for further details (<em>adjust</em>)</td></tr>
 <tr><td class="lr"><dfn>Generation - show Load</dfn></td>
-<td class="none">Display network load on plots (<em>show_load</em>)</td></tr>
+<td class="none">Display network load on charts (<em>show_load</em>)</td></tr>
 <tr><td class="lr"><dfn>Generation - show shortfall from Load</dfn></td>
 <td class="none">Display shortfall of network load not met by renewable generation (<em>shortfall</em>)</td></tr>
 <tr><td class="lr"><dfn>Generation - reduce generation by grid losses</dfn></td>
@@ -2949,42 +2949,42 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <td class="none">Options to specify the maximum amount of storage in MW(h) that can be added to address generation shortfall and the losses incurred in using this storage</td></tr>
 <tr><td class="lr"><dfn>Recharge cap</dfn></td>
 <td class="none">Options to specify the maximum amount of excess generation in MW(h) that can be added to storage and the losses incurred in adding this to storage</td></tr>
-<tr><td class="lr"><strong>Choose plots</strong></td>
-<td class="none">Choose what plots to show. All plots are based upon the full year of data. Energy by options produce a step chart of generation for the chosen time frame; Power - daily average options produce a line graph of the average 24 hour period for the chosen time frame.</td></tr>
-<tr><td class="lr"><dfn>Save plot data</dfn></td>
-<td class="none">This option will enable the data values for most of the plots to be saved to a spreadsheet (<em>save_plot</em>)</td></tr>
+<tr><td class="lr"><strong>Choose charts</strong></td>
+<td class="none">Choose what charts to show. All charts are based upon the full year of data. Energy by options produce a step chart of generation for the chosen time frame; Power - daily average options produce a line graph of the average 24 hour period for the chosen time frame.</td></tr>
+<tr><td class="lr"><dfn>Save chart data</dfn></td>
+<td class="none">This option will enable the data values for most of the charts to be saved to a spreadsheet (<em>save_chart</em>)</td></tr>
 <tr><td class="lr"><dfn>Visualise generation - period &amp; delay (secs)</dfn></td>
 <td class="none">This option will visualise generation by displaying variable generation circles for each station over the chosen periods (<em>visualise</em>)</td></tr>
-<tr><td class="lr"><dfn>Maximise Plot windows</dfn></td>
-<td class="none">Plots will display at maximum window size (<em>maximise</em>)</td></tr>
-<tr><td class="lr"><dfn>Show plots one at a time</dfn></td>
-<td class="none">If checked chosen plots will be displayed one at a time, otherwise where possible they will be displayed all together, that is, display them all and allow you to navigate between them (<em>block</em>)</td></tr>
 <tr><td class="lr"><dfn>Show generation as a percentage of load</dfn></td>
 <td class="none">Where possible display (renewable) percentage of load within the plot title (<em>show_pct</em>)</td></tr>
+<tr><td class="lr"><dfn>Maximise Plot windows</dfn></td>
+<td class="none">Plots will display at maximum window size (<em>maximise</em>)</td></tr>
+<tr><td class="lr"><dfn>Show charts one at a time</dfn></td>
+<td class="none">If checked chosen charts will be displayed one at a time, otherwise where possible they will be displayed all together, that is, display them all and allow you to navigate between them (<em>block</em>)</td></tr>
 <tr><td class="lr"><dfn>Energy by day</dfn></td>
-<td class="none">Display plots of daily results, that is, a figure for each day (<em>by_day</em>)</td></tr>
+<td class="none">Display charts of daily results, that is, a figure for each day (<em>by_day</em>)</td></tr>
 <tr><td class="lr"><dfn>Energy by month</dfn></td>
-<td class="none">Display plots of monthly results, that is, a figure for each month (<em>by_month</em>)</td></tr>
+<td class="none">Display charts of monthly results, that is, a figure for each month (<em>by_month</em>)</td></tr>
 <tr><td class="lr"><dfn>Energy by season</dfn></td>
-<td class="none">Display plots of seasonal results, that is, a figure for each season (<em>by_season</em>)</td></tr>
+<td class="none">Display charts of seasonal results, that is, a figure for each season (<em>by_season</em>)</td></tr>
 <tr><td class="lr"><dfn>Energy by period</dfn></td>
-<td class="none">Display plots of 6 month seasonal results. It is possible to specify any number of months (<em>by_period</em>)</td></tr>
+<td class="none">Display charts of 6 month seasonal results. It is possible to specify any number of months (<em>by_period</em>)</td></tr>
 <tr><td class="lr"><dfn>Power by hour</dfn></td>
-<td class="none">Display plots of hourly results (<em>hour</em>)</td></tr>
+<td class="none">Display charts of hourly results (<em>hour</em>)</td></tr>
 <tr><td class="lr"><dfn>Power - diurnal profile</dfn></td>
-<td class="none">Display plots of average 24 hour period for the full year (<em>total</em>)</td></tr>
+<td class="none">Display charts of average 24 hour period for the full year (<em>total</em>)</td></tr>
 <tr><td class="lr"><dfn>Power - diurnal profile by month</dfn></td>
-<td class="none">Display plots of average 24 hour period for each month (<em>month</em>)</td></tr>
+<td class="none">Display charts of average 24 hour period for each month (<em>month</em>)</td></tr>
 <tr><td class="lr"><dfn>Power - diurnal profile by season</dfn></td>
-<td class="none">Display plots of average 24 hour period for each season (<em>season</em>)</td></tr>
+<td class="none">Display charts of average 24 hour period for each season (<em>season</em>)</td></tr>
 <tr><td class="lr"><dfn>Power - diurnal profile by period</dfn></td>
-<td class="none">Display plots of average 24 hour period for the two periods (<em>period</em>)</td></tr>
+<td class="none">Display charts of average 24 hour period for the two periods (<em>period</em>)</td></tr>
 <tr><td class="lr"><dfn>Power - Load duration</dfn></td>
 <td class="none">Display load duration curves (<em>duration</em>)</td></tr>
 <tr><td class="lr"><dfn>Power by hour - augmented</dfn></td>
-<td class="none">Display plots of hourly results showing renewable generation with shortfalls filled by storage and augmented generation (<em>augment</em>)</td></tr>
+<td class="none">Display charts of hourly results showing renewable generation with shortfalls filled by storage and augmented generation (<em>augment</em>)</td></tr>
 <tr><td class="lr"><dfn>Power - Shortfall analysis</dfn></td>
-<td class="none">Display additional shortfall graphs and data to assist detailed analysis of generation shortfall. If this option is chosen with 0 analysis iterations it will display a table of shortfall and excess generation and, if storage is chosen, storage usage and balance (<em>shortfall_detail</em>)</td></tr>
+<td class="none">Display additional shortfall charts and data to assist detailed analysis of generation shortfall. If this option is chosen with 0 analysis iterations it will display a table of shortfall and excess generation and, if storage is chosen, storage usage and balance (<em>shortfall_detail</em>)</td></tr>
 <tr><td class="lr"><strong>Choose tables</strong></td>
 <td class="none">Choose what tables to present</td></tr>
 <tr><td class="lr"><dfn>Show Summary/Other Tables</dfn></td>
@@ -3002,12 +3002,12 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <tr><td class="lr"><dfn>Run Financial Models</dfn></td>
 <td class="none">Run SAM financial models on the power results for each station and produces a summary table showing additional financial outputs (<em>financials</em>)</td></tr>
 <tr><td class="bottom"><strong>Proceed, Save Options / Do Financials</strong></td>
-<td class="none">At the bottom of the menu is the <strong>Proceed</strong> button. If the button is not visible use the scroll bar to navigate down the table. You can invoke the menu multiple times to specify different growth options, storage options and plots. The first display of the menu gives the option to <strong>Save</strong> the options for future sessions; this writes the updated options to the Preferences file. To exit this phase of processing press the <strong>All Done</strong> or <strong>Do Financials</strong> button</td></tr>
+<td class="none">At the bottom of the menu is the <strong>Proceed</strong> button. If the button is not visible use the scroll bar to navigate down the table. You can invoke the menu multiple times to specify different growth options, storage options and charts. The first display of the menu gives the option to <strong>Save</strong> the options for future sessions; this writes the updated options to the Preferences file. To exit this phase of processing press the <strong>All Done</strong> or <strong>Do Financials</strong> button</td></tr>
 </table>
-<p>The plots and tables are intended to assist with analysing the chosen scenario.</p>
-<h3 id="plots">Plots</h3>
+<p>The charts and tables are intended to assist with analysing the chosen scenario.</p>
+<h3 id="charts">Charts</h3>
 <ul>
-<li><em>Save plot data</em> will enable most of the data inputs to plots to be saved to a spreadsheet. These values are usually an aggregation of the hourly outputs produced by Power Model
+<li><em>Save chart data</em> will enable most of the data inputs to charts to be saved to a spreadsheet. These values are usually an aggregation of the hourly outputs produced by Power Model
 <br /><strong>Note:</strong> If you choose the <em>Power by hour - augmented</em> you can estimate how much non-renewable generation is required to meet the Load (see <a href="#augment">Augmented (non-renewable) Generation</a>)</li>
 <li><em>Visualise generation - period &amp; delay (secs)</em> will visualise generation by displaying variable generation circles for each station over the chosen periods. This option displays an additional window to control the visualisation:
 <table border="0" class="none">
@@ -3029,33 +3029,33 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <tr><td class="bottom"><strong>Quit</strong></td>
 <td class="none">Exit the visualisation</tr>
 </table></li>
-<li><em>Energy by ...</em> options produce step plots that aggregate data into the chosen period</li>
-<li><em>Power by hour</em> option produce line plots for each hour of the year</li>
-<li><em>Power - diurnal ...</em> options produce line plots that summarise data to produce an average diurnal (daily) plot for each of the chosen periods</li>
+<li><em>Energy by ...</em> options produce step charts that aggregate data into the chosen period</li>
+<li><em>Power by hour</em> option produce line charts for each hour of the year</li>
+<li><em>Power - diurnal ...</em> options produce line charts that summarise data to produce an average diurnal (daily) chart for each of the chosen periods</li>
 <li><em>Power - Load duration</em> option produces load duration curves which show how much generation is produced for a percentage of the year</li>
-<li><em>Power - Shortfall analysis</em> option produces a table and line plots that attempt to assist with analysing shortfalls on a daily basis. The analysis iterations option will produce average shortfalls for that number of days, for example, 3 iterations will produce average shortfall figures for one, two and three days. The figures are calculated by &ldquo;averaging&rdquo; the generation shortfall over the chosen number of days. This option will also produce cumulative shortfall graphs that add the average hourly shortfall to generation to attempt to flatten out the shortfall over the year</li>
+<li><em>Power - Shortfall analysis</em> option produces a table and line charts that attempt to assist with analysing shortfalls on a daily basis. The analysis iterations option will produce average shortfalls for that number of days, for example, 3 iterations will produce average shortfall figures for one, two and three days. The figures are calculated by &ldquo;averaging&rdquo; the generation shortfall over the chosen number of days. This option will also produce cumulative shortfall charts that add the average hourly shortfall to generation to attempt to flatten out the shortfall over the year</li>
 </ul>
 <p><strong><u>Plot Navigation</u></strong></p>
-<p>The tool used to produce the plots, matplotlib, has a navigation toolbar
-(<a href="http://matplotlib.org/users/navigation_toolbar.html" target="_blank">Interactive navigation</a>) to enable you to navigate and manipulate the plot (but doesn't allow you to change the plot data). It includes options to zoom into an area of the plot and to save the plot image (by default to the <em>scenarios</em> folder).
-By default the size of plots produced is determined by matplotlib, or by the <em>Maximise Plot windows</em> option (above). By using the <em>orientation</em>, <em>papersize</em>, and <em>save_format</em> Properties of the <em>[Power]</em> section it is possible to produce the plots in a number of formats, such as PDF format, and in a specific page size and layout. If you use these options you can save plots in a standardised format (these Properties can be added and removed by using the <em>Preferences -> Edit Section</em> menu option).</p>
-<p>For most plots the Pan/Zoom option (<img src="pan_zoom.png" alt="Pan/Zoom">) enables you to zoom in on the plot using the right mouse button and to pan across the plot using the left mouse button.</p>
-<p>For the two hourly plots (<em>Power by hour</em> and <em>Power by hour - augmented</em>) and plots produced by Powerplot there is a modified pan and zoom feature to enhance visual examination of the plot:</p>
+<p>The tool used to produce the charts, matplotlib, has a navigation toolbar
+(<a href="http://matplotlib.org/users/navigation_toolbar.html" target="_blank">Interactive navigation</a>) to enable you to navigate and manipulate the chart (but doesn't allow you to change the chart data). It includes options to zoom into an area of the chart and to save the chart image (by default to the <em>scenarios</em> folder).
+By default the size of charts produced is determined by matplotlib, or by the <em>Maximise Plot windows</em> option (above). By using the <em>orientation</em>, <em>papersize</em>, and <em>save_format</em> Properties of the <em>[Power]</em> section it is possible to produce the charts in a number of formats, such as PDF format, and in a specific page size and layout. If you use these options you can save charts in a standardised format (these Properties can be added and removed by using the <em>Preferences -> Edit Section</em> menu option).</p>
+<p>For most charts the Pan/Zoom option (<img src="pan_zoom.png" alt="Pan/Zoom">) enables you to zoom in on the chart using the right mouse button and to pan across the chart using the left mouse button.</p>
+<p>For the two hourly charts (<em>Power by hour</em> and <em>Power by hour - augmented</em>) and charts produced by Powerplot there is a modified pan and zoom feature to enhance visual examination of the chart:</p>
 <ul>
-<li>You can use the mouse scroll wheel to zoom in and out on the time (x) axis. The position of the mouse within the plot determines where the zoom will centre upon (that is, that point will remain fixed and the rest of the plot will move away from or towards that point)</li>
-<li>Moving the mouse while holding down the left button will allow you to pan across the plot</li>
-<li>Clicking the right mouse button or pressing the <em>r</em> key will reset the plot to the original state. This will allow you to zoom out to the original state and then zoom in to another period on the plot</li>
-<li>Pressing the <em>f</em> key will expand the plot window to fullscreen. Pressing it again will return it to the previous size</li>
-<li>Pressing the <em>l</em> key will allow you to move the legend, although the behaviour may be a little erratic. Initially, the legend will be moved to the top right of the window and be arranged as a vertical list. By clicking the left mouse button within the legend and dragging the mouse you can move it to a different location. In the process it may cause the plot to also move or cause some odd behaviour with it. In these cases pressing the <em>r</em> key will reset the plot</li>
-<li>Pressing the <em>m</em> key will display a monthly plot. Each press will show the next month. You can also navigate to a chosen month by pressing the number for the month after the <em>m</em>. For example, pressing <em>m10</em> will display October</li>
-<li>Pressing the <em>w</em> key will display a weekly plot. Each press will show the next week. If the <em>m</em> key has been pressed the weeks for that month will be displayed</li>
+<li>You can use the mouse scroll wheel to zoom in and out on the time (x) axis. The position of the mouse within the chart determines where the zoom will centre upon (that is, that point will remain fixed and the rest of the chart will move away from or towards that point)</li>
+<li>Moving the mouse while holding down the left button will allow you to pan across the chart</li>
+<li>Clicking the right mouse button or pressing the <em>r</em> key will reset the chart to the original state. This will allow you to zoom out to the original state and then zoom in to another period on the chart</li>
+<li>Pressing the <em>f</em> key will expand the chart window to fullscreen. Pressing it again will return it to the previous size</li>
+<li>Pressing the <em>l</em> key will allow you to move the legend, although the behaviour may be a little erratic. Initially, the legend will be moved to the top right of the window and be arranged as a vertical list. By clicking the left mouse button within the legend and dragging the mouse you can move it to a different location. In the process it may cause the chart to also move or cause some odd behaviour with it. In these cases pressing the <em>r</em> key will reset the chart</li>
+<li>Pressing the <em>m</em> key will display a monthly chart. Each press will show the next month. You can also navigate to a chosen month by pressing the number for the month after the <em>m</em>. For example, pressing <em>m10</em> will display October</li>
+<li>Pressing the <em>w</em> key will display a weekly chart. Each press will show the next week. If the <em>m</em> key has been pressed the weeks for that month will be displayed</li>
 <li>Pressing <em>PageUp</em> or <em>PageDown</em> will display the previous or next week or month</li>
 <li>Pressing the <em>left</em> or <em>right</em> arrow will scroll the display to the left or right</li>
 <li>Pressing the <em>up</em> or <em>down</em> arrow will scroll the display up or down</li>
 </ul>
-<p><strong>Note:</strong> For cumulative (stacked) plots produced by Powerplot this feature may perform slowly so please be a little patient</p>
+<p><strong>Note:</strong> For cumulative (stacked) charts produced by Powerplot this feature may perform slowly so please be a little patient</p>
 <h4 id="powerplot"><u>Powerplot</u></h4>
-<p><code>powerplot</code> is a standalone program that will produce either hourly, half-hourly or diurnal plots from a spreadsheet that conforms to certain constraints. It is intended to be used to plot (detailed) results either from Powermatch or some of the files produced by SIREN's PowerModels.
+<p><code>powerplot</code> is a standalone program that will produce either hourly, half-hourly or diurnal charts from a spreadsheet that conforms to certain constraints. It is intended to be used to chart (detailed) results either from Powermatch or some of the files produced by SIREN's PowerModels.
 <div class="experiment">
 The program can also be used to either:
 <ul>
@@ -3079,41 +3079,41 @@ The program displays a window of options. The default values are specified in th
 <tr><td class="lr"><dfn>Sheet</dfn></td>
 <td class="none">A pull-down list to enable you to choose the desired worksheet (<em>sheet</em>)</td></tr>
 <tr><td class="lr"><dfn>Period</dfn></td>
-<td class="none">A pull-down list for a full year, a month or other defined seasons or periods that may be defined in the Preferences file. If an option other than <em>&lt;None&gt;</em> is chosen the resulting plot will present an average diurnal plot for the chosen period (<em>period</em>)
+<td class="none">A pull-down list for a full year, a month or other defined seasons or periods that may be defined in the Preferences file. If an option other than <em>&lt;None&gt;</em> is chosen the resulting chart will present an average diurnal chart for the chosen period (<em>period</em>)
 <div class="experiment">A second pull-down list allows you to choose an ending month range for Contribution or Correlation. This can either be a later month in the year, or if earlier that the first value months will wrap to the start of the year. For example, Period 1 of Nov and Period 2 of Feb will correlate Nov, Dec, Jan and Feb (<em>period2</em>)</div></td></tr>
 <tr><td class="lr"><dfn>Target</dfn></td>
-<td class="none">A pull-down list of column names. If the plot is intended to show how the chosen columns meet a target column, typically Load, this enables you to choose that column. Choosing <em>&lt;None&gt;</em> means no target field. If a target field is chosen the plot will show excess generation as lightly shaded areas above the target values (<em>target</em>)
+<td class="none">A pull-down list of column names. If the chart is intended to show how the chosen columns meet a target column, typically Load, this enables you to choose that column. Choosing <em>&lt;None&gt;</em> means no target field. If a target field is chosen the chart will show excess generation as lightly shaded areas above the target values (<em>target</em>)
 <div class="experiment">A target is required for Contribution and Correlation</div></td></tr>
 <tr><td class="lr"><dfn>Overlay</dfn></td>
-<td class="none">This option allows the total of energy used to recharge storage to be shown as an overlay on the plot; it provides an indication of how and when excess energy has been used for recharge. If a Target, e.g. Load, is chosen the target values will be added to the figure to indicate the use of excess energy above the target. It presents a pull-down list of options. At present the only options are <em>&lt;none&gt;</em> and <em>Charge</em> (<em>overlay</em>)
+<td class="none">This option allows the total of energy used to recharge storage to be shown as an overlay on the chart; it provides an indication of how and when excess energy has been used for recharge. If a Target, e.g. Load, is chosen the target values will be added to the figure to indicate the use of excess energy above the target. It presents a pull-down list of options. At present the only options are <em>&lt;none&gt;</em> and <em>Charge</em> (<em>overlay</em>)
 </tr>
 <tr><td class="lr"><dfn>Title</dfn></td>
-<td class="none">Specify a title for the plot. There are two special strings which will be replaced in the title:
+<td class="none">Specify a title for the chart. There are two special strings which will be replaced in the title:
 <ul>
 <li><em>$YEAR$</em> will be replaced with the year (first Period value)</li>
 <li><em>$MTH$</em> or <em>$MONTH$</em> will be replaced with the chosen Period</li>
 </ul>
-If it's not a diurnal plot (i.e. Period is <em>&lt;None&gt;</em>) any occurence of &rsquo;Diurnal&lsquo; in the title wil be removed (<em>title</em>)
+If it's not a diurnal chart (i.e. Period is <em>&lt;None&gt;</em>) any occurence of &rsquo;Diurnal&lsquo; in the title wil be removed (<em>title</em>)
 </td></tr>
 <tr><td class="lr"><dfn>Maximum</dfn></td>
-<td class="none">You can specify a maximum value for the Power (y) axis. This allows you to produce a series of plots with the same scale (<em>maximum</em>)</td></tr>
+<td class="none">You can specify a maximum value for the Power (y) axis. This allows you to produce a series of charts with the same scale (<em>maximum</em>)</td></tr>
 <tr><td class="lr"><dfn>Type of Plot</dfn></td>
-<td class="none">The type of plot to be produced. Options are <em>Bar Graph</em>, <em>Cumulative</em>, <em>Linegraph</em> and <em>Step Plot</em>. <em>Bar Graph</em>, <em>Cumulative</em> and <em>Step Plot</em> produce cumulative (stacked) plots and have filled areas by technology (or Columns). A Step Plot is similar to a Bar Graph but does not have spaces between the hourly bars; also it is a lot faster to display than a Bar Graph (a Bar Graph is not recommended for hourly plots). If a Target field (e.g. Load) is chosen the area above the Target value (i.e. excess generation) in the Cumulative and Step plot have a lightly shaded value (the degree of shading is chosen by the <em>alpha</em> property in the [Powerplot] Section of the Preferences file) (<em>plot</em>)</td></tr>
+<td class="none">The type of chart to be produced. Options are <em>Bar Chart</em>, <em>Cumulative</em>, <em>Line Chart</em> and <em>Step Chart</em>. <em>Bar Chart</em>, <em>Cumulative</em> and <em>Step Chart</em> produce cumulative (stacked) charts and have filled areas by technology (or Columns). A Step Chart is similar to a Bar Chart but does not have spaces between the hourly bars; also it is a lot faster to display than a Bar Chart (a Bar Chart is not recommended for hourly charts). If a Target field (e.g. Load) is chosen the area above the Target value (i.e. excess generation) in the Cumulative and Step chart have a lightly shaded value (the degree of shading is chosen by the <em>alpha</em> property in the [Powerplot] Section of the Preferences file) (<em>plot</em>)</td></tr>
 <tr><td class="lr"><dfn>Percentage</dfn></td>
-<td class="none">Checking this option will produce a percentage (stacked) curve. The plot will have filled areas showing the percentage of generation for each technology. It is recommended to not set a Target field (i.e. set it to <em>&lt;None&gt;</em>) as this will merely remove the Target field (and it's data) from the plot (<em>percentage</em>)</td></tr>
+<td class="none">Checking this option will produce a percentage (stacked) curve. The chart will have filled areas showing the percentage of generation for each technology. It is recommended to not set a Target field (i.e. set it to <em>&lt;None&gt;</em>) as this will merely remove the Target field (and it's data) from the chart (<em>percentage</em>)</td></tr>
 <tr><td class="lr"><dfn>Spill label</dfn></td>
 <td class="none">Use this to set a suffix for Legend entries for spilled energy. If the field is blank no spilled energy labels will appear in the Legend (<em>spill_label</em>)</td></tr>
 <tr><td class="lr"><dfn>Show Grid</dfn></td>
-<td class="none">The gridlines to be included on the plot. Options are <em>Both</em>, <em>Horizontal</em>, <em>Vertical</em> and <em>None</em>. The default is <em>None</em> (<em>grid</em>)</td></tr>
+<td class="none">The gridlines to be included on the chart. Options are <em>Both</em>, <em>Horizontal</em>, <em>Vertical</em> and <em>None</em>. The default is <em>None</em> (<em>grid</em>)</td></tr>
 <tr><td class="lr"><dfn>Column Order</dfn></td>
-<td class="none">To produce the plot you select those columns to be included. This field consists of two tables (lists) of columns. Those in the left hand list will be included in the plot while those on the right will be excluded. The included columns will be plotted in the chosen order. You can drag individual or a number of columns between the two lists to get the desired configuration. The plot colour for the column will be displayed as the background color for the column (<em>columns</em>)
+<td class="none">To produce the chart you select those columns to be included. This field consists of two tables (lists) of columns. Those in the left hand list will be included in the chart while those on the right will be excluded. The included columns will be charted in the chosen order. You can drag individual or a number of columns between the two lists to get the desired configuration. The chart colour for the column will be displayed as the background color for the column (<em>columns</em>)
 <div class="experiment">Contribution or Correlation will be performed between the target and each of the chosen columns</div></td></tr>
 <tr><td class="bottom"><strong>Done, Plot, Colours, Co..., Help</strong></td>
 <td class="none">At the bottom of the window are a number of buttons:
 <ul>
 <li><strong>Done</strong> Exit the program and save the input values. Input preferences and colours are either saved in a SIREN preferences file or in a specific file, <em>powerplot.ini</em>, if no Peferences file is passed to the program</li>
-<li><strong>Plot</strong> Produce the plot. If there are missing colours you will be taken to the Colours window to add the colour. You need to set a colour and press the Save &amp; Exit button</li>
-<li><strong>Colours</strong> Press this button to change the plot colours or to add new colours. You can remove a plot colour by right-clicking the colour (it will be cleared and the item deleted when you Save &amp; Exit). Colours are held in the [Plot Colors] Section of the Preferences file.
+<li><strong>Plot</strong> Produce the chart. If there are missing colours you will be taken to the Colours window to add the colour. You need to set a colour and press the Save &amp; Exit button</li>
+<li><strong>Colours</strong> Press this button to change the chart colours or to add new colours. You can remove a chart colour by right-clicking the colour (it will be cleared and the item deleted when you Save &amp; Exit). Colours are held in the [Plot Colors] Section of the Preferences file.
 <br />If the palette property in the [Plot Colors] Section of the Preferences file is set to True you can create a palette sequence of colours for columns selected in both the included and excluded lists. If you select columns and then press the <strong>Colours</strong> button you will be given the option to set a starting and ending palette colour and the colours for the chosen columns will be updated to a range of colours between the chosen values</li>
 <li><div class="experiment">
 <strong>Co...</strong> Perform either an analysis of contribution or correlation to a target. These options are presented by setting either the <em>show_contribution</em> or <em>show_correlation</em> Property of the <a href="#p_pm">[Powermatch]</a> section of the Preferences file to True. If both properties are set <em>show_contribution</em> takes precedence.<br/>
@@ -3131,11 +3131,11 @@ If it's not a diurnal plot (i.e. Period is <em>&lt;None&gt;</em>) any occurence 
 <p><code>flexiplot</code> is a standalone program that can be used for &ldquo;prototyping&rdquo; a more conventional Excel spreadsheet where data is arranged in rows or columns. The program is very much experimental. If it proves useful it may be included as part of <code>powerplot</code> in the future. The program has a similar window of options to <code>powerplot</code> with the exception of <em>Period</em> and <em>Target</em>. The default values are specified in the <a href="#p_flexiplot">[Flexiplot]</a> Section of the Preferences file. It has a number of options that differ to <code>powerplot</code>.
 <table border="0" class="none">
 <tr><td class="top" style="width: 20%;"><dfn>Series</dfn></td>
-<td class="none">The location of the data series to be plotted. The range is specified as either Excel columns and rows, e.g. <em>B1:H1</em>, or as four numbers defining the row and columns range, e.g. <em>1,2,1,7</em>. The series can either be in rows or columns but is expected to be a single row (as in the examples) or column. You then choose which series you want plotted by moving them in the Column Order lists (<em>series</em>)</td></tr>
+<td class="none">The location of the data series to be charted. The range is specified as either Excel columns and rows, e.g. <em>B1:H1</em>, or as four numbers defining the row and columns range, e.g. <em>1,2,1,7</em>. The series can either be in rows or columns but is expected to be a single row (as in the examples) or column. You then choose which series you want charted by moving them in the Column Order lists (<em>series</em>)</td></tr>
 <tr><td class="lr"><dfn>Series Label</dfn></td>
 <td class="none">The label for the Series (y values) (<em>ylabel</em>)</td></tr>
 <tr><td class="lr"><dfn>X Values</dfn></td>
-<td class="none">The data values to be plotted. The range is specified as either Excel columns and rows, e.g. <em>A2:A29</em> or as four numbers defining the row and columns range, e.g. <em>2,1,2,29</em>. The series can either be in rows or columns but is expected to be a single row or column (as in the examples). The first column (A) is taken as the X labels and the data series chosen will be plotted (<em>xvalues</em>)</td></tr>
+<td class="none">The data values to be charted. The range is specified as either Excel columns and rows, e.g. <em>A2:A29</em> or as four numbers defining the row and columns range, e.g. <em>2,1,2,29</em>. The series can either be in rows or columns but is expected to be a single row or column (as in the examples). The first column (A) is taken as the X labels and the data series chosen will be charted (<em>xvalues</em>)</td></tr>
 <tr><td class="lr"><dfn>X Label</dfn></td>
 <td class="none">The label for the X Axis (x values) (<em>xlabel</em>)</td></tr>
 <tr><td class="bottom"><strong>Preferences</strong></td>
@@ -3144,7 +3144,7 @@ If it's not a diurnal plot (i.e. Period is <em>&lt;None&gt;</em>) any occurence 
 </table>
 <p><code>flexiplot</code> has a number of options to:
 <ul>
-<li>adjust the font properties of the various text items on the plot. The properties are as described in <a href="https://matplotlib.org/3.1.1/api/font_manager_api.html#matplotlib.font_manager.FontProperties">FontProperties</a> but may be restricted by the matplotlib environment. To specify a property use the format as described in the link, e.g. <em>family=sans-serif,size=xxlarge</em>. The only non-default value is the plot title fontsize which is set to 'x-large'</li>
+<li>adjust the font properties of the various text items on the chart. The properties are as described in <a href="https://matplotlib.org/3.1.1/api/font_manager_api.html#matplotlib.font_manager.FontProperties">FontProperties</a> but may be restricted by the matplotlib environment. To specify a property use the format as described in the link, e.g. <em>family=sans-serif,size=xxlarge</em>. The only non-default value is the chart title fontsize which is set to 'x-large'</li>
 <li>You can specify how often X Axis ticks appear, either by setting <em>sparse_xticks</em> to a single number ,&lsquo;n&rsquo;, for every &lsquo;n&rsquo;th tick to appear, or by setting a test for a change in the label value by specifying the start and end characters to examine, separated by a comma. For example, <em>1,3</em> could be used where you have labels in the form of <em>Jan, Feb</em></li>
 </ul>
 </div>
@@ -3354,14 +3354,14 @@ Surplus - spilled or curtailed - generation is normally used in the calculation 
 <dfn>Capacity (MW)</dfn> is required and must be the first entry. The other Report Groups can be <strong>in any order</strong>. <dfn>Carbon Price</dfn> allows you to input a different Carbon Price for each Model. <dfn>Discount Rate</dfn> allows you to input a different discount rate for each Model. If Carbon Price and/or Discount Rate are to be included they must appear immediately below the Total row for the Capacity inputs.
 <br />By default the resulting output will be appended as a new worksheet to the input file. You can create a new spreadsheet by setting the <em>batch_new_file</em> property to True
 <br />It is also possible to perform batch runs on zone data, but if so both the input data file and the batch file must have input capacities by zone. In this case the name for each facility identifies both the zone and technology in the form <em>zone.technology</em>.
-<br />The Batch option also has a prototype chart facility that can be used to do sensitivity analysis on a suite of batch models - see <a href="#pm_batch_graphs">below</a>
+<br />The Batch option also has a prototype chart facility that can be used to do sensitivity analysis on a suite of batch models - see <a href="#pm_batch_charts">below</a>
 <br /><strong>Usage notes:</strong>
 <ul>
 <li>If you want to include a Total row in the outputs you need to have a Total row (as the last row) in the <em>Capacity (MW)</em> Report Group</li>
 <li>(At present) The same Load data is used for all models in a Batch execution</li>
 </ul>
 </li>
-<li><strong>Optimise</strong>. Invoke the Optimise function. This will use an iterative approach to optimise the input generator capacities to produce a solution with (a) either a lower overall LCOE, (b) the lowest weight for six variables, or (c) both. It will complete by displaying a plot of how the value for LCOE has converged to a minimum, and either (if <em>optimise_multitable</em> and <em>more_details</em> are set) a three dimensional plot showing the three variables with the highest weightings or (if <em>optimise_multitable</em> is set) a table of all variables for the multi-variable approach. Depending on which options are specified you will be presented with a number of &ldquo;best picks&rdquo; where you can choose your preferred choice. This will then produce a summary table which will also contain details on the Optimisation parameters used. It will also update the adjustment values for each generator to enable you to produce a Powermatch spreadsheet. If you choose a solution this can be added to a batch input file (if <em>optimise_to_batch</em> is set).
+<li><strong>Optimise</strong>. Invoke the Optimise function. This will use an iterative approach to optimise the input generator capacities to produce a solution with (a) either a lower overall LCOE, (b) the lowest weight for six variables, or (c) both. It will complete by displaying a chart of how the value for LCOE has converged to a minimum, and either (if <em>optimise_multitable</em> and <em>more_details</em> are set) a three dimensional plot showing the three variables with the highest weightings or (if <em>optimise_multitable</em> is set) a table of all variables for the multi-variable approach. Depending on which options are specified you will be presented with a number of &ldquo;best picks&rdquo; where you can choose your preferred choice. This will then produce a summary table which will also contain details on the Optimisation parameters used. It will also update the adjustment values for each generator to enable you to produce a Powermatch spreadsheet. If you choose a solution this can be added to a batch input file (if <em>optimise_to_batch</em> is set).
 <ul>
 <li>If you are using generator adjustments it may be useful to invoke <strong>Summary</strong> to set or reset the starting capacities for the optimsation (using <strong>Reset</strong> to set initial values or <strong>Restore</strong> to restore previously saved values)</li>
 <li>If you optimise with zones you want to ensure <em>optimise_default</em> is defined to ensure optimisation entries are created for each <em>zone.technology</em> combination. You can then update these entries to the desired range and step increment and save them to a new optimisation spreadsheet if required</li>
@@ -3417,7 +3417,7 @@ See below for more details on optimisation.</li>
 <tr><td class="none"><dfn>Warmup Time</dfn></td><td class="none">For Storage some technologies may require a warmup period before they become operational. You can set a time period for this to occur, either in minutes or part of an hour (if an Initial value is set for the Storage it is assumed the warmup period has occurred prior to the first hour of the year). Also known as Ramp time (The amount of time it takes from the moment a generator is turned on to the moment it can start providing energy to the grid at its lower operating limit)</td></tr>
 </table>
 <div class="experiment">
-<h4 id="pm_batch_graphs">Batch graphs</h4>
+<h4 id="pm_batch_charts">Batch charts</h4>
 <p>With the Batch option there is a possibility to produce a set of charts (graphs) to display impacts of a range of models. The functionality is somewhat limited and should be considered as useful for creating protoype charts rather than fully formatted ones. The specifications for charts can be included in the input worksheet after the desired report details. Charts are created in a worksheet placed after the results worksheet. Charts are specified by a number of rows of information in the first three columns of the input worksheet. The first column is the chart parameter, the second contains the report group as in the report outputs, the third contains the row (e.g. technology) of interest. These are the chart parameters:
 <table border="0", class="none" style="margin-left:35px">
 <tr>
@@ -3579,7 +3579,7 @@ If the best and worse values are the same for a variable and that value is not a
 </ol>
 <li>Produce
 <ol>
-<li>A plot showing the progression of LCOE over each iteration</li>
+<li>A chart showing the progression of LCOE over each iteration</li>
 <li>A three dimensional plot showing the best individual for each iteration. The three variables with the highest weighting are chosen for the plot. It is also possible to pick one of the solutions by clicking the mouse on that point - a small box showing the values for each of the three variables will be displayed. You can &ldquo;rotate&rdquo; the plot around by holding down the left mouse button and then moving the mouse (<em>optimise_multiplot</em>; default is True)</li>
 <li>Optionally, a table showing the best individual for each iteration. You can also choose an individual by clicking anywhere on the desired row. On entry the top row of the table will have the lowest weight and will be chosen on exit (<em>optimise_multitable</em>; default is False)</li>
 </ol>
@@ -3649,12 +3649,12 @@ If the best and worse values are the same for a variable and that value is not a
 <h3 id="tricks">Performance and Execution Tricks</h3>
 <p>Processing a simulation with a large number of stations can take a while to process, especially with Solar Thermal stations. You can minimise this processing by using either of these two options:</p>
 <ol>
-<li>When you invoke Power Model processing it allows you to process Plot (and Table) options multiple times without reprocessing the stations. You can then process Financial options multiple times. The process SIREN uses is as follows:
+<li>When you invoke Power Model processing it allows you to process Chart (and Table) options multiple times without reprocessing the stations. You can then process Financial options multiple times. The process SIREN uses is as follows:
 <ol>
 <li>Displays the Power Model menu allowing you to specify initial options. This allows you to choose the stations of interest and the data options you want. This first display of the menu also allows you to save these options</li>
 <li>Calls the appropriate SAM module for each chosen station, or other options as specified</li>
-<li>Presents the tables and plots you have selected</li>
-<li>Re-displays the Power Model menu allowing you to specify different growth options, storage options and plots. A number of options, such as <em>Generation - from chosen stations</em> will no longer be available as they would require reprocessing the SAM models. To process these new options press the <strong>Proceed</strong> button. To exit this phase of processing press the
+<li>Presents the tables and charts you have selected</li>
+<li>Re-displays the Power Model menu allowing you to specify different growth options, storage options and charts. A number of options, such as <em>Generation - from chosen stations</em> will no longer be available as they would require reprocessing the SAM models. To process these new options press the <strong>Proceed</strong> button. To exit this phase of processing press the
 <strong>All Done</strong> or <strong>Do Financials</strong> button</li>
 <li>If you have chosen to run the Financial Models the Financial Model menu will be displayed, allowing you to specify initial finance options. Press the <strong>Proceed</strong> button to continue with these options</li>
 <li>Calls the SAM financial module for each chosen station</li>
@@ -3676,7 +3676,7 @@ If the best and worse values are the same for a variable and that value is not a
 <p>The <em>Generation - adjust generation</em> option allows you to easily adjust the contribution of each technology to the overall model by allowing you to apply a multiplier to the generation figures. The multiplier multiplies each hourly generation figure to approximate increasing the station by this size. This enables you to assess changes to the technology mix without having to alter individual stations. If you also choose the <em>Generation - from chosen stations</em> option you can also do this adjustment for each station rather than each technology. This approach allows you to &ldquo;experiment&rdquo; with the generation mix without having to add or alter stations.</p>
 <strong>Note:</strong> that the multiplied figures are not passed to the Financial model(s).</p>
 <h4 id="augment">Augmented (non-renewable) Generation</h4>
-<p>You can roughly estimate how much augmented (non-renewable) generation is required to meet the Load by selecting some appropriate Power Model options. This approach will indicate how much hourly demand can be met by generation, with or without storage, in the same hour, and how much excess renewable generation is spilled. If you choose the <em>Save plot data</em> and <em>Power by hour - augmented</em> option three tables will be produced. The first is actual data as in the graph, the second will adjust values to indicate the amount of generation from each component, and the third is a summary of the totals for the second table. This final table summarises how much demand is met by renewables and storage, how much has to be met from other sources (Augment) and how much renewable generation is spilled (that is, not used to meet demand or add to storage). This gives a slightly more accurate figure on how well your scenario meets hourly Load.
+<p>You can roughly estimate how much augmented (non-renewable) generation is required to meet the Load by selecting some appropriate Power Model options. This approach will indicate how much hourly demand can be met by generation, with or without storage, in the same hour, and how much excess renewable generation is spilled. If you choose the <em>Save chart data</em> and <em>Power by hour - augmented</em> option three tables will be produced. The first is actual data as in the graph, the second will adjust values to indicate the amount of generation from each component, and the third is a summary of the totals for the second table. This final table summarises how much demand is met by renewables and storage, how much has to be met from other sources (Augment) and how much renewable generation is spilled (that is, not used to meet demand or add to storage). This gives a slightly more accurate figure on how well your scenario meets hourly Load.
 <h4>Saving the Current View</h4>
 <p>It is possible to save the current view of the main SIREN window using the <strong>Save View</strong> (Ctrl+V) option. Depending on the options chosen you can choose to crop the view at the map boundary (<em>crop_save</em>=True) or to save the full view, and to save either the underlying map (<em>scene_save</em>=True) or the screen view. The image resolution can be different in the two options, dependent upon screen resolution, image resolution, screen window size and how much of the map is being saved.
 </p>

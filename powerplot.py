@@ -374,12 +374,12 @@ class PowerPlot(QtWidgets.QWidget):
         self.grid.addWidget(QtWidgets.QLabel('(Handy if you want to produce a series of plots)'), rw, 3, 1, 3)
         rw += 1
         self.grid.addWidget(QtWidgets.QLabel('Type of Plot:'), rw, 0)
-        plots = ['Bar Chart', 'Cumulative', 'Linegraph', 'Step Plot']
+        plots = ['Bar Chart', 'Cumulative', 'Line Chart', 'Step Chart']
         self.plottype = QtWidgets.QComboBox()
         for plot in plots:
              self.plottype.addItem(plot)
         self.grid.addWidget(self.plottype, rw, 1) #, 1, 2)
-        self.grid.addWidget(QtWidgets.QLabel('(Type of plot - stacked except for Linegraph)'), rw, 3, 1, 3)
+        self.grid.addWidget(QtWidgets.QLabel('(Type of plot - stacked except for Line Chart)'), rw, 3, 1, 3)
         rw += 1
         self.grid.addWidget(QtWidgets.QLabel('Percentage:'), rw, 0)
         self.percentage = QtWidgets.QCheckBox()
@@ -521,6 +521,10 @@ class PowerPlot(QtWidgets.QWidget):
                     else:
                         self.period.setCurrentIndex(0)
                 elif key == 'plot' + choice:
+                    if value == 'Linegraph':
+                        value = 'Line Chart'
+                    elif value == 'Step Plot':
+                        value = 'Step Chart'
                     self.plottype.setCurrentIndex(self.plottype.findText(value))
                 elif key == 'maximum' + choice:
                     try:
@@ -636,7 +640,7 @@ class PowerPlot(QtWidgets.QWidget):
        # if self.plottype.currentText() == 'Bar Chart' and self.period.currentText() == '<none>' and 1 == 2:
        #     self.plottype.setCurrentIndex(self.plottype.currentIndex() + 1) # set to something else
        # el
-        if self.plottype.currentText() == 'Linegraph' and self.percentage.isChecked():
+        if self.plottype.currentText() == 'Line Chart' and self.percentage.isChecked():
             self.percentage.setCheckState(QtCore.Qt.Unchecked)
         if not self.setup[0]:
             self.updated = True
@@ -1007,6 +1011,7 @@ class PowerPlot(QtWidgets.QWidget):
         if self.leapyear: #rows == 8784: # leap year
             the_days[1] = 29
         mth_labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+        figname = self.plottype.currentText().lower().replace(' ','') + '_' + str(year)
         if self.period.currentText() == '<none>': # full year of hourly figures
             m = 0
             d = 1
@@ -1058,8 +1063,13 @@ class PowerPlot(QtWidgets.QWidget):
                         label.append(column)
                         for row in range(self.toprow[1] + 1, self.toprow[1] + self.rows + 1):
                             data[-1].append(ws.cell_value(row, c2))
-                            maxy = max(maxy, data[-1][-1])
-                            miny = min(miny, data[-1][-1])
+                            try:
+                                maxy = max(maxy, data[-1][-1])
+                                miny = min(miny, data[-1][-1])
+                            except:
+                                self.log.setText("Invalid data - '" + column + "' row " + str(row) + " is '" + str(data[-1][-1]) + "'")
+                                return
+                              #  data[-1][-1] = 0 could be set if we ignore bad data
                         break
             if tgt_col >= 0:
                 for row in range(self.toprow[1] + 1, self.toprow[1] + self.rows + 1):
@@ -1072,8 +1082,8 @@ class PowerPlot(QtWidgets.QWidget):
                     for col in overlay_cols:
                         overlay[row - self.toprow[1] - 1] += ws.cell_value(row, col)
                     maxy = max(maxy, overlay[row - self.toprow[1] - 1])
-            if self.plottype.currentText() == 'Linegraph':
-                fig = plt.figure('linegraph_' + str(year), constrained_layout=self.constrained_layout)
+            if self.plottype.currentText() == 'Line Chart':
+                fig = plt.figure(figname, constrained_layout=self.constrained_layout)
                 if self.suptitle.text() != '':
                     fig.suptitle(self.suptitle.text(), fontsize=16)
                 if gridtype != '':
@@ -1110,14 +1120,12 @@ class PowerPlot(QtWidgets.QWidget):
                 f = zp.zoom_pan(ax, base_scale=1.2, flex_ticks=flex_on) # enable scrollable zoom
                 plt.show()
                 del zp
-            elif self.plottype.currentText() in ['Cumulative', 'Step Plot']:
+            elif self.plottype.currentText() in ['Cumulative', 'Step Chart']:
                 if self.plottype.currentText() == 'Cumulative':
                     step = None
-                    pfx = 'cumulative_'
                 else:
                     step = 'pre'
-                    pfx = 'step_plot_'
-                fig = plt.figure(pfx + str(year), constrained_layout=self.constrained_layout)
+                fig = plt.figure(figname, constrained_layout=self.constrained_layout)
                 if self.suptitle.text() != '':
                     fig.suptitle(self.suptitle.text(), fontsize=16)
                 if gridtype != '':
@@ -1251,8 +1259,7 @@ class PowerPlot(QtWidgets.QWidget):
                 plt.show()
                 del zp
             elif self.plottype.currentText() == 'Bar Chart':
-                fig = plt.figure('barchart_' + str(year),
-                                 constrained_layout=self.constrained_layout)
+                fig = plt.figure(figname, constrained_layout=self.constrained_layout)
                 if self.suptitle.text() != '':
                     fig.suptitle(self.suptitle.text(), fontsize=16)
                 if gridtype != '':
@@ -1436,8 +1443,8 @@ class PowerPlot(QtWidgets.QWidget):
                 for h in range(self.interval):
                     overlay[h] = overlay[h] / (tot_rows / self.interval)
                     maxy = max(maxy, overlay[h])
-            if self.plottype.currentText() == 'Linegraph':
-                fig = plt.figure('linegraph_' + self.period.currentText().lower() + '_' + str(year),
+            if self.plottype.currentText() == 'Line Chart':
+                fig = plt.figure(figname + '_' + self.period.currentText().lower(),
                                  constrained_layout=self.constrained_layout)
                 if self.suptitle.text() != '':
                     fig.suptitle(self.suptitle.text(), fontsize=16)
@@ -1474,14 +1481,14 @@ class PowerPlot(QtWidgets.QWidget):
                 f = zp.zoom_pan(cx, base_scale=1.2) # enable scrollable zoom
                 plt.show()
                 del zp
-            elif self.plottype.currentText() in ['Cumulative', 'Step Plot']:
+            elif self.plottype.currentText() in ['Cumulative', 'Step Chart']:
                 if self.plottype.currentText() == 'Cumulative':
                     step = None
                 else:
                     step = 'pre'
           ##      fig, dx = plt.subplots(constrained_layout=self.constrained_layout)
           ##      fig.canvas.manager.set_window_title('cumulative_' + self.period.currentText().lower() + '_' + str(year))
-                fig = plt.figure('cumulative_' + self.period.currentText().lower() + '_' + str(year),
+                fig = plt.figure(figname + '_' + self.period.currentText().lower(),
                                  constrained_layout=self.constrained_layout)
                 if self.suptitle.text() != '':
                     fig.suptitle(self.suptitle.text(), fontsize=16)
@@ -1601,7 +1608,7 @@ class PowerPlot(QtWidgets.QWidget):
                 plt.show()
                 del zp
             elif self.plottype.currentText() == 'Bar Chart':
-                fig = plt.figure('barchart_' + self.period.currentText().lower() + '_' + str(year),
+                fig = plt.figure(figname + '_' + self.period.currentText().lower(),
                                  constrained_layout=self.constrained_layout)
                 if self.suptitle.text() != '':
                     fig.suptitle(self.suptitle.text(), fontsize=16)

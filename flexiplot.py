@@ -316,15 +316,15 @@ class FlexiPlot(QtWidgets.QWidget):
         self.maxSpin.setRange(0, 100000)
         self.maxSpin.setSingleStep(500)
         self.grid.addWidget(self.maxSpin, rw, 1)
-        self.grid.addWidget(QtWidgets.QLabel('(Handy if you want to produce a series of plots)'), rw, 3, 1, 3)
+        self.grid.addWidget(QtWidgets.QLabel('(Handy if you want to produce a series of charts)'), rw, 3, 1, 3)
         rw += 1
-        self.grid.addWidget(QtWidgets.QLabel('Type of Plot:'), rw, 0)
-        plots = ['Bar Chart', 'Cumulative', 'Linegraph', 'Step Plot']
+        self.grid.addWidget(QtWidgets.QLabel('Type of Chart:'), rw, 0)
+        plots = ['Bar Chart', 'Cumulative', 'Line Chart', 'Step Chart']
         self.plottype = QtWidgets.QComboBox()
         for plot in plots:
              self.plottype.addItem(plot)
         self.grid.addWidget(self.plottype, rw, 1) #, 1, 2)
-        self.grid.addWidget(QtWidgets.QLabel('(Type of plot - stacked except for Linegraph)'), rw, 3, 1, 3)
+        self.grid.addWidget(QtWidgets.QLabel('(Type of chart - stacked except for Line Chart)'), rw, 3, 1, 3)
         rw += 1
         self.grid.addWidget(QtWidgets.QLabel('Percentage:'), rw, 0)
         self.percentage = QtWidgets.QCheckBox()
@@ -374,7 +374,7 @@ class FlexiPlot(QtWidgets.QWidget):
         self.grid.addWidget(done, rw, 0)
         done.clicked.connect(self.doneClicked)
         QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.doneClicked)
-        pp = QtWidgets.QPushButton('Plot', self)
+        pp = QtWidgets.QPushButton('Chart', self)
         self.grid.addWidget(pp, rw, 1)
         pp.clicked.connect(self.ppClicked)
         QtWidgets.QShortcut(QtGui.QKeySequence('p'), self, self.ppClicked)
@@ -1020,7 +1020,7 @@ class FlexiPlot(QtWidgets.QWidget):
             plt.grid(axis=gridtype)
         graph = fig.add_subplot(111)
         plt.title(titl, fontdict=font_props(self.title_font))
-        if self.plottype.currentText() in ['Cumulative', 'Step Plot']:
+        if self.plottype.currentText() in ['Cumulative', 'Step Chart']:
             if self.plottype.currentText() == 'Cumulative':
                 step = None
             else:
@@ -1099,7 +1099,7 @@ class FlexiPlot(QtWidgets.QWidget):
                         maxy = ceil(maxy / rndup) * rndup
                     except:
                         pass
-        else: #Linegraph
+        else: #Line Chart
             for c in range(len(data)):
                 mx = max(data[c])
                 maxy = max(maxy, mx)
@@ -1117,7 +1117,7 @@ class FlexiPlot(QtWidgets.QWidget):
         plt.ylim([miny, maxy])
         plt.xlim([0, len(x) - 1])
         if self.sparse_ticks or len(self.sparse_ticks) > 0:
-            # if self.plottype.currentText() == 'Linegraph' and len(x) > 24:
+            # if self.plottype.currentText() == 'Line Chart' and len(x) > 24:
             tick_labels = [str(xlabels[0])]
             xticks = [0]
             if self.sparse_ticks and isinstance(self.sparse_ticks, bool):

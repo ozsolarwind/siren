@@ -2348,11 +2348,11 @@ class PowerModel():
                 'shortfall': 'Generation - show shortfall from Load',
                 'grid_losses': 'Generation - reduce generation by grid losses',
                 'gross_load': 'Add Existing Rooftop PV to Load (Gross Load)',
-                'save_plot': 'Save plot data',
+                'save_plot': 'Save chart data',
                 'visualise': 'Visualise generation',
                 'show_pct': 'Show generation as a percentage of load',
-                'maximise': 'Maximise Plot windows',
-                'block': 'Show plots one at a time',
+                'maximise': 'Maximise chart windows',
+                'block': 'Show charts one at a time',
                 'by_day': 'Energy by day',
                 'by_month': 'Energy by month',
                 'by_season': 'Energy by season',
@@ -2372,8 +2372,8 @@ class PowerModel():
                 'save_tech': 'Save Hourly Data Output by Technology',
                 'save_match': 'Save Powermatch Inputs',
                 'financials': 'Run Financial Models'}
-        self.spacers = {'actual': 'Show in Plot',
-                   'save_plot': 'Choose plots (all use a full year of data)',
+        self.spacers = {'actual': 'Show in Chart',
+                   'save_plot': 'Choose charts (all use a full year of data)',
                    'summary': 'Choose tables'}
         self.plots = {}
         for i in range(len(self.plot_order)):

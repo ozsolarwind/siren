@@ -894,16 +894,16 @@ class PlotWeather():
                 'season': 'Daily average by season',
                 'period': 'Daily average by period',
                 'mthavg': 'Monthly average',
-                'block': 'Show plots one at a time',
+                'block': 'Show charts one at a time',
                 'pdf': 'Probability Density Function',
-                'save_plot': 'Save plot data to a file'}
+                'save_plot': 'Save chart data to a file'}
         self.labels = {'dhi': 'DHI', 'dni': 'DNI', 'ghi': 'GHI', 'rain': 'Rain', 'temp': 'Temp.', 'wind': 'Wind', 'wind2': 'Wind 2'}
         if rain:
              self.hdrs['rain'] = 'Rainfall - mm'
              self.hdrs['monthly'] = 'Monthly totals'
         spacers = {'dhi': 'Weather values',
-                   'hour': 'Choose plots (all use a full year of data)',
-                   'save_plot': 'Save plot data'}
+                   'hour': 'Choose charts (all use a full year of data)',
+                   'save_plot': 'Save chart data'}
         weathers = ['dhi', 'dni', 'ghi', 'rain', 'temp', 'wind']
         self.plots = {}
         for i in range(len(plot_order)):
