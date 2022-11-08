@@ -198,9 +198,9 @@ class WAScene(QtWidgets.QGraphicsScene):
         except:
             pass
         try:
-            technologies = config.get('Power', 'fossil_technologies')
-            technologies = technologies.split()
-            for item in technologies:
+            fossil_technologies = config.get('Power', 'fossil_technologies')
+            fossil_technologies = technologies.split()
+            for item in fossil_technologies:
                 itm = techClean(item)
                 try:
                     self.areas[itm] = float(config.get(itm, 'area'))
