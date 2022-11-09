@@ -83,7 +83,7 @@ class PowerModel():
                 pc += 1
             fig = plt.figure(self.hdrs['by_' + period].title() + self.suffix)
             plt.grid(True)
-            bbdx = fig.add_subplot(111)
+            bbdx = plt.subplot(111)
             plt.title(self.hdrs['by_' + period].title() + self.suffix)
             maxy = 0
             miny = 0
@@ -1313,7 +1313,7 @@ class PowerModel():
             hdr = self.hdrs['hour'].replace('Power - ', '')
             fig = plt.figure(hdr + self.suffix)
             plt.grid(True)
-            hx = fig.add_subplot(111)
+            hx = plt.subplot(111)
             plt.title(self.hdrs['hour'] + self.suffix)
             maxy = 0
             storage = None
@@ -1441,7 +1441,7 @@ class PowerModel():
             hdr = self.hdrs['augment'].replace('Power - ', '')
             fig = plt.figure(hdr + self.suffix)
             plt.grid(True)
-            hx = fig.add_subplot(111)
+            hx = plt.subplot(111)
             plt.title(self.hdrs['augment'] + self.suffix)
             maxy = 0
             miny = 0
@@ -1629,7 +1629,7 @@ class PowerModel():
             hdr = self.hdrs['duration'].replace('Power - ', '')
             fig = plt.figure(hdr + self.suffix)
             plt.grid(True)
-            dx = fig.add_subplot(111)
+            dx = plt.subplot(111)
             plt.title(self.hdrs['duration'] + self.suffix)
             maxy = 0
             if self.plots['cumulative']:

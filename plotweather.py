@@ -524,7 +524,7 @@ class PlotWeather():
                 data.append(x)
             fig = plt.figure('hour')
             plt.grid(True)
-            hx = fig.add_subplot(111)
+            hx = plt.subplot(111)
             plt.title(self.hdrs['hour'] + ' - ' + locn)
             maxy = 0
             if self.two_axes:
@@ -586,7 +586,7 @@ class PlotWeather():
                 data.append(x24)
             figt = plt.figure('total')
             plt.grid(True)
-            tx = figt.add_subplot(111)
+            tx = plt.subplot(111)
             plt.title(self.hdrs['total'] + ' - ' + locn)
             maxy = 0
             i = -1
@@ -651,7 +651,7 @@ class PlotWeather():
                 j = int(ceil(max(self.ly['wind'])))
                 figp = plt.figure('pdf')
                 plt.grid(True)
-                px = figp.add_subplot(111)
+                px = plt.subplot(111)
                 plt.title(self.hdrs['pdf'] + ' - ' + locn)
                 px.hist(self.ly['wind'], j)
                 px.set_ylabel('Number of occurences')
@@ -668,7 +668,7 @@ class PlotWeather():
                 decpts = [0]
             figt = plt.figure('monthly')
             plt.grid(True)
-            tx = figt.add_subplot(111)
+            tx = plt.subplot(111)
             plt.title(self.hdrs['monthly'] + ' - ' + locn)
             maxy = 0
             i = -1
@@ -733,7 +733,7 @@ class PlotWeather():
                 decpts = [0]
             figt = plt.figure('monthly_average')
             plt.grid(True)
-            tx = figt.add_subplot(111)
+            tx = plt.subplot(111)
             plt.title(self.hdrs['mthavg'] + ' - ' + locn)
             maxy = 0
             if self.two_axes:

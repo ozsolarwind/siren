@@ -37,6 +37,17 @@ from getmodels import getModelFile
 from senutils import ClickableQLabel, getParents, getUser, strSplit, techClean
 from zoompan import ZoomPanX
 
+col_letters = ' ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+def ss_col(col, base=1):
+    if base == 1:
+        col -= 1
+    c1 = 0
+    c2, c3 = divmod(col, 26)
+    c3 += 1
+    if c2 > 26:
+        c1, c2 = divmod(c2, 26)
+    return (col_letters[c1] + col_letters[c2] + col_letters[c3]).strip()
+
 def get_range(text, alphabet=None, base=0):
     if len(text) < 1:
         return None
@@ -1004,8 +1015,12 @@ class FlexiPlot(QtWidgets.QWidget):
                         data[-1].append(0.)
                     else:
                         data[-1].append(ws[row, col])
-                    miny = min(miny, data[-1][-1])
-                    maxy = max(maxy, data[-1][-1])
+                    try:
+                        miny = min(miny, data[-1][-1])
+                        maxy = max(maxy, data[-1][-1])
+                    except:
+                        self.log.setText('Data in cell ' + ss_col(col, base=0) + str(row + 1) + ' seems wrong - ' + data[-1][-1])
+                        return
         if self.gridtype.currentText() == 'Both':
             gridtype = 'both'
         elif self.gridtype.currentText() == 'Horizontal':
@@ -1018,7 +1033,7 @@ class FlexiPlot(QtWidgets.QWidget):
         fig = plt.figure(figname, constrained_layout=self.constrained_layout)
         if gridtype != '':
             plt.grid(axis=gridtype)
-        graph = fig.add_subplot(111)
+        graph = plt.subplot(111)
         plt.title(titl, fontdict=font_props(self.title_font))
         if self.plottype.currentText() in ['Cumulative', 'Step Chart']:
             if self.plottype.currentText() == 'Cumulative':
