@@ -52,7 +52,12 @@ class SSCAPI:
                 else:
                         sam_sdk += '32'
                 os.environ["PATH"] += os.pathsep + sam_sdk
-                _dll = CDLL(sam_sdk + "\\ssc.dll")
+                try:
+                    _dll = CDLL(sam_sdk + "\\ssc.dll")
+                except:
+                    if sam_sdk[-2:] == '64':
+                        sam_sdk = sam_sdk.replace('\\win64', '\\x64')
+                        _dll = CDLL(sam_sdk + "\\ssc.dll")
 #               return _dll
         elif sys.platform == 'darwin':
                 _dll = CDLL(sam_sdk + "/osx64/ssc.dylib")
