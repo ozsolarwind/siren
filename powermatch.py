@@ -759,7 +759,7 @@ class powerMatch(QtWidgets.QWidget):
         except:
             pass
         self.file_labels = ['Constraints', 'Generators', 'Optimisation', 'Data', 'Results', 'Batch']
-        self.ifiles = [''] * len(self.file_labels)
+        ifiles = [''] * len(self.file_labels)
         self.isheets = self.file_labels[:]
         del self.isheets[-2:]
         self.batch_new_file = False
@@ -810,7 +810,7 @@ class powerMatch(QtWidgets.QWidget):
                         self.batch_new_file = True
                 elif key[-5:] == '_file':
                     ndx = self.file_labels.index(key[:-5].title())
-                    self.ifiles[ndx] = value.replace('$USER$', getUser())
+                    ifiles[ndx] = value.replace('$USER$', getUser())
                 elif key[-6:] == '_sheet':
                     ndx = self.file_labels.index(key[:-6].title())
                     self.isheets[ndx] = value
@@ -961,7 +961,7 @@ class powerMatch(QtWidgets.QWidget):
             self.grid.addWidget(QtWidgets.QLabel(self.file_labels[i] + ' File:'), r, 0)
             self.files[i] = ClickableQLabel()
             self.files[i].setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
-            self.files[i].setText(self.ifiles[i])
+            self.files[i].setText(ifiles[i])
             self.files[i].clicked.connect(self.fileChanged)
             self.grid.addWidget(self.files[i], r, 1, 1, 5)
             if i < D:
@@ -969,7 +969,7 @@ class powerMatch(QtWidgets.QWidget):
                 self.grid.addWidget(QtWidgets.QLabel(self.file_labels[i] + ' Sheet:'), r, 0)
                 self.sheets[i] = QtWidgets.QComboBox()
                 try:
-                    curfile = self.scenarios + self.ifiles[i]
+                    curfile = self.get_filename(ifiles[i])
                     ts = xlrd.open_workbook(curfile, on_demand=True)
                     ndx = 0
                     j = -1
@@ -1166,13 +1166,11 @@ class powerMatch(QtWidgets.QWidget):
                 break
         if self.files[i].text() == '':
             curfile = self.scenarios[:-1]
-        elif self.files[i].text().find('/') < 0:
-            curfile = self.scenarios + self.files[i].text()
         else:
-            curfile = self.files[i].text()
+            curfile = self.get_filename(self.files[i].text())
         if i == R:
             if self.files[i].text() == '':
-                curfile = self.scenarios + self.files[D].text()
+                curfile = self.get_filename(self.files[D].text())
                 curfile = curfile.replace('data', 'results')
                 curfile = curfile.replace('Data', 'Results')
                 if curfile == self.scenarios + self.files[D].text():
@@ -1235,10 +1233,12 @@ class powerMatch(QtWidgets.QWidget):
             for i in range(3):
                 if self.sheets[i].hasFocus():
                     break
+            else:
+                return
         except:
             return # probably file changed
         self.setStatus('')
-        newfile = self.scenarios + self.files[i].text()
+        newfile = self.get_filename(self.files[i].text())
         ts = xlrd.open_workbook(newfile, on_demand=True)
         ws = ts.sheet_by_name(self.sheets[i].currentText())
         self.setStatus('Sheet ' + self.sheets[i].currentText() + ' loaded')
