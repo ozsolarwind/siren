@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-source_files = ['check_siren.py', 'colours', 'credits', 'dijkstra_4',
+source_files = ['check_siren.py', 'colours', 'credits', 'dataview', 'dijkstra_4',
                 'displayobject', 'displaytable', 'editini', 'flexiplot', 'floaters',
                 'getmap', 'getmerra2', 'getmodels', 'grid', 'indexweather', 'inisyntax',
                 'makegrid', 'makeweatherfiles',

@@ -157,6 +157,7 @@ ul {
 <li><a href="#fopts">Financial Model Options</a></li>
 <li><a href="#powermatch">Powermatch</a></li>
 <li><a href="#resourcegrid">Renewable Resource Grids</a></li>
+<li><a href="#dataview">Data View</a></li>
 <li><a href="#tricks">Performance and Execution Tricks</a></li>
 </ul>
 <li><a href="#feedback">Feedback</a></li>
@@ -568,7 +569,7 @@ The format is similar to a Windows INI file. If you want to create a new Model y
 <p><strong>Note:</strong> There is a quirk with the references to technologies in the <em>[Colors]</em> Section and <em>[Grid] dispatchable</em>, <em>[Power] fossil_technologies</em>, and <em>[Power] technologies</em> variables. The technology names are changed to all lower case and spaces are replaced by underscores. Thus, <em>Fixed PV</em> will appear as <em>fixed_pv</em>.</p>
 <p>(Skip to <a href="#menus">Menus</a>)</p>
 <p>Shortcut to Sections:- <a href="#p_backtrack_pv">Backtrack PV</a>, <a href="#p_base">Base</a>, <a href="#p_biomass">Biomass</a>, <a href="#p_colors">Colors</a>, <a href="#p_cst">CST</a>,
-<a href="#p_files">Files</a>, <a href="#financial">Financial</a>, <a href="#p_fixed_pv">Fixed PV</a>, <a href="#p_flexiplot">Flexiplot</a>,
+<a href="#p_dataview">Dataview</a>, <a href="#p_files">Files</a>, <a href="#financial">Financial</a>, <a href="#p_fixed_pv">Fixed PV</a>, <a href="#p_flexiplot">Flexiplot</a>,
 <a href="#p_fossil_coal">Fossil Coal</a>, <a href="#p_fossil_cogen">Fossil Cogen</a>, <a href="#p_fossil_gas">Fossil Gas</a>,
 <a href="#p_fossil_mixed">Fossil Mixed</a>, <a href="#p_geothermal">Geothermal</a>, <a href="#p_grid">Grid</a>,
 <a href="#p_hydro">Hydro</a>, <a href="#p_map">Map</a>, <a href="#p_offw">Offshore Wind</a>, <a href="#p_other">Other</a>, <a href="#p_parents">Parents</a>, <a href="#p_pc">Plot Colours</a>,
@@ -872,7 +873,83 @@ The format is similar to a Windows INI file. If you want to create a new Model y
 <td class="none">Storage volume in m<sup>3</sup> per MW per hour of storage. Default is 12.9858</td>
 </tr>
 </table>
-</td></tr>
+<tr class="none" id="p_dataview"><td><div class="experiment"><dfn><strong>[Dataview]</strong></dfn><br />(experimental)</div></td>
+<td><div class="experiment">
+Options for <a href="#dataview">Data View</a>. Properties for individual files (columns, file, grid, maximum, percentage, period, chart (plot), series, sheet, title, xlabel, xvalues, and ylabel; marked with an asterisk, &ast;, below) can be repeated a number of times to allow a history of recent files to be accessed. These are suffixed with a number. Properties are as follows:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>columns (&ast;)</dfn></td>
+<td class="none">List of technologies available to be charted</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>file (&ast;)</dfn></td>
+<td class="none">Spreadsheet filename</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>file_choices</dfn></td>
+<td class="none">How many files to keep in a recent history list. The default is 10</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>file_history</dfn></td>
+<td class="none">The order of the recent history list</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>grid_centre</dfn></td>
+<td class="none">Centre charts on the MERRA-2 grid. The default is False</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>number_colour</dfn></td>
+<td class="none">Set the colour for number (pct.) labels</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>number_dynamic</dfn></td>
+<td class="none">Set to True to adjust the size of numbers displayed to vary dynamically based upon the percentage range. The default is False, which displays numbers based upon a range starting at 0</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>number_min</dfn></td>
+<td class="none">Only display percentage equal to or greater than the value. The range is 0 to 100 and the default value is 0</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>number_multiple</dfn></td>
+<td class="none">Set to True to display percentages for each bar of a Bar Chart. The default is False, which displays a single percentage</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>number_show</dfn></td>
+<td class="none">Set to True to display numbers and False to not display numbers. The default is True</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>number_steps</dfn></td>
+<td class="none">Set the steps to adjust the size of numbers displayed. The default steps are 80, 60, 40, 20</td>
+<tr class="none">
+<td class="none"><dfn>plot (&ast;)</dfn></td>
+<td class="none">The type of chart. Options are Bar Chart, Pie Chart. The default is Bar Chart</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>plot_centre</dfn></td>
+<td class="none">Set to True to centre the chart in the chart cell; set to False to show the chart in the top left of the cell. The default is True</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>plot_opacity</dfn></td>
+<td class="none">Opacity of chart values. Range is 1.0 (opaque) to 0.0 (translucent). Default value is 1.0</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>plot_rotate</dfn></td>
+<td class="none">Set to True to rotate Bar Charts to have vertical bars. The default is False (horizontal bars)</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>plot_scale</dfn></td>
+<td class="none">Set a scale for the graphs. The default 1.</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>sheet (&ast;)</dfn></td>
+<td class="none">Worksheet name for chart</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>show_maximums</dfn></td>
+<td class="none">Display maximum values to allow one set of maximums to be used for another sheet</td>
+</tr>
+</table>
+</div>
 <tr class="none" id="p_files"><td><dfn><strong>[Files]</strong></dfn></td>
 <td>Files and directories. You can either specify the folder as the full path or relative to the siren folder (not the folder the Preferences file resides in). Properties are:</p>
 <table border="0", class="none">
@@ -1197,7 +1274,7 @@ Options for <a href="#flexiplot">Flexiplot</a>. Properties for individual files 
 </tr>
 <tr class="none">
 <td class="none"><dfn>title (&ast;)</dfn></td>
-<td class="none">Plot title</td>
+<td class="none">Chart title</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>title_font</dfn></td>
@@ -1832,7 +1909,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>title (&ast;)</dfn></td>
-<td class="none">Plot title</td>
+<td class="none">Chart title</td>
 </tr>
 </table>
 </td></tr>
@@ -2261,6 +2338,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <tr class="none">
 <td class="none"><dfn>line_width</dfn></td>
 <td class="none">Width of grid lines on the map in pixels. A line width of zero indicates a cosmetic pen. This means that the pen width is always drawn one pixel wide, independent of the level of zoom. This is the default. A value &gt; 0 will show lines at this width irrespective of the size of the map. A value &lt; 1 and &gt; 0 will be used to calculate the number of pixels by multiplying the width of the map image by this value. A useful value is 0.0016. For example a map image 12,000 pixels wide will have grid lines 19.2 pixels wide</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>merra2_grid</dfn></td>
+<td class="none">Set the coordinates grid to be based upon MERRA-2 cells rather than the default which is based upon geographic coordinates</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>new_grid</dfn></td>
@@ -2752,6 +2833,10 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <td class="none"><img src="log.png" alt="View Status">&nbsp;&nbsp;Show Status Window</td>
 <td class="none">Invoke floating window to display a log of SIREN session activity and open scenarios</td>
 </tr>
+<tr class="none">
+<td class="none"><div class="experiment"><img src="grid.png" alt="View Status">&nbsp;&nbsp;Show Data View</div></td>
+<td class="none"><div class="experiment">Invoke Data View window to display &ldquo;gridded&rdquo; contribution to generation on the map</div></td>
+</tr>
 </table>
 </td>
 </tr>
@@ -2910,7 +2995,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <li>Powermatch allows you to complete a costed renewable energy scenario. It will use dispatchable generation to meet shortfalls in the renewable energy generation mix to match generation with demand (load) to quantify and cost dispatchable energy generation, storage and CO<sub>2</sub>&#x2011;e emissions</li>
 </ul>
 <h4>Notes on Wind Stations</h4>
-<p>With increasing hub heights associated with larger turbines the SAM models are impacted by the lack of suitable wind speed data at greater heights. The MERRA-2 weather data has a maximum wind speed height of 50 metres which will cope with hub heights up to around 85 metres. To overcome the wind data limitation SIREN can extrapolate wind speeds to greater heights. To enable this you can use the <em>hub_formula</em> property of the <a href="#p_wind">[Wind]</a> and <a href="#p_offw">[Offshore Wind]</a> Sections of the Preferences file. This formula can be used to calculate a hub height (for rotor lengths greater than 88) to extrapolate wind speed using either of two commonly used laws (models). The law to be used can be specified in the <em>extrapolate</em> property of the appropriate wind Section(s) and can be either <em>logarithmic</em>, the default, or <em>Hellmann</em>. This additional data will be added to the normal wind file and passed to the SAM windpower model.</p>
+<p>With increasing hub heights associated with larger turbines the SAM models are impacted by the lack of suitable wind speed data at greater heights. The MERRA-2 climate data has a maximum wind speed height of 50 metres which will cope with hub heights up to around 85 metres. To overcome the wind data limitation SIREN can extrapolate wind speeds to greater heights. To enable this you can use the <em>hub_formula</em> property of the <a href="#p_wind">[Wind]</a> and <a href="#p_offw">[Offshore Wind]</a> Sections of the Preferences file. This formula can be used to calculate a hub height (for rotor lengths greater than 88) to extrapolate wind speed using either of two commonly used laws (models). The law to be used can be specified in the <em>extrapolate</em> property of the appropriate wind Section(s) and can be either <em>logarithmic</em>, the default, or <em>Hellmann</em>. This additional data will be added to the normal wind file and passed to the SAM windpower model.</p>
 <p>From &lsquo;Do we really need rotor equivalent wind speed?&rsquo; (Van Sark etal, <a href="https://onlinelibrary.wiley.com/doi/full/10.1002/we.2319#:~:text=For%20situations%20where%20the%20ratio,and%20the%20wind%20speed%20at">https://onlinelibrary.wiley.com/doi/full/10.1002/we.2319#:~:text=For%20situations%20where%20the%20ratio,and%20the%20wind%20speed%20at</a>) a possible formula for calculating hub height is - <code>H = 0.789 D + 14.9 m</code>. For the <em>hub_formula</em> property this can be set as:</p>
 <p><code>hub_formula=int(floor((0.789 * rotor + 14.9) / 10) * 10)</code></p>
 <p>SIREN will replace <code>rotor</code> with the rotor diameter for the station turbine and perform the calculation which will round the calculated hub height down to the nearest 10 metres. You can of course just set <code>hub_formula=90</code> to set a fixed height</p>
@@ -2956,7 +3041,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <tr><td class="lr"><dfn>Visualise generation - period &amp; delay (secs)</dfn></td>
 <td class="none">This option will visualise generation by displaying variable generation circles for each station over the chosen periods (<em>visualise</em>)</td></tr>
 <tr><td class="lr"><dfn>Show generation as a percentage of load</dfn></td>
-<td class="none">Where possible display (renewable) percentage of load within the plot title (<em>show_pct</em>)</td></tr>
+<td class="none">Where possible display (renewable) percentage of load within the chart title (<em>show_pct</em>)</td></tr>
 <tr><td class="lr"><dfn>Maximise Plot windows</dfn></td>
 <td class="none">Plots will display at maximum window size (<em>maximise</em>)</td></tr>
 <tr><td class="lr"><dfn>Show charts one at a time</dfn></td>
@@ -2995,14 +3080,14 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <td class="none">Save the hourly data for each renewable station. This is the hourly output calculated by the SAM model (<em>save_data</em>)</td></tr>
 <tr><td class="lr"><dfn>Save (adjusted) Hourly Data Output by Station</dfn></td>
 <td class="none">Save adjusted data outputs produced by the model for each station and other options (<em>save_detail</em>)</td></tr>
-<tr><td class="lr"><dfn>Save (adjusted) Hourly Data Output by Technology</dfn></td>
+<tr><td class="lr"><dfn>Save Hourly Data Output by Technology</dfn></td>
 <td class="none">Save adjusted data outputs produced by the model for each technology and other options (<em>save_tech</em>)</td></tr>
 <tr><td class="lr"><dfn>Save Powermatch Inputs</dfn></td>
 <td class="none">Save the input data for Powermatch (or Powerbalance). If you check this option it will check two options that are required for Powermatch (&lsquo;Generation - show Load&rsquo; and &lsquo;Generation - reduce generation by grid losses&rsquo;). (<em>save_match</em>)</td></tr>
 <tr><td class="lr"><dfn>Run Financial Models</dfn></td>
 <td class="none">Run SAM financial models on the power results for each station and produces a summary table showing additional financial outputs (<em>financials</em>)</td></tr>
-<tr><td class="bottom"><strong>Proceed, Save Options / Do Financials</strong></td>
-<td class="none">At the bottom of the menu is the <strong>Proceed</strong> button. If the button is not visible use the scroll bar to navigate down the table. You can invoke the menu multiple times to specify different growth options, storage options and charts. The first display of the menu gives the option to <strong>Save</strong> the options for future sessions; this writes the updated options to the Preferences file. To exit this phase of processing press the <strong>All Done</strong> or <strong>Do Financials</strong> button</td></tr>
+<tr><td class="bottom"><strong>Proceed, Save Options / <br />Do Financials</strong></td>
+<td class="none">At the bottom of the menu is the <strong>Proceed</strong> button. If the button is not visible use the scroll bar to navigate down the table. You can invoke the menu multiple times to specify different growth options, storage options and plots. The first display of the menu gives the option to <strong>Save</strong> the options for future sessions; this writes the updated options to the Preferences file. To exit this phase of processing press the <strong>All Done</strong> or <strong>Do Financials</strong> button</td></tr>
 </table>
 <p>The charts and tables are intended to assist with analysing the chosen scenario.</p>
 <h3 id="charts">Charts</h3>
@@ -3283,7 +3368,7 @@ Surplus - spilled or curtailed - generation is normally used in the calculation 
 <td class="none">If this option is checked you will be presented with a table to enable you to adjust the input capacity data for each generator technology. You can specify the required capacity or, if the <em>show_multipliers</em> property is set, a multiplier between 0 and the cap set by the <em>adjust_cap</em> property in the <a href="#power">[Power]</a> Section of the Preferences file; the default multiplier is 25. The original input values will be derived from the data sheet for renewables and the Generators table for dispatchable technologies. You can also <strong>Save</strong> and <strong>Restore</strong> the capacities to use again later or <strong>List</strong> saved capacities. With the list of saved capacities you can right-click on the desired list before you exit the list and capacities will be set to those values (<em>adjust_generators</em>)</td></tr>
 <tr><td class="lr"><dfn>Dispatch Order</dfn></td>
 <td class="none">The order in which the dispatchable technologies will be processed by Powermatch. You can change the order by clicking on each value and moving it up and down the list. The initial order is derived from the generators (facilities) table. If you want to exclude a generator you can drag it to the right hand list (and drag it back to the left to re-include)</td></tr>
-<tr><td class="bottom"><strong>Done, Constraints, Generators,<br />Summary, Detail, Batch, Optimise,<br />Help</strong></td>
+<tr><td class="bottom"><strong>Done, Summary, Detail,<br />Batch, Optimise, Help</strong></td>
 <td class="none">As well as the buttons beside the sheet options there are a number of buttons at the bottom of the menu, as described below:</td></tr>
 </table>
 <ul>
@@ -3316,9 +3401,9 @@ Surplus - spilled or curtailed - generation is normally used in the calculation 
 <tr><td class="none"><dfn>Load met (xx%)</dfn></td><td class="none">The amount of load met from generation</td></tr>
 <tr><td class="none"><dfn>Shortfall (xx%)</dfn></td><td class="none">The amount of load not met from generation</td></tr>
 <tr><td class="none"><dfn>Total Load - yyyy</dfn></td><td class="none">Total load showing the load year and any multiplier applied to it</td></tr>
-<tr><td class="none"><dfn>Surplus (xx%)</dfn></td><td class="none">Generation not used to meet load (surplus)</td></tr>
 <tr><td class="none"><dfn><strong>RE %age of load</strong></dfn></td><td class="none">The percentage of load met by RE, including the contribution from storage</td></tr>
 <tr><td class="none"><dfn>Storage losses</dfn></td><td class="none">Storage losses in MWh</td></tr>
+<tr><td class="none"><dfn>Surplus (xx%)</dfn></td><td class="none">Generation not used to meet load (surplus)</td></tr>
 <tr><td class="none"><dfn>Largest Shortfall</dfn></td><td class="none">The largest shortfall and the period (hour) in which it occurs</td></tr>
 <tr><td class="none"><dfn>Static Variables</dfn></td><td class="none">The values for Carbon Price, Lifetime and default Discount Rate used for the execution. <strong>Note:</strong> Individual technologies may have different Discount Rates to the static value</td></tr>
 <tr><td class="none"><div class="experiment"<dfn>Correlation To Load</dfn></div></td><td class="none"><div class="experiment">If <em>show_correlation</em> is set there will be a number of additional lines giving a linear correlation between Load and three components used to meet Load - RE contribution, RE plus Storage (includes any minimum generation constraints), and the Total</td></div></tr>
@@ -3336,15 +3421,18 @@ Surplus - spilled or curtailed - generation is normally used in the calculation 
 <tr><td class="none"><dfn>Capital Cost</dfn></td><td class="none">The capital cost for the facility</td></tr>
 <tr><td class="none"><dfn>Carbon<dfn></td><td class="none">Details on Carbon impacts. This will include lifetime carbon costs if the <em>Lifetime Cost</em> Report Group is specified</td></tr>
 <tr><td class="none"><dfn>Carbon Price<dfn></td><td class="none">This is not strictly an output but allows a different carbon price to be set for each input Model</td></tr>
+<tr><td class="none"><div class="experiment"<dfn>Correlation To Load</dfn></div></td><td class="none"><div class="experiment">If <em>show_correlation</em> is set there will be a number of additional lines giving a linear correlation between Load and three components used to meet Load - RE contribution, RE plus Storage (includes any minimum generation constraints), and the Total</td></div></tr>
 <tr><td class="none"><dfn>Cost ($/Yr)<dfn></td><td class="none">The calculated cost for each facility</td></tr>
 <tr><td class="none"><dfn>Discount Rate</dfn><br />(or <dfn>WACC</dfn>)</td><td class="none">This is not strictly an output but allows a different discount rate to be set for each input Model</td></tr>
 <tr><td class="none"><dfn>Emissions (tCO2e)<dfn></td><td class="none">The estimated emissions for each facility</td></tr>
+<tr><td class="none"><dfn>Emissions Cost<dfn></td><td class="none">The estimated cost emissions for each facility</td></tr>
 <tr><td class="none"><dfn>Generation (MWh)<dfn></td><td class="none">Generation for each generator</td></tr>
-<tr><td class="none"><dfn>LCOE ($/MWh)</dfn><br />(or <dfn>Levelised Cost<dfn></td><td class="none">Levelised Cost for each facility</td></tr>
+<tr><td class="none"><dfn>LCOE ($/MWh)</dfn><br />(or <dfn>Levelised Cost</dfn>)</td><td class="none">Levelised Cost for each facility</td></tr>
 <tr><td class="none"><dfn>Lifetime Cost</dfn></td><td class="none">The lifetime cost for each facility</td></tr>
 <tr><td class="none"><dfn>Lifetime Emissions</dfn></td><td class="none">The lifetime emissions for each facility</td></tr>
 <tr><td class="none"><dfn>Lifetime Emissions Cost</dfn></td><td class="none">The lifetime cost of emissions for each facility</td></tr>
 <tr><td class="none"><dfn>Load Analysis<dfn></td><td class="none">Details on how much of the load was met, shortfalls, storage losses, and surpluses</td></tr>
+<tr><td class="none"><dfn>Max MWh<dfn></td><td class="none">he maximum generation or contribution to meeting load for the facility</td></tr>
 <tr><td class="none"><dfn>RE<dfn></td><td class="none">The percentage of RE and storage used to meet the load</td></tr>
 <tr><td class="none"><dfn>To Meet Load (MWh)<dfn></td><td class="none">How much generation or storage output was used to meet the load. It has rows for each non-RE generator, storage and a combined figure for RE</td></tr>
 <tr><td class="none"><dfn>Static Variables</dfn></td><td class="none">The values for Carbon Price, Lifetime and default Discount Rate used for the Model</td></tr>
@@ -3623,29 +3711,80 @@ If the best and worse values are the same for a variable and that value is not a
 <p><a href="#help">Back to top</a></p>
 <h3 id="resourcegrid">Resource Grids</h3>
 <p>To assist with placement of renewable energy stations SIREN can display a grid of renewable resource attributes derived from the SAM weather files. The grid can be displayed by invoking the <em>Show Resource Grid</em> (Ctrl+B) menu option. The Resource Overlay menu presented has the following fields:</p>
+<table border="0" class="none" cellpadding="2">
+<tr><td class="top" style="width: 15%;"><dfn>Weather Detail</dfn></td>
+<td class="none">If appropriate resource files are found you'll be presented with this menu option. Possible choices are:- <em>Daily By Month</em> (default), <em>Hourly By Month</em>, or <em>Hourly By Day</em></td></tr>
+<tr><td class="lr"><dfn>Weather Period</dfn></td>
+<td class="none">This row provides pull-down menus to allow you to choose a period, day and hour to display</td></tr>
+<tr><td class="lr"><dfn>&lt; &gt;</dfn></td>
+<td class="none"You can also navigate to a particular time period by dragging the slider bar. Clicking <strong>&lt;</strong> will step back one period while <strong>&gt;</strong> steps forward one period. You can also use <em>Page Down</em> and <em>Page Up</em> to step forward and back through the weather periods</td></tr>
+<tr><td class="lr"><dfn>Period Loop (secs)</dfn></td>
+<td class="none">You can also cause the visualisation to automatically loop through all time periods. The number field allows you to specify the delay in seconds between each period - between 0 and 10 in .2 second increments. You press the <strong>Loop</strong> button to start the loop. Press <em>Stop</em> (or the <em>Window -> Exit Visualise</em>, Ctrl+Z, menu option) to stop the loop</td></tr>
+<tr><td class="lr"><dfn>Weather Variable</dfn></td>
+<td class="none">This pull-down menu allows you to select the desired variable to display</td></tr>
+<tr><td class="lr"><dfn>Colour Steps</dfn></td>
+<td class="none">The grid displayed can have values grouped in to up to 10 steps. A value of 0 will give a smooth graduation rather than stepped colours</td></tr>
+<tr><td class="lr"><dfn>Opacity</dfn></td>
+<td class="none">Gives the degree of opacity of grid colours. A value of 1 is completely opaque while a value of 0 is completely transparent</td></tr>
+<tr><td class="lr"><dfn>Grid only</dfn></td>
+<td class="none">If this item is checked just the grid cell borders will be displayed</td></tr>
+<tr><td class="lr"><dfn>Low Colour</dfn> and <dfn>High Colour</dfn></td>
+<td class="none">These options present a set of buttons for each weather variable. Pressing the appropriate button will allow you to alter the upper or lower colour value for each variable. The range of colours steps will be displayed beside the buttons</td>
+<tr><td class="bottom"><strong>Quit, Show, Hide, Save, Help</strong></td>
+<td class="none">As well as the <strong>&lt;</strong>, <strong>&gt;</strong> and <strong>Loop</strong> buttons  there are a number of buttons at the bottom of the menu, as described below</td></tr>
+</table>
+<p>Altering any field will cause the revised grid to be overlaid on the SIREN map. The buttons are:</p>
 <ul>
-<li><em>Weather Detail</em>. If appropriate resource files are found you'll be presented with this menu option. Possible choices are:- <em>Daily By Month</em> (default), <em>Hourly By Month</em>, or <em>Hourly By Day</em></li>
-<li><em>Weather Period</em>. This row provides pull-down menus to allow you to choose a period, day and hour to display</li>
-<li><em>&lt;</em>. You can also navigate to a particular time period by dragging the slider bar. Clicking <strong>&lt;</strong> will step back one period while <strong>&gt;</strong> steps forward one period. You can also use <em>Page Down</em> and <em>Page Up</em> to step forward and back through the weather periods</li>
-<li><em>Period Loop (secs)</em>. You can also cause the visualisation to automatically loop through all time periods. The number field allows you to specify the delay in seconds between each period - between 0 and 10 in .2 second increments. You press the <em>Loop</em> button to start the loop. Press <em>Stop</em> (or the <em>Window -> Exit Visualise</em>, Ctrl+Z, menu option) to stop the loop</li>
-<li><em>Weather Variable</em>. This pull-down menu allows you to select the desired variable to display</li>
-<li><em>Colour Steps</em>. The grid displayed can have values grouped in to up to 10 steps. A value of 0 will give a smooth graduation rather than stepped colours</li>
-<li><em>Opacity</em>. Gives the degree of opacity of grid colours. A value of 1 is completely opaque while a value of 0 is completely transparent</li>
-<li><em>Grid only</em>. If this item is checked just the grid cell borders will be displayed</li>
-<li><em>Low Colour</em> and <em>High Colour</em>. These options present a set of buttons for each weather variable. Pressing the appropriate button will allow you to alter the upper or lower colour value for each variable. The range of colours steps will be displayed beside the buttons</li>
-</ul>
-<p>Altering any field will cause the revised grid to be overlaid on the SIREN map. There are several buttons:</p>
-<ul>
-<li><em>Quit</em> will close the Resource Overlay menu. Any grid will continue to be displayed</li>
-<li><em>Show</em> will cause the grid to be displayed. This allows you to display the grid without changing any of the fields</li>
-<li><em>Hide</em> will hide the resource grid</li>
-<li><em>Save</em> will save modified fields. This updates the Preferences file for future executions of SIREN</li>
-<li><em>Help</em> will display the help for how to create the Resource grids</li>
-<li><em>&lt;</em> and <em>&gt;</em> (see above)</li>
-<li><em>Loop</em> (see <em>Period Loop (secs)</em> above)</li>
+<li><strong>Quit</strong>. Close the Resource Overlay menu. Any grid will continue to be displayed</li>
+<li><strong>Show</strong>. Cause the grid to be displayed. This allows you to display the grid without changing any of the fields</li>
+<li><strong>Hide</strong>. Hide the resource grid</li>
+<li><strong>Save</strong>. Save modified fields. This updates the Preferences file for future executions of SIREN</li>
+<li><strong>Help</strong>. Display the help for how to create the Resource grids</li>
+<li><strong>&lt;</strong> and <strong>&gt;</strong>. (see above)</li>
+<li><strong>Loop</strong>. (see <em>Period Loop (secs)</em> above)</li>
 </ul>
 <p>This feature utilises summary data stored in a file rather than having to process hourly data from the weather files (see <a href="#resource">Visualising Renewable Resource Attributes</a>).</p>
 <p><a href="#help">Back to top</a></p>
+<div class="experiment">
+<h3 id="dataview">Data View</h3>
+<p>This experimental feature overlays a set of pie charts or bar charts on the SIREN map, either at individual station locations or based upon the grid of MERRA-2 &ldquo;weather&rdquo; cells. It can be used to visualise the contribution to overall generation from a group of stations. This could assist with identifying optimal placement of stations. For example, identifying potential Renewable Energy Zones could be assisted by running SAM models for identically sized stations placed within each of the cells. When the program is invoked it will display SIREN's coordinates grid. By default the grid is based on geographic coordinates but can be set to show the MERRA-2 cells by setting the <em>merra2_grid</em> property of the <a href="#p_view">[View]</a> Section of the Preferences file to <em>True</em>. The program can accept data in two formats:</p>
+<ol>
+<li>A table of latitudes and longitudes containing the generation in each location for a number of RE technologies, or</li>
+<li>The summary table from a Powermodel execution from SIREN which contains a list of stations, their technology and generation. This format requires the stations in the list to be present in the Scenarios loaded into SIREN</li>
+</ol>
+<p>The program analyses the generation figures for each or all technologies and ovelays charts that show the relative generation for each station or weather cell compared to the maximum generation figure. In Bar Charts the bars are relative to the maximum generation for any technology while percentages are either relative to the total for the cell or for each technology. In Pie Charts the pie slices indicate the contribution of each technology and the total pie slices and percentages are relative to the maximum generation. The base size (scale) of the charts are the same size as the MERRA-2 cells.</p>
+<p>The Data View options (Properties) are specified in the <a href="#p_dataview">[Dataview]</a> Section of the Preferences file. The associated property is indicated in brackets at the end of the description. The Data View menu displayed by invoking the <em>Show Data View</em> menu option. The menu presented has the following fields:</p>
+<table border="0" class="none">
+<tr><td class="top" style="width: 15%;"><dfn>Recent Files</dfn></td>
+<td class="none">A pull-down list of recent spreadsheets. Click on the desired spreadsheet to choose a different one from the list. The list will be ordered in terms of most recently accessed first (<em>file_history</em>)</td></tr>
+<tr><td class="lr"><dfn>Data File</dfn></td>
+<td class="none">Click on this field to choose the desired spreadsheet (<em>file</em>)</td></tr>
+<tr><td class="lr"><dfn>Sheet</dfn> and<br />&nbsp;&nbsp;<dfn>exclude cells</dfn></td>
+<td class="none">A pull-down list to enable you to choose the desired worksheet (<em>sheet</em>). The second field allows you to choose another sheet in the same spreadsheet which can contain a list of cells to be excluded</td></tr>
+<tr><td class="lr"><dfn>Data Choices</dfn></td>
+<td class="none">This will provide a set of checkboxes for the technologies available in the spreadsheet to allow you to choose which ones to display</td></tr>
+<tr><td class="lr"><dfn>Type of Chart</dfn><br />&nbsp;&nbsp;<dfn>Vertical Bar Chart</dfn><br />&nbsp;&nbsp;<dfn>Centre in cell</dfn></td>
+<td class="none">The type of chart to be produced. Options are <em>Bar Chart</em> and <em>Pie Chart</em> (<em>plot</em>)<br />Check this to produce a vertical Bar Chart. The default is horizontal ()<br />Check this to centre the chart in the cell. Uncheck it to place the chart in the top left of the cell (<em>plot_rotate</em>)</td></tr>
+<tr><td class="lr"><dfn>Opacity</dfn><br />&nbsp;&nbsp;<dfn>Scale of chart in cell</dfn></td>
+<td class="none">Gives the degree of opacity of grid colours. A value of 1 is completely opaque while a value of 0 is completely transparent (<em>plot_opacity</em>)<br />
+Scale of the chart in the cell. A value of 1 fills the cell(<em>plot_scale</em>)</td></tr>
+<tr><td class="lr"><dfn>Show pct. values</dfn><br />&nbsp;&nbsp;<dfn>Show</dfn> and <dfn>Each</dfn><br />&nbsp;&nbsp;<dfn>Dynamic scale</dfn></td>
+<td class="none">Two checkboxes to indicate to display percentage values (<dfn>Show</dfn>; <em>number_show</em>) and display values for each technology for Bar Charts (<dfn>Each</dfn>; <em>number_multiple</em>). The <strong>Pct. colour</strong> allows you to set the colour for the percentage labels (<em>number_colour</em>)<br />Checking the Dynamic scale checkbox causes the size of Pct. labels to be adjusted according to the range of generation values (<em>number_dynamic</em>)</td></tr>
+<tr><td class="lr"><dfn>Show pct. >=</dfn></td>
+<td class="none">Only show data cells for those cells with percentages above this value (<em>number_min</em>)</td></tr>
+<tr><td class="lr"><dfn>Centre on grid</dfn></td>
+<td class="none">The location of charts will centre on the geographic location of the stations. By checking this option the charts will centre on the centre of MERRA-2 &ldquo;weather&rdquo; cells and will aggregate the figures for each station within the cell (<em>grid_centre</em>)</td></tr>
+<tr><td class="bottom"><strong>Done, Show, Hide, Help</strong></td>
+<td class="none">There are a number of buttons at the bottom of the menu, described below:</td></tr>
+</table>
+<ul>
+<li><strong>Done</strong>. Close the Data View menu and clear any charts</li>
+<li><strong>Show</strong>. Show the charts</li>
+<li><strong>Hide</strong>. Hide the charts</li>
+<li><strong>Help</strong>. Display the help for Data View</li>
+</ul>
+<p><a href="#help">Back to top</a></p>
+</div>
 <h3 id="tricks">Performance and Execution Tricks</h3>
 <p>Processing a simulation with a large number of stations can take a while to process, especially with Solar Thermal stations. You can minimise this processing by using either of these two options:</p>
 <ol>
@@ -4066,6 +4205,7 @@ You should use the <code>--content-disposition</code> option in your wget comman
 <pre>
 wget --load-cookies ~/.urs_cookies --save-cookies ~/.urs_cookies --auth-no-challenge=on --keep-session-cookies --content-disposition -i <list of urls>
 </pre>
+If your userid contains a space you may need to enclose <code>~/.urs_cookies</code> in quotes, e.g. <code>"~/.urs_cookies"</code>
 </li>
 </ol>
 </li>
@@ -4228,7 +4368,7 @@ You can alternate between these approaches to choose the desired area. If you ha
 <li>If you download two copies of the same file wget will append a number to the second copy filename, e.g. ...nc4.1. At present these will be ignored</li>
 </ul>
 <li>A packaged version of <code>makeweatherfiles</code> for Windows is available as a self-extracting zip file from <a href="https://sourceforge.net/projects/sensiren/" target="_blank">https://sourceforge.net/projects/sensiren/</a>. The file is <a href="https://sourceforge.net/projects/sensiren/files/sen_makeweather_getmerra2.exe/download" target="_blank">sen_makeweather_getmerra2.exe</a> (the package has been created with PyInstaller) and contains both <code>makeweatherfiles</code> and <code>getmerra2</code> which enables MERRA-2 files to be downloaded. This package allows you to create SAM weather files from MERRA-2 files without requiring any other parts of SIREN</a></li>
-<li>With increasing hub heights associated with larger turbines the SAM models are impacted by the lack of suitable wind speed data at greater heights. The MERRA-2 weather data has a maximum wind speed height of 50 metres which will cope with hub heights up to around 85 metres. To overcome the wind data limitation the Hub height parameter can be used to extrapolate wind speeds to a greater (hub) height. <code>makeweatherfiles</code> will extrapolate wind speed using either of two commonly used laws (models). The law to be used can be specified in the <em>extrapolate</em> property of the [makeweatherfiles] Section of the <a href="#getfiles">getfiles.ini</a> Preferences file, and can be either <em>logarithmic</em>, the default, or <em>Hellmann</em>. This additional data will be added to the normal wind file.
+<li>With increasing hub heights associated with larger turbines the SAM models are impacted by the lack of suitable wind speed data at greater heights. The MERRA-2 climate data has a maximum wind speed height of 50 metres which will cope with hub heights up to around 85 metres. To overcome the wind data limitation the Hub height parameter can be used to extrapolate wind speeds to a greater (hub) height. <code>makeweatherfiles</code> will extrapolate wind speed using either of two commonly used laws (models). The law to be used can be specified in the <em>extrapolate</em> property of the [makeweatherfiles] Section of the <a href="#getfiles">getfiles.ini</a> Preferences file, and can be either <em>logarithmic</em>, the default, or <em>Hellmann</em>. This additional data will be added to the normal wind file.
 <p>Discussions on the two wind profile laws can be found at &lsquo;Wind profile power law&rsquo; (aka Hellmann law; <a href="https://en.wikipedia.org/wiki/Wind_profile_power_law">https://en.wikipedia.org/wiki/Wind_profile_power_law</a>) and &lsquo;Log wind profile&rsquo; (aka logarithmic law; <a href="https://en.wikipedia.org/wiki/Log_wind_profile">https://en.wikipedia.org/wiki/Log_wind_profile</a>). The Hellmann law tends to give slightly higher wind speeds. &lsquo;Methodologies Used in the Extrapolation of Wind Speed Data at Different Heights and Its Impact in the Wind Energy Resource Assessment in a Region&rsquo; (<a href="https://www.researchgate.net/publication/221912731_Methodologies_Used_in_the_Extrapolation_of_Wind_Speed_Data_at_Different_Heights_and_Its_Impact_in_the_Wind_Energy_Resource_Assessment_in_a_Region">https://www.researchgate.net/publication/221912731_Methodologies_Used_in_the_Extrapolation_of_Wind_Speed_Data_at_Different_Heights_and_Its_Impact_in_the_Wind_Energy_Resource_Assessment_in_a_Region</a>) provides a fuller discussion on the topic.</p></li>
 </ol>
 <p>

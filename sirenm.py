@@ -51,6 +51,7 @@ from dijkstra_4 import Shortest
 from credits import Credits, fileVersion
 from getmodels import getModelFile
 from grid import dust
+from dataview import DataView
 from viewresource import Resource
 from floaters import FloatLegend, FloatMenu, FloatStatus, ProgressBar
 from sirenicons import Icons
@@ -488,10 +489,10 @@ class MapView(QtWidgets.QGraphicsView):
             p = QtCore.QPointF(self.scene().lower_right[0] + fh, self.scene().upper_left[1] + fh)
             frll = self.scene().mapToLonLat(p)
             p = self.mapFromLonLat(QtCore.QPointF(frll.x(), frll.y()))
-            p = QtCore.QPoint(p.x(), p.y())
+            p = QtCore.QPoint(int(p.x()), int(p.y()))
         elif where is None:
             p = self.mapToScene(pos)
-            p = QtCore.QPoint(p.x(), p.y())
+            p = QtCore.QPointF(p.x(), p.y())
         color = QtGui.QColor()
         if self.scene().colors['ruler'].lower() == 'guess':
             sp = self.mapToGlobal(p)
@@ -1221,6 +1222,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.showFloatStatus = QtWidgets.QAction(QtGui.QIcon('log.png'), 'Show Status Window', self)
         self.showFloatStatus.setStatusTip('Status Window')
         self.showFloatStatus.triggered.connect(self.show_FloatStatus)
+        self.showData = QtWidgets.QAction(QtGui.QIcon('grid.png'), 'Show Data View', self)
+        self.showData.setStatusTip('Data View')
+        self.showData.triggered.connect(self.show_Data)
         credit = QtWidgets.QAction(QtGui.QIcon('about.png'), 'Credits', self)
         credit.setShortcut('F2')
         credit.setStatusTip('Credits')
@@ -1241,6 +1245,7 @@ class MainWindow(QtWidgets.QMainWindow):
         windowMenu.addAction(self.showFloatLegend)
         windowMenu.addAction(self.showFloatMenu)
         windowMenu.addAction(self.showFloatStatus)
+        windowMenu.addAction(self.showData)
         QtWidgets.QShortcut(QtGui.QKeySequence('Ctrl+Z'), self).activated.connect(self.escapeLoop)
         self.credits = None
         self.resource = None
@@ -1249,11 +1254,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.floatstatus = None
         self.progressbar = None
         self.power_signal = None
+        self.dataview = None
         utilities = ['getmap', 'getmerra2', 'indexweather', 'makegrid', 'makeweatherfiles',
-                     'powermatch', 'powerplot', 'updateswis']
-        utilini = [True, False, True, True, False, True, True, True]
+                     'powermatch', 'powerplot', 'updateswis', 'aggregate']
+        utilini = [True, False, True, True, False, True, True, True, True]
         utilicon = ['map.png', 'download.png', 'list.png', 'grid.png', 'weather.png',
-                    'power.png', 'line.png', 'list.png']
+                    'power.png', 'line.png', 'list.png', 'gear_run.png']
         spawns = []
         icons = []
         if sys.platform == 'win32' or sys.platform == 'cygwin':
@@ -2907,6 +2913,35 @@ class MainWindow(QtWidgets.QMainWindow):
             comment += ' On'
         self.view.statusmsg.emit(comment)
 
+    def show_Data(self):
+        if self.dataview is None:
+            if self.sender().text()[:4] == 'Show':
+                self.dataview_year = self.base_year
+            else:
+                self.dataview_year = self.sender().text()
+            self.escaper.setVisible(True)
+            self.dataview = DataView(self.view.scene())
+            if not self.dataview.be_open:
+                self.escaper.setVisible(False)
+                self.dataview = None
+                self.view.statusmsg.emit('Data view not available')
+                return
+            self.dataview.setWindowModality(QtCore.Qt.WindowModal)
+            self.dataview.setWindowFlags(self.dataview.windowFlags() |
+                              QtCore.Qt.WindowSystemMenuHint |
+                              QtCore.Qt.WindowMinMaxButtonsHint)
+            self.dataview.procStart.connect(self.getData)
+            self.view.statusmsg.emit('Data View Window opened')
+            self.dataview.exec_()
+
+    @QtCore.pyqtSlot(str)
+    def getData(self, text):
+        if text == 'goodbye':
+            self.escaper.setVisible(False)
+            self.dataview = None
+            comment = 'Data View Window closed'
+        self.view.statusmsg.emit(comment)
+
     def show_Resource(self):
         if self.resource is None:
             if self.sender().text()[:4] == 'Show':
@@ -3056,6 +3091,9 @@ class MainWindow(QtWidgets.QMainWindow):
             else:
                 lines.append('credits_pos=%s,%s' % (str(self.credits.pos().x() + add), str(self.credits.pos().y() + add)))
                 lines.append('credits_size=%s,%s' % (str(self.credits.size().width()), str(self.credits.size().height())))
+                if self.dataview is not None:
+                    lines.append('dataview_pos=%s,%s' % (str(self.dataview.pos().x() + add), str(self.dataview.pos().y() + add)))
+                    lines.append('dataview_size=%s,%s' % (str(self.dataview.size().width()), str(self.dataview.size().height())))
                 if self.resource is not None:
                     lines.append('resource_pos=%s,%s' % (str(self.resource.pos().x() + add), str(self.resource.pos().y() + add)))
                     lines.append('resource_size=%s,%s' % (str(self.resource.size().width()), str(self.resource.size().height())))
@@ -3082,6 +3120,8 @@ class MainWindow(QtWidgets.QMainWindow):
             if self.credits.initial:  # rude way to close all windows and exit
                 sys.exit()
             self.credits.exit()
+        if self.dataview is not None:
+            self.dataview.exit()
         if self.resource is not None:
             self.resource.exit()
         if self.floatmenu is not None:
