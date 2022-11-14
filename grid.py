@@ -419,7 +419,7 @@ class Grid:
                             placemark_id = value
             elif elem == 'SimpleData' and grid2:
                 for key, value in list(element.items()):
-                    if key == 'name' and (value == 'CAPACITY_kV' or value == 'CAPACITYKV'):
+                    if key == 'name' and value in ['CAPACITY_kV', 'CAPACITYKV', 'kv']:
                         try:
                             styl = self.grid2_colors[element.text]
                         except:
