@@ -95,8 +95,7 @@ class TabDialog(QtWidgets.QDialog):
         self.help = 'help.html'
         self.about = 'about.html'
         self.config = configparser.RawConfigParser()
-        ignore = ['flexiplot.ini', 'getfiles.ini', 'powerplot.ini', 'siren_default.ini',
-                  'siren_windows_default.ini']
+        ignore = ['flexiplot.ini', 'getfiles.ini', 'powerplot.ini', 'siren_default.ini']
         errors = ''
         for fil in sorted(fils):
             if fil[-4:] == '.ini':
@@ -364,10 +363,7 @@ class makeNew(QtWidgets.QDialog):
         self.siren_dir = siren_dir
         self.help = help
         self.ini_file = ''
-        if sys.platform == 'win32' or sys.platform == 'cygwin':
-            ini_file = 'siren_windows_default.ini'
-        else:
-            ini_file = 'siren_default.ini'
+        ini_file = 'siren_default.ini'
         if os.path.exists(self.siren_dir + ini_file):
             ini_file = self.siren_dir + ini_file
         else:
@@ -561,8 +557,6 @@ class makeNew(QtWidgets.QDialog):
     def filenameChanged(self):
         if self.fields[0][4].text().lower() == 'siren_default.ini' or \
           self.fields[0][4].text().lower() == 'siren_default' or \
-          self.fields[0][4].text().lower() == 'siren_windows_default.ini' or \
-          self.fields[0][4].text().lower() == 'siren_windows_default' or \
           self.fields[0][4].text().lower() == 'getfiles' or \
           self.fields[0][4].text().lower() == 'getfiles.ini':
             self.msg.setText('Proposed file name not allowed.')
@@ -649,8 +643,7 @@ class makeNew(QtWidgets.QDialog):
         updates = {}
         lines = []
         newfile = self.fields[0][4].text()
-        if newfile == 'siren_default.ini' or newfile == 'siren_default' or \
-          newfile == 'siren_windows_default.ini' or newfile == 'siren_windows_default':
+        if newfile == 'siren_default.ini' or newfile == 'siren_default':
             self.msg.setText('Proposed file name not allowed.')
             return -1
         if newfile[-4:].lower() != '.ini':
@@ -710,10 +703,7 @@ class makeNew(QtWidgets.QDialog):
                         bits = my_dir[that_len:].split('/')
                         pfx = ('..' + '/') * (len(bits) - 1)
                         updates['[Parents]'][p] = updates['[Parents]'][p][:i + 1] + pfx + value[that_len + 1:]
-        if sys.platform == 'win32' or sys.platform == 'cygwin':
-            ini_file = 'siren_windows_default.ini'
-        else:
-            ini_file = 'siren_default.ini'
+        ini_file = 'siren_default.ini'
         if os.path.exists(self.siren_dir + ini_file):
             ini_file = self.siren_dir + ini_file
         else:
