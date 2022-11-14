@@ -342,7 +342,7 @@ class EditFileSections(QtWidgets.QDialog):
                     if that_len > 0:
                         bits = my_dir[that_len:].split('/')
                         pfx = ('../') * (len(bits) - 1)
-                        pfx = pfx[:-1]
+                       # pfx = pfx[:-1]
                         updates['Parents'][p] = updates['Parents'][p][:i + 1] + pfx + value[that_len + 1:]
         SaveIni(updates, ini_file=self.config_file)
         self.close()
