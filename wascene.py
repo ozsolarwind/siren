@@ -529,7 +529,17 @@ class WAScene(QtWidgets.QGraphicsScene):
         self._gridGroup2 = QtWidgets.QGraphicsItemGroup() # extra grid group
         self._gridGroupz = QtWidgets.QGraphicsItemGroup() # zone group
         self._lineGroup = QtWidgets.QGraphicsItemGroup() # stations lines group
-        self._setupGrid()
+        try:
+            self._setupGrid()
+        except:
+            msgbox = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Critical,
+                                           'Error setting up grid.',
+                                           'May need to check map coordinates\n(upper_left' + self.map \
+                                            + ' and lower_right' + self.map + ' in [Map]).' \
+                                            + '\nExecution aborted.',
+                                           QtWidgets.QMessageBox.Ok)
+            reply = msgbox.exec_()
+            return
         self.addItem(self._gridGroup)
         self.addItem(self._lineGroup)
         if not self.existing_grid:
@@ -555,7 +565,10 @@ class WAScene(QtWidgets.QGraphicsScene):
         self._fossilGroup = QtWidgets.QGraphicsItemGroup()
         self._fcapacityGroup = QtWidgets.QGraphicsItemGroup()
         self._fnameGroup = QtWidgets.QGraphicsItemGroup()
-        self._setupStations()
+        try:
+            self._setupStations()
+        except:
+            pass
         self.addItem(self._capacityGroup)
         if not self.show_capacity:
             self._capacityGroup.setVisible(False)

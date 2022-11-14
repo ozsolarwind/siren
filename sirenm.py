@@ -3315,7 +3315,10 @@ def main():
     if app is None:
         app = QtWidgets.QApplication(sys.argv)
     scene = WAScene()
-    mw = MainWindow(scene)
+    try:
+        mw = MainWindow(scene)
+    except:
+        return
     QtWidgets.QShortcut(QtGui.QKeySequence('q'), mw, mw.close)
     QtWidgets.QShortcut(QtGui.QKeySequence('x'), mw, mw.exit)
     ver = fileVersion()
