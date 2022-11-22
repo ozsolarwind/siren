@@ -367,18 +367,18 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 <li>A map of the area of interest (identified in the <a href="#p_map">[Map]</a> Section of the Preferences file). A simple JPEG or PNG image is fine although most conventional image formats should be acceptable. The map covers a geographically &ldquo;rectangular&rdquo; area of the earth. Obtaining a suitable map image is described in <a href="#map">Obtaining a Suitable Map Image</a></li>
 <li>Names and locations of towns. Two files are used as input (either or both can be specified):
 <ol>
-<li>An Excel file containing a list of weather stations from the BOM (identified by <em>bom</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file)</li>
-<li>A CSV file containing the location of additional towns or localities (identified by <em>towns</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file)</li>
+<li>Either a CSV or Excel (XLS or XLSX) file containing a list of weather stations from the BOM (identified by <em>bom</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file)</li>
+<li>Either a CSV or Excel (XLS or XLSX) file containing the location of additional towns or localities (identified by <em>towns</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file)</li>
 </ol>
 </li>
-<li>Names, technologies and locations of existing power stations (identified by <em>grid_stations</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file). This is either a CSV or Excel file which contains details of existing Facilities (Stations) registered with the local electricity regulator (AEMO in the case of the SWIS) augmented by geographic location of the station and details on turbines for wind farms. The CSV file may be either a specific format or a normal scenario file. You can update this file for the SWIS as described in <a href="#swisupd">Obtaining Current SWIS Facilities</a>.
+<li>Names, technologies and locations of existing power stations (identified by <em>grid_stations</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file). This is either a CSV or Excel (XLS or XLSX) file which contains details of existing Facilities (Stations) registered with the local electricity regulator (AEMO in the case of the SWIS) augmented by geographic location of the station and details on turbines for wind farms. The CSV file may be either a specific format or a normal scenario file. You can update this file for the SWIS as described in <a href="#swisupd">Obtaining Current SWIS Facilities</a>.
 <br>
 You can also create additional stations, such as Rooftop PV, to be included in the list of existing stations by creating an additional Stations file and setting the <em>grid_stations2</em> property in the <a href="#p_files">[Files]</a> Section of the Preferences file</li>
 <li>A layout of the existing electrical grid. A KML file showing the layout of the major power lines in the grid and another with the outline of the network (SWIS) boundary. This should be a simplified version of the grid network with all lines connecting exactly for SIREN to correctly connect new stations into the grid
 <br>
 <strong>Note:</strong> The intention of these two files is to describe the existing fossil and renewable Stations on the electricity network</li>
 <li>Optionally, the network can be divided into zones. This enables different renewable energy potential between zones to be analysed and utilised by <a href="#powermatch">Powermatch</a></li>
-<li>Hourly load details for the electricity grid. A simple CSV file with a single column of electrical load data for the 8,760 hours in the year of interest (identified by <em>load</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file). Each value is for one hour of load commencing on that hour.</li>
+<li>Hourly load details for the electricity grid. Either a CSV or Excel (XLS or XLSX) file with a single column of electrical load data for the 8,760 hours in the year of interest (identified by <em>load</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file). Each value is for one hour of load commencing on that hour.</li>
 <li>Hourly solar and weather details for the area of interest (identified by <em>solar_files</em> and <em>wind_files</em> properties of the <a href="#p_files">[Files]</a> Section of the Preferences file). This data is in formats required for input to SAM and contains entries for the 8,760 hours in the year of interest. A SAM weather file is a text file that contains one (calendar) year's worth of data describing the solar resource, wind speed, temperature, and other weather characteristics at a particular location. The approach we have adopted is to use NASA MERRA-2 data for the desired geographic area and year to create appropriately formatted weather files. This is described in <a href="#merra">Obtaining and Using NASA MERRA-2 Data for SAM weather files</a>. To enable more recent (part-year) data to be used it is possible to &ldquo;wrap&rdquo; the data by using the weather data for the prior year for the remaining part of the year.
 <br>
 You can also use TMY files such as those provided with SAM. If you have a number of weather files you can create an index of these files for SIREN. This is described in <a href="#index">Using other Weather Files</a></li>
@@ -389,7 +389,7 @@ You can also use TMY files such as those provided with SAM. If you have a number
 <p>Due to inconsistency between power (SAM) and weather data / files, hours of the day are portrayed differently. For example, looking at the hour between midnight and 1:00AM:- in power data the hour is shown as the start of the hour, <em>00:00</em>, while for weather data it is the end of the hour, <em>01:00</em>.</p>
 <p><a href="#help">Back to top</a></p>
 <h2 id="objects">Simulation Objects</h2>
-<p>The simulation has two main objects, stations and grid lines. Stations can be saved as scenarios in either an Excel or CSV file format while grid lines are constructed during the simulation rather than being saved to a file (unless you have manually created the grid line).</p>
+<p>The simulation has two main objects, stations and grid lines. Stations can be saved as scenarios in either an Excel (XLS) or CSV file format while grid lines are constructed during the simulation rather than being saved to a file (unless you have manually created the grid line).</p>
 <h3 id="stations">Stations</h3>
 <p>Stations represent either existing generation stations on the grid or new ones you have created during a simulation session. The station files can be updated outside of the simulation. The fields for a station are:</p>
 <table border="0", class="none" style="margin-left:35px">
@@ -436,7 +436,7 @@ You can also use TMY files such as those provided with SAM. If you have a number
 </tr>
 <tr class="none">
 <td class="none"><dfn>Power File</dfn></td>
-<td class="none">If the technology you're interested in is not available in the simulation or you encounter problems you can provide your own power file which contains power output for each hour of the year. This can be produced using SAM itself. Within SAM you display output data, select the Hourly energy data and export the file as either CSV or Excel, and place the file in the same location as your scenario files. When the Power Model is run the program will use this data rather than invoking the SAM module for that station</td>
+<td class="none">If the technology you're interested in is not available in the simulation or you encounter problems you can provide your own power file which contains power output for each hour of the year. This can be produced using SAM itself. Within SAM you display output data, select the Hourly energy data and export the file as either CSV or Excel (XLS), and place the file in the same location as your scenario files. When the Power Model is run the program will use this data rather than invoking the SAM module for that station</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>Storage Hours</dfn></td>
@@ -2105,7 +2105,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </table>
 </td></tr>
 <tr class="none" id="p_sam_modules"><td><dfn><strong>[SAM_Modules]</strong></dfn></td>
-<td>SAM models (modules) and default variables for each technology currently implemented. The variables files can be either CSV or Excel files. Properties are as follows.</p>
+<td>SAM models (modules) and default variables for each technology currently implemented. The variables files can be either a CSV or Excel (XLS or XLSX) file. Properties are as follows.</p>
 <p><strong>Note:</strong> SIREN is using SSC Version 206 which has created some changes to the default variables for <em>ippppa</em>, <em>geothermal</em>, <em>tcsgeneric_solar</em> and <em>tcsmolten_salt</em>. The variable files for these models provided by SIREN have a suffix of <em>_206</em>. You may need to adjust these variables in older SIREN Preferences files</p>
 <table border="0", class="none">
 <tr class="none">
@@ -2571,7 +2571,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><dfn><strong>Scenario</strong></dfn></td>
-<td class="none">Work with scenarios. It is possible to edit the scenarios outside of the simulation as they are simple Excel or CSV files. The type of file is indicated by the file type - <em>.csv</em> for a CSV file, <em>.xls</em> or for an Excel file. If the file type isn't specified any scenario will be saved in Excel format.</p>
+<td class="none">Work with scenarios. It is possible to edit the scenarios outside of the simulation as they are simple CSV or Excel (XLS) files. The type of file is indicated by the file type - <em>.csv</em> for a CSV file, or <em>.xls</em> or <em>.xlsx</em> for an Excel file. If the file type isn't specified any scenario will be saved in Excel format.</p>
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><img src="open.png" alt="Open">&nbsp;&nbsp;Open (Ctrl+O)</td>
@@ -3676,7 +3676,7 @@ If the best and worse values are the same for a variable and that value is not a
 </ol>
 </div>
 <h4>Powermatch input file formats</h4>
-<p>Powermatch has a number of input files which are generally in the form of a simple table stored in an Excel spreadsheet, in most instances in either XLS or XLSX format. Constraints, Generators and Optimisation tables can be stored as separate worksheets in the same Excel file (workbook). Further details on some of the file formats can be found above. The input files are:
+<p>Powermatch has a number of input files which are generally in the form of a simple table stored in either a CSV or Excel (XLS or XLSX) file. Constraints, Generators and Optimisation tables can be stored as separate worksheets in the same Excel file (workbook). Further details on some of the file formats can be found above. The input files are:
 <table border="0", class="none" style="margin-left:35px">
 <tr class="none">
 <td class="none"><dfn>Constraints</dfn></td>
@@ -3828,17 +3828,17 @@ Scale of the chart in the cell. A value of 1 fills the cell(<em>plot_scale</em>)
 <p>This model is very much a work in progress. To improve it's usefulness to a wider community we encourage any feedback on how it might be improved. Feedback to <a href="mailto:siren@sen.asn.au?Subject=SIREN%20Feedback">siren@sen.asn.au</a>.
 <p><a href="#help">Back to top</a></p>
 <h2 id="files">SIREN File Formats</h2>
-<p>SIREN accepts a number of file formats for each of the data files it uses. Due to the initial source for each data file the format for each is different. For Excel and CSV files the first cell for each column is usually taken as the column name.</p>
-<p><strong>Note:</strong> Other than the Powermatch file, all Excel files output by SIREN are in XLS format (XLSX files require a different Python library to create them).</p>
-<p>The files and formats are:</p>
+<p>SIREN accepts a number of file formats for each of the data files it uses. In many cases input files can be either a CSV or Excel (XLS or XLSX) file. Due to the initial source for each data file the format for each may be different. For CSV and Excel files the first cell for each column is usually taken as the column name.</p>
+<p><strong>Note:</strong> Other than the Powermatch file, all Excel files output by SIREN are currently in XLS format (XLSX files require a different Python library to create them).</p>
+<p>The files and formats are as follow:</p>
 <table border="0", class="none" style="margin-left:35px">
 <tr class="none">
 <td class="none"><dfn>actual_power</dfn></td>
-<td class="none">An Excel (XLS or XLSX) or CSV file containing a column of hourly generation in MWh for each (existing) station for each hour of the year (8,760 hours)</td>
+<td class="none">A CSV or Excel (XLS or XLSX) file containing a column of hourly generation in MWh for each (existing) station for each hour of the year (8,760 hours)</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>bom</dfn></td>
-<td class="none">An Excel (XLS or XLSX) or CSV file containing details on those BOM sites you want displayed on the map. This file format is the same as <em>towns</em> (see below) with some additional column name options</td>
+<td class="none">A CSV or Excel (XLS or XLSX) file containing details on those BOM sites you want displayed on the map. This file format is the same as <em>towns</em> (see below) with some additional column name options</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>grid_boundary</dfn></td>
@@ -3850,15 +3850,15 @@ Scale of the chart in the cell. A value of 1 fills the cell(<em>plot_scale</em>)
 </tr>
 <tr class="none">
 <td class="none"><dfn>grid_network2</dfn></td>
-<td class="none">A KML (or KMZ) file defining the actual grid network. Any string of &lt;coordinates&gt; in a &lt;LineString&gt; is used to draw a grid line. &lt;styleUrl&gt; colour elements may be used for the line colour. Alternatively, a standard set of colours based upon line capacity, as defined by &lt;SimpleData name="CAPACITY_kV"&gt; or &lt;SimpleData name="CAPACITYKV&gt; elements, can be used. These values can be set by <em>grid2_line_capacity</em> Colour properties where <em>line_capacity</em> is the line capacity, e.g. <em>grid2_66=#774110</em> for a 66kV line. It can be a detailed as you like and doesn't require accurate connections (SIREN makes no use of it)</td>
+<td class="none">A KML (or KMZ) file defining the actual grid network. Any string of &lt;coordinates&gt; in a &lt;LineString&gt; is used to draw a grid line. &lt;styleUrl&gt; colour elements may be used for the line colour. Alternatively, a standard set of colours based upon line capacity, as defined by &lt;SimpleData name="CAPACITY_kV"&gt;, &lt;SimpleData name="CAPACITYKV&gt;, or &lt;SimpleData name="kv&gt; elements, can be used. These values can be set by <em>grid2_line_capacity</em> Colour properties where <em>line_capacity</em> is the line capacity, e.g. <em>grid2_66=#774110</em> for a 66kV line. It can be a detailed as you like and doesn't require accurate connections (SIREN makes no use of it)</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>grid_stations</dfn></td>
-<td class="none">A file defining actual stations on the grid. This can be either a CSV file or Excel (XLS or XLSX) file in the same format as <em>scenario</em> files (there is also a special CSV format for SWIS stations based upon the AEMO facilities file)</td>
+<td class="none">A file defining actual stations on the grid. This can be an Excel (XLS or XLSX) file in the same format as <em>scenario</em> files (there is also a special CSV format for SWIS stations based upon the AEMO facilities file)</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>grid_stations2
-<td class="none">A file defining additional stations on the grid. This can be either a CSV file or Excel (XLS or XLSX) file in the same format as <em>scenario</em> files. This additional file allows you to specify stations that you want to include that are not part of the existing grid, such as Rooftop PV stations</td>
+<td class="none">A file defining additional stations on the grid. This can be an Excel (XLS or XLSX) file in the same format as <em>scenario</em> files. This additional file allows you to specify stations that you want to include that are not part of the existing grid, such as Rooftop PV stations</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>grid_zones
@@ -3870,7 +3870,7 @@ Scale of the chart in the cell. A value of 1 fills the cell(<em>plot_scale</em>)
 </tr>
 <tr class="none">
 <td class="none"><dfn>load</em></dfn></td>
-<td class="none">An Excel (XLS or XLSX) or CSV file containing a single column of hourly load demand for each hour of the year (8,760 hours)</td>
+<td class="none">A CSV or Excel (XLS or XLSX) file containing a single column of hourly load demand for each hour of the year (8,760 hours)</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>optical_table</dfn></td>
@@ -3897,14 +3897,14 @@ Scale of the chart in the cell. A value of 1 fills the cell(<em>plot_scale</em>)
 </tr>
 <tr class="none">
 <td class="none"><dfn>resource_grid</dfn></td>
-<td class="none">An Excel (XLS) or CSV file File used by SIREN to assist with showing the resource grid. This file is created to summarise weather variables for certain periods to enable a grid of resource variables to be overlaid on the map</td>
+<td class="none">A CSV or Excel (XLS or XLSX) file used by SIREN to assist with showing the resource grid. This file is created to summarise weather variables for certain periods to enable a grid of resource variables to be overlaid on the map</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>sam_turbines</dfn></td>
 <td class="none">This file format is defined by SAM. It is possible to produce a subset of wind turbines by creating a copy of the file provided by SAM (remember to always retain the (three) header rows)</td>
 </tr><tr class="none">
 <td class="none"><dfn>scenario</dfn></td>
-<td class="none">An Excel (XLS) or CSV file containing stations for a scenario. The columns for the file are as defined in the Stations <a href="#objects">Simulation Objects</a>. The filenames must start with the filename prefix specified in the <em>scenarios</em> property in the <a href="#p_files">[Files]</a> Section of the Preferences file. It is possible to provide a brief description for the scenario in the first row of the file. This is indicated by a value of <em>Description:</em> in the top left cell followed by the description in the next cell</td>
+<td class="none">A CSV or Excel (XLS or XLSX) file containing stations for a scenario. The columns for the file are as defined in the Stations <a href="#objects">Simulation Objects</a>. The filenames must start with the filename prefix specified in the <em>scenarios</em> property in the <a href="#p_files">[Files]</a> Section of the Preferences file. It is possible to provide a brief description for the scenario in the first row of the file. This is indicated by a value of <em>Description:</em> in the top left cell followed by the description in the next cell</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>solar_files</dfn></td>
@@ -3912,7 +3912,7 @@ Scale of the chart in the cell. A value of 1 fills the cell(<em>plot_scale</em>)
 </tr>
 <tr class="none">
 <td class="none"><dfn>solar_index</dfn></td>
-<td class="none">Using this file you can specify a list of solar weather files to be used by SIREN. This option allows you to use filenames that don't conform to SIREN's convention, such as the TMY files provided by SAM. The file can be either CSV or Excel (XLS) and contains three columns:
+<td class="none">Using this file you can specify a list of solar weather files to be used by SIREN. This option allows you to use filenames that don't conform to SIREN's convention, such as the TMY files provided by SAM. The file can be either a CSV or Excel (XLS or XLSX) file and contains three columns:
 <ul>
 <li><em>Latitude</em>. Weather file latitude</li>
 <li><em>Longitude</em>. Weather file longitude</li>
@@ -3921,7 +3921,7 @@ Scale of the chart in the cell. A value of 1 fills the cell(<em>plot_scale</em>)
 </tr>
 <tr class="none">
 <td class="none"><dfn>towns</dfn></td>
-<td class="none">An Excel (XLS or XLSX) or CSV file containing details on towns/locations you want displayed on the map. As a minimum the file should have columns for town, latitude and longitude. The columns recognised by SIREN are:
+<td class="none">A CSV or Excel (XLS or XLSX) file containing details on towns/locations you want displayed on the map. As a minimum the file should have columns for town, latitude and longitude. The columns recognised by SIREN are:
 <ul>
 <li><em>Country</em>. The location's country. The default is currently AUS</li>
 <li><em>Elev</em>. The location's elevation</li>
@@ -3934,14 +3934,14 @@ Scale of the chart in the cell. A value of 1 fills the cell(<em>plot_scale</em>)
 </tr>
 <tr class="none">
 <td class="none"><dfn>variable_files</dfn></td>
-<td class="none">SAM technology models use a variety of input and output variables to process a renewable energy station. These variable files are used by SIREN to pass appropriate values to SAM, as defined in the DEFAULT column. A value of <em>Input</em> means the value will be provided by SIREN from details for the station or as specified in the Preferences file. It is possible to create your own copy of the files provided by SIREN to override any of the input variables. the files can be CSV or Excel format</td>
+<td class="none">SAM technology models use a variety of input and output variables to process a renewable energy station. These variable files are used by SIREN to pass appropriate values to SAM, as defined in the DEFAULT column. A value of <em>Input</em> means the value will be provided by SIREN from details for the station or as specified in the Preferences file. It is possible to create your own copy of the files provided by SIREN to override any of the input variables. The files can be either a CSV or Excel (XLS or XLSX) file</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>wind_files</dfn></td>
 <td class="none">These are wind weather files in one of the formats defined by SAM. SIREN uses the filename to define the location and year for the file by separating the filename by an underscore as follows:- <em>anything_anything_latitude_longitude_year.filetype</em></td>
 </tr><tr class="none">
 <td class="none"><dfn>wind_index</dfn></td>
-<td class="none">Using this file you can specify a list of wind weather files to be used by SIREN. This option allows you to use filenames that don't conform to SIREN's convention, such as the TMY files provided by SAM. The file can be either CSV or Excel (XLS) and contains three columns:
+<td class="none">Using this file you can specify a list of wind weather files to be used by SIREN. This option allows you to use filenames that don't conform to SIREN's convention, such as the TMY files provided by SAM. The file can be either a CSV or Excel (XLS or XLSX) file and contains three columns:
 <ul>
 <li><em>Latitude</em>. Weather file latitude</li>
 <li><em>Longitude</em>. Weather file longitude</li>
@@ -4046,7 +4046,7 @@ You can alternate between both approaches to choose the desired area. If you hav
 <p>The AEMO also publish <a href="http://data.wa.aemo.com.au/#facility-scada" target="_blank">facility SCADA data</a>.</p>
 <h4>updateswis</h4>
 <p><code>updateswis.py</code> is a Python program that can be used to access the current list of facilities (power stations) for the SWIS and to obtain recent load data.
-The program will download the list of existing stations and optionally update the file SIREN uses for existing stations (<em>grid_stations</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file). To aid readability you can optionally produce an additional file, Excel or CSV, that will save the list in the same format as a SIREN scenario file.
+The program will download the list of existing stations and optionally update the file SIREN uses for existing stations (<em>grid_stations</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file). To aid readability you can optionally produce an additional file, either CSV or Excel (XLS), that will save the list in the same format as a SIREN scenario file.
 Load data can also be downloaded for prior years to a filename defined by the <em>load</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file.</p>
 <p>You can run <code>updateswis</code> from the SIREN Tools menu or in Windows by running <code>updateswis.exe</code> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
 <ul>
@@ -4650,7 +4650,7 @@ MERRA-2 Variables
 <div class="experiment">
 <li><em>Rain Folder</em>. Source folder for the rain weather files (experimental)</li>
 </div>
-<li><em>Resource File</em>. Target file. This can be either a CSV or Excel file. For an Excel file if you append <em>$MM$</em> to the year in the filename hourly variable values will be produced</li>
+<li><em>Resource File</em>. Target file. This can be either a CSV or Excel (XLS) file. For an Excel file if you append <em>$MM$</em> to the year in the filename hourly variable values will be produced</li>
 <li><em>Properties</em>. This is a read only field that is filled in when the file is created. This property should be copied into the <a href="#p_files">[Files]</a> Section of the Preferences file</li>
 </ul>
 <p>There are three buttons:</p>
@@ -5425,7 +5425,7 @@ MERRA-2 Variables
 <td class="none">A measure of greenhouse gas emissions in carbon dioxide equivalence. Greenhouse gas emissions can be one of a number of gases including carbon dioxide (CO<sub>2</sub>), methane (CH<sub>4</sub>) and nitrous oxide (N<sub>2</sub>O). The equivalence measure allows the global warming potential of each greenhouse gas to be standardised relative to carbon dioxide</td></tr>
 <tr><td class="none"><dfn>CSP</dfn> or <dfn>CST</dfn></td>
 <td class="none">concentrated solar thermal power</td></tr>
-<tr><td class="none"><dfn>CSV</dfn></td>
+<tr><td class="none"><dfn>CSV</dfn> (or <dfn>csv</dfn>)</td>
 <td class="none">comma-separated-variable file</td></tr>
 <tr><td class="none"><dfn>debugging</dfn></td>
 <td class="none">The process of identifying and removing errors from computer hardware or software</td></tr>
@@ -5549,9 +5549,9 @@ MERRA-2 Variables
 <td class="none">Wind Atlas Analysis and Application Program</td></tr>
 <tr><td class="none"><dfn>WEM</dfn></td>
 <td class="none">Wholesale Electricity Market for the SWIS</td></tr>
-<tr><td class="none"><dfn>XLS</dfn></td>
+<tr><td class="none"><dfn>XLS</dfn> (or <dfn>xls</dfn>)</td>
 <td class="none">Original file format for Excel spreadsheets. XLS files are stored internally in binary format</td></tr>
-<tr><td class="none"><dfn>XLSX</dfn></td>
+<tr><td class="none"><dfn>XLSX</dfn><br />(or <dfn>xlsx</dfn>)</td>
 <td class="none">Default file format for Excel spreadsheets since 2003. XLSX files are stored internally in an XML format</td></tr>
 <tr><td class="none"><dfn>XML</dfn></td>
 <td class="none">Extensible Markup Language. A markup language that defines a set of rules for encoding documents in a format which is both human-readable and machine-readable.</td></tr>

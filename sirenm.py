@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2021 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2022 Sustainable Energy Now Inc., Angus King
 #
 #  siren.py - This file is part of SIREN.
 #
@@ -28,7 +28,6 @@ import time
 import matplotlib
 matplotlib.use('TkAgg')
 import webbrowser
-import xlrd
 import xlwt
 from functools import partial
 

@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2020 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2022 Sustainable Energy Now Inc., Angus King
 #
 #  towns.py - This file is part of SIREN.
 #
@@ -20,14 +20,12 @@
 #
 
 import configparser    # decode .ini file
-import csv
 import os
 import sys
-import xlrd
 from math import radians, cos, sin, asin, sqrt
 
 from getmodels import getModelFile
-from senutils import getParents, getUser
+from senutils import getParents, getUser, WorkBook
 
 
 class Town:
@@ -117,137 +115,99 @@ class Towns:
     def __init__(self, ul_lat=None, ul_lon=None, lr_lat=None, lr_lon=None, remove_duplicates=True):
         """Initializes the data."""
 
-        def read_town_csv(town_file):
-            townfile = open(town_file)
-            twns = csv.DictReader(townfile)
-            if 'Town' in twns.fieldnames:
-                name_field = 'Town'
-            elif 'Name' in twns.fieldnames:
-                name_field = 'Name'
-            else:
-                name_field = 'Site name'
-            if remove_duplicates:
-                for twn in twns:
-                    for town in self.towns:
-                        if twn[name_field] == town.name:
-                            break
-                        if len(twn[name_field]) < len(town.name) and town.name.find(' ') > 0:
-                            if twn[name_field].title() == town.name[:len(twn[name_field])]:
+        def get_towns(town_file):
+            c_closed = -1
+            c_id = -1
+            c_nme = -1
+            c_state = -1
+            c_lat = -1
+            c_lon = -1
+            c_elev = -1
+            c_ctry = -1
+            workbook = WorkBook()
+            workbook.open_workbook(town_file)
+            worksheet = workbook.sheet_by_index(0)
+            num_rows = worksheet.nrows - 1
+            num_cols = worksheet.ncols - 1
+#     get column names
+            curr_col = -1
+            while curr_col < num_cols:
+                curr_col += 1
+                if worksheet.cell_value(0, curr_col) == 'Bureau of Meteorology Station Number' or \
+                   worksheet.cell_value(0, curr_col) == 'Lid':
+                    c_id = curr_col
+                elif worksheet.cell_value(0, curr_col) == 'Station Name' or \
+                   worksheet.cell_value(0, curr_col) == 'Site Name' or \
+                   worksheet.cell_value(0, curr_col) == 'Town':
+                    c_nme = curr_col
+                elif worksheet.cell_value(0, curr_col) == 'Latitude to 4 decimal places, in decimal degrees' or \
+                   worksheet.cell_value(0, curr_col) == 'Latitude':
+                    c_lat = curr_col
+                elif worksheet.cell_value(0, curr_col) == 'Longitude to 4 decimal places, in decimal degrees' or \
+                   worksheet.cell_value(0, curr_col) == 'Longitude':
+                    c_lon = curr_col
+                elif worksheet.cell_value(0, curr_col) == 'State':
+                    c_state = curr_col
+                elif worksheet.cell_value(0, curr_col) == 'Height of station above mean sea level in metres' or \
+                   worksheet.cell_value(0, curr_col) == 'Elev':
+                    c_elev = curr_col
+                elif worksheet.cell_value(0, curr_col) == 'Month/Year site closed. (MM/YYYY)':
+                    c_closed = curr_col
+                elif worksheet.cell_value(0, curr_col) == 'Country':
+                    c_ctry = curr_col
+#     WMO (World Meteorological Organisation) Index Number
+            curr_row = 0
+            while curr_row < num_rows:
+                curr_row += 1
+                if worksheet.cell_value(curr_row, c_nme) != '':
+                    if c_closed >= 0 and worksheet.cell_value(curr_row, c_closed).strip() != '':
+                        continue
+                    twn_name = worksheet.cell_value(curr_row, c_nme).strip().title()
+                    i = twn_name.rfind(' ')
+                    if i > 0:
+                        if twn_name[i + 1:] in ['Aero', 'Airfield', 'Airport', 'Comparison', 'Metro']:
+                            twn_name = twn_name[:i]
+                            if twn_name[-8:] == ' Airport':
+                                twn_name = twn_name[:-8]
+                    ok = True
+                    if remove_duplicates:
+                        ok = False
+                        for town in self.towns:
+                            if twn_name == town.name:
                                 break
-                            if town.name[:6].title() == 'North ' and twn[name_field] == town.name[6:]:
+                            if len(twn_name) < len(town.name) and town.name.find(' ') > 0:
+                                if twn_name.title() == town.name[:len(twn_name)]:
+                                    break
+                            if town.name[:6].title() == 'North ' and twn_name == town.name[6:]:
                                 break
-                        if len(twn[name_field]) > len(town.name) and twn[name_field].find(' ') > 0:
-                            if twn[name_field].title()[:len(town.name)] == town.name:
-                                break
-                    else:
-                        if ul_lat is None or \
-                          (float(twn['Latitude']) >= lr_lat and
-                           float(twn['Latitude']) <= ul_lat and
-                           float(twn['Longitude']) >= ul_lon and
-                           float(twn['Longitude']) <= lr_lon):
-                            if 'Lid' in twns.fieldnames and twn['Lid'] != '':
-                                self.towns.append(Town(twn[name_field], twn['Latitude'], twn['Longitude'], twn['Lid'],
-                                             twn['State'], twn['Country'], twn['Elev'], twn['Zone']))
-                            else:
-                                self.towns.append(Town(twn[name_field], twn['Latitude'], twn['Longitude']))
-            else:
-                for twn in twns:
-                    if ul_lat is None or \
-                      (float(twn['Latitude']) >= lr_lat and
-                       float(twn['Latitude']) <= ul_lat and
-                       float(twn['Longitude']) >= ul_lon and
-                       float(twn['Longitude']) <= lr_lon):
-                        if 'Lid' in twns.fieldnames and twn['Lid'] != '':
-                            self.towns.append(Town(twn[name_field], twn['Latitude'], twn['Longitude'], twn['Lid'],
-                                        twn['State'], twn['Country'], twn['Elev'], twn['Zone']))
                         else:
-                            self.towns.append(Town(twn[name_field], twn['Latitude'], twn['Longitude']))
-            townfile.close()
+                            ok = True
+                    if ok:
+                        if ul_lat is None or \
+                          (worksheet.cell_value(curr_row, c_lat) >= lr_lat and
+                           worksheet.cell_value(curr_row, c_lat) <= ul_lat and
+                           worksheet.cell_value(curr_row, c_lon) >= ul_lon and
+                           worksheet.cell_value(curr_row, c_lon) <= lr_lon):
+                            self.towns.append(Town(twn_name,
+                                                   worksheet.cell_value(curr_row, c_lat),
+                                                   worksheet.cell_value(curr_row, c_lon)))
+                            if c_id >= 0:
+                                self.towns[-1].lid = worksheet.cell_value(curr_row, c_id)
+                            if c_state >= 0:
+                                self.towns[-1].state = worksheet.cell_value(curr_row, c_state)
+                            if c_elev >= 0:
+                                self.towns[-1].elev = worksheet.cell_value(curr_row, c_elev)
+                            if c_ctry >= 0:
+                                self.towns[-1].country = worksheet.cell_value(curr_row, c_ctry)
 
         self.get_config()
         self.towns = []
 #   Process BOM stations first
         if os.path.exists(self.bom_file):
-            if self.bom_file[-4:] == '.csv':
-                read_town_csv(self.bom_file)
-            else:
-                c_closed = -1
-                c_id = -1
-                c_nme = -1
-                c_state = -1
-                c_lat = -1
-                c_lon = -1
-                c_elev = -1
-                c_ctry = -1
-                workbook = xlrd.open_workbook(self.bom_file)
-                worksheet = workbook.sheet_by_index(0)
-                num_rows = worksheet.nrows - 1
-                num_cols = worksheet.ncols - 1
-#     get column names
-                curr_col = -1
-                while curr_col < num_cols:
-                    curr_col += 1
-                    if worksheet.cell_value(0, curr_col) == 'Bureau of Meteorology Station Number' or \
-                       worksheet.cell_value(0, curr_col) == 'Lid':
-                        c_id = curr_col
-                    elif worksheet.cell_value(0, curr_col) == 'Station Name' or \
-                       worksheet.cell_value(0, curr_col) == 'Site Name' or \
-                       worksheet.cell_value(0, curr_col) == 'Town':
-                        c_nme = curr_col
-                    elif worksheet.cell_value(0, curr_col) == 'Latitude to 4 decimal places, in decimal degrees' or \
-                       worksheet.cell_value(0, curr_col) == 'Latitude':
-                        c_lat = curr_col
-                    elif worksheet.cell_value(0, curr_col) == 'Longitude to 4 decimal places, in decimal degrees' or \
-                       worksheet.cell_value(0, curr_col) == 'Longitude':
-                        c_lon = curr_col
-                    elif worksheet.cell_value(0, curr_col) == 'State':
-                        c_state = curr_col
-                    elif worksheet.cell_value(0, curr_col) == 'Height of station above mean sea level in metres' or \
-                       worksheet.cell_value(0, curr_col) == 'Elev':
-                        c_elev = curr_col
-                    elif worksheet.cell_value(0, curr_col) == 'Month/Year site closed. (MM/YYYY)':
-                        c_closed = curr_col
-                    elif worksheet.cell_value(0, curr_col) == 'Country':
-                        c_ctry = curr_col
-#     WMO (World Meteorological Organisation) Index Number
-                curr_row = 0
-                while curr_row < num_rows:
-                    curr_row += 1
-                    if c_closed >= 0:
-                        if worksheet.cell_value(curr_row, c_nme) != '' \
-                        and worksheet.cell_value(curr_row, c_closed).strip() == '':
-                            if ul_lat is None or \
-                              (worksheet.cell_value(curr_row, c_lat) >= lr_lat and
-                               worksheet.cell_value(curr_row, c_lat) <= ul_lat and
-                               worksheet.cell_value(curr_row, c_lon) >= ul_lon and
-                               worksheet.cell_value(curr_row, c_lon) <= lr_lon):
-                                self.towns.append(Town(worksheet.cell_value(curr_row, c_nme),
-                                                       worksheet.cell_value(curr_row, c_lat),
-                                                       worksheet.cell_value(curr_row, c_lon),
-                                                       worksheet.cell_value(curr_row, c_id),
-                                                       worksheet.cell_value(curr_row, c_state),
-                                                       elev=worksheet.cell_value(curr_row, c_elev)))
-                    else:
-                        if worksheet.cell_value(curr_row, c_nme) != '':
-                            if ul_lat is None or \
-                              (worksheet.cell_value(curr_row, c_lat) >= lr_lat and
-                               worksheet.cell_value(curr_row, c_lat) <= ul_lat and
-                               worksheet.cell_value(curr_row, c_lon) >= ul_lon and
-                               worksheet.cell_value(curr_row, c_lon) <= lr_lon):
-                                self.towns.append(Town(worksheet.cell_value(curr_row, c_nme),
-                                                       worksheet.cell_value(curr_row, c_lat),
-                                                       worksheet.cell_value(curr_row, c_lon)))
-                                if c_id >= 0:
-                                    self.towns[-1].lid = worksheet.cell_value(curr_row, c_id)
-                                if c_state >= 0:
-                                    self.towns[-1].state = worksheet.cell_value(curr_row, c_state)
-                                if c_elev >= 0:
-                                    self.towns[-1].elev = worksheet.cell_value(curr_row, c_elev)
-                                if c_ctry >= 0:
-                                    self.towns[-1].country = worksheet.cell_value(curr_row, c_ctry)
+            get_towns(self.bom_file)
 # Process list of towns second
         if os.path.exists(self.town_file):
-            read_town_csv(self.town_file)
+            get_towns(self.town_file)
 
     def SAM_Header(self, lat, lon):
 #   SAM CSV (Solar)

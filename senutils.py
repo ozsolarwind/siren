@@ -19,7 +19,9 @@
 #  <http://www.gnu.org/licenses/>.
 #
 
+import csv
 import math
+import openpyxl as oxl
 import os
 try:
     import pwd
@@ -27,6 +29,7 @@ except:
     pass
 import sys
 from PyQt5 import QtCore, QtWidgets
+import xlrd
 
 
 class ClickableQLabel(QtWidgets.QLabel):
@@ -38,6 +41,129 @@ class ClickableQLabel(QtWidgets.QLabel):
     def mousePressEvent(self, event):
         QtWidgets.QApplication.widgetAt(event.globalPos()).setFocus()
         self.clicked.emit()
+
+
+# Class to support input file as .csv, .xls, or .xlsx
+class WorkBook(object):
+    def __init__(self):
+        self._book = None
+        self._sheet = None
+        self._sheet_names = []
+        self._type = None
+        self._nrows = 0
+        self._ncols = 0
+
+    def open_workbook(self, filename=None, on_demand=True):
+        if not os.path.exists(filename):
+            raise Exception('File not found')
+        self._type = filename[filename.rfind('.') + 1:]
+        try:
+            if self._type == 'xls':
+                self._book = xlrd.open_workbook(filename, on_demand=on_demand)
+                self._sheet_names = self._book.sheet_names()
+            elif self._type == 'xlsx':
+                self._book = oxl.load_workbook(filename, data_only=True)
+                self._sheet_names = self._book.sheetnames
+            elif self._type == 'csv':
+                csv_file = open(filename, newline='')
+                things = csv.reader(csv_file)
+                self._sheet_names = ['n/a']
+                self._worksheet = []
+                for row in things:
+                    self._worksheet.append([])
+                    for cell in row:
+                        if len(cell) > 0:
+                            if cell[0] == '-':
+                                minus = '-'
+                                cell = cell[1:]
+                            else:
+                                minus = ''
+                            if cell.isdigit():
+                                 self._worksheet[-1].append(int(minus + cell))
+                            elif cell.replace(',', '').isdigit():
+                                 self._worksheet[-1].append(int(minus + cell.replace(',', '')))
+                            elif cell.replace(',', '').replace('.', '').isdigit():
+                                 try:
+                                     self._worksheet[-1].append(float(minus + cell.replace(',', '')))
+                                 except:
+                                     self._worksheet[-1].append(minus + cell)
+                            else:
+                                 self._worksheet[-1].append(minus + cell)
+                        else:
+                             self._worksheet[-1].append('')
+                csv_file.close()
+                self.nrows = len(self._worksheet)
+                self.ncols = len(self._worksheet[0])
+        except:
+            raise Exception('Error opening file')
+
+    def release_resources(self):
+        if self._type == 'xls':
+            self._book.release_resources()
+
+    def sheet_names(self):
+        return self._sheet_names[:]
+
+    def sheet_by_index(self, sheetx):
+        return self.get_sheet(sheetx)
+
+    def sheet_by_name(self, sheet_name):
+        try:
+            sheetx = self._sheet_names.index(sheet_name)
+        except ValueError:
+            raise Exception('No sheet named <%r>' % sheet_name)
+        return self.sheet_by_index(sheetx)
+
+    def get_sheet(self, sheetx):
+        self._sheet = self.WorkSheet(sheetx, self._type)
+        try:
+            if self._type == 'xls':
+                self._sheet._sheet = self._book.sheet_by_index(sheetx)
+                self._sheet.name = self._book.sheet_names()[sheetx]
+                self._sheet.nrows = self._sheet._sheet.nrows
+                self._sheet.ncols = self._sheet._sheet.ncols
+            elif self._type == 'xlsx':
+                self._sheet._sheet = self._book.worksheets[sheetx]
+                self._sheet.name = self._book.sheetnames[sheetx]
+                self._sheet.nrows = self._sheet._sheet.max_row
+                self._sheet.ncols = self._sheet._sheet.max_column
+            elif self._type == 'csv':
+              #  self._sheet = self._book.worksheets[sheetx]
+                self._sheet.name = 'n/a'
+                self._sheet._sheet = self._worksheet
+                self._sheet.nrows = len(self._sheet._sheet)
+                try:
+                    self._sheet.ncols = len(self._sheet._sheet[0])
+                except:
+                    self._sheet.ncols = 0
+        except:
+            raise Exception('Error accessing sheet')
+        return self._sheet
+
+    class WorkSheet(object):
+        def __init__(self, sheet, typ):
+            self.name = sheet
+            self._sheet = None
+            self.nrows = 0
+            self.ncols = 0
+            self._type = typ
+
+        def cell_value(self, row, col):
+            if self._type == 'xls':
+                return self._sheet.cell_value(row, col)
+            elif self._type == 'xlsx':
+                return self._sheet.cell(row=row + 1, column=col + 1).value
+            elif self._type == 'csv':
+                return self._sheet[row][col]
+
+#        def cell_write(self, row, col, value):
+#            if self._type == 'xls':
+#                self._sheet.write(row, col, value)
+#            elif self._type == 'xlsx':
+#                self._sheet.cell(row=row + 1, column=col + 1).value = value
+#            elif self._type == 'csv':
+#                self._sheet[row][col] = value
+
 
 #
 # replace parent string in filenames

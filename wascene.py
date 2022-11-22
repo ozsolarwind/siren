@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2021 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2022 Sustainable Energy Now Inc., Angus King
 #
 #  wascene.py - This file is part of SIREN.
 #
@@ -19,14 +19,10 @@
 #  <http://www.gnu.org/licenses/>.
 #
 
-import csv
 import datetime
 from math import sin, cos, pi, sqrt, degrees, radians, asin, atan2
 import os
 import sys
-import xlrd
-xlrd.xlsx.ensure_elementtree_imported(False, None)
-xlrd.xlsx.Element_has_iter = True
 import configparser   # decode .ini file
 from PyQt5 import QtCore, QtGui, QtWidgets
 try:
@@ -36,7 +32,7 @@ except:
 from towns import Towns
 from getmodels import getModelFile
 from grid import Grid, Grid_Boundary, Grid_Zones, Line
-from senutils import getParents, getUser, techClean
+from senutils import getParents, getUser, techClean, WorkBook
 from station import Station, Stations
 from dijkstra_4 import Shortest
 
@@ -706,119 +702,88 @@ class WAScene(QtWidgets.QGraphicsScene):
             scen_filter = scenario
         if os.path.exists(scen_file):
             description = ''
-            if scen_file[-4:] == '.xls' or scen_file[-5:] == '.xlsx' or \
-             scen_file[-5:] == '.xls~' or scen_file[-6:] == '.xlsx~':
-                var = {}
-                workbook = xlrd.open_workbook(scen_file)
-                worksheet = workbook.sheet_by_index(0)
-                num_rows = worksheet.nrows - 1
-                num_cols = worksheet.ncols - 1
-                if worksheet.cell_value(0, 0) == 'Description:' or worksheet.cell_value(0, 0) == 'Comment:':
-                    curr_row = 1
-                    description = worksheet.cell_value(0, 1)
-                else:
-                    curr_row = 0
-#               get column names
-                curr_col = -1
-                while curr_col < num_cols:
-                    curr_col += 1
-                    var[worksheet.cell_value(curr_row, curr_col)] = curr_col
-                while curr_row < num_rows:
-                    curr_row += 1
-                    try:
-                        new_st = Station(str(worksheet.cell_value(curr_row, var['Station Name'])),
-                                         str(worksheet.cell_value(curr_row, var['Technology'])),
-                                         worksheet.cell_value(curr_row, var['Latitude']),
-                                         worksheet.cell_value(curr_row, var['Longitude']),
-                                         worksheet.cell_value(curr_row, var['Maximum Capacity (MW)']),
-                                         str(worksheet.cell_value(curr_row, var['Turbine'])),
-                                         worksheet.cell_value(curr_row, var['Rotor Diam']),
-                                         worksheet.cell_value(curr_row, var['No. turbines']),
-                                         worksheet.cell_value(curr_row, var['Area']),
-                                         scen_filter)
-                        name_ok = False
-                        new_name = new_st.name
-                        ctr = 0
-                        while not name_ok:
-                            for i in range(len(self._stations.stations)):
-                                if self._stations.stations[i].name == new_name:
-                                    ctr += 1
-                                    new_name = new_st.name + ' ' + str(ctr)
-                                    break
-                            else:
-                                name_ok = True
-                        if new_name != new_st.name:
-                            new_st.name = new_name
-                        if new_st.area == 0 or new_st.area == '':
-                            if new_st.technology == 'Wind':
-                                new_st.area = self.areas[new_st.technology] * float(new_st.no_turbines) * \
-                                              pow((new_st.rotor * .001), 2)
-                            else:
-                                new_st.area = self.areas[new_st.technology] * float(new_st.capacity)
-                        try:
-                            power_file = worksheet.cell_value(curr_row, var['Power File'])
-                            if power_file != '':
-                                new_st.power_file = power_file
-                        except:
-                            pass
-                        try:
-                            grid_line = worksheet.cell_value(curr_row, var['Grid Line'])
-                            if grid_line != '':
-                                new_st.grid_line = grid_line
-                        except:
-                            pass
-                        try:
-                            direction = worksheet.cell_value(curr_row, var['Direction'])
-                            if direction != '':
-                                new_st.direction = direction
-                        except:
-                            pass
-                        try:
-                            tilt = worksheet.cell_value(curr_row, var['Tilt'])
-                            if tilt != '':
-                                setattr(new_st, 'tilt', tilt)
-                        except:
-                            pass
-                        try:
-                            storage_hours = worksheet.cell_value(curr_row, var['Storage Hours'])
-                            if storage_hours != '':
-                                setattr(new_st, 'storage_hours', storage_hours)
-                        except:
-                            pass
-                        self._stations.stations.append(new_st)
-                        self.addStation(self._stations.stations[-1])
-                    except:
-                        pass
+            var = {}
+            workbook = WorkBook()
+            workbook.open_workbook(scen_file)
+            worksheet = workbook.sheet_by_index(0)
+            num_rows = worksheet.nrows - 1
+            num_cols = worksheet.ncols - 1
+            if worksheet.cell_value(0, 0) == 'Description:' or worksheet.cell_value(0, 0) == 'Comment:':
+                curr_row = 1
+                description = worksheet.cell_value(0, 1)
             else:
-                scene = open(scen_file)
-                line = scene.readline()
-                if len(line) > 9 and line[:9] ==  'Comment:,' or len(line) > 13 and line[:13] == 'Description:,':
-                    if line[:9] ==  'Comment:,':
-                        description = line[9:]
-                    else:
-                        description = line[13:]
-                    if description[0] == '"':
-                        i = description.rfind('"')
-                        description = description[1:i - 1]
-                    else:
-                        bits = line.split(',')
-                        description = bits[1]
-                else:
-                    scene.seek(0)
-                new_stations = csv.DictReader(scene)
-                for st in new_stations:
-                    new_st = Station(st['Station Name'], st['Technology'], float(st['Latitude']),
-                             float(st['Longitude']), float(st['Maximum Capacity (MW)']),
-                             st['Turbine'], float(st['Rotor Diam']), int(st['No. turbines']), float(st['Area']), scen_filter)
-                    if new_st.area == 0:
+                curr_row = 0
+#           get column names
+            curr_col = -1
+            while curr_col < num_cols:
+                curr_col += 1
+                var[worksheet.cell_value(curr_row, curr_col)] = curr_col
+            while curr_row < num_rows:
+                curr_row += 1
+                try:
+                    new_st = Station(str(worksheet.cell_value(curr_row, var['Station Name'])),
+                                     str(worksheet.cell_value(curr_row, var['Technology'])),
+                                     worksheet.cell_value(curr_row, var['Latitude']),
+                                     worksheet.cell_value(curr_row, var['Longitude']),
+                                     worksheet.cell_value(curr_row, var['Maximum Capacity (MW)']),
+                                     str(worksheet.cell_value(curr_row, var['Turbine'])),
+                                     worksheet.cell_value(curr_row, var['Rotor Diam']),
+                                     worksheet.cell_value(curr_row, var['No. turbines']),
+                                     worksheet.cell_value(curr_row, var['Area']),
+                                     scen_filter)
+                    name_ok = False
+                    new_name = new_st.name
+                    ctr = 0
+                    while not name_ok:
+                        for i in range(len(self._stations.stations)):
+                            if self._stations.stations[i].name == new_name:
+                                ctr += 1
+                                new_name = new_st.name + ' ' + str(ctr)
+                                break
+                        else:
+                            name_ok = True
+                    if new_name != new_st.name:
+                        new_st.name = new_name
+                    if new_st.area == 0 or new_st.area == '':
                         if new_st.technology == 'Wind':
                             new_st.area = self.areas[new_st.technology] * float(new_st.no_turbines) * \
                                           pow((new_st.rotor * .001), 2)
                         else:
                             new_st.area = self.areas[new_st.technology] * float(new_st.capacity)
+                    try:
+                        power_file = worksheet.cell_value(curr_row, var['Power File'])
+                        if power_file != '':
+                            new_st.power_file = power_file
+                    except:
+                        pass
+                    try:
+                        grid_line = worksheet.cell_value(curr_row, var['Grid Line'])
+                        if grid_line != '':
+                            new_st.grid_line = grid_line
+                    except:
+                        pass
+                    try:
+                        direction = worksheet.cell_value(curr_row, var['Direction'])
+                        if direction != '':
+                            new_st.direction = direction
+                    except:
+                        pass
+                    try:
+                        tilt = worksheet.cell_value(curr_row, var['Tilt'])
+                        if tilt != '':
+                            setattr(new_st, 'tilt', tilt)
+                    except:
+                        pass
+                    try:
+                        storage_hours = worksheet.cell_value(curr_row, var['Storage Hours'])
+                        if storage_hours != '':
+                            setattr(new_st, 'storage_hours', storage_hours)
+                    except:
+                        pass
                     self._stations.stations.append(new_st)
                     self.addStation(self._stations.stations[-1])
-                scene.close()
+                except:
+                    pass
             self._scenarios.append([scen_filter, False, description])
 
     def _setupGrid(self):

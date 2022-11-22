@@ -25,13 +25,12 @@ import os
 import sys
 import ssc
 import time
-import xlrd
 
 import configparser  # decode .ini file
 from PyQt5 import Qt, QtCore, QtGui, QtWidgets
 
 from getmodels import getModelFile
-from senutils import getParents, getUser, techClean, extrapolateWind
+from senutils import getParents, getUser, techClean, extrapolateWind, WorkBook
 from powerclasses import *
 # import Station
 from turbine import Turbine
@@ -89,10 +88,6 @@ class SuperPower():
                             dist = dist1
         else:
             fils = []
-            if index_file[-4:] == '.xls' or index_file[-5:] == '.xlsx':
-                do_excel = True
-            else:
-                do_excel = False
             if self.default_files[technology] is None:
                 dft_file = index_file
                 if os.path.exists(dft_file):
@@ -100,41 +95,26 @@ class SuperPower():
                 else:
                     dft_file = folder + '/' + index_file
                 if os.path.exists(dft_file):
-                    if do_excel:
-                        self.default_files[technology] = xlrd.open_workbook(dft_file)
-                    else:
-                        self.default_files[technology] = open(dft_file)
+                    self.default_files[technology] = WorkBook()
+                    self.default_files[technology].open_workbook(dft_file, )
                 else:
                     return closest
-            else:
-                if do_excel:
-                    pass
-                else:
-                   self.default_files[technology].seek(0)
-            if do_excel:
-                var = {}
-                worksheet = self.default_files[technology].sheet_by_index(0)
-                num_rows = worksheet.nrows - 1
-                num_cols = worksheet.ncols - 1
-#               get column names
-                curr_col = -1
-                while curr_col < num_cols:
-                    curr_col += 1
-                    var[worksheet.cell_value(0, curr_col)] = curr_col
-                curr_row = 0
-                while curr_row < num_rows:
-                    curr_row += 1
-                    lat = worksheet.cell_value(curr_row, var['Latitude'])
-                    lon = worksheet.cell_value(curr_row, var['Longitude'])
-                    fil = worksheet.cell_value(curr_row, var['Filename'])
-                    fils.append([lat, lon, fil])
-            else:
-                dft_variables = csv.DictReader(self.default_files[technology])
-                for var in dft_variables:
-                    lat = float(var['Latitude'])
-                    lon = float(var['Longitude'])
-                    fil = var['Filename']
-                    fils.append([lat, lon, fil])
+            var = {}
+            worksheet = self.default_files[technology].sheet_by_index(0)
+            num_rows = worksheet.nrows - 1
+            num_cols = worksheet.ncols - 1
+#           get column names
+            curr_col = -1
+            while curr_col < num_cols:
+                curr_col += 1
+                var[worksheet.cell_value(0, curr_col)] = curr_col
+            curr_row = 0
+            while curr_row < num_rows:
+                curr_row += 1
+                lat = worksheet.cell_value(curr_row, var['Latitude'])
+                lon = worksheet.cell_value(curr_row, var['Longitude'])
+                fil = worksheet.cell_value(curr_row, var['Filename'])
+                fils.append([lat, lon, fil])
             for fil in fils:
                 dist1 = self.haversine(fil[0], fil[1], latitude, longitude)
                 if dist1 < dist:
@@ -151,76 +131,45 @@ class SuperPower():
             technology = 'Wind'
         else:
             technology = station.technology
-        if self.defaults[technology][-4:] == '.xls' or \
-          self.defaults[technology][-5:] == '.xlsx':
-            do_excel = True
-        else:
-            do_excel = False
         if self.default_files[technology] is None:
             dft_file = self.variable_files + '/' + self.defaults[technology]
             if os.path.exists(dft_file):
-                if do_excel:
-                    self.default_files[technology] = xlrd.open_workbook(dft_file)
-                else:
-                    self.default_files[technology] = open(dft_file)
+                self.default_files[technology] = WorkBook()
+                self.default_files[technology].open_workbook(dft_file)
             else:
                 return
-        else:
-            if do_excel:
-                pass
-            else:
-                self.default_files[technology].seek(0)
-        if do_excel:
-            var = {}
-            worksheet = self.default_files[technology].sheet_by_index(0)
-            num_rows = worksheet.nrows - 1
-            num_cols = worksheet.ncols - 1
-#           get column names
-            curr_col = -1
-            while curr_col < num_cols:
-                curr_col += 1
-                var[worksheet.cell_value(0, curr_col)] = curr_col
-            curr_row = 0
-            while curr_row < num_rows:
-                curr_row += 1
-                if (worksheet.cell_value(curr_row, var['TYPE']) == 'SSC_INPUT' or \
-                  worksheet.cell_value(curr_row, var['TYPE']) == 'SSC_INOUT') and \
-                  worksheet.cell_value(curr_row, var['DEFAULT']) != '' and \
-                  str(worksheet.cell_value(curr_row, var['DEFAULT'])).lower() != 'input':
-                    if worksheet.cell_value(curr_row, var['DATA']) == 'SSC_STRING':
-                        self.data.set_string(worksheet.cell_value(curr_row, var['NAME']).encode('utf-8'),
-                          worksheet.cell_value(curr_row, var['DEFAULT']).encode('utf-8'))
-                    elif worksheet.cell_value(curr_row, var['DATA']) == 'SSC_ARRAY':
-                        arry = split_array(worksheet.cell_value(curr_row, var['DEFAULT']))
-                        self.data.set_array(worksheet.cell_value(curr_row, var['NAME']).encode('utf-8'), arry)
-                    elif worksheet.cell_value(curr_row, var['DATA']) == 'SSC_NUMBER':
-                        if isinstance(worksheet.cell_value(curr_row, var['DEFAULT']), float):
-                            self.data.set_number(worksheet.cell_value(curr_row, var['NAME']).encode('utf-8'),
-                              float(worksheet.cell_value(curr_row, var['DEFAULT'])))
-                        else:
-                            self.data.set_number(worksheet.cell_value(curr_row, var['NAME']).encode('utf-8'),
-                              worksheet.cell_value(curr_row, int(var['DEFAULT'])))
-                    elif worksheet.cell_value(curr_row, var['DATA']) == 'SSC_MATRIX':
-                        mtrx = split_matrix(worksheet.cell_value(curr_row, var['DEFAULT']))
-                        self.data.set_matrix(worksheet.cell_value(curr_row, var['NAME']).encode('utf-8'), mtrx)
-        else:
-            dft_variables = csv.DictReader(self.default_files[technology])
-            for var in dft_variables:
-                if (var['TYPE'] == 'SSC_INPUT' or var['TYPE'] == 'SSC_INOUT') and \
-                  var['DEFAULT'] != '' and var['DEFAULT'].lower() != 'input':
-                    if var['DATA'] == 'SSC_STRING':
-                        self.data.set_string(var['NAME'].encode('utf-8'), var['DEFAULT'].encode('utf-8'))
-                    elif var['DATA'] == 'SSC_ARRAY':
-                        arry = split_array(var['DEFAULT'])
-                        self.data.set_array(var['NAME'].encode('utf-8'), arry)
-                    elif var['DATA'] == 'SSC_NUMBER':
-                        if var['DEFAULT'].find('.') >= 0:
-                            self.data.set_number(var['NAME'].encode('utf-8'), float(var['DEFAULT']))
-                        else:
-                            self.data.set_number(var['NAME'].encode('utf-8'), int(var['DEFAULT']))
-                    elif var['DATA'] == 'SSC_MATRIX':
-                        mtrx = split_matrix(var['DEFAULT'])
-                        self.data.set_matrix(var['NAME'].encode('utf-8'), mtrx)
+        var = {}
+        worksheet = self.default_files[technology].sheet_by_index(0)
+        num_rows = worksheet.nrows - 1
+        num_cols = worksheet.ncols - 1
+#       get column names
+        curr_col = -1
+        while curr_col < num_cols:
+            curr_col += 1
+            var[worksheet.cell_value(0, curr_col)] = curr_col
+        curr_row = 0
+        while curr_row < num_rows:
+            curr_row += 1
+            if (worksheet.cell_value(curr_row, var['TYPE']) == 'SSC_INPUT' or \
+              worksheet.cell_value(curr_row, var['TYPE']) == 'SSC_INOUT') and \
+              worksheet.cell_value(curr_row, var['DEFAULT']) != '' and \
+              str(worksheet.cell_value(curr_row, var['DEFAULT'])).lower() != 'input':
+                if worksheet.cell_value(curr_row, var['DATA']) == 'SSC_STRING':
+                    self.data.set_string(worksheet.cell_value(curr_row, var['NAME']).encode('utf-8'),
+                      worksheet.cell_value(curr_row, var['DEFAULT']).encode('utf-8'))
+                elif worksheet.cell_value(curr_row, var['DATA']) == 'SSC_ARRAY':
+                    arry = split_array(worksheet.cell_value(curr_row, var['DEFAULT']))
+                    self.data.set_array(worksheet.cell_value(curr_row, var['NAME']).encode('utf-8'), arry)
+                elif worksheet.cell_value(curr_row, var['DATA']) == 'SSC_NUMBER':
+                    if isinstance(worksheet.cell_value(curr_row, var['DEFAULT']), float):
+                        self.data.set_number(worksheet.cell_value(curr_row, var['NAME']).encode('utf-8'),
+                          float(worksheet.cell_value(curr_row, var['DEFAULT'])))
+                    else:
+                        self.data.set_number(worksheet.cell_value(curr_row, var['NAME']).encode('utf-8'),
+                          worksheet.cell_value(curr_row, int(var['DEFAULT'])))
+                elif worksheet.cell_value(curr_row, var['DATA']) == 'SSC_MATRIX':
+                    mtrx = split_matrix(worksheet.cell_value(curr_row, var['DEFAULT']))
+                    self.data.set_matrix(worksheet.cell_value(curr_row, var['NAME']).encode('utf-8'), mtrx)
 
     def debug_sam(self, name, tech, module, data, status):
         data_typs = ['invalid', 'string', 'number', 'array', 'matrix', 'table']
@@ -773,19 +722,30 @@ class SuperPower():
                 return None
 
         if self.plots['actual'] and self.actual_power != '':
-            if self.actual_power[-4:] == '.xls' or self.actual_power[-5:] == '.xlsx':
-                do_excel = True
-            else:
-                do_excel = False
             if self.default_files['actual'] is None:
                 if os.path.exists(self.scenarios + self.actual_power):
-                    if do_excel:
-                        self.default_files['actual'] = xlrd.open_workbook(self.scenarios +
-                                                       self.actual_power)
-                    else:
-                        self.default_files['actual'] = open(self.scenarios + self.actual_power)
-            if do_excel:
-                worksheet = self.default_files['actual'].sheet_by_index(0)
+                    self.default_files['actual'] = WorkBook()
+                    self.default_files['actual'].open_workbook(self.scenarios + self.actual_power)
+            worksheet = self.default_files['actual'].sheet_by_index(0)
+            for col in range(worksheet.ncols):
+                if worksheet.cell_value(0, col) == 'Hourly energy | (kWh)':
+                    break
+                if worksheet.cell_value(0, col) == 'Hourly Energy | (kW)':
+                    break
+                if worksheet.cell_value(0, col) == station.name:
+                    break
+            else:
+                col += 1
+            farmpwr = []
+            if col < worksheet.ncols:
+                for i in range(1, worksheet.nrows):
+                    farmpwr.append(worksheet.cell_value(i, col) * 1000.)
+            return farmpwr
+        elif station.power_file is not None and station.power_file != '':
+            if os.path.exists(self.scenarios + station.power_file):
+                xl_file = WorkBook()
+                xl_file.open_workbook(self.scenarios + station.power_file)
+                worksheet = xl_file.sheet_by_index(0)
                 for col in range(worksheet.ncols):
                     if worksheet.cell_value(0, col) == 'Hourly energy | (kWh)':
                         break
@@ -793,61 +753,10 @@ class SuperPower():
                         break
                     if worksheet.cell_value(0, col) == station.name:
                         break
-                else:
-                    col += 1
-                farmpwr = []
                 if col < worksheet.ncols:
                     for i in range(1, worksheet.nrows):
                         farmpwr.append(worksheet.cell_value(i, col) * 1000.)
                 return farmpwr
-            else:
-                self.default_files['actual'].seek(0)
-                pwr_data = csv.DictReader(self.default_files[technology])
-                try:
-                    h = pwr_data.fieldnames.index('Hourly energy | (kWh)')
-                except:
-                    try:
-                        h = pwr_data.fieldnames.index('Hourly Energy | (kW)')
-                    except:
-                        try:
-                            h = pwr_data.fieldnames.index('Power generated by system | (kW)')
-                        except:
-                            h = pwr_data.fieldnames.index(station.name)
-                for data in pwr_data:
-                    farmpwr.append(float(data[pwr_data.fieldnames[h]]))
-                return farmpwr
-        elif station.power_file is not None and station.power_file != '':
-            if os.path.exists(self.scenarios + station.power_file):
-                if station.power_file[-4:] == '.csv':
-                    csv_file = open(self.scenarios + station.power_file, 'r')
-                    pwr_data = csv.DictReader(csv_file)
-                    try:
-                        h = pwr_data.fieldnames.index('Hourly energy | (kWh)')
-                    except:
-                        try:
-                            h = pwr_data.fieldnames.index('Hourly Energy | (kW)')
-                        except:
-                            try:
-                                h = pwr_data.fieldnames.index('Power generated by system | (kW)')
-                            except:
-                                h = pwr_data.fieldnames.index(station.name)
-                    for data in pwr_data:
-                        farmpwr.append(float(data[pwr_data.fieldnames[h]]))
-                    return farmpwr
-                else:
-                    xl_file = xlrd.open_workbook(self.scenarios + station.power_file)
-                    worksheet = xl_file.sheet_by_index(0)
-                    for col in range(worksheet.ncols):
-                        if worksheet.cell_value(0, col) == 'Hourly energy | (kWh)':
-                            break
-                        if worksheet.cell_value(0, col) == 'Hourly Energy | (kW)':
-                            break
-                        if worksheet.cell_value(0, col) == station.name:
-                            break
-                    if col < worksheet.ncols:
-                        for i in range(1, worksheet.nrows):
-                            farmpwr.append(worksheet.cell_value(i, col) * 1000.)
-                    return farmpwr
         if station.capacity == 0:
             return None
         if self.status:

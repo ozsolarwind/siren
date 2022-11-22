@@ -44,13 +44,10 @@ from openpyxl.chart import (
 )
 import random
 import shutil
-from senutils import ClickableQLabel, getParents, getUser, techClean
+from senutils import ClickableQLabel, getParents, getUser, techClean, WorkBook
 from editini import EdtDialog, SaveIni
 from floaters import ProgressBar, FloatStatus
 from getmodels import getModelFile
-import xlrd
-xlrd.xlsx.ensure_elementtree_imported(False, None)
-xlrd.xlsx.Element_has_iter = True
 import configparser  # decode .ini file
 from zoompan import ZoomPanX
 try:
@@ -970,7 +967,8 @@ class powerMatch(QtWidgets.QWidget):
                 self.sheets[i] = QtWidgets.QComboBox()
                 try:
                     curfile = self.get_filename(ifiles[i])
-                    ts = xlrd.open_workbook(curfile, on_demand=True)
+                    ts = WorkBook()
+                    ts.open_workbook(curfile)
                     ndx = 0
                     j = -1
                     for sht in ts.sheet_names():
@@ -1194,7 +1192,8 @@ class powerMatch(QtWidgets.QWidget):
                     self.generators = None
                 else:
                     self.optimisation = None
-                ts = xlrd.open_workbook(newfile, on_demand=True)
+                ts = WorkBook()
+                ts.open_workbook(newfile)
                 ndx = 0
                 self.sheets[i].clear()
                 j = -1
@@ -1239,7 +1238,8 @@ class powerMatch(QtWidgets.QWidget):
             return # probably file changed
         self.setStatus('')
         newfile = self.get_filename(self.files[i].text())
-        ts = xlrd.open_workbook(newfile, on_demand=True)
+        ts = WorkBook()
+        ts.open_workbook(newfile)
         ws = ts.sheet_by_name(self.sheets[i].currentText())
         self.setStatus('Sheet ' + self.sheets[i].currentText() + ' loaded')
         if i == C:
@@ -1415,7 +1415,8 @@ class powerMatch(QtWidgets.QWidget):
             pass
         else:
             try:
-                ts = xlrd.open_workbook(self.get_filename(self.files[it].text()))
+                ts = WorkBook()
+                ts.open_workbook(self.get_filename(self.files[it].text()))
                 try:
                     sht = self.sheets[it].currentText()
                 except:
@@ -1852,7 +1853,8 @@ class powerMatch(QtWidgets.QWidget):
         err_msg = ''
         if self.constraints is None:
             try:
-                ts = xlrd.open_workbook(self.get_filename(self.files[C].text()))
+                ts = WorkBook()
+                ts.open_workbook(self.get_filename(self.files[C].text()))
                 ws = ts.sheet_by_name(self.sheets[C].currentText())
                 self.getConstraints(ws)
                 ts.release_resources()
@@ -1865,7 +1867,8 @@ class powerMatch(QtWidgets.QWidget):
                 self.getConstraints(None)
         if self.generators is None:
             try:
-                ts = xlrd.open_workbook(self.get_filename(self.files[G].text()))
+                ts = WorkBook()
+                ts.open_workbook(self.get_filename(self.files[G].text()))
                 ws = ts.sheet_by_name(self.sheets[G].currentText())
                 self.getGenerators(ws)
                 ts.release_resources()
@@ -1883,14 +1886,15 @@ class powerMatch(QtWidgets.QWidget):
                     err_msg = 'Error accessing Generators'
                 self.getGenerators(None)
         if option == 'B': # has to be xlsx workbook
-            ts = xlrd.open_workbook(self.get_filename(self.files[B].text()))
             try:
-                ts = xlrd.open_workbook(self.get_filename(self.files[B].text()))
+                ts = WorkBook()
+                ts.open_workbook(self.get_filename(self.files[B].text()))
                 ws = ts.sheet_by_index(0)
                 if ws.ncols > 1000:
                     ts.release_resources()
                     self.clean_batch_sheet()
-                    ts = xlrd.open_workbook(self.get_filename(self.files[B].text()))
+                    ts = WorkBook()
+                    ts.open_workbook(self.get_filename(self.files[B].text()))
                     ws = ts.sheet_by_index(0)
                 ok = self.getBatch(ws)
                 ts.release_resources()
@@ -1903,7 +1907,8 @@ class powerMatch(QtWidgets.QWidget):
                 err_msg = 'Error accessing Batch file ' + str(e)
         if option == 'O' and self.optimisation is None:
             try:
-                ts = xlrd.open_workbook(self.get_filename(self.files[O].text()))
+                ts = WorkBook()
+                ts.open_workbook(self.get_filename(self.files[O].text()))
                 ws = ts.sheet_by_name(self.sheets[O].currentText())
                 self.getOptimisation(ws)
                 ts.release_resources()

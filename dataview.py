@@ -19,8 +19,6 @@
 #  <http://www.gnu.org/licenses/>.
 #
 
-import csv
-import openpyxl as oxl
 import os
 import sys
 import time
@@ -28,120 +26,14 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.Qt import QColor
 #
 import configparser   # decode .ini file
-import xlrd
-#xlrd.xlsx.ensure_elementtree_imported(False, None)
-#xlrd.xlsx.Element_has_iter = True
 import displayobject
 from editini import SaveIni
 from getmodels import getModelFile
-from senutils import ClickableQLabel, getParents, getUser, strSplit, techClean
+from senutils import ClickableQLabel, getParents, getUser, strSplit, techClean, WorkBook
 
 def rreplace(s, old, new, occurrence):
     li = s.rsplit(old, occurrence)
     return new.join(li)
-
-
-class WorkBook(object):
-    def __init__(self):
-        self._book = None
-        self._sheet = None
-        self._sheet_names = []
-        self._type = None
-        self._nrows = 0
-        self._ncols = 0
-
-    def open_workbook(self, filename=None, on_demand=False):
-        if not os.path.exists(filename):
-            raise Exception('File not found')
-        self._type = filename[filename.rfind('.') + 1:]
-        try:
-            if self._type == 'xls':
-                self._book = xlrd.open_workbook(filename, on_demand=True)
-                self._sheet_names = self._book.sheet_names()
-            elif self._type == 'xlsx':
-                self._book = oxl.load_workbook(filename, data_only=True)
-                self._sheet_names = self._book.sheetnames
-            elif self._type == 'csv':
-                dataview = open(filename)
-                things = csv.DictReader(dataview)
-                self._sheet_names = ['n/a']
-                self._worksheet = [[]]
-                for key in things.fieldnames:
-                    self._worksheet[-1].append(key)
-                for cell in things:
-                    self._worksheet.append([])
-                    for key in things.fieldnames:
-                        if cell[key].isdigit():
-                             self._worksheet[-1].append(int(cell[key]))
-                        else:
-                             try:
-                                 self._worksheet[-1].append(float(cell[key]))
-                             except:
-                                 self._worksheet[-1].append(cell[key])
-                dataview.close()
-                self.nrows = len(self._worksheet)
-                self.ncols = len(self._worksheet[0])
-        except:
-            raise Exception('Error opening file')
-
-    def release_resources(self):
-        if self._type == 'xls':
-            self._book.release_resources()
-
-    def sheet_names(self):
-        return self._sheet_names[:]
-
-    def sheet_by_index(self, sheetx):
-        return self.get_sheet(sheetx)
-
-    def sheet_by_name(self, sheet_name):
-        try:
-            sheetx = self._sheet_names.index(sheet_name)
-        except ValueError:
-            raise Exception('No sheet named <%r>' % sheet_name)
-        return self.sheet_by_index(sheetx)
-
-    def get_sheet(self, sheetx):
-        self._sheet = self.WorkSheet(sheetx, self._type)
-        try:
-            if self._type == 'xls':
-                self._sheet._sheet = self._book.sheet_by_index(sheetx)
-                self._sheet.name = self._book.sheet_names()[sheetx]
-                self._sheet.nrows = self._sheet._sheet.nrows
-                self._sheet.ncols = self._sheet._sheet.ncols
-            elif self._type == 'xlsx':
-                self._sheet._sheet = self._book.worksheets[sheetx]
-                self._sheet.name = self._book.sheetnames[sheetx]
-                self._sheet.nrows = self._sheet._sheet.max_row
-                self._sheet.ncols = self._sheet._sheet.max_column
-            elif self._type == 'csv':
-              #  self._sheet = self._book.worksheets[sheetx]
-                self._sheet.name = 'n/a'
-                self._sheet._sheet = self._worksheet
-                self._sheet.nrows = len(self._sheet._sheet)
-                try:
-                    self._sheet.ncols = len(self._sheet._sheet[0])
-                except:
-                    self._sheet.ncols = 0
-        except:
-            raise Exception('Error accessing sheet')
-        return self._sheet
-
-    class WorkSheet(object):
-        def __init__(self, sheet, typ):
-            self.name = sheet
-            self._sheet = None
-            self.nrows = 0
-            self.ncols = 0
-            self._type = typ
-
-        def cell_value(self, row, col):
-            if self._type == 'xls':
-                return self._sheet.cell_value(row, col)
-            elif self._type == 'xlsx':
-                return self._sheet.cell(row=row + 1, column=col + 1).value
-            elif self._type == 'csv':
-                return self._sheet[row][col]
 
 
 class DataView(QtWidgets.QDialog):
@@ -646,9 +538,9 @@ class DataView(QtWidgets.QDialog):
         self.book = WorkBook()
         if 1 == 1: #try:
             if os.path.exists(ifile):
-                self.book.open_workbook(ifile, on_demand=True)
+                self.book.open_workbook(ifile)
             else:
-                self.book.open_workbook(self.scenarios + ifile, on_demand=True)
+                self.book.open_workbook(self.scenarios + ifile)
         else: #except:
             self.log.setText("Can't open file - " + ifile)
             return
@@ -727,6 +619,11 @@ class DataView(QtWidgets.QDialog):
     def setSheet(self, isheet=''):
         if isheet == '':
             isheet = self.book.sheet_names()[0]
+            try:
+                if self.book.sheet_names()[0] == 'Exclude':
+                    isheet = self.book.sheet_names()[1]
+            except:
+                pass
         ndx = 0
         self.sheet.clear()
         j = -1
@@ -1047,6 +944,9 @@ class DataView(QtWidgets.QDialog):
                         self.maximums[keys[-1]][1].setText('')
                 else:
                     self.maximums[keys[-1]][0] = 0
+        if len(cols) == 0:
+            self.log.setText('No data to display')
+            return
         if len(cols) > 1 and self.multiple.isChecked():
             multiple = True
         else:

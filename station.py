@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2021 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2022 Sustainable Energy Now Inc., Angus King
 #
 #  station.py - This file is part of SIREN.
 #
@@ -23,28 +23,26 @@ import csv
 import os
 import sys
 from math import radians, cos, sin, asin, sqrt, pow
-import xlrd
 
 import configparser   # decode .ini file
 
 from getmodels import getModelFile
-from senutils import getParents, getUser, techClean
+from senutils import getParents, getUser, techClean, WorkBook
 
-
-def within_map(x, y, poly):
+def within_map(y, x, poly):
     n = len(poly)
     inside = False
-    p1x, p1y = poly[0]
+    p1y, p1x = poly[0]
     for i in range(n + 1):
-        p2x, p2y = poly[i % n]
-        if y > min(p1y, p2y):
-            if y <= max(p1y, p2y):
-                if x <= max(p1x, p2x):
-                    if p1y != p2y:
-                        xints = (y - p1y) * (p2x - p1x) / (p2y - p1y) + p1x
-                    if p1x == p2x or x <= xints:
+        p2y, p2x = poly[i % n]
+        if x > min(p1x, p2x):
+            if x <= max(p1x, p2x):
+                if y <= max(p1y, p2y):
+                    if p1x != p2x:
+                        yints = (x - p1x) * (p2y - p1y) / (p2x - p1x) + p1y
+                    if p1y == p2y or y <= yints:
                         inside = not inside
-        p1x, p1y = p2x, p2y
+        p1y, p1x = p2y, p2x
     return inside
 
 
@@ -426,7 +424,8 @@ class Stations:
                     facile.close()
                 else:   # assume excel and in our format
                     var = {}
-                    workbook = xlrd.open_workbook(fac_file)
+                    workbook = WorkBook()
+                    workbook.open_workbook(fac_file)
                     worksheet = workbook.sheet_by_index(0)
                     num_rows = worksheet.nrows - 1
                     num_cols = worksheet.ncols - 1

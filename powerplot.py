@@ -28,18 +28,14 @@ import matplotlib
 matplotlib.use('TkAgg')
 from matplotlib.font_manager import FontProperties
 import numpy as np
-import openpyxl as oxl
 import pylab as plt
-import xlrd
-xlrd.xlsx.ensure_elementtree_imported(False, None)
-xlrd.xlsx.Element_has_iter = True
 import displayobject
 from colours import Colours
 from credits import fileVersion
 from displaytable import Table
 from editini import SaveIni
 from getmodels import getModelFile
-from senutils import ClickableQLabel, getParents, getUser, strSplit, techClean
+from senutils import ClickableQLabel, getParents, getUser, strSplit, techClean, WorkBook
 from zoompan import ZoomPanX
 
 
@@ -94,77 +90,6 @@ class ListWidget(QtWidgets.QListWidget):
              #   r = self.row(item)
                 self.takeItem(row)
 
-
-class WorkBook(object):
-    def __init__(self):
-        self._book = None
-        self._sheet = None
-        self._sheet_names = []
-        self._type = None
-        self._nrows = 0
-        self._ncols = 0
-
-    def open_workbook(self, filename=None, on_demand=False):
-        if not os.path.exists(filename):
-            raise Exception('File not found')
-        self._type = filename[filename.rfind('.') + 1:]
-        try:
-            if self._type == 'xls':
-                self._book = xlrd.open_workbook(filename, on_demand=True)
-                self._sheet_names = self._book.sheet_names()
-            elif self._type == 'xlsx':
-                self._book = oxl.load_workbook(filename) # to ignore formulae add data_only=True
-                self._sheet_names = self._book.sheetnames
-        except:
-            raise Exception('Error opening file')
-
-    def release_resources(self):
-        if self._type == 'xls':
-            self._book.release_resources()
-
-    def sheet_names(self):
-        return self._sheet_names[:]
-
-    def sheet_by_index(self, sheetx):
-        return self.get_sheet(sheetx)
-
-    def sheet_by_name(self, sheet_name):
-        try:
-            sheetx = self._sheet_names.index(sheet_name)
-        except ValueError:
-            raise Exception('No sheet named <%r>' % sheet_name)
-        return self.sheet_by_index(sheetx)
-
-    def get_sheet(self, sheetx):
-        self._sheet = self.WorkSheet(sheetx, self._type)
-        try:
-            if self._type == 'xls':
-                self._sheet._sheet = self._book.sheet_by_index(sheetx)
-                self._sheet.name = self._book.sheet_names()[sheetx]
-                self._sheet.nrows = self._sheet._sheet.nrows
-                self._sheet.ncols = self._sheet._sheet.ncols
-            elif self._type == 'xlsx':
-                self._sheet._sheet = self._book.worksheets[sheetx]
-                self._sheet.name = self._book.sheetnames[sheetx]
-                self._sheet.nrows = self._sheet._sheet.max_row
-                self._sheet.ncols = self._sheet._sheet.max_column
-        except:
-            raise Exception('Error accessing sheet')
-        return self._sheet
-
-    class WorkSheet(object):
-        def __init__(self, sheet, typ):
-            self._sheet = None
-            self.name = sheet
-            self.nrows = 0
-            self.ncols = 0
-            self._type = typ
-
-        def cell_value(self, row, col):
-            if self._type == 'xls':
-                return self._sheet.cell_value(row, col)
-            elif self._type == 'xlsx':
-                return self._sheet.cell(row=row + 1, column=col + 1).value
 
 class PowerPlot(QtWidgets.QWidget):
 
@@ -649,7 +574,7 @@ class PowerPlot(QtWidgets.QWidget):
         if self.book is None:
             try:
                 self.book = WorkBook()
-                self.book.open_workbook(ifile, on_demand=True)
+                self.book.open_workbook(ifile)
             except:
                 self.log.setText("Can't open file - " + ifile)
                 return
@@ -668,7 +593,7 @@ class PowerPlot(QtWidgets.QWidget):
         self.toprow = None
         if self.book is None:
             self.book = WorkBook()
-            self.book.open_workbook(newfile, on_demand=True)
+            self.book.open_workbook(newfile)
         isheet = self.sheet.currentText()
         if isheet not in self.book.sheet_names():
             self.log.setText("Can't find sheet - " + isheet)
@@ -998,6 +923,7 @@ class PowerPlot(QtWidgets.QWidget):
                         self.toprow = [row, row]
                     self.rows = ws.nrows - (row + 1)
                     break
+                row += 1
         try:
             year = int(ws.cell_value(self.toprow[1] + 1, 1)[:4])
             if year % 4 == 0 and year % 100 != 0 or year % 400 == 0:

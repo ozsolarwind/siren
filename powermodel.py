@@ -24,13 +24,11 @@ from math import asin, ceil, cos, fabs, floor, log10, pow, radians, sin, sqrt
 import pylab as plt
 from matplotlib.font_manager import FontProperties
 import numpy as np
-import csv
 import openpyxl as oxl
 import os
 import sys
 import ssc
 import time
-import xlrd
 import xlwt
 
 import configparser  # decode .ini file

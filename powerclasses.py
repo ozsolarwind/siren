@@ -26,12 +26,11 @@ try:
     import ssc
 except:
     pass
-import xlrd
 
 import configparser  # decode .ini file
 from PyQt5 import Qt, QtCore, QtGui, QtWidgets
 
-from senutils import getParents, getUser, techClean
+from senutils import getParents, getUser, techClean, WorkBook
 import displayobject
 from editini import SaveIni
 from getmodels import getModelFile
@@ -1023,10 +1022,11 @@ class FinancialModel():
         data = ssc.Data()
         var = {}
         try:
-            workfile = xlrd.open_workbook(xl_file)
+            workbook = WorkBook()
+            workbook.open_workbook(xl_file)
         except:
             return None, None
-        worksheet = workfile.sheet_by_index(0)
+        worksheet = workbook.sheet_by_index(0)
         num_rows = worksheet.nrows - 1
         num_cols = worksheet.ncols - 1
    # get column names

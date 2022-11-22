@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2021 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2022 Sustainable Energy Now Inc., Angus King
 #
 #  viewresource.py - This file is part of SIREN.
 #
@@ -24,11 +24,11 @@ import sys
 import time
 from PyQt5 import QtCore, QtGui, QtWidgets
 import configparser   # decode .ini file
-import xlrd
 
 import displayobject
 from editini import SaveIni
 from getmodels import getModelFile
+from senutils import WorkBook
 
 
 def gradient(lo, hi, steps=10):
@@ -651,74 +651,54 @@ class Resource(QtWidgets.QDialog):
         else:
             new_file = self.scene.resource_grid.replace('$YEAR$', period[:4])
         self.resource_items = []
-        if new_file[-4:] == '.xls' or new_file[-5:] == '.xlsx':
-            if new_file != self.resource_file:
-                if os.path.exists(new_file):
-                    self.resource_var = {}
-                    workbook = xlrd.open_workbook(new_file)
-                    self.resource_worksheet = workbook.sheet_by_index(0)
-                    num_cols = self.resource_worksheet.ncols - 1
-#                   get column names
-                    curr_col = -1
-                    while curr_col < num_cols:
-                        curr_col += 1
-                        self.resource_var[self.resource_worksheet.cell_value(0, curr_col)] = curr_col
-                    self.resource_file = new_file
-                else:
-                    return
-            num_rows = self.resource_worksheet.nrows - 1
-            num_cols = self.resource_worksheet.ncols - 1
-            lo_valu = 99999.
-            hi_valu = 0.
-            calc_minmax = True
-            cells = []
-            curr_row = 1
-            if self.resource_worksheet.cell_value(curr_row, self.resource_var['Period']) == 'Min.' and \
-              self.resource_worksheet.cell_value(curr_row + 1, self.resource_var['Period']) == 'Max.':
-                calc_minmax = False
-                lo_valu = self.resource_worksheet.cell_value(curr_row, self.resource_var[variable])
-                hi_valu = self.resource_worksheet.cell_value(curr_row + 1, self.resource_var[variable])
-                curr_row += 1
-            while curr_row < num_rows:
-                curr_row += 1
-                a_lat = float(self.resource_worksheet.cell_value(curr_row, self.resource_var['Latitude']))
-                a_lon = float(self.resource_worksheet.cell_value(curr_row, self.resource_var['Longitude']))
-                if in_map(a_lat - 0.25, a_lat + 0.25, self.scene.map_lower_right[0],
-                          self.scene.map_upper_left[0]) \
-                  and in_map(a_lon - 0.3333, a_lon + 0.3333,
-                          self.scene.map_upper_left[1], self.scene.map_lower_right[1]):
-                    try:
-                        if self.resource_worksheet.cell_value(curr_row, self.resource_var['Period']) == period:
-                            cells.append([float(self.resource_worksheet.cell_value(curr_row, self.resource_var['Latitude'])),
-                                         float(self.resource_worksheet.cell_value(curr_row, self.resource_var['Longitude'])),
-                                         self.resource_worksheet.cell_value(curr_row, self.resource_var[variable])])
-                        if calc_minmax:
-                            if self.resource_worksheet.cell_value(curr_row, self.resource_var[variable]) < lo_valu:
-                                lo_valu = self.resource_worksheet.cell_value(curr_row, self.resource_var[variable])
-                            if self.resource_worksheet.cell_value(curr_row, self.resource_var[variable]) > hi_valu:
-                                hi_valu = self.resource_worksheet.cell_value(curr_row, self.resource_var[variable])
-                    except:
-                        pass
-        else:
+        if new_file != self.resource_file:
             if os.path.exists(new_file):
-                resource = open(new_file)
-                things = csv.DictReader(resource)
-                for cell in things:
-                    a_lat = float(cell['Latitude'])
-                    a_lon = float(cell['Longitude'])
-                    if in_map(a_lat - 0.25, a_lat + 0.25, self.scene().map_lower_right[0],
-                              self.scene().map_upper_left[0]) \
-                      and in_map(a_lon - 0.3333, a_lon + 0.3333,
-                              self.scene().map_upper_left[1], self.scene().map_lower_right[1]):
-                        if cell['Period'] == period:
-                            cells.append(cell['Latitude'], cell['Longitude'], cell[variable])
-                        if cell[variable] < lo_valu:
-                            lo_valu = cell[variable]
-                        if cell[variable] > hi_valu:
-                            hi_valu = cell[variable]
-                resource.close()
+                self.resource_var = {}
+                workbook = WorkBook()
+                workbook.open_workbook(new_file)
+                self.resource_worksheet = workbook.sheet_by_index(0)
+                num_cols = self.resource_worksheet.ncols - 1
+#                get column names
+                curr_col = -1
+                while curr_col < num_cols:
+                    curr_col += 1
+                    self.resource_var[self.resource_worksheet.cell_value(0, curr_col)] = curr_col
+                self.resource_file = new_file
             else:
                 return
+        num_rows = self.resource_worksheet.nrows - 1
+        num_cols = self.resource_worksheet.ncols - 1
+        lo_valu = 99999.
+        hi_valu = 0.
+        calc_minmax = True
+        cells = []
+        curr_row = 1
+        if self.resource_worksheet.cell_value(curr_row, self.resource_var['Period']) == 'Min.' and \
+          self.resource_worksheet.cell_value(curr_row + 1, self.resource_var['Period']) == 'Max.':
+            calc_minmax = False
+            lo_valu = self.resource_worksheet.cell_value(curr_row, self.resource_var[variable])
+            hi_valu = self.resource_worksheet.cell_value(curr_row + 1, self.resource_var[variable])
+            curr_row += 1
+        while curr_row < num_rows:
+            curr_row += 1
+            a_lat = float(self.resource_worksheet.cell_value(curr_row, self.resource_var['Latitude']))
+            a_lon = float(self.resource_worksheet.cell_value(curr_row, self.resource_var['Longitude']))
+            if in_map(a_lat - 0.25, a_lat + 0.25, self.scene.map_lower_right[0],
+                      self.scene.map_upper_left[0]) \
+              and in_map(a_lon - 0.3333, a_lon + 0.3333,
+                      self.scene.map_upper_left[1], self.scene.map_lower_right[1]):
+                try:
+                    if str(self.resource_worksheet.cell_value(curr_row, self.resource_var['Period'])) == period:
+                        cells.append([float(self.resource_worksheet.cell_value(curr_row, self.resource_var['Latitude'])),
+                                     float(self.resource_worksheet.cell_value(curr_row, self.resource_var['Longitude'])),
+                                     self.resource_worksheet.cell_value(curr_row, self.resource_var[variable])])
+                    if calc_minmax:
+                        if self.resource_worksheet.cell_value(curr_row, self.resource_var[variable]) < lo_valu:
+                            lo_valu = self.resource_worksheet.cell_value(curr_row, self.resource_var[variable])
+                        if self.resource_worksheet.cell_value(curr_row, self.resource_var[variable]) > hi_valu:
+                            hi_valu = self.resource_worksheet.cell_value(curr_row, self.resource_var[variable])
+                except:
+                    pass
         if steps > 0:
             incr = (hi_valu - lo_valu) / steps
         else:

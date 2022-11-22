@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2020 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2022 Sustainable Energy Now Inc., Angus King
 #
 #  plotweather.py - This file is part of SIREN.
 #
@@ -23,10 +23,8 @@ from math import asin, ceil, cos, radians, sin, sqrt
 import pylab as plt
 from matplotlib.font_manager import FontProperties
 import matplotlib.lines as mlines
-import csv
 import os
 import sys
-import xlrd
 
 import configparser  # decode .ini file
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -34,7 +32,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import displaytable
 from getmodels import getModelFile
 from zoompan import ZoomPanX
-from senutils import getParents, getUser
+from senutils import getParents, getUser, WorkBook
 from sammodels import getZenith
 
 the_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
@@ -179,31 +177,24 @@ class PlotWeather():
                 elif os.path.exists(folder + '/' + index_file):
                     ndx_file = folder + '/' + index_file
                 if ndx_file != '':
-                    if ndx_file[-4:] == '.xls' or ndx_file[-5:] == '.xlsx':
-                        var = {}
-                        xl_file = xlrd.open_workbook(ndx_file)
-                        worksheet = xl_file.sheet_by_index(0)
-                        num_rows = worksheet.nrows - 1
-                        num_cols = worksheet.ncols - 1
-#                       get column names
-                        curr_col = -1
-                        while curr_col < num_cols:
-                            curr_col += 1
-                            var[worksheet.cell_value(0, curr_col)] = curr_col
-                        curr_row = 0
-                        while curr_row < num_rows:
-                            curr_row += 1
-                            lat = worksheet.cell_value(curr_row, var['Latitude'])
-                            lon = worksheet.cell_value(curr_row, var['Longitude'])
-                            fil = worksheet.cell_value(curr_row, var['Filename'])
-                            fils.append([lat, lon, fil])
-                    else:
-                        dft_variables = csv.DictReader(open(ndx_file))
-                        for var in dft_variables:
-                            lat = float(var['Latitude'])
-                            lon = float(var['Longitude'])
-                            fil = var['Filename']
-                            fils.append([lat, lon, fil])
+                    w_file = WorkBook()
+                    w_file.open_workbook(ndx_file)
+                    worksheet = w_file.sheet_by_index(0)
+                    num_rows = worksheet.nrows - 1
+                    num_cols = worksheet.ncols - 1
+                    var = {}
+#                   get column names
+                    curr_col = -1
+                    while curr_col < num_cols:
+                        curr_col += 1
+                        var[worksheet.cell_value(0, curr_col)] = curr_col
+                    curr_row = 0
+                    while curr_row < num_rows:
+                        curr_row += 1
+                        lat = worksheet.cell_value(curr_row, var['Latitude'])
+                        lon = worksheet.cell_value(curr_row, var['Longitude'])
+                        fil = worksheet.cell_value(curr_row, var['Filename'])
+                        fils.append([lat, lon, fil])
                     for fil in fils:
                         dist1 = self.haversine(fil[0], fil[1], latitude, longitude)
                         if dist1 < dist:
