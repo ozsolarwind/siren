@@ -34,20 +34,20 @@ from senutils import getParents, getUser
 RADIUS = 6367.   # radius of earth in km
 
 
-def within_map(x, y, poly):
+def within_map(y, x, poly):
     n = len(poly)
     inside = False
-    p1x, p1y = poly[0]
+    p1y, p1x = poly[0]
     for i in range(n + 1):
-        p2x, p2y = poly[i % n]
-        if y > min(p1y, p2y):
-            if y <= max(p1y, p2y):
-                if x <= max(p1x, p2x):
-                    if p1y != p2y:
-                        xints = (y - p1y) * (p2x - p1x) / (p2y - p1y) + p1x
-                    if p1x == p2x or x <= xints:
+        p2y, p2x = poly[i % n]
+        if x > min(p1x, p2x):
+            if x <= max(p1x, p2x):
+                if y <= max(p1y, p2y):
+                    if p1x != p2x:
+                        yints = (x - p1x) * (p2y - p1y) / (p2x - p1x) + p1y
+                    if p1y == p2y or y <= yints:
                         inside = not inside
-        p1x, p1y = p2x, p2y
+        p1y, p1x = p2y, p2x
     return inside
 
 
