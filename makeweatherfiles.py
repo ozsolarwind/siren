@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2021 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2022 Sustainable Energy Now Inc., Angus King
 #
 #  makeweatherfiles.py - This file is part of SIREN.
 #
@@ -736,7 +736,7 @@ class makeWeather():
             txt = now.strftime('%Y-%m-%d %H:%M:%S') + '. Processing month %s wind\n' % str(mt + 1)
             self.log += txt
             if self.show_progress:
-                self.caller.progresslabel.setText(txt[:-1])
+                self.caller.progresslabel.setText(txt[19:-1])
                 if self.make_wind:
                     self.caller.progress(mt / 12.)
                 else:
@@ -1005,7 +1005,7 @@ class makeWeather():
             if self.show_progress:
                 self.caller.progress((mt + 24) / 36.)
                 self.caller.daybar.setMaximum(dys[mt])
-                self.caller.progresslabel.setText(txt[:-1])
+                self.caller.progresslabel.setText(txt[19:-1])
                 QtCore.QCoreApplication.processEvents()
             for dy in range(1, dys[mt] + 1):
                 if self.src_zone <= 0:
@@ -1378,7 +1378,7 @@ class getParms(QtWidgets.QWidget):
         self.progressbar.setValue(0)
         #6891c6 #CB6720
         self.progressbar.setStyleSheet('QProgressBar {border: 1px solid grey; border-radius: 2px; text-align: center;}' \
-                                       + 'QProgressBar::chunk { background-color: #6891c6;}')
+                                       + 'QProgressBar::chunk { background-color: #6891C6;}')
         self.grid.addWidget(self.progressbar, rw, 1, 1, 4)
         self.progressbar.setHidden(True)
         self.progresslabel = QtWidgets.QLabel('')
