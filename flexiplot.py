@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2020-2021 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2020-2022 Sustainable Energy Now Inc., Angus King
 #
 #  flexiplot.py - This file is possibly part of SIREN.
 #
@@ -27,14 +27,13 @@ from math import log10, ceil
 import matplotlib
 from matplotlib.font_manager import FontProperties
 import pylab as plt
-import pyexcel as pxl
 import random
 import displayobject
 from colours import Colours
 from credits import fileVersion
 from editini import EditSect, SaveIni
 from getmodels import getModelFile
-from senutils import ClickableQLabel, getParents, getUser, strSplit, techClean
+from senutils import ClickableQLabel, getParents, getUser, strSplit, techClean, WorkBook
 from zoompan import ZoomPanX
 
 col_letters = ' ABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -537,7 +536,7 @@ class FlexiPlot(QtWidgets.QWidget):
         self.columns = []
         if ifile != '':
             if self.book is not None:
-                pxl.free_resources()
+                self.book.release_resources()
                 self.book = None
             self.file.setText(ifile)
             if os.path.exists(ifile):
@@ -598,7 +597,7 @@ class FlexiPlot(QtWidgets.QWidget):
         newfile = QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', curfile)[0]
         if newfile != '':
             if self.book is not None:
-                pxl.free_resources()
+                self.book.release_resources()
                 self.book = None
             isheet = self.sheet.currentText()
             self.setSheet(newfile, isheet)
@@ -628,7 +627,8 @@ class FlexiPlot(QtWidgets.QWidget):
     def setSheet(self, ifile, isheet):
         if self.book is None:
             try:
-                self.book = pxl.get_book(file_name=ifile)
+                self.book = WorkBook()
+                self.book.open_workbook(ifile)
             except:
                 self.log.setText("Can't open file - " + ifile)
                 return
@@ -645,7 +645,13 @@ class FlexiPlot(QtWidgets.QWidget):
     def sheetChanged(self):
         self.log.setText('')
         if self.book is None:
-            self.book = pxl.get_book(file_name=ifile)
+            try:
+                self.book = WorkBook()
+                self.book.open_workbook(newfile)
+            except:
+                self.book = None
+                self.log.setText("Can't open file - " + newfile)
+                return
         isheet = self.sheet.currentText()
         if isheet not in self.book.sheet_names():
             self.log.setText("Can't find sheet - " + isheet)
@@ -674,7 +680,7 @@ class FlexiPlot(QtWidgets.QWidget):
 
     def setColumns(self, isheet, columns=[]):
         try:
-            ws = getattr(self.book, isheet.replace(' ', '_'))
+            ws = self.book.sheet_by_name(isheet)
         except:
             self.log.setText("Can't find sheet - " + isheet)
             return
@@ -693,7 +699,7 @@ class FlexiPlot(QtWidgets.QWidget):
         for row in range(roco[0], roco[2] + 1):
             for col in range(roco[1], roco[3] + 1):
                 try:
-                    column = str(ws[row, col]).replace('\n', ' ')
+                    column = str(ws.cell_value(row, col)).replace('\n', ' ')
                 except:
                     continue
                 self.columns.append(column) # need order of columns
@@ -725,7 +731,7 @@ class FlexiPlot(QtWidgets.QWidget):
 
     def doneClicked(self):
         if self.book is not None:
-            pxl.free_resources()
+            self.book.release_resources()
         if not self.updated and not self.colours_updated:
             self.close()
         self.saveConfig()
@@ -944,7 +950,7 @@ class FlexiPlot(QtWidgets.QWidget):
             matplotlib.rcParams['savefig.directory'] = self.file.text()[:i + 1]
         else:
             matplotlib.rcParams['savefig.directory'] = self.scenarios
-        ws = getattr(self.book, isheet.replace(' ', '_'))
+        ws = self.book.sheet_by_name(isheet)
         x = []
         xlabels = []
         rocox = get_range(self.xvalues[0])
@@ -958,25 +964,25 @@ class FlexiPlot(QtWidgets.QWidget):
             print('Assume in columns')
         ctr = 0
         if data_in_cols:
-            if rocox[2] >= ws.number_of_rows():
-                rocox[2] = ws.number_of_rows() - 1
+            if rocox[2] >= ws.nrows:
+                rocox[2] = ws.nrows - 1
             for row in range(rocox[0], rocox[2] + 1):
                 x.append(ctr)
                 ctr += 1
                 try:
-                    xlabels.append(str(int(ws[row, rocox[1]])))
+                    xlabels.append(str(int(ws.cell_value(row, rocox[1]))))
                 except:
-                    xlabels.append(ws[row, rocox[1]])
+                    xlabels.append(ws.cell_value(row, rocox[1]))
         else:
-            if rocox[3] >= ws.number_of_columns():
-                rocox[3] = ws.number_of_columns() - 1
+            if rocox[3] >= ws.ncols:
+                rocox[3] = ws.ncols - 1
             for col in range(rocox[1], rocox[3] + 1):
                 x.append(ctr)
                 ctr += 1
                 try:
-                    xlabels.append(str(int(ws[rocox[0], col])))
+                    xlabels.append(str(int(ws.cell_value(rocox[0], col))))
                 except:
-                    xlabels.append(ws[rocox[0], col])
+                    xlabels.append(ws.cell_value(rocox[0], col))
         data = []
         label = []
         miny = 0
@@ -1003,18 +1009,18 @@ class FlexiPlot(QtWidgets.QWidget):
             label.append(column)
             if data_in_cols:
                 for row in range(rocox[0], rocox[2] + 1):
-                    if ws[row, col] == '':
+                    if ws.cell_value(row, col) == '':
                         data[-1].append(0.)
                     else:
-                        data[-1].append(ws[row, col])
+                        data[-1].append(ws.cell_value(row, col))
                     miny = min(miny, data[-1][-1])
                     maxy = max(maxy, data[-1][-1])
             else:
                 for col in range(rocox[1], rocox[3] + 1):
-                    if ws[row, col] == '':
+                    if ws.cell_value(row, col) == '':
                         data[-1].append(0.)
                     else:
-                        data[-1].append(ws[row, col])
+                        data[-1].append(ws.cell_value(row, col))
                     try:
                         miny = min(miny, data[-1][-1])
                         maxy = max(maxy, data[-1][-1])
