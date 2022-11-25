@@ -22,13 +22,16 @@
 import configparser  # decode .ini file
 import os
 from PyQt5 import QtCore, QtGui, QtWidgets
+import subprocess
 import sys
 from math import log10, ceil
 import matplotlib
+matplotlib.use('TkAgg')
 from matplotlib.font_manager import FontProperties
 import pylab as plt
 import random
 import displayobject
+import displaytable
 from colours import Colours
 from credits import fileVersion
 from editini import EditSect, SaveIni
@@ -37,7 +40,7 @@ from senutils import ClickableQLabel, getParents, getUser, strSplit, techClean, 
 from zoompan import ZoomPanX
 
 col_letters = ' ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-def ss_col(col, base=1):
+def ss_col(col, base=0):
     if base == 1:
         col -= 1
     c1 = 0
@@ -262,15 +265,12 @@ class FlexiPlot(QtWidgets.QWidget):
         self.palette = True
         self.history = None
         self.max_files = 10
+        self.current_file = ''
         ifiles = self.get_flex_config()
         if len(ifiles) > 0:
             if self.history is None:
                 self.history = sorted(ifiles.keys(), reverse=True)
-            while ifile == '' and len(self.history) > 0:
-                try:
-                    ifile = ifiles[self.history[0]]
-                except:
-                    self.history.pop(0)
+            ifile = ifiles[self.history[0]]
         matplotlib.rcParams['savefig.directory'] = os.getcwd()
         self.grid = QtWidgets.QGridLayout()
         self.updated = False
@@ -292,6 +292,9 @@ class FlexiPlot(QtWidgets.QWidget):
         self.grid.addWidget(QtWidgets.QLabel('Sheet:'), rw, 0)
         self.sheet = QtWidgets.QComboBox()
         self.grid.addWidget(self.sheet, rw, 1, 1, 2)
+        openfile = QtWidgets.QPushButton('Open File')
+        self.grid.addWidget(openfile, rw, 3)
+        openfile.clicked.connect(self.openfileClicked)
         rw += 1
         self.grid.addWidget(QtWidgets.QLabel('Title:'), rw, 0)
         self.title = QtWidgets.QLineEdit('')
@@ -304,6 +307,9 @@ class FlexiPlot(QtWidgets.QWidget):
         self.seriesi.setEditable(True)
         self.grid.addWidget(self.seriesi, rw, 1, 1, 2)
         self.grid.addWidget(QtWidgets.QLabel('(Cells for Series Categories; A1:B2 or r1,c1,r2,c2 format)'), rw, 3, 1, 2)
+        showseries = QtWidgets.QPushButton('Show Series')
+        self.grid.addWidget(showseries, rw, 5)
+        showseries.clicked.connect(self.showClicked)
         rw += 1
         self.grid.addWidget(QtWidgets.QLabel('Series Label:'), rw, 0)
         self.ylabel = QtWidgets.QLineEdit('')
@@ -316,6 +322,9 @@ class FlexiPlot(QtWidgets.QWidget):
         self.xvaluesi.setEditable(True)
         self.grid.addWidget(self.xvaluesi, rw, 1, 1, 2)
         self.grid.addWidget(QtWidgets.QLabel('(Cells for X values; A1:B2 or r1,c1,r2,c2 format)'), rw, 3, 1, 2)
+        showxvalues = QtWidgets.QPushButton('Show X values')
+        self.grid.addWidget(showxvalues, rw, 5)
+        showxvalues.clicked.connect(self.showClicked)
         rw += 1
         self.grid.addWidget(QtWidgets.QLabel('X Label:'), rw, 0)
         self.xlabel = QtWidgets.QLineEdit('')
@@ -368,6 +377,7 @@ class FlexiPlot(QtWidgets.QWidget):
   #      self.xvalues.textChanged.connect(self.somethingChanged)
         self.files.currentIndexChanged.connect(self.seriesChanged)
         self.sheet.currentIndexChanged.connect(self.sheetChanged)
+        self.quiet = False
         self.title.textChanged.connect(self.somethingChanged)
         self.maxSpin.valueChanged.connect(self.somethingChanged)
         self.plottype.currentIndexChanged.connect(self.somethingChanged)
@@ -490,6 +500,41 @@ class FlexiPlot(QtWidgets.QWidget):
         columns = []
         isheet = ''
         try: # get list of files if any
+            ifile = config.get('Flexiplot', 'file' + choice).replace('$USER$', getUser())
+        except:
+            pass
+        if not os.path.exists(ifile) and not os.path.exists(self.scenarios + ifile):
+            if self.book is not None:
+                self.book.release_resources()
+                self.book = None
+            self.log.setText("Can't find file - " + ifile)
+            msgbox = QtWidgets.QMessageBox()
+            msgbox.setWindowTitle('SIREN - flexiplot file not found')
+            msgbox.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
+            fname = ifile[ifile.rfind('/') + 1:]
+            msgbox.setText("Can't find '" + fname + "'\nDo you want to remove it from file history (Y)?")
+            msgbox.setDetailedText(self.log.text())
+            msgbox.setIcon(QtWidgets.QMessageBox.Question)
+            msgbox.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+            reply = msgbox.exec_()
+            if reply == QtWidgets.QMessageBox.Yes:
+                line = ''
+                for i in range(len(self.history) -1, -1, -1):
+                    if self.history[i] == choice:
+                        del self.history[i]
+                    else:
+                        line += self.history[i] + ','
+                line = line[:-1]
+                lines = ['file_history=' + line]
+                for prop in ['columns', 'file', 'grid', 'percentage', 'plot', 'series', 'maximum', 'sheet',
+                             'title' , 'xlabel', 'xvalues', 'ylabel']:
+                    lines.append(prop + choice + '=')
+                updates = {'Flexiplot': lines}
+                SaveIni(updates, ini_file=self.config_file)
+                self.files.removeItem(self.files.currentIndex())
+                self.log.setText('File removed from file history')
+            return
+        try: # get list of files if any
             self.maxSpin.setValue(0)
             self.gridtype.setCurrentIndex(0)
             self.percentage.setCheckState(QtCore.Qt.Unchecked)
@@ -550,6 +595,7 @@ class FlexiPlot(QtWidgets.QWidget):
 
     def popfileslist(self, ifile, ifiles=None):
         self.setup[1] = True
+        self.current_file = ifile
         if ifiles is None:
              ifiles = {}
              for i in range(self.files.count()):
@@ -558,10 +604,15 @@ class FlexiPlot(QtWidgets.QWidget):
             self.history = ['']
             ifiles = {'': ifile}
         else:
-            for i in range(len(self.history)):
-                if ifile == ifiles[self.history[i]]:
-                    self.history.insert(0, self.history.pop(i)) # make this entry first
-                    break
+            for i in range(len(self.history) - 1, -1, -1):
+                try:
+                    if ifile == ifiles[self.history[i]]:
+                        self.history.insert(0, self.history.pop(i)) # make this entry first
+                        break
+                except KeyError:
+                    del self.history[i]
+                except:
+                    pass
             else:
             # find new entry
                 if len(self.history) >= self.max_files:
@@ -616,6 +667,8 @@ class FlexiPlot(QtWidgets.QWidget):
         self.log.setText('')
         self.saveConfig()
         self.get_file_config(self.history[self.files.currentIndex()])
+        if self.book is None:
+            return
         self.popfileslist(self.files.currentText())
         self.log.setText('File "loaded"')
         self.setup[0] = False
@@ -630,6 +683,7 @@ class FlexiPlot(QtWidgets.QWidget):
                 self.book = WorkBook()
                 self.book.open_workbook(ifile)
             except:
+                self.book = None
                 self.log.setText("Can't open file - " + ifile)
                 return
         ndx = 0
@@ -660,6 +714,8 @@ class FlexiPlot(QtWidgets.QWidget):
         self.updated = True
 
     def seriesChanged(self):
+        if self.setup[0]:
+            return
         self.log.setText('')
         series = self.seriesi.currentText()
         self.series = [series]
@@ -729,6 +785,53 @@ class FlexiPlot(QtWidgets.QWidget):
                  title='Help for flexiplot (' + fileVersion() + ')', section='flexiplot')
         dialog.exec_()
 
+    def openfileClicked(self):
+        if sys.platform == 'win32' or sys.platform == 'cygwin':
+            os.startfile(self.file.text())
+            self.log.setText('File opened')
+        elif sys.platform in ['darwin', 'linux', 'linux2']:
+            pid = subprocess.Popen(['open', self.file.text()]).pid
+            self.log.setText('File opened (pid ' + str(pid) + ')')
+
+    def showClicked(self):
+        if self.book is None:
+            self.log.setText('Error accessing Workbook.')
+            return
+        isheet = self.sheet.currentText()
+        if isheet == '':
+            self.log.setText('Sheet not set.')
+            return
+        ws = self.book.sheet_by_name(isheet)
+        x = []
+        labels = {}
+        if self.sender().text()[-6:] == 'Series':
+            rocox = get_range(self.seriesi.currentText())
+        else:
+            rocox = get_range(self.xvaluesi.currentText())
+        data_in_cols = True
+        if rocox[1] == rocox[3]:
+            pass
+        elif rocox[0] == rocox[2]:
+            data_in_cols = False
+        if data_in_cols:
+            ttr = 'Col ' + ss_col(rocox[1])
+            fields = ['Row']
+            if rocox[2] >= ws.nrows:
+                rocox[2] = ws.nrows - 1
+            for row in range(rocox[0], rocox[2] + 1):
+                labels[row + 1] = str(ws.cell_value(row, rocox[1]))
+        else:
+            ttr = 'Row ' + str(rocox[0] + 1)
+            fields = ['Col']
+            if rocox[3] >= ws.ncols:
+                rocox[3] = ws.ncols - 1
+            for col in range(rocox[1], rocox[3] + 1):
+                labels[ss_col(col)] = str(ws.cell_value(rocox[0], col))
+        fields.append(ttr)
+        dialog = displaytable.Table(labels, title='Series labels', fields=fields)
+        dialog.exec_()
+        del dialog
+
     def doneClicked(self):
         if self.book is not None:
             self.book.release_resources()
@@ -762,28 +865,18 @@ class FlexiPlot(QtWidgets.QWidget):
                 choice = self.history[0]
             except:
                 choice = ''
-            save_file = self.file.text().replace(getUser(), '$USER$')
+            save_file = self.current_file.replace(getUser(), '$USER$')
             try:
                 self.max_files = int(config.get('Flexiplot', 'file_choices'))
             except:
                 pass
             lines = []
-            fix_history = []
-            try:
-                if len(self.history) > 0:
-                    check_history = []
-                    line = ''
-                    for i in range(len(self.history)):
-                        itm = self.history[i]
-                        if self.files.itemText(i) in check_history:
-                            fix_history.append([i, itm])
-                        else:
-                            check_history.append(self.files.itemText(i))
-                            line += itm + ','
-                    line = line[:-1]
-                    lines.append('file_history=' + line)
-            except:
-                pass
+            if len(self.history) > 0:
+                line = ''
+                for itm in self.history:
+                    line += itm + ','
+                line = line[:-1]
+                lines.append('file_history=' + line)
             cols = 'columns' + choice + '='
             for col in range(self.order.count()):
                 try:
@@ -799,7 +892,7 @@ class FlexiPlot(QtWidgets.QWidget):
             if cols[-1] != '=':
                 cols = cols[:-1]
             lines.append(cols)
-            lines.append('file' + choice + '=' + self.file.text().replace(getUser(), '$USER$'))
+            lines.append('file' + choice + '=' + save_file)
             lines.append('grid' + choice + '=' + self.gridtype.currentText())
             lines.append('maximum' + choice + '=')
             if self.maxSpin.value() != 0:
@@ -826,13 +919,6 @@ class FlexiPlot(QtWidgets.QWidget):
                     line += xvalues + ','
             lines.append(line[:-1])
             lines.append('ylabel' + choice + '=' + self.ylabel.text())
-            props = ['columns', 'file', 'grid', 'maximum', 'percentage', 'plot', 'sheet', 'series',
-                     'title', 'xlabel', 'xvalues', 'ylabel']
-            for i in range(len(fix_history) -1, -1, -1):
-                self.files.removeItem(fix_history[i][0])
-                self.history.pop(fix_history[i][0])
-                for prop in props:
-                    lines.append(prop + fix_history[i][1] + '=')
             updates['Flexiplot'] = lines
             if self.restorewindows and not config.has_section('Windows'): # new file set windows section
                 updates['Windows'] = ['restorewindows=True']
@@ -960,8 +1046,8 @@ class FlexiPlot(QtWidgets.QWidget):
             pass
         elif rocox[0] == rocox[2]:
             data_in_cols = False
-        else:
-            print('Assume in columns')
+   #     else:
+    #        print('Assume in columns')
         ctr = 0
         if data_in_cols:
             if rocox[2] >= ws.nrows:
@@ -1009,15 +1095,7 @@ class FlexiPlot(QtWidgets.QWidget):
             label.append(column)
             if data_in_cols:
                 for row in range(rocox[0], rocox[2] + 1):
-                    if ws.cell_value(row, col) == '':
-                        data[-1].append(0.)
-                    else:
-                        data[-1].append(ws.cell_value(row, col))
-                    miny = min(miny, data[-1][-1])
-                    maxy = max(maxy, data[-1][-1])
-            else:
-                for col in range(rocox[1], rocox[3] + 1):
-                    if ws.cell_value(row, col) == '':
+                    if ws.cell_value(row, col) is None or ws.cell_value(row, col) == '':
                         data[-1].append(0.)
                     else:
                         data[-1].append(ws.cell_value(row, col))
@@ -1025,7 +1103,19 @@ class FlexiPlot(QtWidgets.QWidget):
                         miny = min(miny, data[-1][-1])
                         maxy = max(maxy, data[-1][-1])
                     except:
-                        self.log.setText('Data in cell ' + ss_col(col, base=0) + str(row + 1) + ' seems wrong - ' + data[-1][-1])
+                        self.log.setText('Data in cell ' + ss_col(col) + str(row + 1) + ' seems wrong - ' + data[-1][-1])
+                        return
+            else:
+                for col in range(rocox[1], rocox[3] + 1):
+                    if ws.cell_value(row, col) is None or ws.cell_value(row, col) == '':
+                        data[-1].append(0.)
+                    else:
+                        data[-1].append(ws.cell_value(row, col))
+                    try:
+                        miny = min(miny, data[-1][-1])
+                        maxy = max(maxy, data[-1][-1])
+                    except:
+                        self.log.setText('Data in cell ' + ss_col(col) + str(row + 1) + ' seems wrong - ' + data[-1][-1])
                         return
         if self.gridtype.currentText() == 'Both':
             gridtype = 'both'
