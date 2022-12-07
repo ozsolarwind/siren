@@ -2065,8 +2065,8 @@ class MainWindow(QtWidgets.QMainWindow):
         where = self.view.mapToLonLat(self.view.scene().last_locn)
         menu = QtWidgets.QMenu()
         station = None
-        if len(self.view.scene()._stations.stations) > 0:  # some stations
-            try:
+        try:
+            if len(self.view.scene()._stations.stations) > 0:  # some stations
                 station, st_dist = self.view.scene()._stations.Nearest(where.y(), where.x(),
                                    distance=True, fossil=self.view.scene().show_fossil)
                 titl = 'Nearest station: %s (%s MW; %s Km away)' % (station.name, '{:0.0f}'.format(station.capacity),
@@ -2086,8 +2086,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 act8 = 'Copy %s' % station.name
                 act12 = 'Edit grid line for %s' % station.name
                 act13 = 'Trace grid for %s' % station.name
-            except:
-                pass
+        except:
+            titl = 'No stations found'
         try:
             town, town_dist = self.view.scene()._towns.Nearest(where.y(), where.x(), distance=True)
             ttitl = 'Nearest town: %s (%s Km away)' % (town.name, '{:0.0f}'.format(town_dist))
@@ -2465,8 +2465,13 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def list_Stations(self):
         ctr = [0, 0]
-        if len(self.view.scene()._stations.stations) == 0:
-            comment = 'No Stations to display'
+        try:
+            if len(self.view.scene()._stations.stations) == 0:
+                comment = 'No Stations to display'
+                self.view.statusmsg.emit(comment)
+                return
+        except:
+            comment = 'No Stations to display (?)'
             self.view.statusmsg.emit(comment)
             return
         for st in self.view.scene()._stations.stations:
@@ -3321,7 +3326,7 @@ def main():
     QtWidgets.QShortcut(QtGui.QKeySequence('q'), mw, mw.close)
     QtWidgets.QShortcut(QtGui.QKeySequence('x'), mw, mw.exit)
     ver = fileVersion()
-    mw.setWindowTitle('SIREN (' + ver + ') - ' + scene.model_name)
+    mw.setWindowTitle('SIREN (' + ver + ') - ' + scene.model_name + ' (' + scene.config_file + ')')
     mw.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
     scene_ratio = float(mw.view.scene().width()) / mw.view.scene().height()
     screen = QtWidgets.QDesktopWidget().availableGeometry()

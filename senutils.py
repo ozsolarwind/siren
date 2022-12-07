@@ -99,7 +99,10 @@ class WorkBook(object):
 
     def release_resources(self):
         if self._type == 'xls':
-            self._book.release_resources()
+            try:
+                self._book.release_resources()
+            except:
+                pass
 
     def sheet_names(self):
         return self._sheet_names[:]

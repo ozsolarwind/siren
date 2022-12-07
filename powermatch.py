@@ -300,6 +300,8 @@ class PM_Facility:
         self.name = name
         if name.find('.') > 0:
             self.zone = name[:name.find('.')]
+        else:
+            self.zone = ''
         self.generator = generator
         self.capacity = capacity
         self.fac_type = fac_type
@@ -2039,7 +2041,10 @@ class powerMatch(QtWidgets.QWidget):
                         pass
                     else:
                         zone = ws.cell(row=zone_row, column=col).value
-                    zone_tech = zone + '.' + valu
+                    if zone is None or zone == '':
+                        zone_tech = valu
+                    else:
+                        zone_tech = zone + '.' + valu
                     key = zone_tech
                     zone_techs.append(key)
                 else: # temp
@@ -2124,7 +2129,10 @@ class powerMatch(QtWidgets.QWidget):
                         pass
                     else:
                         zone = ws.cell(row=zone_row, column=col).value
-                    zone_tech = zone + '.' + valu
+                    if zone is None or zone == '':
+                        zone_tech = valu
+                    else:
+                        zone_tech = zone + '.' + valu
                     key = zone_tech
                 try:
                     typ = self.constraints[tech_names[i]].category[0]

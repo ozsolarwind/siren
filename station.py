@@ -150,10 +150,16 @@ class Stations:
                     self.areas[itm] = 0.
         except:
             pass
+        self.tech_missing = []
+        for tech in ['biomass', 'fixed_pv', 'rooftop_pv', 'single_axis_pv', 'wind']:
+            if tech not in technologies:
+                itm = techClean(tech)
+                self.tech_missing.append(itm + ' (' + tech + ')')
+                self.technologies.append(itm)
+                self.areas[itm] = 0.
         try:
             technologies = config.get('Power', 'fossil_technologies')
-            technologies = technologies.split()
-            for item in technologies:
+            for item in technologies.split():
                 itm = techClean(item)
                 try:
                     self.areas[itm] = float(config.get(itm, 'area'))
@@ -214,10 +220,12 @@ class Stations:
             self.stations = []
         if not existing:
             return
-        if not os.path.exists(self.sam_file):
-            return
-        sam = open(self.sam_file)
-        sam_turbines = csv.DictReader(sam)
+        if os.path.exists(self.sam_file):
+           sam = open(self.sam_file)
+           sam_turbines = csv.DictReader(sam)
+        else:
+           sam = None
+           sam_turbines = []
         for fac_file in self.fac_files:
             if os.path.exists(fac_file):
                 if fac_file[-4:] == '.csv':
@@ -526,7 +534,8 @@ class Stations:
                                     self.stations[-1].storage_hours = storage_hours
                             except:
                                 pass
-        sam.close()
+        if sam is not None:
+            sam.close()
 
     def Nearest(self, lat, lon, distance=False, fossil=False, ignore=None):
         hdr = ''

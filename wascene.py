@@ -43,8 +43,15 @@ class WAScene(QtWidgets.QGraphicsScene):
         config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
+            if config_file.rfind('/') >= 0:
+                self.config_file = config_file[config_file.rfind('/') + 1:]
+            elif config_file.rfind('\\') >= 0:
+                self.config_file = config_file[config_file.rfind('\\') + 1:]
+            else:
+                self.config_file = config_file
         else:
             config_file = getModelFile('SIREN.ini')
+            self.config_file = 'SIREN.ini'
         config.read(config_file)
         try:
             self.base_year = config.get('Base', 'year')
@@ -561,10 +568,18 @@ class WAScene(QtWidgets.QGraphicsScene):
         self._fossilGroup = QtWidgets.QGraphicsItemGroup()
         self._fcapacityGroup = QtWidgets.QGraphicsItemGroup()
         self._fnameGroup = QtWidgets.QGraphicsItemGroup()
-        try:
-            self._setupStations()
-        except:
-            pass
+        self._setupStations()
+        if len(self._stations.tech_missing) > 0:
+            msg = 'Preferences file needs checking for -\n'
+            for tech in self._stations.tech_missing:
+                msg += " '" + tech + "',"
+            msgbox = QtWidgets.QMessageBox()
+            msgbox.setWindowTitle('SIREN - ' + self.config_file + ' setup stations')
+            msgbox.setText("Error encountered in setting up stations.\n" + \
+                           msg + '\nExecution will continue but need to check stations.')
+            msgbox.setIcon(QtWidgets.QMessageBox.Warning)
+            msgbox.setStandardButtons(QtWidgets.QMessageBox.Ok)
+            reply = msgbox.exec_()    
         self.addItem(self._capacityGroup)
         if not self.show_capacity:
             self._capacityGroup.setVisible(False)
@@ -675,7 +690,7 @@ class WAScene(QtWidgets.QGraphicsScene):
         self._current_name.setFont(new_font)
         self._current_name.setZValue(2)
         self.addItem(self._current_name)
-        self._stations = {}
+        self._stations = []
         self._station_positions = {}
         self._stationGroups = {}
         self._stationLabels = []
@@ -782,7 +797,8 @@ class WAScene(QtWidgets.QGraphicsScene):
                         pass
                     self._stations.stations.append(new_st)
                     self.addStation(self._stations.stations[-1])
-                except:
+                except Exception as error:
+                    print(error)
                     pass
             self._scenarios.append([scen_filter, False, description])
 
