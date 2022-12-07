@@ -254,7 +254,7 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 <li><em>source</em> contains the Python source programs for SIREN</li>
 </ul>
 <p>The first time you open SIREN (without passing a target file or folder) it will present a window titled &lsquo;Choose location for SIREN model (preferences) files&rsquo; to allow you to choose the location for your SIREN Models. SIREN stores this location (in <em>siren_models_location.txt</em> in the <em>siren</em> folder) and uses this as the location of the SIREN Models whenever you invoke SIREN without a target file or location.</p>
-<p>When you open SIREN you will be presented with a list of SIREN Models (Preferences files). Choose the SIREN Model you want by clicking on your choice. It is also possible to launch tools for the model by right-clicking on your choice - the tools are as described in <a href="#tools">Tools</a> - or you can edit the Model file. You can sort the list presented in order of either Preferences File, SIREN Model or Date modified (last time the Preferences file was saved) by right-clicking the appropriate column header. If a Model file has a syntax error this will be identified in the SIREN Model field; editing such a file will, where possible, highlight the line in error. If want to use a specific Preferences file you can open the simulation passing the alternate filename, or a folder, as a parameter, as in these examples:</p>
+<p>When you open SIREN you will be presented with a list of SIREN Models (Preferences files). Choose the SIREN Model you want by clicking on your choice. It is also possible to launch tools for the model by right-clicking on your choice - the tools are as described in <a href="#tools">Tools</a> - or you can edit the Model file. You can sort the list presented in order of either Preferences File, SIREN Model or Date modified (last time the Preferences file was saved) by right-clicking the appropriate column header. If a Model file has a syntax error this will be identified in the SIREN Model field; editing such a file will, where possible, highlight the line in error. If you want to use a specific Preferences file you can open the simulation passing the alternate filename, or a folder, as a parameter, as in these examples:</p>
 <pre>
       siren.exe
       siren.exe SIREN_NWIS.ini
@@ -262,7 +262,8 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
       siren.exe ../&lt;folder with preferences files&gt;/
 </pre>
 <p>If you specify a folder you will be presented with a list of SIREN Models (Preferences files) in that folder. You can either specify the folder as the full path or relative to the siren folder. Placing your models in a separate folder will make it easier to install updates to SIREN without impacting your data files.</p>
-<p>If you want to create a new Model press the <em>New Model</em> button on the start up menu. You will be presented with a small list of Properties to update to create a new Preferences file. Many of these properties relate to files and file locations as described in <a href="#setup">Setting Up</a>. It's important to ensure they're correct for the new model to open. For the file fields click on the field to navigate to the desired file or folder. At the bottom of the Create Preferences file menu you have options to Save the new file, Save the new file and edit it, or Save it and open (launch) the new model. If you specified a folder when you opened SIREN, the new model will be saved in that folder.
+<p>If you want to create a new Model press the <em>New Model</em> button on the start up menu. You will be presented with a small list of Properties to update to create a new Preferences file. Many of these properties relate to files and file locations as described in <a href="#setup">Setting Up</a>. It's important to ensure they're correct for the new model to open. For the file fields click on the field to navigate to the desired file or folder. At the bottom of the Create Preferences file menu you have options to Save the new file, Save the new file and edit it, or Save it and open (launch) the new model. If you specified a folder when you opened SIREN, the new model will be saved in that folder.</p>
+<p>When you launch a SIREN model you may receive either a warning message or a status window indicating possible issues with the Preferences file (Notes in <a href="#prefs">Preferences</a> might assist).</p>
 <h4>SIREN Menu Options</h4>
 <p>SIREN has a small number of menu options.</p>
 <table border="0", class="none">
@@ -399,7 +400,7 @@ You can also use TMY files such as those provided with SAM. If you have a number
 </tr>
 <tr class="none">
 <td class="none"><dfn>Technology</dfn></td>
-<td class="none">One of the defined technologies:- Biomass, CST, Fixed PV, Geothermal, Offshore Wind, Solar Thermal, Rooftop PV, Single Axis PV, Tracking (Dual Axis) PV, Wind (refer to <a href="#sam">SAM Models used by SIREN</a>), and
+<td class="none">One of the defined technologies:- Biomass, CST, Fixed PV, Geothermal, Offshore Wind, Rooftop PV, Single Axis PV, Solar Thermal, Tracking (Dual Axis) PV, Wind (refer to <a href="#sam">SAM Models used by SIREN</a>), and
 <div  class="experiment">Hydro, Wave and Other (refer to <a href="#nonsam">Other Models used by SIREN (experimental)</a>)</div>
 <strong>Note:</strong> SIREN uses two of the SAM Concentrated Solar Power models. <em>Solar Thermal</em> is the SAM model for Power tower concentrating solar power (molten salt and direct steam) and <em>CST</em> is A simple "generic model" for conventional thermal
 </td>
@@ -566,7 +567,7 @@ The format is similar to a Windows INI file. If you want to create a new Model y
 <li><em>$YEAR$</em>&nbsp;will be replaced with the base year value</li>
 <li><em>$dirn</em>&nbsp;will be replaced with the corresponding variable from the <em>[Parents]</em> Section</li>
 </ul>
-<p><strong>Note:</strong> There is a quirk with the references to technologies in the <em>[Colors]</em> Section and <em>[Grid] dispatchable</em>, <em>[Power] fossil_technologies</em>, and <em>[Power] technologies</em> variables. The technology names are changed to all lower case and spaces are replaced by underscores. Thus, <em>Fixed PV</em> will appear as <em>fixed_pv</em>.</p>
+<p><strong>Note:</strong> Technologies appear in two forms in the Preferences file. They appear in the Preferences Sections as words starting with an uppercase letter and separated by spaces (e.g <em>Fixed PV</em> with the Section name <em>[Fixed PV]</em>). In the Section Properties the technology names are changed to all lower case and spaces are replaced by underscores. Thus, <em>Fixed PV</em> will appear as <em>fixed_pv</em>. The lower case versions occur in the <em>[Colors]</em> Section and <em>[Grid] dispatchable</em>, <em>[Power] fossil_technologies</em>, and <em>[Power] technologies</em> variables.</p>
 <p>(Skip to <a href="#menus">Menus</a>)</p>
 <p>Shortcut to Sections:- <a href="#p_backtrack_pv">Backtrack PV</a>, <a href="#p_base">Base</a>, <a href="#p_biomass">Biomass</a>, <a href="#p_colors">Colors</a>, <a href="#p_cst">CST</a>,
 <a href="#p_dataview">Dataview</a>, <a href="#p_files">Files</a>, <a href="#financial">Financial</a>, <a href="#p_fixed_pv">Fixed PV</a>, <a href="#p_flexiplot">Flexiplot</a>,
@@ -1848,6 +1849,14 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">Opacity of chart fill for values above target. Range is 1.0 (opaque) to 0.0 (translucent). Default value is 0.25</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>cmap</dfn></td>
+<td class="none">Identify the colour map (cmap) to be used to create Heat maps (refer to <a href="https://matplotlib.org/stable/gallery/color/colormap_reference.html">https://matplotlib.org/stable/gallery/color/colormap_reference.html</a>). A common colour map is <em>jet</em> or <em>jet_r</r>. The default is a red-amber-green colour map</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>cbar</dfn></td>
+<td class="none">Add a colorbar to a Heat map. This gives a scale to what the colours represent. The default is True. If the colorbar is displayed it is possible to display additional values to indicate the minimum and maximum value encountered by setting <dfn>cbar2</dfn> to True.</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>columns (&ast;)</dfn></td>
 <td class="none">List (and order) for columns to be charted</td>
 </tr>
@@ -1893,7 +1902,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>plot (&ast;)</dfn></td>
-<td class="none">The type of chart. Options are Bar Chart, Cumulative, Line Chart, or Step Chart. The default is Bar Chart</td>
+<td class="none">The type of chart. Options are Bar Chart, Cumulative, Heat Map, Line Chart, or Step Chart. The default is Bar Chart</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>sheet (&ast;)</dfn></td>
@@ -3163,9 +3172,8 @@ The program displays a window of options. The default values are specified in th
 <td class="none">Click on this field to choose the desired spreadsheet (<em>file</em>)</td></tr>
 <tr><td class="lr"><dfn>Sheet</dfn></td>
 <td class="none">A pull-down list to enable you to choose the desired worksheet (<em>sheet</em>)</td></tr>
-<tr><td class="lr"><dfn>Period</dfn></td>
-<td class="none">A pull-down list for a full year, a month or other defined seasons or periods that may be defined in the Preferences file. If an option other than <em>&lt;None&gt;</em> is chosen the resulting chart will present an average diurnal chart for the chosen period (<em>period</em>)
-<div class="experiment">A second pull-down list allows you to choose an ending month range for Contribution or Correlation. This can either be a later month in the year, or if earlier that the first value months will wrap to the start of the year. For example, Period 1 of Nov and Period 2 of Feb will correlate Nov, Dec, Jan and Feb (<em>period2</em>)</div></td></tr>
+<tr><td class="lr"><dfn>Period(s)</dfn></td>
+<td class="none">A pull-down list for a full year, a month or other defined seasons or periods that may be defined in the Preferences file. If an option other than <em>&lt;None&gt;</em> is chosen the resulting chart will present an average diurnal chart for the chosen period (<em>period</em>). If the first period is a month a second pull-down list allows you to choose an ending month range. This can either be a later month in the year or, if earlier than the first value, months will wrap to the start of the year. For example, Period 1 of Nov and Period 2 of Feb will correlate Nov, Dec, Jan and Feb (<em>period2</em>)</td></tr>
 <tr><td class="lr"><dfn>Target</dfn></td>
 <td class="none">A pull-down list of column names. If the chart is intended to show how the chosen columns meet a target column, typically Load, this enables you to choose that column. Choosing <em>&lt;None&gt;</em> means no target field. If a target field is chosen the chart will show excess generation as lightly shaded areas above the target values (<em>target</em>)
 <div class="experiment">A target is required for Contribution and Correlation</div></td></tr>
@@ -3183,7 +3191,7 @@ If it's not a diurnal chart (i.e. Period is <em>&lt;None&gt;</em>) any occurence
 <tr><td class="lr"><dfn>Maximum</dfn></td>
 <td class="none">You can specify a maximum value for the Power (y) axis. This allows you to produce a series of charts with the same scale (<em>maximum</em>)</td></tr>
 <tr><td class="lr"><dfn>Type of Plot</dfn></td>
-<td class="none">The type of chart to be produced. Options are <em>Bar Chart</em>, <em>Cumulative</em>, <em>Line Chart</em> and <em>Step Chart</em>. <em>Bar Chart</em>, <em>Cumulative</em> and <em>Step Chart</em> produce cumulative (stacked) charts and have filled areas by technology (or Columns). A Step Chart is similar to a Bar Chart but does not have spaces between the hourly bars; also it is a lot faster to display than a Bar Chart (a Bar Chart is not recommended for hourly charts). If a Target field (e.g. Load) is chosen the area above the Target value (i.e. excess generation) in the Cumulative and Step chart have a lightly shaded value (the degree of shading is chosen by the <em>alpha</em> property in the [Powerplot] Section of the Preferences file) (<em>plot</em>)</td></tr>
+<td class="none">The type of chart to be produced. Options are <em>Bar Chart</em>, <em>Cumulative</em>, <em>Heat Map</em>, <em>Line Chart</em> and <em>Step Chart</em>. <em>Bar Chart</em>, <em>Cumulative</em> and <em>Step Chart</em> produce cumulative (stacked) charts and have filled areas by technology (or Columns). A Step Chart is similar to a Bar Chart but does not have spaces between the hourly bars; also it is a lot faster to display than a Bar Chart (a Bar Chart is not recommended for hourly charts). If a Target field (e.g. Load) is chosen the area above the Target value (i.e. excess generation) in the Cumulative and Step chart have a lightly shaded value (the degree of shading is chosen by the <em>alpha</em> property in the [Powerplot] Section of the Preferences file). A Heat Map visualises the total value of chosen columns to indicate the highest through lowest values of the range or, if a target column is chosen, an indication of how the total value meets the target value. Each &ldquo;square&rdquo; or &ldquo;cell&rdquo; of the map represents an hour; the vertical axis is hours in a day and the horizontal axis is days for the chosen period (<em>plot</em>)</td></tr>
 <tr><td class="lr"><dfn>Percentage</dfn></td>
 <td class="none">Checking this option will produce a percentage (stacked) curve. The chart will have filled areas showing the percentage of generation for each technology. It is recommended to not set a Target field (i.e. set it to <em>&lt;None&gt;</em>) as this will merely remove the Target field (and it's data) from the chart (<em>percentage</em>)</td></tr>
 <tr><td class="lr"><dfn>Spill label</dfn></td>

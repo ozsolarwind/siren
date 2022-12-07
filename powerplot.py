@@ -25,7 +25,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import sys
 from math import log10, ceil
 import matplotlib
-matplotlib.use('TkAgg')
+matplotlib.use('Qt5Agg')
 from matplotlib.font_manager import FontProperties
 import numpy as np
 import pylab as plt
@@ -147,6 +147,15 @@ class PowerPlot(QtWidgets.QWidget):
         self.setup = [False, False]
         self.details = True
         self.book = None
+        self.error = False
+        # create a colour map based on traffic lights
+        cvals  = [-2., -1, 2]
+        colors = ["red","orange","green"]
+        norm=plt.Normalize(min(cvals),max(cvals))
+        tuples = list(zip(map(norm,cvals), colors))
+        self.cmap = matplotlib.colors.LinearSegmentedColormap.from_list("", tuples)
+        self.cbar = True
+        self.cbar2 = True
         self.toprow = None
         self.rows = None
         self.zone_row = -1
@@ -174,6 +183,14 @@ class PowerPlot(QtWidgets.QWidget):
                         self.alpha = float(value)
                     except:
                         pass
+                elif key == 'cbar':
+                    if value.lower() in ['false', 'no', 'off']:
+                        self.cbar = False
+                elif key == 'cbar2':
+                    if value.lower() in ['false', 'no', 'off']:
+                        self.cbar2 = False
+                elif key == 'cmap':
+                    self.cmap = value
                 elif key == 'constrained_layout':
                     if value.lower() in ['true', 'yes', 'on']:
                         self.constrained_layout = True
@@ -236,6 +253,7 @@ class PowerPlot(QtWidgets.QWidget):
         self.updated = False
         self.colours_updated = False
         self.log = QtWidgets.QLabel('')
+        self.log.setText('Preferences file: ' + self.config_file)
         rw = 0
         self.grid.addWidget(QtWidgets.QLabel('Recent Files:'), rw, 0)
         self.files = QtWidgets.QComboBox()
@@ -267,7 +285,7 @@ class PowerPlot(QtWidgets.QWidget):
         for mth in mth_labels:
             self.cperiod.addItem(mth)
         self.grid.addWidget(self.cperiod, rw, 2, 1, 1)
-        self.grid.addWidget(QtWidgets.QLabel('(Diurnal profile for Period; Correlation range)'), rw, 3, 1, 2)
+        self.grid.addWidget(QtWidgets.QLabel('(Diurnal profile for Period or Month(s))'), rw, 3, 1, 2)
         rw += 1
         self.grid.addWidget(QtWidgets.QLabel('Target:'), rw, 0)
         self.targets = QtWidgets.QComboBox()
@@ -299,7 +317,7 @@ class PowerPlot(QtWidgets.QWidget):
         self.grid.addWidget(QtWidgets.QLabel('(Handy if you want to produce a series of plots)'), rw, 3, 1, 3)
         rw += 1
         self.grid.addWidget(QtWidgets.QLabel('Type of Plot:'), rw, 0)
-        plots = ['Bar Chart', 'Cumulative', 'Line Chart', 'Step Chart']
+        plots = ['Bar Chart', 'Cumulative', 'Heat Map', 'Line Chart', 'Step Chart']
         self.plottype = QtWidgets.QComboBox()
         for plot in plots:
              self.plottype.addItem(plot)
@@ -388,8 +406,7 @@ class PowerPlot(QtWidgets.QWidget):
         self.setWindowTitle('SIREN - powerplot (' + fileVersion() + ') - PowerPlot')
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         self.center()
-        self.resize(int(self.sizeHint().width() * 1.07), int(self.sizeHint().height() * 1.07))
-        self.log.setText('Preferences file: ' + self.config_file)
+        self.resize(int(self.sizeHint().width() * 1.3), int(self.sizeHint().height() * 1.3))
         self.show()
 
     def center(self):
@@ -401,14 +418,13 @@ class PowerPlot(QtWidgets.QWidget):
 
     def get_file_config(self, choice=''):
         ifile = ''
-        ignore = True
         config = configparser.RawConfigParser()
         config.read(self.config_file)
         columns = []
         self.period.setCurrentIndex(0)
         self.cperiod.setCurrentIndex(0)
         self.gridtype.setCurrentIndex(0)
-        self.plottype.setCurrentIndex(0)
+        self.plottype.setCurrentIndex(3)
         try: # get list of files if any
             items = config.items('Powerplot')
             for key, value in items:
@@ -482,12 +498,16 @@ class PowerPlot(QtWidgets.QWidget):
             self.file.setText(ifile)
             if os.path.exists(ifile):
                 self.setSheet(ifile, isheet)
-            else:
+            elif os.path.exists(self.scenarios + ifile):
                 self.setSheet(self.scenarios + ifile, isheet)
+            else:
+                self.log.setText('File not found - ' + ifile)
+                # Maybe delete dodgy entry
+                self.error = True
+                return
             self.setColumns(isheet, columns=columns)
             for column in columns:
                 self.check_colour(column, config, add=False)
-        ignore = False
 
     def popfileslist(self, ifile, ifiles=None):
         self.setup[1] = True
@@ -529,7 +549,6 @@ class PowerPlot(QtWidgets.QWidget):
         self.setup[1] = False
 
     def fileChanged(self):
-        self.log.setText('')
         if os.path.exists(self.file.text()):
             curfile = self.file.text()
         else:
@@ -554,9 +573,11 @@ class PowerPlot(QtWidgets.QWidget):
         if self.setup[1]:
             return
         self.setup[0] = True
-        self.log.setText('')
         self.saveConfig()
         self.get_file_config(self.history[self.files.currentIndex()])
+        if self.error:
+            self.error = False
+            return
         self.popfileslist(self.files.currentText())
         self.log.setText("File 'loaded'")
         self.setup[0] = False
@@ -589,7 +610,6 @@ class PowerPlot(QtWidgets.QWidget):
         self.sheet.setCurrentIndex(ndx)
 
     def sheetChanged(self):
-        self.log.setText('')
         self.toprow = None
         if self.book is None:
             self.book = WorkBook()
@@ -609,7 +629,9 @@ class PowerPlot(QtWidgets.QWidget):
             self.updated = True
 
     def targetChanged(self):
-        self.log.setText('')
+        if self.error:
+            self.error = False
+            return
         target = self.targets.currentText()
         if target != self.target:
             if target == '<none>':
@@ -678,7 +700,7 @@ class PowerPlot(QtWidgets.QWidget):
                     the_row = row
                 for col in range(ws.ncols -1, 1, -1):
                     column = ws.cell_value(the_row, col).replace('\n',' ')
-                    if self.zone_row > 0 and ws.cell_value(self.zone_row, col) != '':
+                    if self.zone_row > 0 and ws.cell_value(self.zone_row, col) != '' and ws.cell_value(self.zone_row, col) is not None:
                         column = ws.cell_value(self.zone_row, col).replace('\n',' ') + '.' + column
                     if column in oldcolumns:
                         columns.append(column)
@@ -714,7 +736,7 @@ class PowerPlot(QtWidgets.QWidget):
     def helpClicked(self):
         dialog = displayobject.AnObject(QtWidgets.QDialog(), self.help,
                  title='Help for powerplot (' + fileVersion() + ')', section='powerplot')
-        dialog.exec_()
+        dialog.exec()
 
     def quitClicked(self):
         if self.book is not None:
@@ -803,7 +825,7 @@ class PowerPlot(QtWidgets.QWidget):
                 palette.append(item.text())
         dialr = Colours(section='Plot Colors', ini_file=self.config_file, add_colour=color,
                         palette=palette)
-        dialr.exec_()
+        dialr.exec()
         self.colours = {}
         config = configparser.RawConfigParser()
         config.read(self.config_file)
@@ -937,8 +959,10 @@ class PowerPlot(QtWidgets.QWidget):
         if self.leapyear: #rows == 8784: # leap year
             the_days[1] = 29
         mth_labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+        hr_labels = ['0:00', '4:00', '8:00', '12:00', '16:00', '20:00', '23:00']
         figname = self.plottype.currentText().lower().replace(' ','') + '_' + str(year)
-        if self.period.currentText() == '<none>': # full year of hourly figures
+        if self.period.currentText() == '<none>' \
+          or (self.period.currentText() == 'Year' and self.plottype.currentText() == 'Heat Map'): # full year of hourly figures
             m = 0
             d = 1
             day_labels = []
@@ -971,7 +995,7 @@ class PowerPlot(QtWidgets.QWidget):
             titl = titl.replace('$SHEET$', isheet)
             for c2 in range(2, ws.ncols):
                 column = ws.cell_value(self.toprow[0], c2).replace('\n',' ')
-                if self.zone_row > 0 and ws.cell_value(self.zone_row, c2) != '':
+                if self.zone_row > 0 and ws.cell_value(self.zone_row, c2) != '' and ws.cell_value(self.zone_row, c2) is not None:
                     column = ws.cell_value(self.zone_row, c2).replace('\n',' ') + '.' + column
                 if column == self.target:
                     tgt_col = c2
@@ -982,7 +1006,7 @@ class PowerPlot(QtWidgets.QWidget):
                 col = self.order.item(c).text()
                 for c2 in range(2, ws.ncols):
                     column = ws.cell_value(self.toprow[0], c2).replace('\n',' ')
-                    if self.zone_row > 0 and ws.cell_value(self.zone_row, c2) != '':
+                    if self.zone_row > 0 and ws.cell_value(self.zone_row, c2) != '' and ws.cell_value(self.zone_row, c2) is not None:
                         column = ws.cell_value(self.zone_row, c2).replace('\n',' ') + '.' + column
                     if column == col:
                         data.append([])
@@ -1014,14 +1038,14 @@ class PowerPlot(QtWidgets.QWidget):
                     fig.suptitle(self.suptitle.text(), fontsize=16)
                 if gridtype != '':
                     plt.grid(axis=gridtype)
-                ax = plt.subplot(111)
+                lc1 = plt.subplot(111)
                 plt.title(titl)
                 for c in range(len(data)):
-                    ax.plot(x, data[c], linewidth=1.5, label=label[c], color=self.colours[label[c].lower()])
+                    lc1.plot(x, data[c], linewidth=1.5, label=label[c], color=self.colours[label[c].lower()])
                 if len(load) > 0:
-                    ax.plot(x, load, linewidth=2.5, label=self.target, color=self.colours[self.target.lower()])
+                    lc1.plot(x, load, linewidth=2.5, label=self.target, color=self.colours[self.target.lower()])
                 if len(overlay) > 0:
-                    ax.plot(x, overlay, linewidth=1.5, label=self.overlay, color='black', linestyle='dotted')
+                    lc1.plot(x, overlay, linewidth=1.5, label=self.overlay, color='black', linestyle='dotted')
                 if self.maxSpin.value() > 0:
                     maxy = self.maxSpin.value()
                 else:
@@ -1033,17 +1057,17 @@ class PowerPlot(QtWidgets.QWidget):
              #   miny = 0
                 lbl_font = FontProperties()
                 lbl_font.set_size('small')
-                ax.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 1),
+                lc1.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 1),
                           prop=lbl_font)
                 plt.ylim([miny, maxy])
                 plt.xlim([0, len(x)])
                 xticks = list(range(0, len(x), self.interval * days_per_label))
-                plt.xticks(xticks)
-                ax.set_xticklabels(day_labels[:len(xticks)], rotation='vertical')
-                ax.set_xlabel('Period')
-                ax.set_ylabel('Power (MW)') # MWh?
+                lc1.set_xticks(xticks)
+                lc1.set_xticklabels(day_labels[:len(xticks)], rotation='vertical')
+                lc1.set_xlabel('Period')
+                lc1.set_ylabel('Power (MW)') # MWh?
                 zp = ZoomPanX()
-                f = zp.zoom_pan(ax, base_scale=1.2, flex_ticks=flex_on) # enable scrollable zoom
+                f = zp.zoom_pan(lc1, base_scale=1.2, flex_ticks=flex_on) # enable scrollable zoom
                 plt.show()
                 del zp
             elif self.plottype.currentText() in ['Cumulative', 'Step Chart']:
@@ -1056,7 +1080,7 @@ class PowerPlot(QtWidgets.QWidget):
                     fig.suptitle(self.suptitle.text(), fontsize=16)
                 if gridtype != '':
                     plt.grid(axis=gridtype)
-                bx = plt.subplot(111)
+                cu1 = plt.subplot(111)
                 plt.title(titl)
                 if self.percentage.isChecked():
                     totals = [0.] * len(x)
@@ -1067,48 +1091,48 @@ class PowerPlot(QtWidgets.QWidget):
                             totals[h] = totals[h] + data[c][h]
                     for h in range(len(data[0])):
                         values[h] = data[0][h] / totals[h] * 100.
-                    bx.fill_between(x, 0, values, label=label[0], color=self.colours[label[0].lower()], step=step)
+                    cu1.fill_between(x, 0, values, label=label[0], color=self.colours[label[0].lower()], step=step)
                     for c in range(1, len(data)):
                         for h in range(len(data[c])):
                             bottoms[h] = values[h]
                             values[h] = values[h] + data[c][h] / totals[h] * 100.
-                        bx.fill_between(x, bottoms, values, label=label[c], color=self.colours[label[c].lower()],
+                        cu1.fill_between(x, bottoms, values, label=label[c], color=self.colours[label[c].lower()],
                                         step=step)
                     maxy = 100
-                    bx.set_ylabel('Power (%)')
+                    cu1.set_ylabel('Power (%)')
                 else:
                     if self.target == '<none>':
-                        bx.fill_between(x, 0, data[0], label=label[0], color=self.colours[label[0].lower()],
+                        cu1.fill_between(x, 0, data[0], label=label[0], color=self.colours[label[0].lower()],
                                         step=step)
                         for c in range(1, len(data)):
                             for h in range(len(data[c])):
                                 data[c][h] = data[c][h] + data[c - 1][h]
                                 maxy = max(maxy, data[c][h])
-                            bx.fill_between(x, data[c - 1], data[c], label=label[c], color=self.colours[label[c].lower()],
+                            cu1.fill_between(x, data[c - 1], data[c], label=label[c], color=self.colours[label[c].lower()],
                                             step=step)
                         top = data[0][:]
                         for d in range(1, len(data)):
                             for h in range(len(top)):
                                 top[h] = max(top[h], data[d][h])
                         if self.plottype.currentText() == 'Cumulative':
-                            bx.plot(x, top, color='white')
+                            cu1.plot(x, top, color='white')
                         else:
-                            bx.step(x, top, color='white')
+                            cu1.step(x, top, color='white')
                     else:
                  #       pattern = ['-', '+', 'x', '\\', '*', 'o', 'O', '.']
                  #       pat = 0
                         full = []
                         for h in range(len(load)):
                            full.append(min(load[h], data[0][h]))
-                        bx.fill_between(x, 0, full, label=label[0], color=self.colours[label[0].lower()],
+                        cu1.fill_between(x, 0, full, label=label[0], color=self.colours[label[0].lower()],
                                         step=step)
                         for h in range(len(data[0])):
                             if data[0][h] > full[h]:
                                 if self.spill_label.text() != '':
-                                    bx.fill_between(x, full, data[0], alpha=self.alpha, color=self.colours[label[0].lower()],
+                                    cu1.fill_between(x, full, data[0], alpha=self.alpha, color=self.colours[label[0].lower()],
                                         label=label[0] + ' ' + self.spill_label.text(), step=step)
                                 else:
-                                    bx.fill_between(x, full, data[c], alpha=self.alpha, color=self.colours[label[c].lower()],
+                                    cu1.fill_between(x, full, data[c], alpha=self.alpha, color=self.colours[label[c].lower()],
                                                     step=step)
                                 break
                         for c in range(1, len(data)):
@@ -1117,15 +1141,15 @@ class PowerPlot(QtWidgets.QWidget):
                                 data[c][h] = data[c][h] + data[c - 1][h]
                                 maxy = max(maxy, data[c][h])
                                 full.append(max(min(load[h], data[c][h]), data[c - 1][h]))
-                            bx.fill_between(x, data[c - 1], full, label=label[c], color=self.colours[label[c].lower()],
+                            cu1.fill_between(x, data[c - 1], full, label=label[c], color=self.colours[label[c].lower()],
                                             step=step)
                             for h in range(len(data[c])):
                                 if data[c][h] > full[h] + self.margin_of_error:
                                     if self.spill_label.text() != '':
-                                        bx.fill_between(x, full, data[c], alpha=self.alpha, color=self.colours[label[c].lower()],
+                                        cu1.fill_between(x, full, data[c], alpha=self.alpha, color=self.colours[label[c].lower()],
                                                         label=label[c] + ' ' + self.spill_label.text(), step=step)
                                     else:
-                                        bx.fill_between(x, full, data[c], alpha=self.alpha, color=self.colours[label[c].lower()],
+                                        cu1.fill_between(x, full, data[c], alpha=self.alpha, color=self.colours[label[c].lower()],
                                                         step=step)
                                     break
                         top = data[0][:]
@@ -1134,14 +1158,14 @@ class PowerPlot(QtWidgets.QWidget):
                                 top[h] = max(top[h], data[d][h])
                         if self.plottype.currentText() == 'Cumulative':
                             if self.alpha == 0:
-                                bx.plot(x, top, color='gray', linestyle='dashed')
+                                cu1.plot(x, top, color='gray', linestyle='dashed')
                             else:
-                                bx.plot(x, top, color='gray')
+                                cu1.plot(x, top, color='gray')
                         else:
                             if self.alpha == 0:
-                                bx.step(x, top, color='gray', linestyle='dashed')
+                                cu1.step(x, top, color='gray', linestyle='dashed')
                             else:
-                                bx.step(x, top, color='gray')
+                                cu1.step(x, top, color='gray')
                         short = []
                         do_short = False
                         c = len(data) - 1
@@ -1150,17 +1174,17 @@ class PowerPlot(QtWidgets.QWidget):
                                 do_short = True
                             short.append(max(data[c][h], load[h]))
                         if do_short:
-                            bx.fill_between(x, data[c], short, label='Shortfall', color=self.colours['shortfall'],
+                            cu1.fill_between(x, data[c], short, label='Shortfall', color=self.colours['shortfall'],
                                             step=step)
                         if self.plottype.currentText() == 'Cumulative':
-                            bx.plot(x, load, linewidth=2.5, label=self.target, color=self.colours[self.target.lower()])
+                            cu1.plot(x, load, linewidth=2.5, label=self.target, color=self.colours[self.target.lower()])
                         else:
-                            bx.step(x, load, linewidth=2.5, label=self.target, color=self.colours[self.target.lower()])
+                            cu1.step(x, load, linewidth=2.5, label=self.target, color=self.colours[self.target.lower()])
                     if len(overlay) > 0:
                         if self.plottype.currentText() == 'Cumulative':
-                            bx.plot(x, overlay, linewidth=1.5, label=self.overlay, color='black', linestyle='dotted')
+                            cu1.plot(x, overlay, linewidth=1.5, label=self.overlay, color='black', linestyle='dotted')
                         else:
-                            bx.step(x, overlay, linewidth=1.5, label=self.overlay, color='black', linestyle='dotted')
+                            cu1.step(x, overlay, linewidth=1.5, label=self.overlay, color='black', linestyle='dotted')
                     if self.maxSpin.value() > 0:
                         maxy = self.maxSpin.value()
                     else:
@@ -1169,19 +1193,19 @@ class PowerPlot(QtWidgets.QWidget):
                             maxy = ceil(maxy / rndup) * rndup
                         except:
                             pass
-                    bx.set_ylabel('Power (MW)')
+                    cu1.set_ylabel('Power (MW)')
         #        miny = 0
                 lbl_font = FontProperties()
                 lbl_font.set_size('small')
-                bx.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 2), prop=lbl_font)
+                cu1.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 2), prop=lbl_font)
                 plt.ylim([miny, maxy])
                 plt.xlim([0, len(x)])
                 xticks = list(range(0, len(x), self.interval * days_per_label))
-                plt.xticks(xticks)
-                bx.set_xticklabels(day_labels[:len(xticks)], rotation='vertical')
-                bx.set_xlabel('Period')
+                cu1.set_xticks(xticks)
+                cu1.set_xticklabels(day_labels[:len(xticks)], rotation='vertical')
+                cu1.set_xlabel('Period')
                 zp = ZoomPanX()
-                f = zp.zoom_pan(bx, base_scale=1.2, flex_ticks=flex_on) # enable scrollable zoom
+                f = zp.zoom_pan(cu1, base_scale=1.2, flex_ticks=flex_on) # enable scrollable zoom
                 plt.show()
                 del zp
             elif self.plottype.currentText() == 'Bar Chart':
@@ -1190,7 +1214,7 @@ class PowerPlot(QtWidgets.QWidget):
                     fig.suptitle(self.suptitle.text(), fontsize=16)
                 if gridtype != '':
                     plt.grid(axis=gridtype)
-                fx = plt.subplot(111)
+                bc1 = plt.subplot(111)
                 plt.title(titl)
                 if self.percentage.isChecked():
                     miny = 0
@@ -1202,34 +1226,34 @@ class PowerPlot(QtWidgets.QWidget):
                             totals[h] = totals[h] + data[c][h]
                     for h in range(len(data[0])):
                         values[h] = data[0][h] / totals[h] * 100.
-                    fx.bar(x, values, label=label[0], color=self.colours[label[0].lower()])
+                    bc1.bar(x, values, label=label[0], color=self.colours[label[0].lower()])
                     for c in range(1, len(data)):
                         for h in range(len(data[c])):
                             bottoms[h] = bottoms[h] + values[h]
                             values[h] = data[c][h] / totals[h] * 100.
-                        ex.bar(x, values, bottom=bottoms, label=label[c], color=self.colours[label[c].lower()])
+                        bc1.bar(x, values, bottom=bottoms, label=label[c], color=self.colours[label[c].lower()])
                     maxy = 100
-                    fx.set_ylabel('Power (%)')
+                    bc1.set_ylabel('Power (%)')
                 else:
                     if self.target == '<none>':
-                        fx.bar(x, data[0], label=label[0], color=self.colours[label[0].lower()])
+                        bc1.bar(x, data[0], label=label[0], color=self.colours[label[0].lower()])
                         bottoms = [0.] * len(x)
                         for c in range(1, len(data)):
                             for h in range(len(data[c])):
                                 bottoms[h] = bottoms[h] + data[c - 1][h]
                                 maxy = max(maxy, data[c][h])
-                            fx.bar(x, data[c], bottom=bottoms, label=label[c], color=self.colours[label[c].lower()])
+                            bc1.bar(x, data[c], bottom=bottoms, label=label[c], color=self.colours[label[c].lower()])
                     else:
-                        fx.bar(x, data[0], label=label[0], color=self.colours[label[0].lower()])
+                        bc1.bar(x, data[0], label=label[0], color=self.colours[label[0].lower()])
                         bottoms = [0.] * len(x)
                         for c in range(1, len(data)):
                             for h in range(len(data[c])):
                                 bottoms[h] = bottoms[h] + data[c - 1][h]
                                 maxy = max(maxy, data[c][h])
-                            fx.bar(x, data[c], bottom=bottoms, label=label[c], color=self.colours[label[c].lower()])
-                        fx.plot(x, load, linewidth=2.5, label=self.target, color=self.colours[self.target.lower()])
+                            bc1.bar(x, data[c], bottom=bottoms, label=label[c], color=self.colours[label[c].lower()])
+                        bc1.plot(x, load, linewidth=2.5, label=self.target, color=self.colours[self.target.lower()])
                     if len(overlay) > 0:
-                        bx.plot(x, overlay, linewidth=1.5, label=self.overlay, color='black', linestyle='dotted')
+                        bc1.plot(x, overlay, linewidth=1.5, label=self.overlay, color='black', linestyle='dotted')
                     if self.maxSpin.value() > 0:
                         maxy = self.maxSpin.value()
                     else:
@@ -1238,23 +1262,114 @@ class PowerPlot(QtWidgets.QWidget):
                             maxy = ceil(maxy / rndup) * rndup
                         except:
                             pass
-                    fx.set_ylabel('Power (MW)')
+                    bc1.set_ylabel('Power (MW)')
         #        miny = 0
                 lbl_font = FontProperties()
                 lbl_font.set_size('small')
-                fx.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 2), prop=lbl_font)
+                bc1.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 2), prop=lbl_font)
                 plt.ylim([miny, maxy])
                 plt.xlim([0, len(x)])
                 xticks = list(range(0, len(x), self.interval * days_per_label))
-                plt.xticks(xticks)
-                fx.set_xticklabels(day_labels[:len(xticks)], rotation='vertical')
-                fx.set_xlabel('Period')
+                bc1.set_xticks(xticks)
+                bc1.set_xticklabels(day_labels[:len(xticks)], rotation='vertical')
+                bc1.set_xlabel('Period')
                 zp = ZoomPanX()
-                f = zp.zoom_pan(fx, base_scale=1.2, flex_ticks=flex_on) # enable scrollable zoom
+                f = zp.zoom_pan(bc1, base_scale=1.2, flex_ticks=flex_on) # enable scrollable zoom
                 plt.show()
                 del zp
+            elif self.plottype.currentText() == 'Heat Map':
+                fig = plt.figure(figname)
+                if self.suptitle.text() != '':
+                    fig.suptitle(self.suptitle.text(), fontsize=16)
+                if gridtype != '':
+                    plt.grid(axis=gridtype)
+                hm1 = plt.subplot(111)
+                plt.title(titl)
+                hmdata = []
+                for hr in range(self.interval):
+                    hmdata.append([])
+                    for dy in range(365):
+                        hmdata[-1].append(0)
+                for col in range(len(data)):
+                    x = 0
+                    y = -1
+                    for hr in range(len(data[col])):
+                        y += 1
+                        if y > self.interval - 1:
+                            x += 1
+                            y = 0
+                        hmdata[y][x] += data[col][hr]
+                if tgt_col >= 0:
+                    x = 0
+                    y = -1
+                    for hr in range(len(load)):
+                        y += 1
+                        if y > self.interval - 1:
+                            x += 1
+                            y = 0
+                        hmdata[y][x] = hmdata[y][x] / load[hr]
+                miny = 999999
+                maxy = 0
+                for y in range(len(hmdata)):
+                    for x in range(len(hmdata[0])):
+                        miny = min(miny, hmdata[y][x])
+                        maxy = max(maxy, hmdata[y][x])
+                if tgt_col >= 0:
+                    fmt_str = '{:.3f}'
+                    vmax = 1
+                    vmin = 0
+                    if maxy > 1:
+                        maxy = 1
+                else:
+                    fmt_str = '{:,.0f}'
+                    if self.cbar2:
+                        vmax = maxy
+                        vmin = miny
+                    else:
+                        vmax = None
+                        vmin = None
+                im1 = hm1.imshow(hmdata, cmap=self.cmap, interpolation='nearest', aspect='auto', vmax=vmax, vmin=vmin)
+                lbl_font = FontProperties()
+                lbl_font.set_size('small')
+                day = -0.5
+                xticks = [day]
+                for m in range(len(the_days) - 1):
+                    day += the_days[m]
+                    xticks.append(day)
+                hm1.set_xticks(xticks)
+                hm1.set_xticklabels(mth_labels, ha='left')
+                yticks = [-0.5]
+                if self.interval == 24:
+                    for y in range(0, 24, 4):
+                        yticks.append(y + 2.5)
+                else:
+                    for y in range(0, 48, 8):
+                        yticks.append(y + 6.5)
+                hm1.invert_yaxis()
+                hm1.set_yticks(yticks)
+                hm1.set_yticklabels(hr_labels, va='bottom')
+                hm1.set_xlabel('Period')
+                hm1.set_ylabel('Hour')
+                if self.cbar:
+                    fig.subplots_adjust(bottom=0.1, right=0.8, top=0.9)
+                    cb_ax = fig.add_axes([0.85, 0.1, 0.025, 0.8])
+                    cbar = fig.colorbar(im1, cax=cb_ax)
+                    if self.cbar2:
+                        curcticks = cbar.get_ticks()
+                        cticks = [vmin, vmax]
+                        if miny != vmin:
+                            cticks.append(miny)
+                        if maxy != vmax:
+                            cticks.append(maxy)
+                        for y in range(len(curcticks)):
+                            if curcticks[y] > vmin and curcticks[y] < vmax:
+                                cticks.append(curcticks[y])
+                        cticks.sort()
+                        cbar.set_ticks(cticks)
+                self.log.setText('Heat map value range: {} to {}'.format(fmt_str, fmt_str).format(miny, maxy))
+                QtCore.QCoreApplication.processEvents()
+                plt.show()
         else: # diurnal average
-            hr_labels = ['0:00', '4:00', '8:00', '12:00', '16:00', '20:00', '23:00']
             if self.interval == 24:
                 ticks = list(range(0, 21, 4))
                 ticks.append(23)
@@ -1263,6 +1378,7 @@ class PowerPlot(QtWidgets.QWidget):
                 ticks.append(47)
             titl = self.title.text().replace('$YEAR$', str(year))
             titl = titl.replace('$SHEET$', isheet)
+            todo_mths = []
             if self.period.currentText() == 'Year':
                 titl = titl.replace('$MTH$', '')
                 titl = titl.replace('$MONTH$', '')
@@ -1270,12 +1386,41 @@ class PowerPlot(QtWidgets.QWidget):
                 strt_row = [self.toprow[1]]
                 todo_rows = [self.rows]
             else:
-                titl = titl.replace('$MTH$', self.period.currentText())
-                titl = titl.replace('$MONTH$', self.period.currentText())
+                strt_row = []
+                todo_rows = []
                 if self.period.currentText() in self.seasons.keys():
-                    strt_row = []
-                    todo_rows = []
+                    titl = titl.replace('$MTH$', self.period.currentText())
+                    titl = titl.replace('$MONTH$', self.period.currentText())
                     for s in self.seasons[self.period.currentText()]:
+                        m = 0
+                        strt_row.append(0)
+                        while m < s:
+                            strt_row[-1] = strt_row[-1] + the_days[m] * self.interval
+                            m += 1
+                        todo_mths.append(m)
+                        strt_row[-1] = strt_row[-1] + self.toprow[1]
+                        todo_rows.append(the_days[s] * self.interval)
+                else:
+                    i = mth_labels.index(self.period.currentText())
+                    todo_mths = [i]
+                    if self.cperiod.currentText() == '<none>':
+                        titl = titl.replace('$MTH$', self.period.currentText())
+                        titl = titl.replace('$MONTH$', self.period.currentText())
+                    else:
+                        titl = titl.replace('$MTH$', self.period.currentText() + ' to ' + self.cperiod.currentText())
+                        titl = titl.replace('$MONTH$', self.period.currentText() + ' to ' + self.cperiod.currentText())
+                        j = mth_labels.index(self.cperiod.currentText())
+                        if j == i:
+                            pass
+                        elif j > i:
+                            for k in range(i + 1, j + 1):
+                                todo_mths.append(k)
+                        else:
+                            for k in range(i + 1, 12):
+                                todo_mths.append(k)
+                            for k in range(j + 1):
+                                todo_mths.append(k)
+                    for s in todo_mths:
                         m = 0
                         strt_row.append(0)
                         while m < s:
@@ -1283,21 +1428,150 @@ class PowerPlot(QtWidgets.QWidget):
                             m += 1
                         strt_row[-1] = strt_row[-1] + self.toprow[1]
                         todo_rows.append(the_days[s] * self.interval)
-                else:
-                    i = mth_labels.index(self.period.currentText())
-                    m = 0
-                    strt_row = 0
-                    while m < i:
-                        strt_row = strt_row + the_days[m] * self.interval
-                        m += 1
-                    strt_row = [self.toprow[1] + strt_row]
-                    todo_rows = [the_days[i] * self.interval]
             load = []
             tgt_col = -1
-            overlay_cols = []
-            overlay = []
             data = []
             label = []
+            if self.plottype.currentText() == 'Heat Map':
+                fig = plt.figure(figname)
+                if self.suptitle.text() != '':
+                    fig.suptitle(self.suptitle.text(), fontsize=16)
+                if gridtype != '':
+                    plt.grid(axis=gridtype)
+                hm2 = plt.subplot(111)
+                plt.title(titl)
+                hmdata = []
+                days = int(sum(todo_rows) / self.interval)
+                for hr in range(self.interval):
+                    hmdata.append([])
+                    for dy in range(days):
+                        hmdata[-1].append(0)
+                for c2 in range(2, ws.ncols):
+                    column = ws.cell_value(self.toprow[0], c2).replace('\n',' ')
+                    if self.zone_row > 0 and ws.cell_value(self.zone_row, c2) != '' and ws.cell_value(self.zone_row, c2) is not None:
+                        column = ws.cell_value(self.zone_row, c2).replace('\n',' ') + '.' + column
+                    if column == self.target:
+                        tgt_col = c2
+                for c in range(self.order.count() -1, -1, -1):
+                    col = self.order.item(c).text()
+                    for c2 in range(2, ws.ncols):
+                        column = ws.cell_value(self.toprow[0], c2).replace('\n',' ')
+                        if self.zone_row > 0 and ws.cell_value(self.zone_row, c2) != '' and ws.cell_value(self.zone_row, c2) is not None:
+                            column = ws.cell_value(self.zone_row, c2).replace('\n',' ') + '.' + column
+                        if column == col:
+                            dy = 0
+                            hr = -1
+                            for s in range(len(strt_row)):
+                                for row in range(strt_row[s] + 1, strt_row[s] + todo_rows[s] + 1):
+                                    hr += 1
+                                    if hr > self.interval - 1:
+                                        dy += 1
+                                        hr = 0
+                                    try:
+                                        hmdata[hr][dy] += ws.cell_value(row, c2)
+                                    except:
+                                        pass
+                            break
+                if tgt_col >= 0:
+                    dy = 0
+                    hr = -1
+                    for s in range(len(strt_row)):
+                        for row in range(strt_row[s] + 1, strt_row[s] + todo_rows[s] + 1):
+                            hr += 1
+                            if hr > self.interval - 1:
+                                dy += 1
+                                hr = 0
+                            try:
+                                hmdata[hr][dy] = hmdata[hr][dy] / ws.cell_value(row, tgt_col)
+                            except:
+                                pass
+                miny = 999999
+                maxy = 0
+                tgap = 0
+                for y in range(len(hmdata)):
+                    for x in range(len(hmdata[0])):
+                        miny = min(miny, hmdata[y][x])
+                        maxy = max(maxy, hmdata[y][x])
+                if tgt_col >= 0:
+                    fmt_str = '{:.3f}'
+                    vmax = 1
+                    vmin = 0
+                    if self.cbar2:
+                        tgap = .03
+                    if maxy > 1:
+                        maxy = 1
+                else:
+                    fmt_str = '{:,.0f}'
+                    if self.cbar2:
+                        tgap = (maxy - miny) * .03
+                        vmax = maxy
+                        vmin = miny
+                    else:
+                        vmax = None
+                        vmin = None
+                im2 = hm2.imshow(hmdata, cmap=self.cmap, interpolation='nearest', aspect='auto', vmax=vmax, vmin=vmin)
+                lbl_font = FontProperties()
+                lbl_font.set_size('small')
+                yticks = [-0.5]
+                if self.interval == 24:
+                    for y in range(0, 24, 4):
+                        yticks.append(y + 2.5)
+                else:
+                    for y in range(0, 48, 8):
+                        yticks.append(y + 6.5)
+                hm2.invert_yaxis()
+                hm2.set_yticks(yticks)
+                hm2.set_yticklabels(hr_labels, va='bottom')
+                if len(hmdata[0]) > 31:
+                    day = -0.5
+                    xticks = []
+                    xticklbls = []
+                    for m in todo_mths:
+                        xticks.append(day)
+                        xticklbls.append(mth_labels[m])
+                        day = day + the_days[m]
+                    hm2.set_xticks(xticks)
+                    hm2.set_xticklabels(xticklbls, ha='left')
+                else:
+                    curxticks = hm2.get_xticks()
+                    xticks = []
+                    xticklabels = []
+                    for x in range(len(curxticks)):
+                        if curxticks[x] >= 0 and curxticks[x] < len(hmdata[0]):
+                            xticklabels.append(str(int(curxticks[x] + 1)))
+                            xticks.append(curxticks[x])
+                    hm2.set_xticks(xticks)
+                    hm2.set_xticklabels(xticklabels)
+                hm2.set_xlabel('Day')
+                hm2.set_ylabel('Hour')
+                if self.cbar:
+                    fig.subplots_adjust(bottom=0.1, right=0.8, top=0.9)
+                    cb_ax = fig.add_axes([0.85, 0.1, 0.025, 0.8])
+                    cbar = fig.colorbar(im2, cax=cb_ax)
+                    if self.cbar2:
+                        curcticks = cbar.get_ticks()
+                        cticks = [vmin, vmax]
+                        if miny != vmin:
+                            cticks.append(miny)
+                        if maxy != vmax:
+                            cticks.append(maxy)
+                        for y in range(len(curcticks)):
+                            if curcticks[y] < vmin or curcticks[y] > vmax:
+                                continue
+                            if self.cbar2 and tgap != 0:
+                                if miny - tgap < curcticks[y] < miny + tgap:
+                                    continue
+                                if maxy - tgap < curcticks[y] < maxy + tgap:
+                                    continue
+                            cticks.append(curcticks[y])
+                        cticks.sort()
+                        cbar.set_ticks(cticks)
+                self.log.setText('Heat map value range: {} to {}'.format(fmt_str, fmt_str).format(miny, maxy))
+                QtCore.QCoreApplication.processEvents()
+                plt.show()
+                return
+            overlay_cols = []
+            overlay = []
             miny = 0
             maxy = 0
             hs = []
@@ -1306,7 +1580,7 @@ class PowerPlot(QtWidgets.QWidget):
             x = hs[:]
             for c2 in range(2, ws.ncols):
                 column = ws.cell_value(self.toprow[0], c2).replace('\n',' ')
-                if self.zone_row > 0 and ws.cell_value(self.zone_row, c2) != '':
+                if self.zone_row > 0 and ws.cell_value(self.zone_row, c2) != '' and ws.cell_value(self.zone_row, c2) is not None:
                     column = ws.cell_value(self.zone_row, c2).replace('\n',' ') + '.' + column
                 if column == self.target:
                     tgt_col = c2
@@ -1317,7 +1591,7 @@ class PowerPlot(QtWidgets.QWidget):
                 col = self.order.item(c).text()
                 for c2 in range(2, ws.ncols):
                     column = ws.cell_value(self.toprow[0], c2).replace('\n',' ')
-                    if self.zone_row > 0 and ws.cell_value(self.zone_row, c2) != '':
+                    if self.zone_row > 0 and ws.cell_value(self.zone_row, c2) != '' and ws.cell_value(self.zone_row, c2) is not None:
                         column = ws.cell_value(self.zone_row, c2).replace('\n',' ') + '.' + column
                     if column == col:
                         data.append([])
@@ -1376,14 +1650,14 @@ class PowerPlot(QtWidgets.QWidget):
                     fig.suptitle(self.suptitle.text(), fontsize=16)
                 if gridtype != '':
                     plt.grid(axis=gridtype)
-                cx = plt.subplot(111)
+                lc2 = plt.subplot(111)
                 plt.title(titl)
                 for c in range(len(data)):
-                    cx.plot(x, data[c], linewidth=1.5, label=label[c], color=self.colours[label[c].lower()])
+                    lc2.plot(x, data[c], linewidth=1.5, label=label[c], color=self.colours[label[c].lower()])
                 if len(load) > 0:
-                    cx.plot(x, load, linewidth=2.5, label=self.target, color=self.colours[self.target.lower()])
+                    lc2.plot(x, load, linewidth=2.5, label=self.target, color=self.colours[self.target.lower()])
                 if len(overlay) > 0:
-                    cx.plot(x, overlay, linewidth=1.5, label=self.overlay, color='black', linestyle='dotted')
+                    lc2.plot(x, overlay, linewidth=1.5, label=self.overlay, color='black', linestyle='dotted')
                 if self.maxSpin.value() > 0:
                     maxy = self.maxSpin.value()
                 else:
@@ -1395,32 +1669,30 @@ class PowerPlot(QtWidgets.QWidget):
            #     miny = 0
                 lbl_font = FontProperties()
                 lbl_font.set_size('small')
-                cx.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 1),
+                lc2.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 1),
                               prop=lbl_font)
                 plt.ylim([miny, maxy])
                 plt.xlim([0, self.interval - 1])
-                plt.xticks(ticks)
-                cx.set_xticklabels(hr_labels)
-                cx.set_xlabel('Hour of the Day')
-                cx.set_ylabel('Power (MW)')
+                lc2.set_xticks(ticks)
+                lc2.set_xticklabels(hr_labels)
+                lc2.set_xlabel('Hour of the Day')
+                lc2.set_ylabel('Power (MW)')
                 zp = ZoomPanX()
-                f = zp.zoom_pan(cx, base_scale=1.2) # enable scrollable zoom
+                f = zp.zoom_pan(lc2, base_scale=1.2) # enable scrollable zoom
                 plt.show()
                 del zp
             elif self.plottype.currentText() in ['Cumulative', 'Step Chart']:
                 if self.plottype.currentText() == 'Cumulative':
                     step = None
                 else:
-                    step = 'pre'
-          ##      fig, dx = plt.subplots(constrained_layout=self.constrained_layout)
-          ##      fig.canvas.manager.set_window_title('cumulative_' + self.period.currentText().lower() + '_' + str(year))
+                    step = 'pre' # 'post'
                 fig = plt.figure(figname + '_' + self.period.currentText().lower(),
                                  constrained_layout=self.constrained_layout)
                 if self.suptitle.text() != '':
                     fig.suptitle(self.suptitle.text(), fontsize=16)
                 if gridtype != '':
                     plt.grid(axis=gridtype)
-                dx = plt.subplot(111)
+                cu2 = plt.subplot(111)
                 plt.title(titl)
                 if self.percentage.isChecked():
                     totals = [0.] * len(x)
@@ -1431,36 +1703,36 @@ class PowerPlot(QtWidgets.QWidget):
                             totals[h] = totals[h] + data[c][h]
                     for h in range(len(data[0])):
                         values[h] = data[0][h] / totals[h] * 100.
-                    dx.fill_between(x, 0, values, label=label[0], color=self.colours[label[0].lower()], step=step)
+                    cu2.fill_between(x, 0, values, label=label[0], color=self.colours[label[0].lower()], step=step)
                     for c in range(1, len(data)):
                         for h in range(len(data[c])):
                             bottoms[h] = values[h]
                             values[h] = values[h] + data[c][h] / totals[h] * 100.
-                        dx.fill_between(x, bottoms, values, label=label[c], color=self.colours[label[c].lower()], step=step)
+                        cu2.fill_between(x, bottoms, values, label=label[c], color=self.colours[label[c].lower()], step=step)
                     maxy = 100
-                    dx.set_ylabel('Power (%)')
+                    cu2.set_ylabel('Power (%)')
                 else:
                     if self.target == '<none>':
-                        dx.fill_between(x, 0, data[0], label=label[0], color=self.colours[label[0].lower()], step=step)
+                        cu2.fill_between(x, 0, data[0], label=label[0], color=self.colours[label[0].lower()], step=step)
                         for c in range(1, len(data)):
                             for h in range(len(data[c])):
                                 data[c][h] = data[c][h] + data[c - 1][h]
                                 maxy = max(maxy, data[c][h])
-                            dx.fill_between(x, data[c - 1], data[c], label=label[c], color=self.colours[label[c].lower()], step=step)
+                            cu2.fill_between(x, data[c - 1], data[c], label=label[c], color=self.colours[label[c].lower()], step=step)
                     else:
                 #        pattern = ['-', '+', 'x', '\\', '*', 'o', 'O', '.']
                 #        pat = 0
                         full = []
                         for h in range(len(load)):
                            full.append(min(load[h], data[0][h]))
-                        dx.fill_between(x, 0, full, label=label[0], color=self.colours[label[0].lower()], step=step)
+                        cu2.fill_between(x, 0, full, label=label[0], color=self.colours[label[0].lower()], step=step)
                         for h in range(len(full)):
                             if data[0][h] > full[h]:
                                 if self.spill_label.text() != '':
-                                    dx.fill_between(x, full, data[0], alpha=self.alpha, color=self.colours[label[0].lower()],
+                                    cu2.fill_between(x, full, data[0], alpha=self.alpha, color=self.colours[label[0].lower()],
                                         label=label[0] + ' ' + self.spill_label.text(), step=step)
                                 else:
-                                    dx.fill_between(x, full, data[c], alpha=self.alpha, color=self.colours[label[c].lower()], step=step)
+                                    cu2.fill_between(x, full, data[c], alpha=self.alpha, color=self.colours[label[c].lower()], step=step)
                                 break
                         for c in range(1, len(data)):
                             full = []
@@ -1468,17 +1740,17 @@ class PowerPlot(QtWidgets.QWidget):
                                 data[c][h] = data[c][h] + data[c - 1][h]
                                 maxy = max(maxy, data[c][h])
                                 full.append(max(min(load[h], data[c][h]), data[c - 1][h]))
-                            dx.fill_between(x, data[c - 1], full, label=label[c], color=self.colours[label[c].lower()], step=step)
+                            cu2.fill_between(x, data[c - 1], full, label=label[c], color=self.colours[label[c].lower()], step=step)
                  #           pat += 1
                  #           if pat >= len(pattern):
                  #               pat = 0
                             for h in range(len(full)):
                                 if data[c][h] > full[h] + self.margin_of_error:
                                     if self.spill_label.text() != '':
-                                        dx.fill_between(x, full, data[c], alpha=self.alpha, color=self.colours[label[c].lower()],
+                                        cu2.fill_between(x, full, data[c], alpha=self.alpha, color=self.colours[label[c].lower()],
                                                         label=label[c] + ' ' + self.spill_label.text(), step=step)
                                     else:
-                                        dx.fill_between(x, full, data[c], alpha=self.alpha, color=self.colours[label[c].lower()],
+                                        cu2.fill_between(x, full, data[c], alpha=self.alpha, color=self.colours[label[c].lower()],
                                                         step=step)
                                     break
                         top = data[0][:]
@@ -1487,14 +1759,14 @@ class PowerPlot(QtWidgets.QWidget):
                                 top[h] = max(top[h], data[d][h])
                         if self.plottype.currentText() == 'Cumulative':
                             if self.alpha == 0:
-                                dx.plot(x, top, color='gray', linestyle='dashed')
+                                cu2.plot(x, top, color='gray', linestyle='dashed')
                             else:
-                                dx.plot(x, top, color='gray')
+                                cu2.plot(x, top, color='gray')
                         else:
                             if self.alpha == 0:
-                                dx.step(x, top, color='gray', linestyle='dashed')
+                                cu2.step(x, top, color='gray', linestyle='dashed')
                             else:
-                                dx.step(x, top, color='gray')
+                                cu2.step(x, top, color='gray')
                         short = []
                         do_short = False
                         for h in range(len(load)):
@@ -1502,15 +1774,15 @@ class PowerPlot(QtWidgets.QWidget):
                                 do_short = True
                             short.append(max(data[c][h], load[h]))
                         if do_short:
-                            dx.fill_between(x, data[c], short, label='Shortfall', color=self.colours['shortfall'], step=step)
+                            cu2.fill_between(x, data[c], short, label='Shortfall', color=self.colours['shortfall'], step=step)
                         if self.plottype.currentText() == 'Cumulative':
-                            dx.plot(x, load, linewidth=2.5, label=self.target, color=self.colours[self.target.lower()])
+                            cu2.plot(x, load, linewidth=2.5, label=self.target, color=self.colours[self.target.lower()])
                             if len(overlay) > 0:
-                                dx.plot(x, overlay, linewidth=1.5, label=self.overlay, color='black', linestyle='dotted')
+                                cu2.plot(x, overlay, linewidth=1.5, label=self.overlay, color='black', linestyle='dotted')
                         else:
-                            dx.step(x, load, linewidth=2.5, label=self.target, color=self.colours[self.target.lower()])
+                            cu2.step(x, load, linewidth=2.5, label=self.target, color=self.colours[self.target.lower()])
                             if len(overlay) > 0:
-                                dx.step(x, overlay, linewidth=1.5, label=self.overlay, color='black', linestyle='dotted')
+                                cu2.step(x, overlay, linewidth=1.5, label=self.overlay, color='black', linestyle='dotted')
                     if self.maxSpin.value() > 0:
                         maxy = self.maxSpin.value()
                     else:
@@ -1519,18 +1791,18 @@ class PowerPlot(QtWidgets.QWidget):
                             maxy = ceil(maxy / rndup) * rndup
                         except:
                             pass
-                    dx.set_ylabel('Power (MW)')
+                    cu2.set_ylabel('Power (MW)')
          #       miny = 0
                 lbl_font = FontProperties()
                 lbl_font.set_size('small')
-                dx.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 2), prop=lbl_font)
+                cu2.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 2), prop=lbl_font)
                 plt.ylim([miny, maxy])
-                plt.xlim([0, self.interval- 1])
-                plt.xticks(ticks)
-                dx.set_xticklabels(hr_labels)
-                dx.set_xlabel('Hour of the Day')
+                plt.xlim([0, self.interval - 1])
+                cu2.set_xticks(ticks)
+                cu2.set_xticklabels(hr_labels)
+                cu2.set_xlabel('Hour of the Day')
                 zp = ZoomPanX()
-                f = zp.zoom_pan(dx, base_scale=1.2) # enable scrollable zoom
+                f = zp.zoom_pan(cu2, base_scale=1.2) # enable scrollable zoom
                 plt.show()
                 del zp
             elif self.plottype.currentText() == 'Bar Chart':
@@ -1540,7 +1812,7 @@ class PowerPlot(QtWidgets.QWidget):
                     fig.suptitle(self.suptitle.text(), fontsize=16)
                 if gridtype != '':
                     plt.grid(axis=gridtype)
-                ex = plt.subplot(111)
+                bc2 = plt.subplot(111)
                 plt.title(titl)
                 if self.percentage.isChecked():
                     miny = 0
@@ -1552,32 +1824,32 @@ class PowerPlot(QtWidgets.QWidget):
                             totals[h] = totals[h] + data[c][h]
                     for h in range(len(data[0])):
                         values[h] = data[0][h] / totals[h] * 100.
-                    ex.bar(x, values, label=label[0], color=self.colours[label[0].lower()])
+                    bc2.bar(x, values, label=label[0], color=self.colours[label[0].lower()])
                     for c in range(1, len(data)):
                         for h in range(len(data[c])):
                             bottoms[h] = bottoms[h] + values[h]
                             values[h] = data[c][h] / totals[h] * 100.
-                        ex.bar(x, values, bottom=bottoms, label=label[c], color=self.colours[label[c].lower()])
+                        bc2.bar(x, values, bottom=bottoms, label=label[c], color=self.colours[label[c].lower()])
                     maxy = 100
-                    ex.set_ylabel('Power (%)')
+                    bc2.set_ylabel('Power (%)')
                 else:
                     if self.target == '<none>':
-                        ex.bar(x, data[0], label=label[0], color=self.colours[label[0].lower()])
+                        bc2.bar(x, data[0], label=label[0], color=self.colours[label[0].lower()])
                         bottoms = [0.] * len(x)
                         for c in range(1, len(data)):
                             for h in range(len(data[c])):
                                 bottoms[h] = bottoms[h] + data[c - 1][h]
                                 maxy = max(maxy, data[c][h])
-                            ex.bar(x, data[c], bottom=bottoms, label=label[c], color=self.colours[label[c].lower()])
+                            bc2.bar(x, data[c], bottom=bottoms, label=label[c], color=self.colours[label[c].lower()])
                     else:
-                        ex.bar(x, data[0], label=label[0], color=self.colours[label[0].lower()])
+                        bc2.bar(x, data[0], label=label[0], color=self.colours[label[0].lower()])
                         bottoms = [0.] * len(x)
                         for c in range(1, len(data)):
                             for h in range(len(data[c])):
                                 bottoms[h] = bottoms[h] + data[c - 1][h]
                                 maxy = max(maxy, data[c][h])
-                            ex.bar(x, data[c], bottom=bottoms, label=label[c], color=self.colours[label[c].lower()])
-                        ex.plot(x, load, linewidth=2.5, label=self.target, color=self.colours[self.target.lower()])
+                            bc2.bar(x, data[c], bottom=bottoms, label=label[c], color=self.colours[label[c].lower()])
+                        bc2.plot(x, load, linewidth=2.5, label=self.target, color=self.colours[self.target.lower()])
                     if self.maxSpin.value() > 0:
                         maxy = self.maxSpin.value()
                     else:
@@ -1586,18 +1858,18 @@ class PowerPlot(QtWidgets.QWidget):
                             maxy = ceil(maxy / rndup) * rndup
                         except:
                             pass
-                    ex.set_ylabel('Power (MW)')
+                    bc2.set_ylabel('Power (MW)')
         #        miny = 0
                 lbl_font = FontProperties()
                 lbl_font.set_size('small')
-                ex.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 2), prop=lbl_font)
+                bc2.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 2), prop=lbl_font)
             #    plt.ylim([miny, maxy])
                 plt.xlim([0, self.interval - 1])
-                plt.xticks(ticks)
-                ex.set_xticklabels(hr_labels)
-                ex.set_xlabel('Hour of the Day')
+                bc2.set_xticks(ticks)
+                bc2.set_xticklabels(hr_labels)
+                bc2.set_xlabel('Hour of the Day')
                 zp = ZoomPanX()
-                f = zp.zoom_pan(ex, base_scale=1.2) # enable scrollable zoom
+                f = zp.zoom_pan(bc2, base_scale=1.2) # enable scrollable zoom
                 plt.show()
                 del zp
 
@@ -1718,7 +1990,7 @@ class PowerPlot(QtWidgets.QWidget):
         total_data = []
         for c2 in range(2, ws.ncols):
             column = ws.cell_value(self.toprow[0], c2).replace('\n',' ')
-            if self.zone_row > 0 and ws.cell_value(self.zone_row, c2) != '':
+            if self.zone_row > 0 and ws.cell_value(self.zone_row, c2) != '' and ws.cell_value(self.zone_row, c2) is not None:
                 column = ws.cell_value(self.zone_row, c2).replace('\n',' ') + '.' + column
             if column == self.target:
                 tgt_col = c2
@@ -1772,7 +2044,7 @@ class PowerPlot(QtWidgets.QWidget):
                 col = self.order.item(c).text()
                 for c2 in range(2, ws.ncols):
                     column = ws.cell_value(self.toprow[0], c2).replace('\n',' ')
-                    if self.zone_row > 0 and ws.cell_value(self.zone_row, c2) != '':
+                    if self.zone_row > 0 and ws.cell_value(self.zone_row, c2) != '' and ws.cell_value(self.zone_row, c2) is not None:
                         column = ws.cell_value(self.zone_row, c2).replace('\n',' ') + '.' + column
                     if column == col:
                         data.append([])
@@ -1868,13 +2140,13 @@ class PowerPlot(QtWidgets.QWidget):
         if per2 != '' and per2 != '<none>':
             title += ' to ' + per2
         dialog = Table(rows, fields=fields, title=title, decpts=decpts, sortby=sortby, reverse=True, save_folder=self.scenarios)
-        dialog.exec_()
+        dialog.exec()
         self.log.setText('Best %s: %s %.4f' % (corrtxt[1], best_fac, best_corr))
 
 
 if "__main__" == __name__:
     app = QtWidgets.QApplication(sys.argv)
     ex = PowerPlot()
-    app.exec_()
+    app.exec()
     app.deleteLater()
     sys.exit()
