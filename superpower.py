@@ -794,7 +794,7 @@ class SuperPower():
             if station.scenario == 'Existing' and (no_turbines * turbine.capacity) != (station.capacity * 1000):
                 loss = round(1. - (station.capacity * 1000) / (no_turbines * turbine.capacity), 2)
                 loss = loss * 100
-                if loss < 0.:
+                if loss < self.wind_farm_losses_percent[wtyp]:
                     loss = self.wind_farm_losses_percent[wtyp]
                 self.data.set_number(b'system_capacity', station.capacity * 1000000)
                 self.data.set_number(b'wind_farm_losses_percent', loss)
