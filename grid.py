@@ -213,14 +213,18 @@ class Grid:
             self.kml_file = self.kml_file.replace('$YEAR$', self.base_year)
         except:
             self.kml_file = ''
+        self.kml_file2 = ''
         try:
+            self.kml_file2 = config.get('Files', 'grid2_network')
+        except configparser.NoOptionError:
             self.kml_file2 = config.get('Files', 'grid_network2')
+        except:
+            pass
+        if self.kml_file2 != '':
             for key, value in parents:
                 self.kml_file2 = self.kml_file2.replace(key, value)
             self.kml_file2 = self.kml_file2.replace('$USER$', getUser())
             self.kml_file2 = self.kml_file2.replace('$YEAR$', self.base_year)
-        except:
-            self.kml_file2 = ''
         try:
             mapc = config.get('Map', 'map_choice')
         except:
