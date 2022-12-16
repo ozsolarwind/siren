@@ -536,12 +536,12 @@ class DataView(QtWidgets.QDialog):
             self.book.release_resources()
             self.book = None
         self.book = WorkBook()
-        if 1 == 1: #try:
+        try:
             if os.path.exists(ifile):
                 self.book.open_workbook(ifile)
             else:
                 self.book.open_workbook(self.scenarios + ifile)
-        else: #except:
+        except:
             self.log.setText("Can't open file - " + ifile)
             return
         self.log.setText('File opened - ' + ifile)

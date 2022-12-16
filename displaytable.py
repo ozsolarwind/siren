@@ -604,7 +604,7 @@ class Table(QtWidgets.QDialog):
         dialog = displayobject.AnObject(QtWidgets.QDialog(), addproperty, readonly=False,
                  textedit=textedit, title='Add ' + self.fields[0].title())
         dialog.exec_()
-        if dialog.getValues()[self.fields[0]] != '' or 1 == 1:
+        if dialog.getValues()[self.fields[0]] != '':
             self.entry.append(addproperty)
             if self.fields[0] == 'property':
                 self.objects.append(FakeObject([dialog.getValues()[self.fields[0]],
