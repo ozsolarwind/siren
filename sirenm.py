@@ -1055,36 +1055,36 @@ class MainWindow(QtWidgets.QMainWindow):
         powerMenu.addAction(self.escape)
         self.escape.setVisible(False)
         if self.view.scene().show_capacity:
-            self.showCapacity = QtWidgets.QAction(QtGui.QIcon('check-mark.png'), 'Capacity Circles', self)
+            self.showCapacity = QtWidgets.QAction(QtGui.QIcon('check-mark.png'), 'Show Capacity Circles', self)
         else:
-            self.showCapacity = QtWidgets.QAction(QtGui.QIcon('blank.png'), 'Capacity Circles', self)
+            self.showCapacity = QtWidgets.QAction(QtGui.QIcon('blank.png'), 'Show Capacity Circles', self)
         self.showCapacity.setShortcut('Ctrl+C')
         self.showCapacity.setStatusTip('Toggle Capacity Circles')
         self.showCapacity.triggered.connect(self.show_Capacity)
         if self.view.scene().show_generation:
-            self.showGeneration = QtWidgets.QAction(QtGui.QIcon('check-mark.png'), 'Generation Circles', self)
+            self.showGeneration = QtWidgets.QAction(QtGui.QIcon('check-mark.png'), 'Show Generation Circles', self)
         else:
-            self.showGeneration = QtWidgets.QAction(QtGui.QIcon('blank.png'), 'Generation Circles', self)
+            self.showGeneration = QtWidgets.QAction(QtGui.QIcon('blank.png'), 'Show Generation Circles', self)
         self.showGeneration.setShortcut('Ctrl+K')
         self.showGeneration.setStatusTip('Toggle Generation Circles')
         self.showGeneration.triggered.connect(self.show_Generation)
         if self.view.scene().show_station_name:
-            self.showName = QtWidgets.QAction(QtGui.QIcon('check-mark.png'), 'Station Names', self)
+            self.showName = QtWidgets.QAction(QtGui.QIcon('check-mark.png'), 'Show Station Names', self)
         else:
-            self.showName = QtWidgets.QAction(QtGui.QIcon('blank.png'), 'Station Names', self)
+            self.showName = QtWidgets.QAction(QtGui.QIcon('blank.png'), 'Show Station Names', self)
         self.showName.setShortcut('Ctrl+N')
         self.showName.triggered.connect(self.show_Name)
         if self.view.scene().show_fossil:
-            self.showFossil = QtWidgets.QAction(QtGui.QIcon('check-mark.png'), 'Fossil-fueled Stations', self)
+            self.showFossil = QtWidgets.QAction(QtGui.QIcon('check-mark.png'), 'Show Fossil-fueled Stations', self)
         else:
-            self.showFossil = QtWidgets.QAction(QtGui.QIcon('blank.png'), 'Fossil-fueled Stations', self)
+            self.showFossil = QtWidgets.QAction(QtGui.QIcon('blank.png'), 'Show Fossil-fueled Stations', self)
         self.showFossil.setShortcut('Ctrl+F')
         self.showFossil.setStatusTip('Show Fossil Stations')
         self.showFossil.triggered.connect(self.show_Fossil)
         if self.view.scene().show_ruler:
-            self.showRuler = QtWidgets.QAction(QtGui.QIcon('check-mark.png'), 'Scale Ruler', self)
+            self.showRuler = QtWidgets.QAction(QtGui.QIcon('check-mark.png'), 'Show Scale Ruler', self)
         else:
-            self.showRuler = QtWidgets.QAction(QtGui.QIcon('blank.png'), 'Scale Ruler', self)
+            self.showRuler = QtWidgets.QAction(QtGui.QIcon('blank.png'), 'Show Scale Ruler', self)
         self.showRuler.setShortcut('Ctrl+R')
         self.showRuler.setStatusTip('Show Scale Ruler')
         self.showRuler.triggered.connect(self.show_Ruler)
@@ -1132,6 +1132,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.coordGrid = QtWidgets.QAction(QtGui.QIcon('network.png'), 'Show Coordinates Grid', self)
         self.coordGrid.setStatusTip('Show Coordinates Grid')
         self.coordGrid.triggered.connect(self.coord_Grid)
+        if self.view.scene().grid_areas:
+            self.showAreas = QtWidgets.QAction(QtGui.QIcon('check-mark.png'), 'Show Grid Areas', self)
+            self.showAreas.setStatusTip('Show Grid Areas')
+            self.showAreas.triggered.connect(self.show_Areas)
         self.goTo = QtWidgets.QAction(QtGui.QIcon('arrow.png'), 'Go to Station', self)
         self.goTo.setShortcut('Ctrl+G')
         self.goTo.setStatusTip('Locate specific Station')
@@ -1163,6 +1167,8 @@ class MainWindow(QtWidgets.QMainWindow):
         viewMenu.addAction(self.showGrid)
         viewMenu.addAction(self.refreshGrid)
         viewMenu.addAction(self.coordGrid)
+        if self.view.scene().grid_areas:
+            viewMenu.addAction(self.showAreas)
         viewMenu.addAction(self.goTo)
         viewMenu.addAction(self.goToTown)
         viewMenu.addAction(self.goToLocn)
@@ -2726,6 +2732,20 @@ class MainWindow(QtWidgets.QMainWindow):
             k_file.write(tline + '\n')
         k_file.close()
         comment = 'Stations saved to ' + kfile
+        self.view.statusmsg.emit(comment)
+
+    def show_Areas(self):
+        comment = 'Grid Areas Toggled'
+        if self.view.scene().grid_areas:
+            self.showAreas.setIcon(QtGui.QIcon('blank.png'))
+            self.view.scene().grid_areas = False
+            self.view.scene()._gridGroupa.setVisible(False)
+            comment += ' Off'
+        else:
+            self.showAreas.setIcon(QtGui.QIcon('check-mark.png'))
+            self.view.scene().grid_areas = True
+            self.view.scene()._gridGroupa.setVisible(True)
+            comment += ' On'
         self.view.statusmsg.emit(comment)
 
     def show_Capacity(self):

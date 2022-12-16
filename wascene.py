@@ -31,7 +31,7 @@ except:
     import pyproj
 from towns import Towns
 from getmodels import getModelFile
-from grid import Grid, Grid_Boundary, Grid_Zones, Line
+from grid import Grid, Grid_Area, Grid_Boundary, Grid_Zones, Line
 from senutils import getParents, getUser, techClean, WorkBook
 from station import Station, Stations
 from dijkstra_4 import Shortest
@@ -168,7 +168,8 @@ class WAScene(QtWidgets.QGraphicsScene):
         self.colors['background'] = 'darkBlue'
         self.colors['border'] = ''
         self.colors['grid_boundary'] = 'blue'
-        self.colors['grid_zones'] = '#00FF00'
+        self.colors['grid_areas'] = '#00FF00'
+        self.colors['grid_zones'] = '#FFFF00'
         self.colors['grid_trace'] = 'white'
         self.colors['ruler'] = 'white'
         self.colors['station'] = '#00FF00'
@@ -325,6 +326,10 @@ class WAScene(QtWidgets.QGraphicsScene):
                 pass
             pass
         try:
+            config.get('Files', 'grid2_network')
+            self.existing_grid2 = True
+        except configparser.NoOptionError:
+            config.get('Files', 'grid_network2')
             self.existing_grid2 = True
         except:
             self.existing_grid2 = False
@@ -339,6 +344,20 @@ class WAScene(QtWidgets.QGraphicsScene):
                 pass
         except:
             self.grid_zones = False
+        self.grid_areas = False
+        for s in ['', '1', '2', '3', '4', '5']:
+            try:
+                grid_areas = config.get('Files', 'grid_areas' + s)
+                self.grid_areas = True
+                try:
+                    grid_areas = config.get('View', 'grid_areas')
+                    if grid_areas.lower() in ['false', 'no', 'off']:
+                        self.grid_areas = False
+                except:
+                    pass
+                break
+            except:
+                pass
         self.line_group = True
         self.trace_grid = True
         try:
@@ -531,6 +550,7 @@ class WAScene(QtWidgets.QGraphicsScene):
         self._gridGroup = QtWidgets.QGraphicsItemGroup() # normal grid group
         self._gridGroup2 = QtWidgets.QGraphicsItemGroup() # extra grid group
         self._gridGroupz = QtWidgets.QGraphicsItemGroup() # zone group
+        self._gridGroupa = QtWidgets.QGraphicsItemGroup() # areas group
         self._lineGroup = QtWidgets.QGraphicsItemGroup() # stations lines group
         try:
             self._setupGrid()
@@ -551,6 +571,8 @@ class WAScene(QtWidgets.QGraphicsScene):
             self.addItem(self._gridGroup2)
         if self.grid_zones:
             self.addItem(self._gridGroupz)
+        if self.grid_areas:
+            self.addItem(self._gridGroupa)
         self._coordGroup = QtWidgets.QGraphicsItemGroup()
         self._setupCoordGrid()
         self.addItem(self._coordGroup)
@@ -579,7 +601,7 @@ class WAScene(QtWidgets.QGraphicsScene):
                            msg + '\nExecution will continue but need to check stations.')
             msgbox.setIcon(QtWidgets.QMessageBox.Warning)
             msgbox.setStandardButtons(QtWidgets.QMessageBox.Ok)
-            reply = msgbox.exec_()    
+            reply = msgbox.exec_()
         self.addItem(self._capacityGroup)
         if not self.show_capacity:
             self._capacityGroup.setVisible(False)
@@ -803,7 +825,7 @@ class WAScene(QtWidgets.QGraphicsScene):
             self._scenarios.append([scen_filter, False, description])
 
     def _setupGrid(self):
-        def do_them(lines, width=self.line_width, grid2=False, gridz=False):
+        def do_them(lines, width=self.line_width, grid_lines=''):
             for line in lines:
                 color = QtGui.QColor()
                 color.setNamedColor(line.style)
@@ -818,12 +840,14 @@ class WAScene(QtWidgets.QGraphicsScene):
                     ln.setPen(pen)
                     ln.setZValue(0)
                     self.addItem(ln)
-                    if grid2:
-                        self._gridGroup2.addToGroup(ln)
-                    elif gridz:
-                        self._gridGroupz.addToGroup(ln)
-                    else:
+                    if grid_lines == '':
                         self._gridGroup.addToGroup(ln)
+                    elif grid_lines == '2':
+                        self._gridGroup2.addToGroup(ln)
+                    elif grid_lines == 'z':
+                        self._gridGroupz.addToGroup(ln)
+                    elif grid_lines == 'a':
+                        self._gridGroupa.addToGroup(ln)
                     start = end
             return
         self.lines = Grid()
@@ -835,11 +859,15 @@ class WAScene(QtWidgets.QGraphicsScene):
             do_them(lines.lines, width=0)
         if self.existing_grid2:
             lines2 = Grid(grid2=True)
-            do_them(lines2.lines, grid2=True)
+            do_them(lines2.lines, grid_lines='2')
         if self.grid_zones:
             self.linesz = Grid_Zones()
             if len(self.linesz.lines) > 0:
-                do_them(self.linesz.lines, gridz=True)
+                do_them(self.linesz.lines, grid_lines='z')
+        if self.grid_areas:
+            linesa = Grid_Area('grid_areas')
+            if len(linesa.lines) > 0:
+                do_them(linesa.lines, grid_lines='a')
 
     def addStation(self, st):
         self._stationGroups[st.name] = []

@@ -600,7 +600,7 @@ class Grid:
         return 0.
 
 
-class Grid_Boundary:
+class Grid_Area:
     def get_config(self):
         config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
@@ -617,26 +617,42 @@ class Grid_Boundary:
             parents = getParents(config.items('Parents'))
         except:
             pass
-        try:
-            self.kml_file = config.get('Files', 'grid_boundary')
-            for key, value in parents:
-                self.kml_file = self.kml_file.replace(key, value)
-            self.kml_file = self.kml_file.replace('$USER$', getUser())
-            self.kml_file = self.kml_file.replace('$YEAR$', self.base_year)
-        except:
-            self.kml_file = ''
-        self.colour = '#0000FF'
+        self.kml_file = []
+        if self.area == 'grid_areas':
+            suffix = ['', '1', '2', '3', '4', '5']
+        elif self.area == 'grid_zones':
+            suffix = ['', '1', '2']
+        else:
+            suffix = ['']
+        for s in suffix:
+            try:
+                kml_file = config.get('Files', self.area + s)
+                for key, value in parents:
+                    kml_file = kml_file.replace(key, value)
+                    kml_file = kml_file.replace('$USER$', getUser())
+                    kml_file = kml_file.replace('$YEAR$', self.base_year)
+                self.kml_file.append(kml_file)
+            except:
+                pass
+        if self.area == 'grid_boundary':
+            self.colour = '#0000FF'
+        elif self.area == 'grid_zones':
+            self.colour = '#FFFF00'
+        elif self.area == 'grid_areas':
+            self.colour = '#00FF00'
+        else:
+            self.colour = '#FF0000'
         try:
             mapc = config.get('Map', 'map_choice')
         except:
             mapc = ''
         try:
-            self.colour = config.get('Colors', 'grid_boundary')
+            self.colour = config.get('Colors', self.area)
         except:
             pass
         if mapc != '':
             try:
-                self.colour = config.get('Colors' + mapc, 'grid_boundary')
+                self.colour = config.get('Colors' + mapc, self.area)
             except:
                 pass
         upper_left = [0., 0.]
@@ -661,187 +677,79 @@ class Grid_Boundary:
         self.map_polygon = [upper_left, [upper_left[0], lower_right[1]], lower_right,
            [lower_right[0], upper_left[1]], upper_left]
 
-    def __init__(self):
+    def __init__(self, area):
+        self.area = area
         self.get_config()
         self.lines = []
-        if not os.path.exists(self.kml_file):
-            return
-        style = {}
-        styl = ''
-        zipped = False
-        if self.kml_file[-4:] == '.kmz': # zipped file?
-            zipped = True
-            zf = zipfile.ZipFile(kml_file, 'r')
-            inner_file = ''
-            for name in zf.namelist():
-                if name[-4:] == '.kml':
-                    inner_file = name
-                    break
-            if inner_file == '':
-                return
-            memory_file = io.BytesIO()
-            memory_file.write(zf.open(inner_file).read())
-            root = ElementTree(fromstring(memory_file.getvalue()))
-        else:
-            kml_data = open(self.kml_file, 'rb')
-            root = ElementTree(fromstring(kml_data.read()))
-         # Create an iterator
-        if sys.version_info[1] < 9: # before python 3.9
-            iterat = root.getiterator()
-        else:
-            iterat = root.iter()
-        for element in iterat:
-            elem = element.tag[element.tag.find('}') + 1:]
-            if elem == 'Style':
-                for name, value in list(element.items()):
-                    if name == 'id':
-                        styl = value
-            elif elem == 'color':
-                style[styl] = self.colour
-            elif elem == 'name':
-                line_name = element.text
-            elif elem == 'styleUrl':
-                styl = element.text[1:]
-            elif elem == 'coordinates':
-                coords = []
-                coordinates = ' '.join(element.text.split()).split()
-                for i in range(len(coordinates)):
-                    coords.append([round(float(coordinates[i].split(',')[1]), 6),
-                      round(float(coordinates[i].split(',')[0]), 6)])
-                i = int(len(coords) / 2)
-                if within_map(coords[0][0], coords[0][1], self.map_polygon) and \
-                   within_map(coords[i][0], coords[i][1], self.map_polygon):
-                    try:
-                        self.lines.append(Line(line_name, style[styl], coords))
-                    except:
-                        self.lines.append(Line(line_name, self.colour, coords))
-        if zipped:
-            memory_file.close()
-            zf.close()
-        else:
-            kml_data.close()
+        for kml_file in self.kml_file:
+            if not os.path.exists(kml_file):
+                continue
+            style = {}
+            styl = ''
+            zipped = False
+            if kml_file[-4:] == '.kmz': # zipped file?
+                zipped = True
+                zf = zipfile.ZipFile(kml_file, 'r')
+                inner_file = ''
+                for name in zf.namelist():
+                    if name[-4:] == '.kml':
+                        inner_file = name
+                        break
+                if inner_file == '':
+                    return
+                memory_file = io.BytesIO()
+                memory_file.write(zf.open(inner_file).read())
+                root = ElementTree(fromstring(memory_file.getvalue()))
+            else:
+                kml_data = open(kml_file, 'rb')
+                root = ElementTree(fromstring(kml_data.read()))
+             # Create an iterator
+            if sys.version_info[1] < 9: # before python 3.9
+                iterat = root.getiterator()
+            else:
+                iterat = root.iter()
+            for element in iterat:
+                elem = element.tag[element.tag.find('}') + 1:]
+                if elem == 'Style':
+                    for name, value in list(element.items()):
+                        if name == 'id':
+                            styl = value
+                elif elem == 'color':
+                    style[styl] = self.colour
+                elif elem == 'name':
+                    line_name = element.text
+                elif elem == 'styleUrl':
+                    styl = element.text[1:]
+                elif elem == 'coordinates':
+                    coords = []
+                    coordinates = ' '.join(element.text.split()).split()
+                    for i in range(len(coordinates)):
+                        coords.append([round(float(coordinates[i].split(',')[1]), 6),
+                          round(float(coordinates[i].split(',')[0]), 6)])
+                    i = int(len(coords) / 2)
+                    if within_map(coords[0][0], coords[0][1], self.map_polygon) and \
+                       within_map(coords[i][0], coords[i][1], self.map_polygon):
+                        try:
+                            self.lines.append(Line(line_name, style[styl], coords))
+                        except:
+                            self.lines.append(Line(line_name, self.colour, coords))
+            if zipped:
+                memory_file.close()
+                zf.close()
+            else:
+                kml_data.close()
 
 
-class Grid_Zones:
-    def get_config(self):
-        config = configparser.RawConfigParser()
-        if len(sys.argv) > 1:
-            config_file = sys.argv[1]
-        else:
-            config_file = getModelFile('SIREN.ini')
-        config.read(config_file)
-        try:
-            self.base_year = config.get('Base', 'year')
-        except:
-            self.base_year = '2012'
-        parents = []
-        try:
-            parents = getParents(config.items('Parents'))
-        except:
-            pass
-        try:
-            self.kml_file = config.get('Files', 'grid_zones')
-            for key, value in parents:
-                self.kml_file = self.kml_file.replace(key, value)
-            self.kml_file = self.kml_file.replace('$USER$', getUser())
-            self.kml_file = self.kml_file.replace('$YEAR$', self.base_year)
-        except:
-            self.kml_file = ''
-        self.colour = '#00FF00'
-        try:
-            mapc = config.get('Map', 'map_choice')
-        except:
-            mapc = ''
-        try:
-            self.colour = config.get('Colors', 'grid_zones')
-        except:
-            pass
-        if mapc != '':
-            try:
-                self.colour = config.get('Colors' + mapc, 'grid_zones')
-            except:
-                pass
-        upper_left = [0., 0.]
-        lower_right = [-90., 180.]
-        try:
-             upper_left = config.get('Map', 'upper_left' + mapc).split(',')
-             upper_left[0] = float(upper_left[0].strip())
-             upper_left[1] = float(upper_left[1].strip())
-             lower_right = config.get('Map', 'lower_right' + mapc).split(',')
-             lower_right[0] = float(lower_right[0].strip())
-             lower_right[1] = float(lower_right[1].strip())
-        except:
-             try:
-                 lower_left = config.get('Map', 'lower_left' + mapc).split(',')
-                 upper_right = config.get('Map', 'upper_right' + mapc).split(',')
-                 upper_left[0] = float(upper_right[0].strip())
-                 upper_left[1] = float(lower_left[1].strip())
-                 lower_right[0] = float(lower_left[0].strip())
-                 lower_right[1] = float(upper_right[1].strip())
-             except:
-                 pass
-        self.map_polygon = [upper_left, [upper_left[0], lower_right[1]], lower_right,
-           [lower_right[0], upper_left[1]], upper_left]
+class Grid_Boundary(Grid_Area):
+
+    def __init__(self, area='grid_boundary'):
+        Grid_Area.__init__(self, area)
+
+
+class Grid_Zones(Grid_Area):
 
     def __init__(self):
-        self.get_config()
-        self.lines = []
-        if not os.path.exists(self.kml_file):
-            return
-        style = {}
-        styl = ''
-        zipped = False
-        if self.kml_file[-4:] == '.kmz': # zipped file?
-            zipped = True
-            zf = zipfile.ZipFile(kml_file, 'r')
-            inner_file = ''
-            for name in zf.namelist():
-                if name[-4:] == '.kml':
-                    inner_file = name
-                    break
-            if inner_file == '':
-                return
-            memory_file = io.BytesIO()
-            memory_file.write(zf.open(inner_file).read())
-            root = ElementTree(fromstring(memory_file.getvalue()))
-        else:
-            kml_data = open(self.kml_file, 'rb')
-            root = ElementTree(fromstring(kml_data.read()))
-         # Create an iterator
-        if sys.version_info[1] < 9: # before python 3.9
-            iterat = root.getiterator()
-        else:
-            iterat = root.iter()
-        for element in iterat:
-            elem = element.tag[element.tag.find('}') + 1:]
-            if elem == 'Style':
-                for name, value in list(element.items()):
-                    if name == 'id':
-                        styl = value
-            elif elem == 'color':
-                style[styl] = self.colour
-            elif elem == 'name':
-                line_name = element.text
-            elif elem == 'styleUrl':
-                styl = element.text[1:]
-            elif elem == 'coordinates':
-                coords = []
-                coordinates = ' '.join(element.text.split()).split()
-                for i in range(len(coordinates)):
-                    coords.append([round(float(coordinates[i].split(',')[1]), 6),
-                      round(float(coordinates[i].split(',')[0]), 6)])
-                i = int(len(coords) / 2)
-                if within_map(coords[0][0], coords[0][1], self.map_polygon) and \
-                   within_map(coords[i][0], coords[i][1], self.map_polygon):
-                    try:
-                        self.lines.append(Line(line_name, style[styl], coords))
-                    except:
-                        self.lines.append(Line(line_name, self.colour, coords))
-        if zipped:
-            memory_file.close()
-            zf.close()
-        else:
-            kml_data.close()
+        Grid_Area.__init__(self, 'grid_zones')
 
     def getZone(self, coords1, coords2):
         if len(self.lines) < 1:

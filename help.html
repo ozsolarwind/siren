@@ -777,7 +777,10 @@ The format is similar to a Windows INI file. If you want to create a new Model y
 <td class="none"><dfn>grid2_&lt;line_capacity&gt;</dfn> for the detailed grid network not used by SIREN</td>
 </tr>
 <tr class="none">
-<td class="none"><dfn>grid_zones</dfn> to display grid zones</td>
+<td class="none"><dfn>grid_areas</dfn> for grid areas</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>grid_zones</dfn> for grid zones</td>
 </tr>
 </table>
 <p>There are colours used for the resource grids:</p>
@@ -975,16 +978,16 @@ Options for <a href="#dataview">Data View</a>. Properties for individual files (
 <td class="none">File to save power output if the save_data property in <em>[Power]</em> is True</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>grid_areas</dfn></td>
+<td class="none">File (KML or KMZ file) defining areas within the map. These can be used to help visualise such things as environmentally sensitive areas. The property can be suffixed with a number 1 through 5 to enable a number of files with different areas to be loaded (at present there is only one colour option, <dfn>grid_areas</dfn>)</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>grid_boundary</dfn></td>
 <td class="none">Electricity network (SWIS) boundary file (KML or KMZ file)</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>grid_network</dfn></td>
 <td class="none">Schematic of Electricity network (KML or KMZ file). This version of the network is used by SIREN to connect new stations into the network. This should be a very simple version of the grid with all network lines accurately connected</td>
-</tr>
-<tr class="none">
-<td class="none"><dfn>grid_network2</dfn></td>
-<td class="none">Schematic of Electricity network (KML or KMZ file). This version of the network can be used to provide a more detailed view of the actual network. It isn't used by SIREN</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>grid_stations</dfn></td>
@@ -998,6 +1001,10 @@ as embedded solar - Rooftop PV - installed on the grid but not registered with A
 <tr class="none">
 <td class="none"><dfn>grid_zones
 <td class="none">File (KML or KMZ file) defining zones within the grid boundary. This allows generation by zone to be calculated</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>grid2_network</dfn></td>
+<td class="none">Schematic of Electricity network (KML or KMZ file). This version of the network can be used to provide a more detailed view of the actual network. It isn't used by SIREN</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>help</dfn></td>
@@ -2329,6 +2336,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">Show fossil generators</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>grid_areas</dfn></td>
+<td class="none">Display grid areas if available. The default is True</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>grid_zones</dfn></td>
 <td class="none">Display grid zones if available. The default is True</td>
 </tr>
@@ -2686,23 +2697,23 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <td class="none">Modify the view of certain elements of the simulation. Those identified with a tick icon can be toggled on or off</p>
 <table border="0", class="none">
 <tr class="none">
-<td class="none"><img src="check-mark.png" alt="Toggle Capacity">&nbsp;&nbsp;Capacity Circles (Ctrl+C)</td>
+<td class="none"><img src="check-mark.png" alt="Toggle Capacity">&nbsp;&nbsp;Show Capacity Circles (Ctrl+C)</td>
 <td class="none">Display circles for the stations based upon Capacity (True) or station area (False)</td>
 </tr>
 <tr class="none">
-<td class="none"><img src="check-mark.png" alt="Toggle Generation">&nbsp;&nbsp;Generation Circles (Ctrl+K)</td>
+<td class="none"><img src="check-mark.png" alt="Toggle Generation">&nbsp;&nbsp;Show Generation Circles (Ctrl+K)</td>
 <td class="none">Display circles for the stations based upon Generation (True). This will only display circles for stations that have had the Power model run for them</td>
 </tr>
 <tr class="none">
-<td class="none"><img src="check-mark.png" alt="Toggle Names">&nbsp;&nbsp;Station Names (Ctrl+N)</td>
+<td class="none"><img src="check-mark.png" alt="Toggle Names">&nbsp;&nbsp;Show Station Names (Ctrl+N)</td>
 <td class="none">Display all station names (True) or just the current one (False)</td>
 </tr>
 <tr class="none">
-<td class="none"><img src="check-mark.png" alt="Toggle Fossil">&nbsp;&nbsp;Fossil-fuelled Stations (Ctrl+F)</td>
+<td class="none"><img src="check-mark.png" alt="Toggle Fossil">&nbsp;&nbsp;Show Fossil-fuelled Stations (Ctrl+F)</td>
 <td class="none">Display fossil-fuelled stations (True)</td>
 </tr>
 <tr class="none">
-<td class="none"><img src="check-mark.png" alt="Scale Ruler">&nbsp;&nbsp;Scale Ruler (Ctrl+R)</td>
+<td class="none"><img src="check-mark.png" alt="Scale Ruler">&nbsp;&nbsp;Show Scale Ruler (Ctrl+R)</td>
 <td class="none">If True Display a Scale Ruler. If you want to move the ruler you need to toggle it off and then back on again</td>
 </tr>
 <tr class="none">
@@ -2744,6 +2755,10 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <tr class="none">
 <td class="none"><img src="check-mark.png" alt="Show Coordinates Grid">&nbsp;&nbsp;Show Coordinates Grid</td>
 <td class="none">Display a grid of latitude and longitude. The spacing of the grid is based upon the geographic size of the map.</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="check-mark.png" alt="Show Grid Areas">&nbsp;&nbsp;Show Grid Areas</td>
+<td class="none">Display grid areas  if available</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="arrow.png" alt="Go to Station">&nbsp;&nbsp;Go to Station (Ctrl+G)</td>
@@ -2923,7 +2938,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <td class="none">Run SAM Power Model for nearest station</td>
 </tr>
 <tr class="none">
-<td class="none"><img src="blank.png" alt="Power for year">&nbsp;&nbsp;Power for year
+<td class="none"><img src="blank.png" alt="Power for year">&nbsp;&nbsp;Model Power for year
 <br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...years(s)</td>
 <td class="none">Run the SAM Power Model for nearest station for one of the years available</td>
@@ -3850,16 +3865,16 @@ Scale of the chart in the cell. A value of 1 fills the cell(<em>plot_scale</em>)
 <td class="none">A CSV or Excel (XLS or XLSX) file containing details on those BOM sites you want displayed on the map. This file format is the same as <em>towns</em> (see below) with some additional column name options</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>grid_areas
+<td class="none">A KML (or KMZ) file defining areas within the map. These can be used to help visualise such things as environmentally sensitive areas. The property can be suffixed with a number 1 through 5 to enable a number of files with different areas to be loaded. Any string of &lt;coordinates&gt; in a &lt;LinearRing&gt; is used to draw an area within the grid boundary. Multiple zones can be defined. Colour for the grid areas can be set by the <em>grid_areas</em> Colour option</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>grid_boundary</dfn></td>
 <td class="none">A KML (or KMZ) file defining the boundary for the grid. Any string of &lt;coordinates&gt; in a &lt;LinearRing&gt; is used to draw the grid boundary or boundaries. Colour for the grid boundary can be set by either the <em>grid_boundary</em> Colour option or by a &lt;styleUrl&gt; colour element in the KML file</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>grid_network</dfn></td>
 <td class="none">A KML (or KMZ) file defining the grid network. Any string of &lt;coordinates&gt; in a &lt;LineString&gt; is used to draw a grid line. The &lt;name&gt; will be used as the Line name. This file defines the grid network SIREN uses to add in additional stations and trace their paths to load centres. As such, this should be a very simplified grid and relies on all lines connecting to one another in a true grid network. Making this grid too complex slows down the process of connecting lines and tracing paths. Colours for the lines can be set by either &lt;styleUrl&gt; colour elements in the KML file or <em>grid_colour</em> Colour options, where <em>colour</em> equals the lines' &lt;styleUrl&gt;, e.g.<em>grid_s_66kv=#774110</em>.</td>
-</tr>
-<tr class="none">
-<td class="none"><dfn>grid_network2</dfn></td>
-<td class="none">A KML (or KMZ) file defining the actual grid network. Any string of &lt;coordinates&gt; in a &lt;LineString&gt; is used to draw a grid line. &lt;styleUrl&gt; colour elements may be used for the line colour. Alternatively, a standard set of colours based upon line capacity, as defined by &lt;SimpleData name="CAPACITY_kV"&gt;, &lt;SimpleData name="CAPACITYKV&gt;, or &lt;SimpleData name="kv&gt; elements, can be used. These values can be set by <em>grid2_line_capacity</em> Colour properties where <em>line_capacity</em> is the line capacity, e.g. <em>grid2_66=#774110</em> for a 66kV line. It can be a detailed as you like and doesn't require accurate connections (SIREN makes no use of it)</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>grid_stations</dfn></td>
@@ -3872,6 +3887,10 @@ Scale of the chart in the cell. A value of 1 fills the cell(<em>plot_scale</em>)
 <tr class="none">
 <td class="none"><dfn>grid_zones
 <td class="none">A KML (or KMZ) file defining zones within the grid boundary. Any string of &lt;coordinates&gt; in a &lt;LinearRing&gt; is used to draw a zone within the grid boundary. Multiple zones can be defined. Colour for the grid boundary can be set by the <em>grid_zones</em> Colour option</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>grid2_network</dfn></td>
+<td class="none">A KML (or KMZ) file defining the actual grid network. Any string of &lt;coordinates&gt; in a &lt;LineString&gt; is used to draw a grid line. &lt;styleUrl&gt; colour elements may be used for the line colour. Alternatively, a standard set of colours based upon line capacity, as defined by &lt;SimpleData name="CAPACITY_kV"&gt;, &lt;SimpleData name="CAPACITYKV&gt;, or &lt;SimpleData name="kv&gt; elements, can be used. These values can be set by <em>grid2_line_capacity</em> Colour properties where <em>line_capacity</em> is the line capacity, e.g. <em>grid2_66=#774110</em> for a 66kV line. It can be a detailed as you like and doesn't require accurate connections (SIREN makes no use of it)</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>helio_positions</dfn></td>
