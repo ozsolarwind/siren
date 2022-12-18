@@ -2034,7 +2034,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>optimise_to_batch</dfn></td>
-<td class="none">When running an optimisation you can choose to add the picked (capacity) results to the batch file. Default is False</td>
+<td class="none">When running an optimisation you can choose to add the picked (capacity) results to the batch file. Default is True</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>optimise_&lt;details&gt;</dfn></td>
@@ -2308,6 +2308,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </p>
 <table border="0", class="none">
 <tr class="none">
+<td class="none"><dfn>area_opacity</dfn></td>
+<td class="none">Opacity of grid Areas. A value between 0 (clear) and 1 (opaque). Default is 0.1</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>capacity</dfn></td>
 <td class="none">Show station areas based upon capacity. The size of the circles is determined by the capacity of the station and the <em>capacity_area</em> value. The intent is to highlight generation based upon capacity. There is an additional option to display circles based upon generation. These circles can be displayed once the Power Model has been run. They are, again, based upon the capacity_area value reduced to provide circles of the same magnitude as the capacity circles. These circles can be toggled on or off. When both are off station areas will be displayed</td>
 </tr>
@@ -2377,7 +2381,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>resource_opacity</dfn></td>
-<td class="none">Opacity of Resource grid. A value between 0 (clear) and 1 (opaque)</td>
+<td class="none">Opacity of Resource grid. A value between 0 (clear) and 1 (opaque). Default is 0.5</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>resource_period</dfn></td>
@@ -2418,6 +2422,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <tr class="none">
 <td class="none"><dfn>txt_ratio</dfn></td>
 <td class="none">This ratio allows you to adjust the size of text strings for town names, stations, ruler and legend items. A larger value makes for larger text. The default value is 0.1</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>zone_opacity</dfn></td>
+<td class="none">Opacity of grid zones. A value between 0 (clear) and 1 (opaque). Default is 0</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>zoom_rate</dfn></td>
