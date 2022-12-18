@@ -329,8 +329,11 @@ class WAScene(QtWidgets.QGraphicsScene):
             config.get('Files', 'grid2_network')
             self.existing_grid2 = True
         except configparser.NoOptionError:
-            config.get('Files', 'grid_network2')
-            self.existing_grid2 = True
+            try:
+                config.get('Files', 'grid_network2')
+                self.existing_grid2 = True
+            except:
+                self.existing_grid2 = False
         except:
             self.existing_grid2 = False
         try:
@@ -344,6 +347,13 @@ class WAScene(QtWidgets.QGraphicsScene):
                 pass
         except:
             self.grid_zones = False
+        self.zone_opacity = 0.
+        try:
+            self.zone_opacity = float(config.get('View', 'zone_opacity'))
+            if self.zone_opacity < 0. or self.zone_opacity > 1.:
+                self.zone_opacity = 0.
+        except:
+            pass
         self.grid_areas = False
         for s in ['', '1', '2', '3', '4', '5']:
             try:
@@ -358,6 +368,13 @@ class WAScene(QtWidgets.QGraphicsScene):
                 break
             except:
                 pass
+        self.area_opacity = 0.1
+        try:
+            self.area_opacity = float(config.get('View', 'area_opacity'))
+            if self.area_opacity < 0. or self.area_opacity > 1.:
+                self.area_opacity = 0.1
+        except:
+            pass
         self.line_group = True
         self.trace_grid = True
         try:
@@ -536,6 +553,7 @@ class WAScene(QtWidgets.QGraphicsScene):
                 painter.drawText(QtCore.QRectF(0, 0, 200 * ratio, 200), QtCore.Qt.AlignCenter,
                                  'Map not found.')
                 painter.end()
+        self.pixmap = pixMap
         self.addPixmap(pixMap)
         w = self.width()
         h = self.height()
@@ -558,7 +576,8 @@ class WAScene(QtWidgets.QGraphicsScene):
             msgbox = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Critical,
                                            'Error setting up grid.',
                                            'May need to check map coordinates\n(upper_left' + self.map \
-                                            + ' and lower_right' + self.map + ' in [Map]).' \
+                                            + ' and lower_right' + self.map + ' in [Map]) or' \
+                                            + '\nthe status of grid-related (KML) files.' \
                                             + '\nExecution aborted.',
                                            QtWidgets.QMessageBox.Ok)
             reply = msgbox.exec_()
@@ -825,30 +844,44 @@ class WAScene(QtWidgets.QGraphicsScene):
             self._scenarios.append([scen_filter, False, description])
 
     def _setupGrid(self):
-        def do_them(lines, width=self.line_width, grid_lines=''):
+        def do_them(lines, width=self.line_width, grid_lines='', opacity=0.):
             for line in lines:
                 color = QtGui.QColor()
                 color.setNamedColor(line.style)
                 pen = QtGui.QPen(color, width)
                 pen.setJoinStyle(QtCore.Qt.RoundJoin)
                 pen.setCapStyle(QtCore.Qt.RoundCap)
-                start = self.mapFromLonLat(QtCore.QPointF(line.coordinates[0][1], line.coordinates[0][0]))
-                for pt in range(1, len(line.coordinates)):
-                    end = self.mapFromLonLat(QtCore.QPointF(line.coordinates[pt][1], line.coordinates[pt][0]))
-                    # FIXME Can't identify the QGraphicsScene in the arguments of the QGraphicsItem
-                    ln = QtWidgets.QGraphicsLineItem(QtCore.QLineF(start, end))
-                    ln.setPen(pen)
-                    ln.setZValue(0)
-                    self.addItem(ln)
-                    if grid_lines == '':
-                        self._gridGroup.addToGroup(ln)
-                    elif grid_lines == '2':
-                        self._gridGroup2.addToGroup(ln)
+                if grid_lines in ['a', 'b', 'z']:
+                    bnds = []
+                    for pt in range(len(line.coordinates)):
+                        bnds.append(self.mapFromLonLat(QtCore.QPointF(line.coordinates[pt][1], line.coordinates[pt][0])))
+                    path = QtGui.QPainterPath()
+                    path.addPolygon(QtGui.QPolygonF(bnds))
+                    poly = QtWidgets.QGraphicsPathItem(path)
+                    brush = QtGui.QColor(color)
+                    brush.setAlphaF(opacity)
+                    poly.setBrush(brush)
+                    poly.setPen(pen)
+                    if grid_lines == 'a':
+                        self._gridGroupa.addToGroup(poly)
+                    elif grid_lines == 'b':
+                        self._gridGroup.addToGroup(poly)
                     elif grid_lines == 'z':
-                        self._gridGroupz.addToGroup(ln)
-                    elif grid_lines == 'a':
-                        self._gridGroupa.addToGroup(ln)
-                    start = end
+                        self._gridGroupz.addToGroup(poly)
+                else:
+                    start = self.mapFromLonLat(QtCore.QPointF(line.coordinates[0][1], line.coordinates[0][0]))
+                    for pt in range(1, len(line.coordinates)):
+                        end = self.mapFromLonLat(QtCore.QPointF(line.coordinates[pt][1], line.coordinates[pt][0]))
+                        # FIXME Can't identify the QGraphicsScene in the arguments of the QGraphicsItem
+                        ln = QtWidgets.QGraphicsLineItem(QtCore.QLineF(start, end))
+                        ln.setPen(pen)
+                        ln.setZValue(0)
+                        self.addItem(ln)
+                        if grid_lines == '':
+                            self._gridGroup.addToGroup(ln)
+                        elif grid_lines == '2':
+                            self._gridGroup2.addToGroup(ln)
+                        start = end
             return
         self.lines = Grid()
         do_them(self.lines.lines)
@@ -856,18 +889,18 @@ class WAScene(QtWidgets.QGraphicsScene):
         lines = Grid_Boundary()
         if len(lines.lines) > 0:
             lines.lines[0].style = self.colors['grid_boundary']
-            do_them(lines.lines, width=0)
+            do_them(lines.lines, width=0, grid_lines='b')
         if self.existing_grid2:
             lines2 = Grid(grid2=True)
             do_them(lines2.lines, grid_lines='2')
         if self.grid_zones:
             self.linesz = Grid_Zones()
             if len(self.linesz.lines) > 0:
-                do_them(self.linesz.lines, grid_lines='z')
+                do_them(self.linesz.lines, grid_lines='z', opacity=self.zone_opacity)
         if self.grid_areas:
             linesa = Grid_Area('grid_areas')
             if len(linesa.lines) > 0:
-                do_them(linesa.lines, grid_lines='a')
+                do_them(linesa.lines, grid_lines='a', opacity=self.area_opacity)
 
     def addStation(self, st):
         self._stationGroups[st.name] = []

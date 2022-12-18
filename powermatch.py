@@ -783,7 +783,7 @@ class powerMatch(QtWidgets.QWidget):
         self.optimise_default = None
         self.optimise_multiplot = True
         self.optimise_multitable = False
-        self.optimise_to_batch = False
+        self.optimise_to_batch = True
         self.remove_cost = True
         self.results_prefix = ''
         self.save_tables = False
@@ -892,8 +892,8 @@ class powerMatch(QtWidgets.QWidget):
                     except:
                         pass
                 elif key == 'optimise_to_batch':
-                    if value.lower() in ['true', 'on', 'yes']:
-                        self.optimise_to_batch = True
+                    if value.lower() in ['false', 'off', 'no']:
+                        self.optimise_to_batch = False
                 elif key[:9] == 'optimise_':
                     try:
                         bits = value.split(',')
@@ -1347,7 +1347,7 @@ class powerMatch(QtWidgets.QWidget):
         try:
             st = config.get('Powermatch', 'optimise_to_batch')
         except:
-            st = 'False'
+            st = 'True'
         if st.lower() in ['true', 'yes', 'on']:
             self.optimise_to_batch = True
         else:
