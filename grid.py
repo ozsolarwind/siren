@@ -217,7 +217,10 @@ class Grid:
         try:
             self.kml_file2 = config.get('Files', 'grid2_network')
         except configparser.NoOptionError:
-            self.kml_file2 = config.get('Files', 'grid_network2')
+            try:
+                self.kml_file2 = config.get('Files', 'grid_network2')
+            except:
+                pass
         except:
             pass
         if self.kml_file2 != '':
@@ -686,6 +689,7 @@ class Grid_Area:
                 continue
             style = {}
             styl = ''
+            stylm = ''
             zipped = False
             if kml_file[-4:] == '.kmz': # zipped file?
                 zipped = True
@@ -714,8 +718,21 @@ class Grid_Area:
                     for name, value in list(element.items()):
                         if name == 'id':
                             styl = value
+                elif elem == 'StyleMap':
+                    for name, value in list(element.items()):
+                        if name == 'id':
+                            stylm = value
                 elif elem == 'color':
                     style[styl] = self.colour
+                    try:
+                        style[styl] = '#' + element.text[-2:] + element.text[-4:-2] + element.text[-6:-4]
+                    except:
+                        pass
+                    if stylm != '':
+                        try:
+                            style[stylm] = '#' + element.text[-2:] + element.text[-4:-2] + element.text[-6:-4]
+                        except:
+                            pass
                 elif elem == 'name':
                     line_name = element.text
                 elif elem == 'styleUrl':
