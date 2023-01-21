@@ -22,6 +22,7 @@
 import csv
 import math
 import openpyxl as oxl
+# from openpyxl.formula import Tokenizer
 import os
 try:
     import pwd
@@ -47,22 +48,24 @@ class ClickableQLabel(QtWidgets.QLabel):
 class WorkBook(object):
     def __init__(self):
         self._book = None
+        self._data_only = None
         self._sheet = None
         self._sheet_names = []
         self._type = None
         self._nrows = 0
         self._ncols = 0
 
-    def open_workbook(self, filename=None, on_demand=True):
+    def open_workbook(self, filename=None, on_demand=True, data_only=True):
         if not os.path.exists(filename):
             raise Exception('File not found')
         self._type = filename[filename.rfind('.') + 1:]
+        self._data_only = data_only
         try:
             if self._type == 'xls':
                 self._book = xlrd.open_workbook(filename, on_demand=on_demand)
                 self._sheet_names = self._book.sheet_names()
             elif self._type == 'xlsx':
-                self._book = oxl.load_workbook(filename, data_only=True)
+                self._book = oxl.load_workbook(filename, data_only=data_only)
                 self._sheet_names = self._book.sheetnames
             elif self._type == 'csv':
                 csv_file = open(filename, newline='')
@@ -118,7 +121,7 @@ class WorkBook(object):
         return self.sheet_by_index(sheetx)
 
     def get_sheet(self, sheetx):
-        self._sheet = self.WorkSheet(sheetx, self._type)
+        self._sheet = self.WorkSheet(sheetx, self._type, self._data_only)
         try:
             if self._type == 'xls':
                 self._sheet._sheet = self._book.sheet_by_index(sheetx)
@@ -144,20 +147,36 @@ class WorkBook(object):
         return self._sheet
 
     class WorkSheet(object):
-        def __init__(self, sheet, typ):
+        def __init__(self, sheet, typ, data_only):
             self.name = sheet
             self._sheet = None
             self.nrows = 0
             self.ncols = 0
             self._type = typ
+            self._data_only = data_only
 
         def cell_value(self, row, col):
             if self._type == 'xls':
                 return self._sheet.cell_value(row, col)
             elif self._type == 'xlsx':
-                return self._sheet.cell(row=row + 1, column=col + 1).value
+                if self._data_only:
+                    return self._sheet.cell(row=row + 1, column=col + 1).value
+                else:
+                    return self._sheet.cell(row=row + 1, column=col + 1).value
+                    # sometime in the future
+                    # if self._sheet.cell(row=row + 1, column=col + 1).data_type == 'f':
+                    #     tok = Tokenizer(self._sheet.cell(row=row + 1, column=col + 1).value)
+                    #     print("\n".join("%12s%11s%9s" % (t.value, t.type, t.subtype) for t in tok.items))
+                    #     return self._sheet.cell(row=row + 1, column=col + 1).value
+                    # else:
             elif self._type == 'csv':
                 return self._sheet[row][col]
+
+        def cell_type(self, row, col):
+            if self._type == 'xlsx':
+                return self._sheet.cell(row=row + 1, column=col + 1).data_type
+            else:
+                return None
 
 #        def cell_write(self, row, col, value):
 #            if self._type == 'xls':
@@ -215,6 +234,8 @@ def techClean(tech, full=False):
                 ['REference', 'Reference']]
         for each in alll:
             cleantech = cleantech.replace(each[0], each[1])
+        # fudge
+        cleantech = cleantech.replace('REc', 'Rec')
     return cleantech
 
 #

@@ -122,7 +122,7 @@ ul {
 <title>SIREN Help</title>
 </head>
 <body>
-<h1 id="help"><img src="sen_icon32.png" alt="SIM">SIREN Help</h1>
+<h1 id="help"><img src="sen_icon32.png" alt="SIM">&nbsp;SIREN Help</h1>
 <p><strong>All acronyms used in this help are defined in the list of <a href="#acronyms">acronyms</a></strong></p>
 <h3>SIREN - SEN's Interactive Renewable Energy Network tool</h3>
 <p>The SEN SAM simulation, SIREN, is used to calculate energy generation for renewable energy power stations. The program uses the SAM SDK API for energy calculations. SAM is provided by the NREL. This help briefly describes how to use the simulation.</p>
@@ -3478,6 +3478,7 @@ Surplus - spilled or curtailed - generation is normally used in the calculation 
 <br /><strong>Usage notes:</strong>
 <ul>
 <li>If you want to include a Total row in the outputs you need to have a Total row (as the last row) in the <em>Capacity (MW)</em> Report Group</li>
+<li><strong>Beware:</strong> If the batch input worksheet (capacity figures) contains formulae you need to be careful doing multiple batch executions. You may need to open the batch worksheet and save it before doing another batch execution.</li>
 <li>(At present) The same Load data is used for all models in a Batch execution</li>
 </ul>
 </li>
