@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2018-2022 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2018-2023 Sustainable Energy Now Inc., Angus King
 #
 #  powermatch.py - This file is part of SIREN.
 #
@@ -142,9 +142,11 @@ def get_value(ws, row, col):
         for c in bits:
             if c == '':
                 return None
-        return [bits[1], bits[0]]
-    while ws.cell(row=row, column=col).value[0] == '=':
-        row, col = get_range(ws.cell(row=row, column=col).value)
+    try:
+        while ws.cell(row=row, column=col).value[0] == '=':
+            row, col = get_range(ws.cell(row=row, column=col).value)
+    except:
+        return ''
     return ws.cell(row=row, column=col).value
 
 class ListWidget(QtWidgets.QListWidget):
