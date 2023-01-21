@@ -1563,6 +1563,8 @@ class powerMatch(QtWidgets.QWidget):
                     par_col = col
                 elif ws.cell_value(0, col)[:9] == 'Wait Time':
                     wait_col = col
+                elif ws.cell_value(0, col)[:12] == 'Min Run Time':
+                    wait_col = col
                 elif ws.cell_value(0, col)[:11] == 'Warmup Time':
                     warm_col = col
             strt_row = 1
@@ -1679,6 +1681,7 @@ class powerMatch(QtWidgets.QWidget):
             self.setStatus(self.file_labels[B] + ' worksheet missing.')
             return False
         istrt = 0
+        year_row = -1
         for row in range(3):
             if ws.cell_value(row, 0) in ['Model', 'Model Label', 'Technology']:
                 istrt = row + 1
@@ -1693,7 +1696,10 @@ class powerMatch(QtWidgets.QWidget):
         inrows = False
         for row in range(istrt, ws.nrows):
             tech = ws.cell_value(row, 0)
-            if tech != '':
+            if tech is not None and tech != '':
+                if year_row < 0 and tech[:4].lower() == 'year':
+                    year_row = row
+                    continue
                 inrows = True
                 if tech[:8].lower() != 'capacity':
                     if tech.find('.') > 0:
@@ -1713,7 +1719,7 @@ class powerMatch(QtWidgets.QWidget):
         carbon_row = -1
         discount_row = -1
         for row in range(istop, ws.nrows):
-            if ws.cell_value(row, 0) != '':
+            if ws.cell_value(row, 0) is not None and ws.cell_value(row, 0) != '':
                 if ws.cell_value(row, 0).lower() in ['chart', 'graph', 'plot']:
                     self.batch_report.append(['Chart', row + 1])
                     break
@@ -1726,6 +1732,10 @@ class powerMatch(QtWidgets.QWidget):
             model = ws.cell_value(istrt - 1, col)
             self.batch_models[col] = {'name': model}
             for row in range(istrt, istop):
+                if row == year_row:
+                    if ws.cell_value(row, col) is not None and ws.cell_value(row, col) != '':
+                        self.batch_models[col]['year'] = str(ws.cell_value(row, col))
+                    continue
                 tech = ws.cell_value(row, 0)
                 try:
                     if ws.cell_value(row, col) > 0:
@@ -1735,9 +1745,13 @@ class powerMatch(QtWidgets.QWidget):
             if carbon_row >= 0:
                 if isinstance(ws.cell_value(carbon_row, col), float):
                     self.batch_models[col]['Carbon Price'] = ws.cell_value(carbon_row, col)
+                elif isinstance(ws.cell_value(carbon_row, col), int):
+                    self.batch_models[col]['Carbon Price'] = float(ws.cell_value(carbon_row, col))
             if discount_row >= 0:
                 if isinstance(ws.cell_value(discount_row, col), float):
                     self.batch_models[col]['Discount Rate'] = ws.cell_value(discount_row, col)
+                elif isinstance(ws.cell_value(discount_row, col), int):
+                    self.batch_models[col]['Discount Rate'] = float(ws.cell_value(discount_row, col))
         return True
 
     def setOrder(self):
@@ -1838,6 +1852,31 @@ class powerMatch(QtWidgets.QWidget):
         wb.save(batch_report_file)
 
     def pmClicked(self):
+        def get_load_data(load_file):
+            try:
+                tf = open(load_file, 'r')
+                lines = tf.readlines()
+                tf.close()
+            except:
+                return None
+            load_data = []
+            bit = lines[0].rstrip().split(',')
+            if len(bit) > 0: # multiple columns
+                for b in range(len(bit)):
+                    if bit[b][:4].lower() == 'load':
+                        if bit[b].lower().find('kwh') > 0: # kWh not MWh
+                            for i in range(1, len(lines)):
+                                bit = lines[i].rstrip().split(',')
+                                load_data.append(float(bit[b]) * 0.001)
+                        else:
+                            for i in range(1, len(lines)):
+                                bit = lines[i].rstrip().split(',')
+                                load_data.append(float(bit[b]))
+            else:
+                for i in range(1, len(lines)):
+                    load_data.append(float(lines[i].rstrip()))
+            return load_data
+
         self.setStatus(self.sender().text() + ' processing started')
         if self.sender().text() == 'Detail': # detailed spreadsheet?
             option = 'P'
@@ -1987,6 +2026,7 @@ class powerMatch(QtWidgets.QWidget):
         pmss_data = []
         re_order = [] # order for re technology
         dispatch_order = [] # order for dispatchable technology
+        load_columns = {}
         load_col = -1
         strt_col = 3
         try:
@@ -1998,26 +2038,10 @@ class powerMatch(QtWidgets.QWidget):
                 capacity = 0
                 fctr = 1
                 pmss_details['Load'] = PM_Facility('Load', 'Load', 0, 'L', len(pmss_data), 1)
+                load_columns[self.loadCombo.currentText()] = len(pmss_data)
                 pmss_data.append([])
                 load_file = self.load_files.replace('$YEAR$', self.loadCombo.currentText())
-                tf = open(load_file, 'r')
-                lines = tf.readlines()
-                tf.close()
-                bit = lines[0].rstrip().split(',')
-                if len(bit) > 0: # multiple columns
-                    for b in range(len(bit)):
-                        if bit[b][:4].lower() == 'load':
-                            if bit[b].lower().find('kwh') > 0: # kWh not MWh
-                                for i in range(1, len(lines)):
-                                    bit = lines[i].rstrip().split(',')
-                                    pmss_data[-1].append(float(bit[b]) * 0.001)
-                            else:
-                                for i in range(1, len(lines)):
-                                    bit = lines[i].rstrip().split(',')
-                                    pmss_data[-1].append(float(bit[b]))
-                else:
-                    for i in range(1, len(lines)):
-                        pmss_data[-1].append(float(lines[i].rstrip()))
+                pmss_data[-1] = get_load_data(load_file)
                 re_order.append('Load')
         except:
             pass
@@ -2064,6 +2088,8 @@ class powerMatch(QtWidgets.QWidget):
                 else:
                     fctr = 1
             pmss_details[key] = PM_Facility(key, tech_names[i], capacity, typ, len(pmss_data), fctr)
+            if key == 'Load':
+                load_columns[year] = len(pmss_data)
             pmss_data.append([])
             re_order.append(key)
             for row in range(top_row + 1, ws.max_row + 1):
@@ -2423,8 +2449,12 @@ class powerMatch(QtWidgets.QWidget):
                 incr = .1
             prgv = incr
             for model, capacities in self.batch_models.items():
+                # to cater for different load profiles (years) and generator costs (years) this loop would need to change, that is
+                # need to be able to change pmss_details and pmss_data[0]
                 for fac in pmss_details.keys():
                     if fac == 'Load':
+                        pmss_details['Load'].capacity = sum(pmss_data[load_columns[year]])
+                        pmss_details['Load'].col = load_columns[year]
                         continue
                     pmss_details[fac].multiplier = 0
                 self.progressbar.setValue(int(prgv))
@@ -2433,6 +2463,17 @@ class powerMatch(QtWidgets.QWidget):
                 dispatch_order = []
                 for key, capacity in capacities.items(): # cater for zones
                     if key in ['name', 'Carbon Price', 'Discount Rate', 'Total']:
+                        continue
+                    if key == 'year':
+                        if capacity in load_columns.keys():
+                            pmss_details['Load'].col = load_columns[capacity]
+                        else:
+                            load_columns[capacity] = len(pmss_data)
+                            pmss_data.append([])
+                            load_file = self.load_files.replace('$YEAR$', capacity)
+                            pmss_data[-1] = get_load_data(load_file)
+                            pmss_details['Load'].col = load_columns[capacity]
+                        pmss_details['Load'].capacity = sum(pmss_data[pmss_details['Load'].col])
                         continue
                     if key not in re_order:
                         dispatch_order.append(key)
@@ -3166,11 +3207,13 @@ class powerMatch(QtWidgets.QWidget):
             sp_load = 0.
             hrows = 10
             load_max = 0
+            load_col = 0
             tml = 0.
             for fac in re_order:
                 if fac == 'Load':
-                    sp_load = sum(pmss_data[pmss_details[fac].col]) * pmss_details[fac].multiplier
-                    load_max = max(pmss_data[pmss_details[fac].col]) * pmss_details[fac].multiplier
+                    load_col = pmss_details[fac].col
+                    sp_load = sum(pmss_data[load_col]) * pmss_details[fac].multiplier
+                    load_max = max(pmss_data[load_col]) * pmss_details[fac].multiplier
                     continue
                 if pmss_details[fac].capacity * pmss_details[fac].multiplier == 0:
                     continue
@@ -3182,9 +3225,9 @@ class powerMatch(QtWidgets.QWidget):
                 sp_data.append(sp_d)
             for h in range(len(shortfall)):
                 if shortfall[h] < 0:
-                    tml += pmss_data[0][h] * pmss_details['Load'].multiplier
+                    tml += pmss_data[load_col][h] * pmss_details['Load'].multiplier
                 else:
-                    tml += pmss_data[0][h] * pmss_details['Load'].multiplier - shortfall[h]
+                    tml += pmss_data[load_col][h] * pmss_details['Load'].multiplier - shortfall[h]
             if tml > 0:
                 sp_d = [' '] * len(headers)
                 sp_d[st_fac] = 'RE Contribution To Load'
@@ -3544,6 +3587,7 @@ class powerMatch(QtWidgets.QWidget):
            # else:
             #    min_after[3] = ''
            # min_after[5] = format_period(min_after[5])
+            load_col = pmss_details[fac].col
             cap_sum = 0.
             gen_sum = 0.
             re_sum = 0.
@@ -3637,10 +3681,10 @@ class powerMatch(QtWidgets.QWidget):
             for sf in range(len(shortfall)):
                 if shortfall[sf] > 0:
                     sf_sums[0] += shortfall[sf]
-                    sf_sums[2] += pmss_data[0][sf] * pmss_details['Load'].multiplier
+                    sf_sums[2] += pmss_data[load_col][sf] * pmss_details['Load'].multiplier
                 else:
                     sf_sums[1] += shortfall[sf]
-                    sf_sums[2] += pmss_data[0][sf] * pmss_details['Load'].multiplier
+                    sf_sums[2] += pmss_data[load_col][sf] * pmss_details['Load'].multiplier
             if gen_sum > 0:
                 gs = cost_sum / gen_sum
             else:
