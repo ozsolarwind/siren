@@ -368,7 +368,7 @@ class ProgressBar(QtWidgets.QDialog):
         self.progressbar.setMinimum(minimum)
         self.progressbar.setMaximum(maximum)
         self.progressbar.setStyleSheet('QProgressBar {border: 1px solid grey; border-radius: 2px; text-align: center;}' \
-                                       + 'QProgressBar::chunk { background-color: #6891c6;}')
+                                       + 'QProgressBar::chunk { background-color: #06A9D6;}')
         self.button = QtWidgets.QPushButton('Stop')
         self.button.clicked.connect(self.stopit)
         if msg == None:
@@ -415,10 +415,10 @@ class ProgressBar(QtWidgets.QDialog):
         else:
             if ctr % 2:
                 self.progressbar.setStyleSheet('QProgressBar {border: 1px solid grey; border-radius: 2px; text-align: center;}' \
-                                             + 'QProgressBar::chunk { background-color: #6891c6;}')
+                                             + 'QProgressBar::chunk { background-color: #06A9D6;}')
             else:
                 self.progressbar.setStyleSheet('QProgressBar {border: 1px solid grey; border-radius: 2px; text-align: center;}' \
-                                             + 'QProgressBar::chunk { background-color: #CB6720;}')
+                                             + 'QProgressBar::chunk { background-color: #FFC709;}')
             self.progressbar.setValue(ctr)
             self.progress_msg.setText(message)
 

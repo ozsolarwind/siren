@@ -1367,18 +1367,18 @@ class getParms(QtWidgets.QWidget):
         self.daybar.setMinimum(0)
         self.daybar.setMaximum(31)
         self.daybar.setValue(0)
-        #6891c6 #CB6720
+        #06A9D6 #FFC709
         self.daybar.setStyleSheet('QProgressBar {border: 1px solid grey; border-radius: 2px; text-align: center;}' \
-                                       + 'QProgressBar::chunk { background-color: #CB6720;}')
+                                       + 'QProgressBar::chunk { background-color: #FFC709;}')
         self.daybar.setHidden(True)
         self.grid.addWidget(self.daybar, rw, 0)
         self.progressbar = QtWidgets.QProgressBar()
         self.progressbar.setMinimum(0)
         self.progressbar.setMaximum(100)
         self.progressbar.setValue(0)
-        #6891c6 #CB6720
+        #06A9D6 #FFC709
         self.progressbar.setStyleSheet('QProgressBar {border: 1px solid grey; border-radius: 2px; text-align: center;}' \
-                                       + 'QProgressBar::chunk { background-color: #6891C6;}')
+                                       + 'QProgressBar::chunk { background-color: #06A9D6;}')
         self.grid.addWidget(self.progressbar, rw, 1, 1, 4)
         self.progressbar.setHidden(True)
         self.progresslabel = QtWidgets.QLabel('')

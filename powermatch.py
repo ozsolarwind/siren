@@ -1064,7 +1064,7 @@ class powerMatch(QtWidgets.QWidget):
         self.progressbar.setMaximum(10)
         self.progressbar.setValue(0)
         self.progressbar.setStyleSheet('QProgressBar {border: 1px solid grey; border-radius: 2px; text-align: center;}' \
-                                       + 'QProgressBar::chunk { background-color: #6891c6;}')
+                                       + 'QProgressBar::chunk { background-color: #06A9D6;}')
         self.grid.addWidget(self.progressbar, r, 1, 1, 6)
         self.progressbar.setHidden(True)
         r += 1
