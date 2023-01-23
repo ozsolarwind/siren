@@ -2924,10 +2924,10 @@ class powerMatch(QtWidgets.QWidget):
                 corr = np.corrcoef(df1, corr_src)
                 if np.isnan(corr.item((0, 1))):
                     corr = 0
+                else:
+                    corr = corr.item((0, 1))
             except:
                 corr = 0
-            else:
-                corr = corr.item((0, 1))
             corr_data = [['Correlation To Load']]
             corr_data.append(['RE Contribution', corr])
         else:
@@ -3137,7 +3137,8 @@ class powerMatch(QtWidgets.QWidget):
                     else:
                         ss.cell(row=ss_row, column=st_emi+1).value = '=Detail!' + ss_col(col) + str(emi_row)
                     ss.cell(row=ss_row, column=st_emi+1).number_format = '#,##0'
-                    ss.cell(row=ss_row, column=st_emc+1).value = '=IF(' + ss_col(st_emi+1) + str(ss_row) + '>0,' + \
+                    ss.cell(row=ss_row, column=st_emc+1).value = '=IF(AND(' + ss_col(st_emi+1) + str(ss_row) + '<>"",' + \
+                                                                 ss_col(st_emi+1) + str(ss_row) + '>0),' + \
                                                                  ss_col(st_emi+1) + str(ss_row) + '*carbon_price,"")'
                     ss.cell(row=ss_row, column=st_emc+1).number_format = '$#,##0'
                 ns.cell(row=max_row, column=col).value = '=MAX(' + ss_col(col) + str(hrows) + \
@@ -3156,10 +3157,12 @@ class powerMatch(QtWidgets.QWidget):
                         ns.cell(row=row, column=col).value = pmss_data[di][row - hrows] * \
                                                              pmss_details[fac].multiplier
                         ns.cell(row=row, column=col).number_format = '#,##0.00'
-                ss.cell(row=ss_row, column=st_lie+1).value = '=IF(' + ss_col(st_emi+1) + str(ss_row) + '>0,' + \
+                ss.cell(row=ss_row, column=st_lie+1).value = '=IF(AND(' + ss_col(st_emi+1) + str(ss_row) + '<>"",' + \
+                                                             ss_col(st_emi+1) + str(ss_row) + '>0),' + \
                                                              ss_col(st_emi+1) + str(ss_row) + '*lifetime,"")'
                 ss.cell(row=ss_row, column=st_lie+1).number_format = '#,##0'
-                ss.cell(row=ss_row, column=st_lec+1).value = '=IF(' + ss_col(st_emc+1) + str(ss_row) + '>0,' + \
+                ss.cell(row=ss_row, column=st_lec+1).value = '=IF(AND(' + ss_col(st_emi+1) + str(ss_row) + '<>"",' + \
+                                                             ss_col(st_emi+1) + str(ss_row) + '>0),' + \
                                                              ss_col(st_emc+1) + str(ss_row) + '*lifetime,"")'
                 ss.cell(row=ss_row, column=st_lec+1).number_format = '$#,##0'
             shrt_col = col + 1
@@ -3564,10 +3567,10 @@ class powerMatch(QtWidgets.QWidget):
                 corr = np.corrcoef(df1, corr_src)
                 if np.isnan(corr.item((0, 1))):
                     corr = 0
+                else:
+                    corr = corr.item((0, 1))
             except:
-                    corr = 0
-            else:
-                corr = corr.item((0, 1))
+                corr = 0
             corr_data.append(['RE plus Storage', corr])
             col = pmss_details['Load'].col
             corr_src = []
@@ -3580,10 +3583,10 @@ class powerMatch(QtWidgets.QWidget):
                 corr = np.corrcoef(df1, corr_src)
                 if np.isnan(corr.item((0, 1))):
                     corr = 0
+                else:
+                    corr = corr.item((0, 1))
             except:
-                    corr = 0
-            else:
-                corr = corr.item((0, 1))
+                corr = 0
             corr_data.append(['To Meet Load', corr])
             for c in range(1, len(corr_data)):
                 if abs(corr_data[c][1]) < 0.1:
@@ -3767,52 +3770,54 @@ class powerMatch(QtWidgets.QWidget):
                     sp_data.append(sp_d)
             sp_data.append(' ')
             sp_data.append(['Load Analysis'])
-            pct = '{:.1%})'.format((sf_sums[2] - sf_sums[0]) / sp_load)
-            sp_d = [' '] * len(headers)
-            sp_d[st_fac] = 'Load met'
-            sp_d[st_cap] = '{:.1f}%'.format((sf_sums[2] - sf_sums[0]) * 100 / sp_load)
-            sp_d[st_tml] = sf_sums[2] - sf_sums[0]
-            sp_data.append(sp_d)
-            pct = '{:.1%})'.format(sf_sums[0] / sp_load)
-            sp_d = [' '] * len(headers)
-            sp_d[st_fac] = 'Shortfall'
-            sp_d[st_cap] = '{:.1f}%'.format(sf_sums[0] * 100 / sp_load), sf_sums[0]
-            sp_data.append(sp_d)
-            if option == 'B':
+            if sp_load != 0:
+                pct = '{:.1%})'.format((sf_sums[2] - sf_sums[0]) / sp_load)
                 sp_d = [' '] * len(headers)
-                sp_d[st_fac] = 'Total Load'
-                sp_d[st_tml] = sp_load
-                sp_d[st_max] = load_max
+                sp_d[st_fac] = 'Load met'
+                sp_d[st_cap] = '{:.1f}%'.format((sp_load - sf_sums[0]) * 100 / sp_load)
+                sp_d[st_tml] = sp_load - sf_sums[0]
                 sp_data.append(sp_d)
-            else:
-                load_mult = ''
-                try:
-                    mult = round(pmss_details['Load'].multiplier, 3)
-                    if mult != 1:
-                        load_mult = ' x ' + str(mult)
-                except:
-                    pass
+                pct = '{:.1%})'.format(sf_sums[0] / sp_load)
                 sp_d = [' '] * len(headers)
-                sp_d[st_fac] = 'Total Load - ' + year + load_mult
-                sp_d[st_tml] = sp_load
-                sp_d[st_max] = load_max
+                sp_d[st_fac] = 'Shortfall'
+                sp_d[st_cap] = '{:.1f}%'.format(sf_sums[0] * 100 / sp_load)
+                sp_d[st_tml] = sf_sums[0]
                 sp_data.append(sp_d)
-            sp_d = [' '] * len(headers)
-            sp_d[st_fac] = 'RE %age of Total Load'
-            sp_d[st_cap] = '{:.1f}%'.format((sp_load - sf_sums[0] - ff_sum) * 100. / sp_load)
-            sp_data.append(sp_d)
-            sp_data.append(' ')
-            if tot_sto_loss != 0:
+                if option == 'B':
+                    sp_d = [' '] * len(headers)
+                    sp_d[st_fac] = 'Total Load'
+                    sp_d[st_tml] = sp_load
+                    sp_d[st_max] = load_max
+                    sp_data.append(sp_d)
+                else:
+                    load_mult = ''
+                    try:
+                        mult = round(pmss_details['Load'].multiplier, 3)
+                        if mult != 1:
+                            load_mult = ' x ' + str(mult)
+                    except:
+                        pass
+                    sp_d = [' '] * len(headers)
+                    sp_d[st_fac] = 'Total Load - ' + year + load_mult
+                    sp_d[st_tml] = sp_load
+                    sp_d[st_max] = load_max
+                    sp_data.append(sp_d)
                 sp_d = [' '] * len(headers)
-                sp_d[st_fac] = 'Storage losses'
-                sp_d[st_sub] = tot_sto_loss
+                sp_d[st_fac] = 'RE %age of Total Load'
+                sp_d[st_cap] = '{:.1f}%'.format((sp_load - sf_sums[0] - ff_sum) * 100. / sp_load)
                 sp_data.append(sp_d)
-            pct = '{:.1%})'.format( -sf_sums[1] / sp_load)
-            sp_d = [' '] * len(headers)
-            sp_d[st_fac] = 'Surplus'
-            sp_d[st_cap] = '{:.1f}%'.format(-sf_sums[1] * 100 / sp_load)
-            sp_d[st_sub] = -sf_sums[1]
-            sp_data.append(sp_d)
+                sp_data.append(' ')
+                if tot_sto_loss != 0:
+                    sp_d = [' '] * len(headers)
+                    sp_d[st_fac] = 'Storage losses'
+                    sp_d[st_sub] = tot_sto_loss
+                    sp_data.append(sp_d)
+                pct = '{:.1%})'.format( -sf_sums[1] / sp_load)
+                sp_d = [' '] * len(headers)
+                sp_d[st_fac] = 'Surplus'
+                sp_d[st_cap] = '{:.1f}%'.format(-sf_sums[1] * 100 / sp_load)
+                sp_d[st_sub] = -sf_sums[1]
+                sp_data.append(sp_d)
             max_short = [0, 0]
             for h in range(len(shortfall)):
                 if shortfall[h] > max_short[1]:
@@ -4662,12 +4667,12 @@ class powerMatch(QtWidgets.QWidget):
                     try:
                         pmss_details[fac].multiplier = capacity / pmss_details[fac].capacity
                     except:
-                        print('(4590)', gen, capacity, pmss_details[fac].capacity)
+                        print('(4670)', gen, capacity, pmss_details[fac].capacity)
                 multi_value, op_data, extra = self.doDispatch(year, option, pmss_details, pmss_data, re_order,
                                               dispatch_order, pm_data_file, data_file)
                 if multi_value['load_pct'] < self.targets['load_pct'][3]:
                     if multi_value['load_pct'] == 0:
-                        print('(4595)', multi_value['lcoe'], self.targets['load_pct'][3], multi_value['load_pct'])
+                        print('(4675)', multi_value['lcoe'], self.targets['load_pct'][3], multi_value['load_pct'])
                         lcoe_fitness_scores.append(1)
                     else:
                         lcoe_fitness_scores.append(pow(multi_value['lcoe'],
@@ -5278,7 +5283,7 @@ class powerMatch(QtWidgets.QWidget):
             try:
                 best_score = np.min(lcoe_scores)
             except:
-                print('(5206)', lcoe_scores)
+                print('(5286)', lcoe_scores)
             best_ndx = lcoe_scores.index(best_score)
             lowest_chrom = population[best_ndx]
             self.setStatus('Starting LCOE: $%.2f' % best_score)
@@ -5648,7 +5653,7 @@ class powerMatch(QtWidgets.QWidget):
                     label = QtWidgets.QLabel(txt % amt)
                 except:
                     label = QtWidgets.QLabel('?')
-                    print('(5576)', key, txt, amt)
+                    print('(5656)', key, txt, amt)
                 label.setAlignment(QtCore.Qt.AlignCenter)
                 grid[h + 1].addWidget(label, rw, 0, 1, 3)
             rw += 1
