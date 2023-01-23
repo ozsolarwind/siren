@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2022 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2023 Sustainable Energy Now Inc., Angus King
 #
 #  powerclasses.py - This file is part of SIREN.
 #
@@ -736,7 +736,15 @@ class Adjustments(QtWidgets.QDialog):
                     if values.lower() in ['true', 'yes', 'on']:
                         self.opt_load = True
                 elif item == 'adjust_cap':
-                    self.adjust_cap = float(values)
+                    try:
+                        self.adjust_cap = float(values)
+                    except:
+                        try:
+                            self.adjust_cap = eval(values)
+                        except:
+                            pass
+                    if self.adjust_cap < 0:
+                        self.adjust_cap = pow(10, 12)
         except:
             pass
         if len(self.seasons) == 0:

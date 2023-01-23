@@ -936,7 +936,16 @@ class powerMatch(QtWidgets.QWidget):
         except:
             pass
         try:
-            self.adjust_cap =  float(config.get('Power', 'adjust_cap'))
+            adjust_cap = config.get('Power', 'adjust_cap')
+            try:
+                self.adjust_cap = float(adjust_cap)
+            except:
+                try:
+                    self.adjust_cap = eval(adjust_cap)
+                except:
+                    pass
+            if self.adjust_cap < 0:
+                self.adjust_cap = pow(10, 12)
         except:
             pass
         self.opt_progressbar = None
