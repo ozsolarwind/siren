@@ -1649,7 +1649,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><dfn>adjust_cap</dfn></td>
-<td class="none">Specify the maximum multiplier to adjust generation by. The default is 25</td>
+<td class="none">Specify the maximum multiplier to adjust generation by. If a negative value is set the value will be set to 10**12. The default is 25.</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>actual</dfn></td>
@@ -3514,7 +3514,7 @@ See below for more details on optimisation.</li>
 <tr><td class="none"><dfn>Initial (*)</dfn></td><td class="none">For storage this species the initial level of storage as a percentage of total capacity</td></tr>
 <tr><td class="none"><dfn>LCOE (l)</dfn></td><td class="none">The Reference LCOE for the facility</td></tr>
 <tr><td class="none"><dfn>LCOE CF (l)</dfn></td><td class="none">The Reference capacity factor (CF) at which the Reference LCOE was determined. A combination of <em>LCOE</em> and <em>LCOE CF</em> allows the cost of the generation or storage to be determined. In undertaking any calculations Powermatch adjusts the resulting LCOE to reflect the difference between this CF and the calculated CF. If the Reference CF is zero the resulting LCOE will be used (that is, resulting LCOE will be the same as reference LCOE)</td></tr>
-<tr><td class="none"><dfn>Lifetime (c)</dfn></td><td class="none">The estimated lifetime of the facility in years</td></tr>
+<tr><td class="none"><dfn>Lifetime (c)</dfn></td><td class="none">The estimated lifetime of the facility in years. If a value of 0 is specified it will be set to 20</td></tr>
 <tr><td class="none"><dfn>(Dispatch) Order (*)</dfn></td><td class="none">Specifies the order in which the <u>dispatchable</u> facilities are used, with a value of 1 being the first in the order. Zero values are placed after those with a positive number</td></tr>
 <tr><td class="none"><dfn>Variable OM (or VOM) (c)</dfn></td><td class="none">Variable Operations and Maintenance costs per MW/h</td></tr>
 </table>

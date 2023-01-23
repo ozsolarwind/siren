@@ -289,13 +289,16 @@ class Facility:
         self.name = ''
         self.constraint = ''
         self.order = 0
-        self.lifetime = 0
+        self.lifetime = 20
         for attr in ['capacity', 'lcoe', 'lcoe_cf', 'emissions', 'initial', 'capex',
                      'fixed_om', 'variable_om', 'fuel', 'disc_rate', 'lifetime']:
             setattr(self, attr, 0.)
         for key, value in kwargs.items():
             if value != '':
-                setattr(self, key, value)
+                if key == 'lifetime' and value == 0:
+                    setattr(self, key, 20)
+                else:
+                    setattr(self, key, value)
 
 class PM_Facility:
     def __init__(self, name, generator, capacity, fac_type, col, multiplier):
@@ -1404,7 +1407,10 @@ class powerMatch(QtWidgets.QWidget):
                 for prop in dir(target[key]):
                     if prop[:2] != '__' and prop[-2:] != '__':
                         try:
-                            setattr(target[key], prop, source[key][prop])
+                            if prop == 'lifetime' and source[key][prop] == 0:
+                                setattr(target[key], prop, 20)
+                            else:
+                                setattr(target[key], prop, source[key][prop])
                         except:
                             pass
 
