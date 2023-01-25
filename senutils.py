@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2022 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2023 Sustainable Energy Now Inc., Angus King
 #
 #  senutils.py - This file is part of SIREN.
 #
@@ -31,6 +31,9 @@ except:
 import sys
 from PyQt5 import QtCore, QtWidgets
 import xlrd
+if sys.version_info[1] >= 9: # python 3.9 onwards
+    xlrd.xlsx.ensure_elementtree_imported(False, None)
+    xlrd.xlsx.Element_has_iter = True
 
 
 class ClickableQLabel(QtWidgets.QLabel):
@@ -241,6 +244,8 @@ def techClean(tech, full=False):
 #
 # add another windspeed height
 def extrapolateWind(wind_file, tgt_height, law='logarithmic', replace=False):
+    if tgt_height < 60:
+        return False
     if not os.path.exists(wind_file):
         if replace:
             return False

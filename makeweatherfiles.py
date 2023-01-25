@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2022 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2023 Sustainable Energy Now Inc., Angus King
 #
 #  makeweatherfiles.py - This file is part of SIREN.
 #
@@ -96,7 +96,7 @@ class ShowHelp(QtWidgets.QDialog):
                 s = html[:s].rfind('<h')
                 e = html[s + 1:].find(html[s:s+3]) + s
                 html = html[:b] + '<body>' + html[s:e] + '</body></html>'
-      #      print('(92)', b, s, e, html[s:s+3], len(html))
+      #      print('(99)', b, s, e, html[s:s+3], len(html))
             self.web.setHtml(html)
         else:
             html = self.anobject
@@ -1319,7 +1319,7 @@ class getParms(QtWidgets.QWidget):
         self.grid.addWidget(QtWidgets.QLabel('Solar Variable:'), rw, 0)
         self.swgcombo = QtWidgets.QComboBox(self)
         self.swgs = ['swgdn', 'swgnt']
-        for i in range(len(self.fmats)):
+        for i in range(len(self.swgs)):
             self.swgcombo.addItem(self.swgs[i])
         self.swgcombo.setCurrentIndex(0) # default is swgdn
         self.grid.addWidget(self.swgcombo, rw, 1)
@@ -1334,7 +1334,15 @@ class getParms(QtWidgets.QWidget):
             pass
         self.grid.addWidget(self.hub_height, rw, 1)
         self.hub_height.valueChanged.connect(self.hub_heightChanged)
-        self.grid.addWidget(QtWidgets.QLabel('To extrapolate wind data above 50 metres'), rw, 2, 1, 3)
+        self.grid.addWidget(QtWidgets.QLabel('To extrapolate wind data above 50 metres; using:'), rw, 2, 1, 2)
+        self.lawcombo = QtWidgets.QComboBox(self)
+        self.laws = ['logarithmic', 'hellman']
+        for i in range(len(self.laws)):
+            self.lawcombo.addItem(self.laws[i])
+            if self.law == self.laws[i][0]  :
+                self.lawcombo.setCurrentIndex(i)
+        self.grid.addWidget(self.lawcombo, rw, 4)
+        self.lawcombo.currentIndexChanged.connect(self.lawChanged)
         rw += 1
         self.grid.addWidget(QtWidgets.QLabel('Coordinates:'), rw, 0)
         self.coords = QtWidgets.QPlainTextEdit()
@@ -1416,6 +1424,7 @@ class getParms(QtWidgets.QWidget):
         self.zoneCombo.setMaximumWidth(wdth)
         self.fmatcombo.setMaximumWidth(wdth)
         self.swgcombo.setMaximumWidth(wdth)
+        self.lawcombo.setMaximumWidth(wdth)
         self.hub_height.setMaximumWidth(wdth)
       #   self.grid.setColumnStretch(4, 2)
         frame = QtWidgets.QFrame()
@@ -1431,6 +1440,7 @@ class getParms(QtWidgets.QWidget):
         self.resize(int(self.sizeHint().width()* 1.27), int(self.sizeHint().height() * 1.07))
         self.updated = False
         self.hubupdated = False
+        self.lawupdated = False
         self.show()
 
     def center(self):
@@ -1447,6 +1457,10 @@ class getParms(QtWidgets.QWidget):
                 self.hub_height.setValue(0)
             else:
                 self.hub_height.setValue(80)
+
+    def lawChanged(self):
+        self.lawupdated = True
+        self.law = self.lawcombo.currentText()[0].lower()
 
     def yearChanged(self):
         yr = str(self.yearSpin.value())
@@ -1494,7 +1508,7 @@ class getParms(QtWidgets.QWidget):
         dialog.exec_()
 
     def quitClicked(self):
-        if self.updated or self.hubupdated:
+        if self.updated or self.hubupdated or self.lawupdated:
             updates = {}
             lines = []
             if self.updated:
@@ -1505,6 +1519,10 @@ class getParms(QtWidgets.QWidget):
                 lines.append('hub_height=')
                 if self.hub_height.value() > 0:
                     lines[-1] += str(self.hub_height.value())
+            if self.lawupdated:
+                lines.append('extrapolate=')
+                if self.law != 'l':
+                    lines[-1] += self.law
             updates['makeweatherfiles'] = lines
             SaveIni(updates, ini_file=self.config_file)
         self.close()
@@ -1575,11 +1593,9 @@ class getParms(QtWidgets.QWidget):
             zone = 'best'
         else:
             zone = str(self.zoneCombo.currentIndex() - 14)
-        if  self.hub_height.value() > 0:
-            hub_height = self.hub_height.value()
         wind = makeWeather(self, str(self.yearSpin.value()), zone, self.dirs[0].text(), \
                            self.dirs[1].text(), self.dirs[2].text(), \
-                            'wind', '', wrap, gaps, coords, hub_height=hub_height, law=self.law)
+                            'wind', '', wrap, gaps, coords, hub_height=self.hub_height.value(), law=self.law)
         dialr = RptDialog(str(self.yearSpin.value()), zone, self.dirs[0].text(), \
                           self.dirs[1].text(), self.dirs[2].text(), 'srw', \
                           '', wrap, gaps, coords, wind.returnCode(), wind.getLog())
