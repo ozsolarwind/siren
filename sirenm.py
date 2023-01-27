@@ -26,7 +26,10 @@ import sys
 import time
 # import types
 import matplotlib
-matplotlib.use('TkAgg')
+if matplotlib.__version__ > '3.5.1':
+    matplotlib.use('Qt5Agg')
+else:
+    matplotlib.use('TkAgg')
 import webbrowser
 import xlwt
 from functools import partial

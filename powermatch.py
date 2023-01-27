@@ -30,7 +30,10 @@ from credits import fileVersion
 import glob
 from math import log10
 import matplotlib
-matplotlib.use('TkAgg') # so PyQT5 and Matplotlib windows don't interfere
+if matplotlib.__version__ > '3.5.1':
+    matplotlib.use('Qt5Agg')
+else:
+    matplotlib.use('TkAgg') # so PyQT5 and Matplotlib windows don't interfere
 import matplotlib.pyplot as plt
 # This import registers the 3D projection, but is otherwise unused.
 from mpl_toolkits.mplot3d import Axes3D

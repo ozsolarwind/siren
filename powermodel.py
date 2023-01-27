@@ -21,8 +21,13 @@
 
 from copy import copy
 from math import asin, ceil, cos, fabs, floor, log10, pow, radians, sin, sqrt
-import pylab as plt
+import matplotlib
+if matplotlib.__version__ > '3.5.1':
+    matplotlib.use('Qt5Agg')
+else:
+    matplotlib.use('TkAgg')
 from matplotlib.font_manager import FontProperties
+import matplotlib.pyplot as plt
 import numpy as np
 import openpyxl as oxl
 import os
@@ -224,7 +229,7 @@ class PowerModel():
                 if sys.platform == 'win32' or sys.platform == 'cygwin':
                     if plt.get_backend() == 'TkAgg':
                         mng.window.state('zoomed')
-                    elif plt.get_backend() == 'Qt4Agg':
+                    elif plt.get_backend() == 'Qt5Agg':
                         mng.window.showMaximized()
                 else:
                     mng.resize(*mng.window.maxsize())
@@ -395,7 +400,7 @@ class PowerModel():
                 if sys.platform == 'win32' or sys.platform == 'cygwin':
                     if plt.get_backend() == 'TkAgg':
                         mng.window.state('zoomed')
-                    elif plt.get_backend() == 'Qt4Agg':
+                    elif plt.get_backend() == 'Qt5Agg':
                         mng.window.showMaximized()
                 else:
                     mng.resize(*mng.window.maxsize())
@@ -1424,7 +1429,7 @@ class PowerModel():
                 if sys.platform == 'win32' or sys.platform == 'cygwin':
                     if plt.get_backend() == 'TkAgg':
                         mng.window.state('zoomed')
-                    elif plt.get_backend() == 'Qt4Agg':
+                    elif plt.get_backend() == 'Qt5Agg':
                         mng.window.showMaximized()
                 else:
                     mng.resize(*mng.window.maxsize())
@@ -1599,7 +1604,7 @@ class PowerModel():
                 if sys.platform == 'win32' or sys.platform == 'cygwin':
                     if plt.get_backend() == 'TkAgg':
                         mng.window.state('zoomed')
-                    elif plt.get_backend() == 'Qt4Agg':
+                    elif plt.get_backend() == 'Qt5Agg':
                         mng.window.showMaximized()
                 else:
                     mng.resize(*mng.window.maxsize())
@@ -1692,7 +1697,7 @@ class PowerModel():
                 if sys.platform == 'win32' or sys.platform == 'cygwin':
                     if plt.get_backend() == 'TkAgg':
                         mng.window.state('zoomed')
-                    elif plt.get_backend() == 'Qt4Agg':
+                    elif plt.get_backend() == 'Qt5Agg':
                         mng.window.showMaximized()
                 else:
                     mng.resize(*mng.window.maxsize())
@@ -1774,7 +1779,7 @@ class PowerModel():
                     if sys.platform == 'win32' or sys.platform == 'cygwin':
                         if plt.get_backend() == 'TkAgg':
                             mng.window.state('zoomed')
-                        elif plt.get_backend() == 'Qt4Agg':
+                        elif plt.get_backend() == 'Qt5Agg':
                             mng.window.showMaximized()
                     else:
                         mng.resize(*mng.window.maxsize())
@@ -1860,7 +1865,7 @@ class PowerModel():
                     if sys.platform == 'win32' or sys.platform == 'cygwin':
                         if plt.get_backend() == 'TkAgg':
                             mng.window.state('zoomed')
-                        elif plt.get_backend() == 'Qt4Agg':
+                        elif plt.get_backend() == 'Qt5Agg':
                             mng.window.showMaximized()
                     else:
                         mng.resize(*mng.window.maxsize())
@@ -1932,7 +1937,7 @@ class PowerModel():
                     if sys.platform == 'win32' or sys.platform == 'cygwin':
                         if plt.get_backend() == 'TkAgg':
                             mng.window.state('zoomed')
-                        elif plt.get_backend() == 'Qt4Agg':
+                        elif plt.get_backend() == 'Qt5Agg':
                             mng.window.showMaximized()
                     else:
                         mng.resize(*mng.window.maxsize())
@@ -1972,7 +1977,7 @@ class PowerModel():
                     if sys.platform == 'win32' or sys.platform == 'cygwin':
                         if plt.get_backend() == 'TkAgg':
                             mng.window.state('zoomed')
-                        elif plt.get_backend() == 'Qt4Agg':
+                        elif plt.get_backend() == 'Qt5Agg':
                             mng.window.showMaximized()
                     else:
                         mng.resize(*mng.window.maxsize())
@@ -2130,7 +2135,7 @@ class PowerModel():
                 if sys.platform == 'win32' or sys.platform == 'cygwin':
                     if plt.get_backend() == 'TkAgg':
                         mng.window.state('zoomed')
-                    elif plt.get_backend() == 'Qt4Agg':
+                    elif plt.get_backend() == 'Qt5Agg':
                         mng.window.showMaximized()
                 else:
                     mng.resize(*mng.window.maxsize())

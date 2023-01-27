@@ -20,6 +20,9 @@
 #
 
 from math import asin, ceil, cos, radians, sin, sqrt
+import matplotlib
+if matplotlib.__version__ > '3.5.1':
+    matplotlib.use('Qt5Agg')
 import pylab as plt
 from matplotlib.font_manager import FontProperties
 import matplotlib.lines as mlines
@@ -297,7 +300,7 @@ class PlotWeather():
                 if sys.platform == 'win32' or sys.platform == 'cygwin':
                     if plt.get_backend() == 'TkAgg':
                         mng.window.state('zoomed')
-                    elif plt.get_backend() == 'Qt4Agg':
+                    elif plt.get_backend() == 'Qt5Agg':
                         mng.window.showMaximized()
                 else:
                     mng.resize(*mng.window.maxsize())
@@ -555,7 +558,7 @@ class PlotWeather():
                 if sys.platform == 'win32' or sys.platform == 'cygwin':
                     if plt.get_backend() == 'TkAgg':
                         mng.window.state('zoomed')
-                    elif plt.get_backend() == 'Qt4Agg':
+                    elif plt.get_backend() == 'Qt5Agg':
                         mng.window.showMaximized()
                 else:
                     mng.resize(*mng.window.maxsize())
@@ -623,7 +626,7 @@ class PlotWeather():
                 if sys.platform == 'win32' or sys.platform == 'cygwin':
                     if plt.get_backend() == 'TkAgg':
                         mng.window.state('zoomed')
-                    elif plt.get_backend() == 'Qt4Agg':
+                    elif plt.get_backend() == 'Qt5Agg':
                         mng.window.showMaximized()
                 else:
                     mng.resize(*mng.window.maxsize())
@@ -708,7 +711,7 @@ class PlotWeather():
                 if sys.platform == 'win32' or sys.platform == 'cygwin':
                     if plt.get_backend() == 'TkAgg':
                         mng.window.state('zoomed')
-                    elif plt.get_backend() == 'Qt4Agg':
+                    elif plt.get_backend() == 'Qt5Agg':
                         mng.window.showMaximized()
                 else:
                     mng.resize(*mng.window.maxsize())
@@ -775,7 +778,7 @@ class PlotWeather():
                 if sys.platform == 'win32' or sys.platform == 'cygwin':
                     if plt.get_backend() == 'TkAgg':
                         mng.window.state('zoomed')
-                    elif plt.get_backend() == 'Qt4Agg':
+                    elif plt.get_backend() == 'Qt5Agg':
                         mng.window.showMaximized()
                 else:
                     mng.resize(*mng.window.maxsize())

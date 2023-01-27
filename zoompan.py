@@ -21,6 +21,11 @@
 # Based on: https://gist.github.com/tacaswell/3144287
 # and https://stackoverflow.com/questions/10374930/matplotlib-annotating-a-3d-scatter-plot
 from math import ceil, sqrt
+import matplotlib
+if matplotlib.__version__ > '3.5.1':
+    matplotlib.use('Qt5Agg')
+else:
+    matplotlib.use('TkAgg')
 from mpl_toolkits.mplot3d import proj3d
 from matplotlib import __version__ as matplotlib_version
 #from matplotlib.lines import Line2D

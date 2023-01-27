@@ -25,7 +25,10 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import sys
 from math import log10, ceil
 import matplotlib
-matplotlib.use('Qt5Agg')
+if matplotlib.__version__ > '3.5.1':
+    matplotlib.use('Qt5Agg')
+else:
+    matplotlib.use('TkAgg')
 from matplotlib.font_manager import FontProperties
 import numpy as np
 import pylab as plt
