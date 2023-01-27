@@ -3224,7 +3224,7 @@ class powerMatch(QtWidgets.QWidget):
             ss.cell(row=ss_row, column=st_tml+1).number_format = '#,##0'
         else:
             sp_data = []
-            sp_load = 0.
+            sp_load = 0. # load from load curve
             hrows = 10
             load_max = 0
             load_col = 0
@@ -3761,7 +3761,8 @@ class powerMatch(QtWidgets.QWidget):
             if tml_sum > 0:
                 sp_d = [' '] * len(headers)
                 sp_d[st_fac] = 'RE %age'
-                sp_d[st_cap] = '{:.1f}%'.format((tml_sum - sto_sum - ff_sum) * 100. / tml_sum)
+                re_pct = (tml_sum - sto_sum - ff_sum) / tml_sum
+                sp_d[st_cap] = '{:.1f}%'.format(re_pct * 100.)
                 sp_data.append(sp_d)
                 if sto_sum > 0:
                     sp_d = [' '] * len(headers)
@@ -3771,13 +3772,12 @@ class powerMatch(QtWidgets.QWidget):
             sp_data.append(' ')
             sp_data.append(['Load Analysis'])
             if sp_load != 0:
-                pct = '{:.1%})'.format((sf_sums[2] - sf_sums[0]) / sp_load)
                 sp_d = [' '] * len(headers)
                 sp_d[st_fac] = 'Load met'
-                sp_d[st_cap] = '{:.1f}%'.format((sp_load - sf_sums[0]) * 100 / sp_load)
+                load_pct = (sp_load - sf_sums[0]) / sp_load
+                sp_d[st_cap] = '{:.1f}%'.format(load_pct * 100)
                 sp_d[st_tml] = sp_load - sf_sums[0]
                 sp_data.append(sp_d)
-                pct = '{:.1%})'.format(sf_sums[0] / sp_load)
                 sp_d = [' '] * len(headers)
                 sp_d[st_fac] = 'Shortfall'
                 sp_d[st_cap] = '{:.1f}%'.format(sf_sums[0] * 100 / sp_load)
@@ -3812,12 +3812,16 @@ class powerMatch(QtWidgets.QWidget):
                     sp_d[st_fac] = 'Storage losses'
                     sp_d[st_sub] = tot_sto_loss
                     sp_data.append(sp_d)
-                pct = '{:.1%})'.format( -sf_sums[1] / sp_load)
                 sp_d = [' '] * len(headers)
                 sp_d[st_fac] = 'Surplus'
-                sp_d[st_cap] = '{:.1f}%'.format(-sf_sums[1] * 100 / sp_load)
+                surp_pct = -sf_sums[1] / sp_load
+                sp_d[st_cap] = '{:.1f}%'.format(surp_pct * 100)
                 sp_d[st_sub] = -sf_sums[1]
                 sp_data.append(sp_d)
+            else:
+                load_pct = 0
+                surp_pct = 0
+                re_pct = 0
             max_short = [0, 0]
             for h in range(len(shortfall)):
                 if shortfall[h] > max_short[1]:
@@ -3869,18 +3873,10 @@ class powerMatch(QtWidgets.QWidget):
                 if gen_sum == 0:
                     re_pct = 0
                     load_pct = 0
-                else:
-                    load_pct = (sf_sums[2] - sf_sums[0]) / op_load_tot
-                    try:
-                        non_re = gen_sum - re_sum - sto_sum
-                        re_pct = (op_load_tot - non_re) / op_load_tot
-                      #  re_pct = re_pct * load_pct # ???
-                      #  re_pct = re_sum / gen_sum
-                    except:
-                        re_pct = 0
+                    re_pct = 0
                 multi_value = {'lcoe': lcoe, #lcoe. lower better
-                    'load_pct': (sf_sums[2] - sf_sums[0]) / op_load_tot, #load met. 100% better
-                    'surplus_pct': -sf_sums[1] / op_load_tot, #surplus. lower better
+                    'load_pct': load_pct, #load met. 100% better
+                    'surplus_pct': surp_pct, #surplus. lower better
                     're_pct': re_pct, # RE pct. higher better
                     'cost': cost_sum, # cost. lower better
                     'co2': co2_sum} # CO2. lower better
@@ -4675,8 +4671,15 @@ class powerMatch(QtWidgets.QWidget):
                         print('(4675)', multi_value['lcoe'], self.targets['load_pct'][3], multi_value['load_pct'])
                         lcoe_fitness_scores.append(1)
                     else:
-                        lcoe_fitness_scores.append(pow(multi_value['lcoe'],
-                            self.targets['load_pct'][3] / multi_value['load_pct']))
+                        try:
+                            lcoe_fitness_scores.append(pow(multi_value['lcoe'],
+                                self.targets['load_pct'][3] / multi_value['load_pct']))
+                        except OverflowError as err:
+                            self.setStatus(f"Overflow error: {err}; POW({multi_value['lcoe']:,}, " \
+                                         + f"{self.targets['load_pct'][3] / multi_value['load_pct']:,}) " \
+                                         + f"({self.targets['load_pct'][3]:,} / {multi_value['load_pct']:,} )")
+                        except:
+                            pass
                 else:
                     lcoe_fitness_scores.append(multi_value['lcoe'])
                 multi_values.append(multi_value)
