@@ -617,7 +617,7 @@ class SuperPower():
                     continue
                 key = stn.name
             else:
-                if stn.technology == 'Rooftop PV' and (stn.scenario == 'Existing' or stn.scenario.find('Rooftop PV') > 0):
+                if stn.technology == 'Rooftop PV' and (stn.scenario.find('Existing') >= 0):
                     key = 'Existing Rooftop PV'
                 else:
                     key = stn.technology
@@ -775,10 +775,16 @@ class SuperPower():
             if not hasattr(turbine, 'capacity'):
                 return None
             wind_file = self.wind_files + '/' + closest
-            if turbine.rotor > 88 and self.wind_hub_formula[wtyp] is not None: # if a hub height is specified
+            hub_hght = 0
+            if self.wind_hub_formula[wtyp] is not None: # if a hub height is specified
                 formula = self.wind_hub_formula[wtyp].replace('rotor', str(turbine.rotor))
                 try:
                     hub_hght = eval(formula)
+                except:
+                    pass
+            temp_file = None
+            if turbine.rotor > 85 and hub_hght > 0: # if a hub height is specified
+                try:
                     temp_dir = tempfile.gettempdir()
                     temp_file = 'windfile.srw'
                     wind_data = extrapolateWind(self.wind_files + '/' + closest, hub_hght, law=self.wind_law[wtyp])
@@ -788,7 +794,7 @@ class SuperPower():
                     wf.close()
                     wind_file = temp_dir + '/' + temp_file
                 except:
-                    self.wind_hub_formula[wtyp] = None
+                    pass
             self.data.set_string(b'wind_resource_filename', wind_file.encode('utf-8'))
             no_turbines = int(station.no_turbines)
             if station.scenario == 'Existing' and (no_turbines * turbine.capacity) != (station.capacity * 1000):
@@ -823,9 +829,15 @@ class SuperPower():
             self.data.set_array(b'wind_farm_yCoordinates', wt_y)
             self.data.set_number(b'wind_turbine_rotor_diameter', turbine.rotor)
             self.data.set_number(b'wind_turbine_cutin', turbine.cutin)
+            try:
+                if station.hub_height > 0:
+                    self.data.set_number(b'wind_turbine_hub_ht', station.hub_height)
+            except:
+                if hub_hght > 0:
+                    self.data.set_number(b'wind_turbine_hub_ht', hub_hght)
             self.do_defaults(station)
             farmpwr = do_module('windpower', station, 'gen')
-            if turbine.rotor > 88 and self.wind_hub_formula[wtyp] is not None: # if a hub height is specified
+            if temp_file is not None: # if a hub height is specified
                 os.remove(temp_dir + '/' + temp_file)
             return farmpwr
         elif station.technology == 'CST':

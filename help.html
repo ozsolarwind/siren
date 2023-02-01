@@ -185,7 +185,7 @@ ul {
 <h3 id="licence">Licence</h3>
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
-You should have received a copy of the GNU Affero General Public License along with this program. If not, see <a href="http://www.gnu.org/licenses/">http://www.gnu.org/licenses/</a>. The source for the program is included in the packaged versions and also available at <a href="https://github.com/ozsolarwind/siren" target="_blank">https://github.com/ozsolarwind/siren</a> (<a href="https://github.com/ozsolarwind/siren/wiki">wiki</a>). The programs are written Python 3.
+You should have received a copy of the GNU Affero General Public License along with this program. If not, see <a href="http://www.gnu.org/licenses/" target="_blank">http://www.gnu.org/licenses/</a>. The source for the program is included in the packaged versions and also available at <a href="https://github.com/ozsolarwind/siren" target="_blank">https://github.com/ozsolarwind/siren</a> (<a href="https://github.com/ozsolarwind/siren/wiki" target="_blank">wiki</a>). The programs are written Python 3.
 <h2 id="overview">Overview</h2>
 <p>Welcome to SEN's renewable energy conceptual simulation - SIREN.</p>
 <p>The worlds renewable energy resources could provide many times the amount of fossil-fuelled energy currently used. SEN's computer simulation models an electricity network and allows you to create, cost and evaluate scenarios for supplying electricity using a mixture of renewable energy sources.</p>
@@ -209,7 +209,7 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 </ul>
 <p>Occasionally new versions of some of the SIREN programs will be uploaded to SourceForge. You can check for new versions and download them by selecting the <code>sirenupd</code> option in SIREN. (Major new releases can also be indicated but these will require a complete new SIREN version to be installed.)</p>
 <p>To install the required package you can just open/launch it and extract it to your desired location. It may be necessary to execute the program as Administrator.</p>
-<p>It is also possible to install and run the Python programs. <a href="https://github.com/ozsolarwind/siren/blob/master/SIREN_notes.html">SIREN_Notes.html</a> provides some guidance on how to do this</a>.</p>
+<p>It is also possible to install and run the Python programs. <a href="https://github.com/ozsolarwind/siren/blob/master/SIREN_notes.html" target="_blank">SIREN_Notes.html</a> provides some guidance on how to do this</a>.</p>
 <p><strong>Note:</strong> This help file may refer to individual programs either with or without the program suffix, for example <code>sirenm</code>, <code>sirenm.exe</code> or <code>sirenm.py</code>. You may have to use the appropriate suffix for your environment.
 <h3>Possible folder setup for SIREN</h3>
 <p>To enable new versions of SIREN to be installed without affecting your work a folder structure similar to the following is suggested.</p>
@@ -400,8 +400,8 @@ You can also use TMY files such as those provided with SAM. If you have a number
 </tr>
 <tr class="none">
 <td class="none"><dfn>Technology</dfn></td>
-<td class="none">One of the defined technologies:- Biomass, CST, Fixed PV, Geothermal, Offshore Wind, Rooftop PV, Single Axis PV, Solar Thermal, Tracking (Dual Axis) PV, Wind (refer to <a href="#sam">SAM Models used by SIREN</a>), and
-<div  class="experiment">Hydro, Wave and Other (refer to <a href="#nonsam">Other Models used by SIREN (experimental)</a>)</div>
+<td class="none">One of the defined technologies:- Biomass, CST, Fixed PV, Geothermal, Offshore Wind, Rooftop PV, Single Axis PV, Solar Thermal, Dual Axis PV (Tracking PV), Wind (refer to <a href="#sam">SAM Models used by SIREN</a>), and
+<div class="experiment">Hydro, Wave and Other (refer to <a href="#nonsam">Other Models used by SIREN (experimental)</a>)</div>
 <strong>Note:</strong> SIREN uses two of the SAM Concentrated Solar Power models. <em>Solar Thermal</em> is the SAM model for Power tower concentrating solar power (molten salt and direct steam) and <em>CST</em> is A simple "generic model" for conventional thermal
 </td>
 </tr>
@@ -426,6 +426,10 @@ You can also use TMY files such as those provided with SAM. If you have a number
 <tr class="none">
 <td class="none"><dfn>Rotor Diam</dfn></td>
 <td class="none">The rotor diameter of the turbine for a Wind station</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>Hub Height</dfn></td>
+<td class="none">The hub height of the turbine for a Wind station. This may be optional if the height can be derived another way such as a <em>hub_formula</em> property in the <a href="#p_offw">[Offshore Wind]</a> or <a href="#p_wind">[Wind]</a> Section of the Preferences file</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>No. turbines</dfn></td>
@@ -570,13 +574,14 @@ The format is similar to a Windows INI file. If you want to create a new Model y
 <p><strong>Note:</strong> Technologies appear in two forms in the Preferences file. They appear in the Preferences Sections as words starting with an uppercase letter and separated by spaces (e.g <em>Fixed PV</em> with the Section name <em>[Fixed PV]</em>). In the Section Properties the technology names are changed to all lower case and spaces are replaced by underscores. Thus, <em>Fixed PV</em> will appear as <em>fixed_pv</em>. The lower case versions occur in the <em>[Colors]</em> Section and <em>[Grid] dispatchable</em>, <em>[Power] fossil_technologies</em>, and <em>[Power] technologies</em> variables.</p>
 <p>(Skip to <a href="#menus">Menus</a>)</p>
 <p>Shortcut to Sections:- <a href="#p_backtrack_pv">Backtrack PV</a>, <a href="#p_base">Base</a>, <a href="#p_biomass">Biomass</a>, <a href="#p_colors">Colors</a>, <a href="#p_cst">CST</a>,
-<a href="#p_dataview">Dataview</a>, <a href="#p_files">Files</a>, <a href="#financial">Financial</a>, <a href="#p_fixed_pv">Fixed PV</a>, <a href="#p_flexiplot">Flexiplot</a>,
+<a href="#p_dataview">Dataview</a>, <a href="#p_dual_axis_pv">Dual Axis PV</a>, <a href="#p_files">Files</a>, <a href="#financial">Financial</a>, <a href="#p_fixed_pv">Fixed PV</a>,
+<a href="#p_flexiplot">Flexiplot</a>,
 <a href="#p_fossil_coal">Fossil Coal</a>, <a href="#p_fossil_cogen">Fossil Cogen</a>, <a href="#p_fossil_gas">Fossil Gas</a>,
 <a href="#p_fossil_mixed">Fossil Mixed</a>, <a href="#p_geothermal">Geothermal</a>, <a href="#p_grid">Grid</a>,
 <a href="#p_hydro">Hydro</a>, <a href="#p_map">Map</a>, <a href="#p_offw">Offshore Wind</a>, <a href="#p_other">Other</a>, <a href="#p_parents">Parents</a>, <a href="#p_pc">Plot Colours</a>,
 <a href="#power">Power</a>, <a href="#p_pm">Powermatch</a>, <a href="#p_pp">Powerplot</a>, <a href="#p_pv">PV</a>, <a href="#p_rooftop_pv">Rooftop PV</a>,
 <a href="#p_sam_modules">SAM Modules</a>, <a href="#p_single_pv">Single Axis PV</a>, <a href="#p_solar_thermal">Solar Thermal</a>, <a href="#p_storage">Storage</a>,
-<a href="#p_tracking_pv">Tracking PV</a>, <a href="#p_view">View</a>, <a href="#p_wave">Wave</a>, <a href="#p_wind">Wind</a>,
+<a href="#p_view">View</a>, <a href="#p_wave">Wave</a>, <a href="#p_wind">Wind</a>,
 <a href="#p_windows">Windows</a>.</p>
 <table border="0", class="none">
 <tr>
@@ -740,7 +745,7 @@ The format is similar to a Windows INI file. If you want to create a new Model y
 <td class="none"><dfn>solar_thermal</dfn></td>
 </tr>
 <tr class="none">
-<td class="none"><dfn>tracking_pv</dfn></td>
+<td class="none"><dfn>dual_axis_pv</dfn> (or <dfn>tracking_pv</dfn>)</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>wave</dfn></td>
@@ -954,6 +959,31 @@ Options for <a href="#dataview">Data View</a>. Properties for individual files (
 </tr>
 </table>
 </div>
+<tr class="none" id="p_dual_axis_pv"><td><dfn><strong>[Dual Axis PV]</strong></dfn><br />or<br /><dfn><strong>[Tracking PV]</strong></dfn></td>
+<td>Specifics on Dual Axis PV (or Tracking PV) characteristics. Properties are:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>area</dfn></td>
+<td class="none">Estimated area in km<sup>2</sup> per MW</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>capital_cost</dfn></td>
+<td class="none">Capital cost per peak MW. A suffix of K indicates thousands and M millions</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>dc_ac_ratio</dfn></td>
+<td class="none">DC to AC ratio. Default value is as specified in the <dfn>[PV]</dfn> Section</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>icon</dfn></td>
+<td class="none">Icon to display for this technology. Default is solar_pv_g.png</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>o_m_cost</dfn></td>
+<td class="none">Operations and Maintenance cost per peak MW. A suffix of K indicates thousands and M millions</td>
+</tr>
+</table>
+</td></tr>
 <tr class="none" id="p_files"><td><dfn><strong>[Files]</strong></dfn></td>
 <td>Files and directories. You can either specify the folder as the full path or relative to the siren folder (not the folder the Preferences file resides in). Properties are:</p>
 <table border="0", class="none">
@@ -1820,7 +1850,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>technologies</dfn></td>
-<td class="none">The list of technologies - <em>biomass, fixed_pv, geothermal, rooftop_pv, solar_thermal, tracking_pv, wind</em></td>
+<td class="none">The list of technologies - <em>biomass, dual_axis_pv (or tracking_pv), fixed_pv, geothermal, rooftop_pv, solar_thermal, wind</em></td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>total</dfn></td>
@@ -1857,7 +1887,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>cmap</dfn></td>
-<td class="none">Identify the colour map (cmap) to be used to create Heat maps (refer to <a href="https://matplotlib.org/stable/gallery/color/colormap_reference.html">https://matplotlib.org/stable/gallery/color/colormap_reference.html</a>). A common colour map is <em>jet</em> or <em>jet_r</r>. The default is a red-amber-green colour map</td>
+<td class="none">Identify the colour map (cmap) to be used to create Heat maps (refer to <a href="https://matplotlib.org/stable/gallery/color/colormap_reference.html" target="_blank">https://matplotlib.org/stable/gallery/color/colormap_reference.html</a>). A common colour map is <em>jet</em> or <em>jet_r</r>. The default is a red-amber-green colour map</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>cbar</dfn></td>
@@ -2091,7 +2121,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>losses</dfn></td>
-<td class="none">Percentage losses for SAM PV model (pvwattsv5). Default is 5. 5  is appropriate for solar weather files derived from the MERRA-2 swgnt variable while 14 or 15 is more appropriate for the swgdn variable</td>
+<td class="none">Percentage losses for SAM PV model (pvwattsv5). Default is 5. 5 is appropriate for solar weather files derived from the MERRA-2 swgnt variable while 14 or 15 is more appropriate for the swgdn variable</td>
 </tr>
 </table>
 </td></tr>
@@ -2120,9 +2150,9 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 </table>
 </td></tr>
-<tr class="none" id="p_sam_modules"><td><dfn><strong>[SAM_Modules]</strong></dfn></td>
+<tr class="none" id="p_sam_modules"><td><dfn><strong>[SAM Modules]</strong></dfn></td>
 <td>SAM models (modules) and default variables for each technology currently implemented. The variables files can be either a CSV or Excel (XLS or XLSX) file. Properties are as follows.</p>
-<p><strong>Note:</strong> SIREN is using SSC Version 206 which has created some changes to the default variables for <em>ippppa</em>, <em>geothermal</em>, <em>tcsgeneric_solar</em> and <em>tcsmolten_salt</em>. The variable files for these models provided by SIREN have a suffix of <em>_206</em>. You may need to adjust these variables in older SIREN Preferences files</p>
+<p><strong>Note:</strong> SIREN is using SSC Version 206 which has created some changes to the default variables for <em>ippppa</em>, <em>geothermal</em>, <em>tcsgeneric_solar</em> and <em>tcsmolten_salt</em>. The variable files for these models provided by SIREN have a suffix of <em>_206</em>. You may need to adjust these variables in older SIREN Preferences files. SIREN has also successfuly been used with Version 209 (2018-11-11), Version 267 (2021-12-02), Version 278 (2022-11-21)</p>
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><dfn>annualoutput_variables</dfn></td>
@@ -2158,7 +2188,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 -->
 <tr class="none">
 <td class="none"><dfn>pv_variables</dfn></td>
-<td class="none">Default values required for the three PV technologies (Fixed, Tracking, Rooftop)</td>
+<td class="none">Default values required for the five PV technologies (Fixed, Rooftop, Single Axis, Backtrack, and Dual Axis (Tracking))</td>
 </tr>
 <!--
 <tr class="none">
@@ -2275,31 +2305,6 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <tr class="none">
 <td class="none"><dfn>storage</dfn></td>
 <td class="none">Specify how large the storage on the grid is; in GWh. This can be a single figure indicating the amount of storage or two figures separated by a comma where the second value specifies the initial storage value</td>
-</tr>
-</table>
-</td></tr>
-<tr class="none" id="p_tracking_pv"><td><dfn><strong>[Tracking PV]</strong></dfn></td>
-<td>Specifics on (dual axis) Tracking PV characteristics. Properties are:</p>
-<table border="0", class="none">
-<tr class="none">
-<td class="none"><dfn>area</dfn></td>
-<td class="none">Estimated area in km<sup>2</sup> per MW</td>
-</tr>
-<tr class="none">
-<td class="none"><dfn>capital_cost</dfn></td>
-<td class="none">Capital cost per peak MW. A suffix of K indicates thousands and M millions</td>
-</tr>
-<tr class="none">
-<td class="none"><dfn>dc_ac_ratio</dfn></td>
-<td class="none">DC to AC ratio. Default value is as specified in the <dfn>[PV]</dfn> Section</td>
-</tr>
-<tr class="none">
-<td class="none"><dfn>icon</dfn></td>
-<td class="none">Icon to display for this technology. Default is solar_pv_g.png</td>
-</tr>
-<tr class="none">
-<td class="none"><dfn>o_m_cost</dfn></td>
-<td class="none">Operations and Maintenance cost per peak MW. A suffix of K indicates thousands and M millions</td>
 </tr>
 </table>
 </td></tr>
@@ -2766,7 +2771,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 </tr>
 <tr class="none">
 <td class="none"><img src="check-mark.png" alt="Show Grid Areas">&nbsp;&nbsp;Show Grid Areas</td>
-<td class="none">Display grid areas  if available</td>
+<td class="none">Display grid areas if available</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="arrow.png" alt="Go to Station">&nbsp;&nbsp;Go to Station (Ctrl+G)</td>
@@ -3020,18 +3025,23 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <p>To add a new station simply right-click on the map at the desired location and then update the details for the station (Name, Technology, Capacity and so forth) and press <em>Save &amp; Exit</em>. You can also copy an existing station and other options as specified above. </p>
 <p>As you build your scenario, the simulation adds additional infrastructure to connect the new generation plants to the grid. The colours for the majority of the items on the map are as you specify in the Preferences file. You navigate around the map using normal mouse movements to scroll, zoom, etc. and interact with it as described previously (<a href="#menus">Menus</a>). Using the various menu options you can model your whole scenario, or by right-clicking you can deal with an individual station. There are a number of additional windows, such as menu options, that can be opened to assist with using SIREN (see <a href="#windows">Windows</a>)</p>
 <p>You can save multiple scenarios and add them and remove them as you wish. When you exit the simulation normally or <em>Save</em> scenarios (Ctrl+S) any modified scenarios will be saved. When you add new stations to your model they will be added as a new scenario which includes the date and time in its name, for example, Scenario_2015-06-09_1000. You can save all open scenarios as a single new scenario by using the <em>Save As...</em> option.</p>
-<p>The strength of the simulation is in running the SAM Power Models (e.g. Ctrl+P). This will run the appropriate SAM model for each station you have chosen or for all renewable stations in your current simulation. SAM calculates a list of power outputs for each hour of the year (8,760 points). If the <em>show_menu</em> property is True you will be presented with a menu to specify what processing and charts to produce (see below). If you choose to run the Financial Models or Powermatch you will be presented with an additional menu of options.</p>
+<p>The strength of the simulation is in running the SAM Power Models (e.g. Ctrl+P). This will run the appropriate SAM model for each station you have chosen or for all renewable stations in your current simulation. SAM calculates a list of power outputs for each hour of the year (8,760 points). If the <em>show_menu</em> property is True you will be presented with a menu to specify what processing and charts to produce (see <a href="#popts">Power Model Options</a> below). If you choose to run the Financial Models or Powermatch you will be presented with an additional menu of options.</p>
 <ul>
 <li>The various charting features allow you to visualise the renewable energy output and how it compares to demand</li>
 <li>The Financial Models option will invoke SAM Annual Output and Utility IPP/Commercial PPA Finance models. These enable a LCOE to be determined for the scenario</li>
 <li>Powermatch allows you to complete a costed renewable energy scenario. It will use dispatchable generation to meet shortfalls in the renewable energy generation mix to match generation with demand (load) to quantify and cost dispatchable energy generation, storage and CO<sub>2</sub>&#x2011;e emissions</li>
 </ul>
+<p><strong>Usage Notes:</strong>
+<ul>
+<li>To simplify the inputs required to run the SAM Power Models SIREN uses variable files for most of the input variables as described in <a href="#sam">SAM Models used by SIREN</a>. You can change the default inputs by editing or creating your own copy of the variable files. With the One variable you may want to adjust is the hub height in the <em>windpower</em> model</li>
+<li>If you run a simulation and get generation of 0 for a station it may be because SAM has returned an error; the error message will appear in the Status Window. If you don't normally have the Status Window open you can Open the window via the SIREN Windows sub-menu and rerun the Power models to find the error</li>
+</ul></p>
 <h4>Notes on Wind Stations</h4>
-<p>With increasing hub heights associated with larger turbines the SAM models are impacted by the lack of suitable wind speed data at greater heights. The MERRA-2 climate data has a maximum wind speed height of 50 metres which will cope with hub heights up to around 85 metres. To overcome the wind data limitation SIREN can extrapolate wind speeds to greater heights. To enable this you can use the <em>hub_formula</em> property of the <a href="#p_wind">[Wind]</a> and <a href="#p_offw">[Offshore Wind]</a> Sections of the Preferences file. This formula can be used to calculate a hub height (for rotor lengths greater than 88) to extrapolate wind speed using either of two commonly used laws (models). The law to be used can be specified in the <em>extrapolate</em> property of the appropriate wind Section(s) and can be either <em>logarithmic</em>, the default, or <em>Hellmann</em>. This additional data will be added to the normal wind file and passed to the SAM windpower model.</p>
-<p>From &lsquo;Do we really need rotor equivalent wind speed?&rsquo; (Van Sark etal, <a href="https://onlinelibrary.wiley.com/doi/full/10.1002/we.2319#:~:text=For%20situations%20where%20the%20ratio,and%20the%20wind%20speed%20at">https://onlinelibrary.wiley.com/doi/full/10.1002/we.2319#:~:text=For%20situations%20where%20the%20ratio,and%20the%20wind%20speed%20at</a>) a possible formula for calculating hub height is - <code>H = 0.789 D + 14.9 m</code>. For the <em>hub_formula</em> property this can be set as:</p>
-<p><code>hub_formula=int(floor((0.789 * rotor + 14.9) / 10) * 10)</code></p>
-<p>SIREN will replace <code>rotor</code> with the rotor diameter for the station turbine and perform the calculation which will round the calculated hub height down to the nearest 10 metres. You can of course just set <code>hub_formula=90</code> to set a fixed height</p>
-<p>Discussions on the two wind profile laws can be found at <a href="https://en.wikipedia.org/wiki/Wind_profile_power_law">Wind profile power law</a> (aka Hellmann law) and <a href="https://en.wikipedia.org/wiki/Log_wind_profile">Log wind profile</a> (aka logarithmic law). The Hellmann law tends to give slightly higher wind speeds. &lsquo;Methodologies Used in the Extrapolation of Wind Speed Data at Different Heights and Its Impact in the Wind Energy Resource Assessment in a Region&rsquo; (<a href="https://www.researchgate.net/publication/221912731_Methodologies_Used_in_the_Extrapolation_of_Wind_Speed_Data_at_Different_Heights_and_Its_Impact_in_the_Wind_Energy_Resource_Assessment_in_a_Region">https://www.researchgate.net/publication/221912731_Methodologies_Used_in_the_Extrapolation_of_Wind_Speed_Data_at_Different_Heights_and_Its_Impact_in_the_Wind_Energy_Resource_Assessment_in_a_Region</a>) provides a fuller discussion on the topic.</p>
+<p>With increasing hub heights associated with larger turbines the SAM models are impacted by the lack of suitable wind speed data at greater heights. The MERRA-2 climate data has a maximum wind speed height of 50 metres which will cope with hub heights up to 85 metres (above that height the SAM <em>windpower</em> model will fail with an error - &ldquo;... the closest wind speed measurement height (50 m) found is more than 35 m from the hub height specified&rdquo;). To overcome the wind data limitation SIREN can extrapolate wind speeds to greater heights. To enable this you can use the <em>hub_formula</em> property of the <a href="#p_wind">[Wind]</a> and <a href="#p_offw">[Offshore Wind]</a> Sections of the Preferences file. This formula can be used to calculate a hub height (for rotor lengths greater than 85) and to extrapolate wind speed using either of two commonly used laws (models). The law to be used can be specified in the <em>extrapolate</em> property of the appropriate wind Section(s) and can be either <em>logarithmic</em>, the default, or <em>Hellmann</em>. This additional data will be added to the normal wind file and passed to the SAM windpower model. If you wish to use this you need update the <em>windpower</em> variables file to allow the default hub height (85 m) to be overridden.</p>
+<p>From &lsquo;Do we really need rotor equivalent wind speed?&rsquo; (Van Sark etal, <a href="https://onlinelibrary.wiley.com/doi/full/10.1002/we.2319#:~:text=For%20situations%20where%20the%20ratio,and%20the%20wind%20speed%20at" target="_blank">https://onlinelibrary.wiley.com/doi/full/10.1002/we.2319#:~:text=For%20situations%20where%20the%20ratio,and%20the%20wind%20speed%20at</a>) a possible formula for calculating hub height is - <code>H = 0.789 D + 14.9 m</code>. For the <em>hub_formula</em> property this can be set as:</p>
+<p><code>hub_formula=int(floor((0.789 * rotor + 14.9) / 5) * 5)</code></p>
+<p>SIREN will replace <code>rotor</code> with the rotor diameter for the station turbine and perform the calculation which will round the calculated hub height down to the nearest 5 metres. You can of course just set <code>hub_formula=90</code> to set a fixed height</p>
+<p>Discussions on the two wind profile laws can be found at <a href="https://en.wikipedia.org/wiki/Wind_profile_power_law" target="_blank">Wind profile power law</a> (aka Hellmann law) and <a href="https://en.wikipedia.org/wiki/Log_wind_profile" target="_blank">Log wind profile</a> (aka logarithmic law). The Hellmann law tends to give slightly higher wind speeds. &lsquo;Methodologies Used in the Extrapolation of Wind Speed Data at Different Heights and Its Impact in the Wind Energy Resource Assessment in a Region&rsquo; (<a href="https://www.researchgate.net/publication/221912731_Methodologies_Used_in_the_Extrapolation_of_Wind_Speed_Data_at_Different_Heights_and_Its_Impact_in_the_Wind_Energy_Resource_Assessment_in_a_Region" target="_blank">https://www.researchgate.net/publication/221912731_Methodologies_Used_in_the_Extrapolation_of_Wind_Speed_Data_at_Different_Heights_and_Its_Impact_in_the_Wind_Energy_Resource_Assessment_in_a_Region</a>) provides a fuller discussion on the topic.</p>
 <p><a href="#help">Back to top</a></p>
 <h3 id="popts">Power Model Options</h3>
 <p>The Power Model options menu are as set out here. The default values are specified in the <a href="#power">[Power]</a> Section of the Preferences file. The associated property is indicated in brackets at the end of the description. If you hover over the window title bar or press F1 a help for the Options will be displayed.</p>
@@ -3235,7 +3245,7 @@ If it's not a diurnal chart (i.e. Period is <em>&lt;None&gt;</em>) any occurence
 <strong>Co...</strong> Perform either an analysis of contribution or correlation to a target. These options are presented by setting either the <em>show_contribution</em> or <em>show_correlation</em> Property of the <a href="#p_pm">[Powermatch]</a> section of the Preferences file to True. If both properties are set <em>show_contribution</em> takes precedence.<br/>
 <p><strong>Contribution</strong> Calculate the percentage contribution of each chosen column in meeting the target. This will present a table showing the percentage contribution for each month in the chosen period.</p>
 <p><strong>Correlation</strong> Perform linear correlations between the target and the chosen columns. This will present a table showing the correlations in descending order (i.e. best first)</p>
-<p>Correlation coefficients whose magnitude are between 0.9 and 1.0 indicate variables which can be considered <strong>very highly correlated</strong>. Correlation coefficients whose magnitude are between 0.7 and 0.9 indicate variables which can be considered <strong>highly correlated</strong>. Correlation coefficients whose magnitude are between 0.5 and 0.7 indicate variables which can be considered <strong>moderately correlated</strong>. Correlation coefficients whose magnitude are between 0.3 and 0.5 indicate variables which have a <strong>low correlation</strong>. Correlation coefficients whose magnitude are less than 0.3 have little if any (linear) correlation (from <a href="https://www.andrews.edu/~calkins/math/edrm611/edrm05.htm">https://www.andrews.edu/~calkins/math/edrm611/edrm05.htm</a>).</p>
+<p>Correlation coefficients whose magnitude are between 0.9 and 1.0 indicate variables which can be considered <strong>very highly correlated</strong>. Correlation coefficients whose magnitude are between 0.7 and 0.9 indicate variables which can be considered <strong>highly correlated</strong>. Correlation coefficients whose magnitude are between 0.5 and 0.7 indicate variables which can be considered <strong>moderately correlated</strong>. Correlation coefficients whose magnitude are between 0.3 and 0.5 indicate variables which have a <strong>low correlation</strong>. Correlation coefficients whose magnitude are less than 0.3 have little if any (linear) correlation (from <a href="https://www.andrews.edu/~calkins/math/edrm611/edrm05.htm" target="_blank">https://www.andrews.edu/~calkins/math/edrm611/edrm05.htm</a>).</p>
 </div></li>
 <li><strong>Help</strong> Display the help for Powerplot</li>
 </ul>
@@ -3261,7 +3271,7 @@ If it's not a diurnal chart (i.e. Period is <em>&lt;None&gt;</em>) any occurence
 </table>
 <p><code>flexiplot</code> has a number of options to:
 <ul>
-<li>Adjust the font properties of the various text items on the chart. The properties are as described in <a href="https://matplotlib.org/3.1.1/api/font_manager_api.html#matplotlib.font_manager.FontProperties">FontProperties</a> but may be restricted by the matplotlib environment. To specify a property use the format as described in the link, e.g. <em>family=sans-serif,size=xxlarge</em>. The only non-default value is the chart title fontsize which is set to 'x-large'</li>
+<li>Adjust the font properties of the various text items on the chart. The properties are as described in <a href="https://matplotlib.org/3.1.1/api/font_manager_api.html#matplotlib.font_manager.FontProperties" target="_blank">FontProperties</a> but may be restricted by the matplotlib environment. To specify a property use the format as described in the link, e.g. <em>family=sans-serif,size=xxlarge</em>. The only non-default value is the chart title fontsize which is set to 'x-large'</li>
 <li>You can specify how often X Axis ticks appear, either by setting <em>sparse_xticks</em> to a single number ,&lsquo;n&rsquo;, for every &lsquo;n&rsquo;th tick to appear, or by setting a test for a change in the label value by specifying the start and end characters to examine, separated by a comma. For example, <em>1,3</em> could be used where you have labels in the form of <em>Jan, Feb</em></li>
 </ul>
 </div>
@@ -3331,7 +3341,7 @@ If it's not a diurnal chart (i.e. Period is <em>&lt;None&gt;</em>) any occurence
 <td class="none"> (<em>min_irr_target</em>)</td></tr>
 <!--
 <tr><td class="lr"><dfn>PPA escalation (%)</dfn></td>
-<td class="none"> Not implemented yet  (<em>ppa_escalation</em>)</td></tr>
+<td class="none"> Not implemented yet (<em>ppa_escalation</em>)</td></tr>
 -->
 <tr><td class="lr"><dfn>Commercial PPA (on), Utility IPP (off)</dfn></td>
 <td class="none">IPP option - Utility IPP or Commercial PPA (<em>market</em>)</td></tr>
@@ -3343,7 +3353,7 @@ If it's not a diurnal chart (i.e. Period is <em>&lt;None&gt;</em>) any occurence
 <td class="none"> (<em>optimize_lcoe_wrt_debt_fraction</em>)</td></tr>
 <!--
 <tr><td class="lr"><dfn>Optimise LCOE with respect to PPA escalation?</dfn></td>
-<td class="none"> Not implemented yet  (<em>optimize_lcoe_wrt_ppa_escalation</em>)</td></tr>
+<td class="none"> Not implemented yet (<em>optimize_lcoe_wrt_ppa_escalation</em>)</td></tr>
 -->
 <tr><td class="lr"><dfn>Reduce power by Grid losses?</dfn></td>
 <td class="none">Reduce the power passed to the financial model by the amount of grid losses. This will slightly increase LCOE. If chosen this will reduce power by losses related to the line connecting the station into the grid. To reduce power by losses for the full grid path length to the load centre you need to also choose the <em>Include full grid path ...</em> option (below)</td></tr>
@@ -3364,7 +3374,7 @@ If it's not a diurnal chart (i.e. Period is <em>&lt;None&gt;</em>) any occurence
 <p>Running the SIREN models will produce hourly generation figures which identify generation shortfalls and excesses against load (demand). One of the outputs from SIREN is a table of these generation shortfalls which could be met by storage (charged by surplus renewable generation) and dispatchable energy generation. The Powermatch (<code>powermatch</code>) component of SIREN can be used to match generation with demand (load) to quantify and cost this dispatchable energy generation, storage and CO<sub>2</sub>-e emissions. This enables you to complete a costed renewable energy scenario. If the input data spreadsheet has zones (of generation) the calculations will be performed for each zone.</p>
 <p>One of the outputs from Powermatch is calculated Levelised Cost figures for each Generator, LCOG, and Storage, LCOS, and an overall LCOE. The Levelised Costs are calculated based upon either Capital (Capex), Operations (Opex) and fuel costs or a Reference LCOE and Reference Capacity Factor (CF) for the generator or storage.
 Be aware that if a facility is not used it will have no costs associated with it (this is based upon the premise that the facility would not be included in any detailed modelling).
-Surplus - spilled or curtailed - generation is normally used in the calculation of the (overall) LCOE. You can choose to ignore this in calculating the LCOE. The default, and recommendation, is to  include the surplus (<em>adjusted_lcoe</em>)
+Surplus - spilled or curtailed - generation is normally used in the calculation of the (overall) LCOE. You can choose to ignore this in calculating the LCOE. The default, and recommendation, is to include the surplus (<em>adjusted_lcoe</em>)
 <p><strong>Note:</strong> The SIREN Powermatch component was in part inspired by the Powerbalance worksheets developed by Ben Rose. For those who would prefer his spreadsheet approach an enhanced version, Powerbalance2, is available at <a href="https://cleanenergymodelling.com.au/powerbalance2/" target="_blank">https://cleanenergymodelling.com.au/powerbalance2/</a></p>
 <p>The Powermatch options are as set out here. The options (Properties) are specified in the <a href="#p_pm">[Powermatch]</a> Section of the Preferences file. The associated property is indicated in brackets at the end of the description. All files are located in the SIREN Scenarios folder.</p>
 <table border="0" class="none" cellpadding="2">
@@ -3387,7 +3397,7 @@ Surplus - spilled or curtailed - generation is normally used in the calculation 
 <tr><td class="lr"><dfn>Results Prefix</dfn></td>
 <td class="none">If set this value will be prefixed to the Results filename and to Summary and Adjust Generators filename if these are saved</td></tr>
 <tr><td class="lr"><dfn>Results File</dfn></td>
-<td class="none">Filename for Powermatch output (report) spreadsheet. Clicking on the field will allow you to choose the name for the report spreadsheet. <strong>Note:</strong> If the  <em>change_results</em> property of the <em>[Powermatch]</em> Section is set changes to the input spreadsheet name will cause this Results spreadsheet name to change (<em>results_file</em>)</td></tr>
+<td class="none">Filename for Powermatch output (report) spreadsheet. Clicking on the field will allow you to choose the name for the report spreadsheet. <strong>Note:</strong> If the <em>change_results</em> property of the <em>[Powermatch]</em> Section is set changes to the input spreadsheet name will cause this Results spreadsheet name to change (<em>results_file</em>)</td></tr>
 <tr><td class="lr"><dfn>Batch File</dfn></td>
 <td class="none">Filename for Batch option. Clicking on the field will allow you to choose another spreadsheet from the SIREN Scenarios folder (<em>batch_file</em>)</td></tr>
 <tr><td class="lr"><dfn>Replace Last</dfn></td>
@@ -3764,7 +3774,7 @@ If the best and worse values are the same for a variable and that value is not a
 <tr><td class="lr"><dfn>Low Colour</dfn> and <dfn>High Colour</dfn></td>
 <td class="none">These options present a set of buttons for each weather variable. Pressing the appropriate button will allow you to alter the upper or lower colour value for each variable. The range of colours steps will be displayed beside the buttons</td>
 <tr><td class="bottom"><strong>Quit, Show, Hide, Save, Help</strong></td>
-<td class="none">As well as the <strong>&lt;</strong>, <strong>&gt;</strong> and <strong>Loop</strong> buttons  there are a number of buttons at the bottom of the menu, as described below</td></tr>
+<td class="none">As well as the <strong>&lt;</strong>, <strong>&gt;</strong> and <strong>Loop</strong> buttons there are a number of buttons at the bottom of the menu, as described below</td></tr>
 </table>
 <p>Altering any field will cause the revised grid to be overlaid on the SIREN map. The buttons are:</p>
 <ul>
@@ -3993,7 +4003,7 @@ Scale of the chart in the cell. A value of 1 fills the cell(<em>plot_scale</em>)
 <p><a href="#help">Back to top</a></p>
 <h2 id="notes">Supporting Notes</h2>
 <h3 id="map">Obtaining a Suitable Map Image</h3>
-<p>Among other publicly available resources, OpenStreetMap provides a set of open map tiles (&ldquo;Slippy Map&rdquo; tiles. Refer <a href="http://wiki.openstreetmap.org/wiki/Slippy_Map" target="_blank">http://wiki.openstreetmap.org/wiki/Slippy_Map</a>) which can be stitched together into a single image. These produce a traditional map type.  A satellite map can be obtained from MapQuest (<a href="https://www.mapquestapi.com/staticmap/" target="_blank">https://www.mapquestapi.com/staticmap/</a> or you can save an image from another source such as Google Maps. Map data copyright (&copy;) OpenStreetMap contributors CC-BY-SA <a href="http://www.openstreetmap.org/copyright" target="_blank"> http://www.openstreetmap.org/copyright</a>. You can obtain a suitable image using <code>getmap</code>.</p>
+<p>Among other publicly available resources, OpenStreetMap provides a set of open map tiles (&ldquo;Slippy Map&rdquo; tiles. Refer <a href="http://wiki.openstreetmap.org/wiki/Slippy_Map" target="_blank">http://wiki.openstreetmap.org/wiki/Slippy_Map</a>) which can be stitched together into a single image. These produce a traditional map type. A satellite map can be obtained from MapQuest (<a href="https://www.mapquestapi.com/staticmap/" target="_blank">https://www.mapquestapi.com/staticmap/</a> or you can save an image from another source such as Google Maps. Map data copyright (&copy;) OpenStreetMap contributors CC-BY-SA <a href="http://www.openstreetmap.org/copyright" target="_blank"> http://www.openstreetmap.org/copyright</a>. You can obtain a suitable image using <code>getmap</code>.</p>
 <h4>getmap</h4>
 <p><code>getmap</code> is a program that can be used to create a map image for any area of the globe. Using this program you can obtain a map from one of the two sources above. You specify:
 <ul>
@@ -4203,7 +4213,7 @@ Parameters<br/>
 To reduce the size of the data files select just those variables we need:
 <ol>
 <li>tavg1_2d_slv_Nx<br>
-<em>ps t10m t2m  u10m u2m u50m v10m v2m v50m </em></li>
+<em>ps t10m t2m u10m u2m u50m v10m v2m v50m </em></li>
 <li>tavg1_2d_rad_Nx<br>
 <em>swgdn</em> and/or <em>swgnt</em></li>
 <div class="experiment">
@@ -4251,7 +4261,7 @@ If your userid contains a space you may need to enclose <code>~/.urs_cookies</co
 <p><strong>wget for Windows</strong></p>
 <p>Earlier versions of wget for windows will not work with the requirements for URS authentication. Version 1.18 has been successfully tested. The following steps highlight an approach:
 <ol>
-<li>Obtain a suitable version of wget, such as <a href="https://eternallybored.org/misc/wget/releases/wget-1.18-win32.zip">wget-1.18-win32.zip</a> for the full package or <a href="https://eternallybored.org/misc/wget/current/wget.exe">wget.exe</a> for just wget itself. Only the .exe file is required</li>
+<li>Obtain a suitable version of wget, such as <a href="https://eternallybored.org/misc/wget/releases/wget-1.18-win32.zip" target="_blank">wget-1.18-win32.zip</a> for the full package or <a href="https://eternallybored.org/misc/wget/current/wget.exe">wget.exe</a> for just wget itself. Only the .exe file is required</li>
 <li>Create a <code>.netrc</code> file as described in the Wget with URS Authentication link above</li>
 <li>Create a <code>HOME</code> environment variable which points to the folder containing the <code>.netrc</code> file (typically this is set to <code>Users/username</code>)</li>
 <li>Open a terminal window, navigate to where you have the list of urls and invoke <code>wget</code></li>
@@ -4346,6 +4356,7 @@ You can alternate between these approaches to choose the desired area. If you ha
 <li><em>Solar Format</em>. The solar option can produce weather files in either of two formats - SMW or CSV format. This option allows you to choose your preferred one. SMW format is suitable for SAM while it may have trouble with the CSV format</li>
 <li><em>Solar Variable</em>. There are two MERRA-2 solar variables to use to create weather files - swgdn or swgnt</li>
 <li><em>Hub height</em>. To extrapolate wind data above the 50 metre maximum in the MERRA-2 data. This can be used to cater for wind turbines with higher hub heights</li>
+<li>Extrapolation will use the chosen <em>law</em>, either <em>logarithmic</em>, the default, or <em>Hellmann</em> as desceibed below</li>
 <li><em>Coordinates</em>. Rather than producing weather files for each grid cell in the chosen area you can restrict it by passing a string of comma-separated latitude and longitude values. The tool will then generate files for just these coordinates.
 <ul>
 <li>For latitudes and longitudes that don't match cell dimensions in the MERRA-2 files values will be calculated from ratios of values for the surrounding cells</li>
@@ -4406,7 +4417,7 @@ You can alternate between these approaches to choose the desired area. If you ha
 </ul>
 <li>A packaged version of <code>makeweatherfiles</code> for Windows is available as a self-extracting zip file from <a href="https://sourceforge.net/projects/sensiren/" target="_blank">https://sourceforge.net/projects/sensiren/</a>. The file is <a href="https://sourceforge.net/projects/sensiren/files/sen_makeweather_getmerra2.exe/download" target="_blank">sen_makeweather_getmerra2.exe</a> (the package has been created with PyInstaller) and contains both <code>makeweatherfiles</code> and <code>getmerra2</code> which enables MERRA-2 files to be downloaded. This package allows you to create SAM weather files from MERRA-2 files without requiring any other parts of SIREN</a></li>
 <li>With increasing hub heights associated with larger turbines the SAM models are impacted by the lack of suitable wind speed data at greater heights. The MERRA-2 climate data has a maximum wind speed height of 50 metres which will cope with hub heights up to around 85 metres. To overcome the wind data limitation the Hub height parameter can be used to extrapolate wind speeds to a greater (hub) height. <code>makeweatherfiles</code> will extrapolate wind speed using either of two commonly used laws (models). The law to be used can be specified in the <em>extrapolate</em> property of the [makeweatherfiles] Section of the <a href="#getfiles">getfiles.ini</a> Preferences file, and can be either <em>logarithmic</em>, the default, or <em>Hellmann</em>. This additional data will be added to the normal wind file.
-<p>Discussions on the two wind profile laws can be found at &lsquo;Wind profile power law&rsquo; (aka Hellmann law; <a href="https://en.wikipedia.org/wiki/Wind_profile_power_law">https://en.wikipedia.org/wiki/Wind_profile_power_law</a>) and &lsquo;Log wind profile&rsquo; (aka logarithmic law; <a href="https://en.wikipedia.org/wiki/Log_wind_profile">https://en.wikipedia.org/wiki/Log_wind_profile</a>). The Hellmann law tends to give slightly higher wind speeds. &lsquo;Methodologies Used in the Extrapolation of Wind Speed Data at Different Heights and Its Impact in the Wind Energy Resource Assessment in a Region&rsquo; (<a href="https://www.researchgate.net/publication/221912731_Methodologies_Used_in_the_Extrapolation_of_Wind_Speed_Data_at_Different_Heights_and_Its_Impact_in_the_Wind_Energy_Resource_Assessment_in_a_Region">https://www.researchgate.net/publication/221912731_Methodologies_Used_in_the_Extrapolation_of_Wind_Speed_Data_at_Different_Heights_and_Its_Impact_in_the_Wind_Energy_Resource_Assessment_in_a_Region</a>) provides a fuller discussion on the topic.</p></li>
+<p>Discussions on the two wind profile laws can be found at &lsquo;Wind profile power law&rsquo; (aka Hellmann law; <a href="https://en.wikipedia.org/wiki/Wind_profile_power_law" target="_blank">https://en.wikipedia.org/wiki/Wind_profile_power_law</a>) and &lsquo;Log wind profile&rsquo; (aka logarithmic law; <a href="https://en.wikipedia.org/wiki/Log_wind_profile" target="_blank">https://en.wikipedia.org/wiki/Log_wind_profile</a>). The Hellmann law tends to give slightly higher wind speeds. &lsquo;Methodologies Used in the Extrapolation of Wind Speed Data at Different Heights and Its Impact in the Wind Energy Resource Assessment in a Region&rsquo; (<a href="https://www.researchgate.net/publication/221912731_Methodologies_Used_in_the_Extrapolation_of_Wind_Speed_Data_at_Different_Heights_and_Its_Impact_in_the_Wind_Energy_Resource_Assessment_in_a_Region" target="_blank">https://www.researchgate.net/publication/221912731_Methodologies_Used_in_the_Extrapolation_of_Wind_Speed_Data_at_Different_Heights_and_Its_Impact_in_the_Wind_Energy_Resource_Assessment_in_a_Region</a>) provides a fuller discussion on the topic.</p></li>
 </ol>
 <p>
 <h4 id="usage">Using getmerra2 and makeweatherfiles</h4>
@@ -4721,7 +4732,7 @@ MERRA-2 Variables
 <tr class="none">
 <th>Technology</th>
 <th>SAM Model</th>
-<th>[SAM_Modules] property</th>
+<th>[SAM Modules] property</th>
 <th>SAM Description</th>
 </tr>
 <tr class="none">
@@ -4755,7 +4766,7 @@ MERRA-2 Variables
 <td>Geothermal monthly and hourly models using general power block code from TRNSYS Type 224 code by M.Wagner, and some GETEM model code</td>
 </tr>
 <tr class="none">
-<td>PV<br \>Fixed PV<br \>Rooftop PV<br \>Single Axis PV<br \>Backtrack PV<br \>Tracking (Dual Axis) PV</td>
+<td>PV<br \>Fixed PV<br \>Rooftop PV<br \>Single Axis PV<br \>Backtrack PV<br \>Dual Axis PV (Tracking PV)</td>
 <td>pvwattsv5</td>
 <td>pv_variables</td>
 <td>PVWatts V5 - integrated hourly weather reader and PV system simulator</td>
@@ -4887,7 +4898,7 @@ MERRA-2 Variables
 <td>dc_ac_ratio</td>
 <td>[PV] dc_ac_ratio</td>
 <td>May also specify for [Backtrack PV], [Fixed PV],
-<br>[Rooftop PV], [Single Axis PV], [Tracking PV]</td>
+<br>[Rooftop PV], [Single Axis PV], [Dual Axis PV] (or [Tracking PV])</td>
 </tr>
 <tr class="none">
 <td>losses</td>
@@ -5009,7 +5020,7 @@ MERRA-2 Variables
 </tr>
 <tr class="none">
 <td>vol_tank</td>
-<td>Station Capacity * <br />storage hours *<br />[Solar Thermal] volume    </td>
+<td>Station Capacity * <br />storage hours *<br />[Solar Thermal] volume</td>
 <td>&nbsp;</td>
 </tr>
 <tr class="none">
@@ -5054,6 +5065,11 @@ MERRA-2 Variables
 <td>From turbine details</td>
 </tr>
 <tr class="none">
+<td>wind_turbine_hub_ht</td>
+<td>Station Hub Height<br />[...Wind] hub_height</td>
+<td>From station details or computed</td>
+</tr>
+<tr class="none">
 <td>wind_turbine_powercurve_windspeeds</td>
 <td>Station Turbine</td>
 <td>From turbine details</td>
@@ -5068,13 +5084,8 @@ MERRA-2 Variables
 <td>Station Rotor</td>
 <td>&nbsp;</td>
 </tr>
-<tr class="none">
-<td>wind_turbine_cutin</td>
-<td>Station Turbine</td>
-<td>From turbine details</td>
-</tr>
 </table>
-<p>
+<p>These files are Excel files. It is possible to update the variables by changing the value in the <em>DEFAULT</em> column. If the value is <em>Input</em> that variable is (already) set by SIREN. If you choose to use the changes to SIREN to support larger turbines (rotor diameter > 85) you can set the default value for <em>wind_turbine_hub_ht</em> in the <em>windpower</em> variables file to <em>Input</em>.</p>
 <h4>Using the full power of SAM</h4>
 <p>It is possible to use the full capabilities of SAM by one of two methods:</p>
 <ol>
@@ -5525,7 +5536,7 @@ MERRA-2 Variables
 <tr><td class="none"><dfn>LCOG</dfn></td>
 <td class="none">Levelised cost of generation. &ldquo;The weighted average cost of generation assuming no curtailment for all technologies that contributed to electricity generation during a given year.&rdquo; (<a href="https://publications.csiro.au/rpr/download?pid=csiro:EP187001&dsid=DS3" target="_blank">Review of alternative methods for extending LCOE to include balancing costs</a>; from <a href="http://iceds.anu.edu.au/files/ANU-100-percent-renewable-electricity-future-in-australia-report.pdf" target="_blank">100% renewable electricity in Australia</a>)</td></tr>
 <tr><td class="none"><dfn>LCOS</dfn></td>
-<td class="none">Levelised cost of storage. &ldquo;The cost of kWh or MWh electricity discharged from a storage device  when accounting for all cost incurred and energy produced throughout the lifetime of the device.&rdquo; (<a href="https://www.storage-lab.com/levelized-cost-of-storage" target="_blank">https://www.storage-lab.com/levelized-cost-of-storage</a>)</td></tr>
+<td class="none">Levelised cost of storage. &ldquo;The cost of kWh or MWh electricity discharged from a storage device when accounting for all cost incurred and energy produced throughout the lifetime of the device.&rdquo; (<a href="https://www.storage-lab.com/levelized-cost-of-storage" target="_blank">https://www.storage-lab.com/levelized-cost-of-storage</a>)</td></tr>
 <tr><td class="none"><dfn>LOL</dfn></td>
 <td class="none">Lower Operating Limit. The (safe) lower limit a generator can run at.
 <tr><td class="none"><dfn>m/s</dfn></td>

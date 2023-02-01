@@ -807,6 +807,12 @@ class WAScene(QtWidgets.QGraphicsScene):
                         else:
                             new_st.area = self.areas[new_st.technology] * float(new_st.capacity)
                     try:
+                        hub_height = worksheet.cell_value(curr_row, var['Hub Height'])
+                        if hub_height != '':
+                            setattr(new_st, 'hub_height', hub_height)
+                    except:
+                        pass
+                    try:
                         power_file = worksheet.cell_value(curr_row, var['Power File'])
                         if power_file != '':
                             new_st.power_file = power_file

@@ -47,9 +47,9 @@ def within_map(y, x, poly):
 
 
 class Station:
-    def __init__(self, name, technology, lat, lon, capacity, turbine, rotor, no_turbines, area, scenario, generation=None,
-                 power_file=None, grid_line=None, grid_len=None, grid_path_len=None, direction=None, tilt=None,
-                 storage_hours=None, zone=None):
+    def __init__(self, name, technology, lat, lon, capacity, turbine, rotor, no_turbines, area, scenario,
+                 direction=None, grid_line=None, hub_height=None, power_file=None, storage_hours=None, tilt=None, # extra file fields
+                 generation=None, grid_len=None, grid_path_len=None, zone=None):
         self.name = name
         self.technology = technology
         self.lat = lat
@@ -57,6 +57,11 @@ class Station:
         self.capacity = capacity
         self.turbine = turbine
         self.rotor = rotor
+        if hub_height is not None:
+            try:
+                self.hub_height = float(hub_height)
+            except:
+                pass
         self.no_turbines = no_turbines
         self.area = area
         self.scenario = scenario
@@ -68,7 +73,11 @@ class Station:
         self.direction = direction
         self.storage_hours = storage_hours
         if tilt is not None:
-            self.tilt = tilt
+            try:
+                self.tilt = float(tilt)
+            except:
+                pass
+
         self.zone = zone
 
 
@@ -241,6 +250,7 @@ class Stations:
                             if 'Facility Code' in facilities.fieldnames:   # IMO format
                                 bit = facility['Facility Code'].split('_')
                                 rotor = 0.
+                                hub_height = 0.
                                 turbine = ''
                                 no_turbines = 0
                                 if bit[-1][:2] == 'WW' or bit[-1][:2] == 'WF':
@@ -284,6 +294,10 @@ class Stations:
                                     except:
                                         pass
                                     area = self.areas[tech] * float(no_turbines) * pow((rotor * .001), 2)
+                                    try:
+                                        hub_height = float(facility['Hub Height'])
+                                    except:
+                                        pass
                                 elif bit[0] == 'MERSOLAR':
                                     tech = 'Single Axis PV'
                                     area = self.areas[tech] * float(facility['Maximum Capacity (MW)'])
@@ -351,6 +365,8 @@ class Stations:
                                     stn.capacity = stn.capacity + float(facility['Maximum Capacity (MW)'])
                                     stn.area += area
                                     stn.no_turbines = stn.no_turbines + no_turbines
+                                if tech == 'Wind' and hub_height > 0:
+                                    stn.hub_height = hub_height
                             else:   # SIREN format
                                 try:
                                     turbs = int(facility['No. turbines'])
@@ -394,14 +410,18 @@ class Stations:
                                         self.stations[-1].rotor = float(rotor)
                                     except:
                                         pass
-                                if self.stations[-1].area == 0 or self.stations[-1].area == '':
-                                    if 'Wind' in self.stations[-1].technology:
+                                    try:
+                                        if float(facility['Hub Height']) > 0:
+                                            self.stations[-1].hub_height = float(facility['Hub Height'])
+                                    except:
+                                        pass
+                                    if self.stations[-1].area == 0 or self.stations[-1].area == '':
                                         self.stations[-1].area = self.areas[self.stations[-1].technology] * \
                                                                  float(self.stations[-1].no_turbines) * \
                                                                  pow((self.stations[-1].rotor * .001), 2)
-                                    else:
-                                        self.stations[-1].area = self.areas[self.stations[-1].technology] * \
-                                                                 float(self.stations[-1].capacity)
+                                elif self.stations[-1].area == 0 or self.stations[-1].area == '':
+                                    self.stations[-1].area = self.areas[self.stations[-1].technology] * \
+                                                             float(self.stations[-1].capacity)
                                 try:
                                     if facility['Power File'] != '':
                                         self.stations[-1].power_file = facility['Power File']
@@ -491,6 +511,10 @@ class Stations:
                                     self.stations[-1].rotor = float(rotor)
                                 except:
                                     pass
+                            try:
+                                self.stations[-1].hub_height = worksheet.cell_value(curr_row, var['Hub Height'])
+                            except:
+                                pass
                         try:
                             if self.stations[-1].area == 0 or self.stations[-1].area == '':
                                 if 'Wind' in self.stations[-1].technology:

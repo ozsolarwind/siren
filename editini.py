@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2022 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2023 Sustainable Energy Now Inc., Angus King
 #
 #  editini.py - This file is part of SIREN.
 #
@@ -348,7 +348,7 @@ class EditFileSections(QtWidgets.QDialog):
         self.close()
 
 class EditSect():
-    def __init__(self, section, save_folder, ini_file=None):
+    def __init__(self, section, save_folder, ini_file=None, txt_ok=None):
         self.section = section
         config = configparser.RawConfigParser()
         if ini_file is not None:
@@ -363,7 +363,7 @@ class EditSect():
         for key, value in section_items:
             section_dict[key] = value
         dialog = Table(section_dict, fields=['property', 'value'], title=self.section + ' Parameters',
-                 save_folder=save_folder, edit=True)
+                 save_folder=save_folder, edit=True, txt_ok=txt_ok)
         dialog.exec_()
         values = dialog.getValues()
         if values is None:

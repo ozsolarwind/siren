@@ -25,6 +25,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 import credits
 from turbine import Turbine
+from math import floor
 
 
 class AnObject(QtWidgets.QDialog):
@@ -218,7 +219,7 @@ class AnObject(QtWidgets.QDialog):
             self.set_stuff(grid, widths, heights, i)
         else:
             units = {'area': 'sq. Km', 'capacity': 'MW', 'rotor': 'm', 'generation': 'MWh', 'grid_len': 'Km',
-                     'grid_path_len': 'Km'}
+                     'grid_path_len': 'Km', 'hub_height': 'm'}
             for prop in dir(self.anobject):
                 if prop[:2] != '__' and prop[-2:] != '__':
                     attr = getattr(self.anobject, prop)
@@ -250,6 +251,11 @@ class AnObject(QtWidgets.QDialog):
                     grid.addWidget(self.edit[-1], i + 1, 1)
                     if prop in list(units.keys()):
                         grid.addWidget(QtWidgets.QLabel(units[prop]), i + 1, 2)
+                        if prop == 'rotor' and attr > 0:
+                            i += 1
+                            grid.addWidget(QtWidgets.QLabel('Est. Hub height:'), i + 1, 0)
+                            grid.addWidget(QtWidgets.QLabel(str(int(floor((0.789 * attr + 14.9) / 10) * 10))), i + 1, 1)
+                            grid.addWidget(QtWidgets.QLabel('m'), i + 1, 2)
                     if prop == 'turbine':
                         i += 1
                         curve = QtWidgets.QPushButton('Show Power Curve', self)

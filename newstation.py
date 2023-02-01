@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2022 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2023 Sustainable Energy Now Inc., Angus King
 #
 #  newstation.py - This file is part of SIREN.
 #
@@ -30,6 +30,7 @@ from getmodels import getModelFile
 from senutils import ClickableQLabel, getParents, getUser, techClean
 from station import Station
 from turbine import Turbine
+from math import floor
 
 
 class AnObject(QtWidgets.QDialog):
@@ -112,6 +113,16 @@ class AnObject(QtWidgets.QDialog):
             self.st_tshours = float(config.get('Solar Thermal', 'tshours'))
         except:
             pass
+        self.wind_hub_formula = [None, None]
+        try:
+            self.wind_hub_formula[0] = config.get('Wind', 'hub_formula')
+        except:
+            pass
+        try:
+            self.wind_hub_formula[1] = config.get('Offshore Wind', 'hub_formula')
+        except:
+            pass
+
 
     def __init__(self, dialog, anobject, scenarios=None):
         super(AnObject, self).__init__()
@@ -128,7 +139,7 @@ class AnObject(QtWidgets.QDialog):
             self.scenarios = None
         dialog.setObjectName('Dialog')
         self.save = False
-        self.field = ['name', 'technology', 'lat', 'lon', 'capacity', 'turbine', 'rotor',
+        self.field = ['name', 'technology', 'lat', 'lon', 'capacity', 'turbine', 'rotor', 'hub_height',
                       'no_turbines', 'area', 'scenario', 'power_file', 'grid_line', 'storage_hours',
                       'direction', 'tilt', 'zone']
         self.label = []
@@ -280,11 +291,32 @@ class AnObject(QtWidgets.QDialog):
             elif self.field[i] == 'rotor':
                 self.rotor = attr
                 self.show_hide['rotor'] = len(self.edit)
-                self.edit.append(QtWidgets.QLineEdit(str(self.rotor)))
+                wind_extra = ''
+                if self.anobject.technology == 'Wind':
+                    wtyp = 0
+                elif self.anobject.technology == 'Offshore Wind':
+                    wtyp = 1
+                else:
+                    wtyp = 0
+                if wtyp >= 0 and self.wind_hub_formula[wtyp] is not None:
+                    formula = self.wind_hub_formula[wtyp].replace('rotor', str(self.rotor))
+                    try:
+                        hub_hght = eval(formula)
+                        wind_extra = ' (est. Hub height: ' + str(hub_hght) + 'm)'
+                    except:
+                        pass
+                self.edit.append(QtWidgets.QLineEdit(str(self.rotor) + wind_extra))
                 self.edit[-1].setEnabled(False)
                 self.curve = QtWidgets.QPushButton('Show Power Curve', self)
                 grid.addWidget(self.curve, i + 1, 2)
                 self.curve.clicked.connect(self.curveClicked)
+            elif self.field[i] == 'hub_height':
+                self.hub_height = attr
+                self.show_hide['hub_height'] = len(self.edit)
+                if self.hub_height is None:
+                    self.edit.append(QtWidgets.QLineEdit(''))
+                else:
+                    self.edit.append(QtWidgets.QLineEdit(str(self.hub_height)))
             elif self.field[i] == 'no_turbines':
                 self.no_turbines = attr
                 self.no_turbines_was = attr
@@ -310,7 +342,10 @@ class AnObject(QtWidgets.QDialog):
                     self.edit.append(self.scencomb)
             elif self.field[i] == 'power_file':
                 self.power_file = attr
-                self.edit.append(QtWidgets.QLineEdit(self.power_file))
+                if attr is not None:
+                    self.edit.append(QtWidgets.QLineEdit(self.power_file))
+                else:
+                    self.edit.append(QtWidgets.QLineEdit(''))
             elif self.field[i] == 'grid_line':
                 self.grid_line = attr
                 if attr is not None:
@@ -388,7 +423,7 @@ class AnObject(QtWidgets.QDialog):
         # self.emit(SIGNAL('status_text'), 'Well Hello!')
 
     def technologyChanged(self, val):
-        wind_fields = ['turbine', 'rotor', 'no_turbines']
+        wind_fields = ['hub_height', 'no_turbines', 'rotor', 'turbine']
         cst_fields = ['storage_hours']
         pv_fields = ['direction', 'tilt']
         show_fields = []
@@ -504,11 +539,16 @@ class AnObject(QtWidgets.QDialog):
                 if self.field[i] == 'tilt' and 'PV' in self.technology:
                     try:
                         setattr(self, self.field[i], float(self.edit[i].text()))
-                        if self.tilt < -180. or self.tilt >  180.:
+                        if self.tilt < -180. or self.tilt > 180.:
                             self.message.setText('Error with ' + self.field[i].title() + ' field')
                             return
                     except:
-                        pass
+                        setattr(self, self.field[i], None)
+                elif self.field[i] == 'hub_height' and 'Wind' in self.technology:
+                    try:
+                        setattr(self, self.field[i], float(self.edit[i].text()))
+                    except:
+                        setattr(self, self.field[i], None)
                 elif self.field_type[i] == 'int':
                     try:
                         setattr(self, self.field[i], int(self.edit[i].text()))
@@ -553,7 +593,8 @@ class AnObject(QtWidgets.QDialog):
                 setattr(self, self.field[i], self.edit[i].value())
         if self.technology.find('Wind') < 0 and self.technology.find('Offshore') < 0:
             self.rotor = 0.0
-            self.turbine == ''
+            self.turbine = ''
+            self.hub_height = None
         if self.technology == 'Biomass':
             self.area = self.areas[self.technology] * float(self.capacity)
         elif 'PV' in self.technology:
@@ -598,6 +639,9 @@ class AnObject(QtWidgets.QDialog):
                     station.direction = self.direction
                 if self.tilt is not None:
                     station.tilt = self.tilt
+            if 'Wind' in self.technology:
+                if self.hub_height is not None and self.hub_height > 0:
+                    station.hub_height = self.hub_height
             if self.storage_hours is not None:
                 if self.technology == 'CST':
                     try:
