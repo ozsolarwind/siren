@@ -1467,7 +1467,11 @@ class MainWindow(QtWidgets.QMainWindow):
         action = menu.exec_(QtCore.QPoint(x, y))
         if action is not None:
             section = action.text()
-            EditSect(section, self.scenarios)
+            if section in ['Wind', 'Offshore Wind']:
+                txt_ok = ['hub_formula', 'law', 'extrapolate']
+            else:
+                txt_ok = None
+            EditSect(section, self.scenarios, txt_ok=txt_ok)
             comment = section + ' Section edited. Reload may be required.'
             self.view.statusmsg.emit(comment)
 
@@ -2267,7 +2271,13 @@ class MainWindow(QtWidgets.QMainWindow):
                         if new_name != chg_station.name:
                             chg_station.name = new_name
                     self.delStation(station)
-                    for atr in dir(chg_station):
+                    stn_atr = dir(station) # existing attributes
+                    chg_atr = dir(chg_station) # changed attributes
+                    for atr in stn_atr:
+                        if atr[:2] != '__' and atr[-2:] != '__':
+                            if atr not in chg_atr:
+                                delattr(station, atr)
+                    for atr in chg_atr:
                         if atr[:2] != '__' and atr[-2:] != '__':
                             setattr(station, atr, getattr(chg_station, atr))
                     self.view.scene().addStation(station)
@@ -2319,6 +2329,11 @@ class MainWindow(QtWidgets.QMainWindow):
                     pass
                 try:
                     new_station.tilt = station.tilt
+                except:
+                    pass
+            if 'Wind' in station.technology:
+                try:
+                    new_station.hub_height = station.hub_height
                 except:
                     pass
             dialog = newstation.AnObject(QtWidgets.QDialog(), new_station, scenarios=self.view.scene()._scenarios)
@@ -3176,69 +3191,51 @@ class MainWindow(QtWidgets.QMainWindow):
             os.rename(self.scenarios + the_scenario, self.scenarios + the_scenario + '~')
         ctr = 0
         d = 0
-        fields = ['Station Name', 'Technology', 'Latitude', 'Longitude', 'Maximum Capacity (MW)',
+        field_names = ['Station Name', 'Technology', 'Latitude', 'Longitude', 'Maximum Capacity (MW)',
                   'Turbine', 'Rotor Diam', 'No. turbines', 'Area']
+        fields = ['name', 'technology', 'lat', 'lon', 'capacity', 'turbine', 'rotor', 'no_turbines',
+                  'area']
+        field_empty = ['', '', 0, 0, 0, '', 0, 0, 0]
+        extra_names = ['Direction', 'Grid Line', 'Hub Height', 'Power File', 'Storage Hours', 'Tilt']
+        extra_fields = []
+        for field in extra_names:
+            extra_fields.append(field.lower().replace(' ', '_'))
+        extra_empty = ['', '', 0, '', 0, 0]
+        to_add = [] # to add extra fields in a consistent order
         for stn in self.view.scene()._stations.stations:
-            if stn.power_file is not None:
-                if 'Power File' not in fields:
-                    fields.append('Power File')
-            if stn.storage_hours is not None:
-                if 'Storage Hours' not in fields:
-                    fields.append('Storage Hours')
-            if stn.grid_line is not None:
-                if 'Grid Line' not in fields:
-                    fields.append('Grid Line')
-            try:
-                if stn.direction is not None:
-                    if 'Direction' not in fields:
-                        fields.append('Direction')
-            except:
-                pass
-            try:
-                if stn.tilt is not None:
-                    if 'Tilt' not in fields:
-                        fields.append('Tilt')
-            except:
-                pass
+            if stn.scenario != 'Existing' and stn.scenario == scenario:
+                for f in range(len(extra_fields)):
+                    try:
+                        attr = getattr(stn, extra_fields[f])
+                        if attr is not None and attr != '' and extra_fields[f] not in to_add:
+                            to_add.append(extra_fields[f])
+                    except:
+                        pass
+        for f in range(len(extra_fields)):
+            if extra_fields[f] in to_add:
+                fields.append(extra_fields[f])
+                field_names.append(extra_names[f])
+                field_empty.append(extra_empty[f])
         if the_scenario[-4:] == '.csv':
             upd_file = open(self.scenarios + the_scenario, 'w')
             if description != '':
                 upd_file.write('Description:,"' + description + '"\n')
             upd_writer = csv.writer(upd_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            upd_writer.writerow(fields)
+            upd_writer.writerow(field_names)
             for stn in self.view.scene()._stations.stations:
                 if stn.scenario != 'Existing':
                     if stn.scenario == scenario:
                         new_line = []
-                        new_line.append(stn.name)
-                        new_line.append(stn.technology)
-                        new_line.append(str(stn.lat))
-                        new_line.append(str(stn.lon))
-                        new_line.append(str(stn.capacity))
-                        if stn.technology == 'Wind':
-                            new_line.append(stn.turbine)
-                            new_line.append(str(stn.rotor))
-                            new_line.append(str(stn.no_turbines))
-                        else:
-                            new_line.append('')
-                            new_line.append('0')
-                            new_line.append('0')
-                        new_line.append(str(stn.area))
-                        if stn.power_file is not None:
-                            new_line.append(str(stn.power_file))
-                        if stn.grid_line is not None:
-                            new_line.append('"' + str(stn.grid_line) + '"')
+                        for f in range(len(fields)):
+                            try:
+                                attr = getattr(stn, fields[f])
+                                if fields[f] == 'grid_line':
+                                    new_line.append('"' + str(attr) + '"')
+                                else:
+                                    new_line.append(str(attr))
+                            except:
+                                new_line.append(str(field_empty[f]))
                # need to add fields for storage hours + fix
-                        try:
-                            if stn.direction is not None:
-                                new_line.append(str(stn.direction))
-                        except:
-                            pass
-                        try:
-                            if stn.tilt is not None:
-                                new_line.append(str(stn.tilt))
-                        except:
-                            pass
                         upd_writer.writerow(new_line)
                         ctr += 1
             upd_file.close()
@@ -3249,8 +3246,8 @@ class MainWindow(QtWidgets.QMainWindow):
             styleb = xlwt.XFStyle()
             styleb.font = fnt
             lens = []
-            for i in range(len(fields)):
-                lens.append(len(fields[i]))
+            for i in range(len(field_names)):
+                lens.append(len(field_names[i]))
             ws = wb.add_sheet(the_scenario[:the_scenario.find('.')])
             d = 0
             if description != '':
@@ -3265,68 +3262,20 @@ class MainWindow(QtWidgets.QMainWindow):
                     ws.row(0).height = int((fnt.height * 1.2)) * r
                 d = -1
                 ctr += 1
-            for i in range(len(fields)):
-                ws.write(ctr, i, fields[i])
+            for i in range(len(field_names)):
+                ws.write(ctr, i, field_names[i])
             for stn in self.view.scene()._stations.stations:
                 if stn.scenario != 'Existing':
                     if stn.scenario == scenario or stn.scenario == the_scenario:
                         ctr += 1
-                        ws.write(ctr, 0, stn.name)
-                        lens[0] = max(lens[0], len(stn.name))
-                        ws.write(ctr, 1, stn.technology)
-                        lens[1] = max(lens[1], len(stn.technology))
-                        ws.write(ctr, 2, stn.lat)
-                        lens[2] = max(lens[2], len(str(stn.lat)))
-                        ws.write(ctr, 3, stn.lon)
-                        lens[3] = max(lens[3], len(str(stn.lon)))
-                        ws.write(ctr, 4, stn.capacity)
-                        lens[4] = max(lens[4], len(str(stn.capacity)))
-                        if stn.technology.find('Wind') >= 0:
-                            ws.write(ctr, 5, stn.turbine)
-                            lens[5] = max(lens[5], len(stn.turbine))
-                            ws.write(ctr, 6, stn.rotor)
-                            lens[6] = max(lens[6], len(str(stn.rotor)))
-                            ws.write(ctr, 7, stn.no_turbines)
-                            lens[7] = max(lens[7], len(str(stn.no_turbines)))
-                        else:
-                            ws.write(ctr, 6, 0)
-                            ws.write(ctr, 7, 0)
-                        ws.write(ctr, 8, stn.area)
-                        lens[8] = max(lens[8], len(str(stn.area)))
-                        if stn.power_file is not None:
-                            ws.write(ctr, fields.index('Power File'), str(stn.power_file))
-                            lens[fields.index('Power File')] = max(lens[fields.index('Power File')],
-                                                               len(stn.power_file))
-                        if stn.grid_line is not None:
-                            ws.write(ctr, fields.index('Grid Line'), str(stn.grid_line))
-                            lens[fields.index('Grid Line')] = max(lens[fields.index('Grid Line')],
-                                                               len(str(stn.grid_line)))
-                        if stn.storage_hours is not None:
-                            if stn.technology == 'CST':
-                                if stn.storage_hours != self.view.scene().cst_tshours:
-                                    ws.write(ctr, fields.index('Storage Hours'), stn.storage_hours)
-                                    lens[fields.index('Storage Hours')] = max(lens[fields.index('Storage Hours')],
-                                                                          len(str(stn.storage_hours)))
-                            elif stn.technology == 'Solar Thermal':
-                                if stn.storage_hours != self.view.scene().st_tshours:
-                                    ws.write(ctr, fields.index('Storage Hours'), stn.storage_hours)
-                                    lens[fields.index('Storage Hours')] = max(lens[fields.index('Storage Hours')],
-                                                                          len(str(stn.storage_hours)))
-                        try:
-                            if stn.direction is not None:
-                                ws.write(ctr, fields.index('Direction'), str(stn.direction))
-                                lens[fields.index('Direction')] = max(lens[fields.index('Direction')],
-                                                                   len(str(stn.direction)))
-                        except:
-                            pass
-                        try:
-                            if stn.tilt is not None:
-                                ws.write(ctr, fields.index('Tilt'), str(stn.tilt))
-                                lens[fields.index('Tilt')] = max(lens[fields.index('Tilt')],
-                                                               len(str(stn.tilt)))
-                        except:
-                            pass
-            for c in range(9):
+                        for f in range(len(fields)):
+                            try:
+                                attr = getattr(stn, fields[f])
+                                ws.write(ctr, f, attr)
+                                lens[f] = max(lens[f], len(str(attr)))
+                            except:
+                                ws.write(ctr, f, field_empty[f])
+            for c in range(len(lens)):
                 if lens[c] * 275 > ws.col(c).width:
                     ws.col(c).width = lens[c] * 275
             ws.set_panes_frozen(True)  # frozen headings instead of split panes
