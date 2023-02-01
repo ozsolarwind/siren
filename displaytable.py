@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2022 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2023 Sustainable Energy Now Inc., Angus King
 #
 #  displaytable.py - This file is part of SIREN.
 #
@@ -51,7 +51,7 @@ class FakeObject:
 class Table(QtWidgets.QDialog):
     def __init__(self, objects, parent=None, fields=None, fossil=True, sumby=None, sumfields=None, units='', title=None,
                  save_folder='', edit=False, sortby=None, decpts=None, totfields=None, abbr=True, txt_align=None,
-                 reverse=False):
+                 reverse=False, txt_ok=None):
         super(Table, self).__init__(parent)
         self.oclass = None
         if len(objects) == 0:
@@ -110,6 +110,7 @@ class Table(QtWidgets.QDialog):
         self.edit_table = edit
         self.decpts = decpts
         self.txt_align = txt_align
+        self.txt_ok = txt_ok
         self.recur = False
         self.replaced = None
         self.savedfile = None
@@ -628,7 +629,9 @@ class Table(QtWidgets.QDialog):
             self.populate()
             self.table.setRowCount(self.table.rowCount() + 1)
             self.sort_col = 1
+            self.recur = True
             self.order(0)
+            self.recur = False
         del dialog
 
     def item_selected(self, row, col):
@@ -670,6 +673,9 @@ class Table(QtWidgets.QDialog):
                     self.recur = False
                     return
                 except:
+                    if self.txt_ok is not None and self.table.item(row, 0).text() in self.txt_ok:
+                        self.recur = False
+                        return
                     self.message.setText('Error with ' + self.fields[col].title() + ' field - ' + tst)
                     self.recur = False
             else:
@@ -683,6 +689,9 @@ class Table(QtWidgets.QDialog):
                     self.recur = False
                     return
                 except:
+                    if self.txt_ok is not None and self.table.item(row, 0).text() in self.txt_ok:
+                        self.recur = False
+                        return
                     self.message.setText('Error with ' + self.fields[col].title() + ' field - ' + tst)
                     self.recur = False
         msg_font = self.message.font()
@@ -926,9 +935,12 @@ class Table(QtWidgets.QDialog):
                                     else:
                                         valu = str(valu)
                                 except:
-                                    self.message.setText('Error with ' + self.fields[cl].title() + ' field - ' + tst)
-                                    self.replaced = None
-                                    return
+                                    if self.txt_ok is not None and self.table.item(rw, 0).text() in self.txt_ok:
+                                        valu = self.table.item(rw, cl).text()
+                                    else:
+                                        self.message.setText('Error with ' + self.fields[cl].title() + ' field - ' + tst)
+                                        self.replaced = None
+                                        return
                             else:
                                 try:
                                     valu = float(tst) * mult
@@ -951,9 +963,12 @@ class Table(QtWidgets.QDialog):
                                     else:
                                         valu = str(valu)
                                 except:
-                                    self.message.setText('Error with ' + self.fields[cl].title() + ' field - ' + tst)
-                                    self.replace = None
-                                    return
+                                    if self.txt_ok is not None and self.table.item(rw, 0).text() in self.txt_ok:
+                                        valu = self.table.item(rw, cl).text()
+                                    else:
+                                        self.message.setText('Error with ' + self.fields[cl].title() + ' field - ' + tst)
+                                        self.replace = None
+                                        return
                     else:
                         valu = self.table.item(rw, cl).text()
                 else:
