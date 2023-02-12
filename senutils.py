@@ -136,7 +136,7 @@ class WorkBook(object):
                 self._sheet.name = self._book.sheetnames[sheetx]
                 self._sheet.nrows = self._sheet._sheet.max_row
                 self._sheet.ncols = self._sheet._sheet.max_column
-            elif self._type == 'csv':
+            else: #if self._type == 'csv':
               #  self._sheet = self._book.worksheets[sheetx]
                 self._sheet.name = 'n/a'
                 self._sheet._sheet = self._worksheet
@@ -172,7 +172,7 @@ class WorkBook(object):
                     #     print("\n".join("%12s%11s%9s" % (t.value, t.type, t.subtype) for t in tok.items))
                     #     return self._sheet.cell(row=row + 1, column=col + 1).value
                     # else:
-            elif self._type == 'csv':
+            else: #if self._type == 'csv':
                 return self._sheet[row][col]
 
         def cell_type(self, row, col):
@@ -297,10 +297,16 @@ def extrapolateWind(wind_file, tgt_height, law='logarithmic', replace=False):
         if speed0 >= speed:
             alpha = 1. / 7. # one-seventh power law
         else:
-            alpha = (math.log(speed)-math.log(speed0))/(math.log(height)-math.log(height0))
+         #   alpha = (math.log(speed)-math.log(speed0))/(math.log(height)-math.log(height0))
+            alpha = math.log(speed / speed0) / math.log(height / height0)
         z0 = math.exp(((pow(height0, alpha) * math.log(height)) - pow(height, alpha) * math.log(height0)) \
                       / ( pow(height0, alpha) - pow(height, alpha)))
+        # z1 = math.exp(((pow(height, alpha) * math.log(height0)) - pow(height0, alpha) * math.log(height)) \
+        #               / ( pow(height, alpha) - pow(height0, alpha)))
         if z0 < 1e-308:
+            z0 = 0.03
+        elif z0 < 1e-302:
+            print('(311)', i, wind_file, z0)
             z0 = 0.03
         if law.lower()[0] == 'l': # law == 'logarithmic'
             speedz = math.log(tgt_height / z0) / math.log(height0 / z0) * speed0
