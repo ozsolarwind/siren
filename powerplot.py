@@ -892,7 +892,7 @@ class PowerPlot(QtWidgets.QWidget):
         if self.book is None:
             self.log.setText('Error accessing Workbook.')
             return
-        if self.order.count() == 0:
+        if self.order.count() == 0 and self.target == '<none>' and self.plottype.currentText() != 'Line Chart':
             self.log.setText('Nothing to plot.')
             return
         isheet = self.sheet.currentText()
