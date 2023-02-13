@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2022 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2023 Sustainable Energy Now Inc., Angus King
 #
 #  wascene.py - This file is part of SIREN.
 #
@@ -642,7 +642,7 @@ class WAScene(QtWidgets.QGraphicsScene):
         self._plot_cache = {}
 
     def _setupCoordTransform(self):
-        self._proj = pyproj.Proj('+init=' + self.projection)   # LatLon with WGS84 datum used by GPS units and Google Earth
+        self._proj = pyproj.Proj(self.projection)   # LatLon with WGS84 datum used by GPS units and Google Earth
         x1, y1, lon1, lat1 = self.upper_left
         x2, y2, lon2, lat2 = self.lower_right
         ul = self._proj(lon1, lat1)

@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2017-2022 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2017-2023 Sustainable Energy Now Inc., Angus King
 #
 #  worldwindow.py - This file is part of SIREN.
 #
@@ -297,7 +297,7 @@ class WorldScene(QtWidgets.QGraphicsScene):
         self._setupCoordTransform()
 
     def _setupCoordTransform(self):
-        self._proj = Proj('+init=' + self.projection)   # LatLon with WGS84 datum used by GPS units and Google Earth
+        self._proj = Proj(self.projection)   # LatLon with WGS84 datum used by GPS units and Google Earth
         x1, y1, lon1, lat1 = self.upper_left
         x2, y2, lon2, lat2 = self.lower_right
         ul = self._proj(lon1, lat1)
