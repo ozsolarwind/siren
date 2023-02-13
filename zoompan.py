@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2019-2021 Angus King
+#  Copyright (C) 2019-2023 Angus King
 #
 #  zoompan.py - This file is used by SIREN.
 #

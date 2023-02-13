@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2017-2022 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2017-2023 Sustainable Energy Now Inc., Angus King
 #
 #  sirenupd.py - This file is part of SIREN.
 #

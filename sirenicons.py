@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2016-2021 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2016-2022 Sustainable Energy Now Inc., Angus King
 #
 #  sirenicons.py - This file is part of SIREN.
 #
