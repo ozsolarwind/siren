@@ -147,6 +147,7 @@ class Stations:
         except:
             pass
         self.technologies = ['']
+        technologies = []
         self.areas = {}
         try:
             technologies = config.get('Power', 'technologies')
