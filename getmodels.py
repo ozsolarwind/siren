@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2020-2022 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2020-2023 Sustainable Energy Now Inc., Angus King
 #
 #  getmodels.py - This file is part of SIREN.
 #
@@ -102,7 +102,7 @@ def getModelFile(*args):
                     copy(mydir + fldr_div +  'SIREN.ini', siren_dir + 'SIREN.ini')
         return siren_dir + ini_file
 
-    siren_dir = ''
+    models_dirs = []
     if sys.platform == 'win32' or sys.platform == 'cygwin':
        models_location = os.getenv('LOCALAPPDATA') + '\\siren\\siren_models_location.txt'
     else:
@@ -111,23 +111,23 @@ def getModelFile(*args):
         ini_file = args[0]
         if os.path.exists(models_location):
             mf = open(models_location, 'r')
-            siren_dir = mf.readline()
+            models_dirs = mf.readlines()
             mf.close()
-            siren_dir = siren_dir.strip('\n')
-            siren_dir = siren_dir + ini_file
-            if not os.path.exists(siren_dir):
-                return ini_file
-            else:
-                return siren_dir
-        else:
-            return ini_file
-    ini_file = ''
+            for models_dir in models_dirs:
+                model_file = models_dir.strip('\n') + ini_file
+                if os.path.exists(model_file):
+                    return model_file
+        return ini_file # default to just return filename
     if os.path.exists(models_location):
         mf = open(models_location, 'r')
-        siren_dir = mf.readline()
+        models_dirs = mf.readlines()
         mf.close()
-        siren_dir = siren_dir.strip('\n')
-        if not(os.path.exists(siren_dir)):
+        good_dirs = []
+        for models_dir in models_dirs:
+            model_dir = models_dir.strip('\n')
+            if os.path.exists(model_dir):
+                good_dirs.append(model_dir)
+        if len(good_dirs) == 0:
             app = QtWidgets.QApplication.instance()
             if app is None:
                 app = QtWidgets.QApplication(sys.argv)
@@ -136,16 +136,15 @@ def getModelFile(*args):
             msgbox.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
             msgbox.setText('SIREN Models folder missing')
             msgbox.setInformativeText('Do you want to reset the Models location (Y)?')
-            msgbox.setDetailedText("Can't find " + siren_dir + '. ' + \
-                "If you reply 'Y'es you can choose a new location for the Models.")
+            msgbox.setDetailedText("Can't find " + model_dir + '. ' + \
+               "If you reply 'Y'es you can choose a new location for the Models.")
             msgbox.setIcon(QtWidgets.QMessageBox.Question)
             msgbox.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
             reply = msgbox.exec_()
             if reply == QtWidgets.QMessageBox.Yes:
-                siren_dir = set_models_locn(ini_file)
+                good_dirs = set_models_locn('')
             else:
                 sys.exit(8)
-        siren_dir = siren_dir + ini_file
+        return(good_dirs)
     else:
-        siren_dir = set_models_locn(ini_file)
-    return siren_dir
+        return set_models_locn('')

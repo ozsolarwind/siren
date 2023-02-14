@@ -38,10 +38,10 @@ from senutils import ClickableQLabel, getUser
 
 class TabDialog(QtWidgets.QDialog):
 
-    def check_file(self, fil, errors=''):
+    def check_file(self, mdir, fil, errors=''):
         ok = True
         try:
-            self.config.read(self.siren_dir + fil)
+            self.config.read(mdir + fil)
         except configparser.DuplicateOptionError as err:
             errors += 'DuplicateOptionError ' + str(err) + '\n'
             i = str(err).find('[line')
@@ -64,7 +64,7 @@ class TabDialog(QtWidgets.QDialog):
             ok = False
         except:
             err = sys.exc_info()[0]
-            errors += 'Error: ' + str(err) + ' While reading from ' + self.siren_dir + fil + '\n'
+            errors += 'Error: ' + str(err) + ' While reading from ' + mdir + fil + '\n'
             model_name = 'Error reading file'
             ok = False
         if ok:
@@ -76,41 +76,48 @@ class TabDialog(QtWidgets.QDialog):
 
     def __init__(self, parent=None):
         QtWidgets.QDialog.__init__(self, parent)
-        self.siren_dir = '.'
+        models_dir = '.'
+        self.models_dirs = []
         if len(sys.argv) > 1:
             if sys.argv[1][-4:] == '.ini':
                 self.invoke('sirenm', sys.argv[1])
                 sys.exit()
             elif os.path.isdir(sys.argv[1]):
-                self.siren_dir = sys.argv[1]
+                models_dir = sys.argv[1]
             if sys.platform == 'win32' or sys.platform == 'cygwin':
-                if self.siren_dir[-1] != '\\' and self.siren_dir[-1] != '/':
-                    self.siren_dir += '\\'
-            elif self.siren_dir[-1] != '/':
-                self.siren_dir += '/'
+                if models_dir[-1] != '\\' and models_dir[-1] != '/':
+                    models_dir += '\\'
+            elif models_dir[-1] != '/':
+                models_dir += '/'
         else:
-            self.siren_dir = getModelFile()
+            self.models_dirs = getModelFile()
+        if len(self.models_dirs) == 0:
+            self.models_dirs = [model_dir]
         self.entries = []
-        fils = os.listdir(self.siren_dir)
-        self.help = 'help.html'
-        self.about = 'about.html'
-        self.config = configparser.RawConfigParser()
-        ignore = ['flexiplot.ini', 'getfiles.ini', 'powerplot.ini', 'siren_default.ini']
-        errors = ''
-        for fil in sorted(fils):
-            if fil[-4:] == '.ini':
-                if fil in ignore:
-                    continue
-                mod_time = time.strftime('%Y-%m-%d %H:%M:%S',
-                           time.localtime(os.path.getmtime(self.siren_dir + fil)))
-                ok, model_name, errors = self.check_file(fil, errors)
-                self.entries.append([fil, model_name, mod_time, ok])
+        for models_dir in self.models_dirs:
+            fils = os.listdir(models_dir)
+            self.help = 'help.html'
+            self.about = 'about.html'
+            self.config = configparser.RawConfigParser()
+            ignore = ['flexiplot.ini', 'getfiles.ini', 'powerplot.ini', 'siren_default.ini']
+            errors = ''
+            for fil in sorted(fils):
+                if fil[-4:] == '.ini':
+                    if fil in ignore:
+                        continue
+                    mod_time = time.strftime('%Y-%m-%d %H:%M:%S',
+                               time.localtime(os.path.getmtime(models_dir + fil)))
+                    ok, model_name, errors = self.check_file(models_dir, fil, errors)
+                    if len(self.models_dirs) > 1:
+                        self.entries.append([fil, model_name, mod_time, models_dir, ok])
+                    else:
+                        self.entries.append([fil, model_name, mod_time, ok])
         if len(errors) > 0:
             dialog = displayobject.AnObject(QtWidgets.QDialog(), errors,
                      title='SIREN (' + fileVersion() + ') - Preferences file errors')
             dialog.exec_()
         if len(self.entries) == 0:
-            self.new()
+            self.new_model()
         self.setWindowTitle('SIREN (' + fileVersion() + ') - Select SIREN Model')
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         buttonLayout = QtWidgets.QHBoxLayout()
@@ -120,14 +127,16 @@ class TabDialog(QtWidgets.QDialog):
         QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.quit)
         self.newButton = QtWidgets.QPushButton(self.tr('&New Model'))
         buttonLayout.addWidget(self.newButton)
-        self.newButton.clicked.connect(self.new)
+        self.newButton.clicked.connect(self.new_model)
         buttons = QtWidgets.QFrame()
         buttons.setLayout(buttonLayout)
         layout = QtWidgets.QGridLayout()
         self.table = QtWidgets.QTableWidget()
         self.table.setRowCount(len(self.entries))
-        self.table.setColumnCount(3)
         hdr_labels = ['Preference File', 'SIREN Model', 'Date modified']
+        if len(self.models_dirs) > 1:
+            hdr_labels.append('Folder')
+        self.table.setColumnCount(len(hdr_labels))
         self.table.setHorizontalHeaderLabels(hdr_labels)
         self.headers = self.table.horizontalHeader()
         self.headers.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
@@ -139,7 +148,7 @@ class TabDialog(QtWidgets.QDialog):
         max_row = 30
         for rw in range(len(self.entries)):
             ln = 0
-            for cl in range(3):
+            for cl in range(len(hdr_labels)):
                 self.table.setItem(rw, cl, QtWidgets.QTableWidgetItem(self.entries[rw][cl]))
                 ln += len(self.entries[rw][cl])
             if ln > max_row:
@@ -216,7 +225,11 @@ class TabDialog(QtWidgets.QDialog):
               event.button() == QtCore.Qt.LeftButton:
                 ent = self.table.item(self.table.currentRow(), 0).text()
                 self.table.viewport().removeEventFilter(self)
-                self.invoke('sirenm', self.siren_dir + ent)
+                if len(self.models_dirs) > 1:
+                    ent_dir = self.table.item(self.table.currentRow(), 3).text()
+                else:
+                    ent_dir = self.models_dirs[0]
+                self.invoke('sirenm', ent_dir + ent)
                 self.quit()
             if (event.type() == QtCore.QEvent.MouseButtonPress or event.type() == QtCore.QEvent.MouseButtonRelease) and \
               event.button() == QtCore.Qt.RightButton:
@@ -243,15 +256,19 @@ class TabDialog(QtWidgets.QDialog):
                 actions[-1].setIconVisibleInMenu(True)
                 action = menu.exec_(self.mapToGlobal(event.pos()))
                 if action is not None:
+                    if len(self.models_dirs) > 1:
+                        ent_dir = self.table.item(self.table.currentRow(), 3).text()
+                    else:
+                        ent_dir = self.models_dirs[0]
                     if action.text()[:8] == 'Execute ':
-                        if not self.entries[self.table.currentRow()][3]:
-                            ok, model_name, errors = self.check_file(ent)
+                        if not self.entries[self.table.currentRow()][-3]:
+                            ok, model_name, errors = self.check_file(ent_dir, ent)
                             if len(errors) > 0:
                                 dialog = displayobject.AnObject(QtWidgets.QDialog(), errors,
                                 title='SIREN (' + fileVersion() + ') - Preferences file errors')
                                 dialog.exec_()
                                 return QtCore.QObject.event(source, event)
-                        self.invoke(action.text()[8:], self.siren_dir + ent)
+                        self.invoke(action.text()[8:], ent_dir + ent)
                     elif action.text()[-11:] == 'Preferences':
                         i = self.table.item(self.table.currentRow(), 1).text().find('[line ')
                         if i >= 0:
@@ -260,21 +277,21 @@ class TabDialog(QtWidgets.QDialog):
                         else:
                             line = None
                         if action.text()[-16:] == 'File Preferences':
-                            self.editIniFileSects(self.siren_dir + ent)
+                            self.editIniFileSects(ent_dir + ent)
                         else:
-                            self.editIniFile(self.siren_dir + ent, line=line)
-                        ok, model_name, errors = self.check_file(ent)
+                            self.editIniFile(ent_dir + ent, line=line)
+                        ok, model_name, errors = self.check_file(ent_dir, ent)
                         if model_name != self.entries[self.table.currentRow()][1]:
                             self.entries[self.table.currentRow()][1] = model_name
                             self.table.setItem(self.table.currentRow(), 1, QtWidgets.QTableWidgetItem(model_name))
                         if len(errors) > 0:
-                            self.entries[self.table.currentRow()][3] = False
+                            self.entries[self.table.currentRow()][-1] = False
                             dialog = displayobject.AnObject(QtWidgets.QDialog(), errors,
                             title='SIREN (' + fileVersion() + ') - Preferences file errors')
                             dialog.exec_()
                             return QtCore.QObject.event(source, event)
                         else:
-                            self.entries[self.table.currentRow()][3] = True
+                            self.entries[self.table.currentRow()][-1] = True
         return QtCore.QObject.event(source, event)
 
     def invoke(self, program, ent):
@@ -287,8 +304,8 @@ class TabDialog(QtWidgets.QDialog):
             pid = subprocess.Popen(['python3', program + '.py', ent]).pid # python3
         return
 
-    def new(self):
-        do_new = makeNew(self.siren_dir)
+    def new_model(self):
+        do_new = makeNew(self.models_dirs)
         do_new.exec_()
         if do_new.ini_file != '':
             self.invoke('sirenm', do_new.ini_file)
@@ -348,7 +365,7 @@ class TabDialog(QtWidgets.QDialog):
             self.sort_col = col
         self.entries = sorted(self.entries, key=lambda x: x[col], reverse=self.sort_desc)
         for item in self.entries:
-            for cl in range(3):
+            for cl in range(len(self.entries[0]) - 1):
                 self.table.setItem(rw, cl, QtWidgets.QTableWidgetItem(item[cl]))
             rw += 1
 
@@ -358,14 +375,16 @@ class TabDialog(QtWidgets.QDialog):
 
 class makeNew(QtWidgets.QDialog):
 
-    def __init__(self, siren_dir=None, help='help.html'):
+    def __init__(self, models_dirs=None, help='help.html'):
         super(makeNew, self).__init__()
-        self.siren_dir = siren_dir
+        self.models_dirs = models_dirs
         self.help = help
         self.ini_file = ''
         ini_file = 'siren_default.ini'
-        if os.path.exists(self.siren_dir + ini_file):
-            ini_file = self.siren_dir + ini_file
+        for models_dir in self.models_dirs:
+            if os.path.exists(models_dir + ini_file):
+                ini_file = models_dir + ini_file
+                break
         else:
             if not os.path.exists(ini_file):
                 return
@@ -393,16 +412,23 @@ class makeNew(QtWidgets.QDialog):
                     props.append([line[:j], prop])
         if len(props) > 0:
             sections[section] = props
-        row = 0
+        row = -1
         self.fields = []
         self.fields.append(['section', 'typ', 'name', 'value', QtWidgets.QLineEdit()])
         self.grid = QtWidgets.QGridLayout()
-        self.grid.addWidget(QtWidgets.QLabel('New file name:'), row, 0)
+        self.grid.addWidget(QtWidgets.QLabel('Model folder:'), row + 1, 0)
+        self.fldrcombo = QtWidgets.QComboBox(self)
+        for models_dir in self.models_dirs:
+            self.fldrcombo.addItem(models_dir)
+        self.fldrcombo.setCurrentIndex(0)
+        self.grid.addWidget(self.fldrcombo, row + 1, 1, 1, 2)
+        row += 1
+        self.grid.addWidget(QtWidgets.QLabel('New file name:'), row + 1, 0)
         self.fields[row][4].setText('siren_new.ini')
-        self.grid.addWidget(self.fields[row][4], row, 1)
+        self.grid.addWidget(self.fields[row][4], row + 1, 1)
         self.fields[row][4].textChanged.connect(self.filenameChanged)
         self.msg = QtWidgets.QLabel('')
-        self.grid.addWidget(self.msg, row, 2, 1, 3)
+        self.grid.addWidget(self.msg, row + 1, 2, 1, 3)
         now = datetime.datetime.now()
         if '[Base]' in list(sections.keys()):
             for key, value in sections['[Base]']:
@@ -411,10 +437,10 @@ class makeNew(QtWidgets.QDialog):
                 if key == 'year':
                     self.fields[-1][3] = str((now.year - 1))
                 if self.fields[row][0] != self.fields[row - 1][0]:
-                    self.grid.addWidget(QtWidgets.QLabel(self.fields[row][0]), row, 0)
-                self.grid.addWidget(QtWidgets.QLabel(self.fields[row][2]), row, 1)
+                    self.grid.addWidget(QtWidgets.QLabel(self.fields[row][0]), row + 1, 0)
+                self.grid.addWidget(QtWidgets.QLabel(self.fields[row][2]), row + 1, 1)
                 self.fields[row][4].setText(self.fields[row][3])
-                self.grid.addWidget(self.fields[row][4], row, 2, 1, 3)
+                self.grid.addWidget(self.fields[row][4], row + 1, 2, 1, 3)
         self.parents = {}
         sections['[Parents]'].append(['$USER$', getUser()])
         sections['[Parents]'].append(['$YEAR$', str(now.year - 1)])
@@ -424,18 +450,18 @@ class makeNew(QtWidgets.QDialog):
                 row += 1
                 self.fields.append(['[Parents]', '?', key, value, '?'])
                 if self.fields[row][0] != self.fields[row - 1][0]:
-                    self.grid.addWidget(QtWidgets.QLabel(self.fields[row][0]), row, 0)
-                self.grid.addWidget(QtWidgets.QLabel(self.fields[row][2]), row, 1)
+                    self.grid.addWidget(QtWidgets.QLabel(self.fields[row][0]), row + 1, 0)
+                self.grid.addWidget(QtWidgets.QLabel(self.fields[row][2]), row + 1, 1)
                 if key == '$USER$' or key == '$YEAR$':
                     self.fields[row][1] = 'txt'
                     self.fields[row][4] = QtWidgets.QLabel(self.fields[row][3])
-                    self.grid.addWidget(self.fields[row][4], row, 2, 1, 3)
+                    self.grid.addWidget(self.fields[row][4], row + 1, 2, 1, 3)
                 else:
                     self.fields[row][1] = 'dir'
                     self.fields[row][4] = ClickableQLabel()
                     self.fields[row][4].setText(self.fields[row][3])
                     self.fields[row][4].setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
-                    self.grid.addWidget(self.fields[row][4], row, 2, 1, 3)
+                    self.grid.addWidget(self.fields[row][4], row + 1, 2, 1, 3)
                     self.fields[row][4].clicked.connect(self.itemClicked)
         for section, props in sections.items():
             if section == '[Base]' or section == '[Parents]':
@@ -445,8 +471,8 @@ class makeNew(QtWidgets.QDialog):
                     row += 1
                     self.fields.append([section, '?', prop[0], prop[1], '?'])
                     if self.fields[row][0] != self.fields[row - 1][0]:
-                        self.grid.addWidget(QtWidgets.QLabel(self.fields[row][0]), row, 0)
-                    self.grid.addWidget(QtWidgets.QLabel(self.fields[row][2]), row, 1)
+                        self.grid.addWidget(QtWidgets.QLabel(self.fields[row][0]), row + 1, 0)
+                    self.grid.addWidget(QtWidgets.QLabel(self.fields[row][2]), row + 1, 1)
                     if prop[0] == 'map' or (prop[0][:3] == 'map' and prop[0][3] != '_'):
                         self.fields[row][3] = prop[1]
                         self.fields[row][1] = 'fil'
@@ -457,14 +483,14 @@ class makeNew(QtWidgets.QDialog):
                         self.fields[row][1] = 'txt'
                         self.fields[row][4] = QtWidgets.QLineEdit()
                     self.fields[row][4].setText(self.fields[row][3])
-                    self.grid.addWidget(self.fields[row][4], row, 2, 1, 3)
+                    self.grid.addWidget(self.fields[row][4], row + 1, 2, 1, 3)
             elif section in file_sects:
                 for prop in props:
                     row += 1
                     self.fields.append([section, '?', prop[0], prop[1], '?'])
                     if self.fields[row][0] != self.fields[row - 1][0]:
-                        self.grid.addWidget(QtWidgets.QLabel(self.fields[row][0]), row, 0)
-                    self.grid.addWidget(QtWidgets.QLabel(self.fields[row][2]), row, 1)
+                        self.grid.addWidget(QtWidgets.QLabel(self.fields[row][0]), row + 1, 0)
+                    self.grid.addWidget(QtWidgets.QLabel(self.fields[row][2]), row + 1, 1)
                     self.fields[row][3] = prop[1]
                     if prop[0] in field_props:
                         self.fields[row][1] = 'txt'
@@ -479,36 +505,36 @@ class makeNew(QtWidgets.QDialog):
                         self.fields[row][4].setText(self.fields[row][3])
                         self.fields[row][4].setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
                         self.fields[row][4].clicked.connect(self.itemClicked)
-                    self.grid.addWidget(self.fields[row][4], row, 2, 1, 3)
+                    self.grid.addWidget(self.fields[row][4], row + 1, 2, 1, 3)
             else:
                 for prop in props:
                     row += 1
                     self.fields.append([section, 'txt', prop[0], prop[1], QtWidgets.QLineEdit()])
                     if self.fields[row][0] != self.fields[row - 1][0]:
-                        self.grid.addWidget(QtWidgets.QLabel(self.fields[row][0]), row, 0)
-                    self.grid.addWidget(QtWidgets.QLabel(self.fields[row][2]), row, 1)
+                        self.grid.addWidget(QtWidgets.QLabel(self.fields[row][0]), row + 1, 0)
+                    self.grid.addWidget(QtWidgets.QLabel(self.fields[row][2]), row + 1, 1)
                     self.fields[row][4].setText(self.fields[row][3])
-                    self.grid.addWidget(self.fields[row][4], row, 2, 1, 3)
+                    self.grid.addWidget(self.fields[row][4], row + 1, 2, 1, 3)
         row += 1
         quit = QtWidgets.QPushButton('Quit', self)
-        self.grid.addWidget(quit, row, 0)
+        self.grid.addWidget(quit, row + 1, 0)
         quit.clicked.connect(self.quitClicked)
         QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
         save = QtWidgets.QPushButton('Save', self)
-        self.grid.addWidget(save, row, 1)
+        self.grid.addWidget(save, row + 1, 1)
         save.clicked.connect(self.saveClicked)
         launch = QtWidgets.QPushButton('Save && Open', self)
-        self.grid.addWidget(launch, row, 3)
+        self.grid.addWidget(launch, row + 1, 3)
         launch.clicked.connect(self.saveLaunch)
         wdth = save.fontMetrics().boundingRect(launch.text()).width() + 9
         launch.setMaximumWidth(wdth)
         edit = QtWidgets.QPushButton('Save && Edit', self)
-        self.grid.addWidget(edit, row, 2)
+        self.grid.addWidget(edit, row + 1, 2)
         edit.clicked.connect(self.saveEdit)
         edit.setMaximumWidth(wdth)
         help = QtWidgets.QPushButton('Help', self)
         help.setMaximumWidth(wdth)
-        self.grid.addWidget(help, row, 4)
+        self.grid.addWidget(help, row + 1, 4)
         help.clicked.connect(self.helpClicked)
         QtWidgets.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
         self.grid.setColumnStretch(2, 5)
@@ -648,7 +674,7 @@ class makeNew(QtWidgets.QDialog):
             return -1
         if newfile[-4:].lower() != '.ini':
             newfile = newfile + '.ini'
-        newfile = self.siren_dir + newfile
+        newfile = self.fldrcombo.currentText() + newfile
         self.new_ini = newfile
         if os.path.exists(newfile):
             if os.path.exists(newfile + '~'):
@@ -704,8 +730,8 @@ class makeNew(QtWidgets.QDialog):
                         pfx = ('..' + '/') * (len(bits) - 1)
                         updates['[Parents]'][p] = updates['[Parents]'][p][:i + 1] + pfx + value[that_len + 1:]
         ini_file = 'siren_default.ini'
-        if os.path.exists(self.siren_dir + ini_file):
-            ini_file = self.siren_dir + ini_file
+        if os.path.exists(self.fldrcombo.currentText() + ini_file):
+            ini_file = self.fldrcombo.currentText() + ini_file
         else:
             if not os.path.exists(ini_file):
                 return -1
