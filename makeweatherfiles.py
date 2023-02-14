@@ -32,6 +32,7 @@ if sys.platform == 'win32' or sys.platform == 'cygwin':
 
 from credits import fileVersion
 from editini import SaveIni
+from getmodels import getModelFile
 from senutils import ClickableQLabel, getUser, extrapolateWind
 from sammodels import getDNI, getDHI
 
@@ -1261,7 +1262,7 @@ class getParms(QtWidgets.QWidget):
     def __init__(self, help='makeweatherfiles.html', ini_file='getfiles.ini'):
         super(getParms, self).__init__()
         self.help = help
-        self.ini_file = ini_file
+        self.ini_file = getModelFile(ini_file)
         self.config = configparser.RawConfigParser()
         self.config_file = self.ini_file
         self.config.read(self.config_file)

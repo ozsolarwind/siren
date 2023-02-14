@@ -31,6 +31,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from credits import fileVersion
 import displayobject
 from editini import SaveIni
+from getmodels import getModelFile
 from senutils import ClickableQLabel, getUser
 import worldwindow
 
@@ -375,7 +376,7 @@ class getMERRA2(QtWidgets.QDialog):
     def __init__(self, help='help.html', ini_file='getfiles.ini', parent=None):
         super(getMERRA2, self).__init__(parent)
         self.help = help
-        self.ini_file = ini_file
+        self.ini_file = getModelFile(ini_file)
         self.get_config()
         self.ignore = False
         self.worldwindow = None

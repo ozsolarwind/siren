@@ -28,6 +28,7 @@ import configparser   # decode .ini file
 from PyQt5 import QtCore, QtGui, QtWidgets
 import displayobject
 from credits import fileVersion
+from getmodels import getModelFile
 from senutils import ClickableQLabel
 import worldwindow
 
@@ -124,7 +125,7 @@ class retrieveMap():
             self.caller = caller
         self.log = ''
         self.properties = ''
-        config_file = 'getfiles.ini'
+        config_file = getModelFile('getfiles.ini')
         config = configparser.RawConfigParser()
         config.read(config_file)
         if width != None and height != None: # Mapquest map
@@ -179,7 +180,7 @@ class retrieveMap():
         st, wt, nt, et = self.tileEdges(top_left[0], top_left[1], zoom)
         sb, wb, nb, eb = self.tileEdges(bottom_right[0], bottom_right[1], zoom)
         if self.batch:
-            print('(185)', '%d: %d,%d --> %1.3f :: %1.3f, %1.3f :: %1.3f' % (zoom, top_left[0], top_left[1], st, nt, wt, et))
+            print('(183)', '%d: %d,%d --> %1.3f :: %1.3f, %1.3f :: %1.3f' % (zoom, top_left[0], top_left[1], st, nt, wt, et))
             print('(186)', '%d: %d,%d --> %1.3f :: %1.3f, %1.3f :: %1.3f' % (zoom, bottom_right[0], bottom_right[1], sb, nb, wb, eb))
         w = bottom_right[0] - top_left[0] + 1
         h = bottom_right[1] - top_left[1] + 1
@@ -360,7 +361,7 @@ class getMap(QtWidgets.QWidget):
         zoom = QtWidgets.QLabel('Map Scale (Zoom):')
         self.zoomSpin = QtWidgets.QSpinBox()
         self.zoomSpin.setValue(6)
-        config_file = 'getfiles.ini'
+        config_file = getModelFile('getfiles.ini')
         config = configparser.RawConfigParser()
         config.read(config_file)
         try:
@@ -375,9 +376,6 @@ class getMap(QtWidgets.QWidget):
         self.grid.addWidget(self.zoomScale, 5, 2, 1, 2)
         self.grid.addWidget(QtWidgets.QLabel('URL template:'), 6, 0)
         self.urltemplate = QtWidgets.QLineEdit()
-        config_file = 'getfiles.ini'
-        config = configparser.RawConfigParser()
-        config.read(config_file)
         try:
             url = his_config.get('getmap', 'url_template')
         except:
@@ -586,7 +584,6 @@ class getMap(QtWidgets.QWidget):
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
     if len(sys.argv) > 1 and sys.argv[1][-4:] != '.ini':
-        print(len(sys.argv))
         if not len(sys.argv) >= 6:
             raise SystemExit('Usage: north_lat west_lon south_lat east_lon output_file zoom=zoom ' +
                              'width=width height=height url=map_url')

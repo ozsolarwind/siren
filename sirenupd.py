@@ -35,6 +35,7 @@ import time
 import zipfile
 
 import credits
+from getmodels import getModelFile
 from senutils import getUser
 
 def get_response(outputs):
@@ -76,7 +77,7 @@ class UpdDialog(QtWidgets.QDialog):
         self.setWindowTitle('SIREN Update (' + credits.fileVersion() + ') - Check for new versions')
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         config = configparser.RawConfigParser()
-        config_file = ini_file
+        config_file = getModelFile(ini_file)
         config.read(config_file)
         self.debug = False
         try:
@@ -121,15 +122,16 @@ class UpdDialog(QtWidgets.QDialog):
                 command[0] = command[0] + '.exe'
                 pid = subprocess.Popen(command, stderr=subprocess.PIPE)
             response = get_response(pid.communicate()[1])
+        row = 0
         if response != '200 OK':
             newgrid.addWidget(QtWidgets.QLabel('Error encountered accessing siren_versions.csv\n\n' + \
-                                           response), 0, 0, 1, 4)
-            row = 1
+                                           response), row, 0, 1, 4)
+            row += 1
         elif os.path.exists(versions_file):
             self.get_new_versions(versions_file)
         else:
-            newgrid.addWidget(QtWidgets.QLabel('No versions file available.'), 0, 0, 1, 4)
-            row = 1
+            newgrid.addWidget(QtWidgets.QLabel('No versions file available.'), row, 0, 1, 4)
+            row += 1
         if len(self.new_versions) > 0:
             self.new_versions.sort()
             if self.debug:
@@ -166,8 +168,8 @@ class UpdDialog(QtWidgets.QDialog):
             newgrid.addWidget(doit, 2, 1)
             row = 2
         else:
-            newgrid.addWidget(QtWidgets.QLabel('No new versions available.'), 0, 0, 1, 4)
-            row = 1
+            newgrid.addWidget(QtWidgets.QLabel('No new versions available.'), row, 0, 1, 4)
+            row += 1
         quit = QtWidgets.QPushButton('Quit')
         quit.clicked.connect(self.quit)
         QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.quit)

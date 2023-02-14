@@ -425,7 +425,7 @@ class getParms(QtWidgets.QWidget):
         except:
             pass
         my_config = configparser.RawConfigParser()
-        my_config_file = 'getfiles.ini'
+        my_config_file = getModelFile('getfiles.ini')
         my_config.read(my_config_file)
         try:
             aemo_facilities = my_config.get('updateswis', 'aemo_facilities')
@@ -596,7 +596,7 @@ if "__main__" == __name__:
     app = QtWidgets.QApplication(sys.argv)
     if len(sys.argv) > 2:   # arguments
         my_config = configparser.RawConfigParser()
-        my_config_file = 'getfiles.ini'
+        my_config_file = getModelFile('getfiles.ini')
         my_config.read(my_config_file)
         try:
             furl = my_config.get('updateswis', 'aemo_facilities')

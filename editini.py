@@ -482,6 +482,14 @@ class SaveIni():
                     if k > 0 and k != len(properties[j]) - 1:
                         lines.insert(i + 1, properties[j] + '\n')
                         i += 1
+        if sys.platform == 'win32' or sys.platform == 'cygwin':
+            try:
+                sou = open(config_file, 'w')
+            except PermissionError as err:
+                print(f"Permission error: {err}")
+                return
+            except:
+                return
         if os.path.exists(config_file + '~'):
             os.remove(config_file + '~')
         try:

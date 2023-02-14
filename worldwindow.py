@@ -22,7 +22,7 @@
 from math import asin, atan2, cos, degrees, pi, pow, radians, sin, sqrt
 import os
 import sys
-import configparser   # decode getfiles.ini file
+import configparser # decode getfiles.ini file
 from PyQt5 import QtCore, QtGui, QtWidgets
 try:
     import mpl_toolkits.basemap.pyproj as pyproj   # Import the pyproj module
@@ -33,6 +33,7 @@ from colours import Colours
 from credits import fileVersion
 import displayobject
 from editini import EdtDialog, EditSect, SaveIni
+from getmodels import getModelFile
 from senutils import getParents, getUser
 
 RADIUS = 6367.
@@ -130,7 +131,7 @@ class WorldScene(QtWidgets.QGraphicsScene):
 
     def get_config(self):
         config = configparser.RawConfigParser()
-        config_file = 'getfiles.ini'
+        config_file = getModelFile('getfiles.ini')
         config.read(config_file)
         parents = []
         try:
@@ -594,7 +595,7 @@ class WorldWindow(QtWidgets.QMainWindow):
 
     def get_config(self):
         self.config = configparser.RawConfigParser()
-        self.config_file = 'getfiles.ini'
+        self.config_file = getModelFile('getfiles.ini')
         self.config.read(self.config_file)
         try:
             self.help = self.config.get('Files', 'help')
@@ -685,7 +686,7 @@ class WorldWindow(QtWidgets.QMainWindow):
         QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.exit)
         QtWidgets.QShortcut(QtGui.QKeySequence('x'), self, self.exit)
         self.config = configparser.RawConfigParser()
-        self.config_file = 'getfiles.ini'
+        self.config_file = getModelFile('getfiles.ini')
         self.config.read(self.config_file)
         parents = []
         try:

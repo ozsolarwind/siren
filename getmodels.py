@@ -63,11 +63,23 @@ def getModelFile(*args):
                 if siren_dir[-1] != fldr_div:
                     siren_dir += fldr_div
             else:
-                siren_dir = newdir
-            mf = open('siren_models_location.txt', 'w')
+                siren_dir = newdir + fldr_div
+            if sys.platform == 'win32' or sys.platform == 'cygwin':
+                pfx = os.getenv('LOCALAPPDATA') + fldr_div + 'siren' + fldr_div
+                if not os.path.exists(pfx):
+                    os.mkdir(pfx)
+            else:
+                pfx = os.path.expanduser('~') + '/.siren/'
+                if not os.path.exists(pfx):
+                    os.mkdir(pfx)
+            mf = open(pfx + 'siren_models_location.txt', 'w')
             mf.write(siren_dir)
             mf.close()
             updir = mydir[:mydir.rfind(fldr_div) + 1]
+            # copy getfiles.ini
+            if not os.path.exists(siren_dir + 'getfiles.ini') \
+              and os.path.exists(mydir + fldr_div + 'getfiles.ini'): # no getfiles.ini
+                copy(mydir + fldr_div +  'getfiles.ini', siren_dir + 'getfiles.ini')
             if os.path.exists(updir + 'siren_sample') \
               and os.path.exists(mydir + fldr_div + 'SIREN.ini') \
               and not os.path.exists(siren_dir + 'SIREN.ini'): # has the sample
@@ -91,20 +103,27 @@ def getModelFile(*args):
         return siren_dir + ini_file
 
     siren_dir = ''
+    if sys.platform == 'win32' or sys.platform == 'cygwin':
+       models_location = os.getenv('LOCALAPPDATA') + '\\siren\\siren_models_location.txt'
+    else:
+       models_location = os.path.expanduser('~') + '/.siren/siren_models_location.txt'
     if len(args) > 0:
         ini_file = args[0]
-        if os.path.exists('siren_models_location.txt'):
-            mf = open('siren_models_location.txt', 'r')
+        if os.path.exists(models_location):
+            mf = open(models_location, 'r')
             siren_dir = mf.readline()
             mf.close()
             siren_dir = siren_dir.strip('\n')
             siren_dir = siren_dir + ini_file
-            return siren_dir
+            if not os.path.exists(siren_dir):
+                return ini_file
+            else:
+                return siren_dir
         else:
             return ini_file
     ini_file = ''
-    if os.path.exists('siren_models_location.txt'):
-        mf = open('siren_models_location.txt', 'r')
+    if os.path.exists(models_location):
+        mf = open(models_location, 'r')
         siren_dir = mf.readline()
         mf.close()
         siren_dir = siren_dir.strip('\n')
