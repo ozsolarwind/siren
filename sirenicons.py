@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2016-2022 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2016-2023 Sustainable Energy Now Inc., Angus King
 #
 #  sirenicons.py - This file is part of SIREN.
 #
@@ -35,7 +35,7 @@ class Icons:
         config.read(config_file)
         self.icons = {'Biomass': 'biomass_g.png', 'CST': 'solar_g.png', 'Fossil': 'fossil_g.png',
                       'Geothermal': 'hot_rocks_g.png', 'Hydro': 'hydro_g.png',
-                      'Other': 'question.png', 'PV': 'solar_pv_g.png',
+                      'Offshore Wind': 'offwind_g.png', 'Other': 'question.png', 'PV': 'solar_pv_g.png',
                       'Solar Thermal': 'solar_g.png', 'Wave': 'wave_g.png', 'Wind': 'wind_g.png'}
         try:
             technologies = config.get('Power', 'technologies').split()
