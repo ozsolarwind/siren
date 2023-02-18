@@ -1365,6 +1365,7 @@ class MainWindow(QtWidgets.QMainWindow):
                     if not os.path.exists(value):
                         if self.floatstatus is None:
                             self.show_FloatStatus()
+                            self.floatstatus.log('Working directory: %s' % os.getcwd())
                         self.floatstatus.log('Need to check [%s].%s property. Resolves to %s' % (section, key, value))
             except:
                 pass
@@ -1381,6 +1382,7 @@ class MainWindow(QtWidgets.QMainWindow):
             if not os.path.exists(mapp):
                 if self.floatstatus is None:
                     self.show_FloatStatus()
+                    self.floatstatus.log('Working directory: %s' % os.getcwd())
                 self.floatstatus.log('Need to check [Map].map%s property. Resolves to %s' % (mapc, mapp))
         except:
             pass
@@ -3324,26 +3326,34 @@ def main():
         config = configparser.RawConfigParser()
         config.read(mw.config_file)
         try:
-            rw = config.get('Windows', 'main_size').split(',')
-            if w != int(rw[0]) or h != int(rw[1]):
-                mw.resize(int(rw[0]), int(rw[1]))
+            ms = config.get('Windows', 'main_size').split(',')
             mp = config.get('Windows', 'main_pos').split(',')
-            mw.move(int(mp[0]), int(mp[1]))
-            vw = config.get('Windows', 'main_view').split(',')
-            vw = list(map(float, vw))
-            tgt_width = vw[2] - vw[0]
-            tgt_height = vw[3] - vw[1]
-            mw.view.centerOn(vw[0] + (vw[2] - vw[0]) / 2, vw[1] + (vw[3] - vw[1]) / 2)
-            cur_width = mw.view.mapToScene(mw.view.width(), mw.view.height()).x() - mw.view.mapToScene(0, 0).x()
-            cur_height = mw.view.mapToScene(mw.view.width(), mw.view.height()).y() - mw.view.mapToScene(0, 0).y()
-            ctr = 0
-            while (cur_width > tgt_width or cur_height > tgt_height) and ctr < 30:
-                mw.view.zoomIn()
+            if len(ms) == 2 and len(mp) == 2:
+                smw = 0
+                smh = 0
+                for sc in range(QtWidgets.QDesktopWidget().screenCount()):
+                    sze = QtWidgets.QDesktopWidget().screenGeometry(sc)
+                    smh += sze.height()
+                    smw += sze.width()
+            if int(ms[0]) + int(mp[0]) <= smw and int(ms[1]) + int(mp[1]) <= smh:
+                if w != int(ms[0]) or h != int(ms[1]):
+                    mw.resize(int(ms[0]), int(ms[1]))
+                mw.move(int(mp[0]), int(mp[1]))
+                vw = config.get('Windows', 'main_view').split(',')
+                vw = list(map(float, vw))
+                tgt_width = vw[2] - vw[0]
+                tgt_height = vw[3] - vw[1]
+                mw.view.centerOn(vw[0] + (vw[2] - vw[0]) / 2, vw[1] + (vw[3] - vw[1]) / 2)
                 cur_width = mw.view.mapToScene(mw.view.width(), mw.view.height()).x() - mw.view.mapToScene(0, 0).x()
                 cur_height = mw.view.mapToScene(mw.view.width(), mw.view.height()).y() - mw.view.mapToScene(0, 0).y()
-                ctr += 1
-            if ctr > 0:
-                mw.view.zoomOut()
+                ctr = 0
+                while (cur_width > tgt_width or cur_height > tgt_height) and ctr < 30:
+                    mw.view.zoomIn()
+                    cur_width = mw.view.mapToScene(mw.view.width(), mw.view.height()).x() - mw.view.mapToScene(0, 0).x()
+                    cur_height = mw.view.mapToScene(mw.view.width(), mw.view.height()).y() - mw.view.mapToScene(0, 0).y()
+                    ctr += 1
+                if ctr > 0:
+                    mw.view.zoomOut()
         except:
             pass
         try:
