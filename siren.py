@@ -92,7 +92,7 @@ class TabDialog(QtWidgets.QDialog):
         else:
             self.models_dirs = getModelFile()
         if len(self.models_dirs) == 0:
-            self.models_dirs = [model_dir]
+            self.models_dirs = [models_dir]
         self.entries = []
         for models_dir in self.models_dirs:
             fils = os.listdir(models_dir)

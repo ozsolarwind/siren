@@ -72,8 +72,8 @@ def getModelFile(*args):
                 pfx = os.path.expanduser('~') + '/.siren/'
                 if not os.path.exists(pfx):
                     os.mkdir(pfx)
-            mf = open(pfx + 'siren_models_location.txt', 'w')
-            mf.write(siren_dir)
+            mf = open(pfx + 'siren_models_location.txt', 'a')
+            mf.write(siren_dir + '\n')
             mf.close()
             updir = mydir[:mydir.rfind(fldr_div) + 1]
             # copy getfiles.ini
@@ -142,9 +142,9 @@ def getModelFile(*args):
             msgbox.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
             reply = msgbox.exec_()
             if reply == QtWidgets.QMessageBox.Yes:
-                good_dirs = set_models_locn('')
+                good_dirs = [set_models_locn('')]
             else:
                 sys.exit(8)
-        return(good_dirs)
+        return good_dirs
     else:
-        return set_models_locn('')
+        return [set_models_locn('')]
