@@ -299,11 +299,11 @@ class Stations:
                                         hub_height = float(facility['Hub Height'])
                                     except:
                                         pass
-                                elif bit[0] == 'MERSOLAR':
-                                    tech = 'Single Axis PV'
+                                elif bit[0] == 'NORTHAM' and bit[-1][:2] == 'PV':
+                                    tech = 'Fixed PV'
                                     area = self.areas[tech] * float(facility['Maximum Capacity (MW)'])
                                 elif bit[-1][:2] == 'PV':
-                                    tech = 'Fixed PV'
+                                    tech = 'Single Axis PV'
                                     area = self.areas[tech] * float(facility['Maximum Capacity (MW)'])
                                 elif bit[-1] == 'PLANT' and bit[-2] == 'BIOMASS':
                                     tech = 'Biomass'
