@@ -33,7 +33,7 @@ from senutils import ClickableQLabel, getParents, getUser, techClean
 
 
 class EdtDialog(QtWidgets.QDialog):
-    def __init__(self, in_file, parent=None, line=None, section=None):
+    def __init__(self, in_file, parent=None, line=None, section=None, save_as=False):
         self.in_file = in_file
         try:
             s = open(self.in_file, 'r').read()
@@ -62,6 +62,10 @@ class EdtDialog(QtWidgets.QDialog):
         buttonLayout.addWidget(self.cancelButton)
         self.saveButton.clicked.connect(self.accept)
         self.cancelButton.clicked.connect(self.reject)
+        if save_as:
+            self.saveasButton = QtWidgets.QPushButton(self.tr('Save as'))
+            buttonLayout.addWidget(self.saveasButton)
+            self.saveasButton.clicked.connect(self.saveas)
         self.widget = QtWidgets.QPlainTextEdit()
         highlight = inisyntax.IniHighlighter(self.widget.document(), line=line)
         if sys.platform == 'linux' or sys.platform == 'linux2':
@@ -108,6 +112,13 @@ class EdtDialog(QtWidgets.QDialog):
                 s.write(lin + '\n')
         s.close()
         self.close()
+
+    def saveas(self):
+        newfile = QtWidgets.QFileDialog.getSaveFileName(None, 'Save Preferences file',
+                  self.in_file, 'Preference files (*.ini)')[0]
+        if newfile != '':
+            self.in_file = newfile
+            self.accept()
 
 
 class EditFileSections(QtWidgets.QDialog):

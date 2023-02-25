@@ -24,6 +24,7 @@ import datetime
 from functools import partial
 import os
 from PyQt5 import QtCore, QtGui, QtWidgets
+import shutil
 import subprocess
 import sys
 import time
@@ -254,6 +255,10 @@ class TabDialog(QtWidgets.QDialog):
                 actions[-1].setIconVisibleInMenu(True)
                 actions.append(menu.addAction(QtGui.QIcon('edit.png'), 'Edit File Preferences'))
                 actions[-1].setIconVisibleInMenu(True)
+                actions.append(menu.addAction(QtGui.QIcon('copy.png'), 'Copy Preferences'))
+                actions[-1].setIconVisibleInMenu(True)
+                actions.append(menu.addAction(QtGui.QIcon('delete.png'), 'Delete Preferences'))
+                actions[-1].setIconVisibleInMenu(True)
                 action = menu.exec_(self.mapToGlobal(event.pos()))
                 if action is not None:
                     if len(self.models_dirs) > 1:
@@ -278,8 +283,61 @@ class TabDialog(QtWidgets.QDialog):
                             line = None
                         if action.text()[-16:] == 'File Preferences':
                             self.editIniFileSects(ent_dir + ent)
+                        elif action.text()[:4] == 'Copy':
+                            newfile = QtWidgets.QFileDialog.getSaveFileName(None, 'Copy Preferences file',
+                                      ent_dir + ent, 'Preference files (*.ini)')[0]
+                            if newfile != '':
+                                if newfile.find('/') >= 0:
+                                    my_dir = os.getcwd()
+                                    if sys.platform == 'win32' or sys.platform == 'cygwin':
+                                        my_dir = my_dir.replace('\\', '/')
+                                    that_len = len(commonprefix([my_dir, newfile]))
+                                    if that_len > 0:
+                                        new_ent = newfile[that_len + 1:]
+                                    else:
+                                        new_ent = newfile
+                                try:
+                                    shutil.copy2(ent_dir + ent, newfile)
+                                except:
+                                    return QtCore.QObject.event(source, event)
+                                i = new_ent.rfind('/')
+                                if i >= 0:
+                                    ent_dir = new_ent[:i + 1]
+                                    ent = new_ent[i + 1:]
+                                else:
+                                    ent_dir = ''
+                                    ent = new_ent
+                                mod_time = time.strftime('%Y-%m-%d %H:%M:%S',
+                                           time.localtime(os.path.getmtime(newfile)))
+                                rw = self.table.currentRow() + 1
+                                self.entries.insert(rw, [])
+                                self.entries[rw].append(ent)
+                                self.entries[rw].append(self.entries[self.table.currentRow()][1])
+                                self.entries[rw].append(mod_time)
+                                if self.table.columnCount() == 4:
+                                    self.entries[rw].append(ent_dir)
+                                self.entries[rw].append(True)
+                                self.table.insertRow(rw)
+                                for cl in range(self.table.columnCount()):
+                                    self.table.setItem(rw, cl, QtWidgets.QTableWidgetItem(self.entries[rw][cl]))
+                        elif action.text()[:6] == 'Delete':
+                            reply = QtWidgets.QMessageBox.question(self, 'SIREN - Delete Preferences',
+                                    "Is '" + ent_dir + ent + "' the one to delete?",
+                                    QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+                                    QtWidgets.QMessageBox.No)
+                            if reply == QtWidgets.QMessageBox.Yes:
+                                os.remove(ent_dir + ent)
+                                del self.entries[self.table.currentRow()]
+                                self.table.removeRow(self.table.currentRow())
+                                return QtCore.QObject.event(source, event)
                         else:
+                            mod_b4 = self.entries[self.table.currentRow()][2]
                             self.editIniFile(ent_dir + ent, line=line)
+                            mod_time = time.strftime('%Y-%m-%d %H:%M:%S',
+                               time.localtime(os.path.getmtime(ent_dir + ent)))
+                            if mod_time != mod_b4:
+                                self.entries[self.table.currentRow()][2] = mod_time
+                                self.table.setItem(self.table.currentRow(), 2, QtWidgets.QTableWidgetItem(mod_time))
                         ok, model_name, errors = self.check_file(ent_dir, ent)
                         if model_name != self.entries[self.table.currentRow()][1]:
                             self.entries[self.table.currentRow()][1] = model_name

@@ -254,7 +254,7 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 <li><em>source</em> contains the Python source programs for SIREN</li>
 </ul>
 <p>The first time you open SIREN (without passing a target file or folder) it will present a window titled &lsquo;Choose location for SIREN model (preferences) files&rsquo; to allow you to choose the location for your SIREN Models. SIREN stores this location in <code>siren_models_location.txt</code> in a user folder and uses this as the location of the SIREN Models whenever you invoke SIREN without a target file or location. In windows the file is stored in the user's LocalAppData folder, <code>C:\User\&lt;user&gt;\AppData\Local\siren\</code>, and in Linux it is in <code>~/.siren/</code>. The file contains a single line with the location of the folder respective to the <em>siren</em> folder. It is possible to edit the file and manually add additional folders if desired.</p>
-<p>When you open SIREN you will be presented with a list of SIREN Models (Preferences files). Choose the SIREN Model you want by clicking on your choice. It is also possible to launch tools for the model by right-clicking on your choice - the tools are as described in <a href="#tools">Tools</a> - or you can edit the Model file. You can sort the list presented in order of either Preferences File, SIREN Model or Date modified (last time the Preferences file was saved) by right-clicking the appropriate column header. If a Model file has a syntax error this will be identified in the SIREN Model field; editing such a file will, where possible, highlight the line in error. If you want to use a specific Preferences file you can open the simulation passing the alternate filename, or a folder, as a parameter, as in these examples:</p>
+<p>When you open SIREN you will be presented with a list of SIREN Models (Preferences files). Choose the SIREN Model you want by (left-) clicking on your choice. It is also possible to launch tools for the model by right-clicking on your choice - the tools are as described in <a href="#tools">Tools</a> - or you can edit the Model file. You can sort the list presented in order of either Preferences File, SIREN Model or Date modified (last time the Preferences file was saved) by right-clicking the appropriate column header. If a Model file has a syntax error this will be identified in the SIREN Model field; editing such a file will, where possible, highlight the line in error. If you want to use a specific Preferences file you can open the simulation passing the alternate filename, or a folder, as a parameter, as in these examples:</p>
 <pre>
       siren.exe
       siren.exe SIREN_NWIS.ini
@@ -317,6 +317,10 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 <td class="none">Invoke <code>powermatch</code> to match generation to demand (load) and to quantify and cost dispatchable energy generation, storage and CO<sub>2</sub>&#x2011;e emissions (see <a href="#powermatch">Powermatch</a>)</td>
 </tr>
 <tr class="none">
+<td class="none"><img src="sen24x24.png" alt="sirenm">&nbsp;&nbsp;sirenm</td>
+<td class="none">Launch SIREN (<code>sirenm</code>) for the chosen Model</td>
+</tr>
+<tr class="none">
 <td class="none"><img src="list.png" alt="updateswis">&nbsp;&nbsp;updateswis</td>
 <td class="none">Invoke <code>updateswis</code> to update the list of existing SWIS Stations (facilities; see <a href="#updateswis">Existing Stations (Facilities)</a>) or SWIS Load data</td>
 </tr>
@@ -327,6 +331,14 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 <tr class="none">
 <td class="none"><img src="arrow.png" alt="Edit File Preferences">&nbsp;&nbsp;Edit File Preferences</td>
 <td class="none">Edit Parents, Files and SAM Modules Sections of the Preferences file. These sections mainly have file and folder Properties. By clicking on a Property you can navigate to the desired file or folder.</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="copy.png" alt="Edit Preferences">&nbsp;&nbsp;Copy Preferences</td>
+<td class="none">Copy the chosen Preferences file. This option allows you to copy an existing Preferences file - with a new name</td>
+</tr>
+<tr class="none">
+<td class="none"><img src="delete.png" alt="Delete Preferences">&nbsp;&nbsp;Delete Preferences</td>
+<td class="none">Delete the chosen Preferences file. This option allows you to delete the chosen Preferences file. A confirmation pop-up will be displayed to ensure you have chosen the correct file (theer are sometimes cases where the incorrect file may be chosen by the program so beware)</td>
 </tr>
 </table>
 </tr>
