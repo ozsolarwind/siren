@@ -102,6 +102,7 @@ class UpdDialog(QtWidgets.QDialog):
         except:
             pass
         self.new_versions = []
+        self.temp_dir = None
         row = 0
         newgrid = QtWidgets.QGridLayout()
         versions_file = 'siren_versions.csv'
@@ -110,8 +111,11 @@ class UpdDialog(QtWidgets.QDialog):
             if os.path.exists(versions_file):
                 self.get_new_versions(versions_file, local=' (local)')
         # now remote versions
-        versions_file = 'siren_versions.csv'
-        command = '%s %s %s%s' % (self.wget_cmd, versions_file, self.host, versions_file)
+        src_file = 'siren_versions.csv'
+        if self.temp_dir is None:
+            self.temp_dir = tempfile.gettempdir() + '/'
+        versions_file = self.temp_dir + src_file
+        command = '%s %s %s%s' % (self.wget_cmd, versions_file, self.host, src_file)
         command = command.split()
         if self.debug:
             response = '200 OK'
@@ -178,15 +182,15 @@ class UpdDialog(QtWidgets.QDialog):
         self.resize(500, int(self.sizeHint().height()))
 
     def doitClicked(self):
-        def do_zipfile(zip_in, temp_dir): # copy multiple files
+        def do_zipfile(zip_in): # copy multiple files
             zf = zipfile.ZipFile(zip_in, 'r')
             ctr = 0
             for zi in zf.infolist():
                 if zi.filename[:-4] == '.exe':
-                    if temp_dir is None:
-                         temp_dir = tempfile.gettempdir() + '/'
-                    zf.extract(zi, temp_dir)
-                    newver = credits.fileVersion(program=temp_dir + zi.filename)
+                    if self.temp_dir is None:
+                         self.temp_dir = tempfile.gettempdir() + '/'
+                    zf.extract(zi, self.temp_dir)
+                    newver = credits.fileVersion(program=self.temp_dir + zi.filename)
                     if newver != '?':
                         curver = credits.fileVersion(program=zi.filename)
                         if newver > curver or curver == '?':
@@ -195,7 +199,7 @@ class UpdDialog(QtWidgets.QDialog):
                                     os.remove(zi.filename + '~')
                                 if cur_verson != '?':
                                     os.rename(zi.filename, zi_filename + '~')
-                                os.rename(temp_dir + zi.filename, zi.filename)
+                                os.rename(self.temp_dir + zi.filename, zi.filename)
                             ctr += 1
                 else:
                     newtime = datetime.fromtimestamp(time.mktime(zi.date_time + (0, 0, -1)))
@@ -221,7 +225,6 @@ class UpdDialog(QtWidgets.QDialog):
             return msg
 
         default_suffix = sys.argv[0][sys.argv[0].rfind('.'):]
-        temp_dir = None
         for p in range(len(self.newbox)):
             if self.newbox[p].checkState() == QtCore.Qt.Checked:
                 self.newbox[p].setCheckState(QtCore.Qt.Unchecked)
@@ -235,7 +238,7 @@ class UpdDialog(QtWidgets.QDialog):
                     suffix = self.newprog[p][s:]
                 if self.table.item(p, 2).text().find('(local)') > 0:
                     if suffix == '.zip': # copy multiple files
-                        msg = do_zipfile(self.local + newprog + suffix, temp_dir)
+                        msg = do_zipfile(self.local + newprog + suffix)
                         self.table.setItem(p, 3, QtWidgets.QTableWidgetItem(msg))
                         continue
                     else:
@@ -265,7 +268,7 @@ class UpdDialog(QtWidgets.QDialog):
                             self.table.setItem(p, 3, QtWidgets.QTableWidgetItem(errmsg))
                             continue
                     if suffix == '.zip': # copy multiple files
-                        msg = do_zipfile(newprog + 'new' + suffix, temp_dir)
+                        msg = do_zipfile(newprog + 'new' + suffix)
                         self.table.setItem(p, 3, QtWidgets.QTableWidgetItem(msg))
                         continue
                     else:
