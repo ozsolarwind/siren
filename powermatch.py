@@ -50,7 +50,7 @@ import shutil
 from senutils import ClickableQLabel, getParents, getUser, techClean, WorkBook
 from editini import EdtDialog, SaveIni
 from floaters import ProgressBar, FloatStatus
-from getmodels import getModelFile
+from getmodels import getModelFile, commonprefix
 import configparser  # decode .ini file
 from zoompan import ZoomPanX
 try:
@@ -696,8 +696,14 @@ class powerMatch(QtWidgets.QWidget):
         if filename.find('/') == 0: # full directory in non-Windows
             return filename
         elif (sys.platform == 'win32' or sys.platform == 'cygwin') \
-          and filename[1] == ':': # full directory for Windows
+          and filename[1:2] == ':/': # full directory for Windows
             return filename
+        elif filename[:3] == '../': # directory upwards of scenarios
+            ups = filename.split('../')
+            scens = self.scenarios.split('/')
+            scens = scens[: -(len(ups) - 1)]
+            scens.append(ups[-1])
+            return '/'.join(scens)
         else: # subdirectory of scenarios
             return self.scenarios + filename
 
@@ -1198,8 +1204,10 @@ class powerMatch(QtWidgets.QWidget):
                         jnr = '_'
                     j = curfile.rfind('.')
                     curfile = curfile[:j] + jnr + 'Results' + curfile[j:]
+            else:
+                curfile = self.get_filename(self.files[R].text())
             newfile = QtWidgets.QFileDialog.getSaveFileName(None, 'Save ' + self.file_labels[i] + ' file',
-                      curfile, 'Excel Files (*.xls*)')[0]
+                      curfile, 'Excel Files (*.xlsx)')[0]
         else:
             newfile = QtWidgets.QFileDialog.getOpenFileName(self, 'Open ' + self.file_labels[i] + ' file',
                       curfile)[0]
@@ -1232,6 +1240,12 @@ class powerMatch(QtWidgets.QWidget):
             if newfile[: len(self.scenarios)] == self.scenarios:
                 self.files[i].setText(newfile[len(self.scenarios):])
             else:
+                if newfile.rfind('/') > 0:
+                    that_len = len(commonprefix([self.scenarios, newfile]))
+                    if that_len > 0:
+                        bits = self.scenarios[that_len:].split('/')
+                        pfx = ('..' + '/') * (len(bits) - 1)
+                        newfile = pfx + newfile[that_len + 1:]
                 self.files[i].setText(newfile)
             if i == D and self.change_res:
                 newfile = self.files[D].text()
@@ -1243,7 +1257,7 @@ class powerMatch(QtWidgets.QWidget):
 
     def pfxChanged(self):
         self.results_prefix = self.results_pfx_fld.text()
-        self.setStatus('Results filename will be ' + self.results_pfx_fld.text() + '_' + self.files[R].text())
+     #   self.setStatus('Results filename will be ' + self.results_pfx_fld.text() + '_' + self.files[R].text())
         self.updated = True
 
     def sheetChanged(self, i):
@@ -2007,7 +2021,7 @@ class powerMatch(QtWidgets.QWidget):
         except:
             self.setStatus('Error accessing Data file - ' + self.files[D].text())
             return
-        ws = ts.active
+        ws = ts.worksheets[0]
         top_row = ws.max_row - 8760
         if top_row < 1 or (ws.cell(row=top_row, column=1).value != 'Hour' \
                            or ws.cell(row=top_row, column=2).value != 'Period'):
@@ -5729,7 +5743,7 @@ class powerMatch(QtWidgets.QWidget):
                  save_folder=self.scenarios, sortby='', decpts=op_pts)
         dialog.exec_()
         del dialog
-        if self.optimise_to_batch:
+        if self.optimise_to_batch and self.files[B].text() != '':
             msgbox = QtWidgets.QMessageBox()
             msgbox.setWindowTitle('SIREN - Add to Batch')
             msgbox.setText("Press 'Yes' to add to Batch file")
