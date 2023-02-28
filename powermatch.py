@@ -2795,7 +2795,7 @@ class powerMatch(QtWidgets.QWidget):
                             # backup a bit in case rows deleted
                             for r in range(len(del_rows)):
                                 try:
-                                    if bs.cell(row=gndx, column=1).value.lower() == group[0]:
+                                    if bs.cell(row=gndx, column=1).value.lower() == group[0].lower():
                                         break
                                 except:
                                     pass
