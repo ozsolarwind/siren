@@ -317,31 +317,31 @@ class SuperPower():
         self.wind_hub_formula = [None, None]
         self.wind_law = ['l', 'l']
         try:
-            self.wind_turbine_spacing[0] = int(config.get('Wind', 'turbine_spacing'))
+            self.wind_turbine_spacing[0] = int(float(config.get('Wind', 'turbine_spacing')))
         except:
             try:
-                self.wind_turbine_spacing[0] = int(config.get('Onshore Wind', 'turbine_spacing'))
+                self.wind_turbine_spacing[0] = int(float(config.get('Onshore Wind', 'turbine_spacing')))
             except:
                 pass
         try:
-            self.wind_row_spacing[0] = int(config.get('Wind', 'row_spacing'))
+            self.wind_row_spacing[0] = int(float(config.get('Wind', 'row_spacing')))
         except:
             try:
-                self.wind_row_spacing[0] = int(config.get('Onshore Wind', 'row_spacing'))
+                self.wind_row_spacing[0] = int(float(config.get('Onshore Wind', 'row_spacing')))
             except:
                 pass
         try:
-            self.wind_offset_spacing[0] = int(config.get('Wind', 'offset_spacing'))
+            self.wind_offset_spacing[0] = int(float(config.get('Wind', 'offset_spacing')))
         except:
             try:
-                self.wind_offset_spacing[0] = int(config.get('Onshore Wind', 'offset_spacing'))
+                self.wind_offset_spacing[0] = int(float(config.get('Onshore Wind', 'offset_spacing')))
             except:
                 pass
         try:
-            self.wind_farm_losses_percent[0] = int(config.get('Wind', 'wind_farm_losses_percent').strip('%'))
+            self.wind_farm_losses_percent[0] = int(float(config.get('Wind', 'wind_farm_losses_percent').strip('%')))
         except:
             try:
-                self.wind_farm_losses_percent[0] = int(config.get('Onshore Wind', 'wind_farm_losses_percent').strip('%'))
+                self.wind_farm_losses_percent[0] = int(float(config.get('Onshore Wind', 'wind_farm_losses_percent').strip('%')))
             except:
                 pass
         try:
@@ -363,15 +363,20 @@ class SuperPower():
         except:
             pass
         try:
-            self.wind_row_spacing[1] = int(config.get('Offshore Wind', 'row_spacing'))
+            self.wind_turbine_spacing[1] = int(float(config.get('Offshore Wind', 'turbine_spacing')))
         except:
             pass
         try:
-            self.wind_offset_spacing[1] = int(config.get('Offshore Wind', 'offset_spacing'))
+            self.wind_row_spacing[1] = int(float(config.get('Offshore Wind', 'row_spacing')))
         except:
             pass
         try:
-            self.wind_farm_losses_percent[1] = int(config.get('Offshore Wind', 'wind_farm_losses_percent').strip('%'))
+            self.wind_offset_spacing[1] = int(float(config.get('Offshore Wind', 'offset_spacing')))
+        except:
+            pass
+        print(self.wind_offset_spacing)
+        try:
+            self.wind_farm_losses_percent[1] = int(float(config.get('Offshore Wind', 'wind_farm_losses_percent').strip('%')))
         except:
             pass
         try:
