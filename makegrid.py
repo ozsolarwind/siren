@@ -302,6 +302,10 @@ class makeFile():
                    if heights[j] == '50':
                        wnd_col = j
                        break
+                   elif heights[j] == '100':
+                       the_cols[val_col] = 'Wind @ 100m'
+                       wnd_col = j
+                       break
             for i in range(fst_row, len(lines)):
                 bits = lines[i].split(',')
                 mth = 11

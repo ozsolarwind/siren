@@ -663,6 +663,8 @@ class Resource(QtWidgets.QDialog):
                 while curr_col < num_cols:
                     curr_col += 1
                     self.resource_var[self.resource_worksheet.cell_value(0, curr_col)] = curr_col
+                    if self.resource_worksheet.cell_value(0, curr_col) == 'Wind @ 100m':
+                        self.resource_var['Wind @ 50m'] = curr_col
                 self.resource_file = new_file
             else:
                 return
