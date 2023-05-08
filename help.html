@@ -1623,6 +1623,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">Provide a formula to calculate hub height for larger turbines to extrapolate wind speed data. Default is None</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>hub_spread</dfn></td>
+<td class="none">Provide a spread of wind heights such that if an existing wind speed height is within this spread of the hub height the wind speed won't be extrapolated. SAM's <em>windpower</em> model requires the closest wind speed measurement height to be within 35 m of the hub height. Default is None</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>icon</dfn></td>
 <td class="none">Icon to display for this technology. Default is wind_g.png</td>
 </tr>
@@ -2496,6 +2500,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">Provide a formula to calculate hub height for larger turbines to extrapolate wind speed data. Default is None</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>hub_spread</dfn></td>
+<td class="none">Provide a spread of wind heights such that if an existing wind speed height is within this spread of the hub height the wind speed won't be extrapolated. SAM's <em>windpower</em> model requires the closest wind speed measurement height to be within 35 m of the hub height. Default is None</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>icon</dfn></td>
 <td class="none">Icon to display for this technology. Default is wind_g.png</td>
 </tr>
@@ -3049,7 +3057,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <li>If you run a simulation and get generation of 0 for a station it may be because SAM has returned an error; the error message will appear in the Status Window. If you don't normally have the Status Window open you can Open the window via the SIREN Windows sub-menu and rerun the Power models to find the error</li>
 </ul></p>
 <h4>Notes on Wind Stations</h4>
-<p>With increasing hub heights associated with larger turbines the SAM models are impacted by the lack of suitable wind speed data at greater heights. The MERRA-2 climate data has a maximum wind speed height of 50 metres which will cope with hub heights up to 85 metres (above that height the SAM <em>windpower</em> model will fail with an error - &ldquo;... the closest wind speed measurement height (50 m) found is more than 35 m from the hub height specified&rdquo;). To overcome the wind data limitation SIREN can extrapolate wind speeds to greater heights. To enable this you can use the <em>hub_formula</em> property of the <a href="#p_wind">[Wind]</a> and <a href="#p_offw">[Offshore Wind]</a> Sections of the Preferences file. This formula can be used to calculate a hub height (for rotor lengths greater than 85) and to extrapolate wind speed using either of two commonly used laws (models). The law to be used can be specified in the <em>extrapolate</em> property of the appropriate wind Section(s) and can be either <em>logarithmic</em>, the default, or <em>Hellmann</em>. This additional data will be added to the normal wind file and passed to the SAM windpower model. If you wish to use this you need update the <em>windpower</em> variables file to allow the default hub height (85 m) to be overridden.</p>
+<p>With increasing hub heights associated with larger turbines the SAM models are impacted by the lack of suitable wind speed data at greater heights. The MERRA-2 climate data has a maximum wind speed height of 50 metres which will cope with hub heights up to 85 metres (above that height the SAM <em>windpower</em> model will fail with an error - &ldquo;<em>... the closest wind speed measurement height (50 m) found is more than 35 m from the hub height specified</em>&rdquo;). To overcome the wind data limitation SIREN can extrapolate wind speeds to greater heights. To enable this you can use the <em>hub_formula</em> property of the <a href="#p_wind">[Wind]</a> and <a href="#p_offw">[Offshore Wind]</a> Sections of the Preferences file (behaviour can also be changed with the <em>hub_spread</em> property). This formula can be used to calculate a hub height (for rotor lengths greater than 85) and to extrapolate wind speed using either of two commonly used laws (models). The law to be used can be specified in the <em>extrapolate</em> property of the appropriate wind Section(s) and can be either <em>logarithmic</em>, the default, or <em>Hellmann</em>. This additional data will be added to the normal wind file and passed to the SAM windpower model. If you wish to use this you need update the <em>windpower</em> variables file to allow the default hub height (85 m) to be overridden.</p>
 <p>From &lsquo;Do we really need rotor equivalent wind speed?&rsquo; (Van Sark etal, <a href="https://onlinelibrary.wiley.com/doi/full/10.1002/we.2319#:~:text=For%20situations%20where%20the%20ratio,and%20the%20wind%20speed%20at" target="_blank">https://onlinelibrary.wiley.com/doi/full/10.1002/we.2319#:~:text=For%20situations%20where%20the%20ratio,and%20the%20wind%20speed%20at</a>) a possible formula for calculating hub height is - <code>H = 0.789 D + 14.9 m</code>. For the <em>hub_formula</em> property this can be set as:</p>
 <p><code>hub_formula=int(floor((0.789 * rotor + 14.9) / 5) * 5)</code></p>
 <p>SIREN will replace <code>rotor</code> with the rotor diameter for the station turbine and perform the calculation which will round the calculated hub height down to the nearest 5 metres. You can of course just set <code>hub_formula=90</code> to set a fixed height</p>

@@ -295,7 +295,7 @@ class SuperPower():
         try:
             self.pv_losses = float(config.get('PV', 'losses'))
         except:
-            self.pv_losses = 5
+            self.pv_losses = 14
         try:
             self.wave_cutout = float(config.get('Wave', 'cutout'))
         except:
@@ -315,6 +315,7 @@ class SuperPower():
         self.wind_offset_spacing = [4, 4]
         self.wind_farm_losses_percent = [2, 2]
         self.wind_hub_formula = [None, None]
+        self.wind_hub_spread = [None, None]
         self.wind_law = ['l', 'l']
         try:
             self.wind_turbine_spacing[0] = int(float(config.get('Wind', 'turbine_spacing')))
@@ -359,9 +360,12 @@ class SuperPower():
             except:
                 pass
         try:
-            self.wind_turbine_spacing[1] = int(config.get('Offshore Wind', 'turbine_spacing'))
+            self.wind_hub_spread[0] = int(float(config.get('Wind', 'hub_spread')))
         except:
-            pass
+            try:
+                self.wind_hub_spread[0] = int(float(config.get('Onshore Wind', 'hub_spread')))
+            except:
+                pass
         try:
             self.wind_turbine_spacing[1] = int(float(config.get('Offshore Wind', 'turbine_spacing')))
         except:
@@ -387,6 +391,11 @@ class SuperPower():
             self.wind_hub_formula[1] = config.get('Offshore Wind', 'hub_formula')
         except:
             pass
+        try:
+            self.wind_hub_spread[1] = int(float(config.get('Offshore Wind', 'hub_spread')))
+        except:
+            pass
+        print('(397)', self.wind_hub_spread)
         self.st_gross_net = 0.87
         try:
             self.st_gross_net = float(config.get('Solar Thermal', 'gross_net'))
@@ -788,16 +797,18 @@ class SuperPower():
                 except:
                     pass
             temp_file = None
-            if turbine.rotor > 85 and hub_hght > 0: # if a hub height is specified
+            if hub_hght > 0: # if a hub height is specified
                 try:
-                    temp_dir = tempfile.gettempdir()
-                    temp_file = 'windfile.srw'
-                    wind_data = extrapolateWind(self.wind_files + '/' + closest, hub_hght, law=self.wind_law[wtyp])
-                    wf = open(temp_dir + '/' + temp_file, 'w')
-                    for line in wind_data:
-                        wf.write(line)
-                    wf.close()
-                    wind_file = temp_dir + '/' + temp_file
+                    wind_data = extrapolateWind(self.wind_files + '/' + closest, hub_hght, law=self.wind_law[wtyp],
+                                spread=self.wind_hub_spread[wtyp])
+                    if wind_data is not None:
+                        temp_dir = tempfile.gettempdir()
+                        temp_file = 'windfile.srw'
+                        wf = open(temp_dir + '/' + temp_file, 'w')
+                        for line in wind_data:
+                            wf.write(line)
+                        wf.close()
+                        wind_file = temp_dir + '/' + temp_file
                 except:
                     pass
             self.data.set_string(b'wind_resource_filename', wind_file.encode('utf-8'))

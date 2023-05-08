@@ -243,7 +243,7 @@ def techClean(tech, full=False):
 
 #
 # add another windspeed height
-def extrapolateWind(wind_file, tgt_height, law='logarithmic', replace=False):
+def extrapolateWind(wind_file, tgt_height, law='logarithmic', replace=False, spread=None):
     if tgt_height < 60:
         return False
     if not os.path.exists(wind_file):
@@ -268,6 +268,9 @@ def extrapolateWind(wind_file, tgt_height, law='logarithmic', replace=False):
     for j in range(len(units)):
         if units[j] == 'm/s':
              heights_ms.append([int(hghts[j]), j])
+             if spread is not None:
+                 if tgt_height in range(heights_ms[-1][0] - spread, heights_ms[-1][0] + spread):
+                     return None
              if heights_ms[-1][0] == tgt_height:
                  if replace:
                      return False
