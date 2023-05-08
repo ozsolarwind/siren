@@ -2708,6 +2708,7 @@ class powerMatch(QtWidgets.QWidget):
             wb.active = bs
             # check if any charts/graphs
             if self.batch_report[-1][0] == 'Chart':
+                bold = oxl.styles.Font(name='Arial', bold=True)
                 min_col = 2
                 max_col = bs.max_column
                 chs = None
@@ -2740,6 +2741,7 @@ class powerMatch(QtWidgets.QWidget):
                             if chart_group != '':
                                 cht_col = col_letters.index(cht_cells[len(charts) % 2])
                                 chs.cell(row=cht_row - 1, column=cht_col).value = chart_group
+                                chs.cell(row=cht_row - 1, column=cht_col).font = bold
                             chs.add_chart(charts[-1], cht_cells[len(charts) % 2] + str(cht_row))
                         in_chart = True
                         if chs is None:
@@ -2836,6 +2838,10 @@ class powerMatch(QtWidgets.QWidget):
                         charts[-1].set_categories(cats)
                     if len(charts) % 2:
                         cht_row += 30
+                    if chart_group != '':
+                        cht_col = col_letters.index(cht_cells[len(charts) % 2])
+                        chs.cell(row=cht_row - 1, column=cht_col).value = chart_group
+                        chs.cell(row=cht_row - 1, column=cht_col).font = bold
                     chs.add_chart(charts[-1], cht_cells[len(charts) % 2] + str(cht_row))
             self.progressbar.setValue(10)
             wb.save(batch_report_file)
@@ -3299,6 +3305,8 @@ class powerMatch(QtWidgets.QWidget):
                     capacity = pmss_details[gen].capacity
                 except:
                     continue
+            if gen not in self.generators.keys():
+                continue
             if self.generators[gen].constraint in self.constraints and \
               self.constraints[self.generators[gen].constraint].category == 'Storage': # storage
                 storage_names.append(gen)
@@ -5753,7 +5761,7 @@ class powerMatch(QtWidgets.QWidget):
             if reply == QtWidgets.QMessageBox.Yes:
                 check_list = []
                 tot_row = 0
-                save_opt_rows = False
+                save_opt_rows = [False, False]
                 for o_r in range(len(op_data[h])):
                     if op_data[h][o_r][0] == 'Total':
                         break
@@ -5789,7 +5797,11 @@ class powerMatch(QtWidgets.QWidget):
                             new_cell.alignment = copy(cell.alignment)
                         continue
                     if batch_input_sheet.cell(row=row, column=1).value == 'Optimisation Parameters':
-                        save_opt_rows = True
+                        if save_opt_rows[0]:
+                            save_opt_rows[1] = True
+                            break
+                        else:
+                            save_opt_rows[0] = True
                     for o_r in range(len(op_data[h])):
                         if op_data[h][o_r][0] == batch_input_sheet.cell(row=row, column=1).value:
                             cell = batch_input_sheet.cell(row=row, column=col - 1)
@@ -5823,7 +5835,11 @@ class powerMatch(QtWidgets.QWidget):
                     if batch_input_sheet.cell(row=row, column=1).value == 'Total':
                         if len(check_list) > 0:
                             tot_row = row
-                if col == 2 and save_opt_rows: # first scenario and want optimisation?
+                if save_opt_rows[0]: # want optimisation?
+                    if not save_opt_rows[1]:
+                        row += 1
+                        new_cell = batch_input_sheet.cell(row=row, column=1)
+                        new_cell.value = op_data[h][o_r][0]
                     for o_r in range(op_op_prm, len(op_data[h])):
                         row += 1
                         new_cell = batch_input_sheet.cell(row=row, column=1)
