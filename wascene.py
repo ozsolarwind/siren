@@ -274,7 +274,6 @@ class WAScene(QtWidgets.QGraphicsScene):
                 self.show_ruler = True
         except:
             pass
-        self.show_coord = False
         self.ruler = 100.
         self.ruler_ticks = 10.
         try:
@@ -417,11 +416,27 @@ class WAScene(QtWidgets.QGraphicsScene):
                 self.hide_map = True
         except:
             pass
-        self.merra2_grid = False
+        self.show_coord = False
         try:
-            merra2_grid = config.get('View', 'merra2_grid')
-            if merra2_grid.lower() in ['true', 'yes', 'on']:
-                self.merra2_grid = True
+            show_coord = config.get('View', 'show_coord')
+            if show_coord.lower() in ['true', 'yes', 'on']:
+                self.show_coord = True
+        except:
+            pass
+        self.coord_grid = [0, 0]
+        try:
+            coord_grid = config.get('View', 'coord_grid')
+            if coord_grid.lower()[0] == 'm': # merra-2
+                self.coord_grid = [.5, .625]
+            elif coord_grid.lower()[0] == 'e': # era5
+                self.coord_grid = [.25, .25]
+            else: # lat,lon
+                try:
+                    bits = coord_grid.split(',')
+                    self.coord_grid[0] = float(bits[0])
+                    self.coord_grid[1] = float(bits[0])
+                except:
+                    pass
         except:
             pass
         try:
@@ -658,15 +673,15 @@ class WAScene(QtWidgets.QGraphicsScene):
         pen = QtGui.QPen(color, self.line_width)
         pen.setJoinStyle(QtCore.Qt.RoundJoin)
         pen.setCapStyle(QtCore.Qt.RoundCap)
-        if self.merra2_grid:
-            lonf = .625 * round((self.map_upper_left[1]) / .625)
-            lont = .625 * round((self.map_lower_right[1]) / .625)
-            latt = .5 * round((self.map_upper_left[0]) / .5)
-            latb = .5 * round((self.map_lower_right[0]) / .5)
-            lat_step = .5
-            lon_step = .625
-            lat = latb + .25
-            lon = lonf + .3125
+        if self.coord_grid[0] > 0 and self.coord_grid[1] > 0:
+            latt = self.coord_grid[0] * round((self.map_upper_left[0]) / self.coord_grid[0])
+            latb = self.coord_grid[0] * round((self.map_lower_right[0]) / self.coord_grid[0])
+            lonf = self.coord_grid[1] * round((self.map_upper_left[1]) / self.coord_grid[1])
+            lont = self.coord_grid[1] * round((self.map_lower_right[1]) / self.coord_grid[1])
+            lat_step = self.coord_grid[0]
+            lon_step = self.coord_grid[1]
+            lat = latb + self.coord_grid[0] / 2
+            lon = lonf + self.coord_grid[1] / 2
         else:
             bnds = [45., 90., 180.]
             degs = [2.5, 5., 10.]

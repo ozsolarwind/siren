@@ -2349,6 +2349,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">If True then centre on nearest station on left-click</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>coord_grid</dfn></td>
+<td class="none">Define the coordinates grid to display. This can be either <em>m</em> for MERRA-2, <em>e</em> for ERA5, or <em>lat,lon</em> to specify a different grid scale. The default grid will adjust depending on the bounding coordinates of the map</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>crop_save</dfn></td>
 <td class="none">If True then when saving a View the image will be cropped to the edge of the map. The default is True</td>
 </tr>
@@ -2385,10 +2389,6 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">Width of grid lines on the map in pixels. A line width of zero indicates a cosmetic pen. This means that the pen width is always drawn one pixel wide, independent of the level of zoom. This is the default. A value &gt; 0 will show lines at this width irrespective of the size of the map. A value &lt; 1 and &gt; 0 will be used to calculate the number of pixels by multiplying the width of the map image by this value. A useful value is 0.0016. For example a map image 12,000 pixels wide will have grid lines 19.2 pixels wide</td>
 </tr>
 <tr class="none">
-<td class="none"><dfn>merra2_grid</dfn></td>
-<td class="none">Set the coordinates grid to be based upon MERRA-2 cells rather than the default which is based upon geographic coordinates</td>
-</tr>
-<tr class="none">
 <td class="none"><dfn>new_grid</dfn></td>
 <td class="none">Include grid lines for new power stations</td>
 </tr>
@@ -2423,6 +2423,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <tr class="none">
 <td class="none"><dfn>scene_save</dfn></td>
 <td class="none">If True then when saving a View the image will be the underlying map image; otherwise the image will be the (screen) view. The image resolution can be different in the two options, dependent upon screen resolution, image resolution, screen window size and how much of the map is being saved. The default is False</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>show_coord</dfn></td>
+<td class="none">Display coordinates grid. The default is False</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>show_towns</dfn></td>
@@ -3509,6 +3513,7 @@ Surplus - spilled or curtailed - generation is normally used in the calculation 
 <ul>
 <li>If you want to include a Total row in the outputs you need to have a Total row (as the last row) in the <em>Capacity (MW)</em> Report Group</li>
 <li><strong>Beware:</strong> If the batch input worksheet (capacity figures) contains formulae you need to be careful doing multiple batch executions. You may need to open the batch worksheet and save it before doing another batch execution.</li>
+<li>(in case you missed it). If you're modelling with zones both the input data file and the batch file must have input capacities by zone</li>
 <li>(At present) The same Load data is used for all models in a Batch execution</li>
 </ul>
 </li>
