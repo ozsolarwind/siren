@@ -64,14 +64,14 @@ def area_of_polygon(x, y):
         area += x[i] * (y[i+1] - y[i-1])
     return abs(area) / 2.0
 
-def merra_cells(top, lft, bot, rht):
-    top = round((top + 0.25) * 2) / 2
-    bot = round((bot - 0.25) * 2) / 2
-    lat = (top - bot) * 2
-    lft = round((lft - 0.3125) / .625) * .625
-    rht = round((rht + 0.3125) / .625) * .625
-    lon = (rht - lft) / 0.625
-    return 'Lat: %s x Lon: %s' % (str(int((top - bot) * 2)), str(int((rht - lft) / 0.625)))
+def merra_cells(top, lft, bot, rht, latsize=0.5, lonsize=0.625):
+    top = round((top + (latsize / 2)) / latsize) * latsize
+    bot = round((bot - (latsize / 2)) / latsize) * latsize
+    lat = (top - bot) / latsize
+    lft = round((lft - (lonsize / 2)) / lonsize) * lonsize
+    rht = round((rht + (lonsize / 2)) / lonsize) * lonsize
+    lon = (rht - lft) / lonsize
+    return 'Lat: %s x Lon: %s' % (str(int((top - bot) / latsize)), str(int((rht - lft) / lonsize)))
 
 
 class GetMany(QtWidgets.QDialog):

@@ -18,7 +18,7 @@
 #  Public License along with SIREN.  If not, see
 #  <http://www.gnu.org/licenses/>.
 #
-from datetime import datetime
+from datetime import datetime, timedelta
 import gzip
 from math import *
 import os
@@ -97,7 +97,6 @@ class ShowHelp(QtWidgets.QDialog):
                 s = html[:s].rfind('<h')
                 e = html[s + 1:].find(html[s:s+3]) + s
                 html = html[:b] + '<body>' + html[s:e] + '</body></html>'
-      #      print('(99)', b, s, e, html[s:s+3], len(html))
             self.web.setHtml(html)
         else:
             html = self.anobject
@@ -251,21 +250,50 @@ class makeWeather():
             ps.append(hp)
         return ps
 
-    def getGHI(self, pmi):
+    def getGHI(self, pmi, watts=True):
         try:
             pm = pmi.data
         except:
             pm = pmi[:]
         ps = []
-        for hr in range(len(pm)):   # 24 hours
+        for hr in range(len(pm)):   # 24 or 8760 hours
             hp = []
             for lat in range(len(pm[hr])):   # n latitudes
                 lp = []
                 for lon in range(len(pm[hr][lat])):   # m longitudes
-                    lp.append(pm[hr][lat][lon])
+                    if watts:
+                        lp.append(pm[hr][lat][lon])
+                    else:
+                        lp.append(pm[hr][lat][lon] / 3600) # joules so / seconds in an hour
                 hp.append(lp)
             ps.append(hp)
         return ps
+
+    def getAlbedo(self, alb1, alb2i=None):
+        try:
+            alb = alb1.data
+        except:
+            alb = alb1[:]
+        if alb2i is not None:
+            try:
+                alb2 = alb2i.data
+            except:
+                alb2 = alb2i[:]
+            do_2 = True
+        else:
+            do_2 = false
+        tmp = []
+        for hr in range(len(alb)):   # 24 or 8760 hours
+            at = []
+            for lat in range(len(alb[hr])):   # n latitudes
+                ap = []
+                for lon in range(len(alb[hr][lat])):   # m longitudes
+                    ap.append(alb[hr][lat][lon])
+                    if do_2:
+                        ap[-1] = (ap[-1] + alb2[hr][lat][lon]) / 2
+                at.append(ap)
+            tmp.append(at)
+        return tmp
 
     def decodeError(self, inp_file):
         self.log += 'Terminating as error with - %s\n' % inp_file
@@ -360,6 +388,79 @@ class makeWeather():
             self.d50m += self.getDirn(cdf_file.variables[self.vars['v50m']], cdf_file.variables[self.vars['u50m']])
         cdf_file.close()
 
+    def get_era5_data(self, inp_file, frst_hour, last_hour):
+        unzip_file = self.unZip(inp_file)
+        if self.return_code != 0:
+            return
+        try:
+            cdf_file = Dataset(unzip_file, 'r')
+        except:
+            self.decodeError(inp_file)
+            return
+
+     #   Variable Description                            Units
+     #   -------- -------------------------------------- --------
+     #   sp       Surface pressure                       Pa
+     #   ssrd     Surface solar radiation downwards      W m-2
+     #   ssr      Surface net solar radiation            W m-2
+     #   t2m      2m temperature                         K
+     #   u10      10m u-component of wind                m/s
+     #   u100     10m u-component of wind                m/s
+     #   v10      10m v-component of wind                m/s
+     #   v100     100m u-component of wind               m/s
+     #   alnip    near_ir_albedo_for_direct_radiation
+     #   aluvp    uv_visible_albedo_for_direct_radiation
+        self.tims = cdf_file.variables['time'][:]
+        t1 = -1
+        t2 = len(self.tims)
+        for hr in range(len(self.tims)):
+            if t1 < 0 and self.tims[hr] >= frst_hour:
+                t1 = hr
+            if self.tims[hr] >= last_hour:
+                t2 = hr
+                break
+        self.lat_lon_ndx += [len(self.lati)] * (t2 - t1 + 1)
+        lats = cdf_file.variables[self.vars['latitude']][:]
+        self.lati.append([])
+        for lat in lats:
+            self.lati[-1].append(lat)
+        lons = cdf_file.variables[self.vars['longitude']][:]
+        self.longi.append([])
+        for lon in lons:
+            self.longi[-1].append(lon)
+        for lat in self.lati[-1]:
+            try:
+                self.lats.index(lat)
+            except:
+                self.lats.append(lat)
+        for lon in self.longi[-1]:
+            try:
+                self.lons.index(lon)
+            except:
+                self.lons.append(lon)
+        self.t_2m += self.getTemp(cdf_file.variables[self.vars['t2m']][t1 : t2])
+        self.s10m += self.getSpeed(cdf_file.variables[self.vars['v10']][t1 : t2] , cdf_file.variables[self.vars['u10']][t1 : t2])
+        self.d10m += self.getDirn(cdf_file.variables[self.vars['v10']][t1 : t2], cdf_file.variables[self.vars['u10']][t1 : t2])
+        self.p_s += self.getPress(cdf_file.variables[self.vars['sp']][t1 : t2])
+        try:
+            if self.vars[self.swg] not in cdf_file.variables.keys():
+                self.swg = 'swgnt'
+            self.ghi += self.getGHI(cdf_file.variables[self.vars[self.swg]][t1 : t2], watts=False)
+        except:
+            pass
+        if self.make_wind:
+            self.s100m += self.getSpeed(cdf_file.variables[self.vars['v100']][t1 : t2], cdf_file.variables[self.vars['u100']][t1 : t2])
+            self.d100m += self.getDirn(cdf_file.variables[self.vars['v100']][t1 : t2], cdf_file.variables[self.vars['u100']][t1 : t2])
+        else:
+            if self.vars['alb'] in cdf_file.variables.keys():
+                if self.vars['alb2'] in cdf_file.variables.keys():
+                    self.alb += self.getAlbedo(cdf_file.variables[self.vars['alb']][t1 : t2], cdf_file.variables[self.vars['alb2']][t1 : t2])
+                else:
+                    self.alb += self.getAlbedo(cdf_file.variables[self.vars['alb']][t1 : t2])
+            elif self.vars['alb2'] in cdf_file.variables.keys():
+                self.alb += self.getAlbedo(cdf_file.variables[self.vars['alb2']][t1 : t2])
+        cdf_file.close()
+
     def get_rad_data(self, inp_file):
         unzip_file = self.unZip(inp_file)
         if self.return_code != 0:
@@ -373,6 +474,7 @@ class makeWeather():
      #   -------- ------------------------------------ --------
      #   swgdn    Surface incoming shortwave flux flux W m-2
      #   swgnt    Surface net downward shortwave flux  W m-2
+     #   albedo   surface albedo
         self.tims = cdf_file.variables['time'][:]
         lats = cdf_file.variables[self.vars['latitude']][:]
         self.latsi.append([])
@@ -383,23 +485,25 @@ class makeWeather():
         for lon in lons:
             self.longsi[-1].append(lon)
         if self.vars[self.swg] in cdf_file.variables:
-            self.swgnt += self.getGHI(cdf_file.variables[self.vars[self.swg]])
+            self.ghi += self.getGHI(cdf_file.variables[self.vars[self.swg]])
         else:
             self.swg = 'swgnt'
-            self.swgnt += self.getGHI(cdf_file.variables[self.vars['swgnt']])
+            self.ghi += self.getGHI(cdf_file.variables[self.vars['swgnt']])
+        if self.vars['alb'] in cdf_file.variables:
+            self.alb += self.getAlbedo(cdf_file.variables[self.vars['alb']])
         cdf_file.close()
 
     def checkZone(self):
         self.return_code = 0
         if self.longrange[0] is not None:
             if int(round(self.longrange[0] / 15)) != self.src_zone:
-                self.log += 'MERRA-2 west longitude (%s) in different time zone: %s\n' % ('{:0.4f}'.format(self.longrange[0]),
-                            int(round(self.longrange[0] / 15)))
+                self.log += '%s west longitude (%s) in different time zone: %s\n' % (self.dataset,
+                            '{:0.4f}'.format(self.longrange[0]), int(round(self.longrange[0] / 15)))
                 self.return_code = 1
         if self.longrange[1] is not None:
             if int(round(self.longrange[1] / 15)) != self.src_zone:
-                self.log += 'MERRA-2 east longitude (%s) in different time zone: %s\n' % ('{:0.4f}'.format(self.longrange[1]),
-                            int(round(self.longrange[1] / 15)))
+                self.log += '%s east longitude (%s) in different time zone: %s\n' % (self.dataset,
+                            '{:0.4f}'.format(self.longrange[1]), int(round(self.longrange[1] / 15)))
                 self.return_code = 1
         return
 
@@ -414,7 +518,7 @@ class makeWeather():
     def returnCode(self):
         return str(self.return_code)
 
-    def findFile(self, inp_strt, wind=True):
+    def findFile(self, inp_strt, wind=True, quiet=False):
         if wind:
             for p in range(len(self.src_w_pfx)):
                 inp_file = self.src_dir_w + self.src_w_pfx[p] + inp_strt + self.src_w_sfx[p]
@@ -430,7 +534,8 @@ class makeWeather():
                         if os.path.exists(inp_file):
                             break
             else:
-                self.log += 'No Wind file found for ' + inp_strt + '\n'
+                if not quiet:
+                    self.log += 'No Wind file found for ' + inp_strt + '\n'
                 return None
         else:
             for p in range(len(self.src_s_pfx)):
@@ -447,7 +552,8 @@ class makeWeather():
                         if os.path.exists(inp_file):
                             break
             else:
-                self.log += 'No Solar file found for ' + inp_strt + '\n'
+                if not quiet:
+                    self.log += 'No Solar/ERA5 file found for ' + inp_strt + '\n'
                 return None
         return inp_file
 
@@ -473,7 +579,10 @@ class makeWeather():
         try:
             self.log += cdf_file.Format + '\n'
         except:
-            self.log += '?\n'
+            try:
+                self.log += cdf_file.file_format + '\n'
+            except:
+                self.log += '?\n'
         self.log += ' Dimensions:\n    '
         vals = ''
         keys = list(cdf_file.dimensions.keys())
@@ -489,6 +598,13 @@ class makeWeather():
                 bits = str(values[i]).strip().split()
                 vals += keys[i] + ': ' + bits[-1] + ', '
         self.log += vals[:-2] + '\n'
+        times = [cdf_file.variables[self.vars['time']][0], cdf_file.variables[self.vars['time']][-1]]
+        if times[0] > 0:
+            self.log += ' Times:\n    '
+            strt_time = datetime(1900, 1, 1, 0, 0)
+            frst_hour = strt_time + timedelta(hours=int(times[0]))
+            last_hour = strt_time + timedelta(hours=int(times[-1]))
+            self.log += frst_hour.strftime('%Y-%m-%d %H:%M') + ' to ' + last_hour.strftime('%Y-%m-%d %H:%M') + '\n'
         self.log += ' Variables:\n    '
         vals = ''
         for key in iter(sorted(cdf_file.variables.keys())):
@@ -513,7 +629,6 @@ class makeWeather():
                 zones[zone] = zones[zone] + 1
             except:
                 zones[zone] = 1
-   #     print(zones, max(zones, key=lambda k: zones[k]))
         self.log += vals[:-2] + '\n'
         if len(zones) > 1:
             self.log += ' Timezones:\n    '
@@ -523,7 +638,405 @@ class makeWeather():
         cdf_file.close()
         return
 
-    def __init__(self, caller, src_year, src_zone, src_dir_s, src_dir_w, tgt_dir, fmat, swg='swgnt',
+    def process_era5(self):
+        dys = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+        if self.show_progress:
+            self.caller.daybar.setValue(0)
+            self.caller.progresslabel.setText('Reading input data')
+            QtCore.QCoreApplication.processEvents()
+        date_1900 = datetime(1900, 1, 1, 0)
+        year_strt = datetime(self.src_year, 1, 1)
+        year_end = datetime(self.src_year + 1, 1, 1)
+        frst_hour = year_strt - date_1900
+        frst_hour = frst_hour.days * 24 - self.src_zone + 1 # weather files are 1 hour different
+        last_hour = year_end - date_1900
+        last_hour = last_hour.days * 24 - self.src_zone + 1
+         # get wind data
+        if self.src_zone > 0:
+            inp_strt = '{0:04d}'.format(self.src_year - 1)
+            inp_file = self.findFile(inp_strt, True, quiet=True)
+            if inp_file is None:
+                inp_strt = '{0:04d}'.format(self.src_year - 1) + '1231'
+                inp_file = self.findFile(inp_strt, True)
+            if inp_file is None:
+                return
+            self.get_era5_data(inp_file, frst_hour, last_hour)
+            if self.return_code != 0:
+                return
+        inp_strt = '{0:04d}'.format(self.src_year)
+        if (last_hour - frst_hour) > 8760: # leap year?
+            last_prt1 = frst_hour + 59 * 24
+            self.get_era5_data(self.findFile(inp_strt, True), frst_hour, last_prt1)
+            if self.return_code != 0:
+                return
+            self.get_era5_data(self.findFile(inp_strt, True), last_prt1 + 24, last_hour)
+            if self.return_code != 0:
+                return
+        else:
+            self.get_era5_data(self.findFile(inp_strt, True), frst_hour, last_hour)
+            if self.return_code != 0:
+                return
+        if self.src_zone < 0:
+            inp_strt = '{0:04d}'.format(self.src_year + 1)
+            inp_file = self.findFile(inp_strt, True, quiet=True)
+            if inp_file is None:
+                inp_strt = '{0:04d}'.format(self.src_year + 1) + '0101'
+                inp_file = self.findFile(inp_strt, True)
+            if inp_file is None:
+                return
+            self.get_era5_data(inp_file, frst_hour, last_hour)
+            if self.return_code != 0:
+                return
+        self.longrange = [self.lons[0], self.lons[-1]]
+        self.checkZone()
+        if self.make_wind:
+            if self.show_progress:
+                self.caller.daybar.setValue(0)
+                self.caller.progresslabel.setText('Creating wind weather files')
+                QtCore.QCoreApplication.processEvents()
+            target_dir = self.tgt_dir
+            now = datetime.now()
+            self.log += now.strftime('%Y-%m-%d %H:%M:%S') + '. Target directory is %s\n' % target_dir
+            if not os.path.exists(target_dir):
+                self.log += 'mkdir %s\n' % target_dir
+                os.makedirs(target_dir)
+            if self.src_lat is not None:   # specific location(s)
+                for i in range(len(self.src_lat)):
+                    if self.show_progress:
+                        self.caller.daybar.setValue(i)
+                        QtCore.QCoreApplication.processEvents()
+                    out_file = self.tgt_dir + 'wind_weather_' + str(self.src_lat[i]) + '_' + \
+                               str(self.src_lon[i]) + '_' + str(self.src_year) + '.' + self.fmat
+                    tf = open(out_file, 'w')
+                    with_gaps = 0
+                    missing = False
+                    hdr = 'id,<city>,<state>,<country>,%s,%s,%s,0,1,8760\n' % (str(self.src_year),
+                          round(self.src_lat[i], 4), round(self.src_lon[i], 4))
+                    tf.write(hdr)
+                    tf.write('Wind data derived from ERA5 reanalysis-era5-single-levels' + '\n')
+                    tf.write('Temperature,Pressure,Direction,Speed,Direction,Speed\n')
+                    tf.write('C,atm,degrees,m/s,degrees,m/s\n')
+                    tf.write('2,0,10,10,100,100\n')
+                    for hr in range(len(self.s100m)):
+                        for lat2 in range(len(self.lati[self.lat_lon_ndx[hr]])):
+                            if self.src_lat[i] <= self.lati[self.lat_lon_ndx[hr]][lat2]:
+                                break
+                        for lon2 in range(len(self.longi[self.lat_lon_ndx[hr]])):
+                            if self.src_lon[i] <= self.longi[self.lat_lon_ndx[hr]][lon2]:
+                                break
+                        if self.longrange[0] is None:
+                            self.longrange[0] = self.longi[self.lat_lon_ndx[hr]][lon2]
+                        else:
+                            if self.longi[self.lat_lon_ndx[hr]][lon2] < self.longrange[0]:
+                                self.longrange[0] = self.longi[self.lat_lon_ndx[hr]][lon2]
+                        if self.longrange[1] is None:
+                            self.longrange[1] = self.longi[self.lat_lon_ndx[hr]][lon2]
+                        else:
+                            if self.longi[self.lat_lon_ndx[hr]][lon2] > self.longrange[1]:
+                                self.longrange[1] = self.longi[self.lat_lon_ndx[hr]][lon2]
+                        lat1 = lat2 - 1
+                        lat_rat = (self.lati[self.lat_lon_ndx[hr]][lat2] - self.src_lat[i]) / \
+                                  (self.lati[self.lat_lon_ndx[hr]][lat2] - self.lati[self.lat_lon_ndx[hr]][lat1])
+                        lon1 = lon2 - 1
+                        lon_rat = (self.longi[self.lat_lon_ndx[hr]][lon2] - self.src_lon[i]) / \
+                                  (self.longi[self.lat_lon_ndx[hr]][lon2] - self.longi[self.lat_lon_ndx[hr]][lon1])
+                        tf.write(str(self.valu(self.t_2m[hr], lat1, lon1, lat_rat, lon_rat, rnd=1)) + ',' +
+                                 str(self.valu(self.p_s[hr], lat1, lon1, lat_rat, lon_rat, rnd=6)) + ',' +
+                                 str(self.valu(self.d10m[hr], lat1, lon1, lat_rat, lon_rat, rnd=0)) + ',' +
+                                 str(self.valu(self.s10m[hr], lat1, lon1, lat_rat, lon_rat)) + ',' +
+                                 str(self.valu(self.d100m[hr], lat1, lon1, lat_rat, lon_rat, rnd=0)) + ',' +
+                                 str(self.valu(self.s100m[hr], lat1, lon1, lat_rat, lon_rat)) + '\n')
+                    tf.close()
+                    self.log += '%s created\n' % out_file[out_file.rfind('/') + 1:]
+                    if self.hub_height > 0:
+                        ok = extrapolateWind(out_file, self.hub_height, law=self.law, replace=True)
+                        if ok:
+                            self.log += '%s updated\n' % out_file[out_file.rfind('/') + 1:]
+            else: # all locations
+                if self.show_progress:
+                    self.caller.daybar.setMaximum(len(self.lats) * len(self.lons))
+                    QtCore.QCoreApplication.processEvents()
+                for la in range(len(self.lats)):
+                    for lo in range(len(self.lons)):
+                        if self.show_progress:
+                            self.caller.daybar.setValue(len(self.lats) * la + lo)
+                            QtCore.QCoreApplication.processEvents()
+                        with_gaps = 0
+                        missing = False
+                        out_file = self.tgt_dir + 'wind_weather_' + '{:0.4f}'.format(self.lats[la]) + \
+                                   '_' + '{:0.4f}'.format(self.lons[lo]) + '_' + str(self.src_year) + '.srw'
+                        tf = open(out_file, 'w')
+                        hdr = 'id,<city>,<state>,<country>,%s,%s,%s,0,1,8760\n' % (str(self.src_year),
+                              round(self.lats[la], 4), round(self.lons[lo], 4))
+                        tf.write(hdr)
+                        tf.write('Wind data derived from ERA5 reanalysis-era5-single-levels' + '\n')
+                        tf.write('Temperature,Pressure,Direction,Speed,Direction,Speed\n')
+                        tf.write('C,atm,degrees,m/s,degrees,m/s\n')
+                        tf.write('2,0,10,10,100,100\n')
+                        for hr in range(len(self.s100m)):
+                            try:
+                                lat = self.lati[self.lat_lon_ndx[hr]].index(self.lats[la])
+                                lon = self.longi[self.lat_lon_ndx[hr]].index(self.lons[lo])
+                            except:
+                                if self.gaps:
+                                    tf.write(',,,,,,,,\n')
+                                    with_gaps += 1
+                                    continue
+                                else:
+                                    missing = True
+                                    break
+                            try:
+                                tf.write(str(self.t_2m[hr][lat][lon]) + ',' + str(self.p_s[hr][lat][lon]) + ',' +
+                                         str(self.d10m[hr][lat][lon]) + ',' + str(self.s10m[hr][lat][lon]) + ',' +
+                                         str(self.d100m[hr][lat][lon]) + ',' + str(self.s100m[hr][lat][lon]) + '\n')
+                            except:
+                                if self.gaps:
+                                    tf.write(',,,,,,,,\n')
+                                    with_gaps += 1
+                                    continue
+                                else:
+                                    missing = True
+                                    break
+                        tf.close()
+                        if with_gaps > 0 and with_gaps < 504:
+                            self.log += '%s created with gaps (%s days)\n' % ( \
+                                        out_file[out_file.rfind('/') + 1:], str(int(with_gaps / 24)))
+                        elif missing or with_gaps > 0:
+                            os.remove(out_file)
+                            self.gaplog += '%s not created due to data gaps\n' % out_file[out_file.rfind('/') + 1:]
+                            continue
+                        else:
+                            self.log += '%s created\n' % out_file[out_file.rfind('/') + 1:]
+                        if self.hub_height > 0:
+                            ok = extrapolateWind(out_file, self.hub_height, law=self.law, replace=True)
+                            if ok:
+                                self.log += '%s updated\n' % out_file[out_file.rfind('/') + 1:]
+            return # that's it for wind
+        #for solar we already have the data - same file (format)
+        if self.show_progress:
+            self.caller.daybar.setValue(0)
+            self.caller.progresslabel.setText('Creating solar weather files')
+            QtCore.QCoreApplication.processEvents()
+        target_dir = self.tgt_dir
+        now = datetime.now()
+        self.log += now.strftime('%Y-%m-%d %H:%M:%S') + '. Target directory is %s\n' % target_dir
+        if not os.path.exists(target_dir):
+            self.log += 'mkdir %s\n' % target_dir
+            os.makedirs(target_dir)
+        if self.src_lat is not None:  # specific location(s)
+            if self.show_progress:
+                self.caller.daybar.setMaximum(len(self.src_lat) - 1)
+                QtCore.QCoreApplication.processEvents()
+            for i in range(len(self.src_lat)):
+                if self.show_progress:
+                    self.caller.daybar.setValue(i)
+                    QtCore.QCoreApplication.processEvents()
+                out_file = self.tgt_dir + 'solar_weather_' + \
+                           str(self.src_lat[i]) + '_' + str(self.src_lon[i]) + '_' + str(self.src_year) + '.' + self.fmat
+                tf = open(out_file, 'w')
+                if self.fmat == 'csv':
+                    hdr = 'Location,City,Region,Country,Latitude,Longitude,Time Zone,Elevation,Source\n' + \
+                          'id,<city>,<state>,<country>,%s,%s,%s,0,IWEC\n' % (round(self.src_lat[i], 4),
+                          round(self.src_lon[i], 4), str(self.src_zone))
+                    tf.write(hdr)
+                    tf.write('Year,Month,Day,Hour,GHI,DNI,DHI,Tdry,Pres,Wspd,Wdir' + '\n')
+                    mth = 0
+                    day = 1
+                    hour = 0
+                    for hr in range(len(self.s10m)):
+                        for lat2 in range(len(self.lati[self.lat_lon_ndx[hr]])):
+                            if self.src_lat[i] <= self.lati[self.lat_lon_ndx[hr]][lat2]:
+                                break
+                        for lon2 in range(len(self.longi[self.lat_lon_ndx[hr]])):
+                            if self.src_lon[i] <= self.longi[self.lat_lon_ndx[hr]][lon2]:
+                                break
+                        if self.longrange[0] is None:
+                            self.longrange[0] = self.longi[self.lat_lon_ndx[hr]][lon2]
+                        else:
+                            if self.longi[self.lat_lon_ndx[hr]][lon2] < self.longrange[0]:
+                                self.longrange[0] = self.longi[self.lat_lon_ndx[hr]][lon2]
+                        if self.longrange[1] is None:
+                            self.longrange[1] = self.longi[self.lat_lon_ndx[hr]][lon2]
+                        else:
+                            if self.longi[self.lat_lon_ndx[hr]][lon2] > self.longrange[1]:
+                                self.longrange[1] = self.longi[self.lat_lon_ndx[hr]][lon2]
+                        lat1 = lat2 - 1
+                        lat_rat = (self.lati[self.lat_lon_ndx[hr]][lat2] - self.src_lat[i]) / \
+                                  (self.lati[self.lat_lon_ndx[hr]][lat2] - self.lati[self.lat_lon_ndx[hr]][lat1])
+                        lon1 = lon2 - 1
+                        lon_rat = (self.longi[self.lat_lon_ndx[hr]][lon2] - self.src_lon[i]) / \
+                                  (self.longi[self.lat_lon_ndx[hr]][lon2] - self.longi[self.lat_lon_ndx[hr]][lon1])
+                        ghi = self.valu(self.ghi[hr], lat1, lon1, lat_rat, lon_rat)
+                        dni = getDNI(ghi, hour=hr + 1, lat=self.src_lat[i], lon=self.src_lon[i],
+                              press=self.valu(self.p_s[hr], lat1,
+                              lon1, lat_rat, lon_rat, rnd=0), zone=self.src_zone)
+                        dhi = getDHI(ghi, dni, hour=hr + 1, lat=self.src_lat[i])
+                        tf.write(str(self.src_year) + ',' + str(mth + 1) + ',' +
+                        str(day) + ',' + str(hour) + ',' +
+                        str(int(ghi)) + ',' + str(int(dni)) + ',' + str(int(dhi)) + ',' +
+                        str(self.valu(self.t_2m[hr], lat1, lon1, lat_rat, lon_rat, rnd=1)) + ',' +
+                        str(self.valu(self.p_s[hr], lat1, lon1, lat_rat, lon_rat, rnd=0)) + ',' +
+                        str(self.valu(self.s10m[hr], lat1, lon1, lat_rat, lon_rat)) + ',' +
+                        str(self.valu(self.d10m[hr], lat1, lon1, lat_rat, lon_rat, rnd=0)) + '\n')
+                        hour += 1
+                        if hour > 23:
+                            hour = 0
+                            day += 1
+                            if day > dys[mth]:
+                                mth += 1
+                                day = 1
+                                hour = 0
+                else:
+                    hdr = 'id,<city>,<state>,%s,%s,%s,0,3600.0,%s,0:30:00\n' % (str(self.src_zone),
+                          round(self.src_lat[i], 4),
+                          round(self.src_lon[i], 4), str(self.src_year))
+                    tf.write(hdr)
+                    for hr in range(len(self.s10m)):
+                        for lat2 in range(len(self.lati[self.lat_lon_ndx[hr]])):
+                            if self.src_lat[i] <= self.lati[self.lat_lon_ndx[hr]][lat2]:
+                                break
+                        for lon2 in range(len(self.longi[self.lat_lon_ndx[hr]])):
+                            if self.src_lon[i] <= self.longi[self.lat_lon_ndx[hr]][lon2]:
+                                break
+                        if self.longrange[0] is None:
+                            self.longrange[0] = self.longi[self.lat_lon_ndx[hr]][lon2]
+                        else:
+                            if self.longi[self.lat_lon_ndx[hr]][lon2] < self.longrange[0]:
+                                self.longrange[0] = self.longi[self.lat_lon_ndx[hr]][lon2]
+                        if self.longrange[1] is None:
+                            self.longrange[1] = self.longi[self.lat_lon_ndx[hr]][lon2]
+                        else:
+                            if self.longi[self.lat_lon_ndx[hr]][lon2] > self.longrange[1]:
+                                self.longrange[1] = self.longi[self.lat_lon_ndx[hr]][lon2]
+                        lat1 = lat2 - 1
+                        lat_rat = (self.lati[self.lat_lon_ndx[hr]][lat2] - self.src_lat[i]) / \
+                                  (self.lati[self.lat_lon_ndx[hr]][lat2] - self.lati[self.lat_lon_ndx[hr]][lat1])
+                        lon1 = lon2 - 1
+                        lon_rat = (self.longi[self.lat_lon_ndx[hr]][lon2] - self.src_lon[i]) / \
+                                  (self.longi[self.lat_lon_ndx[hr]][lon2] - self.longi[self.lat_lon_ndx[hr]][lon1])
+                        ghi = self.valu(self.ghi[hr], lat1, lon1, lat_rat, lon_rat)
+                        dni = getDNI(ghi, hour=hr + 1, lat=self.src_lat[i], lon=self.src_lon[i],
+                              press=self.valu(self.p_s[hr], lat1, lon1, lat_rat,
+                              lon_rat, rnd=0), zone=self.src_zone)
+                        dhi = getDHI(ghi, dni, hour=hr + 1, lat=self.src_lat[i])
+                        if len(self.alb) > 0:
+                            alb = str(self.valu(self.alb[hr], lat1, lon1, lat_rat, lon_rat))
+                        else:
+                            alb = '-999'
+                        tf.write(str(self.valu(self.t_2m[hr], lat1, lon1, lat_rat, lon_rat, rnd=1)) +
+                        ',-999,-999,-999,' +
+                        str(self.valu(self.s10m[hr], lat1, lon1, lat_rat, lon_rat)) + ',' +
+                        str(self.valu(self.d10m[hr], lat1, lon1, lat_rat, lon_rat, rnd=0)) + ',' +
+                        str(self.valu(self.p_s[hr], lat1, lon1, lat_rat, lon_rat, rnd=1)) + ',' +
+                        str(int(ghi)) + ',' + str(int(dni)) + ',' + str(int(dhi)) + ',' + alb + ',-999,\n')
+                tf.close()
+                self.log += '%s created\n' % out_file[out_file.rfind('/') + 1:]
+        else: # all locations
+            if self.show_progress:
+                self.caller.daybar.setMaximum(len(self.lats) * len(self.lons))
+                QtCore.QCoreApplication.processEvents()
+            for la in range(len(self.lats)):
+                for lo in range(len(self.lons)):
+                    if self.show_progress:
+                        self.caller.daybar.setValue(len(self.lats) * la + lo)
+                        QtCore.QCoreApplication.processEvents()
+                    with_gaps = 0
+                    missing = False
+                    out_file = self.tgt_dir + 'solar_weather_' + '{:0.4f}'.format(self.lats[la]) + \
+                            '_' + '{:0.4f}'.format(self.lons[lo]) + '_' + str(self.src_year) + '.' + self.fmat
+                    tf = open(out_file, 'w')
+                    if self.fmat == 'csv':
+                        hdr = 'Location,City,Region,Country,Latitude,Longitude,Time Zone,Elevation,Source\n' + \
+                              'id,<city>,<state>,<country>,%s,%s,%s,0,IWEC\n' % (round(self.lats[la], 4),
+                              round(self.lons[lo], 4), str(self.src_zone))
+                        tf.write(hdr)
+                        tf.write('Year,Month,Day,Hour,GHI,DNI,DHI,Tdry,Pres,Wspd,Wdir' + '\n')
+                        mth = 0
+                        day = 1
+                        hour = 0
+                        for hr in range(len(self.s10m)):
+                            try:
+                                lat = self.lati[self.lat_lon_ndx[hr]].index(self.lats[la])
+                                lon = self.longi[self.lat_lon_ndx[hr]].index(self.lons[lo])
+                            except:
+                                if self.gaps:
+                                    tf.write(',,,,,,,,\n')
+                                    with_gaps += 1
+                                    continue
+                                else:
+                                    missing = True
+                                    break
+                            ghi = self.ghi[hr][lat][lon]
+                            dni = getDNI(ghi, hour=hr + 1, lat=self.lati[self.lat_lon_ndx[hr]][lat],
+                                  lon=self.longi[self.lat_lon_ndx[hr]][lon],
+                                  press=self.p_s[hr][lat][lon], zone=self.src_zone)
+                            dhi = getDHI(ghi, dni, hour=hr + 1, lat=self.lati[self.lat_lon_ndx[hr]][lat])
+                            tf.write(str(self.src_year) + ',' + '{0:02d}'.format(mth + 1) + ',' +
+                                '{0:02d}'.format(day) + ',' + '{0:02d}'.format(hour) + ',' +
+                                '{:0.1f}'.format(ghi) + ',' + '{:0.1f}'.format(dni) + ',' +
+                                '{:0.1f}'.format(dhi) + ',' +
+                                str(self.t_2m[hr][lat][lon]) + ',' +
+                                str(self.p_s[hr][lat][lon]) + ',' +
+                                str(self.s10m[hr][lat][lon]) + ',' +
+                                str(self.d10m[hr][lat][lon]) + '\n')
+                            hour += 1
+                            if hour > 23:
+                                hour = 0
+                                day += 1
+                                if day > dys[mth]:
+                                    mth += 1
+                                    day = 1
+                                    hour = 0
+                    else:
+                        hdr = 'id,<city>,<state>,%s,%s,%s,0,3600.0,%s,0:30:00\n' % (str(self.src_zone),
+                              round(self.lats[la], 4),
+                              round(self.lons[lo], 4), str(self.src_year))
+                        tf.write(hdr)
+                        for hr in range(len(self.s10m)):
+                            try:
+                                lat = self.lati[self.lat_lon_ndx[hr]].index(self.lats[la])
+                                lon = self.longi[self.lat_lon_ndx[hr]].index(self.lons[lo])
+                                la2 = self.lati[self.lat_lon_ndx[hr]].index(self.lats[la])
+                                lo2 = self.longi[self.lat_lon_ndx[hr]].index(self.lons[lo])
+                            except:
+                                if self.gaps:
+                                    tf.write(',,,,,,,,\n')
+                                    with_gaps += 1
+                                    continue
+                                else:
+                                    missing = True
+                                    break
+                            ghi = self.ghi[hr][lat][lon]
+                            dni = getDNI(ghi, hour=hr + 1, lat=self.lati[self.lat_lon_ndx[hr]][lat],
+                                      lon=self.longi[self.lat_lon_ndx[hr]][lon],
+                                      press=self.p_s[hr][lat][lon], zone=self.src_zone)
+                            dhi = getDHI(ghi, dni, hour=hr + 1, lat=self.lati[self.lat_lon_ndx[hr]][lat])
+                            if len(self.alb) > 0:
+                                try: # bug here but let's fix later
+                                    alb = str(self.valu(self.alb[hr], lat1, lon1, lat_rat, lon_rat))
+                                except:
+                                    alb = '-999'
+                            else:
+                                alb = '-999'
+                            tf.write(str(self.t_2m[hr][lat][lon]) +
+                                ',-999,-999,-999,' +
+                                str(self.s10m[hr][lat][lon]) + ',' +
+                                str(self.d10m[hr][lat][lon]) + ',' +
+                                str(self.p_s[hr][lat][lon]) + ',' +
+                                str(int(ghi)) + ',' + str(int(dni)) + ',' + str(int(dhi)) + ',' + alb + ',-999,\n')
+                    tf.close()
+                    if with_gaps > 0 and with_gaps < 504:
+                        self.log += '%s created with gaps (%s days)\n' % ( \
+                                    out_file[out_file.rfind('/') + 1:], str(int(with_gaps / 24)))
+                    elif missing or with_gaps > 0:
+                  #      os.remove(out_file)
+                        self.gaplog += '%s not created due to data gaps\n' % out_file[out_file.rfind('/') + 1:]
+                        continue
+                    else:
+                        self.log += '%s created\n' % out_file[out_file.rfind('/') + 1:]
+        return
+
+    def __init__(self, caller, src_year, src_zone, src_dir_s, src_dir_w, tgt_dir, fmat, swg='swgdn',
                  wrap=None, gaps=None, src_lat_lon=None, info=False, hub_height=0, law='l'):
       #  self.last_time = datetime.now()
         if caller is None:
@@ -562,10 +1075,13 @@ class makeWeather():
         self.src_lat_lon = src_lat_lon
         self.src_s_pfx = []
         self.src_s_sfx = []
+        self.dataset = 'MERRA-2'
+        self.era5 = False
         merra300 = False
         self.vars = {'latitude': 'lat', 'longitude': 'lon', 'ps': 'PS', 'swgdn': 'SWGDN', 'swgnt': 'SWGNT',
                      'time': 'time', 't2m': 'T2M', 't10m': 'T10M', 't50m': 'T50M', 'u2m': 'U2M',
-                     'u10m': 'U10M', 'u50m': 'U50M', 'v2m': 'V2M', 'v10m': 'V10M', 'v50m': 'V50M'}
+                     'u10m': 'U10M', 'u50m': 'U50M', 'v2m': 'V2M', 'v10m': 'V10M', 'v50m': 'V50M',
+                     'alb': 'albedo'}
         if self.src_dir_s != '':
             self.src_dir_s += '/'
             fils = os.listdir(self.src_dir_s)
@@ -609,20 +1125,58 @@ class makeWeather():
                 self.vars[key] = self.vars[key].lower()
             self.vars['latitude'] = 'latitude'
             self.vars['longitude'] = 'longitude'
+        if len(self.src_s_pfx) == 0 and len(self.src_w_pfx) == 0:
+            self.era5 = True
+            self.dataset = 'ERA5'
+            self.vars = {'latitude': 'latitude', 'longitude': 'longitude', 'sp': 'sp', 'swgdn': 'ssrd',
+                         'swgnt': 'ssr', 'time': 'time', 't2m': 't2m', 'u10': 'u10', 'u100': 'u100',
+                         'v10': 'v10', 'v100': 'v100', 'alb': 'alnip', 'alb2': 'aluvp'}
+            if self.src_dir_s != '':
+                fils = os.listdir(self.src_dir_s)
+                for fil in fils:
+                    if fil[-3:] == '.nc':
+                        j = fil.find('{0:04d}'.format(self.src_year))
+                        if j >= 0:
+                            self.src_s_pfx.append(fil[:j])
+                            self.src_s_sfx.append(fil[j + 4:])
+                         #   break
+                del fils
+            if self.src_dir_w != '':
+                if self.src_dir_w == self.src_dir_s:
+                    self.src_w_pfx = self.src_s_pfx[:]
+                    self.src_w_sfx = self.src_s_sfx[:]
+                else:
+                    fils = os.listdir(self.src_dir_s)
+                    for fil in fils:
+                        if fil[-3:] == '.nc':
+                            j = fil.find('{0:04d}'.format(self.src_year))
+                            if j >= 0:
+                                self.src_w_pfx.append(fil[:j])
+                                self.src_w_sfx.append(fil[j + 4:])
+                         #   break
         if self.tgt_dir != '':
             self.tgt_dir += '/'
         if info:
-            inp_strt = '{0:04d}'.format(self.src_year) + '0101'
-            self.log += '\nWind file for: ' + inp_strt + '\n'
-             # get variables from "wind" file
-            self.getInfo(self.findFile(inp_strt, True))
-            self.log += '\nSolar file for: ' + inp_strt + '\n'
-             # get variables from "solar" file
-            self.getInfo(self.findFile(inp_strt, False))
+            if self.era5:
+                inp_strt = '{0:04d}'.format(self.src_year)
+                self.log += '\nERA5 file for: ' + inp_strt + '\n'
+                # get variables from ERA5 file
+                self.getInfo(self.findFile(inp_strt, False))
+            else:
+                inp_strt = '{0:04d}'.format(self.src_year) + '0101'
+                self.log += '\nSolar file for: ' + inp_strt + '\n'
+                # get variables from "solar" file
+                self.getInfo(self.findFile(inp_strt, False))
+                self.log += '\nWind file for: ' + inp_strt + '\n'
+                # get variables from "wind" file
+                self.getInfo(self.findFile(inp_strt, True))
             return
         if str(self.src_zone).lower() in ['auto', 'best']:
            # self.auto_zone = True
-            inp_strt = '{0:04d}'.format(self.src_year) + '0101'
+            if self.era5:
+                inp_strt = '{0:04d}'.format(self.src_year)
+            else:
+                inp_strt = '{0:04d}'.format(self.src_year) + '0101'
              # get longitude from "wind" file
             unzip_file = self.unZip(self.findFile(inp_strt, True))
             if self.return_code != 0:
@@ -641,8 +1195,8 @@ class makeWeather():
                         except:
                             zones[zone] = 1
                     self.src_zone = max(zones, key=lambda k: zones[k])
-            self.log += 'Time zone: %s based on MERRA-2 (west) longitude (%s to %s)\n' % (str(self.src_zone),
-                        '{:0.4f}'.format(longitude[0]), '{:0.4f}'.format(longitude[-1]))
+            self.log += 'Time zone: %s based on %s (west) longitude (%s to %s)\n' % (str(self.src_zone),
+                        self.dataset, '{:0.4f}'.format(longitude[0]), '{:0.4f}'.format(longitude[-1]))
             cdf_file.close()
         else:
             self.src_zone = int(self.src_zone)
@@ -650,7 +1204,8 @@ class makeWeather():
         if self.src_lat_lon != '':
             self.src_lat = []
             self.src_lon = []
-            latlon = self.src_lat_lon.replace(' ','').split(',')
+            latlon = self.src_lat_lon.replace('_',',')
+            latlon = latlon.replace(' ','').split(',')
             try:
                 for j in range(0, len(latlon), 2):
                     self.src_lat.append(float(latlon[j]))
@@ -674,9 +1229,9 @@ class makeWeather():
             self.make_wind = True
         else:
             self.make_wind = False
-            if self.src_dir_s[0] == self.src_dir_s[-1] and (self.src_dir_s[0] == '"' or
-               self.src_dir_s[0] == "'"):
-                self.src_dir_s = self.src_dir_s[1:-1]
+        if self.src_dir_s[0] == self.src_dir_s[-1] and (self.src_dir_s[0] == '"' or
+            self.src_dir_s[0] == "'"):
+            self.src_dir_s = self.src_dir_s[1:-1]
         if self.src_dir_w[0] == self.src_dir_w[-1] and (self.src_dir_w[0] == '"' or
            self.src_dir_w[0] == "'"):
             self.src_dir_w = self.src_dir_w[1:-1]
@@ -696,13 +1251,20 @@ class makeWeather():
         self.d10m = []
         self.t_10m = []
         self.p_s = []
-        self.swgnt = []
+        self.ghi = []
         self.s2m = []
         self.s50m = []
+        self.s100m = []
         self.d2m = []
         self.d50m = []
+        self.d100m = []
         self.t_2m = []
+        self.alb = []
         dys = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+        if self.era5:
+            self.process_era5()
+            return
+        # MERRA_2 data
         if self.src_zone > 0:
             inp_strt = '{0:04d}'.format(self.src_year - 1) + '1231'
         else:
@@ -728,6 +1290,8 @@ class makeWeather():
                 self.d2m = self.d2m[-self.src_zone:]
                 self.d50m = self.d50m[-self.src_zone:]
                 self.t_2m = self.t_2m[-self.src_zone:]
+            if len(self.alb) > 0:
+                self.alb = self.alb[-self.src_zone:]
         if self.wrap:
             yrs = 2
         else:
@@ -781,12 +1345,18 @@ class makeWeather():
             if len(self.s10m) > 0:
                 del self.s10m[len(self.s10m) - (len(self.s10m) - 8760):]
                 del self.d10m[len(self.d10m) - (len(self.d10m) - 8760):]
-                del self.t_10m[len(self.t_10m) - (len(self.t_10m) - 8760):]
+                try:
+                    del self.t_10m[len(self.t_10m) - (len(self.t_10m) - 8760):]
+                except:
+                    pass
             if self.make_wind:
-                del self.s2m[len(self.s2m) - (len(self.s2m) - 8760):]
-                del self.s50m[len(self.s50m) - (len(self.s50m) - 8760):]
-                del self.d2m[len(self.d2m) - (len(self.d2m) - 8760):]
-                del self.d50m[len(self.d50m) - (len(self.d50m) - 8760):]
+                try:
+                    del self.s2m[len(self.s2m) - (len(self.s2m) - 8760):]
+                    del self.s50m[len(self.s50m) - (len(self.s50m) - 8760):]
+                    del self.d2m[len(self.d2m) - (len(self.d2m) - 8760):]
+                    del self.d50m[len(self.d50m) - (len(self.d50m) - 8760):]
+                except:
+                    pass
                 del self.t_2m[len(self.t_2m) - (len(self.t_2m) - 8760):]
         self.longrange = [self.lons[0], self.lons[-1]]
         self.checkZone()
@@ -802,9 +1372,6 @@ class makeWeather():
                 self.log += 'mkdir %s\n' % target_dir
                 os.makedirs(target_dir)
             if self.src_lat is not None:   # specific location(s)
-                if self.show_progress:
-                    self.caller.daybar.setMaximum(len(self.src_lat) - 1)
-                    QtCore.QCoreApplication.processEvents()
                 for i in range(len(self.src_lat)):
                     if self.show_progress:
                         self.caller.daybar.setValue(i)
@@ -849,7 +1416,6 @@ class makeWeather():
                                 str(self.valu(self.d2m[hr], lat1, lon1, lat_rat, lon_rat, rnd=0)) + ',' +
                                 str(self.valu(self.s2m[hr], lat1, lon1, lat_rat, lon_rat)) + ',' +
                                 str(self.valu(self.t_10m[hr], lat1, lon1, lat_rat, lon_rat, rnd=1)) + ',' +
-                                str(self.valu(self.d10m[hr], lat1, lon1, lat_rat, lon_rat, rnd=0)) + ',' +
                                 str(self.valu(self.s10m[hr], lat1, lon1, lat_rat, lon_rat)) + ',' +
                                 str(self.valu(self.d50m[hr], lat1, lon1, lat_rat, lon_rat, rnd=0)) + ',' +
                                 str(self.valu(self.s50m[hr], lat1, lon1, lat_rat, lon_rat)) + '\n')
@@ -907,7 +1473,10 @@ class makeWeather():
                         hdr = 'id,<city>,<state>,<country>,%s,%s,%s,0,1,8760\n' % (str(self.src_year),
                               round(self.lats[la], 4), round(self.lons[lo], 4))
                         tf.write(hdr)
-                        tf.write('Wind data derived from MERRA-2 tavg1_2d_slv_Nx' + '\n')
+                        if self.era5:
+                            tf.write('Wind data derived from ERA5 reanalysis-era5-single-levels' + '\n')
+                        else:
+                            tf.write('Wind data derived from MERRA-2 tavg1_2d_slv_Nx' + '\n')
                         if len(self.s10m) > 0:
                             tf.write('Temperature,Pressure,Direction,Speed,Temperature,Direction,' +
                                      'Speed,Direction,Speed' + '\n')
@@ -980,7 +1549,7 @@ class makeWeather():
                             if ok:
                                 self.log += '%s updated\n' % out_file[out_file.rfind('/') + 1:]
             return  # that's it for wind
-         # get variable from solar files
+        # get variable from solar files
         if self.src_zone > 0:
             inp_strt = '{0:04d}'.format(self.src_year - 1) + '1231'
         elif self.src_zone <= 0:
@@ -993,7 +1562,7 @@ class makeWeather():
             # or first day of this year
             self.latsi = self.latsi[-self.src_zone:]
             self.longsi = self.longsi[-self.src_zone:]
-            self.swgnt = self.swgnt[-self.src_zone:]
+            self.ghi = self.ghi[-self.src_zone:]
         self.the_year = self.src_year  # start with their year
         if self.wrap:
             yrs = 2
@@ -1040,8 +1609,8 @@ class makeWeather():
             self.get_rad_data(inp_file)
             if self.return_code != 0:
                 return
-        if len(self.swgnt) > 8760: # will be the case if src_zone != 0
-            del self.swgnt[len(self.swgnt) - (len(self.swgnt) - 8760):]
+        if len(self.ghi) > 8760: # will be the case if src_zone != 0
+            del self.ghi[len(self.ghi) - (len(self.ghi) - 8760):]
             del self.latsi[len(self.latsi) - (len(self.latsi) - 8760):]
             del self.longsi[len(self.longsi) - (len(self.longsi) - 8760):]
         if self.show_progress:
@@ -1091,11 +1660,18 @@ class makeWeather():
                         else:
                             if self.longi[self.lat_lon_ndx[hr]][lon2] > self.longrange[1]:
                                 self.longrange[1] = self.longi[self.lat_lon_ndx[hr]][lon2]
+                        if len(self.alb) > 0:
+                            try: # bug here but let's fix later
+                                    alb = self.valu(self.alb[hr], lat1, lon1, lat_rat, lon_rat)
+                            except:
+                                    alb = '-999'
+                        else:
+                            alb = -999
                         lat1 = lat2 - 1
                         lat_rat = (self.lati[self.lat_lon_ndx[hr]][lat2] - self.src_lat[i]) / (self.lati[self.lat_lon_ndx[hr]][lat2] - self.lati[self.lat_lon_ndx[hr]][lat1])
                         lon1 = lon2 - 1
                         lon_rat = (self.longi[self.lat_lon_ndx[hr]][lon2] - self.src_lon[i]) / (self.longi[self.lat_lon_ndx[hr]][lon2] - self.longi[self.lat_lon_ndx[hr]][lon1])
-                        ghi = self.valu(self.swgnt[hr], lat1, lon1, lat_rat, lon_rat)
+                        ghi = self.valu(self.ghi[hr], lat1, lon1, lat_rat, lon_rat)
                         dni = getDNI(ghi, hour=hr + 1, lat=self.src_lat[i], lon=self.src_lon[i],
                               press=self.valu(self.p_s[hr], lat1,
                               lon1, lat_rat, lon_rat, rnd=0), zone=self.src_zone)
@@ -1141,18 +1717,21 @@ class makeWeather():
                         lat_rat = (self.lati[self.lat_lon_ndx[hr]][lat2] - self.src_lat[i]) / (self.lati[self.lat_lon_ndx[hr]][lat2] - self.lati[self.lat_lon_ndx[hr]][lat1])
                         lon1 = lon2 - 1
                         lon_rat = (self.longi[self.lat_lon_ndx[hr]][lon2] - self.src_lon[i]) / (self.longi[self.lat_lon_ndx[hr]][lon2] - self.longi[self.lat_lon_ndx[hr]][lon1])
-                        ghi = self.valu(self.swgnt[hr], lat1, lon1, lat_rat, lon_rat)
+                        ghi = self.valu(self.ghi[hr], lat1, lon1, lat_rat, lon_rat)
                         dni = getDNI(ghi, hour=hr + 1, lat=self.src_lat[i], lon=self.src_lon[i],
                               press=self.valu(self.p_s[hr], lat1, lon1, lat_rat,
                               lon_rat, rnd=0), zone=self.src_zone)
                         dhi = getDHI(ghi, dni, hour=hr + 1, lat=self.src_lat[i])
+                        if len(self.alb) > 0:
+                            alb = self.valu(self.alb[hr], lat1, lon1, lat_rat, lon_rat)
+                        else:
+                            alb = '-999'
                         tf.write(str(self.valu(self.t_10m[hr], lat1, lon1, lat_rat, lon_rat, rnd=1)) +
                         ',-999,-999,-999,' +
                         str(self.valu(self.s10m[hr], lat1, lon1, lat_rat, lon_rat)) + ',' +
                         str(self.valu(self.d10m[hr], lat1, lon1, lat_rat, lon_rat, rnd=0)) + ',' +
                         str(self.valu(self.p_s[hr], lat1, lon1, lat_rat, lon_rat, rnd=1)) + ',' +
-                        str(int(ghi)) + ',' + str(int(dni)) + ',' + str(int(dhi)) +
-                        ',-999,-999,\n')
+                        str(int(ghi)) + ',' + str(int(dni)) + ',' + str(int(dhi)) + ',' + alb + ',-999,\n')
                 tf.close()
                 self.log += '%s created\n' % out_file[out_file.rfind('/') + 1:]
         else: # all locations
@@ -1192,7 +1771,7 @@ class makeWeather():
                                 else:
                                     missing = True
                                     break
-                            ghi = self.swgnt[hr][lat][lon]
+                            ghi = self.ghi[hr][lat][lon]
                             dni = getDNI(ghi, hour=hr + 1, lat=self.latsi[self.lat_lon_ndx[hr]][lat],
                                   lon=self.longsi[self.lat_lon_ndx[hr]][lon],
                                   press=self.p_s[hr][lat][lon], zone=self.src_zone)
@@ -1232,7 +1811,14 @@ class makeWeather():
                                 else:
                                     missing = True
                                     break
-                            ghi = self.swgnt[hr][lat][lon]
+                            if len(self.alb) > 0:
+                                try:
+                                    alb = self.alb[hr][lat][lon]
+                                except:
+                                    alb = '-999'
+                            else:
+                                alb = '-999'
+                            ghi = self.ghi[hr][lat][lon]
                             dni = getDNI(ghi, hour=hr + 1, lat=self.latsi[self.lat_lon_ndx[hr]][lat],
                                   lon=self.longsi[self.lat_lon_ndx[hr]][lon],
                                   press=self.p_s[hr][lat][lon], zone=self.src_zone)
@@ -1242,8 +1828,7 @@ class makeWeather():
                                 str(self.s10m[hr][la2][lo2]) + ',' +
                                 str(self.d10m[hr][la2][lo2]) + ',' +
                                 str(self.p_s[hr][la2][lo2]) + ',' +
-                                str(int(ghi)) + ',' + str(int(dni)) + ',' + str(int(dhi)) +
-                                ',-999,-999,\n')
+                                str(int(ghi)) + ',' + str(int(dni)) + ',' + str(int(dhi)) + ',' + alb + ',-999,\n')
                     tf.close()
                     if with_gaps > 0 and with_gaps < 504:
                         self.log += '%s created with gaps (%s days)\n' % ( \
@@ -1254,7 +1839,6 @@ class makeWeather():
                         continue
                     else:
                         self.log += '%s created\n' % out_file[out_file.rfind('/') + 1:]
-                    self.checkZone()
 
 
 class getParms(QtWidgets.QWidget):
@@ -1305,7 +1889,7 @@ class getParms(QtWidgets.QWidget):
         for i in range(-12, 13):
             self.zoneCombo.addItem(str(i))
         self.zoneCombo.currentIndexChanged[str].connect(self.zoneChanged)
-        self.zone_lon = QtWidgets.QLabel(('Time zone calculated from MERRA-2 data'))
+        self.zone_lon = QtWidgets.QLabel(('Time zone calculated from MERRA-2 / ERA5 data'))
         self.grid.addWidget(self.zoneCombo, rw, 1)
         self.grid.addWidget(self.zone_lon, rw, 2, 1, 3)
         rw += 1
@@ -1322,8 +1906,11 @@ class getParms(QtWidgets.QWidget):
         self.swgs = ['swgdn', 'swgnt']
         for i in range(len(self.swgs)):
             self.swgcombo.addItem(self.swgs[i])
-        self.swgcombo.setCurrentIndex(0) # default is swgdn
+        self.swgcombo.setCurrentIndex(0) # default is swgdn/ssrd
         self.grid.addWidget(self.swgcombo, rw, 1)
+        # ssrd: https://gis.stackexchange.com/questions/389174/calculating-global-horizontal-irradiance-ghi-from-surface-solar-radiation-down
+        # swgdn: https://earthscience.stackexchange.com/questions/19062/how-to-get-ghi-data-from-merra-2
+        self.grid.addWidget(QtWidgets.QLabel("ERA5 variables are 'swgdn=ssrd' and 'swgnt=ssr'"), rw, 2, 1, 2)
         rw += 1
         self.grid.addWidget(QtWidgets.QLabel('Hub height:'), rw, 0)
         self.hub_height = QtWidgets.QSpinBox()
@@ -1335,7 +1922,7 @@ class getParms(QtWidgets.QWidget):
             pass
         self.grid.addWidget(self.hub_height, rw, 1)
         self.hub_height.valueChanged.connect(self.hub_heightChanged)
-        self.grid.addWidget(QtWidgets.QLabel('To extrapolate wind data above 50 metres; using:'), rw, 2, 1, 2)
+        self.grid.addWidget(QtWidgets.QLabel('To extrapolate wind data above 50 / 100 metres; using:'), rw, 2, 1, 2)
         self.lawcombo = QtWidgets.QComboBox(self)
         self.laws = ['logarithmic', 'hellman']
         for i in range(len(self.laws)):
@@ -1357,9 +1944,10 @@ class getParms(QtWidgets.QWidget):
         rw += 1
         cur_dir = os.getcwd()
         self.dir_labels = ['Solar', 'Wind', 'Target']
+        xtr_labels = ['/ERA5', '', '']
         self.dirs = [None, None, None, None]
         for i in range(3):
-            self.grid.addWidget(QtWidgets.QLabel(self.dir_labels[i] + ' Folder:'), rw, 0)
+            self.grid.addWidget(QtWidgets.QLabel(self.dir_labels[i] + xtr_labels[i] + ' Folder:'), rw, 0)
             self.dirs[i] = ClickableQLabel()
             try:
                 self.dirs[i].setText(self.config.get('makeweatherfiles', self.dir_labels[i].lower() + '_files').replace('$USER$', getUser()))
@@ -1435,7 +2023,7 @@ class getParms(QtWidgets.QWidget):
         self.scroll.setWidget(frame)
         self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
-        self.setWindowTitle('makeweatherfiles (' + fileVersion() + ') - Make weather files from MERRA-2 data')
+        self.setWindowTitle('makeweatherfiles (' + fileVersion() + ') - Make weather files from MERRA-2 or ERA5 data')
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         self.center()
         self.resize(int(self.sizeHint().width()* 1.27), int(self.sizeHint().height() * 1.07))
@@ -1473,7 +2061,7 @@ class getParms(QtWidgets.QWidget):
 
     def zoneChanged(self, val):
         if self.zoneCombo.currentIndex() <= 1:
-            lon = '(Time zone calculated from MERRA-2 data)'
+            lon = '(Time zone calculated from MERRA-2 or ERA5 data)'
         else:
             lw = int(self.zoneCombo.currentIndex() - 14) * 15 - 7.5
             le = int(self.zoneCombo.currentIndex() - 14) * 15 + 7.5
@@ -1684,12 +2272,16 @@ class RptDialog(QtWidgets.QDialog):
         else:
             gapsy = 'No'
         max_line = 0
+        if swg == 'swgdn':
+            eraswg = 'ssrd'
+        else:
+            eraswg = 'ssr'
         self.lines = 'Parameters:\n    Year: %s\n    Wrap year: %s\n    Ignore gaps: %s\n    Time Zone: %s\n    Output Format: %s\n' \
                      % (year, wrapy, gapsy, zone, fmat)
         if fmat != 'srw':
             self.lines += '    Solar Files: %s\n' % solar_dir
-        self.lines += '    Solar Variable: %s\n' % swg
-        self.lines += '    Wind Files: %s\n' % wind_dir
+        self.lines += '    Solar Variable: %s (ERA5 variable is %s)\n' % (swg, eraswg)
+        self.lines += '    Wind/ERA5 Files: %s\n' % wind_dir
         self.lines += '    Target Folder: %s\n' % tgt_dir
         if coords != '':
             self.lines += '    Coordinates: %s\n' % coords
@@ -1822,7 +2414,7 @@ if "__main__" == __name__:
             fmat = 'smw'
         if fmat in ['csv', 'smw'] and src_dir_s == '':
             src_dir_s = src_dir_w
-        files = makeWeather(None, src_year, src_zone, src_dir_s, src_dir_w, tgt_dir, fmat, swg, wrap, gaps, src_lat_lon, hub_height=hub_height, law=law)
+        makeWeather(None, src_year, src_zone, src_dir_s, src_dir_w, tgt_dir, fmat, swg, wrap, gaps, src_lat_lon, hub_height=hub_height, law=law)
         dialr = RptDialog(str(src_year), src_zone, src_dir_s, src_dir_w, tgt_dir, fmat, swg, wrap, gaps, src_lat_lon, files.returnCode(), files.getLog())
         dialr.exec_()
     else:

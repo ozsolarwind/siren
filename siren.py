@@ -171,8 +171,8 @@ class TabDialog(QtWidgets.QDialog):
         layout.addWidget(self.table, 1, 0)
         layout.addWidget(buttons, 2, 0)
         menubar = QtWidgets.QMenuBar()
-        utilities = ['flexiplot', 'getmap', 'getmerra2', 'makeweatherfiles', 'powerplot', 'sirenupd']
-        utilicon = ['line.png', 'map.png', 'download.png', 'weather.png', 'line.png', 'download.png']
+        utilities = ['flexiplot', 'getera5', 'getmap', 'getmerra2', 'makeweatherfiles', 'powerplot', 'sirenupd']
+        utilicon = ['line.png', 'download.png', 'map.png', 'download.png', 'weather.png', 'line.png', 'download.png']
         spawns = []
         icons = []
         if sys.platform == 'win32' or sys.platform == 'cygwin':
@@ -603,8 +603,8 @@ class makeNew(QtWidgets.QDialog):
         self.scroll.setWidget(frame)
         self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
-        utilities = ['getmap', 'getmerra2', 'makeweatherfiles', 'sirenupd']
-        utilicon = ['map.png', 'download.png', 'weather.png', 'download.png']
+        utilities = ['getera5', 'getmap', 'getmerra2', 'makeweatherfiles', 'sirenupd']
+        utilicon = ['download.png', 'map.png', 'download.png', 'weather.png', 'download.png']
         spawns = []
         icons = []
         if sys.platform == 'win32' or sys.platform == 'cygwin':

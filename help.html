@@ -169,6 +169,7 @@ ul {
 <ul class="none">
 <li><a href="#map">Obtaining a Suitable Map Image</a></li>
 <li><a href="#swisupd">Obtaining Current SWIS Facilities</a></li>
+<li><a href="#reanalysis">Obtaining and Using Satellite Reanalysis Data for SAM weather files</a></li>
 <li><a href="#corr">Validation of NASA MERRA-2 Data and the SAM Models</a></li>
 <li><a href="#merra">Obtaining and Using NASA MERRA-2 Data for SAM weather files</a></li>
 <ul class="none">
@@ -205,7 +206,7 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 <li><code>siren_toolkit.exe</code> contains the full SIREN toolkit, It contains the contents of three other files in this list</li>
 <li><code>siren_application.exe</code> contains the packaged Windows version of the SIREN application</li>
 <li><code>siren_sample.exe</code> contains the files and data for the sample SIREN simulation of the SWIS</li>
-<li>(<code>sen_makeweather_getmerra2.exe</code> is a package containing both <code>getmerra2</code>, which enables MERRA-2 files to be downloaded, and <code>makeweatherfiles</code>, a standalone program to produce SAM weather files. This package allows you to create SAM weather files from MERRA-2 files without requiring any other parts of SIREN. See <a href="makeweatherfiles.html" target="_blank">makeweatherfiles.html</a>)</li>
+<li>(<code>sen_makeweather_getera.exe</code> is a package containing <code>getera5</code>, which enables ERA5 files to be downloaded, <code>getmerra2</code>, which enables MERRA-2 files to be downloaded, and <code>makeweatherfiles</code>, a standalone program to produce SAM weather files. This package allows you to create SAM weather files from either ERA5 or MERRA-2 files without requiring any other parts of SIREN. See <a href="makeweatherfiles.html" target="_blank">makeweatherfiles.html</a>)</li>
 </ul>
 <p>Occasionally new versions of some of the SIREN programs will be uploaded to SourceForge. You can check for new versions and download them by selecting the <code>sirenupd</code> option in SIREN. (Major new releases can also be indicated but these will require a complete new SIREN version to be installed.)</p>
 <p>To install the required package you can just open/launch it and extract it to your desired location. It may be necessary to execute the program as Administrator.</p>
@@ -279,6 +280,10 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 </table>
 </div>
 <table border="0", class="none">
+<tr class="none">
+<td class="none"><img src="download.png" alt="getera5">&nbsp;&nbsp;getera5</td>
+<td class="none">Invoke <code>getera5</code> to download ERA5 data files (see <a href="#getera5">Get ERA5 Files</a>)</td>
+</tr>
 <tr class="none">
 <td class="none"><img src="map.png" alt="getmap">&nbsp;&nbsp;getmap</td>
 <td class="none">Invoke <code>getmap</code> to create a map image for SIREN (see <a href="#map">Obtaining a Suitable Map Image</a>)</td>
@@ -2906,6 +2911,10 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <td class="none">Invoke SIREN tools. This will launch the chosen tool as a new task</p>
 <table border="0", class="none">
 <tr class="none">
+<td class="none"><img src="download.png" alt="getera5">&nbsp;&nbsp;getera5</td>
+<td class="none">Invoke <code>getera5</code> to download ERA5 data files (see <a href="#getera5">Get ERA5 Files</a>)</td>
+</tr>
+<tr class="none">
 <td class="none"><img src="map.png" alt="getmap">&nbsp;&nbsp;getmap</td>
 <td class="none">Invoke <code>getmap</code> to create a map image for SIREN (see <a href="#map">Obtaining a Suitable Map Image</a>)</td>
 </tr>
@@ -4162,7 +4171,7 @@ Load data can also be downloaded for prior years to a filename defined by the <e
 </ul>
 </li>
 <p><a href="#help">Back to top</a></p>
-
+<h3 id="reanalysis">Obtaining and Using Satellite Reanalysis Data for SAM weather files</h3>
 <h3 id="corr">Validation of NASA MERRA-2 Data and the SAM Models</h3>
 <p>SAM uses meteorological and solar data to model output of various renewable energy technologies.
 NASA MERRA-2 data is a suitable source to generate data files containing all weather variables required for input to SAM. It allows weather files to be created on a grid of 0.625 degree of longitude by 0.5 degree of latitude. This is approximately an area of 55 Km x 55 Km for the SWIS latitudes.</p>
@@ -5168,7 +5177,7 @@ MERRA-2 Variables
 </div>
 <p><a href="#help">Back to top</a></p>
 <h3 id="worldwindow">Select area on world map</h3>
-<p><code>worldwindow</code> can be used with <code>getmap</code> (see <a href="#map">Obtaining a Suitable Map Image</a>) and <code>getmerra2</code> (see <a href="#getmerra2">Get MERRA-2 Files</a>) to choose the Area of Interest for a map or for downloading MERRA-2 data. It presents a world map and allows you to choose the area of interest by clicking within the map and updating the area values in the two calling programs</p>
+<p><code>worldwindow</code> can be used with <code>getmap</code> (see <a href="#map">Obtaining a Suitable Map Image</a>), <code>getera5</code> (see <a href="#getera5">Get ERA5 Files</a>) or <code>getmerra2</code> (see <a href="#getmerra2">Get MERRA-2 Files</a>) to choose the Area of Interest for a map or for downloading ERA5 or MERRA-2 data. It presents a world map and allows you to choose the area of interest by clicking within the map and updating the area values in the two calling programs</p>
 <h4>Using worldwindow</h4>
 <p>To use <code>worldwindow</code> you simply left click in the map the top left corner of the desired Area of Interest and then left click the bottom right corner. <code>worldwindow</code> will display a rectangle on the world map highlighting the desired area and update the Area of Interest in the calling program. To choose a different area just repeat the process.
 <h4>worldwindow Menu Structure</h4>
@@ -5231,7 +5240,7 @@ MERRA-2 Variables
 </tr>
 </table>
 <h4 id="getfiles">getfiles Preferences</h4>
-<p>The <code>getfiles</code> Preferences file contains preferences specifically for <code>worldwindow</code>, the programs using it and a number of the SIREN tools (<code>getmap</code>, <code>getmerra2</code>, <code>makeweatherfiles</code>, <code>sirenupd</code>, and <code>updateswis</code>). The file resides in the same folder as <code>worldwindow</code> itself.
+<p>The <code>getfiles</code> Preferences file contains preferences specifically for <code>worldwindow</code>, the programs using it and a number of the SIREN tools (<code>getera5</code>, <code>getmap</code>, <code>getmerra2</code>, <code>makeweatherfiles</code>, <code>sirenupd</code>, and <code>updateswis</code>). The file resides in the same folder as <code>worldwindow</code> itself.
 <table border="0", class="none">
 <tr>
 <th>Section</th>
@@ -5272,7 +5281,21 @@ MERRA-2 Variables
 <td class="none">Help file</td>
 </tr>
 </table>
-</td></tr><tr class="none"><td><dfn><strong>[getmerra2]</strong></dfn></td>
+</td></tr>
+<tr class="none"><td><dfn><strong>[getera5]</strong></dfn></td>
+<td>These properties are used by <code>getera5</code> to create requests to download ERA5 data files. Normally they should not be changed. They're here just to document their content and purpose. Values enclosed in dollars signs ($) are substituted at execution time. Properties are:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>api_url</dfn></td>
+<td class="none">The URL for the Copernicus Data Store API, <code>cdsapi</code></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>variables</dfn></td>
+<td class="none">The shortcode names for the variables obtained from the Copernicus Data Store API. Each variable has it's long name as a separate property, such as <em>var_sp</em> for the <em>surface_pressure</em> variable</td>
+</tr>
+</table>
+</td></tr>
+<tr class="none"><td><dfn><strong>[getmerra2]</strong></dfn></td>
 <td>These properties are used by <code>getmerra2</code> to create requests to download MERRA-2 data files. Normally they should not be changed. They're here just to document their content and purpose. Values enclosed in dollars signs ($) are substituted at execution time. Properties are:</p>
 <table border="0", class="none">
 <tr class="none">
@@ -5508,10 +5531,14 @@ MERRA-2 Variables
 <td class="none">Direct Normal Irradiance</td></tr>
 <tr><td class="none"><dfn>DSCR</dfn></td>
 <td class="none">Debt-Service Coverage Ratio</td></tr>
+<tr><td class="none"><dfn>ECMWF</dfn></td>
+<td class="none">European Centre for Medium-Range Weather Forecasts</td></tr>
 <tr><td class="none"><dfn>EGS</dfn></td>
 <td class="none">Enhanced Geothermal Systems geothermal energy</td></tr>
 <tr><td class="none"><dfn>EOS</dfn></td>
 <td class="none">Earth Observing System</td></tr>
+<tr><td class="none"><dfn>ERA5</dfn></td>
+<td class="none">Fifth generation ECMWF reanalysis for the global climate and weather for the past 8 decades</td></tr>
 <tr><td class="none"><dfn>Facility</dfn></td>
 <td class="none">In the context of this help file the term facility may be used to represent either a generator or storage facility</td></tr>
 <tr><td class="none"><dfn>FTP</dfn></td>
