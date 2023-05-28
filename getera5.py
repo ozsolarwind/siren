@@ -75,6 +75,21 @@ def spawn(who, log):
         pass
     return pid, None
 
+def the_period(period, way='-'):
+    year = int(period[:4])
+    mth = int(period[-2:])
+    if way in ['-', '<']:
+        if mth == 1:
+            return '{:0>4d}{}'.format(year - 1, '12')
+        else:
+            return '{:0>4d}{:0>2d}'.format(year, mth - 1)
+    elif way in ['+', '>']:
+        if mth == 12:
+            return '{:0>4d}{}'.format(year + 1, '01')
+        else:
+            return '{:0>4d}{:0>2d}'.format(year, int(mth + 1))
+    return period
+
 def checkFiles(tgt_dir, ini_file=None):
     def get_range(top, prefix, suffix):
         chk_folders.append(top)
@@ -106,28 +121,32 @@ def checkFiles(tgt_dir, ini_file=None):
     chk_folders = []
     chk_src_files = []
     get_range(tgt_dir, file_pfx, file_sfx)
-    year = ''
     log = None
-    fst_year = ''
-    lst_year = ''
-    gap_years = []
+    fst_period = ''
+    lst_period = ''
+    gap_periods = []
     chk_days = []
     for i in range(len(chk_folders)):
         if len(chk_src_files[i]) == 0:
             continue
         for src_file in chk_src_files[i]:
             if file_pfx == '':
-                year = src_file[:-len(file_sfx)]
+                period = src_file[:-len(file_sfx)]
             else:
-                year = src_file[len(file_pfx):-len(file_sfx)]
-            if len(year) == 4:
-                if fst_year == '':
-                    fst_year = year
-                elif int(year) != int(lst_year) + 1:
-                    gap_years.append(str(int(lst_year) + 1))
-                lst_year = year
+                period = src_file[len(file_pfx):-len(file_sfx)]
+            if len(period) == 4:
+                if fst_period == '':
+                    fst_period = period + '01'
+                elif int(period) != int(lst_period[:4]) + 1:
+                    gap_periods.append(str(int(lst_period[:4]) + 1))
+                lst_period = period + '12'
+            elif len(period) == 6:
+                chk_period = the_period(period)
+                if chk_period != lst_period:
+                    gap_periods.append(the_period(lst_period, '+'))
+                lst_period = period
             else:
-                chk_days.append(year)
+                chk_days.append(period)
             log = fileInfo(chk_folders[i] + '/' + src_file)
             if not log.ok:
                 msg_text = log.log
@@ -142,15 +161,15 @@ def checkFiles(tgt_dir, ini_file=None):
     lone = log.longitudes[-1]
     grd1 = abs(log.latitudes[0] - log.latitudes[1])
     grd2 = abs(log.longitudes[0] - log.longitudes[1])
-    msg_text = 'Boundaries and year set for ERA5 data'
-    if fst_year != '':
+    msg_text = 'Boundaries and period set for ERA5 data'
+    if fst_period != '':
         reqd = ''
         if lone >= 15.:
-            chk_day = '{:0>4d}1231'.format(int(fst_year) - 1)
+            chk_day = '{:0>4d}1231'.format(int(fst_period[:4]) - 1)
             if chk_day not in chk_days:
                 reqd = '; {}{}{}'.format(file_pfx, chk_day, file_sfx)
         if lonw <= -15.0:
-            chk_day = '{:0>4d}0101'.format(int(lst_year) + 1)
+            chk_day = '{:0>4d}0101'.format(int(lst_period[:4]) + 1)
             if chk_day not in chk_days:
                 if reqd != '':
                     reqd += ' & {}{}{}'.format(file_pfx, chk_day, file_sfx)
@@ -158,15 +177,16 @@ def checkFiles(tgt_dir, ini_file=None):
                     reqd = '; {}{}{}'.format(file_pfx, chk_day, file_sfx)
         if reqd != '':
             reqd += ' needed'
-        msg_text += ' (' + fst_year
-        if lst_year == fst_year:
+        msg_text += ' (' + fst_period
+        if lst_period == fst_period:
             msg_text += ' exists'
         else:
-            msg_text += ' to ' + lst_year + ' exist'
-            if len(gap_years) > 0:
-                msg_text += ' with ' + str(len(gap_years)) + ' gaps'
+            msg_text += ' to ' + lst_period + ' exist'
+            if len(gap_periods) > 0:
+                msg_text += ' with ' + str(len(gap_periods)) + ' gaps'
+                print(gap_periods)
         msg_text += reqd + ')'
-    return [msg_text, latn, lats, lonw, lone, grd1, grd2, year]
+    return [msg_text, latn, lats, lonw, lone, grd1, grd2, the_period(lst_period, '+')]
 
 def retrieve_era5(ini_file, lat1, lat2, lon1, lon2, grd1, grd2, year, tgt_dir, launch=False):
     config = configparser.RawConfigParser()
@@ -186,20 +206,24 @@ def retrieve_era5(ini_file, lat1, lat2, lon1, lon2, grd1, grd2, year, tgt_dir, l
     for var in var_list:
         variables.append(config.get('getera5', 'var_' + var.strip()))
     era5_dict['variable'] = variables
-    if len(year) > 4:
+    if len(year) > 6:
         era5_dict['year'] = year[:4]
         era5_dict['month'] = year[4 : -2]
         era5_dict['day'] = year[-2:]
     else:
-        era5_dict['year'] = year
-        mths = []
-        for m in range(1, 13):
-            mths.append('{:0>2d}'.format(m))
-        era5_dict['month'] = mths
         days = []
         for d in range(1, 32):
             days.append('{:0>2d}'.format(d))
         era5_dict['day'] = days
+        if len(year) > 4:
+            era5_dict['year'] = year[:4]
+            era5_dict['month'] = year[-2:]
+        else:
+            era5_dict['year'] = year
+            mths = []
+            for m in range(1, 13):
+                mths.append('{:0>2d}'.format(m))
+            era5_dict['month'] = mths
     times = []
     for h in range(24):
         times.append('{:0>2d}:00'.format(h))
@@ -304,9 +328,16 @@ class getERA5(QtWidgets.QDialog):
                 self.zoom = 0.75
         except:
             pass
-        self.wait_days = 42
+        self.wait_days = 93
         try:
             self.wait_days = int(self.config.get('getera5', 'wait_days'))
+        except:
+            pass
+        self.retrieve_year = False
+        try:
+            yr = self.config.get('getera5', 'retrieve_year')
+            if yr.lower() in ['true', 'yes', 'on']:
+                self.retrieve_year = True
         except:
             pass
 
@@ -339,7 +370,7 @@ class getERA5(QtWidgets.QDialog):
         self.northSpin = QtWidgets.QDoubleSpinBox()
         self.northSpin.setDecimals(3)
         self.northSpin.setSingleStep(.5)
-        self.northSpin.setRange(-85.06, 85.06)
+        self.northSpin.setRange(-90, 90)
         self.northSpin.setObjectName('north')
         self.westSpin = QtWidgets.QDoubleSpinBox()
         self.westSpin.setDecimals(3)
@@ -349,7 +380,7 @@ class getERA5(QtWidgets.QDialog):
         self.southSpin = QtWidgets.QDoubleSpinBox()
         self.southSpin.setDecimals(3)
         self.southSpin.setSingleStep(.5)
-        self.southSpin.setRange(-85.06, 85.06)
+        self.southSpin.setRange(-90, 90)
         self.southSpin.setObjectName('south')
         self.eastSpin = QtWidgets.QDoubleSpinBox()
         self.eastSpin.setDecimals(3)
@@ -359,17 +390,17 @@ class getERA5(QtWidgets.QDialog):
         self.latSpin = QtWidgets.QDoubleSpinBox()
         self.latSpin.setDecimals(3)
         self.latSpin.setSingleStep(.5)
-        self.latSpin.setRange(-84.56, 84.56)
+        self.latSpin.setRange(-90, 90)
         self.latSpin.setObjectName('lat')
         self.lonSpin = QtWidgets.QDoubleSpinBox()
         self.lonSpin.setDecimals(3)
         self.lonSpin.setSingleStep(.5)
-        self.lonSpin.setRange(-179.687, 179.687)
+        self.lonSpin.setRange(-180, 180)
         self.lonSpin.setObjectName('lon')
         self.latwSpin = QtWidgets.QDoubleSpinBox()
         self.latwSpin.setDecimals(3)
         self.latwSpin.setSingleStep(.5)
-        self.latwSpin.setRange(0, 170.12)
+        self.latwSpin.setRange(0, 180)
         self.latwSpin.setObjectName('latw')
         self.lonwSpin = QtWidgets.QDoubleSpinBox()
         self.lonwSpin.setDecimals(3)
@@ -453,27 +484,44 @@ class getERA5(QtWidgets.QDialog):
             self.era5grid[-1].setValue(float(era5_grid[i].strip()))
             self.era5grid[-1].setDecimals(2)
             self.era5grid[-1].setSingleStep(.25)
-            self.era5grid[-1].setRange(0.25, 2.0)
+            self.era5grid[-1].setRange(0.25, 3.0)
             self.era5grid[-1].valueChanged.connect(self.showArea)
             eragrid.addWidget(self.era5grid[-1])
             if i == 0:
                 eragrid.addWidget(QtWidgets.QLabel(' x'))
+        rw = 4
         eragrid.addWidget(QtWidgets.QLabel('(size of weather "cells")'))
-        self.grid.addLayout(eragrid, 4, 1, 1, 3)
-        self.grid.addWidget(QtWidgets.QLabel('Approx. area:'), 5, 0)
+        self.grid.addLayout(eragrid, rw, 1, 1, 3)
+        rw += 1
+        self.grid.addWidget(QtWidgets.QLabel('Approx. area:'), rw, 0)
         self.approx_area = QtWidgets.QLabel('')
-        self.grid.addWidget(self.approx_area, 5, 1)
-        self.grid.addWidget(QtWidgets.QLabel('ERA5 dimensions:'), 5, 2)
+        self.grid.addWidget(self.approx_area, rw, 1)
+        self.grid.addWidget(QtWidgets.QLabel('ERA5 dimensions:'), rw, 2)
         self.merra_cells = QtWidgets.QLabel('')
-        self.grid.addWidget(self.merra_cells, 5, 3, 1, 2)
-        self.grid.addWidget(QtWidgets.QLabel('Year:'), 6, 0)
-        self.year = QtWidgets.QSpinBox()
-        self.year.setRange(1940, datetime.datetime.now().year - 1)
-        self.year.setValue(datetime.datetime.now().year)
-        self.grid.addWidget(self.year, 6, 1)
-        self.grid.addWidget(QtWidgets.QLabel('Variables:'), 8, 0)
-        self.grid.addWidget(QtWidgets.QLabel(self.config.get('getera5', 'variables')), 8, 1, 1, 5)
-        self.grid.addWidget(QtWidgets.QLabel('Target Folder:'), 9, 0)
+        self.grid.addWidget(self.merra_cells, rw, 3, 1, 2)
+        rw += 1
+        self.grid.addWidget(QtWidgets.QLabel('Start month:'), rw, 0)
+        self.strt_date = QtWidgets.QDateEdit(self)
+        self.strt_date.setDate(QtCore.QDate.currentDate().addDays(-self.wait_days))
+        self.strt_date.setCalendarPopup(False)
+        self.strt_date.setMinimumDate(QtCore.QDate(1940, 1, 1))
+        self.strt_date.setMaximumDate(QtCore.QDate.currentDate().addDays(-self.wait_days))
+        self.strt_date.setDisplayFormat('yyyy-MM')
+        self.grid.addWidget(self.strt_date, rw, 1)
+        rw += 1
+        self.grid.addWidget(QtWidgets.QLabel('End month:'), rw, 0)
+        self.end_date = QtWidgets.QDateEdit(self)
+        self.end_date.setDate(QtCore.QDate.currentDate().addDays(-self.wait_days))
+        self.end_date.setCalendarPopup(False)
+        self.end_date.setMinimumDate(QtCore.QDate(1940,1,1))
+        self.end_date.setMaximumDate(QtCore.QDate.currentDate().addDays(-self.wait_days))
+        self.end_date.setDisplayFormat('yyyy-MM')
+        self.grid.addWidget(self.end_date, rw, 1)
+        rw += 1
+        self.grid.addWidget(QtWidgets.QLabel('Variables:'), rw, 0)
+        self.grid.addWidget(QtWidgets.QLabel(self.config.get('getera5', 'variables')), rw, 1, 1, 5)
+        rw += 1
+        self.grid.addWidget(QtWidgets.QLabel('Target Folder:'), rw, 0)
         cur_dir = os.getcwd()
         self.tgt_dir = ClickableQLabel()
         try:
@@ -482,23 +530,24 @@ class getERA5(QtWidgets.QDialog):
             self.tgt_dir.setText(cur_dir)
         self.tgt_dir.setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
         self.tgt_dir.clicked.connect(self.dirChanged)
-        self.grid.addWidget(self.tgt_dir, 9, 1, 1, 8)
+        self.grid.addWidget(self.tgt_dir, rw, 1, 1, 8)
+        rw += 2
         self.log = QtWidgets.QLabel('')
         msg_palette = QtGui.QPalette()
         msg_palette.setColor(QtGui.QPalette.Foreground, QtCore.Qt.red)
         self.log.setPalette(msg_palette)
-        self.grid.addWidget(self.log, 12, 1, 2, 4)
+        self.grid.addWidget(self.log, rw, 1, 2, 4)
         sw = self.northSpin.minimumSizeHint().width()
-        dw = self.year.minimumSizeHint().width()
+        dw = self.strt_date.minimumSizeHint().width()
         if sw > dw: # fix for wide QDoubleSpinBox width in Windows
-            self.northSpin.setMinimumWidth(self.year.minimumSizeHint().width())
-            self.westSpin.setMinimumWidth(self.year.minimumSizeHint().width())
-            self.southSpin.setMinimumWidth(self.year.minimumSizeHint().width())
-            self.eastSpin.setMinimumWidth(self.year.minimumSizeHint().width())
-            self.latSpin.setMinimumWidth(self.year.minimumSizeHint().width())
-            self.lonSpin.setMinimumWidth(self.year.minimumSizeHint().width())
-            self.latwSpin.setMinimumWidth(self.year.minimumSizeHint().width())
-            self.lonwSpin.setMinimumWidth(self.year.minimumSizeHint().width())
+            self.northSpin.setMinimumWidth(self.strt_date.minimumSizeHint().width())
+            self.westSpin.setMinimumWidth(self.strt_date.minimumSizeHint().width())
+            self.southSpin.setMinimumWidth(self.strt_date.minimumSizeHint().width())
+            self.eastSpin.setMinimumWidth(self.strt_date.minimumSizeHint().width())
+            self.latSpin.setMinimumWidth(self.strt_date.minimumSizeHint().width())
+            self.lonSpin.setMinimumWidth(self.strt_date.minimumSizeHint().width())
+            self.latwSpin.setMinimumWidth(self.strt_date.minimumSizeHint().width())
+            self.lonwSpin.setMinimumWidth(self.strt_date.minimumSizeHint().width())
         buttongrid = QtWidgets.QGridLayout()
         quit = QtWidgets.QPushButton('Done', self)
         buttongrid.addWidget(quit, 0, 0)
@@ -527,7 +576,7 @@ class getERA5(QtWidgets.QDialog):
         self.layout.addWidget(frame2)
         self.setWindowTitle('SIREN - getera5 (' + fileVersion() + ') - Get ERA5 data')
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
-        self.resize(int(self.sizeHint().width()* 1.5), int(self.sizeHint().height() * 1.07))
+        self.resize(int(self.sizeHint().width() * 1.5), int(self.sizeHint().height() * 1.07))
         self.updated = False
         self.show()
 
@@ -579,7 +628,7 @@ class getERA5(QtWidgets.QDialog):
     def areaClicked(self):
         if self.worldwindow is None:
             scene = worldwindow.WorldScene()
-            self.worldwindow = worldwindow.WorldWindow(self, scene)
+            self.worldwindow = worldwindow.WorldWindow(self, scene, era5=True)
             self.worldwindow.view.tellarea.connect(self.maparea)
             self.worldwindow.show()
             self.showArea('init')
@@ -608,14 +657,14 @@ class getERA5(QtWidgets.QDialog):
         elif self.sender().objectName() == 'lat':
             self.ignore = True
             if self.latwSpin.value() == 0:
-                self.latwSpin.setValue(1.)
+                self.latwSpin.setValue(0.25)
             self.northSpin.setValue(self.latSpin.value() + self.latwSpin.value() / 2)
             self.southSpin.setValue(self.latSpin.value() - self.latwSpin.value() / 2)
             self.ignore = False
         elif self.sender().objectName() == 'lon':
             self.ignore = True
             if self.lonwSpin.value() == 0:
-                self.lonwSpin.setValue(1.5)
+                self.lonwSpin.setValue(0.25)
             self.eastSpin.setValue(self.lonSpin.value() + self.lonwSpin.value() / 2)
             self.westSpin.setValue(self.lonSpin.value() - self.lonwSpin.value() / 2)
             self.ignore = False
@@ -665,7 +714,8 @@ class getERA5(QtWidgets.QDialog):
             self.lonSpin.setValue(self.eastSpin.value() - (self.eastSpin.value() - self.westSpin.value()) / 2.)
             self.era5grid[0].setValue(check[5])
             self.era5grid[1].setValue(check[6])
-            self.year
+            self.strt_date.setDate(QtCore.QDate(int(check[7][:4]), int(check[7][-2:]), 1))
+            self.end_date.setDate(QtCore.QDate(int(check[7][:4]), 12, 31))
             self.ignore = False
             merra_dims = worldwindow.merra_cells(self.northSpin.value(), self.westSpin.value(),
                          self.southSpin.value(), self.eastSpin.value(),
@@ -698,26 +748,38 @@ class getERA5(QtWidgets.QDialog):
         else:
             file_pfx = ''
             file_sfx = filename[filename.rfind('.'):]
-        if self.eastSpin.value() >= 15.:
-            lst_year = '{:0>4d}'.format(self.year.value() - 1)
-            lst_fil = '{}{}{}'.format(file_pfx, lst_year, file_sfx)
+        strt_period = '{:0>4d}{:0>2d}'.format(int(self.strt_date.date().year()),
+                                              int(self.strt_date.date().month()))
+        stop_period = '{:0>4d}{:0>2d}'.format(int(self.end_date.date().year()),
+                                              int(self.end_date.date().month()))
+        if self.eastSpin.value() >= 15. and self.strt_date.date().month() == 1:
+            chk_period = the_period(strt_period, '-')
+            lst_fil = '{}{}{}'.format(file_pfx, chk_period[:4], file_sfx)
             if not os.path.exists(self.tgt_dir.text() + '/' + lst_fil):
-                fst_day = '{}1231'.format(lst_year)
-                fst_fil = '{}{}{}'.format(file_pfx, fst_day, file_sfx)
-                if not os.path.exists(self.tgt_dir.text() + '/' + fst_fil):
-                    get_file(fst_day)
-        if self.westSpin.value() <= -15.0:
-            nxt_year = '{:0>4d}'.format(self.year.value() + 1)
-            nxt_fil = '{}{}{}'.format(file_pfx, nxt_year, file_sfx)
+                lst_fil = '{}{}{}'.format(file_pfx, chk_period, file_sfx)
+                if not os.path.exists(self.tgt_dir.text() + '/' + lst_fil):
+                    fst_fil = '{}{}31{}'.format(file_pfx, chk_period, file_sfx)
+                    if not os.path.exists(self.tgt_dir.text() + '/' + fst_fil):
+                        get_file(chk_period + '31')
+        if self.westSpin.value() <= -15. and self.end_date.date().month() == 12:
+            chk_period = the_period(stop_period, '+')
+            nxt_fil = '{}{}{}'.format(file_pfx, chk_period[:4], file_sfx)
             if not os.path.exists(self.tgt_dir.text() + '/' + nxt_fil):
-                lst_day = '{}0101'.format(nxt_year)
-                nxt_fil = '{}{}{}'.format(file_pfx, lst_day, file_sfx)
+                nxt_fil = '{}{}{}'.format(file_pfx, chk_period, file_sfx)
                 if not os.path.exists(self.tgt_dir.text() + '/' + nxt_fil):
-                    get_file(lst_day)
-        year = '{:0>4d}'.format(self.year.value())
-        the_file = '{}{}{}'.format(file_pfx, year, file_sfx)
-        if not os.path.exists(self.tgt_dir.text() + '/' + the_file):
-            get_file(year)
+                    nxt_fil = '{}{}01{}'.format(file_pfx, chk_period, file_sfx)
+                    if not os.path.exists(self.tgt_dir.text() + '/' + nxt_fil):
+                        get_file(chk_period + '01')
+        if self.retrieve_year and strt_period[:4] == stop_period[:4] and \
+            strt_period[-2:] == '01' and stop_period[-2:] == '12':
+            get_file(strt_period[:4])
+            return
+        nxt_period = strt_period
+        while nxt_period <= stop_period:
+            the_file = '{}{}{}'.format(file_pfx, nxt_period, file_sfx)
+            if not os.path.exists(self.tgt_dir.text() + '/' + the_file):
+                get_file(nxt_period)
+            nxt_period = the_period(nxt_period, '+')
         return
 
     def create_cdsapirc(self):

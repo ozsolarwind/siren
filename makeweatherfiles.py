@@ -410,6 +410,10 @@ class makeWeather():
      #   v100     100m u-component of wind               m/s
      #   alnip    near_ir_albedo_for_direct_radiation
      #   aluvp    uv_visible_albedo_for_direct_radiation
+        expver = False
+        if 'expver' in cdf_file.variables.keys():
+            self.logMsg('ERA5 and ERA5T data in {}'.format(inp_file[inp_file.rfind('/') + 1:]))
+            expver = True
         self.tims = cdf_file.variables['time'][:]
         t1 = -1
         t2 = len(self.tims)
@@ -438,27 +442,194 @@ class makeWeather():
                 self.lons.index(lon)
             except:
                 self.lons.append(lon)
-        self.t_2m += self.getTemp(cdf_file.variables[self.vars['t2m']][t1 : t2])
-        self.s10m += self.getSpeed(cdf_file.variables[self.vars['v10']][t1 : t2] , cdf_file.variables[self.vars['u10']][t1 : t2])
-        self.d10m += self.getDirn(cdf_file.variables[self.vars['v10']][t1 : t2], cdf_file.variables[self.vars['u10']][t1 : t2])
-        self.p_s += self.getPress(cdf_file.variables[self.vars['sp']][t1 : t2])
-        try:
-            if self.vars[self.swg] not in cdf_file.variables.keys():
-                self.swg = 'swgnt'
-            self.ghi += self.getGHI(cdf_file.variables[self.vars[self.swg]][t1 : t2], watts=False)
-        except:
-            pass
-        if self.make_wind:
-            self.s100m += self.getSpeed(cdf_file.variables[self.vars['v100']][t1 : t2], cdf_file.variables[self.vars['u100']][t1 : t2])
-            self.d100m += self.getDirn(cdf_file.variables[self.vars['v100']][t1 : t2], cdf_file.variables[self.vars['u100']][t1 : t2])
+        if self.show_progress:
+            self.caller.daybar.setValue(0)
+            self.caller.daybar.setMaximum(7)
+            QtCore.QCoreApplication.processEvents()
+        if expver:
+            # need to find valid value in the two expver dimensions
+            tmp_var = []
+            for t in range(len(self.tims)):
+                tmp_var.append([])
+                for la in range(len(self.lats)):
+                    tmp_var[-1].append([])
+                    for lo in range(len(self.lons)):
+                        tmp_var[-1][-1].append([])
+            tmi = cdf_file.variables[self.vars['t2m']][t1 : t2]
+            for t in range(len(tmp_var)):
+                for la in range(len(tmp_var[t])):
+                    for lo in range(len(tmp_var[t][la])):
+                        if isinstance(tmi[t][0][la][lo], float):
+                            tmp_var[t][la][lo] = float(tmi[t][0][la][lo])
+                        else:
+                            tmp_var[t][la][lo] = float(tmi[t][1][la][lo])
+            self.t_2m += self.getTemp(tmp_var)
+            if self.show_progress:
+                self.caller.daybar.setValue(1)
+                QtCore.QCoreApplication.processEvents()
+            tmp_var = []
+            for t in range(len(self.tims)):
+                tmp_var.append([])
+                for la in range(len(self.lats)):
+                    tmp_var[-1].append([])
+                    for lo in range(len(self.lons)):
+                        tmp_var[-1][-1].append([])
+            tmi = cdf_file.variables[self.vars['v10']][t1 : t2]
+            for t in range(len(tmp_var)):
+                for la in range(len(tmp_var[t])):
+                    for lo in range(len(tmp_var[t][la])):
+                        if isinstance(tmi[t][0][la][lo], float):
+                            tmp_var[t][la][lo] = float(tmi[t][0][la][lo])
+                        else:
+                            tmp_var[t][la][lo] = float(tmi[t][1][la][lo])
+            tmp_var2 = []
+            for t in range(len(self.tims)):
+                tmp_var2.append([])
+                for la in range(len(self.lats)):
+                    tmp_var2[-1].append([])
+                    for lo in range(len(self.lons)):
+                        tmp_var2[-1][-1].append([])
+            tmi = cdf_file.variables[self.vars['u10']][t1 : t2]
+            for t in range(len(tmp_var2)):
+                for la in range(len(tmp_var2[t])):
+                    for lo in range(len(tmp_var2[t][la])):
+                        if isinstance(tmi[t][0][la][lo], float):
+                            tmp_var2[t][la][lo] = float(tmi[t][0][la][lo])
+                        else:
+                            tmp_var2[t][la][lo] = float(tmi[t][1][la][lo])
+            self.s10m += self.getSpeed(tmp_var, tmp_var2)
+            if self.show_progress:
+                self.caller.daybar.setValue(2)
+                QtCore.QCoreApplication.processEvents()
+            self.d10m += self.getDirn(tmp_var, tmp_var2)
+            if self.show_progress:
+                self.caller.daybar.setValue(3)
+                QtCore.QCoreApplication.processEvents()
+            tmp_var = []
+            for t in range(len(self.tims)):
+                tmp_var.append([])
+                for la in range(len(self.lats)):
+                    tmp_var[-1].append([])
+                    for lo in range(len(self.lons)):
+                        tmp_var[-1][-1].append([])
+            tmi = cdf_file.variables[self.vars['sp']][t1 : t2]
+            for t in range(len(tmp_var)):
+                for la in range(len(tmp_var[t])):
+                    for lo in range(len(tmp_var[t][la])):
+                        if isinstance(tmi[t][0][la][lo], float):
+                            tmp_var[t][la][lo] = float(tmi[t][0][la][lo])
+                        else:
+                            tmp_var[t][la][lo] = float(tmi[t][1][la][lo])
+            self.p_s += self.getPress(tmp_var)
+            if self.show_progress:
+                self.caller.daybar.setValue(4)
+                QtCore.QCoreApplication.processEvents()
+            try:
+                if self.vars[self.swg] not in cdf_file.variables.keys():
+                    self.swg = 'swgnt'
+                tmp_var = []
+                for t in range(len(self.tims)):
+                    tmp_var.append([])
+                    for la in range(len(self.lats)):
+                        tmp_var[-1].append([])
+                        for lo in range(len(self.lons)):
+                            tmp_var[-1][-1].append([])
+                tmi = cdf_file.variables[self.vars[self.swg]][t1 : t2]
+                for t in range(len(tmp_var)):
+                    for la in range(len(tmp_var[t])):
+                        for lo in range(len(tmp_var[t][la])):
+                            if isinstance(tmi[t][0][la][lo], float):
+                                tmp_var[t][la][lo] = float(tmi[t][0][la][lo])
+                            else:
+                                tmp_var[t][la][lo] = float(tmi[t][1][la][lo])
+                self.ghi += self.getGHI(tmp_var, watts=False)
+                if self.show_progress:
+                    self.caller.daybar.setValue(5)
+                    QtCore.QCoreApplication.processEvents()
+            except:
+                pass
+            if self.make_wind:
+                tmp_var = []
+                for t in range(len(self.tims)):
+                    tmp_var.append([])
+                    for la in range(len(self.lats)):
+                        tmp_var[-1].append([])
+                        for lo in range(len(self.lons)):
+                            tmp_var[-1][-1].append([])
+                tmi = cdf_file.variables[self.vars['v100']][t1 : t2]
+                for t in range(len(tmp_var)):
+                    for la in range(len(tmp_var[t])):
+                        for lo in range(len(tmp_var[t][la])):
+                            if isinstance(tmi[t][0][la][lo], float):
+                                tmp_var[t][la][lo] = float(tmi[t][0][la][lo])
+                            else:
+                                tmp_var[t][la][lo] = float(tmi[t][1][la][lo])
+                tmp_var2 = []
+                for t in range(len(self.tims)):
+                    tmp_var2.append([])
+                    for la in range(len(self.lats)):
+                        tmp_var2[-1].append([])
+                        for lo in range(len(self.lons)):
+                            tmp_var2[-1][-1].append([])
+                tmi = cdf_file.variables[self.vars['u100']][t1 : t2]
+                for t in range(len(tmp_var2)):
+                    for la in range(len(tmp_var2[t])):
+                        for lo in range(len(tmp_var2[t][la])):
+                            if isinstance(tmi[t][0][la][lo], float):
+                                tmp_var2[t][la][lo] = float(tmi[t][0][la][lo])
+                            else:
+                                tmp_var2[t][la][lo] = float(tmi[t][1][la][lo])
+                self.s100m += self.getSpeed(tmp_var, tmp_var2)
+                if self.show_progress:
+                    self.caller.daybar.setValue(6)
+                    QtCore.QCoreApplication.processEvents()
+                self.d100m += self.getDirn(tmp_var, tmp_var2)
+                if self.show_progress:
+                    self.caller.daybar.setValue(7)
+                    QtCore.QCoreApplication.processEvents()
         else:
-            if self.vars['alb'] in cdf_file.variables.keys():
-                if self.vars['alb2'] in cdf_file.variables.keys():
-                    self.alb += self.getAlbedo(cdf_file.variables[self.vars['alb']][t1 : t2], cdf_file.variables[self.vars['alb2']][t1 : t2])
-                else:
-                    self.alb += self.getAlbedo(cdf_file.variables[self.vars['alb']][t1 : t2])
-            elif self.vars['alb2'] in cdf_file.variables.keys():
-                self.alb += self.getAlbedo(cdf_file.variables[self.vars['alb2']][t1 : t2])
+            self.t_2m += self.getTemp(cdf_file.variables[self.vars['t2m']][t1 : t2])
+            if self.show_progress:
+                self.caller.daybar.setValue(1)
+                QtCore.QCoreApplication.processEvents()
+            self.s10m += self.getSpeed(cdf_file.variables[self.vars['v10']][t1 : t2] , cdf_file.variables[self.vars['u10']][t1 : t2])
+            if self.show_progress:
+                self.caller.daybar.setValue(2)
+                QtCore.QCoreApplication.processEvents()
+            self.d10m += self.getDirn(cdf_file.variables[self.vars['v10']][t1 : t2], cdf_file.variables[self.vars['u10']][t1 : t2])
+            if self.show_progress:
+                self.caller.daybar.setValue(3)
+                QtCore.QCoreApplication.processEvents()
+            self.p_s += self.getPress(cdf_file.variables[self.vars['sp']][t1 : t2])
+            if self.show_progress:
+                self.caller.daybar.setValue(4)
+                QtCore.QCoreApplication.processEvents()
+            try:
+                if self.vars[self.swg] not in cdf_file.variables.keys():
+                    self.swg = 'swgnt'
+                self.ghi += self.getGHI(cdf_file.variables[self.vars[self.swg]][t1 : t2], watts=False)
+                if self.show_progress:
+                    self.caller.daybar.setValue(5)
+                    QtCore.QCoreApplication.processEvents()
+            except:
+                pass
+            if self.make_wind:
+                self.s100m += self.getSpeed(cdf_file.variables[self.vars['v100']][t1 : t2], cdf_file.variables[self.vars['u100']][t1 : t2])
+                if self.show_progress:
+                    self.caller.daybar.setValue(6)
+                    QtCore.QCoreApplication.processEvents()
+                self.d100m += self.getDirn(cdf_file.variables[self.vars['v100']][t1 : t2], cdf_file.variables[self.vars['u100']][t1 : t2])
+                if self.show_progress:
+                    self.caller.daybar.setValue(7)
+                    QtCore.QCoreApplication.processEvents()
+      #      else:
+       #         if self.vars['alb'] in cdf_file.variables.keys():
+        #            if self.vars['alb2'] in cdf_file.variables.keys():
+         #               self.alb += self.getAlbedo(cdf_file.variables[self.vars['alb']][t1 : t2], cdf_file.variables[self.vars['alb2']][t1 : t2])
+          #          else:
+           #             self.alb += self.getAlbedo(cdf_file.variables[self.vars['alb']][t1 : t2])
+            #    elif self.vars['alb2'] in cdf_file.variables.keys():
+             #       self.alb += self.getAlbedo(cdf_file.variables[self.vars['alb2']][t1 : t2])
         cdf_file.close()
 
     def get_rad_data(self, inp_file):
@@ -515,11 +686,34 @@ class makeWeather():
             self.log += self.gaplog
         return self.log
 
+    def logMsg(self, msg, progress=False):
+        now = datetime.now()
+        self.log += now.strftime('%Y-%m-%d %H:%M:%S') + '. ' + msg + '\n'
+        if self.show_progress:
+            self.caller.progresslabel.setText(msg)
+            if progress:
+                self.caller.progress(progress)
+            QtCore.QCoreApplication.processEvents()
+
     def returnCode(self):
         return str(self.return_code)
 
     def findFile(self, inp_strt, wind=True, quiet=False):
-        if wind:
+        if self.era5:
+            for p in range(len(self.src_s_pfx)):
+                inp_file = self.src_dir_s + self.src_s_pfx[p] + inp_strt + self.src_s_sfx[p]
+                if os.path.exists(inp_file):
+                    break
+                else:
+                    if self.yearly[0]:
+                        inp_file = self.src_dir_s[:-5] + str(int(inp_strt[:4])) + '/' + self.src_s_pfx[p] + inp_strt + self.src_s_sfx[p]
+                        if os.path.exists(inp_file):
+                            break
+            else:
+                if not quiet:
+                    self.log += 'No ERA5 file found for ' + inp_strt + '\n'
+                return None
+        elif wind:
             for p in range(len(self.src_w_pfx)):
                 inp_file = self.src_dir_w + self.src_w_pfx[p] + inp_strt + self.src_w_sfx[p]
                 if os.path.exists(inp_file):
@@ -553,7 +747,7 @@ class makeWeather():
                             break
             else:
                 if not quiet:
-                    self.log += 'No Solar/ERA5 file found for ' + inp_strt + '\n'
+                    self.log += 'No Solar file found for ' + inp_strt + '\n'
                 return None
         return inp_file
 
@@ -651,37 +845,102 @@ class makeWeather():
         frst_hour = frst_hour.days * 24 - self.src_zone + 1 # weather files are 1 hour different
         last_hour = year_end - date_1900
         last_hour = last_hour.days * 24 - self.src_zone + 1
-         # get wind data
-        if self.src_zone > 0:
-            inp_strt = '{0:04d}'.format(self.src_year - 1)
-            inp_file = self.findFile(inp_strt, True, quiet=True)
+         # get wind and solar data
+        if self.src_zone > 0: # go back to last year if needed
+            inp_strt = '{:04d}'.format(self.src_year - 1) + '12'
+            inp_file = self.findFile(inp_strt, quiet=True)
             if inp_file is None:
-                inp_strt = '{0:04d}'.format(self.src_year - 1) + '1231'
-                inp_file = self.findFile(inp_strt, True)
+                inp_strt = '{:04d}'.format(self.src_year - 1)
+                inp_file = self.findFile(inp_strt, quiet=True)
+                if inp_file is None:
+                    inp_strt = '{:04d}'.format(self.src_year - 1) + '1231'
+                    inp_file = self.findFile(inp_strt, quiet=True)
             if inp_file is None:
                 return
             self.get_era5_data(inp_file, frst_hour, last_hour)
             if self.return_code != 0:
                 return
-        inp_strt = '{0:04d}'.format(self.src_year)
-        if (last_hour - frst_hour) > 8760: # leap year?
-            last_prt1 = frst_hour + 59 * 24
-            self.get_era5_data(self.findFile(inp_strt, True), frst_hour, last_prt1)
-            if self.return_code != 0:
-                return
-            self.get_era5_data(self.findFile(inp_strt, True), last_prt1 + 24, last_hour)
-            if self.return_code != 0:
-                return
-        else:
-            self.get_era5_data(self.findFile(inp_strt, True), frst_hour, last_hour)
-            if self.return_code != 0:
-                return
-        if self.src_zone < 0:
-            inp_strt = '{0:04d}'.format(self.src_year + 1)
-            inp_file = self.findFile(inp_strt, True, quiet=True)
+        inp_strt = '{:04d}'.format(self.src_year)
+        inp_file = self.findFile(inp_strt, quiet=True)
+        if inp_file is None: # monthly files
+            if self.wrap:
+                yrs = 1
+            else:
+                yrs = 2
+            year = self.src_year
+            for mt in range(12):
+                self.logMsg('Processing month %s' % str(mt + 1), mt / 12.)
+                inp_strt = '{:04d}{:02d}'.format(year, mt + 1)
+                inp_file = self.findFile(inp_strt, quiet=True)
+                if inp_file is None:
+                    if yrs == 2:
+                        return
+                    yrs == 2
+                    year -= 1
+                    self.logMsg('Wrapping to prior year - %.4d-%.2d-%.2d' % (year, mt + 1, 1))
+                    last_hour = datetime(year + 1, 1, 1)
+                    last_hour = last_hour - date_1900
+                    last_hour = int(last_hour.days) * 24 - self.src_zone + 1
+                    inp_strt = '{:04d}{:02d}'.format(year, mt + 1)
+                    inp_file = self.findFile(inp_strt, quiet=True)
+                    if inp_file is None:
+                        # try last full year
+                        inp_strt = '{:04d}'.format(year)
+                        inp_file = self.findFile(inp_strt, quiet=True)
+                        if inp_file is None:
+                            return
+                        self.logMsg('Processing months %s to 12' % str(mt + 1))
+                        frst_hour = datetime(year, mt + 1, 1)
+                        frst_hour = frst_hour - date_1900
+                        frst_hour = int(frst_hour.days) * 24
+                        if mt < 2 and year % 4 == 0 and (year % 100 != 0 or year % 400 == 0):
+                            last_hour = datetime(year + 1, 2, 28)
+                            last_hour += timedelta(hours=1)
+                            last_hour = last_hour - date_1900
+                            last_hour = int(last_hour.days) * 24
+                            self.get_era5_data(inp_file, frst_hour, last_hour)
+                            if self.return_code != 0:
+                                return
+                            frst_hour = datetime(year, 3, 1)
+                            frst_hour = frst_hour - date_1900
+                            frst_hour = int(frst_hour.days) * 24
+                        self.get_era5_data(inp_file, frst_hour, last_hour)
+                        if self.return_code != 0:
+                            return
+                        break
+                fst_hour = datetime(year, mt + 1, 1)
+                fst_hour = fst_hour - date_1900
+                fst_hour = int(fst_hour.days) * 24
+                if fst_hour < frst_hour:
+                    fst_hour = frst_hour
+                lst_hour = fst_hour + dys[mt] * 24
+                if lst_hour > last_hour:
+                    lst_hour = last_hour
+                self.get_era5_data(inp_file, fst_hour, lst_hour)
+                if self.return_code != 0:
+                    return
+        else: # year file
+            if (last_hour - frst_hour) > 8760: # leap year?
+                last_prt1 = frst_hour + 59 * 24
+                self.get_era5_data(self.findFile(inp_strt), frst_hour, last_prt1)
+                if self.return_code != 0:
+                    return
+                self.get_era5_data(self.findFile(inp_strt), last_prt1 + 24, last_hour)
+                if self.return_code != 0:
+                    return
+            else:
+                self.get_era5_data(self.findFile(inp_strt), frst_hour, last_hour)
+                if self.return_code != 0:
+                    return
+        if self.src_zone < 0: # go forward to next year if needed
+            inp_strt = '{:04d}'.format(self.src_year + 1) + '01'
+            inp_file = self.findFile(inp_strt, quiet=True)
             if inp_file is None:
-                inp_strt = '{0:04d}'.format(self.src_year + 1) + '0101'
-                inp_file = self.findFile(inp_strt, True)
+                inp_strt = '{:04d}'.format(self.src_year + 1)
+                inp_file = self.findFile(inp_strt, quiet=True)
+                if inp_file is None:
+                    inp_strt = '{:04d}'.format(self.src_year + 1) + '0101'
+                    inp_file = self.findFile(inp_strt, quiet=True)
             if inp_file is None:
                 return
             self.get_era5_data(inp_file, frst_hour, last_hour)
@@ -695,8 +954,7 @@ class makeWeather():
                 self.caller.progresslabel.setText('Creating wind weather files')
                 QtCore.QCoreApplication.processEvents()
             target_dir = self.tgt_dir
-            now = datetime.now()
-            self.log += now.strftime('%Y-%m-%d %H:%M:%S') + '. Target directory is %s\n' % target_dir
+            self.logMsg('Target directory is %s' % target_dir)
             if not os.path.exists(target_dir):
                 self.log += 'mkdir %s\n' % target_dir
                 os.makedirs(target_dir)
@@ -811,6 +1069,10 @@ class makeWeather():
                             ok = extrapolateWind(out_file, self.hub_height, law=self.law, replace=True)
                             if ok:
                                 self.log += '%s updated\n' % out_file[out_file.rfind('/') + 1:]
+            if self.show_progress:
+                self.caller.daybar.setValue(self.caller.daybar.maximum())
+                self.caller.progresslabel.setText('All done')
+                QtCore.QCoreApplication.processEvents()
             return # that's it for wind
         #for solar we already have the data - same file (format)
         if self.show_progress:
@@ -818,8 +1080,7 @@ class makeWeather():
             self.caller.progresslabel.setText('Creating solar weather files')
             QtCore.QCoreApplication.processEvents()
         target_dir = self.tgt_dir
-        now = datetime.now()
-        self.log += now.strftime('%Y-%m-%d %H:%M:%S') + '. Target directory is %s\n' % target_dir
+        self.logMsg('Target directory is %s' % target_dir)
         if not os.path.exists(target_dir):
             self.log += 'mkdir %s\n' % target_dir
             os.makedirs(target_dir)
@@ -971,8 +1232,8 @@ class makeWeather():
                                   lon=self.longi[self.lat_lon_ndx[hr]][lon],
                                   press=self.p_s[hr][lat][lon], zone=self.src_zone)
                             dhi = getDHI(ghi, dni, hour=hr + 1, lat=self.lati[self.lat_lon_ndx[hr]][lat])
-                            tf.write(str(self.src_year) + ',' + '{0:02d}'.format(mth + 1) + ',' +
-                                '{0:02d}'.format(day) + ',' + '{0:02d}'.format(hour) + ',' +
+                            tf.write(str(self.src_year) + ',' + '{:02d}'.format(mth + 1) + ',' +
+                                '{:02d}'.format(day) + ',' + '{:02d}'.format(hour) + ',' +
                                 '{:0.1f}'.format(ghi) + ',' + '{:0.1f}'.format(dni) + ',' +
                                 '{:0.1f}'.format(dhi) + ',' +
                                 str(self.t_2m[hr][lat][lon]) + ',' +
@@ -1034,6 +1295,10 @@ class makeWeather():
                         continue
                     else:
                         self.log += '%s created\n' % out_file[out_file.rfind('/') + 1:]
+        if self.show_progress:
+            self.caller.daybar.setValue(self.caller.daybar.maximum())
+            self.caller.progresslabel.setText('All done')
+            QtCore.QCoreApplication.processEvents()
         return
 
     def __init__(self, caller, src_year, src_zone, src_dir_s, src_dir_w, tgt_dir, fmat, swg='swgdn',
@@ -1091,7 +1356,7 @@ class makeWeather():
                     if j > 0:
                         if fil[:j + 17] not in self.src_s_pfx:
                             self.src_s_pfx.append(fil[:j + 17])
-                            if self.src_s_pfx[-1].find('MERRA3') > 0:
+                            if self.src_s_pfx[-1].find('MERRA3') >= 0:
                                 merra300 = True
                                 self.src_s_pfx[-1] = self.src_s_pfx[-1].replace('MERRA301', 'MERRA300')
                             self.src_s_sfx.append(fil[j + 17 + 8:])
@@ -1131,39 +1396,27 @@ class makeWeather():
             self.vars = {'latitude': 'latitude', 'longitude': 'longitude', 'sp': 'sp', 'swgdn': 'ssrd',
                          'swgnt': 'ssr', 'time': 'time', 't2m': 't2m', 'u10': 'u10', 'u100': 'u100',
                          'v10': 'v10', 'v100': 'v100', 'alb': 'alnip', 'alb2': 'aluvp'}
-            if self.src_dir_s != '':
-                fils = os.listdir(self.src_dir_s)
-                for fil in fils:
-                    if fil[-3:] == '.nc':
-                        j = fil.find('{0:04d}'.format(self.src_year))
-                        if j >= 0:
-                            self.src_s_pfx.append(fil[:j])
-                            self.src_s_sfx.append(fil[j + 4:])
-                         #   break
-                del fils
-            if self.src_dir_w != '':
-                if self.src_dir_w == self.src_dir_s:
-                    self.src_w_pfx = self.src_s_pfx[:]
-                    self.src_w_sfx = self.src_s_sfx[:]
-                else:
-                    fils = os.listdir(self.src_dir_s)
-                    for fil in fils:
-                        if fil[-3:] == '.nc':
-                            j = fil.find('{0:04d}'.format(self.src_year))
-                            if j >= 0:
-                                self.src_w_pfx.append(fil[:j])
-                                self.src_w_sfx.append(fil[j + 4:])
-                         #   break
+            ini_file = getModelFile('getfiles.ini')
+            config = configparser.RawConfigParser()
+            config.read(ini_file)
+            era_file = config.get('getera5', 'filename').split('$year$')
+            self.src_s_pfx = [era_file[0]]
+            self.src_s_sfx = [era_file[1]]
+            self.src_w_pfx = self.src_s_pfx[:]
+            self.src_w_sfx = self.src_s_sfx[:]
         if self.tgt_dir != '':
             self.tgt_dir += '/'
         if info:
             if self.era5:
-                inp_strt = '{0:04d}'.format(self.src_year)
+                inp_strt = '{:04d}'.format(self.src_year)
                 self.log += '\nERA5 file for: ' + inp_strt + '\n'
+                inp_file = self.findFile(inp_strt, quiet=True)
+                if inp_file is None:
+                    inp_file = self.findFile(inp_strt + '01', quiet=True)
                 # get variables from ERA5 file
-                self.getInfo(self.findFile(inp_strt, False))
+                self.getInfo(inp_file)
             else:
-                inp_strt = '{0:04d}'.format(self.src_year) + '0101'
+                inp_strt = '{:04d}'.format(self.src_year) + '0101'
                 self.log += '\nSolar file for: ' + inp_strt + '\n'
                 # get variables from "solar" file
                 self.getInfo(self.findFile(inp_strt, False))
@@ -1174,9 +1427,17 @@ class makeWeather():
         if str(self.src_zone).lower() in ['auto', 'best']:
            # self.auto_zone = True
             if self.era5:
-                inp_strt = '{0:04d}'.format(self.src_year)
+                inp_strt = '{:04d}'.format(self.src_year)
+                inp_file = self.findFile(inp_strt, True, quiet=True)
+                if inp_file is None:
+                    inp_strt += '01'
+                    inp_file = self.findFile(inp_strt, True, quiet=True)
+                    if inp_file is None:
+                        inp_strt += '01'
+                        inp_file = self.findFile(inp_strt, True, quiet=True)
             else:
-                inp_strt = '{0:04d}'.format(self.src_year) + '0101'
+                inp_strt = '{:04d}'.format(self.src_year) + '0101'
+                inp_file = self.findFile(inp_strt, True, quiet=True)
              # get longitude from "wind" file
             unzip_file = self.unZip(self.findFile(inp_strt, True))
             if self.return_code != 0:
@@ -1214,8 +1475,7 @@ class makeWeather():
                 self.log += 'Error with Coordinates field'
                 self.return_code = 2
                 return
-            now = datetime.now()
-            self.log += now.strftime('%Y-%m-%d %H:%M:%S') + '. Processing %s, %s\n' % (self.src_lat, self.src_lon)
+            self.logMsg('Processing %s, %s' % (self.src_lat, self.src_lon))
         else:
             self.src_lat = None
             self.src_lon = None
@@ -1266,9 +1526,9 @@ class makeWeather():
             return
         # MERRA_2 data
         if self.src_zone > 0:
-            inp_strt = '{0:04d}'.format(self.src_year - 1) + '1231'
+            inp_strt = '{:04d}'.format(self.src_year - 1) + '1231'
         else:
-            inp_strt = '{0:04d}'.format(self.src_year) + '0101'
+            inp_strt = '{:04d}'.format(self.src_year) + '0101'
         # get variables from "wind" files
         self.get_data(self.findFile(inp_strt, True))   # get wind data
         if self.return_code != 0:
@@ -1297,17 +1557,15 @@ class makeWeather():
         else:
             yrs = 1
         for mt in range(len(dys)):
-            now = datetime.now()
-            txt = now.strftime('%Y-%m-%d %H:%M:%S') + '. Processing month %s wind\n' % str(mt + 1)
-            self.log += txt
             if self.show_progress:
-                self.caller.progresslabel.setText(txt[19:-1])
                 if self.make_wind:
-                    self.caller.progress(mt / 12.)
+                    progress = mt / 12.
                 else:
-                    self.caller.progress(mt * 2 / 36.)
+                    progress = mt * 2 / 36.
                 self.caller.daybar.setMaximum(dys[mt])
-                QtCore.QCoreApplication.processEvents()
+            else:
+                progress = False
+            self.logMsg('Processing month %s wind' % str(mt + 1), progress)
             for dy in range(1, dys[mt] + 1):
                 if self.src_zone <= 0:
                     if mt == 0 and dy == 1:
@@ -1316,23 +1574,23 @@ class makeWeather():
                     self.caller.daybar.setValue(dy)
                     QtCore.QCoreApplication.processEvents()
                 for yr in range(yrs):
-                    inp_strt = '{0:04d}'.format(self.the_year) + '{0:02d}'.format(mt + 1) + \
-                               '{0:02d}'.format(dy)
+                    inp_strt = '{:04d}'.format(self.the_year) + '{:02d}'.format(mt + 1) + \
+                               '{:02d}'.format(dy)
                     inp_file = self.findFile(inp_strt, True)
                     if inp_file is None:
                         if self.wrap and self.the_year == self.src_year: # check if need to go back a year
                             self.the_year = self.src_year - 1
-                            self.log += 'Wrapping to prior year - %.4d-%.2d-%.2d\n' % (self.the_year, (mt + 1), dy)
+                            self.logMsg('Wrapping to prior year - %.4d-%.2d-%.2d' % (self.the_year, (mt + 1), dy))
                             yrs = 1
                 self.get_data(inp_file)   # get wind data
                 if self.return_code != 0:
                     return
         if self.src_zone < 0:
-            inp_strt = '{0:04d}'.format(self.the_year + 1) + '0101'
+            inp_strt = '{:04d}'.format(self.the_year + 1) + '0101'
             inp_file = self.findFile(inp_strt, True)
             if inp_file is None:
-                self.log += 'Wrapping to prior year - %.4d-%.2d-%.2d\n' % (self.the_year, 1, 1)
-                inp_strt = '{0:04d}'.format(self.the_year) + '0101'
+                self.logMsg('Wrapping to prior year - %.4d-%.2d-%.2d' % (self.the_year, 1, 1))
+                inp_strt = '{:04d}'.format(self.the_year) + '0101'
                 inp_file = self.findFile(inp_strt, True)
             self.get_data(inp_file)
             if self.return_code != 0:
@@ -1366,8 +1624,7 @@ class makeWeather():
                 self.caller.progresslabel.setText('Creating wind weather files')
                 QtCore.QCoreApplication.processEvents()
             target_dir = self.tgt_dir
-            now = datetime.now()
-            self.log += now.strftime('%Y-%m-%d %H:%M:%S') + '. Target directory is %s\n' % target_dir
+            self.logMsg('Target directory is %s' % target_dir)
             if not os.path.exists(target_dir):
                 self.log += 'mkdir %s\n' % target_dir
                 os.makedirs(target_dir)
@@ -1551,9 +1808,9 @@ class makeWeather():
             return  # that's it for wind
         # get variable from solar files
         if self.src_zone > 0:
-            inp_strt = '{0:04d}'.format(self.src_year - 1) + '1231'
+            inp_strt = '{:04d}'.format(self.src_year - 1) + '1231'
         elif self.src_zone <= 0:
-            inp_strt = '{0:04d}'.format(self.src_year) + '0101'
+            inp_strt = '{:04d}'.format(self.src_year) + '0101'
         self.get_rad_data(self.findFile(inp_strt, False))  # get solar data
         if self.return_code != 0:
             return
@@ -1569,14 +1826,12 @@ class makeWeather():
         else:
             yrs = 1
         for mt in range(len(dys)):
-            now = datetime.now()
-            txt = now.strftime('%Y-%m-%d %H:%M:%S') + '. Processing month %s solar\n' % str(mt + 1)
-            self.log += txt
             if self.show_progress:
-                self.caller.progress((mt + 24) / 36.)
+                progress = (mt + 24) / 36.
                 self.caller.daybar.setMaximum(dys[mt])
-                self.caller.progresslabel.setText(txt[19:-1])
-                QtCore.QCoreApplication.processEvents()
+            else:
+                progress= False
+            self.logMsg('Processing month %s solar' % str(mt + 1), progress)
             for dy in range(1, dys[mt] + 1):
                 if self.src_zone <= 0:
                     if mt == 0 and dy == 1:
@@ -1586,13 +1841,13 @@ class makeWeather():
                     QtCore.QCoreApplication.processEvents()
                 found = False
                 for yr in range(yrs):
-                    inp_strt = '{0:04d}'.format(self.the_year) + '{0:02d}'.format(mt + 1) + \
-                               '{0:02d}'.format(dy)
+                    inp_strt = '{:04d}'.format(self.the_year) + '{:02d}'.format(mt + 1) + \
+                               '{:02d}'.format(dy)
                     inp_file = self.findFile(inp_strt, False)
                     if inp_file is None:
                         if self.wrap and self.the_year == self.src_year:
                             self.the_year = self.src_year - 1
-                            self.log += 'Wrapping to prior year - %.4d-%.2d-%.2d\n' % (self.the_year, (mt + 1), dy)
+                            self.logMsg('Wrapping to prior year - %.4d-%.2d-%.2d' % (self.the_year, (mt + 1), dy))
                             yrs = 1
                     if found:
                         break
@@ -1600,11 +1855,11 @@ class makeWeather():
                 if self.return_code != 0:
                     return
         if self.src_zone < 0:
-            inp_strt = '{0:04d}'.format(self.the_year + 1) + '0101'
+            inp_strt = '{:04d}'.format(self.the_year + 1) + '0101'
             inp_file = self.findFile(inp_strt, False)
             if inp_file is None:
-                self.log += 'Wrapping to prior year - %.4d-%.2d-%.2d\n' % (self.the_year, 1, 1)
-                inp_strt = '{0:04d}'.format(self.the_year) + '0101'
+                self.logMsg('Wrapping to prior year - %.4d-%.2d-%.2d' % (self.the_year, 1, 1))
+                inp_strt = '{:04d}'.format(self.the_year) + '0101'
                 inp_file = self.findFile(inp_strt, False)
             self.get_rad_data(inp_file)
             if self.return_code != 0:
@@ -1618,8 +1873,7 @@ class makeWeather():
             self.caller.progresslabel.setText('Creating solar weather files')
             QtCore.QCoreApplication.processEvents()
         target_dir = self.tgt_dir
-        now = datetime.now()
-        self.log += now.strftime('%Y-%m-%d %H:%M:%S') + '. Target directory is %s\n' % target_dir
+        self.logMsg('Target directory is %s' % target_dir)
         if not os.path.exists(target_dir):
             self.log += 'mkdir %s\n' % target_dir
             os.makedirs(target_dir)
@@ -1776,8 +2030,8 @@ class makeWeather():
                                   lon=self.longsi[self.lat_lon_ndx[hr]][lon],
                                   press=self.p_s[hr][lat][lon], zone=self.src_zone)
                             dhi = getDHI(ghi, dni, hour=hr + 1, lat=self.latsi[self.lat_lon_ndx[hr]][lat])
-                            tf.write(str(self.src_year) + ',' + '{0:02d}'.format(mth + 1) + ',' +
-                                '{0:02d}'.format(day) + ',' + '{0:02d}'.format(hour) + ',' +
+                            tf.write(str(self.src_year) + ',' + '{:02d}'.format(mth + 1) + ',' +
+                                '{:02d}'.format(day) + ',' + '{:02d}'.format(hour) + ',' +
                                 '{:0.1f}'.format(ghi) + ',' + '{:0.1f}'.format(dni) + ',' +
                                 '{:0.1f}'.format(dhi) + ',' +
                                 str(self.t_10m[hr][la2][lo2]) + ',' +
@@ -1839,7 +2093,10 @@ class makeWeather():
                         continue
                     else:
                         self.log += '%s created\n' % out_file[out_file.rfind('/') + 1:]
-
+        if self.show_progress:
+            self.caller.daybar.setValue(self.caller.daybar.maximum())
+            self.caller.progresslabel.setText('All done')
+            QtCore.QCoreApplication.processEvents()
 
 class getParms(QtWidgets.QWidget):
 
@@ -2403,6 +2660,8 @@ if "__main__" == __name__:
             elif sys.argv[i][:4] == 'swg=':
                 swg = sys.argv[i][4:]
             elif sys.argv[i][:6] == 'solar=':
+                src_dir_s = sys.argv[i][6:]
+            elif sys.argv[i][:7] == 'erasrc=':
                 src_dir_s = sys.argv[i][6:]
             elif sys.argv[i][:7] == 'source=' or sys.argv[i][:7] == 'srcdir=':
                 src_dir_w = sys.argv[i][7:]

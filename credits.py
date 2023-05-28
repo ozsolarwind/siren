@@ -48,7 +48,7 @@ def fileVersion(program=None, year=False):
             ver_yr = '%04d' % modtime.year
         except:
             pass
-    elif check[-5:] != '.exe':
+    elif check[-4:] != '.exe':
         try:
             modtime = datetime.fromtimestamp(os.path.getmtime(check))
             ver = '4.0.%04d.%d%02d' % (modtime.year, modtime.month, modtime.day)

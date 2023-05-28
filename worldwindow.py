@@ -239,7 +239,7 @@ class WorldScene(QtWidgets.QGraphicsScene):
             pass
         self.show_mgrid = False
         try:
-            show_mgrid = config.get('View', 'show_merra_grid')
+            show_mgrid = config.get('View', 'show_era_grid')
             if show_mgrid.lower() in ['true', 'yes', 'on']:
                 self.show_mgrid = True
         except:
@@ -620,13 +620,17 @@ class WorldWindow(QtWidgets.QMainWindow):
         except:
             pass
 
-    def __init__(self, parent, scene):
+    def __init__(self, parent, scene, era5=False):
         super(WorldWindow, self).__init__(parent)
         self.get_config()
        #  self.setWindowFlags(QtCore.Qt.FramelessWindowHint)
         self.view = WorldView(scene, self.zoom)
         self.view.scale(1., 1.)
         self._mv = self.view
+        if era5:
+            self.era = 'ERA5'
+        else:
+            self.era = 'MERRA-2'
         self.grid_items = None
         self.setStatusBar(QtWidgets.QStatusBar())
         self.view.statusmsg.connect(self.setStatusText)
@@ -645,9 +649,9 @@ class WorldWindow(QtWidgets.QMainWindow):
         self.showGrid.setShortcut('Ctrl+G')
         self.showGrid.setStatusTip('Show Coordinates Grid')
         self.showGrid.triggered.connect(self.show_Grid)
-        self.showMGrid = QtWidgets.QAction(QtGui.QIcon('blank.png'), 'MERRA-2 Grid', self)
+        self.showMGrid = QtWidgets.QAction(QtGui.QIcon('blank.png'), self.era + ' Grid', self)
         self.showMGrid.setShortcut('Ctrl+M')
-        self.showMGrid.setStatusTip('Show MERRA-2 Grid')
+        self.showMGrid.setStatusTip('Show ' + self.era + ' Grid')
         self.showMGrid.triggered.connect(self.show_MGrid)
         self.saveView = QtWidgets.QAction(QtGui.QIcon('camera.png'), 'Save View', self)
         self.saveView.setShortcut('Ctrl+V')
@@ -933,7 +937,7 @@ class WorldWindow(QtWidgets.QMainWindow):
         self.view.statusmsg.emit(comment)
 
     def show_MGrid(self):
-        comment = 'MERRA-2 Grid Toggled '
+        comment = self.era + ' Grid Toggled '
         if self.view.scene().show_mgrid:
             self.view.scene().show_mgrid = False
             self.view.scene()._mgridGroup.setVisible(False)
@@ -952,6 +956,12 @@ class WorldWindow(QtWidgets.QMainWindow):
                 pen2.setJoinStyle(QtCore.Qt.RoundJoin)
            #     pen2.setStyle(QtCore.Qt.DotLine)
                 pen2.setCapStyle(QtCore.Qt.RoundCap)
+                if self.era == 'ERA5':
+                    lat_inc = 0.25
+                    lon_inc = 0.25
+                else:
+                    lat_inc = 0.5
+                    lon_inc = 0.625
                 lat = 85
                 while lat > -85:
                     fromm = self.mapFromLonLat(QtCore.QPointF(-180, lat))
@@ -963,7 +973,7 @@ class WorldWindow(QtWidgets.QMainWindow):
                         item.setPen(pen2)
                     item.setZValue(3)
                     self.view.scene()._mgridGroup.addToGroup(item)
-                    lat -= .5
+                    lat -= lat_inc
                 lon = -180
                 while lon < 180:
                     fromm = self.mapFromLonLat(QtCore.QPointF(lon, self.view.scene().map_upper_left[0]))
@@ -975,7 +985,7 @@ class WorldWindow(QtWidgets.QMainWindow):
                         item.setPen(pen2)
                     item.setZValue(3)
                     self.view.scene()._mgridGroup.addToGroup(item)
-                    lon += 0.625
+                    lon += lon_inc
             self.view.scene().show_mgrid = True
             self.view.scene()._mgridGroup.setVisible(True)
             self.showMGrid.setIcon(QtGui.QIcon('check-mark.png'))

@@ -14,6 +14,5 @@ source_files = ['check_siren.py', 'colours', 'credits', 'dataview', 'dijkstra_4'
                 'siren_versions.csv',
                 'siren_files.py', 'compare_to_siren.git.py']
 version_files = ['flexiplot', 'getera5', 'getmap', 'getmerra2', 'indexweather', 'makegrid',
-                 'makeweatherfiles',
-                 'powermatch', 'powerplot', 'siren', 'sirenm', 'sirenupd',
+                 'makeweatherfiles', 'powermatch', 'powerplot', 'siren', 'sirenm', 'sirenupd',
                  'template', 'updateswis']
