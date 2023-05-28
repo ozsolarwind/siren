@@ -41,15 +41,12 @@ scale = {0: '1:500 million', 1: '1:250 million', 2: '1:150 million', 3: '1:70 mi
 
 class retrieveMap():
 
-    def numTiles(self, z):
-         return(float(pow(2, z)))
-
     def mercatorToLat(self, mercatorY):
         return(math.degrees(math.atan(math.sinh(mercatorY))))
 
     def latEdges(self, y, z):
-        n = self.numTiles(z)
-        unit = 1 / n
+        n = 2 ** z
+        unit = 1. / n
         relY1 = y * unit
         relY2 = relY1 + unit
         if (1 - 2 * relY1) == 1.:
@@ -63,9 +60,9 @@ class retrieveMap():
         return(lat1, lat2)
 
     def lonEdges(self, x, z):
-        n = self.numTiles(z)
-        unit = 360 / n
-        lon1 = -180 + x * unit
+        n = 2 ** z
+        unit = 360. / n
+        lon1 = -180. + x * unit
         lon2 = lon1 + unit
         return(lon1, lon2)
 
@@ -75,11 +72,18 @@ class retrieveMap():
         return((lat2, lon1, lat1, lon2))   # S,W,N,E
 
     def deg2num(self, lat_deg, lon_deg, zoom):
+        # Derived from:  https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#Python
+        if lat_deg > 85:
+            lat_deg = 85
+        elif lat_deg < -85:
+            lat_deg = -85
         lat_rad = math.radians(lat_deg)
         n = 2.0 ** zoom
         xtile = int((lon_deg + 180.0) / 360.0 * n)
+        if xtile >= n:
+            xtile = int(n - 1)
         try:
-            ytile = int((1.0 - math.log(math.tan(lat_rad) + (1 / math.cos(lat_rad))) / math.pi) / 2.0 * n)
+            ytile = int((1.0 - math.asinh(math.tan(lat_rad)) / math.pi) / 2.0 * n)
         except:
             ytile = 0
         return (xtile, ytile)
@@ -99,15 +103,15 @@ class retrieveMap():
             url_tail = self.url_tail.replace('z=zoom', 'z=' + str(zoom))
             url_tail = url_tail.replace('x=x', 'x=' + str(x))
             url_tail = url_tail.replace('y=y', 'y=' + str(y))
-        if self.batch:
+        if self.batch and self.debug:
             print(url + url_tail)
         user_agent = {'User-agent': 'getmap ' + fileVersion() + ' contact siren@sen.asn.au'}
         http = PoolManager(headers=user_agent)
-        if self.batch:
+        if self.batch and self.debug:
             print('Retrieving ' + url_tail)
         response = http.request('GET', url + url_tail)
         if response.status == 200 and response.reason == 'OK':
-            if self.batch:
+            if self.batch and self.debug:
                 print(url_tail + ' retrieved')
             f = open(self.tmp_location + file_name, 'wb')
             f.write(response.data)
@@ -117,12 +121,13 @@ class retrieveMap():
             message = url_tail + ' failed\n' + str(response.status) + ' ' + response.reason
         return message, file_name
 
-    def __init__(self, upper_lat, upper_lon, lower_lat, lower_lon, output, zoom=None, url=None, width=None, height=None, caller=None):
+    def __init__(self, upper_lat, upper_lon, lower_lat, lower_lon, output, zoom=None, url=None, width=None, height=None, caller=None, debug=None):
         if len(sys.argv) > 1 and sys.argv[1][-4:] != '.ini':
             self.batch = True
         else:
             self.batch = False
             self.caller = caller
+        self.debug = debug
         self.log = ''
         self.properties = ''
         config_file = getModelFile('getfiles.ini')
@@ -143,7 +148,7 @@ class retrieveMap():
                 url_key = '&key=' + config.get('getmap', 'mapquest_key')
             except:
                 url_key = '&key=yWspjYHSK6FHtNLzZVcqP3WBxSWSwEo8'
-            if self.batch:
+            if self.batch and self.debug:
                 print(url + url_tail)
             user_agent = {'User-agent': 'getmap ' + fileVersion() + ' contact siren@sen.asn.au'}
             http = PoolManager(headers=user_agent)
@@ -179,13 +184,13 @@ class retrieveMap():
         width = (bottom_right[0] - top_left[0] + 1) * 256
         st, wt, nt, et = self.tileEdges(top_left[0], top_left[1], zoom)
         sb, wb, nb, eb = self.tileEdges(bottom_right[0], bottom_right[1], zoom)
-        if self.batch:
-            print('(183)', '%d: %d,%d --> %1.3f :: %1.3f, %1.3f :: %1.3f' % (zoom, top_left[0], top_left[1], st, nt, wt, et))
-            print('(186)', '%d: %d,%d --> %1.3f :: %1.3f, %1.3f :: %1.3f' % (zoom, bottom_right[0], bottom_right[1], sb, nb, wb, eb))
+        if self.batch and self.debug:
+            print('(189)', '%d: %d,%d --> %1.3f :: %1.3f, %1.3f :: %1.3f' % (zoom, top_left[0], top_left[1], st, nt, wt, et))
+            print('(190)', '%d: %d,%d --> %1.3f :: %1.3f, %1.3f :: %1.3f' % (zoom, bottom_right[0], bottom_right[1], sb, nb, wb, eb))
         w = bottom_right[0] - top_left[0] + 1
         h = bottom_right[1] - top_left[1] + 1
         if self.batch:
-            print(w, h, '=', w * h, 'tiles.', w * 256, 'x', h * 256, 'pixels (approx.', w * 256 * h * 256, 'uncompressed bytes)')
+            print(w, 'x', h, '=', w * h, 'tiles.', w * 256, 'x', h * 256, 'pixels (approx.', w * 256 * h * 256, 'uncompressed bytes)')
             print('map_choice=%s' % (zoom))
             print('map%s=%s' % (zoom, output))
             print('upper_left%d=%1.3f, %1.3f' % (zoom, nt, wt))
@@ -268,22 +273,6 @@ class retrieveMap():
 class getMap(QtWidgets.QWidget):
     statusmsg = QtCore.pyqtSignal()
 
-    def deg2num(self, lat_deg, lon_deg):
-        if lat_deg > 85:
-            ld = 85.
-        elif lat_deg < -85:
-            ld = -85.
-        else:
-            ld = lat_deg
-        lat_rad = math.radians(ld)
-        n = self.world_width
-        xtile = (lon_deg + 180.0) / 360.0 * n
-        try:
-            ytile = (1.0 - math.log(math.tan(lat_rad) + (1 / math.cos(lat_rad))) / math.pi) / 2.0 * n
-        except:
-            ytile = 0
-        return (xtile, ytile)
-
     def __init__(self, help='help.html'):
         super(getMap, self).__init__()
         self.help = help
@@ -292,7 +281,7 @@ class getMap(QtWidgets.QWidget):
         self.northSpin = QtWidgets.QDoubleSpinBox()
         self.northSpin.setDecimals(3)
         self.northSpin.setSingleStep(.5)
-        self.northSpin.setRange(-85.06, 85.06)
+        self.northSpin.setRange(-90, 90)
         self.westSpin = QtWidgets.QDoubleSpinBox()
         self.westSpin.setDecimals(3)
         self.westSpin.setSingleStep(.5)
@@ -300,7 +289,7 @@ class getMap(QtWidgets.QWidget):
         self.southSpin = QtWidgets.QDoubleSpinBox()
         self.southSpin.setDecimals(3)
         self.southSpin.setSingleStep(.5)
-        self.southSpin.setRange(-85.06, 85.06)
+        self.southSpin.setRange(-90, 90)
         self.eastSpin = QtWidgets.QDoubleSpinBox()
         self.eastSpin.setDecimals(3)
         self.eastSpin.setSingleStep(.5)
@@ -584,7 +573,7 @@ class getMap(QtWidgets.QWidget):
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
     if len(sys.argv) > 1 and sys.argv[1][-4:] != '.ini':
-        if not len(sys.argv) >= 6:
+        if not len(sys.argv) >= 6 or sys.argv[1] == '?':
             raise SystemExit('Usage: north_lat west_lon south_lat east_lon output_file zoom=zoom ' +
                              'width=width height=height url=map_url')
         upper_lat = float(sys.argv[1])
@@ -592,15 +581,45 @@ if __name__ == '__main__':
         lower_lat = float(sys.argv[3])
         lower_lon = float(sys.argv[4])
         output = sys.argv[5]
-        try:
-            zoom = int(sys.argv[6])
-        except:
-            zoom = 6
-        if len(sys.argv) > 7:
-            url = sys.argv[7]
-            retrieveMap(upper_lat, upper_lon, lower_lat, lower_lon, output, zoom=zoom, url=url)
-        else:
-            retrieveMap(upper_lat, upper_lon, lower_lat, lower_lon, output, zoom=zoom)
+        zoom = 6
+        width = None
+        height = None
+        url = None
+        debug = None
+        if len(sys.argv) > 5:
+            try:
+                zoom = int(sys.argv[6])
+            except:
+                pass
+            for arg in sys.argv[5 :]:
+                if arg[:5] == 'zoom=':
+                    try:
+                        zoom = int(arg[5:])
+                    except:
+                        pass
+                elif arg[:6] == 'width=':
+                    try:
+                        width = int(arg[6:])
+                    except:
+                        pass
+                elif arg[:7] == 'height=':
+                    try:
+                        height = int(arg[7:])
+                    except:
+                        pass
+                elif arg[:4] == 'url=':
+                    try:
+                        url = arg[4:]
+                    except:
+                        pass
+                elif arg[:6] == 'debug=':
+                    try:
+                        if arg[6:7].lower() in ['y', 't', '1']:
+                            debug = True
+                    except:
+                        pass
+
+        retrieveMap(upper_lat, upper_lon, lower_lat, lower_lon, output, zoom=zoom, width=width, height=height, url=url, debug=debug)
     else:
         ex = getMap()
         app.exec_()
