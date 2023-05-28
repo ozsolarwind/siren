@@ -28,6 +28,9 @@ div.experiment {
     border: 1px solid red;
     border-radius: 5px;
 }
+h4, h5 {
+    font-size: 18px;
+}
 img {
     vertical-align: text-top;
 }
@@ -170,9 +173,11 @@ ul {
 <li><a href="#map">Obtaining a Suitable Map Image</a></li>
 <li><a href="#swisupd">Obtaining Current SWIS Facilities</a></li>
 <li><a href="#reanalysis">Obtaining and Using Satellite Reanalysis Data for SAM weather files</a></li>
-<li><a href="#corr">Validation of NASA MERRA-2 Data and the SAM Models</a></li>
-<li><a href="#merra">Obtaining and Using NASA MERRA-2 Data for SAM weather files</a></li>
 <ul class="none">
+<li><a href="#era">Obtaining and Using ECMWF ERA5 Data for SAM weather files</a></li>
+<li><a href="#ecorr">Validation of ECMWF ERA5 Data and the SAM Models</a></li>
+<li><a href="#merra">Obtaining and Using NASA MERRA-2 Data for SAM weather files</a></li>
+<li><a href="#corr">Validation of NASA MERRA-2 Data and the SAM Models</a></li>
 <li><a href="#makeweather">Produce wind and solar weather files</a></li>
 </ul>
 <li><a href="#index">Using other Weather Files</a></li>
@@ -366,7 +371,6 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 </td>
 </tr>
 </table>
-
 <h3 id="sample">Sample SIREN Model</h3>
 <p>The sample SIREN model for the SWIS for 2014 and 2015. The default Preferences files, <em>SIREN.ini</em>, is set up for this data and assumes the <em>siren_sample</em> folder is located in the same parent folder as the <em>siren</em> folder. The sample data contains:
 <ul class="none">
@@ -533,10 +537,10 @@ You can also use TMY files such as those provided with SAM. If you have a number
 <tr class="none">
 <th>Power range (MW)</th>
 <th>Line Type(s)</th>
-<th>Cost per Km</th>
+<th>Cost per km</th>
 <th>Substation Cost</th>
 <th>Line Type(s)</th>
-<th>Cost per Km</th>
+<th>Cost per km</th>
 <th>Substation Cost</th>
 </tr>
 <tr class="none">
@@ -1509,7 +1513,7 @@ This entails all costs associated with connecting a power station to the network
 <tr class="none">
 <td class="none">
 <dfn>line_costs</dfn></td>
-<td class="none">A list of the line types and their costs per Km separated by commas. A suffix of K indicates thousands and M millions. Example: <em>(220_s=0.6M, 220_d=0.9M, 330_s=1.0M, 330_d=1.5M)</em> describes the lines in <a href="#grid">Types of Grid Lines</a></td>
+<td class="none">A list of the line types and their costs per km separated by commas. A suffix of K indicates thousands and M millions. Example: <em>(220_s=0.6M, 220_d=0.9M, 330_s=1.0M, 330_d=1.5M)</em> describes the lines in <a href="#grid">Types of Grid Lines</a></td>
 </tr>
 <tr class="none">
 <td class="none">
@@ -2859,7 +2863,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 </tr>
 <tr class="none">
 <td class="none"><img src="blank.png" alt="Line Costs">&nbsp;&nbsp;Line Costs</td>
-<td class="none">List the cost per Km for each type of line</td>
+<td class="none">List the cost per km for each type of line</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="blank.png" alt="Substation Costs">&nbsp;&nbsp;Substation Costs</td>
@@ -3407,7 +3411,12 @@ If it's not a diurnal chart (i.e. Period is <em>&lt;None&gt;</em>) any occurence
 <p>Running the SIREN models will produce hourly generation figures which identify generation shortfalls and excesses against load (demand). One of the outputs from SIREN is a table of these generation shortfalls which could be met by storage (charged by surplus renewable generation) and dispatchable energy generation. The Powermatch (<code>powermatch</code>) component of SIREN can be used to match generation with demand (load) to quantify and cost this dispatchable energy generation, storage and CO<sub>2</sub>-e emissions. This enables you to complete a costed renewable energy scenario. If the input data spreadsheet has zones (of generation) the calculations will be performed for each zone.</p>
 <p>One of the outputs from Powermatch is calculated Levelised Cost figures for each Generator, LCOG, and Storage, LCOS, and an overall LCOE. The Levelised Costs are calculated based upon either Capital (Capex), Operations (Opex) and fuel costs or a Reference LCOE and Reference Capacity Factor (CF) for the generator or storage.
 Be aware that if a facility is not used it will have no costs associated with it (this is based upon the premise that the facility would not be included in any detailed modelling).
-Surplus - spilled or curtailed - generation is normally used in the calculation of the (overall) LCOE. You can choose to ignore this in calculating the LCOE. The default, and recommendation, is to include the surplus (<em>adjusted_lcoe</em>)
+Powermatch has three interpretations of levelised cost:
+<ol>
+<li>LCOG and LCOS. This is the average cost of all generation (or, in the case of storage, discharge) produced by a facility</li>
+<li>LCOE. The average cost of electricity. This is generally higher as it excludes surplus - spilled or curtailed - generation from renewable technologies not used &ldquo;to meet load&rdquo;. This is the default, and recommended, figure for levelised cost (excluding carbon cost; <em>adjusted_lcoe</em>). You can choose to ignore this in calculating the LCOE. For non-renewable technologies this is the same as LCOG</li>
+<li>LCOE with CO2 Cost. The average cost of electricity (LCOE) including carbon cost</li>
+</ol>
 <p><strong>Note:</strong> The SIREN Powermatch component was in part inspired by the Powerbalance worksheets developed by Ben Rose. For those who would prefer his spreadsheet approach an enhanced version, Powerbalance2, is available at <a href="https://cleanenergymodelling.com.au/powerbalance2/" target="_blank">https://cleanenergymodelling.com.au/powerbalance2/</a></p>
 <p>The Powermatch options are as set out here. The options (Properties) are specified in the <a href="#p_pm">[Powermatch]</a> Section of the Preferences file. The associated property is indicated in brackets at the end of the description. All files are located in the SIREN Scenarios folder.</p>
 <table border="0" class="none" cellpadding="2">
@@ -3456,9 +3465,11 @@ Surplus - spilled or curtailed - generation is normally used in the calculation 
 <tr><td class="none"><dfn>Subtotal</dfn></td><td class="none">The full (yearly) generation for a generator, including surplus generation and generation used to recharge storage; MWh</td></tr>
 <tr><td class="none"><dfn>CF</dfn></td><td class="none">The capacity factor for the facility</td></tr>
 <tr><td class="none"><dfn>Cost</dfn></td><td class="none">Calculated (yearly) cost for the facility</td></tr>
-<tr><td class="none"><dfn>Levelised Cost</dfn></td><td class="none">Calculated Levelised Cost for the facility</td></tr>
+<tr><td class="none"><dfn>LCOG</dfn></td><td class="none">Calculated Levelised Cost for generation from the facility</td></tr>
+<tr><td class="none"><dfn>LCOE</dfn></td><td class="none">Calculated Levelised Cost for electricity from the facility. For renewable facilities this figure calculates the average cost for generation that was used to meet load (takes into account surplus generation). In determining this figure the contribution from storage to meet load is included</td></tr>
 <tr><td class="none"><dfn>Emissions</dfn></td><td class="none">Calculated (yearly) emissions for the facility; tCO<sub>2</sub>&#x2011;e</td></tr>
 <tr><td class="none"><dfn>Emissions Cost</dfn></td><td class="none">Calculated (yearly) cost of emissions for the facility</td></tr>
+<tr><td class="none"><dfn>LCOE with CO2</dfn></td><td class="none">Calculated Levelised Cost for electricity from the facility including any carbon cost from emissions</td></tr>
 <tr><td class="none"><dfn>Max MWh</dfn></td><td class="none">The maximum generation or contribution to meeting load for the facility. This can be used to assess if the Capacity for a generator can be reduced</td></tr>
 <tr><td class="none"><dfn>Max Balance</dfn></td><td class="none">The maximum storage for the facilty. This can be used to assess whether the capacity for the facility can be reduced or the need for more generation capacity to recharge the facility</td></tr>
 <tr><td class="none"><dfn>Capital Cost</dfn></td><td class="none">The capital cost for the facility. This is the total capital cost for the facility and not an annual cost. It will only be shown for facilities with Capex figures and not for those with a Reference LCOE</td></tr>
@@ -3471,6 +3482,8 @@ Surplus - spilled or curtailed - generation is normally used in the calculation 
 <br />The table also presents some additional figures that, in the main, indicate the RE contribution to meeting demand:
 <table border="0" class="none" style="margin-left:35px">
 <tr><td class="none"><dfn>LCOE</dfn></td><td class="none">Overall LCOE figure (takes into account surplus (spilled) generation</td></tr>
+<tr><td class="none"><dfn>Carbon Cost</dfn></td><td class="none">Carbon costs for emissions</td></tr>
+<tr><td class="none"><dfn>Total incl. Carbon Cost</dfn></td><td class="none">Overall costs and LCOE figure including carbon cost</td></tr>
 <tr><td class="none"><dfn>RE %age</dfn></td><td class="none">The percentage of total generation from RE facilities</td></tr>
 <tr><td class="none"><dfn>Storage %age</dfn></td><td class="none">The percentage of demand met from storage</td></tr>
 <tr><td class="none"><dfn>Load met (xx%)</dfn></td><td class="none">The amount of load met from generation</td></tr>
@@ -3503,6 +3516,7 @@ Surplus - spilled or curtailed - generation is normally used in the calculation 
 <tr><td class="none"><dfn>Emissions Cost<dfn></td><td class="none">The estimated cost emissions for each facility</td></tr>
 <tr><td class="none"><dfn>Generation (MWh)<dfn></td><td class="none">Generation for each generator</td></tr>
 <tr><td class="none"><dfn>LCOE ($/MWh)</dfn><br />(or <dfn>Levelised Cost</dfn>)</td><td class="none">Levelised Cost for each facility</td></tr>
+<tr><td class="none"><dfn>LCOE with CO2 Cost($/MWh)</dfn></td><td class="none">Levelised Cost for each facility including carbon cost</td></tr>
 <tr><td class="none"><dfn>Lifetime Cost</dfn></td><td class="none">The lifetime cost for each facility</td></tr>
 <tr><td class="none"><dfn>Lifetime Emissions</dfn></td><td class="none">The lifetime emissions for each facility</td></tr>
 <tr><td class="none"><dfn>Lifetime Emissions Cost</dfn></td><td class="none">The lifetime cost of emissions for each facility</td></tr>
@@ -3655,6 +3669,8 @@ See below for more details on optimisation.</li>
 <li>A solution with the best (lowest) weighting for six variables - lowest LCOE, lowest CO<sub>2</sub> emissions, lowest Overall Cost, lowest surplus generation, highest RE percentage and maximising the percentage of load met</li>
 <li>A solution with the lowest LCOE and weighting for six variables. Running both does use a single population and so there is some &ldquo;interaction&rdquo; between them which may distort the result</li>
 </ol>
+If a carbon cost is included the LCOE with CO2 Cost is used for evaluation of the lowest LCOE
+<p>
 Genetic algorithms are inspired by the process of natural selection and simulate evolution of multiple generations that evolve to produce an optimal solution, in this case 1. lowest LCOE 2. lowest weighted solution, or 3. lowest in both (<strong>Note:</strong> This is a different approach to optimisation than in Power Model). The approach has a number of inputs:</p>
 <ul>
 <li>A chromosome. This is a series of &ldquo;switches&rdquo; with each switch representing whether a unit of technology is or is not to be included in this iteration of Powermatch. The format of the chromosome is defined by the Optimisation table. In creating the chromosome each technology will be assigned a number of switches representing either a discrete unit of technology or a proportion of the total capacity for that technology (as defined by the Optimisation entry)</li>
@@ -4172,19 +4188,118 @@ Load data can also be downloaded for prior years to a filename defined by the <e
 </li>
 <p><a href="#help">Back to top</a></p>
 <h3 id="reanalysis">Obtaining and Using Satellite Reanalysis Data for SAM weather files</h3>
-<h3 id="corr">Validation of NASA MERRA-2 Data and the SAM Models</h3>
-<p>SAM uses meteorological and solar data to model output of various renewable energy technologies.
-NASA MERRA-2 data is a suitable source to generate data files containing all weather variables required for input to SAM. It allows weather files to be created on a grid of 0.625 degree of longitude by 0.5 degree of latitude. This is approximately an area of 55 Km x 55 Km for the SWIS latitudes.</p>
-<p>Initial correlations between generation calculated by SAM models using NASA MERRA data and actual SCADA generation data (<a href="http://data.wa.aemo.com.au/#facility-scada" target="_blank">AEMO facility SCADA data</a>) obtained by SEN in 2014 are strong enough to support the use of NASA MERRA-derived data for the purposes of the simulation. Average correlation was 0.77, varying from 0.70 to 0.83 for wind and 0.95 for the one utility scale PV farm on the SWIS network.</p>
-<p>More recently MERRA-2 data has been used. The level of correlation measured in 2014 has continued over the years. The following figure graphically presents this correlation for 2018 by showing progressive calculated generation (solid lines) with actual SCADA data (dotted lines) for each renewable generation station on the SWIS. Average correlation for 2018 was 0.79, varying from 0.69 to 0.83 for wind and 0.94 for the one utility scale PV farm on the SWIS network.</p>
-<p>
-<img src="scada_vs_sam_2018_detailed.png" alt="Correlation">
+<p>SAM uses meteorological solar and wind data to model output of various renewable energy technologies. Satellite data is a suitable source to generate data files containing all weather variables required for input to SAM. NASA MERRA-2 data has been used as one source of data by SIREN since 2015. More recently ECMWF ERA5 data has been identified as another source. Both sources provide the hourly data required for the SAM models and show strong correlation between generation calculated by the SAM models and actual SCADA generation data (<a href="http://data.wa.aemo.com.au/#facility-scada" target="_blank">AEMO facility SCADA data</a>) for the SWIS. In recent years the overall generation figures from MERRA-2-derived weather files is 25% to 30% higher than the actual SCADA generation figures while the ERA5-derived figures are around 2% higher suggesting ERA5 may be a better source for weather data (refer to <a href="#ecorr">Validation of ECMWF ERA5 Data and the SAM Models</a> and <a href="#corr">Validation of NASA MERRA-2 Data and the SAM Models</a>). A more detailed and (geographically) wider analysis is warranted.
+<h4 id="era">Obtaining and Using ECMWF ERA5 Data for SAM weather files</h3>
+<h4 id="era1">Using ECMWF ERA5 Data for input to SAM</h4>
+<p>ECMWF ERA5 data is a suitable source to generate data files containing all weather variables required for input to SAM. It allows weather files to be created on a grid of 0.25 degree of longitude by 0.25 degree of latitude or at a larger scale. This is approximately an area of 25 km x 25 km for the SWIS latitudes.</p>
+<p><em>ERA5 hourly data on single levels from 1940 to present</em> provides data suitable to our needs.</p>
+<h4 id="era5">Obtaining ERA5 Data</h4>
+<p>ERA5 Data is publicly available and the following steps can be used to obtain the required data.</p>
+<p>To access ERA5 data you need to <a href="https://cds.climate.copernicus.eu/user/register" target="_blank">create a CDS account</a></p>
+<p>Once set up you can either fill in the data request form or use <code>getera5</code> - see <a href="#getera5">Get ERA5 Files</a>.
+The data request form is at <a href="https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels?tab=form" target="_blank">ERA5 hourly data on single levels from 1940 to present</a>.
+To fill in the form you choose the following options:
+<ul>
+<li>Product type - Reanalysis</li>
+<li>Variable
+<ul>
+<li>Temperature and Pressure - 2m temperature, Surface pressure</li>
+<li>Wind - 100m u-component of wind, 100m u-component of wind, 10m u-component of wind, 10m v-component of wind</li>
+<li>Radiation and heat - Surface net solar radiation, Surface solar radiation downwards</li>
+</ul>
+</li>
+<li>Year - a single year</li>
+<li>Month - either all months or a single month</li>
+<li>Day - all 31 days</li>
+<li>Time - all 24 hours (00:00 to 23:00)</li>
+<li>Geograhical area
+<ul>
+<li>Sub-region extraction - North, West, East, South</li>
+</ul>
+<li>Format - NetCDF (experimental)</li>
+<li>Submit Form</li>
+</ul>
+<p>For timezones greater than zero, such as the SWIS (8 hours), you also need to process a request for Month = 12 and Day = 31. For timezones less than zero you also need to process a request for Month = 1 and Day = 1.</p>
+<p>You can see the progress of <a href="https://cds.climate.copernicus.eu/cdsapp#!/yourrequests" target="_blank">your requests</a>. Once complete you need to save the file in the format <em>era5_data_yyyy.nc</em> or <em>era5_data_yyyymm.nc</em>.
+<h4 id="getera5">Get ERA5 Files</h4>
+<p><code>getera5</code> provides an easier alternate way of downloading ERA5 files than that described above. This approach launches a program that uses the CDS API, <code>cdsapi</code>, to issue the data request as above and save the file or files in the target folder. You still need to create a CDS account.</p>
+<p>When you first execute <code>getera5</code> it will request the check for a <code>.cdsapirc</code> file and if it can't find one it will prompt for the details required - these are your CDS UID and API Key which are displayed on your CDS User profile. If you've invoked <code>getera5</code> in a Windows terminal window and a <code>HOME</code> environment variable does not exist you will need to close and reopen a new terminal window to make the environment variable available to <code>getera5</code>.</p>
+<h5>getera5</h5>
+<p><code>getera5</code> is a program that can be used to download ERA5 data files required to create weather files for SAM. You can invoke the program either by choosing <code>getera5</code> from the SIREN Tools menu or in Windows by running <code>getmerra2.exe</code> in the <em>siren</em> folder. The program accepts a SIREN Preferences file as an optional parameter. The window fields are:</p>
+<ul>
+<li><em>Area of Interest</em>. Area of interest for files to be downloaded. There are three ways the area can be chosen:
+<ol>
+<li>Pressing <em>Choose area via Map</em> to invoke <code>worldwindow</code> (see <a href="#worldwindow">Select area on world map</a>) to choose the area on a world map</li>
+<li>Specifying the bounding coordinates for the area:
+<ul>
+<li><em>North</em>. Upper latitude</li>
+<li><em>West</em>. Left (west) longitude</li>
+<li><em>South</em>. Lower latitude</li>
+<li><em>East</em>. Right (east) longitude</li>
+</ul>
+</li>
+<li>Choosing the centre point and dimensions for the area of interest:
+<ul>
+<li><em>(Centre) Lat</em>. Centre latitude</li>
+<li><em>(Centre) Lon</em>. Centre longitude</li>
+<li><em>Degrees (Lat)</em>. The dimension in degrees north south</li>
+<li><em>Degrees (Lon)</em>. The dimension in degrees east west</li>
+</ul>
+</li>
+</ol>
+You can alternate between these approaches to choose the desired area. If you have passed a SIREN Preferences file or invoked <code>getera5</code> from within SIREN the bounding coordinates will be set to those of the current map
+<br />
+<strong>Note:</strong> The behaviour of the bounding coordinates fields are a little quirky in that they will adjust themselves so the west (left) value is always west of the east value and the north (upper) value is always higher than the south value
+</li>
+<li><em>Grid</em>. The size of the desired grid latitude and longitude. These can be in increments of 0.25 degrees up to a mximum of 3 degrees</li>
+<li><em>Start month</em>. The first month to be downloaded. The CDS API is flexible on the range of dates that can be requested. For pragmatic purposes <code>getera5</code> requests data as a range of months</li>
+<li><em>End month</em>. The last month to be downloaded. If a Start month of 1 and an End month of 12 is chosen the program will request a year of data as a single file</li>
+<li><em>Target Folder</em>. Use this to specify the location for the ERA5 files. To change the location you need to click on the field and navigate to the correct folder (you can't type into the field)</li>
+</ul>
+<p>There are five buttons:</p>
+<ul>
+<li><em>Choose area via Map</em> (at top of window; as above) will open the world map
+<li><em>Done</em> will exit the program</li>
+<li><em>Get Data</em> will invoke one of more new tasks to request and download the ERA5 data for the selected area and date range. As part of the execution a log file will be saved to the Target Folder</li>
+<li><em>Check Data</em> will interrogate ERA5 files in the Target Folder to provide the boundaries for the Area of Interest and set the starting month to download the next month in sequence. The interrogation may cater for files in yearly sub-folders</li>
+<li><em>Help</em> Display this help</li>
+</ul>
+<p>Downloading the ERA5 data are performed by new tasks allowing you to close the <code>getera5</code> window once you have requested the files. Depending on the area and date range the process of downloading is likely to take significant time. A log file with the same name as the target file and a file type of <em>log</em> (e.g. <em>era5_data_202301.log</em>) will contain the results of the request and indicate it's success or otherwise.</p>
+<p>You can also run the program on the command line. In this case the parameters are passed to the program as follows:</p>
+<pre>
+      getera5.exe &lt;parm1=value parm2=value&gt;
+</pre>
+<p>Parameters are as described above and can be passed to the program as follows:</p>
+<ul>
+<li><em>check</em>. If this parameter is passed the program will interrogate ERA5 files in the target folder to provide the boundaries for the area of interest and set the starting date to download the next month in sequence</li>
+<li><em>config=</em> or <em>configuration=</em> or <em>ini=</em>. Alternative Preferences file. Default value is <em>getfiles.ini</em>. You can also specify just the filename</li>
+<li><em>date=</em> or <em>year=</em>. The month or year to download. The format is <em>yyyymm</em> or <em>yyyy</em></li>
+<li><em>dir=</em> or <em>folder=</em> or <em>target=</em> or <em>tgt_dir=</em>. The target folder for the ERA5 files to be downloaded to</li>
+<li><em>get</em> or <em>wget</em> or <em>spawn</em>. Passing this parameter will cause <code>wget</code> to be launched to download the files. If not passed the <em>wget_type_yyyy-mm-dd_hhmm.txt</em> and <em>wget_type_yyyy-mm-dd_hhmm.bat</em> files are created but <code>wget</code> is not launched</li>
+<li><em>lat2=</em> or <em>bottomlat=</em> or <em>botlat=</em> or <em>southlat=</em> or <em>south=</em>. The south latitude of the area of interest</li>
+<li><em>lat1=</em> or <em>toplat=</em> or <em>northlat=</em> or <em>north=</em>. The north latitude of the area of interest</li>
+<li><em>lon1=</em> or <em>leftlon=</em> or <em>westlon=</em> or <em>west=</em>. The west longitude of the area of interest</li>
+<li><em>lon2=</em> or <em>rightlon=</em> or <em>eastlon=</em> or <em>east=</em>. The east longitude of the area of interest</li>
+<li><em>grd1=</em> or <em>grid1=</em> or <em>latgrid</em>. The grid size for latitude</li>
+<li><em>grd2=</em> or <em>grid2=</em> or <em>longrid</em>. The grid size for longitude</li>
+</ul>
 </p>
-<p><strong>Note:</strong> Initially, the <em>swgnt</em> (surface net downward shortwave flux) MERRA variable was used to generate the solar weather variables. This produced outputs that were slightly lower than observed data. To compensate for this a losses percentage of 5 (percent) was used for the SAM pvwattsv5 model. Subsequent work has identified the <em>swgdn</em> (surface incoming shortwave flux) MERRA-2 variable as a more appropriate resource. Using this variable, a losses percentage of 14 - the SAM default - can be used. Validation using either variable (swgnt and 5%, or swgdn and 14%) produces essentially identical results and correlations.
-<h3 id="merra">Obtaining and Using NASA MERRA-2 Data for SAM weather files</h3>
+<p><strong>Notes:</strong>
+<ol class="none">
+<li>The first time you use <code>getera5</code> you should run it interactively to ensure the correct environment (e.g. <code>.cdsapirc</code> file) is established</li>
+<li>If you invoke the program with target folder and check parameters the program will be launched to download more recent files into the target folder with the same area of interest as the existing files.</li>
+</ol>
+</p>
+<h4  id="ecorr">Validation of ECMWF ERA5 Data and the SAM Models</h4>
+ECMWF ERA5 data allows weather files to be created on a grid of 0.25 degree of longitude by 0.25 degree of latitude. This is approximately an area of 25 km x 25 km for the SWIS latitudes.</p>
+<p>Initial correlations between generation calculated by SAM models using ECMWF ERA5 data and actual SCADA generation data (<a href="http://data.wa.aemo.com.au/#facility-scada" target="_blank">AEMO facility SCADA data</a>) obtained by SEN for 2022 are strong enough to support the use of ECMWF ERA5-derived data for the purposes of the simulation. Average correlation was 0.82, varying from 0.65 to 0.83 for wind and 0.77 to 0.93 for utility scale PV farms on the SWIS network. The following figure graphically presents this correlation for 2022 by showing progressive calculated generation (solid lines) with actual SCADA data (dotted lines) for each renewable generation station on the SWIS. There is some variability between the two sets of data for each stations but total calculated generation is within 2% of actual SCADA data.</p>
+<p>
+<img src="scada_vs_sam_era5_2022_detailed.png" alt="Correlation">
+</p>
+<!-- Back to top< -->
+<h4 id="merra">Obtaining and Using NASA MERRA-2 Data for SAM weather files</h3>
 <h4 id="merra1">Using NASA MERRA-2 Data for input to SAM</h4>
-<p>SAM uses meteorological and solar data to model output of various renewable energy technologies.
-NASA MERRA-2 data is a suitable source to generate data files containing all weather variables required for input to SAM. It allows weather files to be created on a grid of 0.625 degree of longitude by 0.5 degree of latitude. This is approximately an area of 55 Km x 55 Km for the SWIS latitudes.</p>
+<p>NASA MERRA-2 data is a suitable source to generate data files containing all weather variables required for input to SAM. It allows weather files to be created on a grid of 0.625 degree of longitude by 0.5 degree of latitude. This is approximately an area of 55 km x 55 km for the SWIS latitudes.</p>
 <p>Two MERRA-2 data files are appropriate for our needs:</p>
 <ul>
 <li><em>tavg1_2d_slv_Nx</em> for wind</li>
@@ -4358,7 +4473,7 @@ You can alternate between these approaches to choose the desired area. If you ha
 <li><em>config=</em> or <em>configuration=</em> or <em>ini=</em>. Alternative Preferences file. Default value is <em>getfiles.ini</em>. You can also specify just the filename</li>
 <li><em>date=</em> or <em>date1=</em> or <em>strtdate=</em> or <em>startdate=</em>. The first date to download. The format is <em>yyyy-mm-dd</em></li>
 <li><em>date2=</em> or <em>enddate=</em>. The last date to download. The format is <em>yyyy-mm-dd</em></li>
-<li><em>dir=</em> or <em>folder=</em> or <em>target=</em> or <em>tgt_dir=</em>. The target folder for the MERRA-2 files to be downloaded</li>
+<li><em>dir=</em> or <em>folder=</em> or <em>target=</em> or <em>tgt_dir=</em>. The target folder for the MERRA-2 files to be downloaded to</li>
 <li><em>get</em> or <em>wget</em> or <em>spawn</em>. Passing this parameter will cause <code>wget</code> to be launched to download the files. If not passed the <em>wget_type_yyyy-mm-dd_hhmm.txt</em> and <em>wget_type_yyyy-mm-dd_hhmm.bat</em> files are created but <code>wget</code> is not launched</li>
 <li><em>lat2=</em> or <em>bottomlat=</em> or <em>botlat=</em> or <em>southlat=</em> or <em>south=</em>. The south latitude of the area of interest</li>
 <li><em>lat1=</em> or <em>toplat=</em> or <em>northlat=</em> or <em>north=</em>. The north latitude of the area of interest</li>
@@ -4371,34 +4486,50 @@ You can alternate between these approaches to choose the desired area. If you ha
 <ol class="none">
 <li>The first time you use <code>getmerra2</code> you should run it interactively to ensure the correct environment (e.g. <code>.netrc</code> file) is established</li>
 <li>If you invoke the program with collection, target folder, check and wget parameters <code>wget</code> will be launched to download more recent files into the target folder with the same area of interest as the existing files.</li>
-<li>Occasionally MERRA-2 datasets will be reprocessed, e.g. September 2020, which may result in a change to the location of the files on the NASA MERRA-2 server. This may require the filename property in the [getmerra2] section of the Preferences file used by <code>getmerra2</code>. For example, for September 2020 the string &lsquo;MERRA2_400&rsquo; needs to be changed to &lsquo;MERRA2_401&rsquo; to download files for that month.
+<li>Occasionally MERRA-2 datasets will be reprocessed, e.g. September 2020, which may result in a change to the location of the files on the NASA MERRA-2 server. This may require the filename property in the [getmerra2] section of the Preferences file used by <code>getmerra2</code>. For example, for September 2020 the string &lsquo;MERRA2_400&rsquo; needs to be changed to &lsquo;MERRA2_401&rsquo; to download files for that month.</li>
 </ol>
 </p>
+<h4 id="corr">Validation of NASA MERRA-2 Data and the SAM Models</h3>
+NASA MERRA-2 data allows weather files to be created on a grid of 0.625 degree of longitude by 0.5 degree of latitude. This is approximately an area of 55 km x 55 km for the SWIS latitudes.</p>
+<p>Initial correlations between generation calculated by SAM models using NASA MERRA data and actual SCADA generation data (<a href="http://data.wa.aemo.com.au/#facility-scada" target="_blank">AEMO facility SCADA data</a>) obtained by SEN in 2014 are strong enough to support the use of NASA MERRA-derived data for the purposes of the simulation. Average correlation was 0.77, varying from 0.70 to 0.83 for wind and 0.95 for the one utility scale PV farm on the SWIS network. The level of correlation measured in 2014 has continued over the years. The following figure graphically presents this correlation for 2022 by showing progressive calculated generation (solid lines) with actual SCADA data (dotted lines) for each renewable generation station on the SWIS. Average correlation for 2022 was 0.80, varying from 0.56 to 0.78 for wind and and 0.75 to 0.92 for utility scale PV farms on the SWIS network. There is some variability between the two sets of data for each stations and total calculated generation is about 25% greater than actual SCADA data.</p>
+<p>
+<img src="scada_vs_sam_2022_detailed.png" alt="Correlation">
+</p>
+<p><strong>Note:</strong> Initially, the <em>swgnt</em> (surface net downward shortwave flux) MERRA variable was used to generate the solar weather variables. This produced outputs that were slightly lower than observed data. To compensate for this a losses percentage of 5 (percent) was used for the SAM pvwattsv5 model. Subsequent work has identified the <em>swgdn</em> (surface incoming shortwave flux) MERRA-2 variable as a more appropriate resource. Using this variable, a losses percentage of 14 - the SAM default - can be used. Validation using either variable (swgnt and 5%, or swgdn and 14%) produces essentially identical results and correlations.
 <!-- Back to top< -->
 <h4 id="makeweather">Produce wind and solar weather files</h4>
 <h5>makeweatherfiles</h5>
-<p><code>makeweatherfiles</code> is a program that can be used to produce solar and/or wind weather files for input to SAM. The program generates SMW (preferred for SAM) or CSV format solar resource files and SRW format wind resource files. These file formats have been chosen as they're easier to generate than other formats. Using the program you specify the source folder for the MERRA-2 data files, the time zone for the area of interest, a file format and target folder for the weather files. The program will generate files for each of the MERRA-2 grid squares within the chosen MERRA-2 data files or optionally for a number of latitude and longitude positions. You can invoke the program either by choosing <code>makeweatherfiles</code> from the SIREN Tools menu or in Windows by running <code>makeweatherfiles.exe</code> in the <em>siren</em> (or <em>makeweatherfiles</em>) folder. Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
+<p><code>makeweatherfiles</code> is a program that can be used to produce solar and/or wind weather files for input to SAM. The program generates SMW (preferred for SAM) or CSV format solar resource files and SRW format wind resource files. These file formats have been chosen as they're easier to generate than other formats. Using the program you specify the source folder for either the ERA5 or  MERRA-2 data files, the time zone for the area of interest, a file format and target folder for the weather files. The program will generate files for each of the ERA5 or MERRA-2 grid squares within the chosen data files or optionally for a number of latitude and longitude positions. You can invoke the program either by choosing <code>makeweatherfiles</code> from the SIREN Tools menu or in Windows by running <code>makeweatherfiles.exe</code> in the <em>siren</em> (or <em>makeweatherfiles</em>) folder. Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
 <ul>
 <li><em>Year</em>. Year of interest. The naming conventions for MERRA-2 files include the date so this defines the date range. The tool processes dates from the last day of the prior year through to the first day of the next year (ignoring 29 February)</li>
-<li><em>Wrap to prior year</em>. To enable you to use (more) recent weather data this option will indicate that weather data should wrap to the prior year. As an example, if you have downloaded MERRA-2 data up until April for the current year <code>makeweatherfiles</code> will use weather data from the prior year for May onwards to give a full year of data. The MERRA-2 data for both years must reside in the same folder (or the next sub-folder if yearly folders are used) and have the same dimensions for latitude and longitude</li>
+<li><em>Wrap to prior year</em>. To enable you to use (more) recent weather data this option will indicate that weather data should wrap to the prior year. As an example, if you have downloaded data up until April for the current year <code>makeweatherfiles</code> will use weather data from the prior year for May onwards to give a full year of data. The     data for both years must reside in the same folder (or the next sub-folder if yearly folders are used) and have the same dimensions for latitude and longitude</li>
 <li><em>Ignore data gaps</em>. This option will cater for individual MERRA-2 files containing different dimensions for latitude and longitude. If this option is selected the program will create weather files where there are gaps for 21 days or less. If there are more gaps the file will not be created.
+<ul>
+<li>MERRA-2
 <ul>
 <li>The program does require a MERRA-2 file for each day of the year (It is possible to copy another file, say for the same day of another year, and rename it to &ldquo;replace&rdquo; the missing file)</li>
 <li>In creating a solar weather file the program requires both wind and solar MERRA-2 files, so any gaps in either dataset will result in a gap in the solar weather file</li>
 </ul></li>
+<li>ERA5
+<ul>
+<li>The program requires a ERA5 file for each month of the year</li>
+</ul>
+</ul>
+</li>
 <li><em>Time Zone</em>. The (solar) time zone for the area of interest. This is used to create suitable weather files where the first hour in the file is the first hour of the year in the local time zone. A value of <em>auto</em> will cause the program to use the (first) longitude and a value of <em>best</em> will cause the program to use the time zone with the most longitude values in the MERRA-2 data files to calculate the time zone</li>
 <li><em>Solar Format</em>. The solar option can produce weather files in either of two formats - SMW or CSV format. This option allows you to choose your preferred one. SMW format is suitable for SAM while it may have trouble with the CSV format</li>
-<li><em>Solar Variable</em>. There are two MERRA-2 solar variables to use to create weather files - swgdn or swgnt</li>
-<li><em>Hub height</em>. To extrapolate wind data above the 50 metre maximum in the MERRA-2 data. This can be used to cater for wind turbines with higher hub heights</li>
-<li>Extrapolation will use the chosen <em>law</em>, either <em>logarithmic</em>, the default, or <em>Hellmann</em> as desceibed below</li>
+<li><em>Solar Variable</em>. There are two MERRA-2 solar variables to use to create weather files - <em>swgdn</em> or <em>swgnt</em>. The equivalent ERA5 variables are - <em>ssrd</em> and <em>ssr</em></li>
+<li><em>Hub height</em>. To extrapolate wind data above the 50 metre maximum in the MERRA-2 data, or 100 metres in ERA5 data. This can be used to cater for wind turbines with higher hub heights. SAM's <em>windpower</em> model expects wind data within 35 metres of the hub height.
+<br /><strong>Note</strong>: SIREN can dynamically extrapolate wind data when running Powermodel so if using SIREN theer is no need to produce extrapolated wind data</li>
+<li>Extrapolation will use the chosen <em>law</em>, either <em>logarithmic</em>, the default, or <em>Hellmann</em> as described below</li>
 <li><em>Coordinates</em>. Rather than producing weather files for each grid cell in the chosen area you can restrict it by passing a string of comma-separated latitude and longitude values. The tool will then generate files for just these coordinates.
 <ul>
 <li>For latitudes and longitudes that don't match cell dimensions in the MERRA-2 files values will be calculated from ratios of values for the surrounding cells</li>
 <li>If there are data gaps values will be calculated from the nearest cells</li>
 </ul></li>
 <li><em>Copy folder down</em>. This is an ease of use field. If this is checked any changes to the Solar Source Folder field will be propagated to the other two Folder fields</li>
-<li><em>Solar Folder</em>. Use this to specify the location for the MERRA-2 solar (<em>tavg1_2d_rad_Nx</em>) source files. To change the location you need to click on the field and navigate to the correct folder (you can't type into the field). This location is only used for solar files</li>
-<li><em>Wind Folder</em>. Use this to specify the location for the MERRA-2 wind (<em>tavg1_2d_slv_Nx</em>) source files. To change the location you need to click on the field and navigate to the correct folder (you can't type into the field). This location is used for both solar and wind files so you need to specify it in all cases</li>
+<li><em>Solar/ERA5 Folder</em>. Use this to specify the location for the MERRA-2 solar (<em>tavg1_2d_rad_Nx</em>) source files or ERA5 data files. To change the location you need to click on the field and navigate to the correct folder (you can't type into the field). This location is used for ERA5 data files and for MERRA-2 it's only used for solar files</li>
+<li><em>Wind Folder</em>. Use this to specify the location for the MERRA-2 wind (<em>tavg1_2d_slv_Nx</em>) source files. To change the location you need to click on the field and navigate to the correct folder (you can't type into the field). This location is not required for ERA5 data files. For MERRA-2 files it is used for both solar and wind files, so you need to specify it in all cases</li>
 <li><em>Target Folder</em>. Use this to specify the location for the weather files produced by the tool. To change the location you need to click on the field and navigate to the correct folder (you can't type into the field)</li>
 </ul>
 <p>There are six buttons:</p>
@@ -4416,8 +4547,8 @@ You can alternate between these approaches to choose the desired area. If you ha
 <li><em>1.</em> Successful execution, however, the time zone chosen does not match the time zone(s) suggested by the MERRA-2 data files. If you chose <em>auto</em> or <em>best</em> this indicates more than one time zone is suggested by the MERRA-2 data files</li>
 <li><em>2.</em> Error with coordinates field</li>
 <li><em>3.</em> Invalid output file format specified. It must be one of <em>csv</em>, <em>smw</em>, <em>srw</em>, or <em>wind</em></li>
-<li><em>4.</em> MERRA-2 data file not found. The program requires filename(s) to be in a specific format so either the filename doesn't match that format or the source folder is incorrect</li>
-<li><em>5.</em> Error with MERRA-2 data file. If you encounter an error &ldquo;Regridder Error. File generation error: Failed to create working directory.&rdquo; you might attempt to obtain a valid copy of the file in error by entering it's URL entry from the MERRA-2 search results into your browser</li>
+<li><em>4.</em> Data file not found. The program requires filename(s) to be in a specific format so either the filename doesn't match that format or the source folder is incorrect</li>
+<li><em>5.</em> Error with data file. If you encounter a MERRA-2 error &ldquo;Regridder Error. File generation error: Failed to create working directory.&rdquo; you might attempt to obtain a valid copy of the file in error by entering it's URL entry from the MERRA-2 search results into your browser</li>
 </ul>
 <p>You can also run the program on the command line. In this case the parameters are passed to the program as follows:</p>
 <pre>
@@ -4430,7 +4561,7 @@ You can alternate between these approaches to choose the desired area. If you ha
 <li><em>fmat=</em> Weather file format</li>
 <li><em>gaps=</em> A value starting with <em>y</em> (yes) or <em>t</em> (true) indicates to create files with data gaps</li>
 <li><em>hub_height=</em> A hub height to extrapolate wind speeds</li>
-<li><em>solar=</em> Location of the MERRA-2 solar (<em>tavg1_2d_rad_Nx</em>) files</li>
+<li><em>solar=</em> or <em>erasrc=</em> Location of the ERA5 files or MERRA-2 solar (<em>tavg1_2d_rad_Nx</em>) files</li>
 <li><em>swg=</em> Solar variable - swgdn or swgnt. Default is swgnt</li>
 <li><em>target=</em> or <em>tgtdir=</em> Location for the weather files produced</li>
 <li><em>wind=</em> Location of the MERRA-2 wind (<em>tavg1_2d_slv_Nx</em>) files</li>
@@ -4441,6 +4572,8 @@ You can alternate between these approaches to choose the desired area. If you ha
 </p>
 <p><strong>Notes:</strong>
 <ol>
+<li>MERRA-2
+<ul>
 <li>The program should also handle MERRA (version 1) data files downloaded (probably) prior to February 2016</li>
 <li>The program assumes each day of data is a separate file and uses the filename to as a &ldquo;key&rdquo; to the data. It relies on:
 <ul>
@@ -4448,14 +4581,40 @@ You can alternate between these approaches to choose the desired area. If you ha
 <li>Filenames contain <em>tavg1_2d_slv_Nx.YYYYMMDD</em> for wind and <em>tavg1_2d_rad_Nx.YYYYMMDD</em> for solar, where <em>YYYYMMDD</em> indicates the data file for that day</li>
 <li>All files of the same type (solar or wind) being in the same folder</em>
 <li>If you download two copies of the same file wget will append a number to the second copy filename, e.g. ...nc4.1. At present these will be ignored</li>
+</ul></li>
 </ul>
-<li>A packaged version of <code>makeweatherfiles</code> for Windows is available as a self-extracting zip file from <a href="https://sourceforge.net/projects/sensiren/" target="_blank">https://sourceforge.net/projects/sensiren/</a>. The file is <a href="https://sourceforge.net/projects/sensiren/files/sen_makeweather_getmerra2.exe/download" target="_blank">sen_makeweather_getmerra2.exe</a> (the package has been created with PyInstaller) and contains both <code>makeweatherfiles</code> and <code>getmerra2</code> which enables MERRA-2 files to be downloaded. This package allows you to create SAM weather files from MERRA-2 files without requiring any other parts of SIREN</a></li>
-<li>With increasing hub heights associated with larger turbines the SAM models are impacted by the lack of suitable wind speed data at greater heights. The MERRA-2 climate data has a maximum wind speed height of 50 metres which will cope with hub heights up to around 85 metres. To overcome the wind data limitation the Hub height parameter can be used to extrapolate wind speeds to a greater (hub) height. <code>makeweatherfiles</code> will extrapolate wind speed using either of two commonly used laws (models). The law to be used can be specified in the <em>extrapolate</em> property of the [makeweatherfiles] Section of the <a href="#getfiles">getfiles.ini</a> Preferences file, and can be either <em>logarithmic</em>, the default, or <em>Hellmann</em>. This additional data will be added to the normal wind file.
+</li>
+<li>ERA5
+<ul>
+<li>Normally, the program assumes each month of data is a separate file and uses the filename as a &ldquo;key&rdquo; to the data. Filenames are of the format <em>era5_data_&lt;yyyymm&gt;.nc</em></li>
+<li>It is also possible to use a single file for a year, of the format <em>era5_data_&lt;yyyy&gt;.nc</em></li>
+<li>When processing the data the program also looks for data for the last day of the prior year (for timezones > 0) or the first day of the next year (for timezones < 0). It will look for one of the appropriate month file, the appropriate year file, or a file for the single day (<em>era5_data_&lt;yyyymmdd&gt;.nc</em> format)</li>
+</ul>
+</li>
+<li>A packaged version of <code>makeweatherfiles</code> for Windows is available as a self-extracting zip file from <a href="https://sourceforge.net/projects/sensiren/" target="_blank">https://sourceforge.net/projects/sensiren/</a>. The file is <a href="https://sourceforge.net/projects/sensiren/files/sen_makeweather_getera.exe/download" target="_blank">sen_makeweather_getera.exe</a> (the package has been created with PyInstaller) and contains <code>makeweatherfiles</code>, <code>getera5</code>, which enables ERA5 files to be downloaded, and <code>getmerra2</code>, which enables MERRA-2 files to be downloaded. This package allows you to create SAM weather files from ERA5 or MERRA-2 files without requiring any other parts of SIREN</a></li>
+<li>With increasing hub heights associated with larger turbines the SAM models are impacted by the lack of suitable wind speed data at greater heights. The MERRA-2 climate data has a maximum wind speed height of 50 metres which will cope with hub heights up to around 85 metres. The ERA5 data has a maximum wind speed height of 100 metres which will cope with hub heights up to around 135 metres. To overcome the wind data limitation the Hub height parameter can be used to extrapolate wind speeds to a greater (hub) height. <code>makeweatherfiles</code> will extrapolate wind speed using either of two commonly used laws (models). The law to be used can be specified in the <em>extrapolate</em> property of the [makeweatherfiles] Section of the <a href="#getfiles">getfiles.ini</a> Preferences file, and can be either <em>logarithmic</em>, the default, or <em>Hellmann</em>. This additional data will be added to the normal wind file.
 <p>Discussions on the two wind profile laws can be found at &lsquo;Wind profile power law&rsquo; (aka Hellmann law; <a href="https://en.wikipedia.org/wiki/Wind_profile_power_law" target="_blank">https://en.wikipedia.org/wiki/Wind_profile_power_law</a>) and &lsquo;Log wind profile&rsquo; (aka logarithmic law; <a href="https://en.wikipedia.org/wiki/Log_wind_profile" target="_blank">https://en.wikipedia.org/wiki/Log_wind_profile</a>). The Hellmann law tends to give slightly higher wind speeds. &lsquo;Methodologies Used in the Extrapolation of Wind Speed Data at Different Heights and Its Impact in the Wind Energy Resource Assessment in a Region&rsquo; (<a href="https://www.researchgate.net/publication/221912731_Methodologies_Used_in_the_Extrapolation_of_Wind_Speed_Data_at_Different_Heights_and_Its_Impact_in_the_Wind_Energy_Resource_Assessment_in_a_Region" target="_blank">https://www.researchgate.net/publication/221912731_Methodologies_Used_in_the_Extrapolation_of_Wind_Speed_Data_at_Different_Heights_and_Its_Impact_in_the_Wind_Energy_Resource_Assessment_in_a_Region</a>) provides a fuller discussion on the topic.</p></li>
 </ol>
 <p>
-<h4 id="usage">Using getmerra2 and makeweatherfiles</h4>
-<p>To make use of <code>getmerra2</code> and <code>makeweatherfiles</code> the following steps should help:</p>
+<h4 id="usage">Using getera5, getmerra2 and makeweatherfiles</h4>
+<p>To make use of <code>getera5</code>, <code>getmerra2</code> and <code>makeweatherfiles</code> the following steps should help:</p>
+<ul>
+<li><code>getera5</code> get ERA5 data</p>
+<ol>
+<li>Ensure you <a href="#getera5">create a CDS account</a> as described above to gain access to the ERA5 data</p></li>
+<li>Set up a <code>.cdapirc</code> file and for Windows a <code>HOME</code> environment variable. The first time you invoke <code>getera5</code> it will allow you to set these up</p></li>
+<li>Run <code>getera5</code> to get the ERA5 data for your area of interest</p>
+<ol>
+<li>You specify the bounding coordinates for your area of interest. For example, for the SWIS in Western Australia you could input North -26.0, South -36.0, West 113.125 and East 122.5</li>
+<li>Specify the month range. To create a SAM weather file you need at least one year of data plus the last day of the prior year and/or the first day of the next year. As an example Start month: 01/15 (or 2015-01) and End month: 12/15 (or 2015-12) will download data for 2016. ERA5 data is based upon UTC while SAM files are local time. In the case of the SWIS, UTC+8, the first 8 hours of the year will be in the last day of the previous year; for UTC-n, the last n hours of the year will be in the first day of the next year. When you request the data <code>getera5</code> will check if the file for the required extra day exists and if not it will submit an additional request for the single day of data</li>
+<li>Click on the target folder field to specify a location for the ERA5 data</li>
+<li>Click <em>Get Data</em> to submit the request. When you click the buttons <code>getera5</code> will launch separate tasks to download the required files into the target folder. You can Quit out of <code>getera5</code> as this stage. The tasks will probably take a while to run as they have to request and download individual files for each month or the full year. The output and success will be in a log file in the target folder</li>
+<li>If you click <em>Check Data</em> <code>getera5</code> will interrogate ERA5 files in the appropriate Target Folder to provide the boundaries for the Area of Interest and set the starting date to download the next month in sequence. The interrogation will cater for files in yearly sub-folders</li>
+</ol></p></li>
+<li>Once the ERA5 files are downloaded run <code>makeweatherfiles</code> to create the SAM weather files</p>
+</li>
+</ol></li>
+<li><code>getmerra2</code> get MERRA-2 data</p>
 <ol>
 <li>Ensure you <a href="#merra2a">Register for access</a> as described above to gain access to the MERRA-2 data</p></li>
 <li>Set up a <code>.netrc</code> file and for Windows a <code>HOME</code> environment variable. The first time you invoke <code>getmerra2</code> it will allow you to set these up</p></li>
@@ -4468,14 +4627,17 @@ You can alternate between these approaches to choose the desired area. If you ha
 <li>If you click <em>Check Solar</em> or <em>Check Wind</em> <code>getmerra2</code> will interrogate MERRA-2 solar files in the appropriate Target Folder to provide the boundaries for the Area of Interest and set the starting date to download the next day in sequence. The interrogation will cater for files in yearly sub-folders</li>
 </ol></p></li>
 <li>Once the MERRA-2 files are downloaded run <code>makeweatherfiles</code> to create the SAM weather files</p>
+</li></ol>
+<li><code>makeweatherfiles</code> - create weather files</p>
 <ol>
 <li>Specify the year, 2016 in the case above</li>
-<li>Click on the source folder(s) to locate the MERRA-2 files. This will be the same as point 1.3 above</li>
+<li>Click on the source folder(s) to locate the ERA5 or MERRA-2 files. This will be the same as points 3.1 above</li>
 <li>Click on Target folder to specify a location for the weather files. It's convenient to use a different folder to the MERRA-2 files</li>
-<li>You can click <em>File Info</em> to test if the MERRA-2 files are OK. This reads the first file of the year (e.g. 20160101) and displays the dimensions of the MERRA-2 file. The output shows the latitude and longitude cells covered</li>
-<li>Click <em>Produce Solar Files</em> to create solar weather files. Clicking the button will cause <code>makeweatherfiles</code> to create the weather files. It will take a while to run so please be patient. There are two progress bars that will display to indicate how far along the process the program is. It will eventually return with an output listing of the files produced</li>
-<li>Click <em>Produce Wind Files</em> to create wind weather files. Same deal as solar</li>
+<li>You can click <em>File Info</em> to test if the data files are OK. This reads the first file of the year (e.g. 20160101) and displays the dimensions of the data file. The output shows the latitude and longitude cells covered</li>
+<li>Click <em>Produce Solar Files</em> to create solar weather files. Clicking the button will cause <code>makeweatherfiles</code> to create the solar weather files. It will take a while to run so please be patient. There are two progress bars that will display to indicate how far along the process the program is. It will eventually return with an output listing of the files produced</li>
+<li>Click <em>Produce Wind Files</em> to create the wind weather files. Same deal as solar</li>
 </ol></p></li></ol>
+</ul>
 <h4>SAM Weather Files</h4>
 <h5 id="merra6">Wind Files</h5>
 <p>SRW format wind files are one of the formats acceptable to SAM. This format has been chosen as it's easier to generate than other formats. MERRA-2 variables from tavg1_2d_slv_Nx data files are used to create the SRW variables.</p>
@@ -4663,6 +4825,12 @@ MERRA-2 Variables
 <li>DNI is computed using formulae derived from the NREL Centre for Renewable Energy Resources DISC DNI Model</li>
 <li>DHI is computed using formulae derived from the NREL DNI-GHI to DHI Calculator</li>
 </ul>
+<h4 id="era7">Background on ERA5</h4>
+<p>&ldquo;ERA5 is the fifth generation ECMWF reanalysis for the global climate and weather for the past 8 decades. Data is available from 1940 onwards. ERA5 replaces the ERA-Interim reanalysis.
+<br />Reanalysis combines model data with observations from across the world into a globally complete and consistent dataset using the laws of physics. ... Reanalysis does not have the constraint of issuing timely forecasts, so there is more time to collect observations, and when going further back in time, to allow for the ingestion of improved versions of the original observations, which all benefit the quality of the reanalysis product.&rdquo;</p>
+<ul>
+<li>I interpret each grid is centred on the latitude / longitude for that set of variables, that is, the value extends outwards in all directions from that point. The actual data is point values at the grid point (refer <a href="https://confluence.ecmwf.int/display/CKB/ERA5%3A+What+is+the+spatial+reference" target="_blank">Visualisation of regular lat/lon data</a>) so the data points are 0.125 of a degree out</li>
+</ul>
 <h4 id="merra7">Background on MERRA-2</h4>
 <p>&ldquo;The Modern Era Retrospective-analysis for Research and Applications, Version 2 (MERRA-2) is a NASA atmospheric data reanalysis for the satellite era using a major new version of the Goddard Earth Observing System Data Assimilation System Version 5 (GEOS-5). MERRA-2 focuses on historical analyses of the hydrological cycle on a broad range of weather and climate time scales, and places the NASA EOS suite of observations in a climate context.&rdquo;</p>
 <ul>
@@ -4671,7 +4839,7 @@ MERRA-2 Variables
 </ul>
 <p><a href="#help">Back to top</a></p>
 <h3 id="index">Using other Weather Files</h3>
-<p>The use of MERRA-2 data for the weather files is not necessary but provides a way of obtaining (gridded) weather data for any geographic area. Any weather files suitable for SAM can be used by SIREN. <a href="https://sam.nrel.gov/weather" target="_blank">Weather Data</a> describes these file formats and <a href="https://sam.nrel.gov/content/weather-data-non-us-locations" target="_blank">Weather Data for non-U.S. Locations</a> gives some details on where non-U.S. weather data may be obtained.</p>
+<p>The use of ERA5 or MERRA-2 data for the weather files is not necessary but provides a way of obtaining (gridded) weather data for any geographic area. Any weather files suitable for SAM can be used by SIREN. <a href="https://sam.nrel.gov/weather" target="_blank">Weather Data</a> describes these file formats and <a href="https://sam.nrel.gov/content/weather-data-non-us-locations" target="_blank">Weather Data for non-U.S. Locations</a> gives some details on where non-U.S. weather data may be obtained.</p>
 <p>SIREN has two approaches for obtaining weather files:</p>
 <ol>
 <li>Having the geographic location of the file as part of the filename. This option uses filename formats of &lt;location_latitude_longitude_year&gt; and includes files created from MERRA-2 data by <code>makeweatherfiles</code>. The location for weather files for solar and wind are defined by the <em>solar_files</em> and <em>wind_files</em> properties in the <a href="#p_files">[Files]</a> Section of the Preferences file</li>
@@ -5005,7 +5173,6 @@ MERRA-2 Variables
 <td>n/a</td>
 <td>Computed by SIREN</td>
 </tr>
-
 <tr class="none">
 <td rowspan="13">tcsmolten_salt</td>
 <td>Design_power</td>
@@ -5195,8 +5362,8 @@ MERRA-2 Variables
 <td class="none">Display a grid for every 10 degrees of latitude and longitude</td>
 </tr>
 <tr class="none">
-<td class="none"><img src="check-mark.png" alt="Show MERRA-2 Grid">&nbsp;&nbsp;MERRA-2 Grid (Ctrl+M)</td>
-<td class="none">Display a grid for every MERRA-2 cell. Due to the number of cells (720 latitude x 576 longitude) this is not very useful unless you zoom in</td>
+<td class="none"><img src="check-mark.png" alt="Show ERA5 / MERRA-2 Grid">&nbsp;&nbsp;ERA5 / MERRA-2 Grid (Ctrl+M)</td>
+<td class="none">Display a grid for every ERA5 or MERRA-2 cell. Due to the number of cells (1,440 latitude x 1,440 longitude, or 720 latitude x 576 longitude) this is not very useful unless you zoom in</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="blank.png" alt="many Areas">&nbsp;&nbsp;Show many Areas</td>
@@ -5239,6 +5406,7 @@ MERRA-2 Variables
 </td>
 </tr>
 </table>
+<!-- Back to top< -->
 <h4 id="getfiles">getfiles Preferences</h4>
 <p>The <code>getfiles</code> Preferences file contains preferences specifically for <code>worldwindow</code>, the programs using it and a number of the SIREN tools (<code>getera5</code>, <code>getmap</code>, <code>getmerra2</code>, <code>makeweatherfiles</code>, <code>sirenupd</code>, and <code>updateswis</code>). The file resides in the same folder as <code>worldwindow</code> itself.
 <table border="0", class="none">
@@ -5290,8 +5458,20 @@ MERRA-2 Variables
 <td class="none">The URL for the Copernicus Data Store API, <code>cdsapi</code></td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>retrieve_year</dfn></td>
+<td class="none">By default monthly data is downloaded. Setting this property to True will cause a year of data to be downloaded (if a full year is requested)</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>variables</dfn></td>
 <td class="none">The shortcode names for the variables obtained from the Copernicus Data Store API. Each variable has it's long name as a separate property, such as <em>var_sp</em> for the <em>surface_pressure</em> variable</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>var_&lt;shortcode&gt;</dfn></td>
+<td class="none">The full variable name for the shortcode variable. Full names are passed to avoid naming conflicts with several of the shortcodes</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>wait_days</dfn></td>
+<td class="none">ERA5 datasets have preliminary data available about 5 days after the actual date, however, there is a three month delay in publishing the final data. As <code>getera5</code> downloads monthly data the default is set to 93 days (31 * 3). You can use this property to override this default</td>
 </tr>
 </table>
 </td></tr>
@@ -5539,6 +5719,8 @@ MERRA-2 Variables
 <td class="none">Earth Observing System</td></tr>
 <tr><td class="none"><dfn>ERA5</dfn></td>
 <td class="none">Fifth generation ECMWF reanalysis for the global climate and weather for the past 8 decades</td></tr>
+<tr><td class="none"><dfn>ERA5T</dfn></td>
+<td class="none">ERA5T (near real time) preliminary data. Used to fill the gap between the end of the ERA5 data and 5 days before the present date</td></tr>
 <tr><td class="none"><dfn>Facility</dfn></td>
 <td class="none">In the context of this help file the term facility may be used to represent either a generator or storage facility</td></tr>
 <tr><td class="none"><dfn>FTP</dfn></td>
@@ -5571,7 +5753,7 @@ MERRA-2 Variables
 <td class="none">Joint Photographic Experts Group. A compressed image file format</td></tr>
 <tr><td class="none"><dfn>Kb</dfn></td>
 <td class="none">kilobytes - 1,000 or 1,024 bytes</td></tr>
-<tr><td class="none"><dfn>Km</dfn></td>
+<tr><td class="none"><dfn>km</dfn></td>
 <td class="none">Kilometre (or kilometer)</td></tr>
 <tr><td class="none"><dfn>KML</dfn></td>
 <td class="none">Keyhole Markup Language. An XML based file format used to display geographic data in an Earth browser such as Google Earth, Google Maps
