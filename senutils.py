@@ -232,9 +232,9 @@ def techClean(tech, full=False):
     cleantech = cleantech.replace('Phs', 'PHS')
     cleantech = cleantech.replace('Pv', 'PV')
     if full:
-        alll = [['Cf', 'CF'], ['hi ', 'HI '], ['Lcoe', 'LCOE'], ['Mw', 'MW'],
-                ['ni ', 'NI '], ['Npv', 'NPV'], ['Re', 'RE'], ['Tco2E', 'tCO2e'],
-                ['REference', 'Reference']]
+        alll = [['Cf', 'CF'], ['Co2', 'CO2'], ['hi ', 'HI '], ['Lcog', 'LCOG'],
+                ['Lcoe', 'LCOE'], ['Mw', 'MW'], ['ni ', 'NI '], ['Npv', 'NPV'],
+                ['Re', 'RE'], ['Tco2E', 'tCO2e'], ['REference', 'Reference']]
         for each in alll:
             cleantech = cleantech.replace(each[0], each[1])
         # fudge
