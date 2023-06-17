@@ -5858,7 +5858,7 @@ class powerMatch(QtWidgets.QWidget):
             if reply == QtWidgets.QMessageBox.Yes:
                 check_list = []
                 tot_row = 0
-                save_opt_rows = [False, False]
+                save_opt_rows = False
                 for o_r in range(len(op_data[h])):
                     if op_data[h][o_r][0] == 'Total':
                         break
@@ -5917,11 +5917,8 @@ class powerMatch(QtWidgets.QWidget):
                             new_cell.alignment = copy(cell.alignment)
                         continue
                     if batch_input_sheet.cell(row=row, column=1).value == 'Optimisation Parameters':
-                        if save_opt_rows[0]:
-                            save_opt_rows[1] = True
-                            break
-                        else:
-                            save_opt_rows[0] = True
+                        save_opt_rows = True
+                        break
                     for o_r in range(len(op_data[h])):
                         if op_data[h][o_r][0] == batch_input_sheet.cell(row=row, column=1).value:
                             cell = batch_input_sheet.cell(row=row, column=col - 1)
@@ -5955,11 +5952,7 @@ class powerMatch(QtWidgets.QWidget):
                     if batch_input_sheet.cell(row=row, column=1).value == 'Total':
                         if len(check_list) > 0:
                             tot_row = row
-                if save_opt_rows[0]: # want optimisation?
-                    if not save_opt_rows[1]:
-                        row += 1
-                        new_cell = batch_input_sheet.cell(row=row, column=1)
-                        new_cell.value = op_data[h][o_r][0]
+                if save_opt_rows: # want optimisation?
                     for o_r in range(op_op_prm, len(op_data[h])):
                         row += 1
                         new_cell = batch_input_sheet.cell(row=row, column=1)
