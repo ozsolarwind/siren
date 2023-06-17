@@ -98,7 +98,7 @@ class ZoomPanX():
             else:
                 # deal with something that should never happen
                 scale_factor = 1
-                print('(92)', event.button)
+                print('(101)', event.button)
             # set new limits
             if self.d3:
                 z_left = ydata - cur_zlim[0]
@@ -122,7 +122,6 @@ class ZoomPanX():
             """
             if ax.M is None:
                 return {}
-
             xd, yd = event.xdata, event.ydata
             p = (xd, yd)
             edges = ax.tunit_edges()
@@ -157,9 +156,8 @@ class ZoomPanX():
                     x, y, z = get_xyz_mouse_click(event, ax)
                 except:
                     return
-             #   print(f'Clicked at: x={x}, y={y}, z={z}')
                 self.datapoint = [[-1, x, y, z]]
-                self.msg = '{:d}: {}: {:.2f}\n{}: {:.2f}\n{}: {:.2f}'.format(self.datapoint[0][0],
+                self.msg = '{}: {:.2f}\n{}: {:.2f}\n{}: {:.2f}'.format(
                             ax.get_xlabel(), self.datapoint[0][1], ax.get_ylabel(),
                             self.datapoint[0][2], ax.get_zlabel(), self.datapoint[0][3])
                 # If we have previously displayed another label, remove it first
@@ -173,6 +171,7 @@ class ZoomPanX():
                 ax.label = ax.annotate(self.msg, xy = (x2, y2), xytext = (0, 20),
                            textcoords = 'offset points', ha = 'right', va = 'bottom',
                            bbox = dict(boxstyle = 'round,pad=0.5', alpha = 0.5),
+                           zorder=100,
                            arrowprops = dict(arrowstyle = '->',
                                              connectionstyle = 'arc3,rad=0'))
                 return
@@ -212,6 +211,7 @@ class ZoomPanX():
                 ax.label = ax.annotate(self.msg, xy = (x2, y2), xytext = (0, 20),
                            textcoords = 'offset points', ha = 'right', va = 'bottom',
                            bbox = dict(boxstyle = 'round,pad=0.5', alpha = 0.5),
+                           zorder=100,
                            arrowprops = dict(arrowstyle = '->',
                                              connectionstyle = 'arc3,rad=0'))
                 set_flex()
