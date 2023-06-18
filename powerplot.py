@@ -38,60 +38,8 @@ from credits import fileVersion
 from displaytable import Table
 from editini import SaveIni
 from getmodels import getModelFile
-from senutils import ClickableQLabel, getParents, getUser, strSplit, techClean, WorkBook
+from senutils import ClickableQLabel, getParents, getUser, ListWidget, strSplit, techClean, WorkBook
 from zoompan import ZoomPanX
-
-
-class ListWidget(QtWidgets.QListWidget):
-    def decode_data(self, bytearray):
-        data = []
-        ds = QtCore.QDataStream(bytearray)
-        while not ds.atEnd():
-            row = ds.readInt32()
-            column = ds.readInt32()
-            map_items = ds.readInt32()
-            for i in range(map_items):
-                key = ds.readInt32()
-                value = QtCore.QVariant()
-                ds >> value
-                data.append(value.value())
-        return data
-
-    def __init__(self, parent=None):
-        super(ListWidget, self).__init__(parent)
-        self.setDragDropMode(self.DragDrop)
-        self.setSelectionMode(self.ExtendedSelection)
-        self.setAcceptDrops(True)
-
-    def dragEnterEvent(self, event):
-        if event.mimeData().hasUrls():
-            event.accept()
-        else:
-            super(ListWidget, self).dragEnterEvent(event)
-
-    def dragMoveEvent(self, event):
-        if event.mimeData().hasUrls():
-            event.setDropAction(QtCore.Qt.CopyAction)
-            event.accept()
-        else:
-            super(ListWidget, self).dragMoveEvent(event)
-
-    def dropEvent(self, event):
-        if event.source() == self:
-            event.setDropAction(QtCore.Qt.MoveAction)
-            QtWidgets.QListWidget.dropEvent(self, event)
-        else:
-            ba = event.mimeData().data('application/x-qabstractitemmodeldatalist')
-            data_items = self.decode_data(ba)
-            event.setDropAction(QtCore.Qt.MoveAction)
-            event.source().deleteItems(data_items)
-            super(ListWidget, self).dropEvent(event)
-
-    def deleteItems(self, items):
-        for row in range(self.count() -1, -1, -1):
-            if self.item(row).text() in items:
-             #   r = self.row(item)
-                self.takeItem(row)
 
 
 class PowerPlot(QtWidgets.QWidget):
@@ -153,10 +101,10 @@ class PowerPlot(QtWidgets.QWidget):
         self.error = False
         # create a colour map based on traffic lights
         cvals  = [-2., -1, 2]
-        colors = ["red","orange","green"]
-        norm=plt.Normalize(min(cvals),max(cvals))
-        tuples = list(zip(map(norm,cvals), colors))
-        self.cmap = matplotlib.colors.LinearSegmentedColormap.from_list("", tuples)
+        colors = ['red' ,'orange', 'green']
+        norm=plt.Normalize(min(cvals), max(cvals))
+        tuples = list(zip(map(norm, cvals), colors))
+        self.cmap = matplotlib.colors.LinearSegmentedColormap.from_list('', tuples)
         self.cbar = True
         self.cbar2 = True
         self.toprow = None

@@ -46,6 +46,120 @@ class ClickableQLabel(QtWidgets.QLabel):
         QtWidgets.QApplication.widgetAt(event.globalPos()).setFocus()
         self.clicked.emit()
 
+# class to support listwidget drag and drop between two lists
+# also supports using keys where drag and drop not working (e.g. Ubuntu 23.04)
+class ListWidget(QtWidgets.QListWidget):
+    def decode_data(self, bytearray):
+        data = []
+        ds = QtCore.QDataStream(bytearray)
+        while not ds.atEnd():
+            row = ds.readInt32()
+            column = ds.readInt32()
+            map_items = ds.readInt32()
+            for i in range(map_items):
+                key = ds.readInt32()
+                value = QtCore.QVariant()
+                ds >> value
+                data.append(value.value())
+        return data
+
+    def __init__(self, parent=None):
+        super(ListWidget, self).__init__(parent)
+        self.setDragDropMode(self.DragDrop)
+        self.setSelectionMode(self.ExtendedSelection)
+        self.setAcceptDrops(True)
+        self._other = None
+        for child in self.parent().children():
+            if isinstance(child, ListWidget) and child != self: # will work if more than one ListWidget
+                self._other = child
+                self.setObjectName('Exclude')
+                child._other = self
+                child.setObjectName('Include')
+
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasUrls():
+            event.accept()
+        else:
+            super(ListWidget, self).dragEnterEvent(event)
+
+    def dragMoveEvent(self, event):
+        if event.mimeData().hasUrls():
+            event.setDropAction(QtCore.Qt.CopyAction)
+            event.accept()
+        else:
+            super(ListWidget, self).dragMoveEvent(event)
+
+    def dropEvent(self, event):
+        if event.source() == self:
+            event.setDropAction(QtCore.Qt.MoveAction)
+            QtWidgets.QListWidget.dropEvent(self, event)
+        else:
+            ba = event.mimeData().data('application/x-qabstractitemmodeldatalist')
+            data_items = self.decode_data(ba)
+            event.setDropAction(QtCore.Qt.MoveAction)
+            event.source().deleteItems(data_items)
+            super(ListWidget, self).dropEvent(event)
+
+    def deleteItems(self, items):
+        for row in range(self.count() -1, -1, -1):
+            if self.item(row).text() in items:
+             #   r = self.row(item)
+                self.takeItem(row)
+
+    def keyPressEvent(self, event):
+        if self.currentRow() < 0:
+            return
+        action = ''
+        try:
+            if event.key() == 16777223:
+                action = 'Delete'
+            elif event.key() == 16777235:
+                action = 'Up'
+            elif event.key() == 16777237:
+                action = 'Down'
+            elif event.key() == 16777234:
+                if self.objectName == 'Include':
+                    return
+                action = 'Shift'
+            elif event.key() == 16777236:
+                if self.objectName == 'Exclude':
+                    return
+                action = 'Shift'
+            elif chr(event.key()) == 'U':
+                action = 'Up'
+            elif chr(event.key()) == 'D':
+                action = 'Down'
+            elif chr(event.key()) == '+' or chr(event.key()) == '=' or chr(event.key()) == 'I' or chr(event.key()) == 'L':
+                if self.objectName == 'Include':
+                    return
+                action = 'Shift'
+            elif chr(event.key()) == '-' or chr(event.key()) == 'E' or chr(event.key()) == 'R':
+                if self.objectName == 'Exclude':
+                    return
+                action = 'Shift'
+        except:
+            return
+        if action == 'Shift':
+            background = self.currentItem().background()
+            self._other.addItem(self.currentItem().text())
+            self._other.item(self._other.count() - 1).setBackground(background)
+            self.takeItem(self.currentRow())
+        elif action == 'Up':
+            if self.currentRow() > 0:
+                background = self.currentItem().background()
+                self.insertItem(self.currentRow() - 1, self.currentItem().text())
+                self.takeItem(self.currentRow())
+                self.setCurrentRow(self.currentRow() - 1)
+                self.currentItem().setBackground(background)
+        elif action == 'Down':
+            if self.currentRow() < self.count() - 1:
+                background = self.currentItem().background()
+                self.insertItem(self.currentRow() + 2, self.currentItem().text())
+                row = self.currentRow()
+                self.takeItem(self.currentRow())
+                self.setCurrentRow(row + 1)
+                self.currentItem().setBackground(background)
+
 
 # Class to support input file as .csv, .xls, or .xlsx
 class WorkBook(object):
