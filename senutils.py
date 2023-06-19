@@ -31,9 +31,10 @@ except:
 import sys
 from PyQt5 import QtCore, QtWidgets
 import xlrd
-if sys.version_info[1] >= 9: # python 3.9 onwards
-    xlrd.xlsx.ensure_elementtree_imported(False, None)
-    xlrd.xlsx.Element_has_iter = True
+if xlrd.__version__[:2] [0] == '1.': # if xlsx files still supported
+    if sys.version_info[1] >= 9: # python 3.9 onwards
+        xlrd.xlsx.ensure_elementtree_imported(False, None)
+        xlrd.xlsx.Element_has_iter = True
 
 
 class ClickableQLabel(QtWidgets.QLabel):
