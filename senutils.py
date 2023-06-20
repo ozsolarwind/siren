@@ -345,6 +345,7 @@ def getUser():
 # clean up tech names
 def techClean(tech, full=False):
     cleantech = tech.replace('_', ' ').title()
+    cleantech = cleantech.replace('Bess', 'BESS')
     cleantech = cleantech.replace('Bm', 'BM')
     cleantech = cleantech.replace('Ccgt', 'CCGT')
     cleantech = cleantech.replace('Ccg', 'CCG')

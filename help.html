@@ -422,7 +422,7 @@ You can also use TMY files such as those provided with SAM. If you have a number
 <tr class="none">
 <td class="none"><dfn>Technology</dfn></td>
 <td class="none">One of the defined technologies:- Biomass, CST, Fixed PV, Geothermal, Offshore Wind, Rooftop PV, Single Axis PV, Solar Thermal, Dual Axis PV (Tracking PV), Wind (refer to <a href="#sam">SAM Models used by SIREN</a>), and
-<div class="experiment">Hydro, Wave and Other (refer to <a href="#nonsam">Other Models used by SIREN (experimental)</a>)</div>
+<div class="experiment">BESS (Battery), Hydro, Wave and Other (refer to <a href="#nonsam">Other Models used by SIREN (experimental)</a>)</div>
 <strong>Note:</strong> SIREN uses two of the SAM Concentrated Solar Power models. <em>Solar Thermal</em> is the SAM model for Power tower concentrating solar power (molten salt and direct steam) and <em>CST</em> is A simple "generic model" for conventional thermal
 </td>
 </tr>
@@ -594,7 +594,7 @@ The format is similar to a Windows INI file. If you want to create a new Model y
 </ul>
 <p><strong>Note:</strong> Technologies appear in two forms in the Preferences file. They appear in the Preferences Sections as words starting with an uppercase letter and separated by spaces (e.g <em>Fixed PV</em> with the Section name <em>[Fixed PV]</em>). In the Section Properties the technology names are changed to all lower case and spaces are replaced by underscores. Thus, <em>Fixed PV</em> will appear as <em>fixed_pv</em>. The lower case versions occur in the <em>[Colors]</em> Section and <em>[Grid] dispatchable</em>, <em>[Power] fossil_technologies</em>, and <em>[Power] technologies</em> variables.</p>
 <p>(Skip to <a href="#menus">Menus</a>)</p>
-<p>Shortcut to Sections:- <a href="#p_backtrack_pv">Backtrack PV</a>, <a href="#p_base">Base</a>, <a href="#p_biomass">Biomass</a>, <a href="#p_colors">Colors</a>, <a href="#p_cst">CST</a>,
+<p>Shortcut to Sections:- <a href="#p_backtrack_pv">Backtrack PV</a>, <a href="#p_base">Base</a>, <a href="#p_bess">BESS (Battery)</a>, <a href="#p_biomass">Biomass</a>, <a href="#p_colors">Colors</a>, <a href="#p_cst">CST</a>,
 <a href="#p_dataview">Dataview</a>, <a href="#p_dual_axis_pv">Dual Axis PV</a>, <a href="#p_files">Files</a>, <a href="#financial">Financial</a>, <a href="#p_fixed_pv">Fixed PV</a>,
 <a href="#p_flexiplot">Flexiplot</a>,
 <a href="#p_fossil_coal">Fossil Coal</a>, <a href="#p_fossil_cogen">Fossil Cogen</a>, <a href="#p_fossil_gas">Fossil Gas</a>,
@@ -658,6 +658,27 @@ The format is similar to a Windows INI file. If you want to create a new Model y
 <tr class="none">
 <td class="none"><dfn>years</dfn></td>
 <td class="none">Specify the range of years available for processing. This can be specified as a list separated by commas and/or a range of years separated by a hyphen. For example, <em>2008, 2010-2015</em></td>
+</tr>
+</table>
+</td></tr>
+<tr class="none" id="p_bess"><td><dfn><strong>[BESS]</strong></dfn></td>
+<td>Specifics on BESS (Battery) characteristics. Properties are:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>area</dfn></td>
+<td class="none">Estimated area in km<sup>2</sup> per MW</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>capital_cost</dfn></td>
+<td class="none">Capital cost per MWh. A suffix of K indicates thousands and M millions</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>icon</dfn></td>
+<td class="none">Icon to display for this technology. Default is bess_g.png</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>o_m_cost</dfn></td>
+<td class="none">Operations and Maintenance cost per MWh. A suffix of K indicates thousands and M millions</td>
 </tr>
 </table>
 </td></tr>
@@ -2069,7 +2090,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>optimise_multiplot</dfn></td>
-<td class="none">When running a multi optimisation you can choose to display a 3D plot of the best individuals from each iteration. Default is True</td>
+<td class="none">When running a multi optimisation you can choose to display a 3D plot of the best individuals from each iteration. Default is True (if set to <em>trisurf</em> the 3D plot will be a tri-surface plot; not very useful in this instance)</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>optimise_multitable</dfn></td>
@@ -3526,7 +3547,7 @@ Powermatch has three interpretations of levelised cost:
 <tr><td class="none"><dfn>To Meet Load (MWh)<dfn></td><td class="none">How much generation or storage output was used to meet the load. It has rows for each non-RE generator, storage and a combined figure for RE</td></tr>
 <tr><td class="none"><dfn>Static Variables</dfn></td><td class="none">The values for Carbon Price, Lifetime and default Discount Rate used for the Model</td></tr>
 <tr><td class="none"><dfn>Data Sources<dfn></td><td class="none">Display the data sources used for the batch run (provides: Scenarios folder, Powermatch data file, Constraints worksheet and Facility worksheet)</td></tr>
-<tr><td class="none"><dfn>Optimisation Parameters<dfn></td><td class="none">If the model was added via Optimisation this will list the optimisation parameters used. This should be the last group entry</td></tr>
+<tr><td class="none"><dfn>Optimisation Parameters<dfn></td><td class="none">If the model was added via Optimisation this will list the optimisation parameters used. This should be the last entry (even below any Chart options)</td></tr>
 </table>
 <dfn>Capacity (MW)</dfn> is required and must be the first entry. The other Report Groups can be <strong>in any order</strong>. <dfn>Carbon Price</dfn> allows you to input a different Carbon Price for each Model. <dfn>Discount Rate</dfn> allows you to input a different discount rate for each Model. If Carbon Price and/or Discount Rate are to be included they must appear immediately below the Total row for the Capacity inputs.
 <br />By default the resulting output will be appended as a new worksheet to the input file. You can create a new spreadsheet by setting the <em>batch_new_file</em> property to True
@@ -3551,7 +3572,7 @@ Powermatch has three interpretations of levelised cost:
 <tr><td class="none"><dfn>Capacity (MW)<dfn></td><td class="none">&nbsp;</td></tr>
 <tr><td class="none"><dfn>Total<dfn></td><td class="none">&nbsp;</td></t&nbsp;r>
 <tr><td class="none"><dfn>To Meet Load (MWh)<dfn></td><td class="none">&nbsp;</td></tr>
-<tr><td class="none"><dfn>Optimisation Parameters<dfn></td><td class="none">If desired this should be the last group entry</td></tr>
+<tr><td class="none"><dfn>Optimisation Parameters<dfn></td><td class="none">If desired this should be the last entry (even below any Charts)</td></tr>
 </table>
 </ul>
 See below for more details on optimisation.</li>
@@ -5311,6 +5332,8 @@ MERRA-2 Variables
 <div class="experiment">
 <h3 id="nonsam">Other Models used by SIREN (experimental)</h3>
 <p>SIREN will support models to accommodate other technologies not supported by SAM models. As well as this it is possible to provide a list of generation figures for a Station using the <em>Power File</em> field (see <a href="#stations">Stations</a>).
+<h4>BESS (Battery)</h4>
+<p>This is currently a &ldquo;placeholder&rdquo; for battery energy storage systems</p>
 <h4>Hydro</h4>
 <p>The Hydro model used in SIREN is a very simplistic model computed by multiplying station capacity by the defined capacity factor for Hydro.</p>
 <h4>Wave</h4>
@@ -5693,6 +5716,8 @@ MERRA-2 Variables
 <td class="none">Australian Energy Market Operator. Responsible for operating the WEM</td></tr>
 <tr><td class="none"><dfn>API</dfn></td>
 <td class="none">Application Programming Interface</td></tr>
+<tr><td class="none"><dfn>BESS</dfn></td>
+<td class="none">Battery Energy Storage System</td></tr>
 <tr><td class="none"><dfn>BOM</dfn></td>
 <td class="none">Australian Bureau of Meteorology</td></tr>
 <tr><td class="none"><dfn>CF</dfn></td>

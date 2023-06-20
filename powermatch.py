@@ -35,6 +35,7 @@ if matplotlib.__version__ > '3.5.1':
 else:
     matplotlib.use('TkAgg') # so PyQT5 and Matplotlib windows don't interfere
 import matplotlib.pyplot as plt
+import matplotlib.tri as mtri
 # This import registers the 3D projection, but is otherwise unused.
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.ticker import LinearLocator, FormatStrFormatter
@@ -62,8 +63,8 @@ tech_names = ['Load', 'Onshore Wind', 'Offshore Wind', 'Rooftop PV', 'Fixed PV',
               'Dual Axis PV', 'Biomass', 'Geothermal', 'Other1', 'CST', 'Shortfall']
 target_keys = ['lcoe', 'load_pct', 'surplus_pct', 're_pct', 'cost', 'co2']
 target_names = ['LCOE', 'Load%', 'Surplus%', 'RE%', 'Cost', 'CO2']
-target_fmats = ['$%.2f', '%d%%', '%d%%', '%d%%', '$%.1fpwr_chr', '%.1fpwr_chr']
-target_titles = ['LCOE ($)', '% Load met', 'Surplus %', 'RE %', 'Total Cost ($)', 'tCO2e']
+target_fmats = ['$%.2f', '%.1f%%', '%.1f%%', '%.1f%%', '$%.1fpwr_chr', '%.1fpwr_chr']
+target_titles = ['LCOE ($)', 'Load met %', 'Surplus %', 'RE %', 'Total Cost ($)', 'tCO2e']
 headers = ['Facility', 'Capacity\n(Gen, MW;\nStor, MWh)', 'To meet\nLoad (MWh)',
            'Subtotal\n(MWh)', 'CF', 'Cost ($/yr)', 'LCOG\nCost\n($/MWh)', 'LCOE\nCost\n($/MWh)',
            'Emissions\n(tCO2e)', 'Emissions\nCost', 'LCOE With\nCO2 Cost\n($/MWh)', 'Max.\nMWH',
@@ -755,6 +756,7 @@ class powerMatch(QtWidgets.QWidget):
         self.optimise_debug = False
         self.optimise_default = None
         self.optimise_multiplot = True
+        self.optimise_multisurf = False
         self.optimise_multitable = False
         self.optimise_to_batch = True
         self.remove_cost = True
@@ -846,6 +848,8 @@ class powerMatch(QtWidgets.QWidget):
                 elif key == 'optimise_multiplot':
                     if value.lower() in ['false', 'off', 'no']:
                         self.optimise_multiplot = False
+                    elif value.lower() in ['surf', 'tri-surf', 'trisurf']:
+                        self.optimise_multisurf = True
                 elif key == 'optimise_multitable':
                     if value.lower() in ['true', 'on', 'yes']:
                         self.optimise_multitable = True
@@ -4872,7 +4876,7 @@ class powerMatch(QtWidgets.QWidget):
                     weight[1] += w * value[1]
             return weight[calc]
 
-        def plot_multi(multi_best, multi_order, title):
+        def plot_multi(multi_scores, multi_best, multi_order, title):
             data = [[], [], []]
             max_amt = [0., 0.]
             for multi in multi_best:
@@ -4899,19 +4903,47 @@ class powerMatch(QtWidgets.QWidget):
                         data[axis].append(multi[multi_order[axis]] * 100.)
                     else:
                         data[axis].append(multi[multi_order[axis]])
+            # create colour map
+            colours = multi_scores[:]
+            cmax = max(colours)
+            cmin = min(colours)
+            for c in range(len(colours)):
+                colours[c] = (colours[c] - cmin) / (cmax - cmin)
+            scolours = sorted(colours)
+            cvals  = [-1., 0, 1]
+            colors = ['green' ,'orange', 'red']
+            norm = plt.Normalize(min(cvals), max(cvals))
+            tuples = list(zip(map(norm,cvals), colors))
+            cmap = matplotlib.colors.LinearSegmentedColormap.from_list('', tuples)
             fig = plt.figure(title + QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), '_yyyy-MM-dd_hhmm'))
-            mx = fig.gca(projection='3d')
+            mx = plt.axes(projection='3d')
             plt.title('\n' + title.title() + '\n')
             try:
-                surf = mx.scatter(data[0], data[1], data[2], picker=1) # enable picking a point
+                for i in range(len(data[0])):
+                    mx.scatter3D(data[2][i], data[1][i], data[0][i], picker=True, color=cmap(colours[i]), cmap=cmap)
+                    if title[:5] == 'start':
+                        mx.text(data[2][i], data[1][i], data[0][i], '%s' % str(i+1))
+                    else:
+                        j = scolours.index(colours[i])
+                        if j < 10:
+                            mx.text(data[2][i], data[1][i], data[0][i], '%s' % str(j+1))
             except:
                 return
-            mx.xaxis.set_major_formatter(FormatStrFormatter(self.targets[multi_order[0]][5]))
+            if self.optimise_multisurf:
+                cvals_r  = [-1., 0, 1]
+                colors_r = ['red' ,'orange', 'green']
+                norm_r = plt.Normalize(min(cvals_r), max(cvals_r))
+                tuples_r = list(zip(map(norm_r, cvals_r), colors_r))
+                cmap_r = matplotlib.colors.LinearSegmentedColormap.from_list('', tuples_r)
+                # https://www.fabrizioguerrieri.com/blog/surface-graphs-with-irregular-dataset/
+                triang = mtri.Triangulation(data[2], data[1])
+                mx.plot_trisurf(triang, data[0], cmap=cmap_r)
+            mx.xaxis.set_major_formatter(FormatStrFormatter(self.targets[multi_order[2]][5]))
             mx.yaxis.set_major_formatter(FormatStrFormatter(self.targets[multi_order[1]][5]))
-            mx.zaxis.set_major_formatter(FormatStrFormatter(self.targets[multi_order[2]][5]))
-            mx.set_xlabel(self.targets[multi_order[0]][6])
+            mx.zaxis.set_major_formatter(FormatStrFormatter(self.targets[multi_order[0]][5]))
+            mx.set_xlabel(self.targets[multi_order[2]][6])
             mx.set_ylabel(self.targets[multi_order[1]][6])
-            mx.set_zlabel(self.targets[multi_order[2]][6])
+            mx.set_zlabel(self.targets[multi_order[0]][6])
             zp = ZoomPanX()
             f = zp.zoom_pan(mx, base_scale=1.2, annotate=True)
             plt.show()
@@ -4934,18 +4966,20 @@ class powerMatch(QtWidgets.QWidget):
                         zp.datapoint[0].append(multi_best[p][key])
                 if self.more_details:
                     for p in zp.datapoint:
-                        msg = 'iteration ' + str(p[0]) + ': ' + \
-                              self.targets[multi_order[0]][6].replace('%', '%%') + ': ' + \
-                              self.targets[multi_order[0]][5] + '; ' + \
-                              self.targets[multi_order[1]][6].replace('%', '%%') + ': ' + \
-                              self.targets[multi_order[1]][5] + '; ' + \
-                              self.targets[multi_order[2]][6].replace('%', '%%') + ': ' + \
-                              self.targets[multi_order[2]][5]
-                        msg = msg % (p[1] * 100., p[2] * 100., p[3])
+                        msg = 'iteration ' + str(p[0]) + ': '
+                        mult = []
+                        for i in range(3):
+                            if self.targets[multi_order[i]][6].find('%') > -1:
+                                mult.append(100.)
+                            else:
+                                mult.append(1.)
+                            msg += self.targets[multi_order[i]][6].replace('%', '%%') + ': ' + \
+                                   self.targets[multi_order[i]][5] + '; '
+                        msg = msg % (p[1] * mult[0], p[2] * mult[1], p[3] * mult[2])
                         self.setStatus(msg)
             return zp.datapoint
 
-        def show_multitable(multi_best, multi_order, best_score_progress):
+        def show_multitable(best_score_progress, multi_best, multi_order, title):
             def pwr_chr(amt):
                 pwr_chrs = ' KMBTPEZY'
                 pchr = ''
@@ -4968,7 +5002,7 @@ class powerMatch(QtWidgets.QWidget):
               #      amt = amt * 100.
                 fmat = fmat.replace('.1f', '.2f')
                 i = fmat.find('%')
-                fmt = fmat[:i] + '{:>,' + fmat[i:].replace('%', '').replace('d', '.2%') + '}' + tail
+                fmt = fmat[:i] + '{:> 8,' + fmat[i:].replace('%', '').replace('d', '.2%') + '}' + tail
                 return fmt.format(amt)
 
             best_table = []
@@ -4981,7 +5015,7 @@ class powerMatch(QtWidgets.QWidget):
                 best_fmate.append([b + 1])
                 best_fmate[-1].insert(1, best_score_progress[b])
                 for f in range(2, len(best_table[-1])):
-                    if target_keys[f - 2] == 'load_pct':
+                    if target_keys[f - 2] in ['load_pct', 'surplus_pct', 're_pct']:
                         best_fmate[-1].append(opt_fmat(bl[f], '%d%%'))
                     else:
                         best_fmate[-1].append(opt_fmat(bl[f], target_fmats[f - 2]))
@@ -4989,7 +5023,7 @@ class powerMatch(QtWidgets.QWidget):
             fields.insert(0, 'weight')
             fields.insert(0, 'iteration')
             dialog = displaytable.Table(best_fmate, fields=fields, txt_align='R', decpts=[0, 4],
-                     title='best of each iteration', sortby='weight')
+                     title=title, sortby='weight')
             dialog.exec_()
             b = int(dialog.getItem(0)) - 1
             del dialog

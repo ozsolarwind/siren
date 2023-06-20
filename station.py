@@ -161,7 +161,7 @@ class Stations:
         except:
             pass
         self.tech_missing = []
-        for tech in ['biomass', 'fixed_pv', 'rooftop_pv', 'single_axis_pv', 'wind']:
+        for tech in ['bess', 'biomass', 'fixed_pv', 'rooftop_pv', 'single_axis_pv', 'wind']:
             if tech not in technologies:
                 itm = techClean(tech)
                 self.tech_missing.append(itm + ' (' + tech + ')')
@@ -299,6 +299,8 @@ class Stations:
                                         hub_height = float(facility['Hub Height'])
                                     except:
                                         pass
+                                elif bit[-1][:3] == 'ESR':
+                                    tech = 'BESS'
                                 elif bit[0] == 'NORTHAM' and bit[-1][:2] == 'PV':
                                     tech = 'Fixed PV'
                                     area = self.areas[tech] * float(facility['Maximum Capacity (MW)'])
