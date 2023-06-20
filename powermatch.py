@@ -1173,6 +1173,9 @@ class powerMatch(QtWidgets.QWidget):
                 curfile = self.get_filename(self.files[R].text())
             newfile = QtWidgets.QFileDialog.getSaveFileName(None, 'Save ' + self.file_labels[i] + ' file',
                       curfile, 'Excel Files (*.xlsx)')[0]
+        elif i == B:
+            newfile = QtWidgets.QFileDialog.getSaveFileName(None, 'Open/Create and save ' + self.file_labels[i] + ' file',
+                      curfile, 'Excel Files (*.xlsx)')[0]
         else:
             newfile = QtWidgets.QFileDialog.getOpenFileName(self, 'Open ' + self.file_labels[i] + ' file',
                       curfile)[0]
@@ -5879,7 +5882,9 @@ class powerMatch(QtWidgets.QWidget):
                         break
                     if op_data[h][o_r][0] != 'RE Contribution To Load':
                         check_list.append(o_r)
-                if self.files[B].text() == '':
+                if self.files[B].text() != '':
+                    newfile = self.get_filename(self.files[B].text())
+                else:
                     curfile = self.scenarios[:-1]
                     newfile = QtWidgets.QFileDialog.getSaveFileName(None, 'Create and save ' + self.file_labels[B] + ' file',
                               curfile, 'Excel Files (*.xlsx)')[0]
@@ -5900,9 +5905,9 @@ class powerMatch(QtWidgets.QWidget):
                                     bits = self.scenarios[that_len:].split('/')
                                     pfx = ('..' + '/') * (len(bits) - 1)
                                     newfile = pfx + newfile[that_len + 1:]
+                        if newfile[-5:] != '.xlsx':
+                            newfile += '.xlsx'
                             self.files[B].setText(newfile)
-                else:
-                    wb = oxl.load_workbook(self.get_filename(self.files[B].text()))
                 if wb.worksheets[0].max_column > 1000:
                     self.clean_batch_sheet()
                     ds = oxl.load_workbook(self.get_filename(self.files[B].text()))
@@ -5911,6 +5916,18 @@ class powerMatch(QtWidgets.QWidget):
                 normal = oxl.styles.Font(name='Arial')
                 bold = oxl.styles.Font(name='Arial', bold=True)
                 col = batch_input_sheet.max_column + 1
+                if col == 4: # possibly only chart stuff in columns 2 and 3
+                    get_out = False
+                    for col in range(3, 1, -1):
+                        for row in range(1, batch_input_sheet.max_row + 1):
+                            if batch_input_sheet.cell(row=row, column=col).value is not None:
+                                col += 1
+                                get_out = True
+                                break
+                            if batch_input_sheet.cell(row=row, column=1).value == 'Total':
+                                break
+                        if get_out:
+                            break
                 for row in range(1, batch_input_sheet.max_row + 1):
                     if batch_input_sheet.cell(row=row, column=1).value is None:
                         continue
