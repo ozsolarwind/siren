@@ -173,10 +173,13 @@ class WorkBook(object):
         self._nrows = 0
         self._ncols = 0
 
-    def open_workbook(self, filename=None, on_demand=True, data_only=True):
+    def open_workbook(self, filename=None, on_demand=True, data_only=True, filetype=None):
         if not os.path.exists(filename):
             raise Exception('File not found')
-        self._type = filename[filename.rfind('.') + 1:]
+        if filetype is None:
+            self._type = filename[filename.rfind('.') + 1:]
+        else:
+            self._type = filetype
         self._data_only = data_only
         try:
             if self._type == 'xls':
@@ -215,8 +218,13 @@ class WorkBook(object):
                 csv_file.close()
                 self.nrows = len(self._worksheet)
                 self.ncols = len(self._worksheet[0])
-        except:
-            raise Exception('Error opening file')
+            else:
+                raise Exception(f"Error with filetype - '{self._type}'")
+        except Exception as err:
+            if isinstance(err, Exception) and err.args[0][:19] == 'Error with filetype':
+                raise
+            else:
+                raise Exception('Error opening file')
 
     def release_resources(self):
         if self._type == 'xls':
