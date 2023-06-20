@@ -248,7 +248,7 @@ class Facility:
                      'fixed_om', 'variable_om', 'fuel', 'disc_rate', 'lifetime']:
             setattr(self, attr, 0.)
         for key, value in kwargs.items():
-            if value != '':
+            if value != '' and value is not None:
                 if key == 'lifetime' and value == 0:
                     setattr(self, key, 20)
                 else:
@@ -1603,7 +1603,10 @@ class powerMatch(QtWidgets.QWidget):
                 'capex', 'fixed_om', 'variable_om', 'fuel', 'disc_rate', 'lifetime']
         possibles = {'name': 0}
         for col in range(ws.ncols):
+            try:
             arg = ws.cell_value(0, col).lower()
+            except:
+                continue
             if arg in args:
                 possibles[arg] = col
             elif ws.cell_value(0, col)[:9] == 'Capital':
@@ -1653,6 +1656,8 @@ class powerMatch(QtWidgets.QWidget):
         self.optimisation = {}
         for row in range(1, ws.nrows):
             tech = ws.cell_value(row, 0)
+            if tech is None:
+                continue
             if coln[2] > 0: # values format
                 self.optimisation[tech] = Optimisation(tech,
                                      ws.cell_value(row, coln[1]),
@@ -5395,7 +5400,7 @@ class powerMatch(QtWidgets.QWidget):
             self.setStatus('Starting LCOE: $%.2f' % best_score)
         if do_multi:
             if self.more_details: # display starting population ?
-                pick = plot_multi(multi_values, multi_order, 'starting population')
+                pick = plot_multi(multi_scores, multi_values, multi_order, 'starting population')
             # want maximum from first round to set base upper limit
             for key in self.targets.keys():
                 if self.targets[key][2] < 0: # want a maximum from first round
@@ -5555,8 +5560,8 @@ class powerMatch(QtWidgets.QWidget):
         if best_score > lowest_score:
             msg += ' Try more iterations.'
         # we'll keep two or three to save re-calculating_fitness
-        op_data = [[], [], [], []]
-        score_data = [None, None, None, None]
+        op_data = [[], [], [], [], []]
+        score_data = [None, None, None, None, None]
         if do_lcoe:
             op_data[0], score_data[0] = calculate_fitness([lowest_chrom])
         if do_multi:
@@ -5591,15 +5596,24 @@ class powerMatch(QtWidgets.QWidget):
         f = zp.zoom_pan(lx, base_scale=1.2, annotate=True)
         plt.show()
         pick = None
+        pickf = None
         if do_multi:
-            if self.optimise_multiplot and self.more_details:
-                pick = plot_multi(multi_best, multi_order, 'best of each iteration')
+            if self.optimise_multiplot:
+                pick = plot_multi(best_multi_progress, multi_best, multi_order, 'best of each iteration')
+                if self.more_details:
+                    pickf = plot_multi(multi_scores, multi_values, multi_order, 'final iteration')
             if self.optimise_multitable:
-                pick2 = show_multitable(multi_best, multi_order, best_multi_progress)
+                pick2 = show_multitable(best_multi_progress, multi_best, multi_order, 'best of each iteration')
                 try:
                     pick = pick + pick2
                 except:
                     pick = pick2
+                if self.more_details:
+                    pick2 = show_multitable(multi_scores, multi_values, multi_order, 'final iteration')
+                    try:
+                        pickf = pickf + pick2
+                    except:
+                        pickf = pick2
         op_pts = [0] * len(headers)
         for p in [st_lcg, st_lco, st_lcc, st_max, st_bal, st_rlc]:
             op_pts[p] = 2
@@ -5633,9 +5647,17 @@ class powerMatch(QtWidgets.QWidget):
             chrom_hdrs.append('Lowest Weight')
             chroms.append(multi_lowest_chrom)
             ndxes.append(1)
+        if pickf is not None:
+            for p in range(len(pickf)):
+                if pick is None:
+                    pick = [pickf[f]]
+                else:
+                    pick.append(pickf[p][:])
+                pick[-1][0] = len(multi_best_popn)
+                multi_best_popn.append(population[pickf[p][0]])
         if pick is not None:
             # at present I'll calculate the best weight for the chosen picks. Could actually present all for user choice
-            if len(pick) <= 2:
+            if len(pick) <= 3:
                 multi_lowest_chrom = multi_best_popn[pick[0][0]]
                 op_data[2], score_data[2] = calculate_fitness([multi_lowest_chrom])
                 if self.more_details:
@@ -5647,7 +5669,7 @@ class powerMatch(QtWidgets.QWidget):
                 chrom_hdrs.append('Your pick')
                 chroms.append(multi_lowest_chrom)
                 ndxes.append(2)
-                if len(pick) == 2:
+                if len(pick) >= 2:
                     multi_lowest_chrom = multi_best_popn[pick[1][0]]
                     op_data[3], score_data[3] = calculate_fitness([multi_lowest_chrom])
                     if self.more_details:
@@ -5659,6 +5681,18 @@ class powerMatch(QtWidgets.QWidget):
                     chrom_hdrs.append('Your 2nd pick')
                     chroms.append(multi_lowest_chrom)
                     ndxes.append(3)
+                if len(pick) == 3:
+                    multi_lowest_chrom = multi_best_popn[pick[2][0]]
+                    op_data[4], score_data[4] = calculate_fitness([multi_lowest_chrom])
+                    if self.more_details:
+                        list(map(list, list(zip(*op_data[4]))))
+                        dialog = displaytable.Table(op_data[4], title='Pick_' + self.sender().text(), fields=headers,
+                                 save_folder=self.scenarios, sortby='', decpts=op_pts)
+                        dialog.exec_()
+                        del dialog
+                    chrom_hdrs.append('Your 3rd pick')
+                    chroms.append(multi_lowest_chrom)
+                    ndxes.append(4)
             else:
                 picks = []
                 for pck in pick:
