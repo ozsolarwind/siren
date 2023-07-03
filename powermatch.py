@@ -350,7 +350,8 @@ class Adjustments(MyQDialog):
         size = QtCore.QSize(QtCore.QSize(int(width), int(height)))
         window.resize(size)
 
-    def __init__(self, parent, data, adjustin, adjust_cap, prefix, show_multipliers=False, save_folder=None):
+    def __init__(self, parent, data, adjustin, adjust_cap, prefix, show_multipliers=False, save_folder=None,
+                 batch_file=None):
         super(Adjustments, self).__init__()
         self.ignoreEnter = False
         self._adjust_typ = {} # facility type = G, S or L
@@ -361,6 +362,10 @@ class Adjustments(MyQDialog):
             self._adjust_rnd = {} # multiplier widget (rounded to 4 digits)
         self._adjust_txt = {} # string with capacity units
         self._save_folder = save_folder
+        self._batch_file = None
+        if batch_file is not None:
+            if os.path.exists(batch_file):
+                self._batch_file = batch_file
         self._ignore = False
         self._results = None
         self.grid = QtWidgets.QGridLayout()
@@ -453,14 +458,18 @@ class Adjustments(MyQDialog):
         if save_folder is not None:
             ctr += 1
             save = QtWidgets.QPushButton('Save', self)
-            self.grid.addWidget(save, ctr, 1)
+            self.grid.addWidget(save, ctr, 0)
             save.clicked.connect(self.saveClicked)
             restore = QtWidgets.QPushButton('Restore', self)
-            self.grid.addWidget(restore, ctr, 2)
+            self.grid.addWidget(restore, ctr, 1)
             restore.clicked.connect(self.restoreClicked)
             listi = QtWidgets.QPushButton('List', self)
-            self.grid.addWidget(listi, ctr, 3)
+            self.grid.addWidget(listi, ctr, 2)
             listi.clicked.connect(self.listClicked)
+            if self._batch_file is not None:
+                batch = QtWidgets.QPushButton('Add to Batch', self)
+                self.grid.addWidget(batch, ctr, 3)
+                batch.clicked.connect(self.addtoBatch)
         frame = QtWidgets.QFrame()
         frame.setLayout(self.grid)
         self.scroll = QtWidgets.QScrollArea()
@@ -514,14 +523,21 @@ class Adjustments(MyQDialog):
         self.close()
 
     def resetClicked(self, to):
-        if isinstance(to, bool):
+        if to is None:
+            to = 0.
+        else:
             to = 1.
         if self.show_multipliers:
             for key in self._adjust_rnd.keys():
                 self._adjust_rnd[key].setValue(to)
         else:
+            if to == 0:
+                for key in self._adjust_cty.keys():
+                    self._adjust_cty[key].setValue(0.)
+        else:
             for key in self._adjust_cty.keys():
                 self._adjust_cty[key].setValue(self._data[key][0])
+        self.pfx_fld.setText('')
 
     def resetloadClicked(self, to):
         if isinstance(to, bool):
@@ -539,14 +555,18 @@ class Adjustments(MyQDialog):
             reshow = False
             config = configparser.RawConfigParser()
             config.read(ini_file)
-            self.getIt(config)
+            try:
+                prefix = ini_file[ini_file.rfind('/') + 1: - 4]
+            except:
+                prefix = ''
+            self.getIt(config, prefix)
 
-    def getIt(self, config):
+    def getIt(self, config, prefix=''):
         try:
             adjustto = config.get('Powermatch', 'adjusted_capacities')
         except:
             return
-        self.resetClicked(to=0)
+        self.resetClicked(to=None)
         bits = adjustto.split(',')
         for bit in bits:
             bi = bit.split('=')
@@ -561,6 +581,7 @@ class Adjustments(MyQDialog):
             except:
                 pass
         self._ignore = False
+        self.pfx_fld.setText(prefix)
 
     def listClicked(self):
         if os.path.exists(self._save_folder):
@@ -571,7 +592,10 @@ class Adjustments(MyQDialog):
             for ini_file in ini_files:
                 if ini_file[-4:] == '.ini':
                     config = configparser.RawConfigParser()
+                    try:
                     config.read(self._save_folder + ini_file)
+                    except:
+                        continue
                     try:
                         adjustto = config.get('Powermatch', 'adjusted_capacities')
                     except:
@@ -603,7 +627,7 @@ class Adjustments(MyQDialog):
             reshow = False
             config = configparser.RawConfigParser()
             config.read(self._save_folder + chosen + '.ini')
-            self.getIt(config)
+            self.getIt(config, chosen)
             del dialog
 
     def saveClicked(self):
@@ -638,6 +662,112 @@ class Adjustments(MyQDialog):
 
     def getPrefix(self):
         return self.pfx_fld.text()
+
+    def addtoBatch(self):
+        check_list = list(self._adjust_cty.keys())[1:]
+        wb = oxl.load_workbook(self._batch_file)
+        batch_input_sheet = wb.worksheets[0]
+        batch_input_sheet.protection.sheet = False
+        normal = oxl.styles.Font(name='Arial')
+        bold = oxl.styles.Font(name='Arial', bold=True)
+        col = batch_input_sheet.max_column + 1
+        tot_row = -1
+        fst_row = -1
+        if col == 4: # possibly only chart stuff in columns 2 and 3
+            get_out = False
+            for col in range(3, 1, -1):
+                for row in range(1, batch_input_sheet.max_row + 1):
+                    if batch_input_sheet.cell(row=row, column=col).value is not None:
+                        col += 1
+                        get_out = True
+                        break
+                    if batch_input_sheet.cell(row=row, column=1).value == 'Total':
+                        break
+                if get_out:
+                    break
+        for row in range(1, batch_input_sheet.max_row + 1):
+            if batch_input_sheet.cell(row=row, column=1).value is None:
+                continue
+            if batch_input_sheet.cell(row=row, column=1).value in ['Model', 'Model Label', 'Technology']:
+                new_cell = batch_input_sheet.cell(row=row, column=col)
+                new_cell.value = QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'MM-dd hh:mm')
+                add_msg = new_cell.value
+            if batch_input_sheet.cell(row=row, column=1).value == 'Capacity (MW)':
+                fst_row = row + 1
+                cell = batch_input_sheet.cell(row=row, column=col - 1)
+                new_cell = batch_input_sheet.cell(row=row, column=col)
+                new_cell.value = 'MW'
+                if cell.has_style:
+                    new_cell.font = copy(cell.font)
+                    new_cell.border = copy(cell.border)
+                    new_cell.fill = copy(cell.fill)
+                    new_cell.number_format = copy(cell.number_format)
+                    new_cell.protection = copy(cell.protection)
+                    new_cell.alignment = copy(cell.alignment)
+                continue
+            for key in self._adjust_cty.keys():
+                if key == batch_input_sheet.cell(row=row, column=1).value:
+                    cell = batch_input_sheet.cell(row=fst_row, column=col - 1)
+                    new_cell = batch_input_sheet.cell(row=row, column=col)
+                    new_cell.value = self._adjust_cty[key].value()
+                    if cell.has_style:
+                        new_cell.font = copy(cell.font)
+                        new_cell.border = copy(cell.border)
+                        new_cell.fill = copy(cell.fill)
+                        new_cell.protection = copy(cell.protection)
+                        new_cell.alignment = copy(cell.alignment)
+                        if col == 2:
+                            new_cell.font = normal
+                            new_cell.number_format = '#0.00'
+                        else:
+                            new_cell.number_format = copy(cell.number_format)
+                    elif col == 2:
+                        new_cell.font = normal
+                        new_cell.number_format = '#0.00'
+                    try:
+                        i = check_list.index(key)
+                        del check_list[i]
+                    except:
+                        pass
+            if batch_input_sheet.cell(row=row, column=1).value == 'Total':
+                tot_row = row
+           #     if len(check_list) > 0:
+           #         tot_row = row
+        if len(check_list) > 0:
+            check_list.reverse()
+            cell = batch_input_sheet.cell(row=fst_row, column=col)
+            for key in check_list:
+                if self._adjust_cty[key].value() == 0:
+                    continue
+                batch_input_sheet.insert_rows(tot_row)
+                new_cell = batch_input_sheet.cell(row=tot_row, column=1)
+                new_cell.value = key
+                new_cell = batch_input_sheet.cell(row=tot_row, column=col)
+                new_cell.value = self._adjust_cty[key].value()
+                if cell.has_style:
+                    new_cell.font = copy(cell.font)
+                    new_cell.border = copy(cell.border)
+                    new_cell.fill = copy(cell.fill)
+                    new_cell.number_format = copy(cell.number_format)
+                    new_cell.protection = copy(cell.protection)
+                    new_cell.alignment = copy(cell.alignment)
+                tot_row += 1
+        if fst_row > 0 and tot_row > 0:
+            new_cell = batch_input_sheet.cell(row=tot_row, column=col)
+            new_cell.value = '=SUM(' + ss_col(col) + str(fst_row) + ':' + ss_col(col) + str(tot_row - 1) + ')'
+            if col > 2:
+                cell = batch_input_sheet.cell(row=tot_row, column=2)
+            else:
+                cell = batch_input_sheet.cell(row=tot_row, column=col)
+            if cell.has_style:
+                new_cell.font = copy(cell.font)
+                new_cell.border = copy(cell.border)
+                new_cell.fill = copy(cell.fill)
+                new_cell.number_format = copy(cell.number_format)
+                new_cell.protection = copy(cell.protection)
+                new_cell.alignment = copy(cell.alignment)
+        wb.save(self._batch_file)
+        QtWidgets.QMessageBox.about(self, 'SIREN - Add to Batch', "Added to batch as '" + add_msg + "' (column " + ss_col(col) + ')')
 
 class powerMatch(QtWidgets.QWidget):
     log = QtCore.pyqtSignal()
@@ -2193,7 +2323,8 @@ class powerMatch(QtWidgets.QWidget):
                 except:
                     pass
             adjust = Adjustments(self, datain, self.adjustto, self.adjust_cap, self.results_prefix,
-                                 show_multipliers=self.show_multipliers, save_folder=self.scenarios)
+                                 show_multipliers=self.show_multipliers, save_folder=self.scenarios,
+                                 batch_file=self.get_filename(self.files[B].text()))
             adjust.exec_()
             if adjust.getValues() is None:
                 self.setStatus('Execution aborted.')
@@ -5916,6 +6047,7 @@ class powerMatch(QtWidgets.QWidget):
                 normal = oxl.styles.Font(name='Arial')
                 bold = oxl.styles.Font(name='Arial', bold=True)
                 col = batch_input_sheet.max_column + 1
+                fst_row = -1
                 if col == 4: # possibly only chart stuff in columns 2 and 3
                     get_out = False
                     for col in range(3, 1, -1):
@@ -5934,9 +6066,10 @@ class powerMatch(QtWidgets.QWidget):
                     if batch_input_sheet.cell(row=row, column=1).value in ['Model', 'Model Label', 'Technology']:
                         new_cell = batch_input_sheet.cell(row=row, column=col)
                         new_cell.value = QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'MM-dd hh:mm')
-                        msg += " Added to batch as '" + new_cell.value + "'"
+                        msg += " Added to batch as '" + new_cell.value + "' (column " + ss_col(col) + ')'
                         continue
                     if batch_input_sheet.cell(row=row, column=1).value == 'Capacity (MW)':
+                        fst_row = row + 1
                         cell = batch_input_sheet.cell(row=row, column=col - 1)
                         new_cell = batch_input_sheet.cell(row=row, column=col)
                         new_cell.value = 'MW'
@@ -5953,6 +6086,9 @@ class powerMatch(QtWidgets.QWidget):
                         break
                     for o_r in range(len(op_data[h])):
                         if op_data[h][o_r][0] == batch_input_sheet.cell(row=row, column=1).value:
+                            if op_data[h][o_r][0] == 'Total' and col > 2:
+                                cell = batch_input_sheet.cell(row=row, column=2)
+                            else:
                             cell = batch_input_sheet.cell(row=row, column=col - 1)
                             new_cell = batch_input_sheet.cell(row=row, column=col)
                             try:
@@ -5982,7 +6118,6 @@ class powerMatch(QtWidgets.QWidget):
                             except:
                                 pass
                     if batch_input_sheet.cell(row=row, column=1).value == 'Total':
-                        if len(check_list) > 0:
                             tot_row = row
                 if save_opt_rows: # want optimisation?
                     for o_r in range(op_op_prm, len(op_data[h])):
@@ -5996,7 +6131,10 @@ class powerMatch(QtWidgets.QWidget):
                             new_cell.value = op_data[h][o_r][1]
                 if len(check_list) > 0:
                     check_list.reverse()
-                    cell = batch_input_sheet.cell(row=tot_row, column=col)
+                    if col > 2:
+                        cell = batch_input_sheet.cell(row=fst_row, column=2)
+                    else:
+                        cell = batch_input_sheet.cell(row=fst_row, column=col)
                     for o_r in check_list:
                         batch_input_sheet.insert_rows(tot_row)
                         new_cell = batch_input_sheet.cell(row=tot_row, column=1)
