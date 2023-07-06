@@ -395,7 +395,6 @@ class SuperPower():
             self.wind_hub_spread[1] = int(float(config.get('Offshore Wind', 'hub_spread')))
         except:
             pass
-        print('(397)', self.wind_hub_spread)
         self.st_gross_net = 0.87
         try:
             self.st_gross_net = float(config.get('Solar Thermal', 'gross_net'))
