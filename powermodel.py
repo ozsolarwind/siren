@@ -2573,8 +2573,9 @@ class PowerModel():
 #       loop around processing plots
 #
         if do_plots:
-            if plt.get_backend() != 'TkAgg':
-                plt.switch_backend('TkAgg')
+            if matplotlib.__version__ <= '3.5.1':
+                if matplotlib.get_backend() != 'TkAgg':
+                    plt.switch_backend('TkAgg')
             self.gen_pct = None
             self.load_data = None
             if self.plots['save_detail']:
