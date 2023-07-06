@@ -40,6 +40,10 @@ class ZoomPanX():
         self.base_zlim = None
         self.xlabel = None
         self.axis = 'x'
+        self.angle = 0
+        self.roll = 0
+        self.elev = 30
+        self.azim = -60
         self.d3 = False
         self.datapoint = None
         self.msg = None
@@ -267,6 +271,8 @@ class ZoomPanX():
                             self.datapoint = None
                         ax.set_zlim(self.base_zlim)
                     set_flex()
+                    if self.d3:
+                        ax.view_init(elev=self.elev, azim=self.azim)
                     ax.figure.canvas.draw()
                     return
             if event_key == 'pageup':
@@ -447,17 +453,68 @@ class ZoomPanX():
                 set_flex()
                 ax.figure.canvas.draw()
             elif event_key == 'x':
-                if self.axis != 'x':
+                if self.d3:
+                    if self.axis == 'x':
+                        if self.angle <= 0:
+                            self.angle = 90
+                        else:
+                            self.angle = -90
+                    try:
+                        ax.view_init(elev=self.angle, azim=-self.angle, roll=0, vertical_axis='x')
+                    except:
+                        try:
+                            ax.view_init(elev=self.angle, azim=-self.angle, vertical_axis='x')
+                        except:
+                            ax.view_init(elev=self.angle, azim=-self.angle)
+                    ax.figure.canvas.draw()
+                elif self.axis != 'x':
                     self.press = None
                 self.axis = 'x'
             elif event_key == 'y':
-                if self.axis != 'y':
+                if self.d3:
+                    if self.axis == 'y':
+                        if self.angle <= 0:
+                            self.angle = 90
+                        else:
+                            self.angle = -90
+                    try:
+                        ax.view_init(elev=self.angle, azim=-self.angle, roll=0, vertical_axis='y')
+                    except:
+                        try:
+                            ax.view_init(elev=self.angle, azim=-self.angle, vertical_axis='y')
+                        except:
+                            ax.view_init(elev=self.angle, azim=-self.angle)
+                    ax.figure.canvas.draw()
+                elif self.axis != 'y':
                     self.press = None
                 self.axis = 'y'
-            elif event_key == 'z' and self.d3:
-                if self.axis != 'z':
+            elif event_key == 'z':
+                if self.d3:
+                    if self.axis == 'z':
+                        if self.angle <= 0:
+                            self.angle = 90
+                        else:
+                            self.angle = -90
+                    try:
+                        ax.view_init(elev=self.angle, azim=-self.angle, roll=0, vertical_axis='z')
+                    except:
+                        try:
+                            ax.view_init(elev=self.angle, azim=-self.angle, vertical_axis='z')
+                        except:
+                            ax.view_init(elev=self.angle, azim=-self.angle)
+                    ax.figure.canvas.draw()
+                elif self.axis != 'z':
                     self.press = None
                 self.axis = 'z'
+            elif self.d3 and (event.key == '>' or event.key == '.'):
+                self.roll = self.roll + 90
+                if self.roll > 270:
+                    self.roll = 0
+                try:
+                    ax.view_init(elev=self.angle, azim=-self.angle, roll=self.roll, vertical_axis=self.axis)
+                    ax.figure.canvas.draw()
+                except:
+                    pass
             elif event.key == 'right':
                 xlim = ax.get_xlim()
                 if xlim[1] >= self.base_xlim[1]:
@@ -554,6 +611,8 @@ class ZoomPanX():
         try:
             self.base_zlim = ax.get_zlim() # remember z base for 3D
             self.d3 = True
+            self.elev = ax.elev
+            self.azim = ax.azim
         except:
             self.d3 = False
         if self.base_xlim[1] == 8784 or self.base_xlim[1] == 8784 * 2: # leap year
