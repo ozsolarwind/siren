@@ -71,25 +71,25 @@ headers = ['Facility', 'Capacity\n(Gen, MW;\nStor, MWh)', 'To meet\nLoad (MWh)',
            'Max.\nBalance', 'Capital\nCost', 'Lifetime\nCost', 'Lifetime\nEmissions',
            'Lifetime\nEmissions\nCost', 'Reference\nLCOE', 'Reference\nCF']
 # set up columns for summary table. Hopefully to make it easier to add / alter columns
-st_fac = 0
-st_cap = 1
-st_tml = 2
-st_sub = 3
-st_cfa = 4
-st_cst = 5
-st_lcg = 6
-st_lco = 7
-st_emi = 8
-st_emc = 9
-st_lcc = 10
-st_max = 11
-st_bal = 12
-st_cac = 13
-st_lic = 14
-st_lie = 15
-st_lec = 16
-st_rlc = 17
-st_rcf = 18
+st_fac = 0 # Facility
+st_cap = 1 # Capacity\n(Gen, MW;\nStor, MWh)
+st_tml = 2 # To meet\nLoad (MWh)
+st_sub = 3 # Subtotal\n(MWh)
+st_cfa = 4 # CF
+st_cst = 5 # Cost ($/yr)
+st_lcg = 6 # LCOG\nCost\n($/MWh)
+st_lco = 7 # LCOE\nCost\n($/MWh)
+st_emi = 8 # Emissions\n(tCO2e)
+st_emc = 9 # Emissions\nCost
+st_lcc = 10 # LCOE With\nCO2 Cost\n($/MWh)
+st_max = 11 # Max.\nMWH
+st_bal = 12 # Max.\nBalance'
+st_cac = 13 # Capital\nCost'
+st_lic = 14 # Lifetime\nCost'
+st_lie = 15 # Lifetime\nEmissions
+st_lec = 16 # Lifetime\nEmissions\nCost
+st_rlc = 17 # Reference\nLCOE
+st_rcf = 18 # Reference\nCF
 
 # same order as self.file_labels
 C = 0 # Constraints - xls or xlsx
@@ -364,7 +364,7 @@ class Adjustments(MyQDialog):
         self._save_folder = save_folder
         self._batch_file = None
         if batch_file is not None:
-            if os.path.exists(batch_file):
+            if os.path.isfile(batch_file):
                 self._batch_file = batch_file
         self._ignore = False
         self._results = None
@@ -534,9 +534,9 @@ class Adjustments(MyQDialog):
             if to == 0:
                 for key in self._adjust_cty.keys():
                     self._adjust_cty[key].setValue(0.)
-        else:
-            for key in self._adjust_cty.keys():
-                self._adjust_cty[key].setValue(self._data[key][0])
+            else:
+                for key in self._adjust_cty.keys():
+                    self._adjust_cty[key].setValue(self._data[key][0])
         self.pfx_fld.setText('')
 
     def resetloadClicked(self, to):
@@ -593,7 +593,7 @@ class Adjustments(MyQDialog):
                 if ini_file[-4:] == '.ini':
                     config = configparser.RawConfigParser()
                     try:
-                    config.read(self._save_folder + ini_file)
+                        config.read(self._save_folder + ini_file)
                     except:
                         continue
                     try:
@@ -897,7 +897,6 @@ class powerMatch(QtWidgets.QWidget):
         self.surplus_sign = 1 # Note: Preferences file has it called shortfall_sign
         # it's easier for the user to understand while for the program logic surplus is easier
         iorder = []
-
         self.targets = {}
         for t in range(len(target_keys)):
             if target_keys[t] in ['re_pct', 'surplus_pct']:
@@ -1304,8 +1303,10 @@ class powerMatch(QtWidgets.QWidget):
             newfile = QtWidgets.QFileDialog.getSaveFileName(None, 'Save ' + self.file_labels[i] + ' file',
                       curfile, 'Excel Files (*.xlsx)')[0]
         elif i == B:
+            options = QtWidgets.QFileDialog.Options()
+            # options |= QFileDialog.DontUseNativeDialog
             newfile = QtWidgets.QFileDialog.getSaveFileName(None, 'Open/Create and save ' + self.file_labels[i] + ' file',
-                      curfile, 'Excel Files (*.xlsx)')[0]
+                      curfile, 'Excel Files (*.xlsx)', options=options)[0]
         else:
             newfile = QtWidgets.QFileDialog.getOpenFileName(self, 'Open ' + self.file_labels[i] + ' file',
                       curfile)[0]
@@ -1737,7 +1738,7 @@ class powerMatch(QtWidgets.QWidget):
         possibles = {'name': 0}
         for col in range(ws.ncols):
             try:
-            arg = ws.cell_value(0, col).lower()
+                arg = ws.cell_value(0, col).lower()
             except:
                 continue
             if arg in args:
@@ -1760,6 +1761,8 @@ class powerMatch(QtWidgets.QWidget):
                 possibles['variable_om'] = col
         self.generators = {}
         for row in range(1, ws.nrows):
+            if ws.cell_value(row, 0) is None:
+                continue
             in_args = {}
             for key, value in possibles.items():
                 in_args[key] = ws.cell_value(row, value)
@@ -2236,7 +2239,11 @@ class powerMatch(QtWidgets.QWidget):
         if option == 'O':
             for itm in range(self.order.count()):
                 gen = self.order.item(itm).text()
-                if self.generators[gen].capacity <= 0:
+                try:
+                    if self.generators[gen].capacity <= 0:
+                        continue
+                except KeyError as err:
+                    self.setStatus('Key Error: No Generator entry for ' + str(err))
                     continue
                 try:
                     if self.generators[gen].constraint in self.constraints and \
@@ -2363,7 +2370,13 @@ class powerMatch(QtWidgets.QWidget):
             data_file = data_file[: j + 1] + self.results_prefix + '_' + data_file[j + 1:]
         for itm in range(self.order.count()):
             gen = self.order.item(itm).text()
-            if self.generators[gen].capacity <= 0:
+            try:
+                if self.generators[gen].capacity <= 0:
+                    continue
+            except KeyError as err:
+                self.setStatus('Key Error: No Generator entry for ' + str(err))
+                continue
+            except:
                 continue
             if do_adjust:
                 try:
@@ -2387,7 +2400,7 @@ class powerMatch(QtWidgets.QWidget):
                 datain = [['Load', 'L', generated]]
                 adjustto = {'Load': generated}
                 adjust = Adjustments(self, datain, adjustto, self.adjust_cap, None,
-                                 show_multipliers=self.show_multipliers )
+                                     show_multipliers=self.show_multipliers)
                 adjust.exec_()
                 if adjust.getValues() is None:
                     self.setStatus('Execution aborted.')
@@ -3233,8 +3246,8 @@ class powerMatch(QtWidgets.QWidget):
                     ss.cell(row=ss_row, column=st_cac+1).number_format = '$#,##0'
                 elif self.generators[gen].lcoe > 0:
                     ns.cell(row=cost_row, column=col).value = '=IF(' + ss_col(col) + str(cf_row) + \
-                            '>0,' + ss_col(col) + str(sum_row) + '*Summary!J' + str(ss_row) + \
-                            '*Summary!K' + str(ss_row) + '/' + ss_col(col) + str(cf_row) + ',0)'
+                            '>0,' + ss_col(col) + str(sum_row) + '*Summary!' + ss_col(st_rlc + 1) + str(ss_row) + \
+                            '*Summary!' + ss_col(st_rcf + 1) + str(ss_row) + '/' + ss_col(col) + str(cf_row) + ',0)'
                     ns.cell(row=cost_row, column=col).number_format = '$#,##0'
                     # cost / yr
                     if self.remove_cost:
@@ -3747,7 +3760,7 @@ class powerMatch(QtWidgets.QWidget):
            # else:
             #    min_after[3] = ''
            # min_after[5] = format_period(min_after[5])
-            load_col = pmss_details[fac].col
+            load_col = pmss_details['Load'].col
             cap_sum = 0.
             gen_sum = 0.
             re_sum = 0.
@@ -3763,32 +3776,39 @@ class powerMatch(QtWidgets.QWidget):
             lifetime_co2_cost = 0.
             for sp in range(len(sp_data)):
                 gen = sp_data[sp][st_fac]
-                try:
-                    gen = gen[gen.find('.') + 1:]
-                except:
-                    pass
-                if gen in tech_names:
-                    re_sum += sp_data[sp][st_sub]
                 if gen in storage_names:
                     sto_sum += sp_data[sp][2]
+                else:
+                    try:
+                        gen2 = gen[gen.find('.') + 1:]
+                    except:
+                        pass
+                    if gen in tech_names or gen2 in tech_names:
+                        re_sum += sp_data[sp][st_sub]
             for sp in range(len(sp_data)):
                 gen = sp_data[sp][st_fac]
-                try:
-                    gen = gen[gen.find('.') + 1:]
-                except:
-                    pass
-                ndx = 3
                 if gen in storage_names:
                     ndx = 2
+                else:
+                    try:
+                        gen = gen[gen.find('.') + 1:]
+                    except:
+                        pass
+                    ndx = 3
                 try:
                     if sp_data[sp][st_cap] > 0:
                         cap_sum += sp_data[sp][st_cap]
-                        sp_data[sp][st_cfa] = '{:.1f}%'.format(sp_data[sp][ndx] / sp_data[sp][st_cap] / 8760 * 100)
+                        if self.generators[gen].lcoe > 0:
+                            sp_data[sp][st_cfa] = sp_data[sp][ndx] / sp_data[sp][st_cap] / 8760 # need number for now
+                        else:
+                            sp_data[sp][st_cfa] = '{:.1f}%'.format(sp_data[sp][ndx] / sp_data[sp][st_cap] / 8760 * 100)
                     gen_sum += sp_data[sp][st_sub]
                 except:
                     pass
                 try:
                     tml_sum += sp_data[sp][st_tml]
+                    if sp_data[sp][0] == 'RE Contribution To Load':
+                        re_tml_sum = sp_data[sp][st_tml]
                 except:
                     pass
          #       if gen in tech_names:
@@ -3800,7 +3820,10 @@ class powerMatch(QtWidgets.QWidget):
                     ndx = 2
             #        sto_sum += sp_data[sp][ndx]
                 elif gen not in tech_names:
-                    ff_sum += sp_data[sp][ndx]
+                    try:
+                        ff_sum += sp_data[sp][ndx]
+                    except:
+                        pass
                 if self.generators[gen].capex > 0 or self.generators[gen].fixed_om > 0 or self.generators[gen].variable_om > 0:
                     if self.remove_cost and sp_data[sp][ndx] == 0:
                         sp_data[sp][st_cst] = 0
@@ -3831,15 +3854,13 @@ class powerMatch(QtWidgets.QWidget):
                     else:
                         lcoe_cf = sp_data[sp][st_cfa]
                     sp_data[sp][st_cst] = self.generators[gen].lcoe * lcoe_cf * 8760 * sp_data[sp][st_cap]
-                    if sp_data[sp][st_cap] > 0 and sp_data[sp][st_cfa] > 0:
-                        sp_data[sp][st_lcg] = '{:.1f}%'.format(sp_data[sp][st_cst] / 8760 / sp_data[sp][st_cfa] / sp_data[sp][st_cap] * 100.)
-                        if gen in tech_names:
-                            sp_data[sp][st_lco] = sp_data[sp][st_cst] / ((sp_data[sp][ndx] / re_sum) * (re_tml_sum + sto_sum))
-                        else:
-                            sp_data[sp][st_lco] = sp_data[sp][st_lcg]
+                    if sp_data[sp][st_cfa] > 0:
+                        sp_data[sp][st_lcg] = sp_data[sp][st_cst] / sp_data[sp][ndx]
+                        sp_data[sp][st_lco] = sp_data[sp][st_lcg]
+                    sp_data[sp][st_cfa] = '{:.1f}%'.format(sp_data[sp][st_cfa] * 100.)
                     cost_sum += sp_data[sp][st_cst]
                     sp_data[sp][st_rlc] = self.generators[gen].lcoe
-                    sp_data[sp][st_rcf] = lcoe_cf
+                    sp_data[sp][st_rcf] = '{:.1f}%'.format(lcoe_cf * 100.)
                 sp_data[sp][st_lic] = sp_data[sp][st_cst] * max_lifetime
                 lifetime_sum += sp_data[sp][st_lic]
                 if self.generators[gen].emissions > 0:
@@ -4080,19 +4101,28 @@ class powerMatch(QtWidgets.QWidget):
         ss_sto_rows = []
         for gen in dispatch_order:
             ss_row += 1
-            if self.constraints[self.generators[gen].constraint].category == 'Storage':
-                ss_sto_rows.append(ss_row)
-                nc = 2
-                ns.cell(row=what_row, column=col).value = 'Charge\n' + gen
-                ns.cell(row=what_row, column=col).alignment = oxl.styles.Alignment(wrap_text=True,
-                        vertical='bottom', horizontal='center')
-                ns.cell(row=what_row, column=col + 1).value = gen + '\nLosses'
-                ns.cell(row=what_row, column=col + 1).alignment = oxl.styles.Alignment(wrap_text=True,
-                        vertical='bottom', horizontal='center')
-                is_storage = True
-                sto_sum += '+C' + str(ss_row)
-                loss_sum += '+Detail!' + ss_col(col + 1) + str(sum_row)
-            else:
+            try:
+                if self.constraints[self.generators[gen].constraint].category == 'Storage':
+                    ss_sto_rows.append(ss_row)
+                    nc = 2
+                    ns.cell(row=what_row, column=col).value = 'Charge\n' + gen
+                    ns.cell(row=what_row, column=col).alignment = oxl.styles.Alignment(wrap_text=True,
+                            vertical='bottom', horizontal='center')
+                    ns.cell(row=what_row, column=col + 1).value = gen + '\nLosses'
+                    ns.cell(row=what_row, column=col + 1).alignment = oxl.styles.Alignment(wrap_text=True,
+                            vertical='bottom', horizontal='center')
+                    is_storage = True
+                    sto_sum += '+C' + str(ss_row)
+                    loss_sum += '+Detail!' + ss_col(col + 1) + str(sum_row)
+                else:
+                    nc = 0
+                    is_storage = False
+                    not_sum += '-C' + str(ss_row)
+            except KeyError as err:
+                msg = 'Key Error: No Constraint for ' + gen
+                if title is not None:
+                    msg += ' (model ' + title + ')'
+                self.setStatus(msg)
                 nc = 0
                 is_storage = False
                 not_sum += '-C' + str(ss_row)
@@ -4106,7 +4136,11 @@ class powerMatch(QtWidgets.QWidget):
             ss.cell(row=ss_row, column=st_tml+1).value = '=Detail!' + ss_col(col + nc) + str(sum_row)
             ss.cell(row=ss_row, column=st_tml+1).number_format = '#,##0'
             # subtotal
-            if self.constraints[self.generators[gen].constraint].category != 'Storage':
+            try:
+                if self.constraints[self.generators[gen].constraint].category != 'Storage':
+                    ss.cell(row=ss_row, column=st_sub+1).value = '=Detail!' + ss_col(col + nc) + str(sum_row)
+                    ss.cell(row=ss_row, column=st_sub+1).number_format = '#,##0'
+            except KeyError as err:
                 ss.cell(row=ss_row, column=st_sub+1).value = '=Detail!' + ss_col(col + nc) + str(sum_row)
                 ss.cell(row=ss_row, column=st_sub+1).number_format = '#,##0'
             # cf
@@ -4148,10 +4182,10 @@ class powerMatch(QtWidgets.QWidget):
                 # capital cost
                 ss.cell(row=ss_row, column=st_cac+1).value = self.generators[gen].capex * capacity
                 ss.cell(row=ss_row, column=st_cac+1).number_format = '$#,##0'
-            elif self.generators[fac].lcoe > 0:
+            elif self.generators[gen].lcoe > 0:
                 ns.cell(row=cost_row, column=col + nc).value = '=IF(' + ss_col(col + nc) + str(cf_row) + \
-                        '>0,' + ss_col(col + nc) + str(sum_row) + '*Summary!J' + str(ss_row) + \
-                        '*Summary!K' + str(ss_row) + '/' + ss_col(col + nc) + str(cf_row) + ',0)'
+                        '>0,' + ss_col(col + nc) + str(sum_row) + '*Summary!' + ss_col(st_rlc + 1) + str(ss_row) + \
+                        '*Summary!' + ss_col(st_rcf + 1) + str(ss_row) + '/' + ss_col(col + nc) + str(cf_row) + ',0)'
                 ns.cell(row=cost_row, column=col + nc).number_format = '$#,##0'
                 # cost / yr
                 if self.remove_cost:
@@ -4875,12 +4909,12 @@ class powerMatch(QtWidgets.QWidget):
                     try:
                         pmss_details[fac].multiplier = capacity / pmss_details[fac].capacity
                     except:
-                        print('(4788)', gen, capacity, pmss_details[fac].capacity)
+                        print('(4915)', gen, capacity, pmss_details[fac].capacity)
                 multi_value, op_data, extra = self.doDispatch(year, option, pmss_details, pmss_data, re_order,
                                               dispatch_order, pm_data_file, data_file)
                 if multi_value['load_pct'] < self.targets['load_pct'][3]:
                     if multi_value['load_pct'] == 0:
-                        print('(4793)', multi_value['lcoe'], self.targets['load_pct'][3], multi_value['load_pct'])
+                        print('(4920)', multi_value['lcoe'], self.targets['load_pct'][3], multi_value['load_pct'])
                         lcoe_fitness_scores.append(1)
                     else:
                         try:
@@ -5046,6 +5080,8 @@ class powerMatch(QtWidgets.QWidget):
             colours = multi_scores[:]
             cmax = max(colours)
             cmin = min(colours)
+            if cmin == cmax:
+                return
             for c in range(len(colours)):
                 colours[c] = (colours[c] - cmin) / (cmax - cmin)
             scolours = sorted(colours)
@@ -5528,7 +5564,7 @@ class powerMatch(QtWidgets.QWidget):
             try:
                 best_score = np.min(lcoe_scores)
             except:
-                print('(5411)', lcoe_scores)
+                print('(5567)', lcoe_scores)
             best_ndx = lcoe_scores.index(best_score)
             lowest_chrom = population[best_ndx]
             self.setStatus('Starting LCOE: $%.2f' % best_score)
@@ -5927,7 +5963,7 @@ class powerMatch(QtWidgets.QWidget):
                     label = QtWidgets.QLabel(txt % amt)
                 except:
                     label = QtWidgets.QLabel('?')
-                    print('(5781)', key, txt, amt)
+                    print('(5969)', key, txt, amt)
                 label.setAlignment(QtCore.Qt.AlignCenter)
                 grid[h + 1].addWidget(label, rw, 0, 1, 3)
             rw += 1
@@ -6021,24 +6057,24 @@ class powerMatch(QtWidgets.QWidget):
                               curfile, 'Excel Files (*.xlsx)')[0]
                     if newfile == '':
                         return
-                    if os.path.exists(newfile):
-                         wb = oxl.load_workbook(newfile)
-                    elif self.batch_template == '':
-                        return
+                if os.path.exists(newfile):
+                    wb = oxl.load_workbook(newfile)
+                elif self.batch_template == '':
+                    return
+                else:
+                    wb = oxl.load_workbook(self.batch_template)   #copy batch
+                    if newfile[: len(self.scenarios)] == self.scenarios:
+                        self.files[B].setText(newfile[len(self.scenarios):])
                     else:
-                        wb = oxl.load_workbook(self.batch_template)   #copy batch
-                        if newfile[: len(self.scenarios)] == self.scenarios:
-                            self.files[B].setText(newfile[len(self.scenarios):])
-                        else:
-                            if newfile.rfind('/') > 0:
-                                that_len = len(commonprefix([self.scenarios, newfile]))
-                                if that_len > 0:
-                                    bits = self.scenarios[that_len:].split('/')
-                                    pfx = ('..' + '/') * (len(bits) - 1)
-                                    newfile = pfx + newfile[that_len + 1:]
+                        if newfile.rfind('/') > 0:
+                            that_len = len(commonprefix([self.scenarios, newfile]))
+                            if that_len > 0:
+                                bits = self.scenarios[that_len:].split('/')
+                                pfx = ('..' + '/') * (len(bits) - 1)
+                                newfile = pfx + newfile[that_len + 1:]
                         if newfile[-5:] != '.xlsx':
                             newfile += '.xlsx'
-                            self.files[B].setText(newfile)
+                        self.files[B].setText(newfile)
                 if wb.worksheets[0].max_column > 1000:
                     self.clean_batch_sheet()
                     ds = oxl.load_workbook(self.get_filename(self.files[B].text()))
@@ -6089,7 +6125,7 @@ class powerMatch(QtWidgets.QWidget):
                             if op_data[h][o_r][0] == 'Total' and col > 2:
                                 cell = batch_input_sheet.cell(row=row, column=2)
                             else:
-                            cell = batch_input_sheet.cell(row=row, column=col - 1)
+                                cell = batch_input_sheet.cell(row=row, column=col - 1)
                             new_cell = batch_input_sheet.cell(row=row, column=col)
                             try:
                                 new_cell.value = float(op_data[h][o_r][1])
@@ -6118,7 +6154,7 @@ class powerMatch(QtWidgets.QWidget):
                             except:
                                 pass
                     if batch_input_sheet.cell(row=row, column=1).value == 'Total':
-                            tot_row = row
+                        tot_row = row
                 if save_opt_rows: # want optimisation?
                     for o_r in range(op_op_prm, len(op_data[h])):
                         row += 1
