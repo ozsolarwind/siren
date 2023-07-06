@@ -2016,7 +2016,7 @@ class powerMatch(QtWidgets.QWidget):
 
         self.setStatus(self.sender().text() + ' processing started')
         if self.sender().text() == 'Detail': # detailed spreadsheet?
-            option = 'P'
+            option = 'D'
         elif self.sender().text() == 'Optimise': # do optimisation?
             option = 'O'
             self.optExit = False #??
@@ -3067,7 +3067,7 @@ class powerMatch(QtWidgets.QWidget):
             corr_data.append(['RE Contribution', corr])
         else:
             corr_data = None
-        if option == 'P':
+        if option == 'D':
             wb = oxl.Workbook()
             ns = wb.active
             ns.title = 'Detail'
@@ -3427,7 +3427,7 @@ class powerMatch(QtWidgets.QWidget):
                 storage_names.append(gen)
                 storage = [0., 0., 0., 0.] # capacity, initial, min level, max drain
                 storage[0] = capacity
-                if option == 'P':
+                if option == 'D':
                     ns.cell(row=cap_row, column=col + 2).value = capacity
                     ns.cell(row=cap_row, column=col + 2).number_format = '#,##0.00'
                 try:
@@ -3466,7 +3466,7 @@ class powerMatch(QtWidgets.QWidget):
                     in_run[0] = False
                 warm_time = self.constraints[self.generators[gen].constraint].warm_time
                 storage_carry = storage[1] # self.generators[gen].initial
-                if option == 'P':
+                if option == 'D':
                     ns.cell(row=ini_row, column=col + 2).value = storage_carry
                     ns.cell(row=ini_row, column=col + 2).number_format = '#,##0.00'
                 storage_bal = []
@@ -3546,7 +3546,7 @@ class powerMatch(QtWidgets.QWidget):
                     storage_bal.append(storage_carry)
                     if storage_bal[-1] > sto_max:
                         sto_max = storage_bal[-1]
-                    if option == 'P':
+                    if option == 'D':
                         if can_use > 0:
                             ns.cell(row=row + hrows, column=col).value = 0
                             ns.cell(row=row + hrows, column=col + 2).value = can_use * self.surplus_sign
@@ -3571,7 +3571,7 @@ class powerMatch(QtWidgets.QWidget):
                         tot_sto_loss += storage_losses
                         if can_use > 0:
                             storage_can += can_use
-                if option == 'P':
+                if option == 'D':
                     ns.cell(row=sum_row, column=col).value = '=SUMIF(' + ss_col(col) + \
                             str(hrows) + ':' + ss_col(col) + str(hrows + 8759) + ',">0")'
                     ns.cell(row=sum_row, column=col).number_format = '#,##0'
@@ -3620,7 +3620,7 @@ class powerMatch(QtWidgets.QWidget):
                     min_gen = short_taken[gen]
                 else:
                     min_gen = 0
-                if option == 'P':
+                if option == 'D':
                     ns.cell(row=cap_row, column=col).value = capacity
                     ns.cell(row=cap_row, column=col).number_format = '#,##0.00'
      #               min_after[4] = shortfall[0]
@@ -3741,7 +3741,7 @@ class powerMatch(QtWidgets.QWidget):
                     corr_data[c].append('High')
                 else:
                     corr_data[c].append('Very high')
-        if option != 'P':
+        if option != 'D':
          #   if min_after[2] >= 0:
           #      min_after[2] = format_period(min_after[2])
            # else:
