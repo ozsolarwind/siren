@@ -303,7 +303,7 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 </tr>
 <tr class="none">
 <td class="none"><img src="line.png" alt="powerplot">&nbsp;&nbsp;powerplot</td>
-<td class="none">Invoke <code>powerplot</code> to create charts from PowerModel and Powermatch outputs (see <a href="#powerplot">Powerplot</a>)</td>
+<td class="none">Invoke <code>powerplot</code> to create charts from Powermodel and Powermatch outputs (see <a href="#powerplot">Powerplot</a>)</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="download.png" alt="sirenupd">&nbsp;&nbsp;sirenupd</td>
@@ -2965,7 +2965,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 </tr>
 <tr class="none">
 <td class="none"><img src="line.png" alt="powerplot">&nbsp;&nbsp;powerplot</td>
-<td class="none">Invoke <code>powerplot</code> to create charts from PowerModel and Powermatch outputs (see <a href="#powerplot">Powerplot</a>)</td>
+<td class="none">Invoke <code>powerplot</code> to create charts from Powermodel and Powermatch outputs (see <a href="#powerplot">Powerplot</a>)</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="list.png" alt="updateswis">&nbsp;&nbsp;updateswis</td>
@@ -3240,7 +3240,7 @@ By default the size of charts produced is determined by matplotlib, or by the <e
 </ul>
 <p><strong>Note:</strong> For cumulative (stacked) charts produced by Powerplot this feature may perform slowly so please be a little patient</p>
 <h4 id="powerplot"><u>Powerplot</u></h4>
-<p><code>powerplot</code> is a standalone program that will produce either hourly, half-hourly or diurnal charts from a spreadsheet that conforms to certain constraints. It is intended to be used to chart (detailed) results either from Powermatch or some of the files produced by SIREN's PowerModels.
+<p><code>powerplot</code> is a standalone program that will produce either hourly, half-hourly or diurnal charts from a spreadsheet that conforms to certain constraints. It is intended to be used to chart (detailed) results either from Powermatch or some of the files produced by SIREN's Powermodel.
 <div class="experiment">
 The program can also be used to either:
 <ul>
@@ -3439,6 +3439,36 @@ Powermatch has three interpretations of levelised cost:
 <li>LCOE with CO2 Cost. The average cost of electricity (LCOE) including carbon cost</li>
 </ol>
 <p><strong>Note:</strong> The SIREN Powermatch component was in part inspired by the Powerbalance worksheets developed by Ben Rose. For those who would prefer his spreadsheet approach an enhanced version, Powerbalance2, is available at <a href="https://cleanenergymodelling.com.au/powerbalance2/" target="_blank">https://cleanenergymodelling.com.au/powerbalance2/</a></p>
+<h4>Powermatch input (data) file formats</h4>
+<p>Powermatch has a number of input files which are generally in the form of a simple table stored in either a CSV or Excel (XLS or XLSX) file. Constraints, Generators and Optimisation tables can be stored as separate worksheets in the same Excel file (workbook). Further details on some of the file formats can be found below. The input files are:
+<table border="0", class="none" style="margin-left:35px">
+<tr class="none">
+<td class="none"><dfn>Constraints</dfn></td>
+<td class="none">A table of constraints on the performance of a generator, for example, the maximum discharge rate for a battery or the minimum capacity for a generator once it is turned on (lower operating limit). The columns in the table are described below. Each row contains details for a constraint</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>Generators</dfn></td>
+<td class="none">A table of generators and storage facilities providing details on costs, emissions, operating lifetime, and a pointer to the constraints on the facility. The columns in the table are described below. Each row contains details for a given facility (type), including the constraint for the facility as defined in the Constraints table</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>Optimisation</dfn></td>
+<td class="none">A table of optimisation inputs providing capacity ranges for each facility. The columns in the table are described below. Each row contains details for a Generator</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>Data</dfn></td>
+<td class="none">The input data of hourly load, capacities and hourly generation produced by the Powermodel component of SIREN. This is used with a dispatch order and the generators and constraints tables to calculate how hourly load can be met. This is in XLSX format</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>Batch</dfn></td>
+<td class="none">The first worksheet in the file gives a table of input capacities and report options as described above. The first column contains a list of Generators followed by the desired report details. Each subsequent column contains the details for a model. Each row contains capacity details for a Generator. The table can also have up to five &ldquo;header&rdquo; rows which will be copied to the output report worksheet</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>Dispatch Order</dfn></td>
+<td class="none">
+The order in which the dispatchable technologies will be processed by Powermatch. This is not a file, but one of the inputs in the <code>Powermatch</code> main menu</td>
+</tr>
+</table>
+<h4>Powermatch execution</h4>
 <p>The Powermatch options are as set out here. The options (Properties) are specified in the <a href="#p_pm">[Powermatch]</a> Section of the Preferences file. The associated property is indicated in brackets at the end of the description. All files are located in the SIREN Scenarios folder.</p>
 <table border="0" class="none" cellpadding="2">
 <tr><td class="top" style="width: 20%;"><dfn>Constraints File</dfn></td>
@@ -3470,7 +3500,7 @@ Powermatch has three interpretations of levelised cost:
 <tr><td class="lr"><dfn>Carbon Price</dfn></td>
 <td class="none">If a carbon price is not included in LCOE figures you can use this option to set a carbon price between $0 and the maximum carbon price (<em>carbon_price_max</em>) (<em>carbon_price</em>)</td></tr>
 <tr><td class="lr"><dfn>Adjust Generators</dfn></td>
-<td class="none">If this option is checked you will be presented with a table to enable you to adjust the input capacity data for each generator technology. You can specify the required capacity or, if the <em>show_multipliers</em> property is set, a multiplier between 0 and the cap set by the <em>adjust_cap</em> property in the <a href="#power">[Power]</a> Section of the Preferences file; the default multiplier is 25. The original input values will be derived from the data sheet for renewables and the Generators table for dispatchable technologies. You can also <strong>Save</strong> and <strong>Restore</strong> the capacities to use again later or <strong>List</strong> saved capacities. With the list of saved capacities you can right-click on the desired list before you exit the list and capacities will be set to those values (<em>adjust_generators</em>)</td></tr>
+<td class="none">If this option is checked you will be presented with a table to enable you to adjust the input capacity data for each generator technology. You can specify the required capacity or, if the <em>show_multipliers</em> property is set, a multiplier between 0 and the cap set by the <em>adjust_cap</em> property in the <a href="#power">[Power]</a> Section of the Preferences file; the default multiplier is 25. The original input values will be derived from the data sheet for renewables and the Generators table for dispatchable technologies. If you have adjusted the capacities you can <strong>Reset</strong> the capacities or just <strong>Reset Load</strong>. You can also <strong>Save</strong> and <strong>Restore</strong> the capacities to use again later or <strong>List</strong> saved capacities. With the list of saved capacities you can right-click on the desired list before you exit the list and capacities will be set to those values. You can also <strong>Add to  Batch</strong> file. You press <strong>Proceed</strong> to execute <code>Powermatch</code>. (<em>adjust_generators</em>)</td></tr>
 <tr><td class="lr"><dfn>Dispatch Order</dfn></td>
 <td class="none">The order in which the dispatchable technologies will be processed by Powermatch. You can change the order by clicking on each value and moving it up and down the list. The initial order is derived from the generators (facilities) table. If you want to exclude a generator you can drag it to the right hand list (and drag it back to the left to re-include)</td></tr>
 <tr><td class="bottom"><strong>Done, Summary, Detail,<br />Batch, Optimise, Help</strong></td>
@@ -3580,7 +3610,7 @@ See below for more details on optimisation.</li>
 </ul>
 <p>The Constraints, Generators and Optimisation tables can be edited, updated and saved and the revised table(s) used as inputs for the <strong>Summary</strong>, <strong>Powermatch</strong>, <strong>Batch</strong> and <strong>Optimise</strong> options. During the edit process the revised values can be exported as a new spreadsheet. If the table(s) is saved but not exported the revised values will not be available once Powermatch is exited. You can also choose another sheet, however, if the sheet you choose is not the correct format you may get unusual behaviour.</p>
 <h4>Generators</h4>
-<p>To address the shortfall in generation encountered by a renewable scenario other dispatchable generation and storage facilities can be used. These are defined in a Generators table. The Generators table can also be used to define the Reference <em>LCOE</em> and <em>LCOE CF</em> figures for Renewable technologies. The dispatchable facilities are dispatched after renewable generators. The fields are:
+<p>To address the shortfall in generation encountered by a renewable scenario other dispatchable generation and storage facilities can be used. These are defined in a Generators table. The Generators table is also used to define the Reference <em>LCOE</em> and <em>LCOE CF</em> figures for Renewable technologies. The dispatchable facilities are dispatched after renewable generators. The fields are:
 <table border="0" class="none" style="margin-left:35px">
 <tr><td class="none"><dfn>Name (*)</dfn></td><td class="none">Name of the Facility</td></tr>
 <tr><td class="none"><dfn>Capacity (*)</dfn></td><td class="none">The capacity for the facility in MW for generators and MWh, that is total energy content, for storage</td></tr>
@@ -3789,30 +3819,6 @@ If the best and worse values are the same for a variable and that value is not a
 <li>Optionally, present a table for the optimal solutions (<em>optimise_multitable</em>; default is False). The table shows the adjustment values and capacity for each generator followed by the estimated value for each of the six multi-variables prioritised by Weight. By pressing the appropriate button the adjustment values for the chosen solution will be made available for <strong>Summary</strong> and <strong>Powermatch</strong></li>
 </ol>
 </div>
-<h4>Powermatch input file formats</h4>
-<p>Powermatch has a number of input files which are generally in the form of a simple table stored in either a CSV or Excel (XLS or XLSX) file. Constraints, Generators and Optimisation tables can be stored as separate worksheets in the same Excel file (workbook). Further details on some of the file formats can be found above. The input files are:
-<table border="0", class="none" style="margin-left:35px">
-<tr class="none">
-<td class="none"><dfn>Constraints</dfn></td>
-<td class="none">A table of constraints. The columns in the table are described above. Each row contains details for a constraint</td>
-</tr>
-<tr class="none">
-<td class="none"><dfn>Generators</dfn></td>
-<td class="none">A table of generators and storage facilities. The columns in the table are described above. Each row contains details for a given facility (type), including the constraint for the facility as defined in the Constraints table</td>
-</tr>
-<tr class="none">
-<td class="none"><dfn>Optimisation</dfn></td>
-<td class="none">A table of optimisation inputs. The columns in the table are described above. Each row contains details for a Generator</td>
-</tr>
-<tr class="none">
-<td class="none"><dfn>Data</dfn></td>
-<td class="none">The input data of capacities and hourly generation produced by Powermodel. This is in XLSX format</td>
-</tr>
-<tr class="none">
-<td class="none"><dfn>Batch</dfn></td>
-<td class="none">The first worksheet in the file gives a table of input capacities and report options as described above. The first column contains a list of Generators followed by the desired report details. Each subsequent column contains the details for a model. Each row contains capacity details for a Generator. The table can also have up to five &ldquo;header&rdquo; rows which will be copied to the output report worksheet</td>
-</tr>
-</table>
 <h4>Minimal Preferences file for Powermatch</h4>
 <p>It is possible to run <code>powermatch</code> with a minimal Preferences file. If you have a Powermatch data file produced from SIREN you can use that as an input to Powermatch without having access to the full set of SIREN files. As well as the <a href="#p_pm">[Powermatch]</a> Section of the Preferences file the only properties required are:
 <ul>
@@ -4541,7 +4547,7 @@ NASA MERRA-2 data allows weather files to be created on a grid of 0.625 degree o
 <li><em>Solar Format</em>. The solar option can produce weather files in either of two formats - SMW or CSV format. This option allows you to choose your preferred one. SMW format is suitable for SAM while it may have trouble with the CSV format</li>
 <li><em>Solar Variable</em>. There are two MERRA-2 solar variables to use to create weather files - <em>swgdn</em> or <em>swgnt</em>. The equivalent ERA5 variables are - <em>ssrd</em> and <em>ssr</em></li>
 <li><em>Hub height</em>. To extrapolate wind data above the 50 metre maximum in the MERRA-2 data, or 100 metres in ERA5 data. This can be used to cater for wind turbines with higher hub heights. SAM's <em>windpower</em> model expects wind data within 35 metres of the hub height.
-<br /><strong>Note</strong>: SIREN can dynamically extrapolate wind data when running Powermodel so if using SIREN theer is no need to produce extrapolated wind data</li>
+<br /><strong>Note</strong>: SIREN can dynamically extrapolate wind data when running Powermodel so if using SIREN there is no need to produce extrapolated wind data</li>
 <li>Extrapolation will use the chosen <em>law</em>, either <em>logarithmic</em>, the default, or <em>Hellmann</em> as described below</li>
 <li><em>Coordinates</em>. Rather than producing weather files for each grid cell in the chosen area you can restrict it by passing a string of comma-separated latitude and longitude values. The tool will then generate files for just these coordinates.
 <ul>
