@@ -31,7 +31,7 @@ except:
 import sys
 from PyQt5 import QtCore, QtWidgets
 import xlrd
-if xlrd.__version__[:2] [0] == '1.': # if xlsx files still supported
+if xlrd.__version__[:2][0] == '1.': # if xlsx files still supported
     if sys.version_info[1] >= 9: # python 3.9 onwards
         xlrd.xlsx.ensure_elementtree_imported(False, None)
         xlrd.xlsx.Element_has_iter = True
@@ -47,7 +47,7 @@ class ClickableQLabel(QtWidgets.QLabel):
         QtWidgets.QApplication.widgetAt(event.globalPos()).setFocus()
         self.clicked.emit()
 
-# class to support listwidget drag and drop between two lists
+# class to support  listwidget drag and drop between two lists
 # also supports using keys where drag and drop not working (e.g. Ubuntu 23.04)
 class ListWidget(QtWidgets.QListWidget):
     def decode_data(self, bytearray):
@@ -69,6 +69,7 @@ class ListWidget(QtWidgets.QListWidget):
         self.setDragDropMode(self.DragDrop)
         self.setSelectionMode(self.ExtendedSelection)
         self.setAcceptDrops(True)
+        self.updated = False
         self._other = None
         for child in self.parent().children():
             if isinstance(child, ListWidget) and child != self: # will work if more than one ListWidget
@@ -91,6 +92,7 @@ class ListWidget(QtWidgets.QListWidget):
             super(ListWidget, self).dragMoveEvent(event)
 
     def dropEvent(self, event):
+        self.updated = True
         if event.source() == self:
             event.setDropAction(QtCore.Qt.MoveAction)
             QtWidgets.QListWidget.dropEvent(self, event)
@@ -138,6 +140,7 @@ class ListWidget(QtWidgets.QListWidget):
                 if self.objectName == 'Exclude':
                     return
                 action = 'Shift'
+            self.updated = True
         except:
             return
         if action == 'Shift':
