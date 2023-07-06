@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2022 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2023 Sustainable Energy Now Inc., Angus King
 #
 #  turbine.py - This file is part of SIREN.
 #
@@ -19,7 +19,8 @@
 #  <http://www.gnu.org/licenses/>.
 #
 
-import pylab as plt
+import matplotlib.pyplot as plt
+import numpy as np
 import csv
 import os
 import sys
@@ -87,7 +88,7 @@ class Power_Curve:
                 except:
                     break
             self.cutout = ln - 5
-            self.power_curve = plt.polyfit(x, y, poly)
+            self.power_curve = np.polyfit(x, y, poly)
             self.capacity = last_valu
         else:
             print('No', pow_file)
@@ -97,7 +98,7 @@ class Power_Curve:
         """return power for wind speed."""
         if wind_speed < self.cutin or wind_speed > self.cutout:
             return 0.
-        reslt = plt.polyval(self.power_curve, wind_speed)
+        reslt = np.polyval(self.power_curve, wind_speed)
         if reslt < 0:
             return 0.
         if reslt > self.capacity:

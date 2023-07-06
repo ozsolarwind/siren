@@ -23,7 +23,7 @@ from math import asin, ceil, cos, radians, sin, sqrt
 import matplotlib
 if matplotlib.__version__ > '3.5.1':
     matplotlib.use('Qt5Agg')
-import pylab as plt
+import matplotlib.pyplot as plt
 from matplotlib.font_manager import FontProperties
 import matplotlib.lines as mlines
 import os

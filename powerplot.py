@@ -31,7 +31,7 @@ else:
     matplotlib.use('TkAgg')
 from matplotlib.font_manager import FontProperties
 import numpy as np
-import pylab as plt
+import matplotlib.pyplot as plt
 import displayobject
 from colours import Colours
 from credits import fileVersion

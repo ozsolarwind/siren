@@ -31,7 +31,7 @@ if matplotlib.__version__ > '3.5.1':
 else:
     matplotlib.use('TkAgg')
 from matplotlib.font_manager import FontProperties
-import pylab as plt
+import matplotlib.pyplot as plt
 import random
 import displayobject
 import displaytable
