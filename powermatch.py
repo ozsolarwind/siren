@@ -1302,7 +1302,7 @@ class powerMatch(QtWidgets.QWidget):
                 curfile = self.get_filename(self.files[R].text())
             newfile = QtWidgets.QFileDialog.getSaveFileName(None, 'Save ' + self.file_labels[i] + ' file',
                       curfile, 'Excel Files (*.xlsx)')[0]
-        elif i == B:
+        elif i == B and not self.batch_new_file:
             options = QtWidgets.QFileDialog.Options()
             # options |= QFileDialog.DontUseNativeDialog
             newfile = QtWidgets.QFileDialog.getSaveFileName(None, 'Open/Create and save ' + self.file_labels[i] + ' file',
@@ -1856,6 +1856,9 @@ class powerMatch(QtWidgets.QWidget):
             if tech[:5] == 'Total':
                 istop = row + 1
                 break
+        if len(self.batch_tech) == 0:
+            self.setStatus('No input technologies found in ' + self.file_labels[B] + ' worksheet (try opening and re-saving the workbook).')
+            return False
         carbon_row = -1
         discount_row = -1
         for row in range(istop, ws.nrows):
@@ -2452,19 +2455,19 @@ class powerMatch(QtWidgets.QWidget):
             if self.batch_new_file:
                 wb.close()
                 i = self.files[B].text().rfind('.')
-                batch_report_file = self.get_filename(self.files[B].text()[:i] + '_report' + self.files[B].text()[i:])
-                if os.path.exists(batch_report_file):
-                    batch_report_file = QtWidgets.QFileDialog.getSaveFileName(None, 'Save Batch Report file',
-                                        batch_report_file, 'Excel Files (*.xlsx)')[0]
-                    if batch_report_file == '':
-                        self.setStatus(self.sender().text() + ' aborted')
-                        return
-                    if batch_report_file[-5:] != '.xlsx':
-                        batch_report_file += '.xlsx'
-                ds = oxl.Workbook()
+                rpt_time = QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'yyyy-MM-dd_hhmm')
+                suffix = '_report_' + rpt_time
+                batch_report_file = self.get_filename(self.files[B].text()[:i] + suffix + self.files[B].text()[i:])
+                batch_report_file = QtWidgets.QFileDialog.getSaveFileName(None, 'Save Batch Report file',
+                                    batch_report_file, 'Excel Files (*.xlsx)')[0]
+                if batch_report_file == '':
+                    self.setStatus(self.sender().text() + ' aborted')
+                    return
+                if batch_report_file[-5:] != '.xlsx':
+                    batch_report_file += '.xlsx'
+                wb = oxl.Workbook()
                 bs = wb.active
-                bs.title = 'Results_' + QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),
-                           'yyyy-MM-dd_hhmm')
+                bs.title = 'Results_' + rpt_time
             else:
                 batch_report_file = self.get_filename(self.files[B].text())
                 if self.replace_last.isChecked():
@@ -4909,12 +4912,12 @@ class powerMatch(QtWidgets.QWidget):
                     try:
                         pmss_details[fac].multiplier = capacity / pmss_details[fac].capacity
                     except:
-                        print('(4915)', gen, capacity, pmss_details[fac].capacity)
+                        print('(4923)', gen, capacity, pmss_details[fac].capacity)
                 multi_value, op_data, extra = self.doDispatch(year, option, pmss_details, pmss_data, re_order,
                                               dispatch_order, pm_data_file, data_file)
                 if multi_value['load_pct'] < self.targets['load_pct'][3]:
                     if multi_value['load_pct'] == 0:
-                        print('(4920)', multi_value['lcoe'], self.targets['load_pct'][3], multi_value['load_pct'])
+                        print('(4928)', multi_value['lcoe'], self.targets['load_pct'][3], multi_value['load_pct'])
                         lcoe_fitness_scores.append(1)
                     else:
                         try:
@@ -5564,7 +5567,7 @@ class powerMatch(QtWidgets.QWidget):
             try:
                 best_score = np.min(lcoe_scores)
             except:
-                print('(5567)', lcoe_scores)
+                print('(5578)', lcoe_scores)
             best_ndx = lcoe_scores.index(best_score)
             lowest_chrom = population[best_ndx]
             self.setStatus('Starting LCOE: $%.2f' % best_score)
@@ -5963,7 +5966,7 @@ class powerMatch(QtWidgets.QWidget):
                     label = QtWidgets.QLabel(txt % amt)
                 except:
                     label = QtWidgets.QLabel('?')
-                    print('(5969)', key, txt, amt)
+                    print('(5977)', key, txt, amt)
                 label.setAlignment(QtCore.Qt.AlignCenter)
                 grid[h + 1].addWidget(label, rw, 0, 1, 3)
             rw += 1
