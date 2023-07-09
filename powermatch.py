@@ -2973,7 +2973,7 @@ class powerMatch(QtWidgets.QWidget):
             if tim < 60:
                 tim = '%.1f secs' % tim
             else:
-                tim = '%.2f mins' % tim / 60.
+                tim = '%.2f mins' % (tim / 60.)
             self.setStatus('%s completed (%d models; %s)' % (self.sender().text(),
                            len(self.batch_models), tim))
             return
