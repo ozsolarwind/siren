@@ -1176,7 +1176,7 @@ class powerMatch(QtWidgets.QWidget):
         r += 1
         self.progressbar = QtWidgets.QProgressBar()
         self.progressbar.setMinimum(0)
-        self.progressbar.setMaximum(10)
+        self.progressbar.setMaximum(20) # was 10 set to 20 to get 5% steps
         self.progressbar.setValue(0)
         self.progressbar.setStyleSheet('QProgressBar {border: 1px solid grey; border-radius: 2px; text-align: center;}' \
                                        + 'QProgressBar::chunk { background-color: #06A9D6;}')
@@ -2032,7 +2032,7 @@ class powerMatch(QtWidgets.QWidget):
             option = 'S'
         if option != 'O':
             self.progressbar.setMinimum(0)
-            self.progressbar.setMaximum(10)
+            self.progressbar.setMaximum(20)
             self.progressbar.setHidden(False)
         err_msg = ''
         if self.constraints is None:
@@ -2349,6 +2349,7 @@ class powerMatch(QtWidgets.QWidget):
             do_adjust = True
         ts.close()
         self.progressbar.setValue(1)
+        QtWidgets.QApplication.processEvents()
         if self.files[R].text() == '':
             i = pm_data_file.rfind('/')
             if i >= 0:
@@ -2465,9 +2466,13 @@ class powerMatch(QtWidgets.QWidget):
                     return
                 if batch_report_file[-5:] != '.xlsx':
                     batch_report_file += '.xlsx'
-                wb = oxl.Workbook()
-                bs = wb.active
-                bs.title = 'Results_' + rpt_time
+                if os.path.exists(batch_report_file) and self.replace_last.isChecked():
+                    wb = oxl.Workbook()
+                    bs = wb.active
+                    bs.title = 'Results_' + rpt_time
+                else:
+                    wb = oxl.load_workbook(batch_report_file)
+                    bs = wb.create_sheet('Results_' + rpt_time)
             else:
                 batch_report_file = self.get_filename(self.files[B].text())
                 if self.replace_last.isChecked():
@@ -2604,10 +2609,11 @@ class powerMatch(QtWidgets.QWidget):
                     elif self.batch_report[g][0] == 'Cost ($/Yr)' and batch_disc_row >= 0:
                         gndx += 1
             try:
-                incr = 10 / len(self.batch_models)
+                incr = 20 / len(self.batch_models)
             except:
-                incr = .1
+                incr = .05
             prgv = incr
+            prgv_int = 0
             for model, capacities in self.batch_models.items():
                 # to cater for different load profiles (years) and generator costs (years) this loop would need to change, that is
                 # need to be able to change pmss_details and pmss_data[0]
@@ -2617,7 +2623,10 @@ class powerMatch(QtWidgets.QWidget):
                         pmss_details['Load'].col = load_columns[year]
                         continue
                     pmss_details[fac].multiplier = 0
+                if int(prgv) > prgv_int:
+                    prgv_int = int(prgv)
                 self.progressbar.setValue(int(prgv))
+                    QtWidgets.QApplication.processEvents()
                 prgv += incr
                 column += 1
                 dispatch_order = []
@@ -2768,6 +2777,15 @@ class powerMatch(QtWidgets.QWidget):
                                         bs.cell(row=gndx + tndx, column=column).font = normal
                         except:
                             pass
+            tim = (time.time() - start_time)
+            if tim < 60:
+                tim = '%.1f secs' % tim
+            else:
+                tim = '%.2f mins' % (tim / 60.)
+            self.setStatus('Saving %s report (%d models; %s)' % (self.sender().text(),
+                           len(self.batch_models), tim))
+       #     self.setStatus('Saving %s report' % (self.sender().text()))
+            QtWidgets.QApplication.processEvents()
             if total_load_row > 0:
                 load_mult = ''
                 try:
@@ -2970,7 +2988,8 @@ class powerMatch(QtWidgets.QWidget):
                         chs.cell(row=cht_row - 1, column=cht_col).value = chart_group
                         chs.cell(row=cht_row - 1, column=cht_col).font = bold
                     chs.add_chart(charts[-1], cht_cells[len(charts) % 2] + str(cht_row))
-            self.progressbar.setValue(10)
+            self.progressbar.setValue(20)
+            QtWidgets.QApplication.processEvents()
             wb.save(batch_report_file)
             tim = (time.time() - start_time)
             if tim < 60:
@@ -3408,7 +3427,8 @@ class powerMatch(QtWidgets.QWidget):
                 sp_data.append(sp_d)
                 re_tml_sum = tml
         if option not in ['O', '1', 'B']:
-            self.progressbar.setValue(3)
+            self.progressbar.setValue(6)
+            QtWidgets.QApplication.processEvents()
         storage_names = []
         # find any minimum generation for generators
         short_taken = {}
@@ -3717,7 +3737,8 @@ class powerMatch(QtWidgets.QWidget):
                     sp_d[st_max] = gen_max
                     sp_data.append(sp_d)
         if option not in ['O', '1', 'B']:
-            self.progressbar.setValue(4)
+            self.progressbar.setValue(8)
+            QtWidgets.QApplication.processEvents()
         if corr_data is not None:
             try:
                 corr = np.corrcoef(df1, corr_src)
@@ -4095,7 +4116,7 @@ class powerMatch(QtWidgets.QWidget):
             dialog = displaytable.Table(sp_data, title=atitle, fields=headers,
                      save_folder=self.scenarios, sortby='', decpts=sp_pts)
             dialog.exec_()
-            self.progressbar.setValue(10)
+            self.progressbar.setValue(20)
             self.progressbar.setHidden(True)
             self.progressbar.setValue(0)
             return # finish if not detailed spreadsheet
@@ -4340,7 +4361,8 @@ class powerMatch(QtWidgets.QWidget):
                     ns.cell(row=row, column=col).font = normal
                 except:
                     pass
-        self.progressbar.setValue(6)
+        self.progressbar.setValue(12)
+        QtWidgets.QApplication.processEvents()
         ns.row_dimensions[what_row].height = 30
         ns.freeze_panes = 'C' + str(hrows)
         ns.activeCell = 'C' + str(hrows)
@@ -4617,7 +4639,8 @@ class powerMatch(QtWidgets.QWidget):
         ss.cell(row=ss_row, column=st_cap+1).number_format = '#,##0.00%'
         ss_row += 2
         ss_row = self.data_sources(ss, ss_row, pm_data_file)
-        self.progressbar.setValue(7)
+        self.progressbar.setValue(14)
+        QtWidgets.QApplication.processEvents()
         for row in range(1, ss_row + 1):
             for col in range(1, len(headers) + 1):
                 try:
@@ -4750,7 +4773,8 @@ class powerMatch(QtWidgets.QWidget):
             cs.freeze_panes = 'B2'
             cs.activeCell = 'B2'
         wb.save(data_file)
-        self.progressbar.setValue(10)
+        self.progressbar.setValue(20)
+        QtWidgets.QApplication.processEvents()
         j = data_file.rfind('/')
         data_file = data_file[j + 1:]
         msg = '%s created (%.2f seconds)' % (data_file, time.time() - start_time)
