@@ -2536,9 +2536,15 @@ class powerMatch(QtWidgets.QWidget):
             gndx = self.batch_report[0][1] # Capacity group starting row
             do_opt_parms = [False, 0, 0, 0]
             total_load_row = 0
+            if self.discount_rate > 0:
+                batch_disc_row = 0
+            else:
+                batch_disc_row = -1
+            if self.carbon_price > 0:
             batch_carbon_row = 0
+            else:
+                batch_carbon_row = -1
             batch_lifetime = False
-            batch_disc_row = -1
             batch_data_sources_row = 0
             report_keys = []
             for g in range(len(self.batch_report)):
@@ -2549,7 +2555,7 @@ class powerMatch(QtWidgets.QWidget):
                 if self.batch_report[g][0] == 'Chart':
                     continue
                 elif self.batch_report[g][0] == 'Carbon Price':
-       #             batch_carbon_row = self.batch_report[g][1]
+                    batch_carbon_row = self.batch_report[g][1]
                     continue
                 elif self.batch_report[g][0] == 'Discount Rate' or self.batch_report[g][0].lower() == 'wacc':
                     batch_disc_row = self.batch_report[g][1]
