@@ -1126,7 +1126,11 @@ class powerMatch(QtWidgets.QWidget):
             r += 1
       #  wdth = edit[1].fontMetrics().boundingRect(edit[1].text()).width() + 9
         self.grid.addWidget(QtWidgets.QLabel('Replace Last:'), r, 0)
-        self.replace_last = QtWidgets.QCheckBox('(check to replace last Results worksheet in Batch spreadsheet)', self)
+        if self.batch_new_file:
+            msg = '(check to replace an existing Results workbook)'
+        else:
+            msg = '(check to replace last Results worksheet in Batch spreadsheet)'
+        self.replace_last = QtWidgets.QCheckBox(msg, self)
         self.replace_last.setCheckState(QtCore.Qt.Unchecked)
         self.grid.addWidget(self.replace_last, r, 1, 1, 4)
         r += 1
@@ -1490,6 +1494,14 @@ class powerMatch(QtWidgets.QWidget):
             self.show_multipliers = True
         else:
             self.show_multipliers = False
+        try:
+            st = config.get('Powermatch', 'batch_new_file')
+        except:
+            st = 'False'
+        if st.lower() in ['true', 'yes', 'on']:
+            self.batch_new_file = True
+        else:
+            self.batch_new_file = False
         self.setStatus(config_file + ' edited. Reload may be required.')
 
     def editClicked(self):
@@ -2412,7 +2424,7 @@ class powerMatch(QtWidgets.QWidget):
                     return
                 adjustto = adjust.getValues()
                 pmss_details['Load'].multiplier = adjustto['Load'] / pmss_details['Load'].capacity
-            start_time = time.time() # just for fun
+       #     start_time = time.time() # just for fun
             batch_details = {'Capacity (MW/MWh)': [st_cap, '#,##0.00'],
                              'To Meet Load (MWh)': [st_tml, '#,##0'],
                              'Generation (MWh)': [st_sub, '#,##0'],
@@ -2466,13 +2478,13 @@ class powerMatch(QtWidgets.QWidget):
                     return
                 if batch_report_file[-5:] != '.xlsx':
                     batch_report_file += '.xlsx'
-                if os.path.exists(batch_report_file) and self.replace_last.isChecked():
+                if os.path.exists(batch_report_file) and not self.replace_last.isChecked():
+                    wb = oxl.load_workbook(batch_report_file)
+                    bs = wb.create_sheet('Results_' + rpt_time)
+                else:
                     wb = oxl.Workbook()
                     bs = wb.active
                     bs.title = 'Results_' + rpt_time
-                else:
-                    wb = oxl.load_workbook(batch_report_file)
-                    bs = wb.create_sheet('Results_' + rpt_time)
             else:
                 batch_report_file = self.get_filename(self.files[B].text())
                 if self.replace_last.isChecked():
@@ -2484,6 +2496,7 @@ class powerMatch(QtWidgets.QWidget):
                         wb.remove(ws)
                 bs = wb.create_sheet('Results_' + QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),
                                      'yyyy-MM-dd_hhmm'))
+            start_time = time.time() # just for fun
             normal = oxl.styles.Font(name='Arial')
             bold = oxl.styles.Font(name='Arial', bold=True)
             # copy header rows to new worksheet
