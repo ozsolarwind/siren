@@ -650,7 +650,10 @@ class PowerPlot(QtWidgets.QWidget):
                 else:
                     the_row = row
                 for col in range(ws.ncols -1, 1, -1):
-                    column = ws.cell_value(the_row, col).replace('\n',' ')
+                    try:
+                        column = ws.cell_value(the_row, col).replace('\n',' ')
+                    except:
+                        column = str(ws.cell_value(the_row, col))
                     if self.zone_row > 0 and ws.cell_value(self.zone_row, col) != '' and ws.cell_value(self.zone_row, col) is not None:
                         column = ws.cell_value(self.zone_row, col).replace('\n',' ') + '.' + column
                     if column in oldcolumns:
@@ -945,7 +948,10 @@ class PowerPlot(QtWidgets.QWidget):
             titl = titl.replace('Diurnal', '')
             titl = titl.replace('$SHEET$', isheet)
             for c2 in range(2, ws.ncols):
-                column = ws.cell_value(self.toprow[0], c2).replace('\n',' ')
+                try:
+                    column = ws.cell_value(self.toprow[0], c2).replace('\n',' ')
+                except:
+                    column = str(ws.cell_value(self.toprow[0], c2))
                 if self.zone_row > 0 and ws.cell_value(self.zone_row, c2) != '' and ws.cell_value(self.zone_row, c2) is not None:
                     column = ws.cell_value(self.zone_row, c2).replace('\n',' ') + '.' + column
                 if column == self.target:
@@ -956,7 +962,10 @@ class PowerPlot(QtWidgets.QWidget):
             for c in range(self.order.count() -1, -1, -1):
                 col = self.order.item(c).text()
                 for c2 in range(2, ws.ncols):
-                    column = ws.cell_value(self.toprow[0], c2).replace('\n',' ')
+                    try:
+                        column = ws.cell_value(self.toprow[0], c2).replace('\n',' ')
+                    except:
+                        column = str(ws.cell_value(self.toprow[0], c2))
                     if self.zone_row > 0 and ws.cell_value(self.zone_row, c2) != '' and ws.cell_value(self.zone_row, c2) is not None:
                         column = ws.cell_value(self.zone_row, c2).replace('\n',' ') + '.' + column
                     if column == col:
@@ -1398,7 +1407,10 @@ class PowerPlot(QtWidgets.QWidget):
                     for dy in range(days):
                         hmdata[-1].append(0)
                 for c2 in range(2, ws.ncols):
-                    column = ws.cell_value(self.toprow[0], c2).replace('\n',' ')
+                    try:
+                        column = ws.cell_value(self.toprow[0], c2).replace('\n',' ')
+                    except:
+                        column = str(ws.cell_value(self.toprow[0], c2))
                     if self.zone_row > 0 and ws.cell_value(self.zone_row, c2) != '' and ws.cell_value(self.zone_row, c2) is not None:
                         column = ws.cell_value(self.zone_row, c2).replace('\n',' ') + '.' + column
                     if column == self.target:
@@ -1406,7 +1418,10 @@ class PowerPlot(QtWidgets.QWidget):
                 for c in range(self.order.count() -1, -1, -1):
                     col = self.order.item(c).text()
                     for c2 in range(2, ws.ncols):
-                        column = ws.cell_value(self.toprow[0], c2).replace('\n',' ')
+                        try:
+                            column = ws.cell_value(self.toprow[0], c2).replace('\n',' ')
+                        except:
+                            column = str(ws.cell_value(self.toprow[0], c2))
                         if self.zone_row > 0 and ws.cell_value(self.zone_row, c2) != '' and ws.cell_value(self.zone_row, c2) is not None:
                             column = ws.cell_value(self.zone_row, c2).replace('\n',' ') + '.' + column
                         if column == col:
@@ -1530,7 +1545,10 @@ class PowerPlot(QtWidgets.QWidget):
                 hs.append(h)
             x = hs[:]
             for c2 in range(2, ws.ncols):
-                column = ws.cell_value(self.toprow[0], c2).replace('\n',' ')
+                try:
+                    column = ws.cell_value(self.toprow[0], c2).replace('\n',' ')
+                except:
+                    column = str(ws.cell_value(self.toprow[0], c2))
                 if self.zone_row > 0 and ws.cell_value(self.zone_row, c2) != '' and ws.cell_value(self.zone_row, c2) is not None:
                     column = ws.cell_value(self.zone_row, c2).replace('\n',' ') + '.' + column
                 if column == self.target:
@@ -1541,7 +1559,10 @@ class PowerPlot(QtWidgets.QWidget):
             for c in range(self.order.count() -1, -1, -1):
                 col = self.order.item(c).text()
                 for c2 in range(2, ws.ncols):
-                    column = ws.cell_value(self.toprow[0], c2).replace('\n',' ')
+                    try:
+                        column = ws.cell_value(self.toprow[0], c2).replace('\n',' ')
+                    except:
+                        column = str(ws.cell_value(self.toprow[0], c2))
                     if self.zone_row > 0 and ws.cell_value(self.zone_row, c2) != '' and ws.cell_value(self.zone_row, c2) is not None:
                         column = ws.cell_value(self.zone_row, c2).replace('\n',' ') + '.' + column
                     if column == col:
@@ -1940,7 +1961,10 @@ class PowerPlot(QtWidgets.QWidget):
         total_tgt = 0
         total_data = []
         for c2 in range(2, ws.ncols):
-            column = ws.cell_value(self.toprow[0], c2).replace('\n',' ')
+            try:
+                column = ws.cell_value(self.toprow[0], c2).replace('\n',' ')
+            except:
+                column = str(ws.cell_value(self.toprow[0], c2))
             if self.zone_row > 0 and ws.cell_value(self.zone_row, c2) != '' and ws.cell_value(self.zone_row, c2) is not None:
                 column = ws.cell_value(self.zone_row, c2).replace('\n',' ') + '.' + column
             if column == self.target:
@@ -1994,7 +2018,10 @@ class PowerPlot(QtWidgets.QWidget):
             for c in range(self.order.count() -1, -1, -1):
                 col = self.order.item(c).text()
                 for c2 in range(2, ws.ncols):
-                    column = ws.cell_value(self.toprow[0], c2).replace('\n',' ')
+                    try:
+                        column = ws.cell_value(self.toprow[0], c2).replace('\n',' ')
+                    except:
+                        column = str(ws.cell_value(self.toprow[0], c2))
                     if self.zone_row > 0 and ws.cell_value(self.zone_row, c2) != '' and ws.cell_value(self.zone_row, c2) is not None:
                         column = ws.cell_value(self.zone_row, c2).replace('\n',' ') + '.' + column
                     if column == col:
