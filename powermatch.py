@@ -878,6 +878,7 @@ class powerMatch(QtWidgets.QWidget):
         self.carbon_price = 0.
         self.carbon_price_max = 200.
         self.discount_rate = 0.
+        self.load_year = 'n/a'
         self.optimise_choice = 'LCOE'
         self.optimise_generations = 20
         self.optimise_mutation = 0.005
@@ -956,6 +957,8 @@ class powerMatch(QtWidgets.QWidget):
                             self.load_files = self.load_files.replace(ky, valu)
                     except:
                         pass
+                elif key == 'load_year':
+                    self.load_year = value
                 elif key == 'log_status':
                     if value.lower() in ['false', 'no', 'off']:
                         self.log_status = False
@@ -1028,6 +1031,7 @@ class powerMatch(QtWidgets.QWidget):
                     if value[0] == '+' or value[0].lower() == 'p':
                         self.surplus_sign = -1
         except:
+            print('Error with', key)
             pass
         self.restorewindows = False
         try:
@@ -1119,8 +1123,9 @@ class powerMatch(QtWidgets.QWidget):
                 self.loadCombo = QtWidgets.QComboBox()
                 for choice in self.load_years:
                     self.loadCombo.addItem(choice)
-                  #  if choice == self.load_year:
-                   #     loadCombo.setCurrentIndex(loadCombo.count() - 1)
+                    if choice == self.load_year:
+                        self.loadCombo.setCurrentIndex(self.loadCombo.count() - 1)
+                self.loadCombo.currentIndexChanged.connect(self.changes)
                 self.grid.addWidget(self.loadCombo, r, 1)
                 self.grid.addWidget(QtWidgets.QLabel("(To to use a different load year to the data file. Otherwise choose 'n/a')"), r, 2, 1, 4)
             r += 1
@@ -1426,6 +1431,10 @@ class powerMatch(QtWidgets.QWidget):
                 lines.append(self.file_labels[i].lower() + '_file=' + self.files[i].text().replace(getUser(), '$USER$'))
             for i in range(D):
                 lines.append(self.file_labels[i].lower() + '_sheet=' + self.sheets[i].currentText())
+            line = 'load_year='
+            if self.loadCombo.currentText() != 'n/a':
+                line += self.loadCombo.currentText()
+            lines.append(line)
             lines.append('optimise_choice=' + self.optimise_choice)
             lines.append('optimise_generations=' + str(self.optimise_generations))
             lines.append('optimise_mutation=' + str(self.optimise_mutation))
