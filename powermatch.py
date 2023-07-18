@@ -1143,6 +1143,7 @@ class powerMatch(QtWidgets.QWidget):
         self.discount = QtWidgets.QDoubleSpinBox()
         self.discount.setRange(0, 100)
         self.discount.setDecimals(2)
+        self.discount.setSingleStep(.5)
         try:
             self.discount.setValue(self.discount_rate * 100.)
         except:
