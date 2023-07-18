@@ -1951,42 +1951,46 @@ class powerMatch(QtWidgets.QWidget):
                 for stn in cat:
                     self.order.addItem(stn)
 
-    def data_sources(self, ss, ss_row, pm_data_file):
+    def data_sources(self, sheet, sheet_row, pm_data_file):
+        normal = oxl.styles.Font(name='Arial')
         bold = oxl.styles.Font(name='Arial', bold=True)
-        ss.cell(row=ss_row, column=1).value = 'Data sources'
-        ss.cell(row=ss_row, column=1).font = bold
-        ss_row += 1
-        ss.cell(row=ss_row, column=1).value = 'Scenarios folder'
-        ss.cell(row=ss_row, column=2).value = self.scenarios
-        ss.merge_cells('B' + str(ss_row) + ':I' + str(ss_row))
-        ss_row += 1
-        ss.cell(row=ss_row, column=1).value = 'Powermatch data file'
+        sheet.cell(row=sheet_row, column=1).value = 'Data sources'
+        sheet.cell(row=sheet_row, column=1).font = bold
+        sheet_row += 1
+        sheet.cell(row=sheet_row, column=1).value = 'Scenarios folder'
+        sheet.cell(row=sheet_row, column=1).font = normal
+        sheet.cell(row=sheet_row, column=2).value = self.scenarios
+        sheet.cell(row=sheet_row, column=2).font = normal
+        sheet.merge_cells('B' + str(sheet_row) + ':I' + str(sheet_row))
+        sheet_row += 1
+        sheet.cell(row=sheet_row, column=1).value = 'Powermatch data file'
+        sheet.cell(row=sheet_row, column=1).font = normal
         if pm_data_file[: len(self.scenarios)] == self.scenarios:
             pm_data_file = pm_data_file[len(self.scenarios):]
-        ss.cell(row=ss_row, column=2).value = pm_data_file
-        ss.merge_cells('B' + str(ss_row) + ':I' + str(ss_row))
-        ss_row += 1
+        sheet.cell(row=sheet_row, column=2).value = pm_data_file
+        sheet.cell(row=sheet_row, column=2).font = normal
+        sheet.merge_cells('B' + str(sheet_row) + ':I' + str(sheet_row))
+        sheet_row += 1
         try:
             if self.loadCombo.currentText() != 'n/a':
-                ss.cell(row=ss_row, column=1).value = 'Load file'
+                sheet.cell(row=sheet_row, column=1).value = 'Load file'
+                sheet.cell(row=sheet_row, column=1).font = normal
                 load_file = self.load_files.replace('$YEAR$', self.loadCombo.currentText())
                 if load_file[: len(self.scenarios)] == self.scenarios:
                     load_file = load_file[len(self.scenarios):]
-                ss.cell(row=ss_row, column=2).value = load_file
-                ss.merge_cells('B' + str(ss_row) + ':I' + str(ss_row))
-                ss_row += 1
+                sheet.cell(row=sheet_row, column=2).value = load_file
+                sheet.cell(row=sheet_row, column=2).font = normal
+                sheet.merge_cells('B' + str(sheet_row) + ':I' + str(sheet_row))
+                sheet_row += 1
         except:
             pass
-        ss.cell(row=ss_row, column=1).value = 'Constraints worksheet'
-        ss.cell(row=ss_row, column=2).value = str(self.files[C].text()) \
+        sheet.cell(row=sheet_row, column=1).value = 'Constraints worksheet'
+        sheet.cell(row=sheet_row, column=1).font = normal
+        sheet.cell(row=sheet_row, column=2).value = str(self.files[C].text()) \
                + '.' + str(self.sheets[C].currentText())
-        ss.merge_cells('B' + str(ss_row) + ':I' + str(ss_row))
-        ss_row += 1
-        ss.cell(row=ss_row, column=1).value = 'Facility worksheet'
-        ss.cell(row=ss_row, column=2).value = str(self.files[G].text()) \
-               + '.' + str(self.sheets[G].currentText())
-        ss.merge_cells('B' + str(ss_row) + ':I' + str(ss_row))
-        return ss_row
+        sheet.cell(row=sheet_row, column=2).font = normal
+        sheet.merge_cells('B' + str(sheet_row) + ':I' + str(sheet_row))
+        return sheet_row
 
     def clean_batch_sheet(self):
         msgbox = QtWidgets.QMessageBox()
