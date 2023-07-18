@@ -2555,7 +2555,7 @@ class powerMatch(QtWidgets.QWidget):
             else:
                 batch_disc_row = -1
             if self.carbon_price > 0:
-            batch_carbon_row = 0
+                batch_carbon_row = 0
             else:
                 batch_carbon_row = -1
             batch_lifetime = False
@@ -2632,7 +2632,9 @@ class powerMatch(QtWidgets.QWidget):
                             bs.cell(row=gndx + sp + 1, column=1).value = self.batch_tech[sp]
                         bs.cell(row=gndx + sp + 1, column=1).font = normal
                     if self.batch_report[g][0] == 'Cost ($/Yr)' and batch_disc_row >= 0:
-                        bs.cell(row=gndx + sp + 2, column=1).value = 'Discount Rate'
+                        batch_disc_row = gndx + sp + 2
+                        bs.cell(row=batch_disc_row, column=1).value = 'Discount Rate'
+                        bs.cell(row=batch_disc_row, column=1).font = normal
                     if self.batch_report[g][0] == 'Capacity Factor' and self.batch_tech[-1] == 'Total':
                         gndx += len(self.batch_tech) + 1
                     else:
@@ -2658,7 +2660,7 @@ class powerMatch(QtWidgets.QWidget):
                     pmss_details[fac].multiplier = 0
                 if int(prgv) > prgv_int:
                     prgv_int = int(prgv)
-                self.progressbar.setValue(int(prgv))
+                    self.progressbar.setValue(int(prgv))
                     QtWidgets.QApplication.processEvents()
                 prgv += incr
                 column += 1
@@ -2725,10 +2727,6 @@ class powerMatch(QtWidgets.QWidget):
                                      bs.cell(row=gndx + tndx, column=column).value = sp_data[sp][col]
                                  bs.cell(row=gndx + tndx, column=column).number_format = batch_details[group[0]][1]
                                  bs.cell(row=gndx + tndx, column=column).font = normal
-                                 if group[0] == 'Cost ($/Yr)' and batch_disc_row >= 0:
-                                    bs.cell(row=gndx + tndx + 1, column=column).value = self.discount_rate
-                                    bs.cell(row=gndx + tndx + 1, column=column).number_format = '#0.00%'
-                                    bs.cell(row=gndx + tndx + 1, column=column).font = normal
                     elif sp_data[sp][st_fac] == 'RE Contribution To Load':
                         try:
                             for group in self.batch_report:
@@ -2743,6 +2741,10 @@ class powerMatch(QtWidgets.QWidget):
                             pass
                     if sp_data[sp][st_fac] == 'Total':
                         break
+                if batch_disc_row > 1:
+                     bs.cell(row=batch_disc_row, column=column).value = self.discount_rate
+                     bs.cell(row=batch_disc_row, column=column).number_format = '#0.00%'
+                     bs.cell(row=batch_disc_row, column=column).font = normal
                 if 'Discount Rate' in capacities.keys():
                     self.discount_rate = save_discount_rate
                 # now the other stuff in sp_data
@@ -4969,12 +4971,12 @@ class powerMatch(QtWidgets.QWidget):
                     try:
                         pmss_details[fac].multiplier = capacity / pmss_details[fac].capacity
                     except:
-                        print('(4923)', gen, capacity, pmss_details[fac].capacity)
+                        print('(4974)', gen, capacity, pmss_details[fac].capacity)
                 multi_value, op_data, extra = self.doDispatch(year, option, pmss_details, pmss_data, re_order,
                                               dispatch_order, pm_data_file, data_file)
                 if multi_value['load_pct'] < self.targets['load_pct'][3]:
                     if multi_value['load_pct'] == 0:
-                        print('(4928)', multi_value['lcoe'], self.targets['load_pct'][3], multi_value['load_pct'])
+                        print('(4979)', multi_value['lcoe'], self.targets['load_pct'][3], multi_value['load_pct'])
                         lcoe_fitness_scores.append(1)
                     else:
                         try:
@@ -5624,7 +5626,7 @@ class powerMatch(QtWidgets.QWidget):
             try:
                 best_score = np.min(lcoe_scores)
             except:
-                print('(5578)', lcoe_scores)
+                print('(5629)', lcoe_scores)
             best_ndx = lcoe_scores.index(best_score)
             lowest_chrom = population[best_ndx]
             self.setStatus('Starting LCOE: $%.2f' % best_score)
@@ -6023,7 +6025,7 @@ class powerMatch(QtWidgets.QWidget):
                     label = QtWidgets.QLabel(txt % amt)
                 except:
                     label = QtWidgets.QLabel('?')
-                    print('(5977)', key, txt, amt)
+                    print('(6028)', key, txt, amt)
                 label.setAlignment(QtCore.Qt.AlignCenter)
                 grid[h + 1].addWidget(label, rw, 0, 1, 3)
             rw += 1
