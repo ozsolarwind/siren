@@ -2562,6 +2562,7 @@ class powerMatch(QtWidgets.QWidget):
             batch_lifetime = False
             batch_data_sources_row = 0
             re_tml_row = 0
+            max_load_row = -1
             report_keys = []
             for g in range(len(self.batch_report)):
                 report_keys.append(self.batch_report[g][0])
@@ -2640,6 +2641,9 @@ class powerMatch(QtWidgets.QWidget):
                      #       bs.cell(row=gndx + sp + 1, column=1).value = 'RE Contribution To Load'
                         if self.batch_report[g][0] != 'Capacity Factor' or self.batch_tech[sp] != 'Total':
                             bs.cell(row=gndx + sp + 1, column=1).value = self.batch_tech[sp]
+                        if self.batch_report[g][0] == 'Max MWh' and self.batch_tech[sp] == 'Total':
+                            max_load_row = gndx + sp + 1
+                            bs.cell(row=max_load_row, column=1).value = 'Max Load'
                         bs.cell(row=gndx + sp + 1, column=1).font = normal
                     if self.batch_report[g][0] == 'Cost ($/Yr)' and batch_disc_row >= 0:
                         batch_disc_row = gndx + sp + 2
@@ -2801,6 +2805,7 @@ class powerMatch(QtWidgets.QWidget):
                                     bs.cell(row=re_tml_row, column=column).font = normal
                                 except:
                                     pass
+                                break
                     elif tgt == 'Storage %age':
                         for group in self.batch_report:
                             if group[0] == 'To Meet Load (MWh)':
@@ -2811,6 +2816,7 @@ class powerMatch(QtWidgets.QWidget):
                                     bs.cell(row=re_tml_row + 1  , column=column).font = normal
                                 except:
                                     pass
+                                break
                     elif tgt == 'LCOE':
                         for group in self.batch_report:
                             if group[0] == 'LCOE ($/MWh)':
@@ -2821,6 +2827,7 @@ class powerMatch(QtWidgets.QWidget):
                                     bs.cell(row=re_tml_row + 1  , column=column).font = normal
                                 except:
                                     pass
+                                break
                     elif tgt == 'Carbon Price':
                         for group in batch_extra['Carbon'][1:]:
                             if group[0] == 'Carbon Price':
@@ -2831,6 +2838,18 @@ class powerMatch(QtWidgets.QWidget):
                                     bs.cell(row=tot_carb_row - 1, column=column).font = normal
                                 except:
                                     pass
+                                break
+                    elif tgt[:10] == 'Total Load':
+                        for group in self.batch_report:
+                            if group[0] == 'Max MWh':
+                                try:
+                                    col = batch_details['Max MWh'][0]
+                                    bs.cell(row=max_load_row, column=column).value = sp_data[sp][col]
+                                    bs.cell(row=max_load_row, column=column).number_format = batch_extra['Max MWh'][0]
+                                    bs.cell(row=max_load_row, column=column).font = normal
+                                except:
+                                    pass
+                                break
                     for key, details in batch_extra.items():
                         try:
                             x = [x for x in details if tgt in x][0]
