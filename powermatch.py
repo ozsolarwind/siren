@@ -1031,7 +1031,7 @@ class powerMatch(QtWidgets.QWidget):
                     if value[0] == '+' or value[0].lower() == 'p':
                         self.surplus_sign = -1
         except:
-            print('Error with', key)
+            print('PME1: Error with', key)
             pass
         self.restorewindows = False
         try:
@@ -1888,7 +1888,7 @@ class powerMatch(QtWidgets.QWidget):
                 if ws.cell_value(row, 0).lower() in ['chart', 'graph', 'plot']:
                     self.batch_report.append(['Chart', row + 1])
                     break
-                if ws.cell_value(row, 0).lower() == 'carbon price':
+                if ws.cell_value(row, 0).lower() in ['carbon price', 'carbon price ($/tco2e)']:
                     carbon_row = row
                 if ws.cell_value(row, 0).lower() == 'discount rate' or ws.cell_value(row, 0).lower() == 'wacc':
                     discount_row = row
@@ -2457,8 +2457,8 @@ class powerMatch(QtWidgets.QWidget):
             batch_extra = {'RE': ['#,##0.00', ['RE %age', st_cap], ['Storage %age', st_cap], ['RE %age of Total Load', st_cap]],
                            'Load Analysis': ['#,##0', ['Load met', st_tml], ['Load met %age', st_cap], ['Shortfall', st_tml], ['Total Load', st_tml],
                            ['Largest Shortfall', st_cap], ['Storage losses', st_sub], ['Surplus', st_sub], ['Surplus %age', st_cap]],
-                           'Carbon': ['#,##0.00', ['Carbon Price', st_cap], ['Carbon Cost', st_cst], ['Total incl. Carbon Cost', st_lcc],
-                           ['Lifetime Cost', st_lic]],
+                           'Carbon': ['#,##0.00', ['Carbon Price', st_cap], ['Carbon Cost', st_emc], ['LCOE incl. Carbon Cost', st_lcc],
+                           ['Lifetime Emissions Cost', st_lec]],
                            'Correlation To Load': ['0.0000', ['RE Contribution', st_cap], ['RE plus Storage', st_cap],
                            ['To Meet Load', st_cap]],
                            'Static Variables': ['#,##0.00', ['Carbon Price', st_cap], ['Lifetime', st_cap],
@@ -2476,7 +2476,8 @@ class powerMatch(QtWidgets.QWidget):
             batch_extra['LCOE With CO2 ($/MWh)'] = ['#,##0.00']
             for tech in self.batch_tech:
                 batch_extra['LCOE With CO2 ($/MWh)'].append([tech])
-            batch_extra['LCOE With CO2 ($/MWh)'].append(['Total incl. Carbon Cost', st_lcc])
+            batch_extra['LCOE With CO2 ($/MWh)'].append(['LCOE incl. Carbon Cost', st_lcc])
+         #   batch_extra['To Meet Load (MWh)'] = ['#,##0.00', ['Total', st_tml]]
             wb = oxl.load_workbook(self.get_filename(self.files[B].text()))
             batch_input_sheet = wb.worksheets[0]
             if self.batch_new_file:
@@ -2560,6 +2561,7 @@ class powerMatch(QtWidgets.QWidget):
                 batch_carbon_row = -1
             batch_lifetime = False
             batch_data_sources_row = 0
+            re_tml_row = 0
             report_keys = []
             for g in range(len(self.batch_report)):
                 report_keys.append(self.batch_report[g][0])
@@ -2620,15 +2622,23 @@ class powerMatch(QtWidgets.QWidget):
                         else:
                             bs.cell(row=gndx + sp, column=1).font = normal
                     gndx += len(batch_extra[key]) + 1
-                    if key == 'Carbon' and not batch_lifetime:
-                        gndx -= 1
+                    if key == 'Carbon':
+                        if not batch_lifetime:
+                            gndx -= 1
+                            tot_carb_row = gndx - 3
+                        else:
+                            tot_carb_row = gndx - 4
+                    elif key == 'LCOE ($/MWh)':
+                        tot_lco_row = gndx - 2
+                    elif key == 'LCOE With CO2 ($/MWh)':
+                        tot_lcc_row = gndx - 2
                 else:
                     if self.batch_report[g][0] not in batch_details.keys():
                         continue
                     for sp in range(len(self.batch_tech)):
-                        if self.batch_report[g][0] == 'To Meet Load (MWh)' and sp == 0:
-                            bs.cell(row=gndx + sp + 1, column=1).value = 'RE Contribution To Load'
-                        elif self.batch_report[g][0] != 'Capacity Factor' or self.batch_tech[sp] != 'Total':
+                    #    if self.batch_report[g][0] == 'To Meet Load (MWh)' and sp == 0:
+                     #       bs.cell(row=gndx + sp + 1, column=1).value = 'RE Contribution To Load'
+                        if self.batch_report[g][0] != 'Capacity Factor' or self.batch_tech[sp] != 'Total':
                             bs.cell(row=gndx + sp + 1, column=1).value = self.batch_tech[sp]
                         bs.cell(row=gndx + sp + 1, column=1).font = normal
                     if self.batch_report[g][0] == 'Cost ($/Yr)' and batch_disc_row >= 0:
@@ -2639,10 +2649,15 @@ class powerMatch(QtWidgets.QWidget):
                         gndx += len(self.batch_tech) + 1
                     else:
                         gndx += len(self.batch_tech) + 2
-                    if self.batch_report[g][0] == 'LCOE ($/MWh)':
+                    if self.batch_report[g][0] == 'Cost ($/Yr)' and batch_disc_row >= 0:
                         gndx += 1
-                    elif self.batch_report[g][0] == 'Cost ($/Yr)' and batch_disc_row >= 0:
-                        gndx += 1
+                    if self.batch_report[g][0] == 'To Meet Load (MWh)':
+                        re_tml_row = gndx - 1
+                        bs.cell(row=re_tml_row, column=1).value = 'RE Contribution To Load'
+                        bs.cell(row=re_tml_row, column=1).font = normal
+                        bs.cell(row=re_tml_row + 1, column=1).value = 'Storage Contribution To Load'
+                        bs.cell(row=re_tml_row + 1, column=1).font = normal
+                        gndx += 2
             try:
                 incr = 20 / len(self.batch_models)
             except:
@@ -2701,6 +2716,7 @@ class powerMatch(QtWidgets.QWidget):
                         pmss_details[fac].multiplier = capacities[fac] * 1.0 / pmss_details[fac].capacity
                     except:
                         pass
+                save_carbon_price = None
                 if 'Carbon Price' in capacities.keys():
                     save_carbon_price = self.carbon_price
                     self.carbon_price = capacities['Carbon Price']
@@ -2717,34 +2733,53 @@ class powerMatch(QtWidgets.QWidget):
                         tndx = self.batch_tech.index(sp_data[sp][st_fac]) + 1
                         for group in self.batch_report:
                             if group[0] in batch_details.keys():
-                                 gndx = group[1]
-                                 col = batch_details[group[0]][0]
-                                 if group[0] == 'Capacity Factor' and sp_data[sp][0] == 'Total':
-                                     continue
-                                 if group[0] == 'Capacity Factor' and isinstance(sp_data[sp][col], str):
-                                     bs.cell(row=gndx + tndx, column=column).value = float(sp_data[sp][col].strip('%')) / 100.
-                                 else:
-                                     bs.cell(row=gndx + tndx, column=column).value = sp_data[sp][col]
-                                 bs.cell(row=gndx + tndx, column=column).number_format = batch_details[group[0]][1]
-                                 bs.cell(row=gndx + tndx, column=column).font = normal
-                    elif sp_data[sp][st_fac] == 'RE Contribution To Load':
-                        try:
-                            for group in self.batch_report:
-                                if group[0] ==  'To Meet Load (MWh)':
-                                    gndx = group[1]
-                            tndx = 1
-                            col = batch_details['To Meet Load (MWh)'][0]
-                            bs.cell(row=gndx + tndx, column=column).value = sp_data[sp][col]
-                            bs.cell(row=gndx + tndx, column=column).number_format = batch_details['To Meet Load (MWh)'][1]
-                            bs.cell(row=gndx + tndx, column=column).font = normal
-                        except:
-                            pass
+                                gndx = group[1]
+                                col = batch_details[group[0]][0]
+                                if group[0] == 'Capacity Factor' and sp_data[sp][0] == 'Total':
+                                    continue
+                                if group[0] == 'Capacity Factor' and isinstance(sp_data[sp][col], str):
+                                    bs.cell(row=gndx + tndx, column=column).value = float(sp_data[sp][col].strip('%')) / 100.
+                                else:
+                                    bs.cell(row=gndx + tndx, column=column).value = sp_data[sp][col]
+                                bs.cell(row=gndx + tndx, column=column).number_format = batch_details[group[0]][1]
+                                bs.cell(row=gndx + tndx, column=column).font = normal
                     if sp_data[sp][st_fac] == 'Total':
                         break
                 if batch_disc_row > 1:
                      bs.cell(row=batch_disc_row, column=column).value = self.discount_rate
                      bs.cell(row=batch_disc_row, column=column).number_format = '#0.00%'
                      bs.cell(row=batch_disc_row, column=column).font = normal
+                # save details from Total row
+                for group in self.batch_report:
+                    if group[0] == 'LCOE ($/MWh)':
+                        try:
+                            col = batch_details['LCOE ($/MWh)'][0]
+                            bs.cell(row=tot_lco_row, column=column).value = sp_data[sp][col]
+                            bs.cell(row=tot_lco_row, column=column).number_format = batch_details['LCOE ($/MWh)'][1]
+                            bs.cell(row=tot_lco_row, column=column).font = bold
+                        except:
+                            pass
+                    elif group[0] == 'LCOE With CO2 ($/MWh)':
+                        try:
+                            col = batch_details['LCOE With CO2 ($/MWh)'][0]
+                            bs.cell(row=tot_lcc_row, column=column).value = sp_data[sp][col]
+                            bs.cell(row=tot_lcc_row, column=column).number_format = batch_details['LCOE With CO2 ($/MWh)'][1]
+                            bs.cell(row=tot_lcc_row, column=column).font = bold
+                        except:
+                            pass
+                    elif group[0] == 'Carbon':
+                        try:
+                            bs.cell(row=tot_carb_row, column=column).value = sp_data[sp][st_emc]
+                            bs.cell(row=tot_carb_row, column=column).number_format = '#,##0'
+                            bs.cell(row=tot_carb_row, column=column).font = normal
+                            bs.cell(row=tot_carb_row + 1, column=column).value = sp_data[sp][st_lcc]
+                            bs.cell(row=tot_carb_row + 1, column=column).number_format = '#,##0.00'
+                            bs.cell(row=tot_carb_row + 1, column=column).font = bold
+                            bs.cell(row=tot_carb_row + 2, column=column).value = sp_data[sp][st_lec]
+                            bs.cell(row=tot_carb_row + 2, column=column).number_format = '#,##0'
+                            bs.cell(row=tot_carb_row + 2, column=column).font = normal
+                        except:
+                            pass
                 if 'Discount Rate' in capacities.keys():
                     self.discount_rate = save_discount_rate
                 # now the other stuff in sp_data
@@ -2756,6 +2791,46 @@ class powerMatch(QtWidgets.QWidget):
                         tgt = sp_data[sp][st_fac][: i]
                     else:
                         tgt = sp_data[sp][st_fac]
+                    if tgt == 'RE %age':
+                        for group in self.batch_report:
+                            if group[0] == 'To Meet Load (MWh)':
+                                try:
+                                    col = batch_details['To Meet Load (MWh)'][0]
+                                    bs.cell(row=re_tml_row, column=column).value = sp_data[sp][col]
+                                    bs.cell(row=re_tml_row, column=column).number_format = batch_details['To Meet Load (MWh)'][1]
+                                    bs.cell(row=re_tml_row, column=column).font = normal
+                                except:
+                                    pass
+                    elif tgt == 'Storage %age':
+                        for group in self.batch_report:
+                            if group[0] == 'To Meet Load (MWh)':
+                                try:
+                                    col = batch_details['To Meet Load (MWh)'][0]
+                                    bs.cell(row=re_tml_row + 1, column=column).value = sp_data[sp][col]
+                                    bs.cell(row=re_tml_row + 1, column=column).number_format = batch_details['To Meet Load (MWh)'][1]
+                                    bs.cell(row=re_tml_row + 1  , column=column).font = normal
+                                except:
+                                    pass
+                    elif tgt == 'LCOE':
+                        for group in self.batch_report:
+                            if group[0] == 'LCOE ($/MWh)':
+                                try:
+                                    col = batch_details['LCOE ($/MWh)'][0]
+                                    bs.cell(row=re_tml_row + 1, column=column).value = sp_data[sp][col]
+                                    bs.cell(row=re_tml_row + 1, column=column).number_format = batch_details['LCOE ($/MWh)'][1]
+                                    bs.cell(row=re_tml_row + 1  , column=column).font = normal
+                                except:
+                                    pass
+                    elif tgt == 'Carbon Price':
+                        for group in batch_extra['Carbon'][1:]:
+                            if group[0] == 'Carbon Price':
+                                try:
+                                    col = group[1]
+                                    bs.cell(row=tot_carb_row - 1, column=column).value = sp_data[sp][col]
+                                    bs.cell(row=tot_carb_row - 1, column=column).number_format = batch_extra['Carbon'][0]
+                                    bs.cell(row=tot_carb_row - 1, column=column).font = normal
+                                except:
+                                    pass
                     for key, details in batch_extra.items():
                         try:
                             x = [x for x in details if tgt in x][0]
@@ -2790,26 +2865,11 @@ class powerMatch(QtWidgets.QWidget):
                                     bs.cell(row=gndx + tndx, column=column).value = pct
                                     bs.cell(row=gndx + tndx, column=column).number_format = '0.0%'
                                     bs.cell(row=gndx + tndx, column=column).font = normal
-                            elif key == 'Carbon': # handle differently
-                                if tndx == 2:
-                                    col = details[2][1]
-                                    bs.cell(row=gndx + tndx, column=column).value = sp_data[sp][col]
-                                    bs.cell(row=gndx + tndx, column=column).number_format = '#,##0'
-                                    bs.cell(row=gndx + tndx, column=column).font = normal
-                                    if batch_lifetime:
-                                        col = details[4][1]
-                                        tndx += 2
-                                        bs.cell(row=gndx + tndx, column=column).value = sp_data[sp][col]
-                                        bs.cell(row=gndx + tndx, column=column).number_format = '#,##0'
-                                        bs.cell(row=gndx + tndx, column=column).font = normal
-                                else:
-                                    col = details[tndx][1]
-                                    bs.cell(row=gndx + tndx, column=column).value = sp_data[sp][col]
-                                    bs.cell(row=gndx + tndx, column=column).number_format = details[0]
-                                    if tndx == 3:
-                                        bs.cell(row=gndx + tndx, column=column).font = bold
-                                    else:
-                                        bs.cell(row=gndx + tndx, column=column).font = normal
+                   #         elif key == 'Carbon': # handle differently
+                    #            if tndx == 1:
+                     #               bs.cell(row=tot_carb_row - 1, column=column).value = save_carbon_price
+                      #              bs.cell(row=tot_carb_row - 1, column=column).number_format = '#,##0.00'
+                       #             bs.cell(row=tot_carb_row - 1, column=column).font = normal
                         except:
                             pass
             tim = (time.time() - start_time)
@@ -2846,13 +2906,13 @@ class powerMatch(QtWidgets.QWidget):
                     t_row += 1
             del_rows = []
             for group in self.batch_report:
-                if group[0] in ['Generation (MWh)', 'To Meet Load (MWh)']:
+                if group[0] in ['Generation (MWh)']:
                     # remove storage or RE
                     gndx = group[1]
                     if group[0] == 'Generation (MWh)':
                         tst = 'S'
                     else:
-                        tst = 'R'
+                        tst = 'R' # probably redundant
                     for row in range(gndx, gndx + len(self.batch_tech)):
                         try:
                             if pmss_details[bs.cell(row=row, column=1).value].fac_type == tst:
@@ -3065,6 +3125,125 @@ class powerMatch(QtWidgets.QWidget):
                 mth += 1
             return '{}-{:02d}-{:02d} {:02d}:00'.format(year, mth+1, day+1, hr)
 
+        def summary_totals(title=''):
+            sp_d = [' '] * len(headers)
+            sp_d[st_fac] = title + 'Total'
+            sp_d[st_cap] = cap_sum
+            sp_d[st_tml] = tml_sum
+            sp_d[st_sub] = gen_sum
+            sp_d[st_cst] = cost_sum
+            sp_d[st_lcg] = gs
+            sp_d[st_lco] = gsw
+            sp_d[st_emi] = co2_sum
+            sp_d[st_emc] = co2_cost_sum
+            sp_d[st_lcc] = gswc
+            sp_d[st_cac] = capex_sum
+            sp_d[st_lic] = lifetime_sum
+            sp_d[st_lie] = lifetime_co2_sum
+            sp_d[st_lec] = lifetime_co2_cost
+            sp_data.append(sp_d)
+            if (self.carbon_price > 0 or option == 'B'):
+                sp_d = [' '] * len(headers)
+                cc = co2_sum * self.carbon_price
+                cl = cc * max_lifetime
+                if self.adjusted_lcoe and tml_sum > 0:
+                    cs = (cost_sum + cc) / tml_sum
+                else:
+                    if gen_sum > 0:
+                        cs = (cost_sum + cc) / gen_sum
+                    else:
+                        cs = ''
+                if self.carbon_price == int(self.carbon_price):
+                   cp = str(int(self.carbon_price))
+                else:
+                   cp = '${:.2f}'.format(self.carbon_price)
+                sp_d[st_fac] = title + 'Total incl. Carbon Cost'
+                sp_d[st_cst] = cost_sum + cc
+                sp_d[st_lic] = lifetime_sum + cl
+                sp_data.append(sp_d)
+            if tml_sum > 0:
+                sp_d = [' '] * len(headers)
+             #   sp_d[st_fac] = 'RE Direct Contribution to ' + title + 'Load'
+                sp_d[st_fac] = 'RE %age'
+                re_pct = (tml_sum - sto_sum - ff_sum) / tml_sum
+                sp_d[st_cap] = '{:.1f}%'.format(re_pct * 100.)
+                sp_d[st_tml] = tml_sum - ff_sum - sto_sum
+                sp_data.append(sp_d)
+                if sto_sum > 0:
+                    sp_d = [' '] * len(headers)
+                 #   sp_d[st_fac] = 'RE Contribution to ' + title + 'Load via Storage'
+                    sp_d[st_fac] = 'Storage %age'
+                    sp_d[st_cap] = '{:.1f}%'.format(sto_sum * 100. / tml_sum)
+                    sp_d[st_tml] = sto_sum
+                    sp_data.append(sp_d)
+            sp_data.append([' '])
+            sp_data.append([title + 'Load Analysis'])
+            if sp_load != 0:
+                sp_d = [' '] * len(headers)
+                sp_d[st_fac] = title + 'Load met'
+                load_pct = (sp_load - sf_sums[0]) / sp_load
+                sp_d[st_cap] = '{:.1f}%'.format(load_pct * 100)
+                sp_d[st_tml] = sp_load - sf_sums[0]
+                sp_data.append(sp_d)
+                sp_d = [' '] * len(headers)
+                sp_d[st_fac] = 'Shortfall'
+                sp_d[st_cap] = '{:.1f}%'.format(sf_sums[0] * 100 / sp_load)
+                sp_d[st_tml] = sf_sums[0]
+                sp_data.append(sp_d)
+                if option == 'B':
+                    sp_d = [' '] * len(headers)
+                    sp_d[st_fac] = title + 'Total Load'
+                    sp_d[st_tml] = sp_load
+                    if title == '':
+                        sp_d[st_max] = load_max
+                    sp_data.append(sp_d)
+                else:
+                    load_mult = ''
+                    try:
+                        mult = round(pmss_details['Load'].multiplier, 3)
+                        if mult != 1:
+                            load_mult = ' x ' + str(mult)
+                    except:
+                        pass
+                    sp_d = [' '] * len(headers)
+                    sp_d[st_fac] = 'Total ' + title + 'Load - ' + year + load_mult
+                    sp_d[st_tml] = sp_load
+                    if title == '' or option == 'S':
+                        sp_d[st_max] = load_max
+                        sp_d[st_bal] = '(' + format_period(load_hr)[5:] + ')'
+                    sp_data.append(sp_d)
+                sp_d = [' '] * len(headers)
+                sp_d[st_fac] = 'RE %age of Total ' + title + 'Load'
+                sp_d[st_cap] = '{:.1f}%'.format((sp_load - sf_sums[0] - ff_sum) * 100. / sp_load)
+                sp_data.append(sp_d)
+                sp_data.append(' ')
+                if tot_sto_loss != 0:
+                    sp_d = [' '] * len(headers)
+                    sp_d[st_fac] = 'Storage losses'
+                    sp_d[st_sub] = tot_sto_loss
+                    sp_data.append(sp_d)
+                sp_d = [' '] * len(headers)
+                sp_d[st_fac] = title + 'Surplus'
+                surp_pct = -sf_sums[1] / sp_load
+                sp_d[st_cap] = '{:.1f}%'.format(surp_pct * 100)
+                sp_d[st_sub] = -sf_sums[1]
+                sp_data.append(sp_d)
+            else:
+                load_pct = 0
+                surp_pct = 0
+                re_pct = 0
+            max_short = [0, 0]
+            for h in range(len(shortfall)):
+                if shortfall[h] > max_short[1]:
+                    max_short[0] = h
+                    max_short[1] = shortfall[h]
+            if max_short[1] > 0:
+                sp_d = [' '] * len(headers)
+                sp_d[st_fac] = 'Largest Shortfall (' + format_period(max_short[0]) + ')'
+                sp_d[st_cap] = round(max_short[1], 2)
+                sp_data.append(sp_d)
+            if option == 'O' or option == '1':
+                return load_pct, surp_pct, re_pct
     # The "guts" of Powermatch processing. Have a single calculation algorithm
     # for Summary, Powermatch (detail), and Optimise. The detail makes it messy
     # Note: For Batch pmss_data is reused so don't update it in doDispatch
@@ -3094,22 +3273,27 @@ class powerMatch(QtWidgets.QWidget):
             if key.find('.') > 0:
                 do_zone = True
                 break
+        fac_tml = {}
         for fac in re_order:
-            col = pmss_details[fac].col
-            if pmss_details[fac].multiplier == 1:
-                if fac == 'Load':
-                    for h in range(len(pmss_data[col])):
-                        shortfall[h] += pmss_data[col][h]
-                else:
-                    for h in range(len(pmss_data[col])):
-                        shortfall[h] -= pmss_data[col][h]
+            if fac == 'Load':
+                continue
+            fac_tml[fac] = 0.
+        load_col = pmss_details['Load'].col
+        for h in range(len(pmss_data[0])):
+            load_h = pmss_data[load_col][h] * pmss_details['Load'].multiplier
+            shortfall[h] = load_h
+            for fac in fac_tml.keys():
+                shortfall[h] -= pmss_data[pmss_details[fac].col][h] * pmss_details[fac].multiplier
+            if shortfall[h] >= 0:
+                alloc = 1.
             else:
-                if fac == 'Load':
-                    for h in range(len(pmss_data[col])):
-                        shortfall[h] += pmss_data[col][h] * pmss_details[fac].multiplier
-                else:
-                    for h in range(len(pmss_data[col])):
-                        shortfall[h] -= pmss_data[col][h] * pmss_details[fac].multiplier
+                alloc = load_h / (load_h - shortfall[h])
+            for fac in fac_tml.keys():
+                fac_tml[fac] += pmss_data[pmss_details[fac].col][h] * pmss_details[fac].multiplier * alloc
+            line = ''
+        fac_tml_sum = 0
+        for fac in fac_tml.keys():
+            fac_tml_sum += fac_tml[fac]
         if self.show_correlation:
             col = pmss_details['Load'].col
             if pmss_details['Load'].multiplier == 1:
@@ -3434,19 +3618,29 @@ class powerMatch(QtWidgets.QWidget):
             sp_load = 0. # load from load curve
             hrows = 10
             load_max = 0
+            load_hr = 0
             load_col = 0
             tml = 0.
             for fac in re_order:
                 if fac == 'Load':
                     load_col = pmss_details[fac].col
                     sp_load = sum(pmss_data[load_col]) * pmss_details[fac].multiplier
-                    load_max = max(pmss_data[load_col]) * pmss_details[fac].multiplier
+                    load_max = 0
+                    for h in range(len(pmss_data[0])):
+                        amt = pmss_data[load_col][h] * pmss_details[fac].multiplier
+                        if amt > load_max:
+                            load_max = amt
+                            load_hr = h
                     continue
                 if pmss_details[fac].capacity * pmss_details[fac].multiplier == 0:
                     continue
                 sp_d = [' '] * len(headers)
                 sp_d[st_fac] = fac
                 sp_d[st_cap] = pmss_details[fac].capacity * pmss_details[fac].multiplier
+                try:
+                    sp_d[st_tml] = fac_tml[fac]
+                except:
+                    pass
                 sp_d[st_sub] = sum(pmss_data[pmss_details[fac].col]) * pmss_details[fac].multiplier
                 sp_d[st_max] = max(pmss_data[pmss_details[fac].col]) * pmss_details[fac].multiplier
                 sp_data.append(sp_d)
@@ -3455,12 +3649,12 @@ class powerMatch(QtWidgets.QWidget):
                     tml += pmss_data[load_col][h] * pmss_details['Load'].multiplier
                 else:
                     tml += pmss_data[load_col][h] * pmss_details['Load'].multiplier - shortfall[h]
-            if tml > 0:
-                sp_d = [' '] * len(headers)
-                sp_d[st_fac] = 'RE Contribution To Load'
-                sp_d[st_tml] = tml
-                sp_data.append(sp_d)
-                re_tml_sum = tml
+         #   if tml > 0:
+         #       sp_d = [' '] * len(headers)
+         #       sp_d[st_fac] = 'RE Contribution To Load'
+         #       sp_d[st_tml] = tml
+         #       sp_data.append(sp_d)
+         #       re_tml_sum = tml
         if option not in ['O', '1', 'B']:
             self.progressbar.setValue(6)
             QtWidgets.QApplication.processEvents()
@@ -3866,8 +4060,8 @@ class powerMatch(QtWidgets.QWidget):
                     pass
                 try:
                     tml_sum += sp_data[sp][st_tml]
-                    if sp_data[sp][0] == 'RE Contribution To Load':
-                        re_tml_sum = sp_data[sp][st_tml]
+           #         if sp_data[sp][0] == 'RE Contribution To Load':
+           #             re_tml_sum = sp_data[sp][st_tml]
                 except:
                     pass
          #       if gen in tech_names:
@@ -3899,7 +4093,7 @@ class powerMatch(QtWidgets.QWidget):
                     sp_data[sp][st_lcg] = calcLCOE(sp_data[sp][ndx], capex, opex, disc_rate, lifetime)
                     sp_data[sp][st_cst] = sp_data[sp][ndx] * sp_data[sp][st_lcg]
                     if gen in tech_names:
-                        sp_data[sp][st_lco] = sp_data[sp][st_cst] / ((sp_data[sp][ndx] / re_sum) * (re_tml_sum + sto_sum))
+                        sp_data[sp][st_lco] = sp_data[sp][st_cst] / (sp_data[sp][st_tml] + (sto_sum * sp_data[sp][st_tml] / fac_tml_sum))
                     else:
                         sp_data[sp][st_lco] = sp_data[sp][st_lcg]
                     cost_sum += sp_data[sp][st_cst]
@@ -3956,127 +4150,10 @@ class powerMatch(QtWidgets.QWidget):
             else:
                 gsw = ''
                 gswc = ''
-            sp_d = [' '] * len(headers)
-            sp_d[st_fac] = 'Total'
-            sp_d[st_cap] = cap_sum
-            sp_d[st_tml] = tml_sum
-            sp_d[st_sub] = gen_sum
-         #   sp_d[st_cfa] = cs
-            sp_d[st_cst] = cost_sum
-            sp_d[st_lcg] = gs
-            sp_d[st_lco] = gsw
-            sp_d[st_emi] = co2_sum
-            sp_d[st_emc] = co2_cost_sum
-            sp_d[st_lcc] = gswc
-            sp_d[st_cac] = capex_sum
-            sp_d[st_lic] = lifetime_sum
-            sp_d[st_lie] = lifetime_co2_sum
-            sp_d[st_lec] = lifetime_co2_cost
-            sp_data.append(sp_d)
-            if self.adjusted_lcoe:
-                sp_d = [' '] * len(headers)
-                sp_d[st_fac] = 'LCOE'
-                sp_d[st_lco] = gsw
-                sp_data.append(sp_d)
-            if self.carbon_price > 0 or option == 'B':
-                cc = co2_sum * self.carbon_price
-                cl = cc * max_lifetime
-                if self.adjusted_lcoe and tml_sum > 0:
-                    cs = (cost_sum + cc) / tml_sum
-                else:
-                    if gen_sum > 0:
-                        cs = (cost_sum + cc) / gen_sum
-                    else:
-                        cs = ''
-                if self.carbon_price == int(self.carbon_price):
-                   cp = str(int(self.carbon_price))
-                else:
-                   cp = '${:.2f}'.format(self.carbon_price)
-                sp_d = [' '] * len(headers)
-                sp_d[st_fac] = 'Carbon Cost'
-                sp_d[st_cst] = cc
-                sp_d[st_lic] = cl
-                sp_data.append(sp_d)
-                sp_d = [' '] * len(headers)
-                sp_d[st_fac] = 'Total incl. Carbon Cost'
-                sp_d[st_cst] = cost_sum + cc
-                sp_d[st_lcc] = gswc
-                sp_d[st_lic] = lifetime_sum + cl
-                sp_data.append(sp_d)
-            if tml_sum > 0:
-                sp_d = [' '] * len(headers)
-                sp_d[st_fac] = 'RE %age'
-                re_pct = (tml_sum - sto_sum - ff_sum) / tml_sum
-                sp_d[st_cap] = '{:.1f}%'.format(re_pct * 100.)
-                sp_data.append(sp_d)
-                if sto_sum > 0:
-                    sp_d = [' '] * len(headers)
-                    sp_d[st_fac] = 'Storage %age'
-                    sp_d[st_cap] = '{:.1f}%'.format(sto_sum * 100. / tml_sum)
-                    sp_data.append(sp_d)
-            sp_data.append(' ')
-            sp_data.append(['Load Analysis'])
-            if sp_load != 0:
-                sp_d = [' '] * len(headers)
-                sp_d[st_fac] = 'Load met'
-                load_pct = (sp_load - sf_sums[0]) / sp_load
-                sp_d[st_cap] = '{:.1f}%'.format(load_pct * 100)
-                sp_d[st_tml] = sp_load - sf_sums[0]
-                sp_data.append(sp_d)
-                sp_d = [' '] * len(headers)
-                sp_d[st_fac] = 'Shortfall'
-                sp_d[st_cap] = '{:.1f}%'.format(sf_sums[0] * 100 / sp_load)
-                sp_d[st_tml] = sf_sums[0]
-                sp_data.append(sp_d)
-                if option == 'B':
-                    sp_d = [' '] * len(headers)
-                    sp_d[st_fac] = 'Total Load'
-                    sp_d[st_tml] = sp_load
-                    sp_d[st_max] = load_max
-                    sp_data.append(sp_d)
-                else:
-                    load_mult = ''
-                    try:
-                        mult = round(pmss_details['Load'].multiplier, 3)
-                        if mult != 1:
-                            load_mult = ' x ' + str(mult)
-                    except:
-                        pass
-                    sp_d = [' '] * len(headers)
-                    sp_d[st_fac] = 'Total Load - ' + year + load_mult
-                    sp_d[st_tml] = sp_load
-                    sp_d[st_max] = load_max
-                    sp_data.append(sp_d)
-                sp_d = [' '] * len(headers)
-                sp_d[st_fac] = 'RE %age of Total Load'
-                sp_d[st_cap] = '{:.1f}%'.format((sp_load - sf_sums[0] - ff_sum) * 100. / sp_load)
-                sp_data.append(sp_d)
-                sp_data.append(' ')
-                if tot_sto_loss != 0:
-                    sp_d = [' '] * len(headers)
-                    sp_d[st_fac] = 'Storage losses'
-                    sp_d[st_sub] = tot_sto_loss
-                    sp_data.append(sp_d)
-                sp_d = [' '] * len(headers)
-                sp_d[st_fac] = 'Surplus'
-                surp_pct = -sf_sums[1] / sp_load
-                sp_d[st_cap] = '{:.1f}%'.format(surp_pct * 100)
-                sp_d[st_sub] = -sf_sums[1]
-                sp_data.append(sp_d)
+            if option == 'O' or option == '1':
+                load_pct, surp_pct, re_pct = summary_totals()
             else:
-                load_pct = 0
-                surp_pct = 0
-                re_pct = 0
-            max_short = [0, 0]
-            for h in range(len(shortfall)):
-                if shortfall[h] > max_short[1]:
-                    max_short[0] = h
-                    max_short[1] = shortfall[h]
-            if max_short[1] > 0:
-                sp_d = [' '] * len(headers)
-                sp_d[st_fac] = 'Largest Shortfall (' + format_period(max_short[0]) + ')'
-                sp_d[st_cap] = round(max_short[1], 2)
-                sp_data.append(sp_d)
+                summary_totals()
             if corr_data is not None:
                 sp_data.append(' ')
                 sp_data = sp_data + corr_data
@@ -4580,6 +4657,7 @@ class powerMatch(QtWidgets.QWidget):
         ss.cell(row=ss_row, column=st_max+1).value = '=Detail!C' + str(max_row)
         ss.cell(row=ss_row, column=st_max+1).number_format = '#,##0.00'
         ss.cell(row=ss_row, column=st_max+1).font = bold
+        ss.cell(row=ss_row, column=st_bal+1).value = '=" ("&OFFSET(Detail!B12,MATCH(Detail!C9,Detail!C13:Detail!C8772,0),0)&")"'
         # values for LCOE and Carbon Cost LCOE
   #      if self.adjusted_lcoe:
      #       ss.cell(row=lcoe_row, column=st_lco+1).value = '=' + ss_col(st_cst+1) + str(lcoe_row - 1) + '/' + \
@@ -4971,12 +5049,12 @@ class powerMatch(QtWidgets.QWidget):
                     try:
                         pmss_details[fac].multiplier = capacity / pmss_details[fac].capacity
                     except:
-                        print('(4974)', gen, capacity, pmss_details[fac].capacity)
+                        print('PME2:', gen, capacity, pmss_details[fac].capacity)
                 multi_value, op_data, extra = self.doDispatch(year, option, pmss_details, pmss_data, re_order,
                                               dispatch_order, pm_data_file, data_file)
                 if multi_value['load_pct'] < self.targets['load_pct'][3]:
                     if multi_value['load_pct'] == 0:
-                        print('(4979)', multi_value['lcoe'], self.targets['load_pct'][3], multi_value['load_pct'])
+                        print('PME3:', multi_value['lcoe'], self.targets['load_pct'][3], multi_value['load_pct'])
                         lcoe_fitness_scores.append(1)
                     else:
                         try:
@@ -5626,7 +5704,7 @@ class powerMatch(QtWidgets.QWidget):
             try:
                 best_score = np.min(lcoe_scores)
             except:
-                print('(5629)', lcoe_scores)
+                print('PME4:', lcoe_scores)
             best_ndx = lcoe_scores.index(best_score)
             lowest_chrom = population[best_ndx]
             self.setStatus('Starting LCOE: $%.2f' % best_score)
@@ -6025,7 +6103,7 @@ class powerMatch(QtWidgets.QWidget):
                     label = QtWidgets.QLabel(txt % amt)
                 except:
                     label = QtWidgets.QLabel('?')
-                    print('(6028)', key, txt, amt)
+                    print('PME5:', key, txt, amt)
                 label.setAlignment(QtCore.Qt.AlignCenter)
                 grid[h + 1].addWidget(label, rw, 0, 1, 3)
             rw += 1
