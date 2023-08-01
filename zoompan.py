@@ -57,8 +57,9 @@ class ZoomPanX():
         self.flex_ticks = False
         self.flex_on = False
         self.step = 168
+        self.pick = True
 
-    def zoom_pan(self, ax, base_scale=2., annotate=False, dropone=False, flex_ticks=False):
+    def zoom_pan(self, ax, base_scale=2., annotate=False, dropone=False, flex_ticks=False, pick=True):
         def set_flex():
             if self.flex_ticks:
                 cur_xlim = ax.get_xlim()
@@ -102,7 +103,7 @@ class ZoomPanX():
             else:
                 # deal with something that should never happen
                 scale_factor = 1
-                print('(101)', event.button)
+                print('(106)', event.button)
             # set new limits
             if self.d3:
                 z_left = ydata - cur_zlim[0]
@@ -160,6 +161,8 @@ class ZoomPanX():
                     x, y, z = get_xyz_mouse_click(event, ax)
                 except:
                     return
+                if not self.pick:
+                    return
                 self.datapoint = [[-1, x, y, z]]
                 self.msg = '{}: {:.2f}\n{}: {:.2f}\n{}: {:.2f}'.format(
                             ax.get_xlabel(), self.datapoint[0][1], ax.get_ylabel(),
@@ -203,6 +206,8 @@ class ZoomPanX():
 
         def onRelease(event):
             self.press = None
+            if not self.pick:
+                return
             if self.datapoint is not None:
                 # If we have previously displayed another label, remove it first
                 if hasattr(ax, 'label'):
@@ -551,6 +556,9 @@ class ZoomPanX():
             if not isinstance(event.artist, Path3DCollection): # just 3D picking for the moment
                 return
             if matplotlib_version > '3.0.3':
+
+                return
+            if not self.pick:
                 return
             self.datapoint = None
             if len(event.ind) > 0:
@@ -580,6 +588,7 @@ class ZoomPanX():
                 ax.figure.canvas.draw()
 
         the_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+        self.pick = pick
         self.xlabel = ax.get_xlabel()
         self.title = ax.get_title()
         self.base_xlim = ax.get_xlim() # remember x base
