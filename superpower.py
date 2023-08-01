@@ -378,7 +378,6 @@ class SuperPower():
             self.wind_offset_spacing[1] = int(float(config.get('Offshore Wind', 'offset_spacing')))
         except:
             pass
-        print(self.wind_offset_spacing)
         try:
             self.wind_farm_losses_percent[1] = int(float(config.get('Offshore Wind', 'wind_farm_losses_percent').strip('%')))
         except:
