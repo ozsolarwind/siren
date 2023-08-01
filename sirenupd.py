@@ -56,8 +56,14 @@ class UpdDialog(QtWidgets.QDialog):
         versions = open(versions_file)
         programs = csv.DictReader(versions)
         for program in programs:
+            if (sys.argv[0][-4:] == '.exe' and program['Program'][-3:] == '.py') \
+              or (sys.argv[0][-3:] == '.py' and program['Program'].find('.') < 0):
+                  continue
             version = credits.fileVersion(program=program['Program'].replace('.zip', '.py'))
-            if version != '?' and version != program['Version']:
+            if version == '?':
+                if not os.path.exists(program['Program']):
+                    self.new_versions.append([program['Program'], 'New Program' + local, version])
+            elif version != program['Version']:
                 cur = version.split('.')
                 new = program['Version'].split('.')
                 if new[0] == cur[0]: # must be same major release
@@ -245,13 +251,16 @@ class UpdDialog(QtWidgets.QDialog):
                         curver = credits.fileVersion(program=newprog + suffix)
                         #  print(newprog, suffix, curver, self.table.item(p, 2).text())
                         if curver != '?':
-                            if self.table.item(p, 2).text() < curver:
+                            if self.table.item(p, 2).text() < curver and self.table.item(p, 2).text() != 'New Program':
                                 self.table.setItem(p, 3, QtWidgets.QTableWidgetItem('Current is newer'))
                                 continue
                     if not self.debug:
                         if os.path.exists(newprog + suffix + '~'):
                             os.remove(newprog + suffix + '~')
-                        os.rename(newprog + suffix, newprog + suffix + '~')
+                        try:
+                            os.rename(newprog + suffix, newprog + suffix + '~')
+                        except:
+                            pass
                         copy2(self.local + newprog + suffix, newprog + suffix)
                     self.table.setItem(p, 3, QtWidgets.QTableWidgetItem('Updated'))
                 else:
@@ -275,7 +284,7 @@ class UpdDialog(QtWidgets.QDialog):
                         if os.path.exists(newprog + 'new' + suffix):
                             newver = credits.fileVersion(program=newprog + 'new')
                             if newver != '?':
-                                if newver < self.table.item(p, 3).text():
+                                if newver < self.table.item(p, 3).text() and self.table.item(p, 2).text() != 'New Program':
                                     if not self.debug:
                                         os.rename(newprog + 'new' + suffix,
                                                   newprog + '.' + newver + suffix)
@@ -284,7 +293,10 @@ class UpdDialog(QtWidgets.QDialog):
                     if not self.debug:
                         if os.path.exists(newprog + suffix + '~'):
                             os.remove(newprog + suffix + '~')
-                        os.rename(newprog + suffix, newprog + suffix + '~')
+                        try:
+                            os.rename(newprog + suffix, newprog + suffix + '~')
+                        except:
+                            pass
                         os.rename(newprog + 'new' + suffix, newprog + suffix)
                     self.table.setItem(p, 3, QtWidgets.QTableWidgetItem('Updated'))
         self.table.resizeColumnsToContents()
