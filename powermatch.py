@@ -48,6 +48,7 @@ from openpyxl.chart import (
 )
 import random
 import shutil
+import subprocess
 from senutils import ClickableQLabel, getParents, getUser, ListWidget, techClean, WorkBook
 from editini import EdtDialog, SaveIni
 from floaters import ProgressBar, FloatStatus
@@ -897,6 +898,8 @@ class powerMatch(QtWidgets.QWidget):
         self.show_correlation = False
         self.surplus_sign = 1 # Note: Preferences file has it called shortfall_sign
         # it's easier for the user to understand while for the program logic surplus is easier
+        self.underlying = ['Rooftop PV'] # technologies contributing to underlying (but not operational) load
+        self.operational = []
         iorder = []
         self.targets = {}
         for t in range(len(target_keys)):
@@ -1030,8 +1033,15 @@ class powerMatch(QtWidgets.QWidget):
                 elif key == 'shortfall_sign':
                     if value[0] == '+' or value[0].lower() == 'p':
                         self.surplus_sign = -1
+                elif key == 'underlying':
+                    self.underlying = value.split(',')
+                elif key == 'operational':
+                    self.operational = value.split(',')
         except:
-            print('PME1: Error with', key)
+            if key == 'tml_detail_file':
+                pass
+            else:
+                print('PME1: Error with', key)
             pass
         self.restorewindows = False
         try:
@@ -1067,7 +1077,7 @@ class powerMatch(QtWidgets.QWidget):
         self.sheets = self.file_labels[:]
         del self.sheets[-2:]
         self.updated = False
-        edit = [None, None, None]
+        edit = [None] * D
         r = 0
         for i in range(len(self.file_labels)):
             if i == R:
@@ -1222,6 +1232,17 @@ class powerMatch(QtWidgets.QWidget):
         help.clicked.connect(self.helpClicked)
         QtWidgets.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
      #   self.grid.setColumnStretch(0, 2)
+        do_tml = False
+        if sys.platform == 'win32' or sys.platform == 'cygwin':
+            if os.path.exists('pmtmldetail.exe'):
+                do_tml = True
+        elif os.path.exists('pmtmldetail.py'):
+            do_tml = True
+        if do_tml:
+            r += 1
+            tmld = QtWidgets.QPushButton('TML Detail', self)
+            self.grid.addWidget(tmld, r, 0)
+            tmld.clicked.connect(self.tmlClicked)
         self.setOrder()
         if len(iorder) > 0:
             self.order.clear()
@@ -1326,7 +1347,7 @@ class powerMatch(QtWidgets.QWidget):
                     self.constraints = None
                 elif i == G:
                     self.generators = None
-                else:
+                elif i == O:
                     self.optimisation = None
                 ts = WorkBook()
                 ts.open_workbook(newfile)
@@ -1461,6 +1482,20 @@ class powerMatch(QtWidgets.QWidget):
             updates['Windows'] = lines
             SaveIni(updates)
         event.accept()
+
+    def tmlClicked(self):
+        if len(sys.argv) > 1:
+            config_file = sys.argv[1]
+        else:
+            config_file = getModelFile('SIREN.ini')
+        if sys.platform == 'win32' or sys.platform == 'cygwin':
+            if os.path.exists('pmtmldetail.exe'):
+                pid = subprocess.Popen(['pmtmldetail.exe', config_file]).pid
+            elif os.path.exists('pmtmldetail.py'):
+                pid = subprocess.Popen(['pmtmldetail.py', config_file], shell=True).pid
+        else:
+            pid = subprocess.Popen(['python3', 'pmtmldetail.py', config_file]).pid # python3
+        return
 
     def editIniFile(self):
         if len(sys.argv) > 1:
@@ -1995,7 +2030,7 @@ class powerMatch(QtWidgets.QWidget):
     def clean_batch_sheet(self):
         msgbox = QtWidgets.QMessageBox()
         msgbox.setWindowTitle('SIREN - Powermatch Batch')
-        msgbox.setText("Batch worksheet has more that 1,000 columns.\nSome may be invalid/empty. Would you like these to be removed")
+        msgbox.setText("Batch worksheet has more that 1,024 columns.\nSome may be invalid/empty. Would you like these to be removed")
         msgbox.setIcon(QtWidgets.QMessageBox.Warning)
         msgbox.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
         reply = msgbox.exec_()
@@ -2100,7 +2135,7 @@ class powerMatch(QtWidgets.QWidget):
                 ts = WorkBook()
                 ts.open_workbook(self.get_filename(self.files[B].text()))
                 ws = ts.sheet_by_index(0)
-                if ws.ncols > 1000:
+                if ws.ncols > 1024:
                     ts.release_resources()
                     self.clean_batch_sheet()
                     ts = WorkBook()
@@ -2884,11 +2919,6 @@ class powerMatch(QtWidgets.QWidget):
                                     bs.cell(row=gndx + tndx, column=column).value = pct
                                     bs.cell(row=gndx + tndx, column=column).number_format = '0.0%'
                                     bs.cell(row=gndx + tndx, column=column).font = normal
-                   #         elif key == 'Carbon': # handle differently
-                    #            if tndx == 1:
-                     #               bs.cell(row=tot_carb_row - 1, column=column).value = save_carbon_price
-                      #              bs.cell(row=tot_carb_row - 1, column=column).number_format = '#,##0.00'
-                       #             bs.cell(row=tot_carb_row - 1, column=column).font = normal
                         except:
                             pass
             tim = (time.time() - start_time)
@@ -3172,10 +3202,6 @@ class powerMatch(QtWidgets.QWidget):
                         cs = (cost_sum + cc) / gen_sum
                     else:
                         cs = ''
-                if self.carbon_price == int(self.carbon_price):
-                   cp = str(int(self.carbon_price))
-                else:
-                   cp = '${:.2f}'.format(self.carbon_price)
                 sp_d[st_fac] = title + 'Total incl. Carbon Cost'
                 sp_d[st_cst] = cost_sum + cc
                 sp_d[st_lic] = lifetime_sum + cl
@@ -3229,7 +3255,7 @@ class powerMatch(QtWidgets.QWidget):
                     sp_d[st_tml] = sp_load
                     if title == '' or option == 'S':
                         sp_d[st_max] = load_max
-                        sp_d[st_bal] = '(' + format_period(load_hr)[5:] + ')'
+                        sp_d[st_bal] = ' (' + format_period(load_hr)[5:] + ')'
                     sp_data.append(sp_d)
                 sp_d = [' '] * len(headers)
                 sp_d[st_fac] = 'RE %age of Total ' + title + 'Load'
@@ -3258,11 +3284,390 @@ class powerMatch(QtWidgets.QWidget):
                     max_short[1] = shortfall[h]
             if max_short[1] > 0:
                 sp_d = [' '] * len(headers)
-                sp_d[st_fac] = 'Largest Shortfall (' + format_period(max_short[0]) + ')'
-                sp_d[st_cap] = round(max_short[1], 2)
+                sp_d[st_fac] = 'Largest Shortfall'
+                sp_d[st_sub] = round(max_short[1], 2)
+                sp_d[st_cfa] = ' (' + format_period(max_short[0])[5:] + ')'
                 sp_data.append(sp_d)
             if option == 'O' or option == '1':
                 return load_pct, surp_pct, re_pct
+
+        def do_detail(fac, col, ss_row):
+            gen = pmss_details[fac].generator
+            col += 1
+            sp_cols.append(fac)
+            sp_cap.append(pmss_details[fac].capacity * pmss_details[fac].multiplier)
+            if do_zone and pmss_details[fac].zone != '':
+                ns.cell(row=zone_row, column=col).value = pmss_details[fac].zone
+                ns.cell(row=zone_row, column=col).alignment = oxl.styles.Alignment(wrap_text=True,
+                    vertical='bottom', horizontal='center')
+            ns.cell(row=what_row, column=col).value = gen
+            ns.cell(row=what_row, column=col).alignment = oxl.styles.Alignment(wrap_text=True,
+                    vertical='bottom', horizontal='center')
+            ns.cell(row=cap_row, column=col).value = sp_cap[-1]
+            ns.cell(row=cap_row, column=col).number_format = '#,##0.00'
+            # capacity
+            ns.cell(row=sum_row, column=col).value = '=SUM(' + ss_col(col) \
+                    + str(hrows) + ':' + ss_col(col) + str(hrows + 8759) + ')'
+            ns.cell(row=sum_row, column=col).number_format = '#,##0'
+            # To meet load MWh
+            ns.cell(row=tml_row, column=col).value = fac_tml[fac]
+            ns.cell(row=tml_row, column=col).number_format = '#,##0'
+            ns.cell(row=cf_row, column=col).value = '=IF(' + ss_col(col) + str(cap_row) + '>0,' + \
+                    ss_col(col) + str(sum_row) + '/' + ss_col(col) + str(cap_row) + '/8760,"")'
+            ns.cell(row=cf_row, column=col).number_format = '#,##0.0%'
+            # subtotal MWh
+            ns.cell(row=cf_row, column=col).value = '=IF(' + ss_col(col) + str(cap_row) + '>0,' + \
+                    ss_col(col) + str(sum_row) +'/' + ss_col(col) + str(cap_row) + '/8760,"")'
+            ns.cell(row=cf_row, column=col).number_format = '#,##0.0%'
+            if gen not in self.generators:
+                return col
+            if self.generators[gen].capex > 0 or self.generators[gen].fixed_om > 0 or self.generators[gen].variable_om > 0:
+                disc_rate = self.generators[gen].disc_rate
+                if disc_rate == 0:
+                    disc_rate = self.discount_rate
+                if disc_rate == 0:
+                    cst_calc = '/' + str(self.generators[gen].lifetime)
+                else:
+                    pwr_calc = 'POWER(1+' + str(disc_rate) + ',' + str(self.generators[gen].lifetime) + ')'
+                    cst_calc = '*' + str(disc_rate) + '*' + pwr_calc + '/SUM(' + pwr_calc + ',-1)'
+                ns.cell(row=cost_row, column=col).value = '=IF(' + ss_col(col) + str(cf_row) + \
+                        '>0,' + ss_col(col) + str(cap_row) + '*' + str(self.generators[gen].capex) + \
+                        cst_calc + '+' + ss_col(col) + str(cap_row) + '*' + \
+                        str(self.generators[gen].fixed_om) + '+' + ss_col(col) + str(sum_row) + '*(' + \
+                        str(self.generators[gen].variable_om) + '+' + str(self.generators[gen].fuel) + \
+                        '),0)'
+                ns.cell(row=cost_row, column=col).number_format = '$#,##0'
+                ns.cell(row=lcoe_row, column=col).value = '=IF(AND(' + ss_col(col) + str(cf_row) + \
+                        '>0,' + ss_col(col) + str(cap_row) + '>0),' + ss_col(col) + \
+                        str(cost_row) + '/' + ss_col(col) + str(sum_row) + ',"")'
+                ns.cell(row=lcoe_row, column=col).number_format = '$#,##0.00'
+            elif self.generators[gen].lcoe > 0:
+                if ss_row >= 0:
+                    ns.cell(row=cost_row, column=col).value = '=IF(' + ss_col(col) + str(cf_row) + \
+                            '>0,' + ss_col(col) + str(sum_row) + '*Summary!' + ss_col(st_rlc + 1) + str(ss_row) + \
+                        '*Summary!' + ss_col(st_rcf + 1) + str(ss_row) + '/' + ss_col(col) + str(cf_row) + ',0)'
+                    ns.cell(row=cost_row, column=col).number_format = '$#,##0'
+                ns.cell(row=lcoe_row, column=col).value = '=IF(AND(' + ss_col(col) + str(cf_row) + '>0,' \
+                        + ss_col(col) + str(cap_row) + '>0),' + ss_col(col) + str(cost_row) + '/8760/' \
+                        + ss_col(col) + str(cf_row) +'/' + ss_col(col) + str(cap_row) + ',"")'
+                ns.cell(row=lcoe_row, column=col).number_format = '$#,##0.00'
+            if self.generators[gen].emissions > 0:
+                ns.cell(row=emi_row, column=col).value = '=' + ss_col(col) + str(sum_row) \
+                        + '*' + str(self.generators[gen].emissions)
+                ns.cell(row=emi_row, column=col).number_format = '#,##0'
+            ns.cell(row=max_row, column=col).value = '=MAX(' + ss_col(col) + str(hrows) + \
+                                           ':' + ss_col(col) + str(hrows + 8759) + ')'
+            ns.cell(row=max_row, column=col).number_format = '#,##0.00'
+            ns.cell(row=hrs_row, column=col).value = '=COUNTIF(' + ss_col(col) + str(hrows) + \
+                                           ':' + ss_col(col) + str(hrows + 8759) + ',">0")'
+            ns.cell(row=hrs_row, column=col).number_format = '#,##0'
+            di = pmss_details[fac].col
+            if pmss_details[fac].multiplier == 1:
+                for row in range(hrows, 8760 + hrows):
+                    ns.cell(row=row, column=col).value = pmss_data[di][row - hrows]
+                    ns.cell(row=row, column=col).number_format = '#,##0.00'
+            else:
+                for row in range(hrows, 8760 + hrows):
+                    ns.cell(row=row, column=col).value = pmss_data[di][row - hrows] * \
+                                                         pmss_details[fac].multiplier
+                    ns.cell(row=row, column=col).number_format = '#,##0.00'
+            return col
+
+        def do_detail_summary(fac, col, ss_row, dd_tml_sum, dd_re_sum):
+            if do_zone and pmss_details[fac].zone != '':
+                ss.cell(row=ss_row, column=st_fac+1).value = '=Detail!' + ss_col(col) + str(zone_row) + \
+                                                      '&"."&Detail!' + ss_col(col) + str(what_row)
+            else:
+                ss.cell(row=ss_row, column=st_fac+1).value = '=Detail!' + ss_col(col) + str(what_row)
+            # capacity
+            ss.cell(row=ss_row, column=st_cap+1).value = '=Detail!' + ss_col(col) + str(cap_row)
+            ss.cell(row=ss_row, column=st_cap+1).number_format = '#,##0.00'
+            # To meet load MWh
+            ss.cell(row=ss_row, column=st_tml+1).value = '=Detail!' + ss_col(col) + str(tml_row)
+            ss.cell(row=ss_row, column=st_tml+1).number_format = '#,##0'
+            dd_tml_sum += ss_col(st_tml+1) + str(ss_row) + '+'
+            # subtotal MWh
+            ss.cell(row=ss_row, column=st_sub+1).value = '=IF(Detail!' + ss_col(col) + str(sum_row) \
+                                                  + '>0,Detail!' + ss_col(col) + str(sum_row) + ',"")'
+            ss.cell(row=ss_row, column=st_sub+1).number_format = '#,##0'
+            dd_re_sum += ss_col(st_sub+1) + str(ss_row) + '+'
+            # CF
+            ss.cell(row=ss_row, column=st_cfa+1).value = '=IF(Detail!' + ss_col(col) + str(cf_row) \
+                                                  + '>0,Detail!' + ss_col(col) + str(cf_row) + ',"")'
+            ss.cell(row=ss_row, column=st_cfa+1).number_format = '#,##0.0%'
+            if gen not in self.generators:
+                return dd_tml_sum, dd_re_sum
+            if self.generators[gen].capex > 0 or self.generators[gen].fixed_om > 0 or self.generators[gen].variable_om > 0:
+                disc_rate = self.generators[gen].disc_rate
+                if disc_rate == 0:
+                    disc_rate = self.discount_rate
+                if disc_rate == 0:
+                    cst_calc = '/' + str(self.generators[gen].lifetime)
+                else:
+                    pwr_calc = 'POWER(1+' + str(disc_rate) + ',' + str(self.generators[gen].lifetime) + ')'
+                    cst_calc = '*' + str(disc_rate) + '*' + pwr_calc + '/SUM(' + pwr_calc + ',-1)'
+                # cost / yr
+                if self.remove_cost:
+                    ss.cell(row=ss_row, column=st_cst+1).value = '=IF(Detail!' + ss_col(col) + str(sum_row) \
+                            + '>0,Detail!' + ss_col(col) + str(cost_row) + ',"")'
+                else:
+                    ss.cell(row=ss_row, column=st_cst+1).value = '=Detail!' + ss_col(col) + str(cost_row)
+                ss.cell(row=ss_row, column=st_cst+1).number_format = '$#,##0'
+                # lcog
+                ss.cell(row=ss_row, column=st_lcg+1).value = '=IF(Detail!' + ss_col(col) + str(lcoe_row) \
+                                                      + '>0,Detail!' + ss_col(col) + str(lcoe_row) + ',"")'
+                ss.cell(row=ss_row, column=st_lcg+1).number_format = '$#,##0.00'
+                # capital cost
+                ss.cell(row=ss_row, column=st_cac+1).value = '=IF(Detail!' + ss_col(col) + str(cap_row) \
+                                                        + '>0,Detail!' + ss_col(col) + str(cap_row) + '*'  \
+                                                        + str(self.generators[gen].capex) + ',"")'
+                ss.cell(row=ss_row, column=st_cac+1).number_format = '$#,##0'
+            elif self.generators[gen].lcoe > 0:
+                # cost / yr
+                if self.remove_cost:
+                    ss.cell(row=ss_row, column=st_cst+1).value = '=IF(Detail!' + ss_col(col) + str(sum_row) \
+                            + '>0,Detail!' + ss_col(col) + str(cost_row) + ',"")'
+                else:
+                    ss.cell(row=ss_row, column=st_cst+1).value = '=Detail!' + ss_col(col) + str(cost_row)
+                ss.cell(row=ss_row, column=st_cst+1).number_format = '$#,##0'
+                # lcog
+                ss.cell(row=ss_row, column=st_lcg+1).value = '=Detail!' + ss_col(col) + str(lcoe_row)
+                ss.cell(row=ss_row, column=st_lcg+1).number_format = '$#,##0.00'
+                # ref lcoe
+                ss.cell(row=ss_row, column=st_rlc+1).value = self.generators[gen].lcoe
+                ss.cell(row=ss_row, column=st_rlc+1).number_format = '$#,##0.00'
+                # ref cf
+                ss.cell(row=ss_row, column=st_rcf+1).value = self.generators[gen].lcoe_cf
+                ss.cell(row=ss_row, column=st_rcf+1).number_format = '#,##0.0%'
+            # lifetime cost
+            ss.cell(row=ss_row, column=st_lic+1).value = '=IF(Detail!' + ss_col(col) + str(sum_row) \
+                                                    + '>0,Detail!' + ss_col(col) + str(cost_row) + '*lifetime,"")'
+            ss.cell(row=ss_row, column=st_lic+1).number_format = '$#,##0'
+            # max mwh
+            ss.cell(row=ss_row, column=st_max+1).value = '=IF(Detail!' + ss_col(col) + str(sum_row) \
+                                                   + '>0,Detail!' + ss_col(col) + str(max_row) + ',"")'
+            ss.cell(row=ss_row, column=st_max+1).number_format = '#,##0.00'
+            if self.generators[gen].emissions > 0:
+                if self.remove_cost:
+                    ss.cell(row=ss_row, column=st_emi+1).value = '=IF(Detail!' + ss_col(col) + str(sum_row) \
+                            + '>0,Detail!' + ss_col(col) + str(emi_row) + ',"")'
+                else:
+                    ss.cell(row=ss_row, column=st_emi+1).value = '=Detail!' + ss_col(col) + str(emi_row)
+                ss.cell(row=ss_row, column=st_emi+1).number_format = '#,##0'
+                ss.cell(row=ss_row, column=st_emc+1).value = '=IF(AND(' + ss_col(st_emi+1) + str(ss_row) + '<>"",' + \
+                                                             ss_col(st_emi+1) + str(ss_row) + '>0),' + \
+                                                             ss_col(st_emi+1) + str(ss_row) + '*carbon_price,"")'
+                ss.cell(row=ss_row, column=st_emc+1).number_format = '$#,##0'
+            ss.cell(row=ss_row, column=st_lie+1).value = '=IF(AND(' + ss_col(st_emi+1) + str(ss_row) + '<>"",' + \
+                                                         ss_col(st_emi+1) + str(ss_row) + '>0),' + \
+                                                         ss_col(st_emi+1) + str(ss_row) + '*lifetime,"")'
+            ss.cell(row=ss_row, column=st_lie+1).number_format = '#,##0'
+            ss.cell(row=ss_row, column=st_lec+1).value = '=IF(AND(' + ss_col(st_emi+1) + str(ss_row) + '<>"",' + \
+                                                         ss_col(st_emi+1) + str(ss_row) + '>0),' + \
+                                                         ss_col(st_emc+1) + str(ss_row) + '*lifetime,"")'
+            ss.cell(row=ss_row, column=st_lec+1).number_format = '$#,##0'
+            return dd_tml_sum, dd_re_sum
+
+        def detail_summary_total(ss_row, title='', base_row='', back_row=''):
+            ss_row += 1
+            ss.cell(row=ss_row, column=1).value = title + 'Total'
+            for col in range(1, len(headers) + 1):
+                ss.cell(row=3, column=col).font = bold
+                ss.cell(row=ss_row, column=col).font = bold
+            for col in [st_cap, st_tml, st_sub, st_cst, st_emi, st_emc, st_cac, st_lic, st_lie, st_lec]:
+                if back_row != '':
+                    strt = ss_col(col, base=0) + back_row + '+'
+                else:
+                    strt = ''
+                ss.cell(row=ss_row, column=col+1).value = '=' + strt + 'SUM(' + ss_col(col, base=0) + \
+                        base_row + ':' + ss_col(col, base=0) + str(ss_row - 1) + ')'
+                if col in [st_cap]:
+                    ss.cell(row=ss_row, column=col+1).number_format = '#,##0.00'
+                elif col in [st_tml, st_sub, st_emi, st_lie]:
+                    ss.cell(row=ss_row, column=col+1).number_format = '#,##0'
+                else:
+                    ss.cell(row=ss_row, column=col+1).number_format = '$#,##0'
+            ss.cell(row=ss_row, column=st_lcg+1).value = '=' + ss_col(st_cst+1) + str(ss_row) + \
+                                                         '/' + ss_col(st_sub+1) + str(ss_row)
+            ss.cell(row=ss_row, column=st_lcg+1).number_format = '$#,##0.00'
+            ss.cell(row=ss_row, column=st_lco+1).value = '=' + ss_col(st_cst+1) + str(ss_row) + \
+                                                         '/' + ss_col(st_tml+1) + str(ss_row)
+            ss.cell(row=ss_row, column=st_lco+1).number_format = '$#,##0.00'
+            if self.carbon_price > 0:
+                ss.cell(row=ss_row, column=st_lcc+1).value = '=(' + ss_col(st_cst+1) + str(ss_row) + \
+                    '+' + ss_col(st_emc+1) + str(ss_row) + ')/' + ss_col(st_tml+1) + str(ss_row)
+                ss.cell(row=ss_row, column=st_lcc+1).number_format = '$#,##0.00'
+                ss.cell(row=ss_row, column=st_lcc+1).font = bold
+            last_col = ss_col(ns.max_column)
+            r = 1
+            if self.carbon_price > 0:
+                ss_row += 1
+                ss.cell(row=ss_row, column=1).value = title + 'Total incl. Carbon Cost'
+                ss.cell(row=ss_row, column=st_cst+1).value = '=' + ss_col(st_cst+1) + str(ss_row - 1) + \
+                        '+' + ss_col(st_emc+1) + str(ss_row - 1)
+                ss.cell(row=ss_row, column=st_cst+1).number_format = '$#,##0'
+                ss.cell(row=ss_row, column=st_lic+1).value = '=' + ss_col(st_lic+1) + str(ss_row - r) + \
+                                                             '+' + ss_col(st_lec+1) + str(ss_row - 1)
+                ss.cell(row=ss_row, column=st_lic+1).number_format = '$#,##0'
+                r += 1
+            ss_row += 1
+            ss.cell(row=ss_row, column=1).value = title + 'RE %age'
+            ss.cell(row=ss_row, column=st_tml+1).value = ns_tml_sum[:-1] + ')'
+            ss.cell(row=ss_row, column=st_tml+1).number_format = '#,##0'
+            ss.cell(row=ss_row, column=st_cap+1).value = '=' + ss_col(st_tml+1) + str(ss_row) + '/' +\
+                                                         ss_col(st_tml+1) + str(ss_row - r)
+            ss.cell(row=ss_row, column=st_cap+1).number_format = '#,##0.0%'
+            ss_re_row = ss_row
+            # if storage
+            if ns_sto_sum != '':
+                ss_row += 1
+                ss.cell(row=ss_row, column=1).value = title + 'Storage %age'
+                ss.cell(row=ss_row, column=st_tml+1).value = '=' + ns_sto_sum[1:]
+                ss.cell(row=ss_row, column=st_tml+1).number_format = '#,##0'
+                ss.cell(row=ss_row, column=st_cap+1).value = '=' + ns_sto_sum[1:] + '/' + ss_col(st_tml+1) + \
+                                                             str(ss_row - r - 1)
+                ss.cell(row=ss_row, column=st_cap+1).number_format = '#,##0.0%'
+                ss_sto_row = ss_row
+            # now do the LCOE and LCOE with CO2 stuff
+            if base_row == '4':
+                base_col = 'C'
+                if ss_sto_row >= 0:
+                    for rw in range(ss_re_fst_row, ss_re_lst_row + 1):
+                        ss.cell(row=rw, column=st_lco+1).value = '=IF(' + ss_col(st_lcg+1) + str(rw) + '>0,' + \
+                                ss_col(st_cst+1) + str(rw) + '/(' + ss_col(st_tml+1) + str(rw) + '+(' + \
+                                ss_col(st_tml+1) + '$' + str(ss_sto_row) + '*' + ss_col(st_tml+1) + str(rw) + \
+                                ')/' + ss_col(st_tml+1) + '$' + str(ss_re_row) + '),"")'
+                        ss.cell(row=rw, column=st_lco+1).number_format = '$#,##0.00'
+                        ss.cell(row=rw, column=st_lcc+1).value = '=IF(' + ss_col(st_emc+1) + str(rw) + '>0,(' + \
+                                ss_col(st_cst+1) + str(rw) + '+' + ss_col(st_emc+1) + str(rw) + ')/(' + \
+                                ss_col(st_tml+1) + str(rw) + '+(' + ss_col(st_tml+1) + '$' + str(ss_sto_row) + \
+                                '*' + ss_col(st_tml+1) + str(rw) + ')/' + ss_col(st_tml+1) + '$' + \
+                                str(ss_re_row) + '),"")'
+                        ss.cell(row=rw, column=st_lcc+1).number_format = '$#,##0.00'
+                else:
+                    for rw in range(ss_re_fst_row, ss_re_lst_row):
+                        ss.cell(row=rw, column=st_lco+1).value = '=IF(' + ss_col(st_lcg+1) + str(rw) + '>0,' + \
+                                ss_col(st_cst+1) + str(rw) + '/' + ss_col(st_tml+1) + str(rw) + '),"")'
+                        ss.cell(row=rw, column=st_lco+1).number_format = '$#,##0.00'
+                        ss.cell(row=rw, column=st_lcc+1).value = '=IF(' + ss_col(st_emc+1) + str(rw) + '>0,(' + \
+                                ss_col(st_cst+1) + str(rw) + ss_col(st_emc+1) + str(rw) + ')/' + \
+                                ss_col(st_tml+1) + str(rw) + '),"")'
+                        ss.cell(row=rw, column=st_lcc+1).number_format = '$#,##0.00'
+                for rw in range(ss_re_lst_row + 1, ss_lst_row + 1):
+                    ss.cell(row=rw, column=st_lco+1).value = '=' + ss_col(st_lcg+1) + str(rw)
+                    ss.cell(row=rw, column=st_lco+1).number_format = '$#,##0.00'
+                    ss.cell(row=rw, column=st_lcc+1).value = '=IF(' + ss_col(st_emc+1) + str(rw) + '>0,(' + \
+                            ss_col(st_cst+1) + str(rw) + '+' + ss_col(st_emc+1) + str(rw) + ')/' + \
+                            ss_col(st_tml+1) + str(rw) + ',"")'
+                    ss.cell(row=rw, column=st_lcc+1).number_format = '$#,##0.00'
+            else:
+                base_col = ss_col(next_col)
+                for rw in range(ul_fst_row, ul_lst_row + 1):
+                    ss.cell(row=rw, column=st_lco+1).value = '=' + ss_col(st_cst+1) + str(rw) + \
+                                                             '/' + ss_col(st_tml+1) + str(rw)
+                    ss.cell(row=rw, column=st_lco+1).number_format = '$#,##0.00'
+                    if self.carbon_price > 0:
+                        ss.cell(row=rw, column=st_lcc+1).value = '=(' + ss_col(st_cst+1) + str(rw) + \
+                            '+' + ss_col(st_emc+1) + str(rw) + ')/' + ss_col(st_tml+1) + str(rw)
+                        ss.cell(row=rw, column=st_lcc+1).number_format = '$#,##0.00'
+            ss_row += 2
+            ss.cell(row=ss_row, column=1).value = title + 'Load Analysis'
+            ss.cell(row=ss_row, column=1).font = bold
+            ss_row += 1
+            ss.cell(row=ss_row, column=1).value = title + 'Load met'
+      ##      lm_row = ss_row
+      #      if self.surplus_sign < 0:
+      #          addsub = ')+' + base_col
+      #      else:
+      #          addsub = ')-' + base_col
+      #      ss.cell(row=ss_row, column=st_tml+1).value = '=SUMIF(Detail!' + last_col + str(hrows) + ':Detail!' \
+      #          + last_col + str(hrows + 8759) + ',"' + sf_test[0] + '=0",Detail!C' + str(hrows) \
+      #          + ':Detail!C' + str(hrows + 8759) + ')+SUMIF(Detail!' + last_col + str(hrows) + ':Detail!' \
+      #          + last_col + str(hrows + 8759) + ',"' + sf_test[1] + '0",Detail!C' + str(hrows) + ':Detail!C' \
+      #          + str(hrows + 8759) + addsub + str(ss_row + 1)
+            ss.cell(row=ss_row, column=st_tml+1).value = '=Detail!' + base_col + str(sum_row) + '-' + base_col + str(ss_row + 1)
+            ss.cell(row=ss_row, column=st_tml+1).number_format = '#,##0'
+            ss.cell(row=ss_row, column=st_cap+1).value = '=' + ss_col(st_tml+1) + str(ss_row) + '/' + ss_col(st_tml+1) + \
+                                                         str(ss_row + 2)
+            ss.cell(row=ss_row, column=st_cap+1).number_format = '#,##0.0%'
+            ss_row += 1
+            ss.cell(row=ss_row, column=1).value = title + 'Shortfall'
+            sf_text = 'SUMIF(Detail!' + last_col + str(hrows) + ':Detail!' + last_col \
+                      + str(hrows + 8759) + ',"' + sf_test[0] + '0",Detail!' + last_col \
+                      + str(hrows) + ':Detail!' + last_col + str(hrows + 8759) + ')'
+            if self.surplus_sign > 0:
+                ss.cell(row=ss_row, column=st_tml+1).value = '=-' + sf_text
+            else:
+                ss.cell(row=ss_row, column=st_tml+1).value = '=' + sf_text
+            ss.cell(row=ss_row, column=st_tml+1).number_format = '#,##0'
+            ss.cell(row=ss_row, column=st_cap+1).value = '=' + ss_col(st_tml+1) + str(ss_row) + '/' + ss_col(st_tml+1) + \
+                                                         str(ss_row + 1)
+            ss.cell(row=ss_row, column=st_cap+1).number_format = '#,##0.0%'
+            ss_row += 1
+            ld_row = ss_row
+            load_mult = ''
+            try:
+                mult = round(pmss_details['Load'].multiplier, 3)
+                if mult != 1:
+                    load_mult = ' x ' + str(mult)
+            except:
+                pass
+            ss.cell(row=ss_row, column=1).value = 'Total ' + title + 'Load - ' + year + load_mult
+            ss.cell(row=ss_row, column=1).font = bold
+            ss.cell(row=ss_row, column=st_tml+1).value = '=SUM(' + ss_col(st_tml+1) + str(ss_row - 2) + ':' + \
+                                                         ss_col(st_tml+1) + str(ss_row - 1) + ')'
+            ss.cell(row=ss_row, column=st_tml+1).number_format = '#,##0'
+            ss.cell(row=ss_row, column=st_tml+1).font = bold
+            ss.cell(row=ss_row, column=st_max+1).value = '=Detail!' + base_col + str(max_row)
+            ss.cell(row=ss_row, column=st_max+1).number_format = '#,##0.00'
+            ss.cell(row=ss_row, column=st_max+1).font = bold
+            ss.cell(row=ss_row, column=st_bal+1).value = '=" ("&OFFSET(Detail!B' + str(hrows - 1) + ',MATCH(Detail!' + \
+                    base_col + str(max_row) + ',Detail!' + base_col + str(hrows) + ':Detail!' + base_col + \
+                    str(hrows + 8759) + ',0),0)&")"'
+            ss_row += 1
+            ss.cell(row=ss_row, column=1).value = 'RE %age of Total ' + title + 'Load'
+            ss.cell(row=ss_row, column=1).font = bold
+            if ns_sto_sum == '':
+                ss.cell(row=ss_row, column=st_cap+1).value = ss_col(st_tml+1) + str(ss_re_row - 1) + \
+                                                             '/' + ss_col(st_tml+1) + str(ss_row - 1)
+            else:
+                ss.cell(row=ss_row, column=st_cap+1).value = '=(' + ss_col(st_tml+1) + str(ss_re_row) + '+' + \
+                                                             ss_col(st_tml+1) + str(ss_sto_row) + ')/' + \
+                                                             ss_col(st_tml+1) + str(ss_row - 1)
+            ss.cell(row=ss_row, column=st_cap+1).number_format = '#,##0.0%'
+            ss.cell(row=ss_row, column=st_cap+1).font = bold
+            ss_row += 2
+            if ns_loss_sum != '':
+                ss.cell(row=ss_row, column=1).value = title + 'Storage Losses'
+                ss.cell(row=ss_row, column=st_sub+1).value = '=' + ns_loss_sum[1:]
+                ss.cell(row=ss_row, column=st_sub+1).number_format = '#,##0'
+                ss_row += 1
+            ss.cell(row=ss_row, column=1).value = title + 'Surplus'
+            sf_text = 'SUMIF(Detail!' + last_col + str(hrows) + ':Detail!' + last_col \
+                      + str(hrows + 8759) + ',"' + sf_test[1] + '0",Detail!' + last_col + str(hrows) \
+                      + ':Detail!' + last_col + str(hrows + 8759) + ')'
+            if self.surplus_sign < 0:
+                ss.cell(row=ss_row, column=st_sub+1).value = '=-' + sf_text
+            else:
+                ss.cell(row=ss_row, column=st_sub+1).value = '=' + sf_text
+            ss.cell(row=ss_row, column=st_sub+1).number_format = '#,##0'
+            ss.cell(row=ss_row, column=st_cap+1).value = '=' + ss_col(st_sub+1) + str(ss_row) + '/' + ss_col(st_tml+1) + str(ld_row)
+            ss.cell(row=ss_row, column=st_cap+1).number_format = '#,##0.0%'
+            max_short = [0, 0]
+            for h in range(len(shortfall)):
+                if shortfall[h] > max_short[1]:
+                    max_short[0] = h
+                    max_short[1] = shortfall[h]
+            if max_short[1] > 0:
+                ss_row += 1
+                ss.cell(row=ss_row, column=1).value = 'Largest ' + title + 'Shortfall:'
+                ss.cell(row=ss_row, column=st_sub+1).value = '=Detail!' + last_col + str(hrows + max_short[0])
+                ss.cell(row=ss_row, column=st_sub+1).number_format = '#,##0.00'
+                ss.cell(row=ss_row, column=st_cfa+1).value = '=" ("&OFFSET(Detail!B' + str(hrows - 1) + \
+                        ',MATCH(' + ss_col(st_sub+1) + str(ss_row) + ',Detail!' + last_col + str(hrows) + \
+                        ':Detail!' + last_col + str(hrows + 8759) + ',0),0)&")"'
+            return ss_row, ss_re_row
+
     # The "guts" of Powermatch processing. Have a single calculation algorithm
     # for Summary, Powermatch (detail), and Optimise. The detail makes it messy
     # Note: For Batch pmss_data is reused so don't update it in doDispatch
@@ -3292,23 +3697,41 @@ class powerMatch(QtWidgets.QWidget):
             if key.find('.') > 0:
                 do_zone = True
                 break
+        underlying_facs = []
+        undercol = [] * len(self.underlying)
+        operational_facs = []
         fac_tml = {}
         for fac in re_order:
             if fac == 'Load':
                 continue
             fac_tml[fac] = 0.
+            if fac in self.operational:
+              #  operational_facs.append(fac)
+                continue
+            if fac.find('.') > 0:
+                if fac[fac.find('.') + 1:] in self.underlying:
+                    underlying_facs.append(fac)
+                    continue
+            elif fac in self.underlying:
+                underlying_facs.append(fac)
+                continue
         load_col = pmss_details['Load'].col
         for h in range(len(pmss_data[0])):
             load_h = pmss_data[load_col][h] * pmss_details['Load'].multiplier
             shortfall[h] = load_h
             for fac in fac_tml.keys():
+                if fac in underlying_facs:
+                    continue
                 shortfall[h] -= pmss_data[pmss_details[fac].col][h] * pmss_details[fac].multiplier
             if shortfall[h] >= 0:
                 alloc = 1.
             else:
                 alloc = load_h / (load_h - shortfall[h])
             for fac in fac_tml.keys():
-                fac_tml[fac] += pmss_data[pmss_details[fac].col][h] * pmss_details[fac].multiplier * alloc
+                if fac in underlying_facs:
+                    fac_tml[fac] += pmss_data[pmss_details[fac].col][h] * pmss_details[fac].multiplier
+                else:
+                    fac_tml[fac] += pmss_data[pmss_details[fac].col][h] * pmss_details[fac].multiplier * alloc
             line = ''
         fac_tml_sum = 0
         for fac in fac_tml.keys():
@@ -3347,10 +3770,11 @@ class powerMatch(QtWidgets.QWidget):
             normal = oxl.styles.Font(name='Arial')
             bold = oxl.styles.Font(name='Arial', bold=True)
             ss = wb.create_sheet('Summary', 0)
-            re_sum = '=('
-            sto_sum = ''
-            loss_sum = ''
-            not_sum = ''
+            ns_re_sum = '=('
+            ns_tml_sum = '=('
+            ns_sto_sum = ''
+            ns_loss_sum = ''
+            ns_not_sum = ''
             cap_row = 1
             ns.cell(row=cap_row, column=2).value = 'Capacity (MW/MWh)' #headers[1].replace('\n', ' ')
             ss.row_dimensions[3].height = 40
@@ -3358,21 +3782,23 @@ class powerMatch(QtWidgets.QWidget):
             ss.cell(row=3, column=st_cap+1).value = headers[st_cap] # capacity
             ini_row = 2
             ns.cell(row=ini_row, column=2).value = 'Initial Capacity'
-            ss.cell(row=3, column=st_tml+1).value = headers[st_tml] # to meet load; skip this row on ns top rows
-            sum_row = 3
+            tml_row = 3
+            ns.cell(row=tml_row, column=2).value = headers[st_tml].replace('\n', ' ')
+            ss.cell(row=3, column=st_tml+1).value = headers[st_tml] # to meet load
+            sum_row = 4
             ns.cell(row=sum_row, column=2).value = headers[st_sub].replace('\n', ' ')
             ss.cell(row=3, column=st_sub+1).value = headers[st_sub] # subtotal MWh
-            cf_row = 4
+            cf_row = 5
             ns.cell(row=cf_row, column=2).value = headers[st_cfa].replace('\n', ' ')
             ss.cell(row=3, column=st_cfa+1).value = headers[st_cfa] # CF
-            cost_row = 5
+            cost_row = 6
             ns.cell(row=cost_row, column=2).value = headers[st_cst].replace('\n', ' ')
             ss.cell(row=3, column=st_cst+1).value = headers[st_cst] # Cost / yr
-            lcoe_row = 6
+            lcoe_row = 7
             ns.cell(row=lcoe_row, column=2).value = headers[st_lcg].replace('\n', ' ')
             ss.cell(row=3, column=st_lcg+1).value = headers[st_lcg] # LCOG
             ss.cell(row=3, column=st_lco+1).value = headers[st_lco] # LCOE
-            emi_row = 7
+            emi_row = 8
             ns.cell(row=emi_row, column=2).value = headers[st_emi].replace('\n', ' ')
             ss.cell(row=3, column=st_emi+1).value = headers[st_emi] # emissions
             ss.cell(row=3, column=st_emc+1).value = headers[st_emc] # emissions cost
@@ -3386,20 +3812,21 @@ class powerMatch(QtWidgets.QWidget):
             ss.cell(row=3, column=st_rlc+1).value = headers[st_rlc] # reference lcoe
             ss.cell(row=3, column=st_rcf+1).value = headers[st_rcf] # reference cf
             ss_row = 3
-            fall_row = 8
+            ss_re_fst_row = 4
+            fall_row = 9
             ns.cell(row=fall_row, column=2).value = 'Shortfall periods'
-            max_row = 9
+            max_row = 10
             ns.cell(row=max_row, column=2).value = 'Maximum (MW/MWh)'
-            hrs_row = 10
+            hrs_row = 11
             ns.cell(row=hrs_row, column=2).value = 'Hours of usage'
             if do_zone:
-                zone_row = 11
-                what_row = 12
-                hrows = 13
+                zone_row = 12
+                what_row = 13
+                hrows = 14
                 ns.cell(row=zone_row, column=1).value = 'Zone'
             else:
-                what_row = 11
-                hrows = 12
+                what_row = 12
+                hrows = 13
             ns.cell(row=what_row, column=1).value = 'Hour'
             ns.cell(row=what_row, column=2).value = 'Period'
             ns.cell(row=what_row, column=3).value = 'Load'
@@ -3430,152 +3857,16 @@ class powerMatch(QtWidgets.QWidget):
             for fac in re_order:
                 if fac == 'Load':
                     continue
-                if pmss_details[fac].col <= 0:
-                        continue
-                gen = pmss_details[fac].generator
-                col += 1
-                sp_cols.append(fac)
-                sp_cap.append(pmss_details[fac].capacity * pmss_details[fac].multiplier)
-                ss_row += 1
-                if do_zone and pmss_details[fac].zone != '':
-                    ns.cell(row=zone_row, column=col).value = pmss_details[fac].zone
-                    ns.cell(row=zone_row, column=col).alignment = oxl.styles.Alignment(wrap_text=True,
-                        vertical='bottom', horizontal='center')
-                    ss.cell(row=ss_row, column=st_fac+1).value = '=Detail!' + ss_col(col) + str(zone_row) + \
-                                                          '&"."&Detail!' + ss_col(col) + str(what_row)
-                else:
-                    ss.cell(row=ss_row, column=st_fac+1).value = '=Detail!' + ss_col(col) + str(what_row)
-                ns.cell(row=what_row, column=col).value = gen
-                ns.cell(row=cap_row, column=col).value = sp_cap[-1]
-                ns.cell(row=cap_row, column=col).number_format = '#,##0.00'
-                # capacity
-                ss.cell(row=ss_row, column=st_cap+1).value = '=Detail!' + ss_col(col) + str(cap_row)
-                ss.cell(row=ss_row, column=st_cap+1).number_format = '#,##0.00'
-                ns.cell(row=sum_row, column=col).value = '=SUM(' + ss_col(col) \
-                        + str(hrows) + ':' + ss_col(col) + str(hrows + 8759) + ')'
-                ns.cell(row=sum_row, column=col).number_format = '#,##0'
-                # subtotal MWh
-                ss.cell(row=ss_row, column=st_sub+1).value = '=IF(Detail!' + ss_col(col) + str(sum_row) \
-                                                      + '>0,Detail!' + ss_col(col) + str(sum_row) + ',"")'
-                ss.cell(row=ss_row, column=st_sub+1).number_format = '#,##0'
-                re_sum += 'C' + str(ss_row) + '+'
-                ns.cell(row=cf_row, column=col).value = '=IF(' + ss_col(col) + '1>0,' + \
-                        ss_col(col) + '3/' + ss_col(col) + '1/8760,"")'
-                ns.cell(row=cf_row, column=col).number_format = '#,##0.0%'
-                # CF
-                ss.cell(row=ss_row, column=st_cfa+1).value = '=IF(Detail!' + ss_col(col) + str(cf_row) \
-                                                      + '>0,Detail!' + ss_col(col) + str(cf_row) + ',"")'
-                ss.cell(row=ss_row, column=st_cfa+1).number_format = '#,##0.0%'
-                if gen not in self.generators:
+                if fac in underlying_facs:
                     continue
-                if self.generators[gen].capex > 0 or self.generators[gen].fixed_om > 0 or self.generators[gen].variable_om > 0:
-                    disc_rate = self.generators[gen].disc_rate
-                    if disc_rate == 0:
-                        disc_rate = self.discount_rate
-                    if disc_rate == 0:
-                        cst_calc = '/' + str(self.generators[gen].lifetime)
-                    else:
-                        pwr_calc = 'POWER(1+' + str(disc_rate) + ',' + str(self.generators[gen].lifetime) + ')'
-                        cst_calc = '*' + str(disc_rate) + '*' + pwr_calc + '/SUM(' + pwr_calc + ',-1)'
-                    ns.cell(row=cost_row, column=col).value = '=IF(' + ss_col(col) + str(cf_row) + \
-                            '>0,' + ss_col(col) + str(cap_row) + '*' + str(self.generators[gen].capex) + \
-                            cst_calc + '+' + ss_col(col) + str(cap_row) + '*' + \
-                            str(self.generators[gen].fixed_om) + '+' + ss_col(col) + str(sum_row) + '*(' + \
-                            str(self.generators[gen].variable_om) + '+' + str(self.generators[gen].fuel) + \
-                            '),0)'
-                    ns.cell(row=cost_row, column=col).number_format = '$#,##0'
-                    # cost / yr
-                    if self.remove_cost:
-                        ss.cell(row=ss_row, column=st_cst+1).value = '=IF(Detail!' + ss_col(col) + str(sum_row) \
-                                + '>0,Detail!' + ss_col(col) + str(cost_row) + ',"")'
-                    else:
-                        ss.cell(row=ss_row, column=st_cst+1).value = '=Detail!' + ss_col(col) + str(cost_row)
-                    ss.cell(row=ss_row, column=st_cst+1).number_format = '$#,##0'
-                    ns.cell(row=lcoe_row, column=col).value = '=IF(AND(' + ss_col(col) + str(cf_row) + \
-                            '>0,' + ss_col(col) + str(cap_row) + '>0),' + ss_col(col) + \
-                            str(cost_row) + '/' + ss_col(col) + str(sum_row) + ',"")'
-                    ns.cell(row=lcoe_row, column=col).number_format = '$#,##0.00'
-                    # lcog
-                    ss.cell(row=ss_row, column=st_lcg+1).value = '=IF(Detail!' + ss_col(col) + str(lcoe_row) \
-                                                          + '>0,Detail!' + ss_col(col) + str(lcoe_row) + ',"")'
-                    ss.cell(row=ss_row, column=st_lcg+1).number_format = '$#,##0.00'
-                    # capital cost
-                    ss.cell(row=ss_row, column=st_cac+1).value = '=IF(Detail!' + ss_col(col) + str(cap_row) \
-                                                            + '>0,Detail!' + ss_col(col) + str(cap_row) + '*'  \
-                                                            + str(self.generators[gen].capex) + ',"")'
-                    ss.cell(row=ss_row, column=st_cac+1).number_format = '$#,##0'
-                elif self.generators[gen].lcoe > 0:
-                    ns.cell(row=cost_row, column=col).value = '=IF(' + ss_col(col) + str(cf_row) + \
-                            '>0,' + ss_col(col) + str(sum_row) + '*Summary!' + ss_col(st_rlc + 1) + str(ss_row) + \
-                            '*Summary!' + ss_col(st_rcf + 1) + str(ss_row) + '/' + ss_col(col) + str(cf_row) + ',0)'
-                    ns.cell(row=cost_row, column=col).number_format = '$#,##0'
-                    # cost / yr
-                    if self.remove_cost:
-                        ss.cell(row=ss_row, column=st_cst+1).value = '=IF(Detail!' + ss_col(col) + str(sum_row) \
-                                + '>0,Detail!' + ss_col(col) + str(cost_row) + ',"")'
-                    else:
-                        ss.cell(row=ss_row, column=st_cst+1).value = '=Detail!' + ss_col(col) + str(cost_row)
-                    ss.cell(row=ss_row, column=st_cst+1).number_format = '$#,##0'
-                    ns.cell(row=lcoe_row, column=col).value = '=IF(AND(' + ss_col(col) + str(cf_row) + '>0,' \
-                            + ss_col(col) + str(cap_row) + '>0),' + ss_col(col) + str(cost_row) + '/8760/' \
-                            + ss_col(col) + str(cf_row) +'/' + ss_col(col) + str(cap_row) + ',"")'
-                    ns.cell(row=lcoe_row, column=col).number_format = '$#,##0.00'
-                    # lcog
-                    ss.cell(row=ss_row, column=st_lcg+1).value = '=Detail!' + ss_col(col) + str(lcoe_row)
-                    ss.cell(row=ss_row, column=st_lcg+1).number_format = '$#,##0.00'
-                    # ref lcoe
-                    ss.cell(row=ss_row, column=st_rlc+1).value = self.generators[gen].lcoe
-                    ss.cell(row=ss_row, column=st_rlc+1).number_format = '$#,##0.00'
-                    # ref cf
-                    ss.cell(row=ss_row, column=st_rcf+1).value = self.generators[gen].lcoe_cf
-                    ss.cell(row=ss_row, column=st_rcf+1).number_format = '#,##0.0%'
-                # lifetime cost
-                ss.cell(row=ss_row, column=st_lic+1).value = '=IF(Detail!' + ss_col(col) + str(sum_row) \
-                                                        + '>0,Detail!' + ss_col(col) + str(cost_row) + '*lifetime,"")'
-                ss.cell(row=ss_row, column=st_lic+1).number_format = '$#,##0'
-                # max mwh
-                ss.cell(row=ss_row, column=st_max+1).value = '=IF(Detail!' + ss_col(col) + str(sum_row) \
-                                                       + '>0,Detail!' + ss_col(col) + str(max_row) + ',"")'
-                ss.cell(row=ss_row, column=st_max+1).number_format = '#,##0.00'
-                if self.generators[gen].emissions > 0:
-                    ns.cell(row=emi_row, column=col).value = '=' + ss_col(col) + str(sum_row) \
-                            + '*' + str(self.generators[gen].emissions)
-                    ns.cell(row=emi_row, column=col).number_format = '#,##0'
-                    if self.remove_cost:
-                        ss.cell(row=ss_row, column=st_emi+1).value = '=IF(Detail!' + ss_col(col) + str(sum_row) \
-                                + '>0,Detail!' + ss_col(col) + str(emi_row) + ',"")'
-                    else:
-                        ss.cell(row=ss_row, column=st_emi+1).value = '=Detail!' + ss_col(col) + str(emi_row)
-                    ss.cell(row=ss_row, column=st_emi+1).number_format = '#,##0'
-                    ss.cell(row=ss_row, column=st_emc+1).value = '=IF(AND(' + ss_col(st_emi+1) + str(ss_row) + '<>"",' + \
-                                                                 ss_col(st_emi+1) + str(ss_row) + '>0),' + \
-                                                                 ss_col(st_emi+1) + str(ss_row) + '*carbon_price,"")'
-                    ss.cell(row=ss_row, column=st_emc+1).number_format = '$#,##0'
-                ns.cell(row=max_row, column=col).value = '=MAX(' + ss_col(col) + str(hrows) + \
-                                               ':' + ss_col(col) + str(hrows + 8759) + ')'
-                ns.cell(row=max_row, column=col).number_format = '#,##0.00'
-                ns.cell(row=hrs_row, column=col).value = '=COUNTIF(' + ss_col(col) + str(hrows) + \
-                                               ':' + ss_col(col) + str(hrows + 8759) + ',">0")'
-                ns.cell(row=hrs_row, column=col).number_format = '#,##0'
-                di = pmss_details[fac].col
-                if pmss_details[fac].multiplier == 1:
-                    for row in range(hrows, 8760 + hrows):
-                        ns.cell(row=row, column=col).value = pmss_data[di][row - hrows]
-                        ns.cell(row=row, column=col).number_format = '#,##0.00'
-                else:
-                    for row in range(hrows, 8760 + hrows):
-                        ns.cell(row=row, column=col).value = pmss_data[di][row - hrows] * \
-                                                             pmss_details[fac].multiplier
-                        ns.cell(row=row, column=col).number_format = '#,##0.00'
-                ss.cell(row=ss_row, column=st_lie+1).value = '=IF(AND(' + ss_col(st_emi+1) + str(ss_row) + '<>"",' + \
-                                                             ss_col(st_emi+1) + str(ss_row) + '>0),' + \
-                                                             ss_col(st_emi+1) + str(ss_row) + '*lifetime,"")'
-                ss.cell(row=ss_row, column=st_lie+1).number_format = '#,##0'
-                ss.cell(row=ss_row, column=st_lec+1).value = '=IF(AND(' + ss_col(st_emi+1) + str(ss_row) + '<>"",' + \
-                                                             ss_col(st_emi+1) + str(ss_row) + '>0),' + \
-                                                             ss_col(st_emc+1) + str(ss_row) + '*lifetime,"")'
-                ss.cell(row=ss_row, column=st_lec+1).number_format = '$#,##0'
-            shrt_col = col + 1
+                if pmss_details[fac].col <= 0:
+                    continue
+                ss_row += 1
+                col = do_detail(fac, col, ss_row)
+                ns_tml_sum, ns_re_sum = do_detail_summary(fac, col, ss_row, ns_tml_sum, ns_re_sum)
+            ss_re_lst_row = ss_row
+            col += 1
+            shrt_col = col
             ns.cell(row=fall_row, column=shrt_col).value = '=COUNTIF(' + ss_col(shrt_col) \
                             + str(hrows) + ':' + ss_col(shrt_col) + str(hrows + 8759) + \
                             ',"' + sf_test[0] + '0")'
@@ -3595,9 +3886,9 @@ class powerMatch(QtWidgets.QWidget):
                 ns.cell(row=row, column=shrt_col).value = shortfall[row - hrows] * -self.surplus_sign
                 ns.cell(row=row, column=col).number_format = '#,##0.00'
             col = shrt_col + 1
-            ns.cell(row=sum_row, column=col).value = '=SUM(' + ss_col(col) + str(hrows) + \
+            ns.cell(row=tml_row, column=col).value = '=SUM(' + ss_col(col) + str(hrows) + \
                                                    ':' + ss_col(col) + str(hrows + 8759) + ')'
-            ns.cell(row=sum_row, column=col).number_format = '#,##0'
+            ns.cell(row=tml_row, column=col).number_format = '#,##0'
             ns.cell(row=max_row, column=col).value = '=MAX(' + ss_col(col) + str(hrows) + \
                                            ':' + ss_col(col) + str(hrows + 8759) + ')'
             ns.cell(row=max_row, column=col).number_format = '#,##0.00'
@@ -3625,13 +3916,37 @@ class powerMatch(QtWidgets.QWidget):
                #                            ss_col(3) + str(row) + ',' + ss_col(3) + str(row) + \
                #                            '+' + ss_col(shrt_col) + str(row) + ')'
                 ns.cell(row=row, column=col).number_format = '#,##0.00'
-            shrt_col += 1
-            col = shrt_col + 1
-            ss_row += 1
-            tml_row = ss_row
-            ss.cell(row=ss_row, column=1).value = 'RE Contribution To Load'
-            ss.cell(row=ss_row, column=st_tml+1).value = '=Detail!' + ss_col(shrt_col) + str(sum_row)
-            ss.cell(row=ss_row, column=st_tml+1).number_format = '#,##0'
+          #  shrt_col += 1
+           # col = shrt_col + 1
+            ul_re_sum = ns_re_sum
+            ul_tml_sum = ns_tml_sum
+            nsul_sums = ['C']
+            nsul_sum_cols = [3]
+            for fac in underlying_facs:
+                if pmss_details[fac].capacity * pmss_details[fac].multiplier == 0:
+                    continue
+                col = do_detail(fac, col, -1)
+                nsul_sums.append(ss_col(col))
+                nsul_sum_cols.append(col)
+            if col > shrt_col + 1: # underlying
+                col += 1
+                ns.cell(row=what_row, column=col).value = 'Underlying\nLoad'
+                ns.cell(row=what_row, column=col).alignment = oxl.styles.Alignment(wrap_text=True,
+                        vertical='bottom', horizontal='center')
+                ns.cell(row=sum_row, column=col).value = '=SUM(' + ss_col(col) + str(hrows) + \
+                                                         ':' + ss_col(col) + str(hrows + 8759) + ')'
+                ns.cell(row=sum_row, column=col).number_format = '#,##0'
+                ns.cell(row=max_row, column=col).value = '=MAX(' + ss_col(col) + str(hrows) + \
+                                                         ':' + ss_col(col) + str(hrows + 8759) + ')'
+                ns.cell(row=max_row, column=col).number_format = '#,##0.00'
+                for row in range(hrows, 8760 + hrows):
+                    txt = '='
+                    for c in nsul_sums:
+                        txt += c + str(row) + '+'
+                    ns.cell(row=row, column=col).value = txt[:-1]
+                    ns.cell(row=row, column=col).number_format = '#,##0.00'
+            next_col = col
+            col += 1
         else:
             sp_data = []
             sp_load = 0. # load from load curve
@@ -3641,6 +3956,8 @@ class powerMatch(QtWidgets.QWidget):
             load_col = 0
             tml = 0.
             for fac in re_order:
+                if fac in underlying_facs:
+                    continue
                 if fac == 'Load':
                     load_col = pmss_details[fac].col
                     sp_load = sum(pmss_data[load_col]) * pmss_details[fac].multiplier
@@ -3668,12 +3985,6 @@ class powerMatch(QtWidgets.QWidget):
                     tml += pmss_data[load_col][h] * pmss_details['Load'].multiplier
                 else:
                     tml += pmss_data[load_col][h] * pmss_details['Load'].multiplier - shortfall[h]
-         #   if tml > 0:
-         #       sp_d = [' '] * len(headers)
-         #       sp_d[st_fac] = 'RE Contribution To Load'
-         #       sp_d[st_tml] = tml
-         #       sp_data.append(sp_d)
-         #       re_tml_sum = tml
         if option not in ['O', '1', 'B']:
             self.progressbar.setValue(6)
             QtWidgets.QApplication.processEvents()
@@ -3718,9 +4029,6 @@ class powerMatch(QtWidgets.QWidget):
                     storage[1] = self.generators[gen].initial * pmss_details[gen].multiplier
                 except:
                     storage[1] = self.generators[gen].initial
-          #      min_after[0] = storage[1]
-           #     min_after[1] = storage[1]
-            #    min_after[2] = 0
                 if self.constraints[self.generators[gen].constraint].capacity_min > 0:
                     storage[2] = capacity * self.constraints[self.generators[gen].constraint].capacity_min
                 if self.constraints[self.generators[gen].constraint].capacity_max > 0:
@@ -3815,13 +4123,6 @@ class powerMatch(QtWidgets.QWidget):
                                 storage_carry = 0
                         else:
                             can_use = 0.
-               #         if storage_carry < min_after[1]:
-                #            min_after[1] = storage_carry
-                 #           min_after[2] = row
-                  #      if shortfall[row] > min_after[4]:
-                    #        min_after[4] = shortfall[row]
-                     #       min_after[5] = row
-                      #  min_after[3] = storage_carry
                     if can_use < 0:
                         if use_max[1] is None or can_use < use_max[1]:
                             use_max[1] = can_use
@@ -3845,12 +4146,6 @@ class powerMatch(QtWidgets.QWidget):
                             ns.cell(row=max_row, column=col + ac).value = '=MAX(' + ss_col(col + ac) + \
                                     str(hrows) + ':' + ss_col(col + ac) + str(hrows + 8759) + ')'
                             ns.cell(row=max_row, column=col + ac).number_format = '#,##0.00'
-     #                   ns.cell(row=hrs_row, column=col + 1).value = '=COUNTIF(' + ss_col(col + 1) + \
-      #                          str(hrows) + ':' + ss_col(col + 1) + str(hrows + 8759) + ',">0")'
-       #                 ns.cell(row=hrs_row, column=col + 1).number_format = '#,##0'
-        #                ns.cell(row=hrs_row, column=col + 2).value = '=' + ss_col(col + 1) + \
-         #                       str(hrs_row) + '/8760'
-          #              ns.cell(row=hrs_row, column=col + 2).number_format = '#,##0.0%'
                     else:
                         tot_sto_loss += storage_losses
                         if can_use > 0:
@@ -3865,8 +4160,8 @@ class powerMatch(QtWidgets.QWidget):
                     ns.cell(row=sum_row, column=col + 2).value = '=SUMIF(' + ss_col(col + 2) + \
                             str(hrows) + ':' + ss_col(col + 2) + str(hrows + 8759) + ',">0")'
                     ns.cell(row=sum_row, column=col + 2).number_format = '#,##0'
-                    ns.cell(row=cf_row, column=col + 2).value = '=IF(' + ss_col(col + 2) + '1>0,' + \
-                                                    ss_col(col + 2) + '3/' + ss_col(col + 2) + '1/8760,"")'
+                    ns.cell(row=cf_row, column=col + 2).value = '=IF(' + ss_col(col + 2) + str(cap_row) + '>0,' + \
+                            ss_col(col + 2) + str(sum_row) + '/' + ss_col(col + 2) + '1/8760,"")'
                     ns.cell(row=cf_row, column=col + 2).number_format = '#,##0.0%'
                     ns.cell(row=max_row, column=col).value = '=MAX(' + ss_col(col) + \
                             str(hrows) + ':' + ss_col(col) + str(hrows + 8759) + ')'
@@ -3907,8 +4202,6 @@ class powerMatch(QtWidgets.QWidget):
                 if option == 'D':
                     ns.cell(row=cap_row, column=col).value = capacity
                     ns.cell(row=cap_row, column=col).number_format = '#,##0.00'
-     #               min_after[4] = shortfall[0]
-      #              min_after[5] = 0
                     for row in range(8760):
                         if shortfall[row] >= 0: # shortfall?
                             if shortfall[row] >= cap_capacity:
@@ -3920,9 +4213,6 @@ class powerMatch(QtWidgets.QWidget):
                             else:
                                 ns.cell(row=row + hrows, column=col).value = shortfall[row]
                                 shortfall[row] = 0
-                    #        if shortfall[row] > min_after[4]:
-                     #           min_after[4] = shortfall[row]
-                      #          min_after[5] = row
                         else:
                             shortfall[row] -= min_gen
                             ns.cell(row=row + hrows, column=col).value = min_gen
@@ -3932,11 +4222,11 @@ class powerMatch(QtWidgets.QWidget):
                     ns.cell(row=sum_row, column=col).value = '=SUM(' + ss_col(col) + str(hrows) + \
                             ':' + ss_col(col) + str(hrows + 8759) + ')'
                     ns.cell(row=sum_row, column=col).number_format = '#,##0'
-                    ns.cell(row=cf_row, column=col).value = '=IF(' + ss_col(col) + '1>0,' + \
-                                                ss_col(col) + '3/' + ss_col(col) + '1/8760,"")'
+                    ns.cell(row=cf_row, column=col).value = '=IF(' + ss_col(col) + str(cap_row) + '>0,' + \
+                            ss_col(col) + str(sum_row) + '/' + ss_col(col) + str(cap_row) + '/8760,"")'
                     ns.cell(row=cf_row, column=col).number_format = '#,##0.0%'
                     ns.cell(row=max_row, column=col).value = '=MAX(' + ss_col(col) + \
-                            str(hrows) + ':' + ss_col(col) + str(hrows + 8759) + ')'
+                                str(hrows) + ':' + ss_col(col) + str(hrows + 8759) + ')'
                     ns.cell(row=max_row, column=col).number_format = '#,##0.00'
                     ns.cell(row=hrs_row, column=col).value = '=COUNTIF(' + ss_col(col) + \
                             str(hrows) + ':' + ss_col(col) + str(hrows + 8759) + ',">0")'
@@ -3947,8 +4237,6 @@ class powerMatch(QtWidgets.QWidget):
                     col += 2
                 else:
                     gen_can = 0.
-              #      min_after[4] = shortfall[0]
-               #     min_after[5] = 0
                     gen_max = 0
                     for row in range(8760):
                         if shortfall[row] >= 0: # shortfall?
@@ -3967,9 +4255,6 @@ class powerMatch(QtWidgets.QWidget):
                                 if shortfall[row] > gen_max:
                                     gen_max = shortfall[row]
                                 shortfall[row] = 0
-                #            if shortfall[row] > min_after[4]:
-                 #               min_after[4] = shortfall[row]
-                  #              min_after[5] = row
                         else:
                             if min_gen > gen_max:
                                 gen_max = min_gen
@@ -3984,6 +4269,14 @@ class powerMatch(QtWidgets.QWidget):
                     sp_d[st_sub] = gen_can
                     sp_d[st_max] = gen_max
                     sp_data.append(sp_d)
+#        if option == 'D': # Currently calculated elsewhere
+#            if self.surplus_sign > 0:
+#                maxmin = 'MIN'
+#            else:
+#                maxmin = 'MAX'
+#            ns.cell(row=max_row, column=col-1).value = '=' + maxmin + '(' + \
+#                    ss_col(col-1) + str(hrows) + ':' + ss_col(col - 1) + str(hrows + 8759) + ')'
+#            ns.cell(row=max_row, column=col-1).number_format = '#,##0.00'
         if option not in ['O', '1', 'B']:
             self.progressbar.setValue(8)
             QtWidgets.QApplication.processEvents()
@@ -4027,11 +4320,6 @@ class powerMatch(QtWidgets.QWidget):
                 else:
                     corr_data[c].append('Very high')
         if option != 'D':
-         #   if min_after[2] >= 0:
-          #      min_after[2] = format_period(min_after[2])
-           # else:
-            #    min_after[3] = ''
-           # min_after[5] = format_period(min_after[5])
             load_col = pmss_details['Load'].col
             cap_sum = 0.
             gen_sum = 0.
@@ -4079,18 +4367,13 @@ class powerMatch(QtWidgets.QWidget):
                     pass
                 try:
                     tml_sum += sp_data[sp][st_tml]
-           #         if sp_data[sp][0] == 'RE Contribution To Load':
-           #             re_tml_sum = sp_data[sp][st_tml]
                 except:
                     pass
-         #       if gen in tech_names:
-          #          re_sum += sp_data[sp][st_sub]
                 if gen not in self.generators:
                     continue
                 ndx = 3
                 if gen in storage_names:
                     ndx = 2
-            #        sto_sum += sp_data[sp][ndx]
                 elif gen not in tech_names:
                     try:
                         ff_sum += sp_data[sp][ndx]
@@ -4147,10 +4430,6 @@ class powerMatch(QtWidgets.QWidget):
                     lifetime_co2_cost += sp_data[sp][st_lec]
                 else:
                     sp_data[sp][st_lcc] = sp_data[sp][st_lco]
-      #      if cap_sum > 0:
-      #          cs = gen_sum / cap_sum / 8760
-      #      else:
-      #          cs = ''
             sf_sums = [0., 0., 0.]
             for sf in range(len(shortfall)):
                 if shortfall[sf] > 0:
@@ -4173,6 +4452,96 @@ class powerMatch(QtWidgets.QWidget):
                 load_pct, surp_pct, re_pct = summary_totals()
             else:
                 summary_totals()
+            do_underlying = False
+            if len(underlying_facs) > 0:
+                for fac in underlying_facs:
+                    if pmss_details[fac].capacity * pmss_details[fac].multiplier > 0:
+                        do_underlying = True
+                        break
+            if do_underlying:
+                sp_data.append(' ')
+                sp_data.append('Additional Underlying Load')
+                for fac in underlying_facs:
+                    if pmss_details[fac].capacity * pmss_details[fac].multiplier == 0:
+                        continue
+                    col = pmss_details[fac].col
+                    sp_d = [' '] * len(headers)
+                    sp_d[st_fac] = fac
+                    sp_d[st_cap] = pmss_details[fac].capacity * pmss_details[fac].multiplier
+                    cap_sum += sp_d[st_cap]
+                    sp_d[st_tml] = sum(pmss_data[pmss_details[fac].col]) * pmss_details[fac].multiplier
+                    tml_sum += sp_d[st_tml]
+                    sp_d[st_sub] = sp_d[st_tml]
+                    gen_sum += sp_d[st_tml]
+                    sp_load += sp_d[st_tml]
+                    sp_d[st_cfa] = '{:.1f}%'.format(sp_d[st_sub] / sp_d[st_cap] / 8760 * 100.)
+                    sp_d[st_max] = max(pmss_data[pmss_details[fac].col]) * pmss_details[fac].multiplier
+                    gen = pmss_details[fac].generator
+                    if self.generators[gen].capex > 0 or self.generators[gen].fixed_om > 0 or self.generators[gen].variable_om > 0:
+                        capex = sp_d[st_cap] * self.generators[gen].capex
+                        capex_sum += capex
+                        opex = sp_d[st_cap] * self.generators[gen].fixed_om \
+                               + sp_d[st_tml] * self.generators[gen].variable_om \
+                               + sp_d[st_tml] * self.generators[gen].fuel
+                        disc_rate = self.generators[gen].disc_rate
+                        if disc_rate == 0:
+                            disc_rate = self.discount_rate
+                        lifetime = self.generators[gen].lifetime
+                        sp_d[st_lcg] = calcLCOE(sp_d[st_tml], capex, opex, disc_rate, lifetime)
+                        sp_d[st_cst] = sp_d[st_tml] * sp_d[st_lcg]
+                        cost_sum += sp_d[st_cst]
+                        sp_d[st_lco] = sp_d[st_lcg]
+                        sp_d[st_cac] = capex
+                    elif self.generators[gen].lcoe > 0:
+                        if self.generators[gen].lcoe_cf > 0:
+                            lcoe_cf = self.generators[gen].lcoe_cf
+                        else:
+                            lcoe_cf = sp_d[st_cfa]
+                        sp_d[st_cst] = self.generators[gen].lcoe * lcoe_cf * 8760 * sp_d[st_cap]
+                        cost_sum += sp_d[st_cst]
+                        if sp_d[st_cfa] > 0:
+                            sp_d[st_lcg] = sp_d[st_cst] / sp_d[st_tml]
+                            sp_d[st_lco] = sp_d[st_lcg]
+                        sp_d[st_cfa] = '{:.1f}%'.format(sp_d[st_cfa] * 100.)
+                        sp_d[st_rlc] = self.generators[gen].lcoe
+                        sp_d[st_rcf] = '{:.1f}%'.format(lcoe_cf * 100.)
+                    sp_d[st_lic] = sp_d[st_cst] * max_lifetime
+                    lifetime_sum += sp_d[st_lic]
+                    if self.generators[gen].emissions > 0:
+                        sp_d[st_emi] = sp_d[st_tml] * self.generators[gen].emissions
+                        co2_sum += sp_d[st_emi]
+                        sp_d[st_emc] = sp_d[st_emi] * self.carbon_price
+                        sp_d[st_lcc] = sp_d[st_lco] * ((sp_d[st_cst] + sp_d[st_emc]) / sp_d[st_cst])
+                        co2_cost_sum += sp_d[st_emc]
+                        sp_d[st_lie] = sp_d[st_emi] * max_lifetime
+                        lifetime_co2_sum += sp_d[st_lie]
+                        sp_d[st_lec] = sp_d[st_lie] * self.carbon_price
+                        lifetime_co2_cost += sp_d[st_lec]
+                    else:
+                        sp_d[st_lcc] = sp_d[st_lco]
+                    sp_data.append(sp_d)
+                if gen_sum > 0:
+                    gs = cost_sum / gen_sum
+                else:
+                    gs = ''
+                if tml_sum > 0:
+                    gsw = cost_sum / tml_sum # LCOE
+                    gswc = (cost_sum + co2_cost_sum) / tml_sum
+                else:
+                    gsw = ''
+                    gswc = ''
+                # find maximum underlying load
+                if option == 'S':
+                    load_max = 0
+                    load_hr = 0
+                    for h in range(len(pmss_data[0])):
+                        amt = pmss_data[load_col][h] * pmss_details['Load'].multiplier
+                        for fac in underlying_facs:
+                            amt += pmss_data[pmss_details[fac].col][h] * pmss_details[fac].multiplier
+                        if amt > load_max:
+                            load_max = amt
+                            load_hr = h
+                summary_totals('Underlying ')
             if corr_data is not None:
                 sp_data.append(' ')
                 sp_data = sp_data + corr_data
@@ -4204,9 +4573,6 @@ class powerMatch(QtWidgets.QWidget):
                 return sp_data
             if option == 'O' or option == '1':
                 op_load_tot = pmss_details['Load'].capacity * pmss_details['Load'].multiplier
-             #   if (sf_sums[2] - sf_sums[0]) / op_load_tot < 1:
-              #      lcoe = 500
-               # el
                 if gswc != '':
                     lcoe = gswc
                 elif self.adjusted_lcoe:
@@ -4236,7 +4602,6 @@ class powerMatch(QtWidgets.QWidget):
                 sp_pts[p] = 2
             if corr_data is not None:
                 sp_pts[st_cap] = 3 # compromise between capacity (2) and correlation (4)
-        #    if option != 'B':
             self.setStatus(self.sender().text() + ' completed')
             if title is not None:
                 atitle = title
@@ -4251,9 +4616,10 @@ class powerMatch(QtWidgets.QWidget):
             self.progressbar.setHidden(True)
             self.progressbar.setValue(0)
             return # finish if not detailed spreadsheet
-        col = shrt_col + 1
+        col = next_col + 1
         is_storage = False
         ss_sto_rows = []
+        ss_st_row = -1
         for gen in dispatch_order:
             ss_row += 1
             try:
@@ -4267,12 +4633,12 @@ class powerMatch(QtWidgets.QWidget):
                     ns.cell(row=what_row, column=col + 1).alignment = oxl.styles.Alignment(wrap_text=True,
                             vertical='bottom', horizontal='center')
                     is_storage = True
-                    sto_sum += '+C' + str(ss_row)
-                    loss_sum += '+Detail!' + ss_col(col + 1) + str(sum_row)
+                    ns_sto_sum += '+' + ss_col(st_tml+1) + str(ss_row)
+                    ns_loss_sum += '+Detail!' + ss_col(col + 1) + str(sum_row)
                 else:
                     nc = 0
                     is_storage = False
-                    not_sum += '-C' + str(ss_row)
+                    ns_not_sum += '-' + ss_col(st_tml+1) + str(ss_row)
             except KeyError as err:
                 msg = 'Key Error: No Constraint for ' + gen
                 if title is not None:
@@ -4280,7 +4646,7 @@ class powerMatch(QtWidgets.QWidget):
                 self.setStatus(msg)
                 nc = 0
                 is_storage = False
-                not_sum += '-C' + str(ss_row)
+                ns_not_sum += '-' + ss_col(st_tml+1) + str(ss_row)
             ns.cell(row=what_row, column=col + nc).value = gen
             ss.cell(row=ss_row, column=st_fac+1).value = '=Detail!' + ss_col(col + nc) + str(what_row)
             # facility
@@ -4335,7 +4701,9 @@ class powerMatch(QtWidgets.QWidget):
                 ss.cell(row=ss_row, column=st_lco+1).value = '=Detail!' + ss_col(col + nc) + str(lcoe_row)
                 ss.cell(row=ss_row, column=st_lco+1).number_format = '$#,##0.00'
                 # capital cost
-                ss.cell(row=ss_row, column=st_cac+1).value = self.generators[gen].capex * capacity
+                ss.cell(row=ss_row, column=st_cac+1).value = '=IF(Detail!' + ss_col(col + nc) + str(cap_row) \
+                                                            + '>0,Detail!' + ss_col(col + nc) + str(cap_row) + '*'  \
+                                                            + str(self.generators[gen].capex) + ',"")'
                 ss.cell(row=ss_row, column=st_cac+1).number_format = '$#,##0'
             elif self.generators[gen].lcoe > 0:
                 ns.cell(row=cost_row, column=col + nc).value = '=IF(' + ss_col(col + nc) + str(cf_row) + \
@@ -4398,7 +4766,7 @@ class powerMatch(QtWidgets.QWidget):
                 ss.cell(row=ss_row, column=st_lic+1).value = '=IF(Detail!' + ss_col(col + 2) + str(sum_row) \
                                                         + '>0,Detail!' + ss_col(col + 2) + str(cost_row) + '*lifetime,"")'
                 ss.cell(row=ss_row, column=st_lic+1).number_format = '$#,##0'
-             #   ns.cell(row=what_row, column=col + 1).value = gen
+                # ns.cell(row=what_row, column=col + 1).value = gen
                 ns.cell(row=what_row, column=col + 3).value = gen + '\nBalance'
                 ns.cell(row=what_row, column=col + 3).alignment = oxl.styles.Alignment(wrap_text=True,
                         vertical='bottom', horizontal='center')
@@ -4431,9 +4799,6 @@ class powerMatch(QtWidgets.QWidget):
             ns.cell(row=emi_row, column=col - 2).value = '=MIN(' + ss_col(col - 2) + str(hrows) + \
                     ':' + ss_col(col - 2) + str(hrows + 8759) + ')'
             ns.cell(row=emi_row, column=col - 2).number_format = '#,##0.00'
-    #    ns.cell(row=emi_row, column=col - 1).value = '=MIN(' + ss_col(col - 1) + str(hrows) + \
-     #           ':' + ss_col(col - 1) + str(hrows + 8759) + ')'
-      #  ns.cell(row=emi_row, column=col - 1).number_format = '#,##0.00'
         for column_cells in ns.columns:
             length = 0
             value = ''
@@ -4497,71 +4862,28 @@ class powerMatch(QtWidgets.QWidget):
         ns.row_dimensions[what_row].height = 30
         ns.freeze_panes = 'C' + str(hrows)
         ns.activeCell = 'C' + str(hrows)
-        # now do the LCOE and LCOE with CO2 stuff
-        tml_bit = 'SUM(' + ss_col(st_sub+1) + '$4:' + ss_col(st_sub+1) + '$' + str(tml_row - 1) + \
-                  ')*(' + ss_col(st_tml+1) + '$' + str(tml_row)
-        for rw in ss_sto_rows:
-            tml_bit += '+' + ss_col(st_tml+1) + str(rw)
-        tml_bit += '))'
-        for rw in range(4, tml_row):
-            ss.cell(row=rw, column=st_lco+1).value = '=IF(' + ss_col(st_lcg+1) + str(rw) + '>0,' + \
-                ss_col(st_cst+1) + str(rw) + '/(' + ss_col(st_sub+1) + str(rw) + '/' + tml_bit + \
-                ',"")'
-            ss.cell(row=rw, column=st_lco+1).number_format = '$#,##0.00'
-            ss.cell(row=rw, column=st_lcc+1).value = '=IF(' + ss_col(st_emc+1) + str(rw) + '>0,(' + \
-                ss_col(st_cst+1) + str(rw) + '+' + ss_col(st_emc+1) + str(rw) + ')/(' + \
-                ss_col(st_sub+1) + str(rw) + '/' + tml_bit + ',' + ss_col(st_lco+1) + str(rw) + ')'
-            ss.cell(row=rw, column=st_lcc+1).number_format = '$#,##0.00'
-        for rw in range(tml_row + 1, ss_row + 1):
-            if rw in ss_sto_rows:
-                the_col = st_tml
-            else:
-                the_col = st_sub
-            ss.cell(row=rw, column=st_lcc+1).value = '=IF(' + ss_col(st_emc+1) + str(rw) + '>0,(' + \
-                ss_col(st_cst+1) + str(rw) + '+' + ss_col(st_emc+1) + str(rw) + ')/' + \
-                ss_col(the_col+1) + str(rw) + ',' + ss_col(st_lco+1) + str(rw) + ')'
-            ss.cell(row=rw, column=st_lcc+1).number_format = '$#,##0.00'
         if self.results_prefix != '':
             ss.cell(row=1, column=1).value = 'Powermatch - ' + self.results_prefix + ' Summary'
         else:
             ss.cell(row=1, column=1).value = 'Powermatch - Summary'
         ss.cell(row=1, column=1).font = bold
-        ss_row +=1
-        for col in range(1, len(headers) + 1):
-            ss.cell(row=3, column=col).font = bold
-            ss.cell(row=ss_row, column=col).font = bold
-        for col in [st_cap, st_tml, st_sub, st_cst, st_emi, st_emc, st_cac, st_lic, st_lie, st_lec]:
-            ss.cell(row=ss_row, column=col+1).value = '=SUM(' + ss_col(col, base=0) +'4:' + \
-                                                      ss_col(col, base=0) + str(ss_row - 1) + ')'
-            if col in [st_cap]:
-                ss.cell(row=ss_row, column=col+1).number_format = '#,##0.00'
-            elif col in [st_tml, st_sub, st_emi, st_lie]:
-                ss.cell(row=ss_row, column=col+1).number_format = '#,##0'
-            else:
-                ss.cell(row=ss_row, column=col+1).number_format = '$#,##0'
-      #  ss.cell(row=ss_row, column=st_cfa+1).value = '=' + ss_col(st_sub+1) + str(ss_row) + \
-      #                                               '/' + ss_col(st_cap+1) + str(ss_row) + '/8760'
-      #  ss.cell(row=ss_row, column=st_cfa+1).number_format = '#,##0.0%'
-        ss.cell(row=ss_row, column=st_lcg+1).value = '=' + ss_col(st_cst+1) + str(ss_row) + \
-                                                     '/' + ss_col(st_sub+1) + str(ss_row)
-        ss.cell(row=ss_row, column=st_lcg+1).number_format = '$#,##0.00'
-        ss.cell(row=ss_row, column=st_lco+1).value = '=' + ss_col(st_cst+1) + str(ss_row) + \
-                                                     '/' + ss_col(st_tml+1) + str(ss_row)
-        ss.cell(row=ss_row, column=st_lco+1).number_format = '$#,##0.00'
-        ss.cell(row=ss_row, column=1).value = 'Total'
-        if self.adjusted_lcoe:
-            ss_row +=1
-            ss.cell(row=ss_row, column=1).value = 'LCOE'
+        ss_lst_row = ss_row + 1
+        ss_row, ss_re_row = detail_summary_total(ss_row, base_row='4')
+        if len(nsul_sum_cols) > 0:
+            ss_row += 2
+            ss.cell(row=ss_row, column=1).value = 'Additional Underlying Load'
             ss.cell(row=ss_row, column=1).font = bold
-            ss.cell(row=ss_row, column=st_lco+1).value = '=' + ss_col(st_cst+1) + str(ss_row-1) + \
-                                                         '/' + ss_col(st_tml+1) + str(ss_row-1)
-            ss.cell(row=ss_row, column=st_lco+1).number_format = '$#,##0.00'
-            ss.cell(row=ss_row, column=st_lco+1).font = bold
-        lcoe_row = ss_row
-        wider = []
-    #    wider.append(ss_col(st_cst + 1))
-   #     wider.append(ss_col(st_cac + 1))
-        wider.append(ss_col(st_lic + 1))
+            base_row = str(ss_row + 1)
+            for col in nsul_sum_cols[1:]:
+                ss_row += 1
+                ul_tml_sum, ul_re_sum = do_detail_summary(fac, col, ss_row, ul_tml_sum, ul_re_sum)
+            ul_fst_row = int(base_row)
+            ul_lst_row = ss_row
+            ns_re_sum = ul_re_sum
+            ns_tml_sum = ul_tml_sum
+            ss_row, ss_re_row = detail_summary_total(ss_row, title='Underlying ', base_row=base_row,
+                                          back_row=str(ss_lst_row))
+        wider = [ss_col(st_cac + 1), ss_col(st_lic + 1)]
         for column_cells in ss.columns:
             length = 0
             value = ''
@@ -4579,161 +4901,7 @@ class powerMatch(QtWidgets.QWidget):
                 ss.column_dimensions[cel].width = max(length, 10) * 1.5
             else:
                 ss.column_dimensions[cel].width = max(length, 10) * 1.2
-        last_col = ss_col(ns.max_column)
-        r = 1
-        if self.adjusted_lcoe:
-            r += 1
-        if self.carbon_price > 0:
-            ss_row += 1
-            if self.carbon_price == int(self.carbon_price):
-               cp = str(int(self.carbon_price))
-            else:
-               cp = '{:.2f}'.format(self.carbon_price)
-            ss.cell(row=ss_row, column=1).value = 'Carbon Cost'
-      #      ss.cell(row=ss_row, column=st_cap+1).value = '=carbon_price' #self.carbon_price
-      #      ss.cell(row=ss_row, column=st_cap+1).number_format = '$#,##0.00'
-            ss.cell(row=ss_row, column=st_cst+1).value = '=' + ss_col(st_emc+1) + str(ss_row - r)
-            ss.cell(row=ss_row, column=st_cst+1).number_format = '$#,##0'
-            ss.cell(row=ss_row, column=st_lcc+1).value = '=(' + ss_col(st_cst+1) + str(ss_row - r) + \
-                '+' + ss_col(st_emc+1) + str(ss_row - r) + ')/' + ss_col(st_tml+1) + str(ss_row - r)
-            ss.cell(row=ss_row, column=st_lcc+1).number_format = '$#,##0.00'
-            ss.cell(row=ss_row, column=st_lcc+1).font = bold
 
-            ss.cell(row=ss_row, column=st_lic+1).value = '=' + ss_col(st_cst+1) + str(ss_row) + '*lifetime'
-            ss.cell(row=ss_row, column=st_lic+1).number_format = '$#,##0'
-            ss_row += 1
-            r += 1
-            ss.cell(row=ss_row, column=1).value = 'Total incl. Carbon Cost'
-            ss.cell(row=ss_row, column=st_cst+1).value = '=' + ss_col(st_cst+1) + str(ss_row - r) + '+F' + str(ss_row - 1)
-            ss.cell(row=ss_row, column=st_cst+1).number_format = '$#,##0'
-      #      if not self.adjusted_lcoe:
-       #         ss.cell(row=ss_row, column=st_lco+1).value = '=F' + str(ss_row) + '/C' + str(ss_row - r)
-        #        ss.cell(row=ss_row, column=st_lco+1).number_format = '$#,##0.00'
-            ss.cell(row=ss_row, column=st_lic+1).value = '=' + ss_col(st_lic+1) + str(ss_row - r) + \
-                                                         '+' + ss_col(st_lic+1) + str(ss_row - 1)
-            ss.cell(row=ss_row, column=st_lic+1).number_format = '$#,##0'
-            r += 1
-        ss_row += 1
-        ss.cell(row=ss_row, column=1).value = 'RE %age'
-        ss.cell(row=ss_row, column=st_tml+1).value = '=' + ss_col(st_tml+1) + str(tml_row) + '/' +\
-                                                     ss_col(st_tml+1) + str(ss_row - r)
-        ss.cell(row=ss_row, column=st_tml+1).number_format = '#,##0.0%'
-        # if storage
-        if sto_sum != '':
-            ss_row += 1
-            ss.cell(row=ss_row, column=1).value = 'Storage %age'
-            ss.cell(row=ss_row, column=st_tml+1).value = '=(' + sto_sum[1:] + ')/' + ss_col(st_tml+1) + \
-                                                         str(ss_row - r - 1)
-            ss.cell(row=ss_row, column=st_tml+1).number_format = '#,##0.0%'
-        ss_row += 2
-        ss.cell(row=ss_row, column=1).value = 'Load Analysis'
-        ss.cell(row=ss_row, column=1).font = bold
-        ss_row += 1
-        ss.cell(row=ss_row, column=1).value = 'Load met'
-        lm_row = ss_row
-        if self.surplus_sign < 0:
-            addsub = ')+C'
-        else:
-            addsub = ')-C'
-        ss.cell(row=ss_row, column=st_tml+1).value = '=SUMIF(Detail!' + last_col + str(hrows) + ':Detail!' \
-            + last_col + str(hrows + 8759) + ',"' + sf_test[0] + '=0",Detail!C' + str(hrows) \
-            + ':Detail!C' + str(hrows + 8759) + ')+SUMIF(Detail!' + last_col + str(hrows) + ':Detail!' \
-            + last_col + str(hrows + 8759) + ',"' + sf_test[1] + '0",Detail!C' + str(hrows) + ':Detail!C' \
-            + str(hrows + 8759) + addsub + str(ss_row + 1)
-        ss.cell(row=ss_row, column=st_tml+1).value = '=Detail!C' + str(sum_row) + '-C' + str(ss_row + 1)
-        ss.cell(row=ss_row, column=st_tml+1).number_format = '#,##0'
-        ss.cell(row=ss_row, column=st_cfa+1).value = '=' + ss_col(st_tml+1) + str(ss_row) + '/' + ss_col(st_tml+1) + \
-                                                     str(ss_row + 2)
-        ss.cell(row=ss_row, column=st_cfa+1).number_format = '#,##0.0%'
-        ss_row += 1
-        ss.cell(row=ss_row, column=1).value = 'Shortfall'
-        sf_text = 'SUMIF(Detail!' + last_col + str(hrows) + ':Detail!' + last_col \
-                  + str(hrows + 8759) + ',"' + sf_test[0] + '0",Detail!' + last_col \
-                  + str(hrows) + ':Detail!' + last_col + str(hrows + 8759) + ')'
-        if self.surplus_sign > 0:
-            ss.cell(row=ss_row, column=st_tml+1).value = '=-' + sf_text
-        else:
-            ss.cell(row=ss_row, column=st_tml+1).value = '=' + sf_text
-        ss.cell(row=ss_row, column=st_tml+1).number_format = '#,##0'
-        ss.cell(row=ss_row, column=st_cfa+1).value = '=' + ss_col(st_tml+1) + str(ss_row) + '/' + ss_col(st_tml+1) + \
-                                                     str(ss_row + 1)
-        ss.cell(row=ss_row, column=st_cfa+1).number_format = '#,##0.0%'
-        ss_row += 1
-        ld_row = ss_row
-        load_mult = ''
-        try:
-            mult = round(pmss_details['Load'].multiplier, 3)
-            if mult != 1:
-                load_mult = ' x ' + str(mult)
-        except:
-            pass
-        ss.cell(row=ss_row, column=1).value = 'Total Load - ' + year + load_mult
-        ss.cell(row=ss_row, column=1).font = bold
-        ss.cell(row=ss_row, column=st_tml+1).value = '=SUM(' + ss_col(st_tml+1) + str(ss_row - 2) + ':' + \
-                                                     ss_col(st_tml+1) + str(ss_row - 1) + ')'
-        ss.cell(row=ss_row, column=st_tml+1).number_format = '#,##0'
-        ss.cell(row=ss_row, column=st_tml+1).font = bold
-        ss.cell(row=ss_row, column=st_max+1).value = '=Detail!C' + str(max_row)
-        ss.cell(row=ss_row, column=st_max+1).number_format = '#,##0.00'
-        ss.cell(row=ss_row, column=st_max+1).font = bold
-        ss.cell(row=ss_row, column=st_bal+1).value = '=" ("&OFFSET(Detail!B12,MATCH(Detail!C9,Detail!C13:Detail!C8772,0),0)&")"'
-        # values for LCOE and Carbon Cost LCOE
-  #      if self.adjusted_lcoe:
-     #       ss.cell(row=lcoe_row, column=st_lco+1).value = '=' + ss_col(st_cst+1) + str(lcoe_row - 1) + '/' + \
-      #                                                     ss_col(st_tml+1) + str(lcoe_row - 1)
-       #     ss.cell(row=lcoe_row, column=st_lco+1).number_format = '$#,##0.00'
-        #    ss.cell(row=lcoe_row, column=st_lco+1).font = bold
-         #   if self.carbon_price > 0:
-          #      ss.cell(row=lcoe_row + 2, column=st_lco+1).value = '=' + ss_col(st_cst+1) + str(lcoe_row + 2) + '/' + \
-           #                                                        ss_col(st_tml+1) + str(lcoe_row - 1)
-            #    ss.cell(row=lcoe_row + 2, column=st_lco+1).number_format = '$#,##0.00'
-        ss_row += 1
-        ss.cell(row=ss_row, column=1).value = 'RE %age of Total Load'
-        ss.cell(row=ss_row, column=1).font = bold
-        if not_sum == '':
-            ss.cell(row=ss_row, column=st_cfa+1).value = re_sum[:-1] + '-' + ss_col(st_tml+1) + str(ss_row - 1) + ')/' + \
-                                                         ss_col(st_tml+1) + str(ss_row - 1)
-        else:
-            ss.cell(row=ss_row, column=st_cfa+1).value = '=(' + ss_col(st_tml+1) + str(lm_row) + not_sum + ')/' + \
-                                                         ss_col(st_tml+1) + str(ss_row - 1)
-        ss.cell(row=ss_row, column=st_cfa+1).number_format = '#,##0.0%'
-        ss.cell(row=ss_row, column=st_cfa+1).font = bold
-        ss_row += 2
-        if loss_sum != '':
-            ss.cell(row=ss_row, column=1).value = 'Storage Losses'
-            ss.cell(row=ss_row, column=st_sub+1).value = '=' + loss_sum[1:]
-            ss.cell(row=ss_row, column=st_sub+1).number_format = '#,##0'
-            ss_row += 1
-        ss.cell(row=ss_row, column=1).value = 'Surplus'
-        sf_text = 'SUMIF(Detail!' + last_col + str(hrows) + ':Detail!' + last_col \
-                  + str(hrows + 8759) + ',"' + sf_test[1] + '0",Detail!' + last_col + str(hrows) \
-                  + ':Detail!' + last_col + str(hrows + 8759) + ')'
-        if self.surplus_sign < 0:
-            ss.cell(row=ss_row, column=st_sub+1).value = '=-' + sf_text
-        else:
-            ss.cell(row=ss_row, column=st_sub+1).value = '=' + sf_text
-        ss.cell(row=ss_row, column=st_sub+1).number_format = '#,##0'
-        ss.cell(row=ss_row, column=st_cfa+1).value = '=' + ss_col(st_sub+1) + str(ss_row) + '/' + ss_col(st_tml+1) + str(ld_row)
-        ss.cell(row=ss_row, column=st_cfa+1).number_format = '#,##0.0%'
-     #   if min_after[4] > 0:
-       #     ss_row += 1
-        #    ss.cell(row=ss_row, column=1).value = 'Shortfall Minimum:'
-         #   ss.cell(row=ss_row, column=2).value = '=Detail!B' + str(hrows + min_after[5])
-          #  ss.cell(row=ss_row, column=3).value = '=Detail!' + last_col + str(hrows + min_after[5])
-           # ss.cell(row=ss_row, column=3).number_format = '#,##0.00'
-        max_short = [0, 0]
-        for h in range(len(shortfall)):
-            if shortfall[h] > max_short[1]:
-                max_short[0] = h
-                max_short[1] = shortfall[h]
-        if max_short[1] > 0:
-            ss_row += 1
-            ss.cell(row=ss_row, column=1).value = 'Largest Shortfall:'
-            ss.cell(row=ss_row, column=st_cap+1).value = '=Detail!B' + str(hrows + max_short[0])
-            if ss.column_dimensions[ss_col(st_cap+1)].width < 17:
-                ss.column_dimensions[ss_col(st_cap+1)].width = 17.4
-            ss.cell(row=ss_row, column=st_tml+1).value = '=Detail!' + last_col + str(hrows + max_short[0])
-            ss.cell(row=ss_row, column=st_tml+1).number_format = '#,##0.00'
         if corr_data is not None:
             ss_row += 2
             for corr in corr_data:
@@ -4748,10 +4916,6 @@ class powerMatch(QtWidgets.QWidget):
         ss.cell(row=ss_row, column=1).font = bold
         if self.carbon_price > 0:
             ss_row += 1
-            if self.carbon_price == int(self.carbon_price):
-               cp = str(int(self.carbon_price))
-            else:
-               cp = '{:.2f}'.format(self.carbon_price)
             ss.cell(row=ss_row, column=1).value = 'Carbon Price ($/tCO2e)'
             ss.cell(row=ss_row, column=st_cap+1).value = self.carbon_price
             ss.cell(row=ss_row, column=st_cap+1).number_format = '$#,##0.00'
@@ -4919,8 +5083,6 @@ class powerMatch(QtWidgets.QWidget):
         if self.opt_progressbar is None:
             self.opt_progressbar = ProgressBar(maximum=maximum, msg=msg, title=title)
             self.opt_progressbar.setWindowModality(QtCore.Qt.WindowModal)
-         #   self.opt_progressbar.progress.connect(self.opt_progressbar.progress)
-         #   self.opt_progressbar.range.connect(self.opt_progressbar.range)
             self.opt_progressbar.show()
             self.opt_progressbar.setVisible(False)
             self.activateWindow()
@@ -4937,7 +5099,6 @@ class powerMatch(QtWidgets.QWidget):
                          QtCore.Qt.WindowSystemMenuHint |
                          QtCore.Qt.WindowMinMaxButtonsHint)
             self.floatstatus.procStart.connect(self.getStatus)
-       #     self.floatstatus.log.connect(self.floatstatus.log)
             self.floatstatus.show()
             self.activateWindow()
 
@@ -5447,9 +5608,6 @@ class powerMatch(QtWidgets.QWidget):
         self.optLoad.setSingleStep(.1)
         rw = 0
         grid.addWidget(self.optLoad, rw, 1)
-    #   self.optLoad.valueChanged.connect(self.ldchanged)
-    #    self.optLoadMWh = QtWidgets.QLabel('')
-    #    grid.addWidget(self.optLoadMWh, rw, 3)
         grid.addWidget(QtWidgets.QLabel('Multiplier for input Load'), rw, 2, 1, 3)
         self.optLoad.setValue(pmss_details['Load'].multiplier)
         rw += 1
@@ -6234,7 +6392,7 @@ class powerMatch(QtWidgets.QWidget):
                         if newfile[-5:] != '.xlsx':
                             newfile += '.xlsx'
                         self.files[B].setText(newfile)
-                if wb.worksheets[0].max_column > 1000:
+                if wb.worksheets[0].max_column > 1024:
                     self.clean_batch_sheet()
                     ds = oxl.load_workbook(self.get_filename(self.files[B].text()))
                 batch_input_sheet = wb.worksheets[0]
