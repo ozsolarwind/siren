@@ -3099,6 +3099,11 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 </table>
 <p><a href="#help">Back to top</a></p>
 <h2 id="usage">Using the Simulation</h2>
+<p>The simulation has two parts:</p>
+<ol>
+<li>Using SIREN to build scenarios for an energy mix as described in more detail below</li>
+<li>Using the Powermatch data produced to complete a costed renewable energy scenario. This is described in <a href="#powermatch">Powermatch</a></li>
+</ol>
 <p>The simulation allows you to build scenarios for the energy mix for your area of interest. It is based around the map of your chosen area and allows you to visualise the layout of the existing electricity network plus the additional stations you place on the map to build your scenario(s). The map initially shows the main skeleton of the existing electricity grid infrastructure and current generation stations.</p>
 <p>To add a new station simply right-click on the map at the desired location and then update the details for the station (Name, Technology, Capacity and so forth) and press <em>Save &amp; Exit</em>. You can also copy an existing station and other options as specified above. </p>
 <p>As you build your scenario, the simulation adds additional infrastructure to connect the new generation plants to the grid. The colours for the majority of the items on the map are as you specify in the Preferences file. You navigate around the map using normal mouse movements to scroll, zoom, etc. and interact with it as described previously (<a href="#menus">Menus</a>). Using the various menu options you can model your whole scenario, or by right-clicking you can deal with an individual station. There are a number of additional windows, such as menu options, that can be opened to assist with using SIREN (see <a href="#windows">Windows</a>)</p>
@@ -4030,7 +4035,7 @@ Scale of the chart in the cell. A value of 1 fills the cell(<em>plot_scale</em>)
 <p><a href="#help">Back to top</a></p>
 <h2 id="files">SIREN File Formats</h2>
 <p>SIREN accepts a number of file formats for each of the data files it uses. In many cases input files can be either a CSV or Excel (XLS or XLSX) file. Due to the initial source for each data file the format for each may be different. For CSV and Excel files the first cell for each column is usually taken as the column name.</p>
-<p><strong>Note:</strong> Other than the Powermatch file, all Excel files output by SIREN are currently in XLS format (XLSX files require a different Python library to create them).</p>
+<p><strong>Note:</strong> Other than the Powermatch file, all Excel files output by SIREN are currently in XLS format (XLSX files require a different Python library to create them). Powermatch itself produces XLSX files.</p>
 <p>The files and formats are as follow:</p>
 <table border="0", class="none" style="margin-left:35px">
 <tr class="none">
@@ -4359,7 +4364,7 @@ You can alternate between these approaches to choose the desired area. If you ha
 <br />
 <strong>Note:</strong> The behaviour of the bounding coordinates fields are a little quirky in that they will adjust themselves so the west (left) value is always west of the east value and the north (upper) value is always higher than the south value
 </li>
-<li><em>Grid</em>. The size of the desired grid latitude and longitude. These can be in increments of 0.25 degrees up to a mximum of 3 degrees</li>
+<li><em>Grid</em>. The size of the desired grid latitude and longitude. These can be in increments of 0.25 degrees up to a maximum of 3 degrees</li>
 <li><em>Start month</em>. The first month to be downloaded. The CDS API is flexible on the range of dates that can be requested. For pragmatic purposes <code>getera5</code> requests data as a range of months</li>
 <li><em>End month</em>. The last month to be downloaded. If a Start month of 1 and an End month of 12 is chosen the program will request a year of data as a single file</li>
 <li><em>Target Folder</em>. Use this to specify the location for the ERA5 files. To change the location you need to click on the field and navigate to the correct folder (you can't type into the field)</li>

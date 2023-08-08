@@ -82,7 +82,7 @@ class PowerPlot(QtWidgets.QWidget):
     def replace_words(self, what, src, tgt):
         words = {'m': ['$MTH$', '$MONTH$'],
                  'y': ['$YEAR$'],
-                 's': ['$SHEET']}
+                 's': ['$SHEET$']}
         tgt_str = src
         if tgt == 'find':
             for wrd in words[what]:

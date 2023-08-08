@@ -33,10 +33,11 @@ pre {
 <li>If required, the sample SIREN simulation of the SWIS - <em>siren_sample.exe</em>
 </ul>
 <h3>Packaging for Windows</h3>
-<p>I use PyInstaller (currently Version 5.6.2) to package SIREN for Windows. I use the multi-package facility to create executables for <code>siren.py, sirenm.py</code> and the tools (<code>flexiplot.py, getmap.py, getmerra2.py, indexweather.py, makegrid.py, makeweatherfiles.py, powermatch.py, powerplot.py, sirenupd.py</code> and <code>updateswis.py</code>). <code>siren_application.spec</code> is the spec file (<code>pyinstaller.exe siren_application.spec</code> with options <code>--log-level ERROR</code> and/or <code>--noconfirm</code> ... <code>pyinstaller.exe --noconfirm --log-level ERROR siren_application.spec</code>). This enables all programs to be included in a single library for distribution. PyInstaller places them in individual directories - I use <code>package_siren.py</code> to copy all the executables into the <em>siren</em> directory and remove some unwanted files that are included as part of the packaging process.</p>
+<p>I use PyInstaller (currently Version 5.6.2) to package SIREN for Windows. I use the multi-package facility to create executables for <code>siren.py, sirenm.py</code> and the tools (<code>flexiplot.py, getera5.py, getmap.py, getmerra2.py, indexweather.py, makegrid.py, makeweatherfiles.py, pmtmldetail.py, powermatch.py, powerplot.py, sirenupd.py</code> and <code>updateswis.py</code>). <code>siren_application.spec</code> is the spec file (<code>pyinstaller.exe siren_application.spec</code> with options <code>--log-level ERROR</code> and/or <code>--noconfirm</code> ... <code>pyinstaller.exe --noconfirm --log-level ERROR siren_application.spec</code>). This enables all programs to be included in a single library for distribution. PyInstaller places them in individual directories - I use <code>package_siren.py</code> to copy all the executables into the <em>siren</em> directory and remove some unwanted files that are included as part of the packaging process.</p>
 <p>All these files have a version file where the version is <code>&lt;major&gt;,&lt;minor&gt;.&lt;yyyy&gt;.&lt;mmdd&gt;</code>. <code>&lt;major&gt;</code> and <code>&lt;minor&gt;</code> refer to the SIREN release. The date part is the date the program was last changed. The version numbering simulates Microsoft version numbers. <code>template_version</code> provides a template for the version files to enable new SIREN releases to be packaged. The current <code>major</code> version is <strong><code>4</code></strong> (<code>1</code> was the initial version, <code>2</code> for the change from Python2 to Python3, and for the change from PyQt4 to PyQt5, and <code>4</code> for a change to a new packaging environment, Windows 10 rather than Windows 7, and a change to 64-bit Python).</p>
 <p>To enable the modules to be built correctly most require <code>hiddenimports</code>, as identified in <code>siren_application.spec</code>, as often PyInstaller will fail to identify all imports from libraries used by the SIREN program.</p>
-<p><code>makeweather_getmerra2.spec</code> and <code>package_makeweatherfiles.py</code> package <code>makeweatherfiles.py</code> and <code>getmerra2.py</code> to provide a standalone tool to create SAM weather files from MERRA-2 datasets.</p>
+<h4>Makeweatherfiles</h4>
+<p>Weather files suitable for SAM can be obtained from either ERA5 or MERRA-2 satellite data. I again use the multi-package facility to create executables for <code>getera5.py, getmerra2.py</code> and <code>makeweatherfiles.py</code> to provide a standalone tool to create SAM weather files from ERA5 or MERRA-2 datasets. <code>package_makeweatherfiles.py</code> packages these three programs.</p>
 <h2 id="python">A Python version</h2>
 <p>A Python version of SIREN is a viable alternative for Linux and MacOS (and for Windows users who have Python installed). The following instructions may assist:</p>
 <ul>
@@ -66,7 +67,7 @@ pre {
 <li><em>siren_application.spec</em> is the specification file used to package the SIREN application using PyInstaller</li>
 <li>You can also view the SIREN help file at <a href="https://rawgit.com/ozsolarwind/siren/master/help.html" target="_blank">https://rawgit.com/ozsolarwind/siren/master/help.html</a>
 </ul>
-<p>You should download all files (except the spec file) to your target &ldquo;home&rdquo; folder for SIREN.<p>
+<p>You should download all files (except the package and spec files) to your target &ldquo;home&rdquo; folder for SIREN.<p>
 <h2>SourceForge</h2>
 <p><a href="https://sourceforge.net/projects/sensiren/" target="_blank">https://sourceforge.net/projects/sensiren/</a> contains a number of self-extracting zip files for the full SIREN Toolkit and a number of the components. See <a href="help.html#install" target="_blank">Installation</a>.
 <ul>
@@ -97,7 +98,7 @@ pre {
 <tr><td>python3-openpyxl</td></tr>
 <tr><td>os</td><td style="text-align:center">y</td></tr>
 <tr><td>pwd</td><td style="text-align:center">y</td><td>Linux ?</td></td></tr>
-<tr><td><s>pyexcel</s></td><td>&nbsp;</td><td><s>Support for spreadsheets</s></td></td></tr>
+<tr><td><s>pyexcel</s></td><td>&nbsp;</td><td><s>Support for spreadsheet. No longer used</s></td></td></tr>
 <tr><td><s>pyexcel-io</s></td><td>&nbsp;</td><td><s>CSV files</s></td></td></tr>
 <tr><td><s>pyexcel-ods</s></td><td>&nbsp;</td><td><s>ODS (LibreOffice) files</s></td></td></tr>
 <tr><td><s>pyexcel-xls</s></td><td>&nbsp;</td><td><s>XLS (Excel) files</s></td></td></tr>
@@ -121,8 +122,7 @@ pre {
 <tr><td>urllib3</td></tr>
 <tr><td>webbrowser</td><td style="text-align:center">y</td></tr>
 <tr><td>win32api</td><td>&nbsp;</td><td>Windows</td></tr>
-<tr><td>xlrd</td></td><td>&nbsp;</td><td>At present needs to be an earlier version. This can be done by setting the version on install e.g.<br />
-<code>pip install xlrd==1.2.0</code></td></tr>
+<tr><td>xlrd</td></tr>
 <tr><td>xlwt</td></tr>
 <tr><td>xml.etree.ElementTree</td><td style="text-align:center">y</td></tr>
 <tr><td>zipfile</td><td style="text-align:center">y</td></tr>
@@ -152,7 +152,9 @@ pre {
 <tr><td><del>makerainfall2.py</del></td><td><del>Create rainfall files from MERRA-2 data</del></td></tr>
 <tr><td>makeweatherfiles.py (*)</td><td>Standalone program to create weather files from MERRA-2 data</td></tr>
 <tr><td>newstation.py</td><td>Create/edit a new power station</td></tr>
+<tr><td>plot3d.py</td><td>A prototype and incomplete program to produce 3D plots (charts) for Powermatch batch</td></tr>
 <tr><td>plotweather.py (*)</td><td>Plot (chart) weather data</td></tr>
+<tr><td>pmtmldetail.py</td><td>Produce a more detailed Powermatch Detail worksheet which contains hourly details on how RE is used to meet load</td></tr>
 <tr><td>powerclasses.py</td><td>Classes used by PowerModel (powermodel.py)</td></tr>
 <tr><td>powermatch.py</td><td>Match generation to load. Produce costed scenarios</td></tr>
 <tr><td>powermodel.py (*)</td><td>Process SAM models for stations to produce spreadsheets and charts</td></tr>
@@ -193,5 +195,5 @@ pre {
 </ul>
 <h3>opt_debug</h3>
 <p><code>opt_debug.py</code> can be used to debug the <code>powermatch</code> optimisation routine. It doesn't need to be packaged with SIREN.</p>
-<p>Angus King<br />November 2022</p>
+<p>Angus King<br />August 2023</p>
 </body>
