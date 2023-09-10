@@ -188,7 +188,7 @@ class WorkBook(object):
             if self._type == 'xls':
                 self._book = xlrd.open_workbook(filename, on_demand=on_demand)
                 self._sheet_names = self._book.sheet_names()
-            elif self._type == 'xlsx':
+            elif self._type == 'xlsx' or self._type == 'xlsm':
                 self._book = oxl.load_workbook(filename, data_only=data_only)
                 self._sheet_names = self._book.sheetnames
             elif self._type == 'csv':
@@ -257,7 +257,7 @@ class WorkBook(object):
                 self._sheet.name = self._book.sheet_names()[sheetx]
                 self._sheet.nrows = self._sheet._sheet.nrows
                 self._sheet.ncols = self._sheet._sheet.ncols
-            elif self._type == 'xlsx':
+            elif self._type == 'xlsx' or self._type == 'xlsm':
                 self._sheet._sheet = self._book.worksheets[sheetx]
                 self._sheet.name = self._book.sheetnames[sheetx]
                 self._sheet.nrows = self._sheet._sheet.max_row
@@ -287,7 +287,7 @@ class WorkBook(object):
         def cell_value(self, row, col):
             if self._type == 'xls':
                 return self._sheet.cell_value(row, col)
-            elif self._type == 'xlsx':
+            elif self._type == 'xlsx' or self._type == 'xlsm':
                 if self._data_only:
                     return self._sheet.cell(row=row + 1, column=col + 1).value
                 else:
@@ -302,7 +302,7 @@ class WorkBook(object):
                 return self._sheet[row][col]
 
         def cell_type(self, row, col):
-            if self._type == 'xlsx':
+            if self._type == 'xlsx' or self._type == 'xlsm':
                 return self._sheet.cell(row=row + 1, column=col + 1).data_type
             else:
                 return None
@@ -310,7 +310,7 @@ class WorkBook(object):
 #        def cell_write(self, row, col, value):
 #            if self._type == 'xls':
 #                self._sheet.write(row, col, value)
-#            elif self._type == 'xlsx':
+#            elif self._type == 'xlsx' or self._type == 'xlsm':
 #                self._sheet.cell(row=row + 1, column=col + 1).value = value
 #            elif self._type == 'csv':
 #                self._sheet[row][col] = value
