@@ -852,7 +852,10 @@ class SuperPower():
             self.do_defaults(station)
             farmpwr = do_module('windpower', station, 'gen')
             if temp_file is not None: # if a hub height is specified
-                os.remove(temp_dir + '/' + temp_file)
+                try:
+                    os.remove(temp_dir + '/' + temp_file)
+                except:
+                    pass
             return farmpwr
         elif station.technology == 'CST':
             closest = self.find_closest(station.lat, station.lon)
