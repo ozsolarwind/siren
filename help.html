@@ -2021,12 +2021,12 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td>Filenames, worksheet names and other variables used by <a href="#powermatch">Powermatch</a>. Properties are:</p>
 <table border="0", class="none">
 <tr class="none">
-<td class="none"><dfn>adjust_capacities</dfn></td>
-<td class="none">Contains a list of adjusted capacities (in MW) for generators</td>
-</tr>
-<tr class="none">
 <td class="none"><dfn>adjust_generators</dfn></td>
 <td class="none">Indicates whether to adjust generators capacity inputs or not. Default is False</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>adjusted_capacities</dfn></td>
+<td class="none">Contains a list of adjusted capacities (in MW) for generators</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>adjusted_lcoe</dfn></td>
@@ -2077,6 +2077,14 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">Worksheet name for generators (facilities) table</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>load</dfn></td>
+<td class="none">Folder location and file name format for load files. The default value is that used by SIREN (<em>load</em> property of the <a href="#p_files">[Files]</a> Section)</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>load_year<dfn></td>
+<td class="none">The last saved load year (or load file). Default is 'n/a'</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>log_status</dfn></td>
 <td class="none">Override the [Windows] <em>log_status</em> property. If set to False the status messages will not be logged in the status window</td>
 </tr>
@@ -2095,6 +2103,14 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <tr class="none">
 <td class="none"><dfn>optimisation_sheet</dfn></td>
 <td class="none">Worksheet name for optimisation table</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>optimise_choice</dfn></td>
+<td class="none">The last saved optimisation choice. Possible values are: Both, LCOE (default), or Multi</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>(optimise_debug)</dfn></td>
+<td class="none">If set to True this will produce a file to help analyse the Optimisation process. Default is False. Probably only of value to the developer</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>optimise_default</dfn></td>
@@ -2167,6 +2183,18 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <tr class="none">
 <td class="none"><dfn>show_multipliers</dfn></td>
 <td class="none">If set to True, technology multipliers will be shown on the Adjustment window. The default is False</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>summary_sources</dfn></td>
+<td class="none">If set to True the list of data sources will be added to the Summary report. The default is False></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>tml_detail_file<dfn></td>
+<td class="none">The saved name of the TML detail file</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>tml_results_sheet<dfn></td>
+<td class="none">The Detail worksheet used as input to TML Detail</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>underlying</dfn></td>
@@ -4942,7 +4970,7 @@ MERRA-2 Variables
 <p>&ldquo;ERA5 is the fifth generation ECMWF reanalysis for the global climate and weather for the past 8 decades. Data is available from 1940 onwards. ERA5 replaces the ERA-Interim reanalysis.
 <br />Reanalysis combines model data with observations from across the world into a globally complete and consistent dataset using the laws of physics. ... Reanalysis does not have the constraint of issuing timely forecasts, so there is more time to collect observations, and when going further back in time, to allow for the ingestion of improved versions of the original observations, which all benefit the quality of the reanalysis product.&rdquo;</p>
 <ul>
-<li>I interpret each grid is centred on the latitude / longitude for that set of variables, that is, the value extends outwards in all directions from that point. The actual data is point values at the grid point (refer <a href="https://confluence.ecmwf.int/display/CKB/ERA5%3A+What+is+the+spatial+reference" target="_blank">Visualisation of regular lat/lon data</a>) so the data points are 0.125 of a degree out</li>
+<li>I interpret each grid is centred on the latitude / longitude for that set of variables, that is, the value extends outwards in all directions from that point. The actual data is point values at the ERA5 grid point (refer <a href="https://confluence.ecmwf.int/display/CKB/ERA5%3A+What+is+the+spatial+reference" target="_blank">Visualisation of regular lat/lon data</a>) so the grids are equally spaced around a data point</li>
 </ul>
 <h4 id="merra7">Background on MERRA-2</h4>
 <p>&ldquo;The Modern Era Retrospective-analysis for Research and Applications, Version 2 (MERRA-2) is a NASA atmospheric data reanalysis for the satellite era using a major new version of the Goddard Earth Observing System Data Assimilation System Version 5 (GEOS-5). MERRA-2 focuses on historical analyses of the hydrological cycle on a broad range of weather and climate time scales, and places the NASA EOS suite of observations in a climate context.&rdquo;</p>
