@@ -188,6 +188,7 @@ class Colours(QtWidgets.QDialog):
         buttons = QtWidgets.QFrame()
         buttons.setLayout(buttonLayout)
         layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(buttons)
         layout.addLayout(self.grid)
         layout.addWidget(buttons)
         self.setLayout(layout)
