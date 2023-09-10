@@ -423,13 +423,13 @@ class WAScene(QtWidgets.QGraphicsScene):
                 self.show_coord = True
         except:
             pass
-        self.coord_grid = [0, 0]
+        self.coord_grid = [0, 0, 'c']
         try:
             coord_grid = config.get('View', 'coord_grid')
             if coord_grid.lower()[0] == 'm': # merra-2
-                self.coord_grid = [.5, .625]
+                self.coord_grid = [.5, .625, 'c']
             elif coord_grid.lower()[0] == 'e': # era5
-                self.coord_grid = [.25, .25]
+                self.coord_grid = [.25, .25, 'c'] # set to 't' to have grid at top left
             else: # lat,lon
                 try:
                     bits = coord_grid.split(',')
@@ -674,14 +674,18 @@ class WAScene(QtWidgets.QGraphicsScene):
         pen.setJoinStyle(QtCore.Qt.RoundJoin)
         pen.setCapStyle(QtCore.Qt.RoundCap)
         if self.coord_grid[0] > 0 and self.coord_grid[1] > 0:
-            latt = self.coord_grid[0] * round((self.map_upper_left[0]) / self.coord_grid[0])
-            latb = self.coord_grid[0] * round((self.map_lower_right[0]) / self.coord_grid[0])
-            lonf = self.coord_grid[1] * round((self.map_upper_left[1]) / self.coord_grid[1])
-            lont = self.coord_grid[1] * round((self.map_lower_right[1]) / self.coord_grid[1])
+            latn = self.coord_grid[0] * round((self.map_upper_left[0]) / self.coord_grid[0])
+            lats = self.coord_grid[0] * round((self.map_lower_right[0]) / self.coord_grid[0])
+            lonw = self.coord_grid[1] * round((self.map_upper_left[1]) / self.coord_grid[1])
+            lone = self.coord_grid[1] * round((self.map_lower_right[1]) / self.coord_grid[1])
             lat_step = self.coord_grid[0]
             lon_step = self.coord_grid[1]
-            lat = latb + self.coord_grid[0] / 2
-            lon = lonf + self.coord_grid[1] / 2
+            if self.coord_grid[2] == 'c':
+                lat = lats + self.coord_grid[0] / 2
+                lon = lonw + self.coord_grid[1] / 2
+            else:
+                lat = lats
+                lon = lonw
         else:
             bnds = [45., 90., 180.]
             degs = [2.5, 5., 10.]
