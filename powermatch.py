@@ -1049,7 +1049,7 @@ class powerMatch(QtWidgets.QWidget):
                 elif key == 'operational':
                     self.operational = value.split(',')
         except:
-                print('PME1: Error with', key)
+            print('PME1: Error with', key)
             pass
         self.restorewindows = False
         try:
@@ -1465,6 +1465,7 @@ class powerMatch(QtWidgets.QWidget):
                 if choice == self.load_year:
                     self.loadCombo.setCurrentIndex(self.loadCombo.count() - 1)
             self.updated = True
+
     def helpClicked(self):
         dialog = displayobject.AnObject(QtWidgets.QDialog(), self.help,
                  title='Help for powermatch (' + fileVersion() + ')', section='powermatch')
@@ -2644,7 +2645,7 @@ class powerMatch(QtWidgets.QWidget):
                     if model_row and col > 1:
                         new_cell = bs.cell(row=row, column=col, value=self.batch_models[col - 1]['name'])
                     else:
-                    new_cell = bs.cell(row=row, column=col, value=cell.value)
+                        new_cell = bs.cell(row=row, column=col, value=cell.value)
                     if cell.has_style:
                         new_cell.font = copy(cell.font)
                         new_cell.border = copy(cell.border)
@@ -3378,7 +3379,7 @@ class powerMatch(QtWidgets.QWidget):
             if fac in self.generators.keys():
                 gen = fac
             else:
-            gen = pmss_details[fac].generator
+                gen = pmss_details[fac].generator
             col += 1
             sp_cols.append(fac)
             sp_cap.append(pmss_details[fac].capacity * pmss_details[fac].multiplier)
@@ -3441,6 +3442,16 @@ class powerMatch(QtWidgets.QWidget):
                         + ss_col(col) + str(cap_row) + '>0),' + ss_col(col) + str(cost_row) + '/8760/' \
                         + ss_col(col) + str(cf_row) +'/' + ss_col(col) + str(cap_row) + ',"")'
                 ns.cell(row=lcoe_row, column=col).number_format = '$#,##0.00'
+            elif self.generators[gen].lcoe_cf == 0: # no cost facility
+                if ss_row >= 0:
+                    ns.cell(row=cost_row, column=col).value = '=IF(' + ss_col(col) + str(cf_row) + \
+                            '>0,' + ss_col(col) + str(sum_row) + '*Summary!' + ss_col(st_rlc + 1) + str(ss_row) + \
+                        '*Summary!' + ss_col(st_rcf + 1) + str(ss_row) + '/' + ss_col(col) + str(cf_row) + ',0)'
+                    ns.cell(row=cost_row, column=col).number_format = '$#,##0'
+                ns.cell(row=lcoe_row, column=col).value = '=IF(AND(' + ss_col(col) + str(cf_row) + '>0,' \
+                        + ss_col(col) + str(cap_row) + '>0),' + ss_col(col) + str(cost_row) + '/8760/' \
+                        + ss_col(col) + str(cf_row) +'/' + ss_col(col) + str(cap_row) + ',"")'
+                ns.cell(row=lcoe_row, column=col).number_format = '$#,##0.00'
             if self.generators[gen].emissions > 0:
                 ns.cell(row=emi_row, column=col).value = '=' + ss_col(col) + str(sum_row) \
                         + '*' + str(self.generators[gen].emissions)
@@ -3491,7 +3502,8 @@ class powerMatch(QtWidgets.QWidget):
             ss.cell(row=ss_row, column=st_cfa+1).number_format = '#,##0.0%'
             if gen not in self.generators.keys():
                 return dd_tml_sum, dd_re_sum
-            if self.generators[gen].capex > 0 or self.generators[gen].fixed_om > 0 or self.generators[gen].variable_om > 0:
+            if self.generators[gen].capex > 0 or self.generators[gen].fixed_om > 0 \
+              or self.generators[gen].variable_om > 0 or self.generators[gen].fuel > 0:
                 disc_rate = self.generators[gen].disc_rate
                 if disc_rate == 0:
                     disc_rate = self.discount_rate
@@ -3533,6 +3545,23 @@ class powerMatch(QtWidgets.QWidget):
                 # ref cf
                 ss.cell(row=ss_row, column=st_rcf+1).value = self.generators[gen].lcoe_cf
                 ss.cell(row=ss_row, column=st_rcf+1).number_format = '#,##0.0%'
+            elif self.generators[gen].lcoe_cf == 0: # no cost facility
+                # cost / yr
+                if self.remove_cost:
+                    ss.cell(row=ss_row, column=st_cst+1).value = '=IF(Detail!' + ss_col(col) + str(sum_row) \
+                            + '>0,Detail!' + ss_col(col) + str(cost_row) + ',"")'
+                else:
+                    ss.cell(row=ss_row, column=st_cst+1).value = '=Detail!' + ss_col(col) + str(cost_row)
+                ss.cell(row=ss_row, column=st_cst+1).number_format = '$#,##0'
+                # lcog
+                ss.cell(row=ss_row, column=st_lcg+1).value = '=Detail!' + ss_col(col) + str(lcoe_row)
+                ss.cell(row=ss_row, column=st_lcg+1).number_format = '$#,##0.00'
+                # ref lcoe
+                ss.cell(row=ss_row, column=st_rlc+1).value = self.generators[gen].lcoe
+                ss.cell(row=ss_row, column=st_rlc+1).number_format = '$#,##0.00'
+                # ref cf
+                ss.cell(row=ss_row, column=st_rcf+1).value = self.generators[gen].lcoe_cf
+                ss.cell(row=ss_row, column=st_rcf+1).number_format = '#,##0.0%'
             # lifetime cost
             ss.cell(row=ss_row, column=st_lic+1).value = '=IF(Detail!' + ss_col(col) + str(sum_row) \
                                                     + '>0,Detail!' + ss_col(col) + str(cost_row) + '*lifetime,"")'
@@ -3548,10 +3577,11 @@ class powerMatch(QtWidgets.QWidget):
                 else:
                     ss.cell(row=ss_row, column=st_emi+1).value = '=Detail!' + ss_col(col) + str(emi_row)
                 ss.cell(row=ss_row, column=st_emi+1).number_format = '#,##0'
-                ss.cell(row=ss_row, column=st_emc+1).value = '=IF(AND(' + ss_col(st_emi+1) + str(ss_row) + '<>"",' + \
-                                                             ss_col(st_emi+1) + str(ss_row) + '>0),' + \
-                                                             ss_col(st_emi+1) + str(ss_row) + '*carbon_price,"")'
-                ss.cell(row=ss_row, column=st_emc+1).number_format = '$#,##0'
+                if self.carbon_price > 0:
+                    ss.cell(row=ss_row, column=st_emc+1).value = '=IF(AND(' + ss_col(st_emi+1) + str(ss_row) + '<>"",' + \
+                                                                 ss_col(st_emi+1) + str(ss_row) + '>0),' + \
+                                                                 ss_col(st_emi+1) + str(ss_row) + '*carbon_price,"")'
+                    ss.cell(row=ss_row, column=st_emc+1).number_format = '$#,##0'
             ss.cell(row=ss_row, column=st_lie+1).value = '=IF(AND(' + ss_col(st_emi+1) + str(ss_row) + '<>"",' + \
                                                          ss_col(st_emi+1) + str(ss_row) + '>0),' + \
                                                          ss_col(st_emi+1) + str(ss_row) + '*lifetime,"")'
@@ -3618,7 +3648,7 @@ class powerMatch(QtWidgets.QWidget):
                 ss.cell(row=ss_row, column=1).value = title + 'Storage %age'
                 ss.cell(row=ss_row, column=st_tml+1).value = '=' + ns_sto_sum[1:]
                 ss.cell(row=ss_row, column=st_tml+1).number_format = '#,##0'
-                ss.cell(row=ss_row, column=st_cap+1).value = '=' + ns_sto_sum[1:] + '/' + ss_col(st_tml+1) + \
+                ss.cell(row=ss_row, column=st_cap+1).value = '=(' + ns_sto_sum[1:] + ')/' + ss_col(st_tml+1) + \
                                                              str(ss_row - r - 1)
                 ss.cell(row=ss_row, column=st_cap+1).number_format = '#,##0.0%'
                 ss_sto_row = ss_row
@@ -3632,28 +3662,31 @@ class powerMatch(QtWidgets.QWidget):
                                 ss_col(st_tml+1) + '$' + str(ss_sto_row) + '*' + ss_col(st_tml+1) + str(rw) + \
                                 ')/' + ss_col(st_tml+1) + '$' + str(ss_re_row) + '),"")'
                         ss.cell(row=rw, column=st_lco+1).number_format = '$#,##0.00'
-                        ss.cell(row=rw, column=st_lcc+1).value = '=IF(' + ss_col(st_emc+1) + str(rw) + '>0,(' + \
-                                ss_col(st_cst+1) + str(rw) + '+' + ss_col(st_emc+1) + str(rw) + ')/(' + \
-                                ss_col(st_tml+1) + str(rw) + '+(' + ss_col(st_tml+1) + '$' + str(ss_sto_row) + \
-                                '*' + ss_col(st_tml+1) + str(rw) + ')/' + ss_col(st_tml+1) + '$' + \
-                                str(ss_re_row) + '),"")'
-                        ss.cell(row=rw, column=st_lcc+1).number_format = '$#,##0.00'
+                        if self.carbon_price > 0:
+                            ss.cell(row=rw, column=st_lcc+1).value = '=IF(' + ss_col(st_emc+1) + str(rw) + '>0,(' + \
+                                    ss_col(st_cst+1) + str(rw) + '+' + ss_col(st_emc+1) + str(rw) + ')/(' + \
+                                    ss_col(st_tml+1) + str(rw) + '+(' + ss_col(st_tml+1) + '$' + str(ss_sto_row) + \
+                                    '*' + ss_col(st_tml+1) + str(rw) + ')/' + ss_col(st_tml+1) + '$' + \
+                                    str(ss_re_row) + '),"")'
+                            ss.cell(row=rw, column=st_lcc+1).number_format = '$#,##0.00'
                 else:
                     for rw in range(ss_re_fst_row, ss_re_lst_row):
                         ss.cell(row=rw, column=st_lco+1).value = '=IF(' + ss_col(st_lcg+1) + str(rw) + '>0,' + \
                                 ss_col(st_cst+1) + str(rw) + '/' + ss_col(st_tml+1) + str(rw) + '),"")'
                         ss.cell(row=rw, column=st_lco+1).number_format = '$#,##0.00'
-                        ss.cell(row=rw, column=st_lcc+1).value = '=IF(' + ss_col(st_emc+1) + str(rw) + '>0,(' + \
-                                ss_col(st_cst+1) + str(rw) + ss_col(st_emc+1) + str(rw) + ')/' + \
-                                ss_col(st_tml+1) + str(rw) + '),"")'
-                        ss.cell(row=rw, column=st_lcc+1).number_format = '$#,##0.00'
+                        if self.carbon_price > 0:
+                            ss.cell(row=rw, column=st_lcc+1).value = '=IF(' + ss_col(st_emc+1) + str(rw) + '>0,(' + \
+                                    ss_col(st_cst+1) + str(rw) + ss_col(st_emc+1) + str(rw) + ')/' + \
+                                    ss_col(st_tml+1) + str(rw) + '),"")'
+                            ss.cell(row=rw, column=st_lcc+1).number_format = '$#,##0.00'
                 for rw in range(ss_re_lst_row + 1, ss_lst_row + 1):
                     ss.cell(row=rw, column=st_lco+1).value = '=' + ss_col(st_lcg+1) + str(rw)
                     ss.cell(row=rw, column=st_lco+1).number_format = '$#,##0.00'
-                    ss.cell(row=rw, column=st_lcc+1).value = '=IF(' + ss_col(st_emc+1) + str(rw) + '>0,(' + \
-                            ss_col(st_cst+1) + str(rw) + '+' + ss_col(st_emc+1) + str(rw) + ')/' + \
-                            ss_col(st_tml+1) + str(rw) + ',"")'
-                    ss.cell(row=rw, column=st_lcc+1).number_format = '$#,##0.00'
+                    if self.carbon_price > 0:
+                        ss.cell(row=rw, column=st_lcc+1).value = '=IF(' + ss_col(st_emc+1) + str(rw) + '>0,(' + \
+                                ss_col(st_cst+1) + str(rw) + '+' + ss_col(st_emc+1) + str(rw) + ')/' + \
+                                ss_col(st_tml+1) + str(rw) + ',"")'
+                        ss.cell(row=rw, column=st_lcc+1).number_format = '$#,##0.00'
             else:
                 base_col = ss_col(next_col)
                 for rw in range(ul_fst_row, ul_lst_row + 1):
@@ -4446,11 +4479,11 @@ class powerMatch(QtWidgets.QWidget):
                 else:
                     if gen in self.generators.keys():
                         pass
-                else:
-                    try:
-                        gen = gen[gen.find('.') + 1:]
-                    except:
-                        pass
+                    else:
+                        try:
+                            gen = gen[gen.find('.') + 1:]
+                        except:
+                            pass
                     ndx = 3
                 try:
                     if sp_data[sp][st_cap] > 0:
@@ -4478,9 +4511,8 @@ class powerMatch(QtWidgets.QWidget):
                         gen2 = gen
                     if gen not in tech_names and gen2 not in tech_names:
                         ff_sum += sp_data[sp][ndx]
-                    except:
-                        pass
-                if self.generators[gen].capex > 0 or self.generators[gen].fixed_om > 0 or self.generators[gen].variable_om > 0:
+                if self.generators[gen].capex > 0 or self.generators[gen].fixed_om > 0 \
+                  or self.generators[gen].variable_om > 0 or self.generators[gen].fuel > 0:
                     if self.remove_cost and sp_data[sp][ndx] == 0:
                         sp_data[sp][st_cst] = 0
                         continue
@@ -4517,13 +4549,23 @@ class powerMatch(QtWidgets.QWidget):
                     cost_sum += sp_data[sp][st_cst]
                     sp_data[sp][st_rlc] = self.generators[gen].lcoe
                     sp_data[sp][st_rcf] = '{:.1f}%'.format(lcoe_cf * 100.)
+                elif self.generators[gen].lcoe_cf == 0: # no cost facility
+                    if self.remove_cost and sp_data[sp][ndx] == 0:
+                        sp_data[sp][st_cst] = 0
+                        continue
+                    lcoe_cf = sp_data[sp][st_cfa]
+                    sp_data[sp][st_cst] = 0
+                    cost_sum += sp_data[sp][st_cst]
                 sp_data[sp][st_lic] = sp_data[sp][st_cst] * max_lifetime
                 lifetime_sum += sp_data[sp][st_lic]
                 if self.generators[gen].emissions > 0:
                     sp_data[sp][st_emi] = sp_data[sp][ndx] * self.generators[gen].emissions
                     co2_sum += sp_data[sp][st_emi]
                     sp_data[sp][st_emc] = sp_data[sp][st_emi] * self.carbon_price
-                    sp_data[sp][st_lcc] = sp_data[sp][st_lco] * ((sp_data[sp][st_cst] + sp_data[sp][st_emc]) / sp_data[sp][st_cst])
+                    if sp_data[sp][st_cst] == 0:
+                        sp_data[sp][st_lcc] = sp_data[sp][st_emc] / sp_data[sp][st_tml]
+                    else:
+                        sp_data[sp][st_lcc] = sp_data[sp][st_lco] * ((sp_data[sp][st_cst] + sp_data[sp][st_emc]) / sp_data[sp][st_cst])
                     co2_cost_sum += sp_data[sp][st_emc]
                     sp_data[sp][st_lie] = sp_data[sp][st_emi] * max_lifetime
                     lifetime_co2_sum += sp_data[sp][st_lie]
@@ -4581,8 +4623,8 @@ class powerMatch(QtWidgets.QWidget):
                     sp_load += sp_d[st_tml]
                     sp_d[st_cfa] = '{:.1f}%'.format(sp_d[st_sub] / sp_d[st_cap] / 8760 * 100.)
                     sp_d[st_max] = max(pmss_data[pmss_details[fac].col]) * pmss_details[fac].multiplier
-                    gen = pmss_details[fac].generator
-                    if self.generators[gen].capex > 0 or self.generators[gen].fixed_om > 0 or self.generators[gen].variable_om > 0:
+                    if self.generators[gen].capex > 0 or self.generators[gen].fixed_om > 0 \
+                      or self.generators[gen].variable_om > 0 or self.generators[gen].fuel > 0:
                         capex = sp_d[st_cap] * self.generators[gen].capex
                         capex_sum += capex
                         opex = sp_d[st_cap] * self.generators[gen].fixed_om \
@@ -4610,13 +4652,21 @@ class powerMatch(QtWidgets.QWidget):
                         sp_d[st_cfa] = '{:.1f}%'.format(sp_d[st_cfa] * 100.)
                         sp_d[st_rlc] = self.generators[gen].lcoe
                         sp_d[st_rcf] = '{:.1f}%'.format(lcoe_cf * 100.)
+                    elif self.generators[gen].lcoe_cf == 0: # no cost facility
+                        sp_d[st_cst] = 0
+                        sp_d[st_lcg] = 0
+                        sp_d[st_lco] = 0
+                        sp_d[st_rlc] = self.generators[gen].lcoe
                     sp_d[st_lic] = sp_d[st_cst] * max_lifetime
                     lifetime_sum += sp_d[st_lic]
                     if self.generators[gen].emissions > 0:
                         sp_d[st_emi] = sp_d[st_tml] * self.generators[gen].emissions
                         co2_sum += sp_d[st_emi]
                         sp_d[st_emc] = sp_d[st_emi] * self.carbon_price
-                        sp_d[st_lcc] = sp_d[st_lco] * ((sp_d[st_cst] + sp_d[st_emc]) / sp_d[st_cst])
+                        if sp_d[st_cst] > 0:
+                            sp_d[st_lcc] = sp_d[st_lco] * ((sp_d[st_cst] + sp_d[st_emc]) / sp_d[st_cst])
+                        else:
+                            sp_d[st_lcc] = sp_d[st_emc] / sp_d[st_tml]
                         co2_cost_sum += sp_d[st_emc]
                         sp_d[st_lie] = sp_d[st_emi] * max_lifetime
                         lifetime_co2_sum += sp_d[st_lie]
@@ -4787,7 +4837,8 @@ class powerMatch(QtWidgets.QWidget):
             # cf
             ss.cell(row=ss_row, column=st_cfa+1).value = '=Detail!' + ss_col(col + nc) + str(cf_row)
             ss.cell(row=ss_row, column=st_cfa+1).number_format = '#,##0.0%'
-            if self.generators[gen].capex > 0 or self.generators[gen].fixed_om > 0 or self.generators[gen].variable_om > 0:
+            if self.generators[gen].capex > 0 or self.generators[gen].fixed_om > 0 \
+              or self.generators[gen].variable_om > 0 or self.generators[gen].fuel > 0:
                 disc_rate = self.generators[gen].disc_rate
                 if disc_rate == 0:
                     disc_rate = self.discount_rate
@@ -4856,6 +4907,37 @@ class powerMatch(QtWidgets.QWidget):
                 else:
                     ss.cell(row=ss_row, column=st_rcf+1).value = self.generators[gen].lcoe_cf
                 ss.cell(row=ss_row, column=st_rcf+1).number_format = '#,##0.0%'
+            elif self.generators[gen].lcoe_cf == 0: # no cost facility
+                ns.cell(row=cost_row, column=col + nc).value = '=IF(' + ss_col(col + nc) + str(cf_row) + \
+                        '>0,' + ss_col(col + nc) + str(sum_row) + '*Summary!' + ss_col(st_rlc + 1) + str(ss_row) + \
+                        '*Summary!' + ss_col(st_rcf + 1) + str(ss_row) + '/' + ss_col(col + nc) + str(cf_row) + ',0)'
+                ns.cell(row=cost_row, column=col + nc).number_format = '$#,##0'
+                # cost / yr
+                if self.remove_cost:
+                    ss.cell(row=ss_row, column=st_cst+1).value = '=IF(Detail!' + ss_col(col + nc) + str(sum_row) \
+                            + '>0,Detail!' + ss_col(col + nc) + str(cost_row) + ',"")'
+                else:
+                    ss.cell(row=ss_row, column=st_cst+1).value = '=Detail!' + ss_col(col + nc) + str(cost_row)
+                ss.cell(row=ss_row, column=st_cst+1).number_format = '$#,##0'
+                ns.cell(row=lcoe_row, column=col + nc).value = '=IF(AND(' + ss_col(col + nc) + str(cf_row) + '>0,' \
+                            + ss_col(col + nc) + str(cap_row) + '>0),' + ss_col(col + nc) + str(cost_row) + '/8760/' \
+                            + ss_col(col + nc) + str(cf_row) + '/' + ss_col(col + nc) + str(cap_row)+  ',"")'
+                ns.cell(row=lcoe_row, column=col + nc).number_format = '$#,##0.00'
+                # lcog
+                ss.cell(row=ss_row, column=st_lcg+1).value = '=Detail!' + ss_col(col + nc) + str(lcoe_row)
+                ss.cell(row=ss_row, column=st_lcg+1).number_format = '$#,##0.00'
+                # lcoe
+                ss.cell(row=ss_row, column=st_lco+1).value = '=Detail!' + ss_col(col + nc) + str(lcoe_row)
+                ss.cell(row=ss_row, column=st_lco+1).number_format = '$#,##0.00'
+                # ref lcoe
+                ss.cell(row=ss_row, column=st_rlc+1).value = self.generators[gen].lcoe
+                ss.cell(row=ss_row, column=st_rlc+1).number_format = '$#,##0.00'
+                # ref cf
+                if self.generators[gen].lcoe_cf == 0:
+                    ss.cell(row=ss_row, column=st_rcf+1).value = '=' + ss_col(st_cfa+1) + str(ss_row)
+                else:
+                    ss.cell(row=ss_row, column=st_rcf+1).value = self.generators[gen].lcoe_cf
+                ss.cell(row=ss_row, column=st_rcf+1).number_format = '#,##0.0%'
             if self.generators[gen].emissions > 0:
                 ns.cell(row=emi_row, column=col + nc).value = '=' + ss_col(col + nc) + str(sum_row) \
                         + '*' + str(self.generators[gen].emissions)
@@ -4867,9 +4949,10 @@ class powerMatch(QtWidgets.QWidget):
                 else:
                     ss.cell(row=ss_row, column=st_emi+1).value = '=Detail!' + ss_col(col + nc) + str(emi_row)
                 ss.cell(row=ss_row, column=st_emi+1).number_format = '#,##0'
-                ss.cell(row=ss_row, column=st_emc+1).value = '=IF(' + ss_col(st_emi+1) + str(ss_row) + '>0,' + \
-                                                             ss_col(st_emi+1) + str(ss_row) + '*carbon_price,"")'
-                ss.cell(row=ss_row, column=st_emc+1).number_format = '$#,##0'
+                if self.carbon_price > 0:
+                    ss.cell(row=ss_row, column=st_emc+1).value = '=IF(' + ss_col(st_emi+1) + str(ss_row) + '>0,' + \
+                                                                 ss_col(st_emi+1) + str(ss_row) + '*carbon_price,"")'
+                    ss.cell(row=ss_row, column=st_emc+1).number_format = '$#,##0'
             # max mwh
             ss.cell(row=ss_row, column=st_max+1).value = '=Detail!' + ss_col(col + nc) + str(max_row)
             ss.cell(row=ss_row, column=st_max+1).number_format = '#,##0.00'
