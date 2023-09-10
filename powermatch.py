@@ -855,6 +855,10 @@ class powerMatch(QtWidgets.QWidget):
             self.load_files = self.load_files.replace('$USER$', getUser())
         except:
             self.load_files = ''
+        try:
+            self._load_folder = self.load_files[:self.load_files.rfind('/')]
+        except:
+            self._load_folder = ''
         self.log_status = True
         try:
             rw = config.get('Windows', 'log_status')
@@ -879,6 +883,7 @@ class powerMatch(QtWidgets.QWidget):
         self.carbon_price = 0.
         self.carbon_price_max = 200.
         self.discount_rate = 0.
+        self.load_folder = ''
         self.load_year = 'n/a'
         self.optimise_choice = 'LCOE'
         self.optimise_generations = 20
@@ -1127,6 +1132,16 @@ class powerMatch(QtWidgets.QWidget):
                 self.grid.addWidget(edit[i], r, 4, 1, 2)
                 edit[i].clicked.connect(self.editClicked)
             elif i == D and self.load_files != '':
+                r += 1
+                self.grid.addWidget(QtWidgets.QLabel('Load Folder:'), r, 0)
+                self.load_dir = ClickableQLabel()
+                try:
+                    self.load_dir.setText(self.load_files[:self.load_files.rfind('/')])
+                except:
+                    self.load_dir.setText('')
+                self.load_dir.setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
+                self.load_dir.clicked.connect(self.loaddirChanged)
+                self.grid.addWidget(self.load_dir, r, 1, 1, 5)
                 r += 1
                 self.grid.addWidget(QtWidgets.QLabel('Load Year:'), r, 0)
                 self.load_years = self.get_load_years()
@@ -1415,6 +1430,32 @@ class powerMatch(QtWidgets.QWidget):
         ts.release_resources()
         del ts
 
+    def loaddirChanged(self):
+        curdir = self.load_dir.text()
+        newdir = QtWidgets.QFileDialog.getExistingDirectory(self, 'Choose Load File Folder',
+                 curdir, QtWidgets.QFileDialog.ShowDirsOnly)
+        if newdir != '':
+            try:
+                self.load_files = newdir + self.load_files[self.load_files.rfind('/'):]
+            except:
+                self.load_files = newdir + self.load_files
+            if newdir[: len(self.scenarios)] == self.scenarios:
+                self.load_dir.setText(newdir[len(self.scenarios):])
+            else:
+                if newdir.rfind('/') > 0:
+                    that_len = len(commonprefix([self.scenarios, newdir]))
+                    if that_len > 0:
+                        bits = self.scenarios[that_len:].split('/')
+                        pfx = ('..' + '/') * (len(bits) - 1)
+                        newdir = pfx + newdir[that_len + 1:]
+                self.load_dir.setText(newdir)
+            self.load_years = self.get_load_years()
+            self.loadCombo.clear()
+            for choice in self.load_years:
+                self.loadCombo.addItem(choice)
+                if choice == self.load_year:
+                    self.loadCombo.setCurrentIndex(self.loadCombo.count() - 1)
+            self.updated = True
     def helpClicked(self):
         dialog = displayobject.AnObject(QtWidgets.QDialog(), self.help,
                  title='Help for powermatch (' + fileVersion() + ')', section='powermatch')
@@ -1453,6 +1494,10 @@ class powerMatch(QtWidgets.QWidget):
                 lines.append(self.file_labels[i].lower() + '_file=' + self.files[i].text().replace(getUser(), '$USER$'))
             for i in range(D):
                 lines.append(self.file_labels[i].lower() + '_sheet=' + self.sheets[i].currentText())
+            line = 'load='
+            if self.load_dir.text() != self._load_folder:
+                line += self.load_files
+            lines.append(line)
             line = 'load_year='
             if self.loadCombo.currentText() != 'n/a':
                 line += self.loadCombo.currentText()
