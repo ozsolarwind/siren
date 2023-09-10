@@ -1271,6 +1271,12 @@ class powerMatch(QtWidgets.QWidget):
                 for gen in self.generators.keys():
                     if gen in tech_names or gen in iorder:
                         continue
+                    try:
+                        chk = gen[gen.find('.') + 1:]
+                        if chk in tech_names:
+                            continue
+                    except:
+                        pass
                     self.ignore.addItem(gen)
             except:
                 pass
@@ -1978,6 +1984,8 @@ class powerMatch(QtWidgets.QWidget):
                 self.batch_report.append([techClean(ws.cell_value(row, 0), full=True), row + 1])
         for col in range(1, ws.ncols):
             model = ws.cell_value(istrt - 1, col)
+            if model is None:
+                break
             self.batch_models[col] = {'name': model}
             for row in range(istrt, istop):
                 if row == year_row:
@@ -2000,6 +2008,9 @@ class powerMatch(QtWidgets.QWidget):
                     self.batch_models[col]['Discount Rate'] = ws.cell_value(discount_row, col)
                 elif isinstance(ws.cell_value(discount_row, col), int):
                     self.batch_models[col]['Discount Rate'] = float(ws.cell_value(discount_row, col))
+        if len(self.batch_models) == 0:
+            self.setStatus('No models found in ' + self.file_labels[B] + ' worksheet (try opening and re-saving the workbook).')
+            return False
         return True
 
     def setOrder(self):
@@ -2019,6 +2030,13 @@ class powerMatch(QtWidgets.QWidget):
                 if key in tech_names:
                     self.re_capacity[key] = value.capacity
                     continue
+                try:
+                    gen = key[key.find('.') + 1:]
+                    if gen in tech_names:
+                        self.re_capacity[key] = value.capacity
+                        continue
+                except:
+                    pass
                 try:
                     o = int(value.order)
                     if o > 0:
@@ -2150,6 +2168,7 @@ class powerMatch(QtWidgets.QWidget):
             self.progressbar.setMinimum(0)
             self.progressbar.setMaximum(20)
             self.progressbar.setHidden(False)
+            QtWidgets.QApplication.processEvents()
         err_msg = ''
         if self.constraints is None:
             try:
@@ -2607,8 +2626,14 @@ class powerMatch(QtWidgets.QWidget):
             # copy header rows to new worksheet
             merged_cells = []
             merge_cells = None
+            model_row = False
+            model_cols = len(self.batch_models)
             for row in range(1, self.batch_report[0][1] + 2):
-                for col in range(1, batch_input_sheet.max_column + 1):
+                if batch_input_sheet.cell(row=row, column=1).value in ['Model', 'Model Label', 'Technology']:
+                    model_row = True
+                else:
+                    model_row = False
+                for col in range(1, model_cols + 2):
                     cell = batch_input_sheet.cell(row=row, column=col)
                     if type(cell).__name__ == 'MergedCell':
                         if merge_cells is None:
@@ -2616,6 +2641,9 @@ class powerMatch(QtWidgets.QWidget):
                         else:
                             merge_cells[2] = col
                         continue
+                    if model_row and col > 1:
+                        new_cell = bs.cell(row=row, column=col, value=self.batch_models[col - 1]['name'])
+                    else:
                     new_cell = bs.cell(row=row, column=col, value=cell.value)
                     if cell.has_style:
                         new_cell.font = copy(cell.font)
@@ -3347,6 +3375,9 @@ class powerMatch(QtWidgets.QWidget):
                 return load_pct, surp_pct, re_pct
 
         def do_detail(fac, col, ss_row):
+            if fac in self.generators.keys():
+                gen = fac
+            else:
             gen = pmss_details[fac].generator
             col += 1
             sp_cols.append(fac)
@@ -3355,7 +3386,10 @@ class powerMatch(QtWidgets.QWidget):
                 ns.cell(row=zone_row, column=col).value = pmss_details[fac].zone
                 ns.cell(row=zone_row, column=col).alignment = oxl.styles.Alignment(wrap_text=True,
                     vertical='bottom', horizontal='center')
-            ns.cell(row=what_row, column=col).value = gen
+            try:
+                ns.cell(row=what_row, column=col).value = fac[fac.find('.') + 1:]
+            except:
+                ns.cell(row=what_row, column=col).value = fac # gen
             ns.cell(row=what_row, column=col).alignment = oxl.styles.Alignment(wrap_text=True,
                     vertical='bottom', horizontal='center')
             ns.cell(row=cap_row, column=col).value = sp_cap[-1]
@@ -3374,9 +3408,10 @@ class powerMatch(QtWidgets.QWidget):
             ns.cell(row=cf_row, column=col).value = '=IF(' + ss_col(col) + str(cap_row) + '>0,' + \
                     ss_col(col) + str(sum_row) +'/' + ss_col(col) + str(cap_row) + '/8760,"")'
             ns.cell(row=cf_row, column=col).number_format = '#,##0.0%'
-            if gen not in self.generators:
+            if gen not in self.generators.keys():
                 return col
-            if self.generators[gen].capex > 0 or self.generators[gen].fixed_om > 0 or self.generators[gen].variable_om > 0:
+            if self.generators[gen].capex > 0 or self.generators[gen].fixed_om > 0 \
+              or self.generators[gen].variable_om > 0 or self.generators[gen].fuel > 0:
                 disc_rate = self.generators[gen].disc_rate
                 if disc_rate == 0:
                     disc_rate = self.discount_rate
@@ -3434,6 +3469,10 @@ class powerMatch(QtWidgets.QWidget):
                                                       '&"."&Detail!' + ss_col(col) + str(what_row)
             else:
                 ss.cell(row=ss_row, column=st_fac+1).value = '=Detail!' + ss_col(col) + str(what_row)
+            if fac in self.generators.keys():
+                gen = fac
+            else:
+                gen = pmss_details[fac].generator
             # capacity
             ss.cell(row=ss_row, column=st_cap+1).value = '=Detail!' + ss_col(col) + str(cap_row)
             ss.cell(row=ss_row, column=st_cap+1).number_format = '#,##0.00'
@@ -3450,7 +3489,7 @@ class powerMatch(QtWidgets.QWidget):
             ss.cell(row=ss_row, column=st_cfa+1).value = '=IF(Detail!' + ss_col(col) + str(cf_row) \
                                                   + '>0,Detail!' + ss_col(col) + str(cf_row) + ',"")'
             ss.cell(row=ss_row, column=st_cfa+1).number_format = '#,##0.0%'
-            if gen not in self.generators:
+            if gen not in self.generators.keys():
                 return dd_tml_sum, dd_re_sum
             if self.generators[gen].capex > 0 or self.generators[gen].fixed_om > 0 or self.generators[gen].variable_om > 0:
                 disc_rate = self.generators[gen].disc_rate
@@ -4397,13 +4436,16 @@ class powerMatch(QtWidgets.QWidget):
                     try:
                         gen2 = gen[gen.find('.') + 1:]
                     except:
-                        pass
+                        gen2 = gen
                     if gen in tech_names or gen2 in tech_names:
                         re_sum += sp_data[sp][st_sub]
             for sp in range(len(sp_data)):
                 gen = sp_data[sp][st_fac]
                 if gen in storage_names:
                     ndx = 2
+                else:
+                    if gen in self.generators.keys():
+                        pass
                 else:
                     try:
                         gen = gen[gen.find('.') + 1:]
@@ -4424,13 +4466,17 @@ class powerMatch(QtWidgets.QWidget):
                     tml_sum += sp_data[sp][st_tml]
                 except:
                     pass
-                if gen not in self.generators:
+                if gen not in self.generators.keys():
                     continue
                 ndx = 3
                 if gen in storage_names:
                     ndx = 2
-                elif gen not in tech_names:
+                else:
                     try:
+                        gen2 = gen[gen.find('.') + 1:]
+                    except:
+                        gen2 = gen
+                    if gen not in tech_names and gen2 not in tech_names:
                         ff_sum += sp_data[sp][ndx]
                     except:
                         pass
@@ -4519,6 +4565,10 @@ class powerMatch(QtWidgets.QWidget):
                 for fac in underlying_facs:
                     if pmss_details[fac].capacity * pmss_details[fac].multiplier == 0:
                         continue
+                    if fac in self.generators.keys():
+                        gen = fac
+                    else:
+                        gen = pmss_details[fac].generator
                     col = pmss_details[fac].col
                     sp_d = [' '] * len(headers)
                     sp_d[st_fac] = fac
