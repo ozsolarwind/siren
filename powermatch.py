@@ -901,6 +901,7 @@ class powerMatch(QtWidgets.QWidget):
         self.save_tables = False
         self.show_multipliers = False
         self.show_correlation = False
+        self.summary_sources = False
         self.surplus_sign = 1 # Note: Preferences file has it called shortfall_sign
         # it's easier for the user to understand while for the program logic surplus is easier
         self.underlying = ['Rooftop PV'] # technologies contributing to underlying (but not operational) load
@@ -920,6 +921,8 @@ class powerMatch(QtWidgets.QWidget):
                 if key == 'batch_new_file':
                     if value.lower() in ['true', 'on', 'yes']:
                         self.batch_new_file = True
+                elif key[:4] == 'tml_':
+                    continue
                 elif key[-5:] == '_file':
                     ndx = self.file_labels.index(key[:-5].title())
                     ifiles[ndx] = value.replace('$USER$', getUser())
@@ -1038,14 +1041,14 @@ class powerMatch(QtWidgets.QWidget):
                 elif key == 'shortfall_sign':
                     if value[0] == '+' or value[0].lower() == 'p':
                         self.surplus_sign = -1
+                elif key == 'summary_sources':
+                    if value.lower() in ['true', 'yes', 'on']:
+                        self.summary_sources = True
                 elif key == 'underlying':
                     self.underlying = value.split(',')
                 elif key == 'operational':
                     self.operational = value.split(',')
         except:
-            if key == 'tml_detail_file':
-                pass
-            else:
                 print('PME1: Error with', key)
             pass
         self.restorewindows = False
@@ -2041,7 +2044,7 @@ class powerMatch(QtWidgets.QWidget):
         sheet.cell(row=sheet_row, column=1).font = normal
         sheet.cell(row=sheet_row, column=2).value = self.scenarios
         sheet.cell(row=sheet_row, column=2).font = normal
-        sheet.merge_cells('B' + str(sheet_row) + ':I' + str(sheet_row))
+        sheet.merge_cells('B' + str(sheet_row) + ':M' + str(sheet_row))
         sheet_row += 1
         sheet.cell(row=sheet_row, column=1).value = 'Powermatch data file'
         sheet.cell(row=sheet_row, column=1).font = normal
@@ -2049,7 +2052,7 @@ class powerMatch(QtWidgets.QWidget):
             pm_data_file = pm_data_file[len(self.scenarios):]
         sheet.cell(row=sheet_row, column=2).value = pm_data_file
         sheet.cell(row=sheet_row, column=2).font = normal
-        sheet.merge_cells('B' + str(sheet_row) + ':I' + str(sheet_row))
+        sheet.merge_cells('B' + str(sheet_row) + ':M' + str(sheet_row))
         sheet_row += 1
         try:
             if self.loadCombo.currentText() != 'n/a':
@@ -2060,7 +2063,7 @@ class powerMatch(QtWidgets.QWidget):
                     load_file = load_file[len(self.scenarios):]
                 sheet.cell(row=sheet_row, column=2).value = load_file
                 sheet.cell(row=sheet_row, column=2).font = normal
-                sheet.merge_cells('B' + str(sheet_row) + ':I' + str(sheet_row))
+                sheet.merge_cells('B' + str(sheet_row) + ':M' + str(sheet_row))
                 sheet_row += 1
         except:
             pass
@@ -2069,7 +2072,14 @@ class powerMatch(QtWidgets.QWidget):
         sheet.cell(row=sheet_row, column=2).value = str(self.files[C].text()) \
                + '.' + str(self.sheets[C].currentText())
         sheet.cell(row=sheet_row, column=2).font = normal
-        sheet.merge_cells('B' + str(sheet_row) + ':I' + str(sheet_row))
+        sheet.merge_cells('B' + str(sheet_row) + ':M' + str(sheet_row))
+        sheet_row += 1
+        sheet.cell(row=sheet_row, column=1).value = 'Generators worksheet'
+        sheet.cell(row=sheet_row, column=1).font = normal
+        sheet.cell(row=sheet_row, column=2).value = str(self.files[G].text()) \
+               + '.' + str(self.sheets[G].currentText())
+        sheet.cell(row=sheet_row, column=2).font = normal
+        sheet.merge_cells('B' + str(sheet_row) + ':M' + str(sheet_row))
         return sheet_row
 
     def clean_batch_sheet(self):
@@ -4641,7 +4651,22 @@ class powerMatch(QtWidgets.QWidget):
                 else:
                     extra = [gsw, op_load_tot, sto_sum, re_sum, re_pct, sf_sums]
                     return multi_value, sp_data, extra
-            list(map(list, list(zip(*sp_data))))
+        #    list(map(list, list(zip(*sp_data))))
+            if self.summary_sources: # want data sources
+                sp_data.append(' ')
+                sp_data.append('Data sources')
+                sp_data.append(['Scenarios folder', self.scenarios])
+                if pm_data_file[: len(self.scenarios)] == self.scenarios:
+                    pm_data_file = pm_data_file[len(self.scenarios):]
+                sp_data.append(['Powermatch data file', pm_data_file])
+                load_file = self.load_files.replace('$YEAR$', self.loadCombo.currentText())
+                if load_file[: len(self.scenarios)] == self.scenarios:
+                    load_file = load_file[len(self.scenarios):]
+                sp_data.append(['Load file', load_file])
+                sp_data.append(['Constraints worksheet', str(self.files[C].text()) \
+                                + '.' + str(self.sheets[C].currentText())])
+                sp_data.append(['Generators worksheet', str(self.files[G].text()) \
+                                + '.' + str(self.sheets[G].currentText())])
             sp_pts = [0] * len(headers)
             for p in [st_cap, st_lcg, st_lco, st_lcc, st_max, st_bal, st_rlc]:
                 sp_pts[p] = 2
