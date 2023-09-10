@@ -115,7 +115,10 @@ class TMLDetail(QtWidgets.QWidget):
                     if key[:-5].title() in self.file_labels:
                         ndx = self.file_labels.index(key[:-5].title())
                         ifiles[ndx] = value.replace('$USER$', getUser())
-                elif key == 'results_sheet':
+                    elif key[:-5].title().replace('_', ' ') in self.file_labels:
+                        ndx = self.file_labels.index(key[:-5].title().replace('_', ' '))
+                        ifiles[ndx] = value.replace('$USER$', getUser())
+                elif key == 'tml_results_sheet':
                     self.isheet = value
                 elif key == 'shortfall_sign':
                     if value[0] == '+' or value[0].lower() == 'p':
@@ -275,8 +278,8 @@ class TMLDetail(QtWidgets.QWidget):
             updates = {}
             lines = []
             for i in range(len(self.file_labels)):
-                lines.append(self.file_labels[i].lower() + '_file=' + self.files[i].text().replace(getUser(), '$USER$'))
-            lines.append('results_sheet=' + self.sheet.currentText())
+                lines.append(self.file_labels[i].lower().replace(' ', '_') + '_file=' + self.files[i].text().replace(getUser(), '$USER$'))
+            lines.append('tml_results_sheet=' + self.sheet.currentText())
             updates['Powermatch'] = lines
             SaveIni(updates)
         self.close()
