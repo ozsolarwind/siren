@@ -100,7 +100,7 @@ class TabDialog(QtWidgets.QDialog):
             self.help = 'help.html'
             self.about = 'about.html'
             self.config = configparser.RawConfigParser()
-            ignore = ['flexiplot.ini', 'getfiles.ini', 'powerplot.ini', 'siren_default.ini']
+            ignore = ['flexiplot.ini', 'powerplot.ini', 'siren_default.ini']
             errors = ''
             for fil in sorted(fils):
                 if fil[-4:] == '.ini':
@@ -225,6 +225,8 @@ class TabDialog(QtWidgets.QDialog):
             if event.type() == QtCore.QEvent.MouseButtonRelease and \
               event.button() == QtCore.Qt.LeftButton:
                 ent = self.table.item(self.table.currentRow(), 0).text()
+                if ent == 'getfiles.ini':
+                    return QtCore.QObject.event(source, event)
                 self.table.viewport().removeEventFilter(self)
                 if len(self.models_dirs) > 1:
                     ent_dir = self.table.item(self.table.currentRow(), 3).text()
@@ -243,22 +245,26 @@ class TabDialog(QtWidgets.QDialog):
                     selectionModel.Rows)
                 menu = QtWidgets.QMenu()
                 actions =  []
-                for i in range(len(self.model_tool)):
-                    if self.model_tool[i] == 'updateswis':
-                        mdl = self.table.item(self.table.currentRow(), 1).text()
-                        if mdl.find('SWIS') < 0:
-                            continue
-                    actions.append(menu.addAction(QtGui.QIcon(self.model_icon[i]),
-                                                 'Execute ' + self.model_tool[i]))
+                if ent == 'getfiles.ini':
+                    actions.append(menu.addAction(QtGui.QIcon('edit.png'), 'Edit Preferences'))
                     actions[-1].setIconVisibleInMenu(True)
-                actions.append(menu.addAction(QtGui.QIcon('edit.png'), 'Edit Preferences'))
-                actions[-1].setIconVisibleInMenu(True)
-                actions.append(menu.addAction(QtGui.QIcon('edit.png'), 'Edit File Preferences'))
-                actions[-1].setIconVisibleInMenu(True)
-                actions.append(menu.addAction(QtGui.QIcon('copy.png'), 'Copy Preferences'))
-                actions[-1].setIconVisibleInMenu(True)
-                actions.append(menu.addAction(QtGui.QIcon('delete.png'), 'Delete Preferences'))
-                actions[-1].setIconVisibleInMenu(True)
+                else:
+                    for i in range(len(self.model_tool)):
+                        if self.model_tool[i] == 'updateswis':
+                            mdl = self.table.item(self.table.currentRow(), 1).text()
+                            if mdl.find('SWIS') < 0:
+                                continue
+                        actions.append(menu.addAction(QtGui.QIcon(self.model_icon[i]),
+                                                     'Execute ' + self.model_tool[i]))
+                        actions[-1].setIconVisibleInMenu(True)
+                    actions.append(menu.addAction(QtGui.QIcon('edit.png'), 'Edit Preferences'))
+                    actions[-1].setIconVisibleInMenu(True)
+                    actions.append(menu.addAction(QtGui.QIcon('edit.png'), 'Edit File Preferences'))
+                    actions[-1].setIconVisibleInMenu(True)
+                    actions.append(menu.addAction(QtGui.QIcon('copy.png'), 'Copy Preferences'))
+                    actions[-1].setIconVisibleInMenu(True)
+                    actions.append(menu.addAction(QtGui.QIcon('delete.png'), 'Delete Preferences'))
+                    actions[-1].setIconVisibleInMenu(True)
                 action = menu.exec_(self.mapToGlobal(event.pos()))
                 if action is not None:
                     if len(self.models_dirs) > 1:

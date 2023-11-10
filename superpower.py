@@ -378,7 +378,6 @@ class SuperPower():
             self.wind_offset_spacing[1] = int(float(config.get('Offshore Wind', 'offset_spacing')))
         except:
             pass
-        print(self.wind_offset_spacing)
         try:
             self.wind_farm_losses_percent[1] = int(float(config.get('Offshore Wind', 'wind_farm_losses_percent').strip('%')))
         except:
@@ -395,7 +394,6 @@ class SuperPower():
             self.wind_hub_spread[1] = int(float(config.get('Offshore Wind', 'hub_spread')))
         except:
             pass
-        print('(397)', self.wind_hub_spread)
         self.st_gross_net = 0.87
         try:
             self.st_gross_net = float(config.get('Solar Thermal', 'gross_net'))
@@ -854,7 +852,10 @@ class SuperPower():
             self.do_defaults(station)
             farmpwr = do_module('windpower', station, 'gen')
             if temp_file is not None: # if a hub height is specified
-                os.remove(temp_dir + '/' + temp_file)
+                try:
+                    os.remove(temp_dir + '/' + temp_file)
+                except:
+                    pass
             return farmpwr
         elif station.technology == 'CST':
             closest = self.find_closest(station.lat, station.lon)

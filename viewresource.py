@@ -146,6 +146,22 @@ class Resource(QtWidgets.QDialog):
             self.helpfile = config.get('Files', 'help')
         except:
             self.helpfile = ''
+        self.coord_grid = [0, 0, 'c']
+        try:
+            coord_grid = config.get('View', 'coord_grid')
+            if coord_grid.lower()[0] == 'm': # merra-2
+                self.coord_grid = [.5, .625, 'c']
+            elif coord_grid.lower()[0] == 'e': # era5
+                self.coord_grid = [.25, .25, 'c']
+            else: # lat,lon
+                try:
+                    bits = coord_grid.split(',')
+                    self.coord_grid[0] = float(bits[0])
+                    self.coord_grid[1] = float(bits[0])
+                except:
+                    pass
+        except:
+            pass
         try:
             opacity = float(config.get('View', 'resource_opacity'))
         except:
@@ -685,10 +701,20 @@ class Resource(QtWidgets.QDialog):
             curr_row += 1
             a_lat = float(self.resource_worksheet.cell_value(curr_row, self.resource_var['Latitude']))
             a_lon = float(self.resource_worksheet.cell_value(curr_row, self.resource_var['Longitude']))
-            if in_map(a_lat - 0.25, a_lat + 0.25, self.scene.map_lower_right[0],
-                      self.scene.map_upper_left[0]) \
-              and in_map(a_lon - 0.3333, a_lon + 0.3333,
-                      self.scene.map_upper_left[1], self.scene.map_lower_right[1]):
+            in_the_map = False
+            if self.coord_grid[2] == 'c':
+                if in_map(a_lat - (self.coord_grid[0] / 2), a_lat + (self.coord_grid[0] / 2),
+                          self.scene.map_lower_right[0], self.scene.map_upper_left[0]) \
+                  and in_map(a_lon - (self.coord_grid[1] / 2), a_lon + (self.coord_grid[1] / 2),
+                             self.scene.map_upper_left[1], self.scene.map_lower_right[1]):
+                    in_the_map = True
+            else:
+                if in_map(a_lat - self.coord_grid[0], a_lat,
+                          self.scene.map_lower_right[0], self.scene.map_upper_left[0]) \
+                  and in_map(a_lon, a_lon + self.coord_grid[1],
+                             self.scene.map_upper_left[1], self.scene.map_lower_right[1]):
+                    in_the_map = True
+            if in_the_map:
                 try:
                     if str(self.resource_worksheet.cell_value(curr_row, self.resource_var['Period'])) == period:
                         cells.append([float(self.resource_worksheet.cell_value(curr_row, self.resource_var['Latitude'])),
@@ -714,7 +740,7 @@ class Resource(QtWidgets.QDialog):
         lo_per = 99999.
         hi_per = 0.
         lons = []
-        lon_cell = .3125
+        lon_cell = self.coord_grid[1] / 2
         for cell in cells:
             if cell[1] not in lons:
                 lons.append(cell[1])
@@ -723,9 +749,14 @@ class Resource(QtWidgets.QDialog):
             lon_cell = (lons[1] - lons[0]) / 2.
             del lons
         for cell in cells:
-            p = self.scene.mapFromLonLat(QtCore.QPointF(cell[1] - lon_cell, cell[0] + .25))
-            pe = self.scene.mapFromLonLat(QtCore.QPointF(cell[1] + lon_cell, cell[0] + .25))
-            ps = self.scene.mapFromLonLat(QtCore.QPointF(cell[1] - lon_cell, cell[0] - .25))
+            if self.coord_grid[2] == 'c':
+                p = self.scene.mapFromLonLat(QtCore.QPointF(cell[1] - lon_cell, cell[0] + self.coord_grid[0] / 2))
+                pe = self.scene.mapFromLonLat(QtCore.QPointF(cell[1] + lon_cell, cell[0] + self.coord_grid[0] / 2))
+                ps = self.scene.mapFromLonLat(QtCore.QPointF(cell[1] - lon_cell, cell[0] - self.coord_grid[0] / 2))
+            else:
+                p = self.scene.mapFromLonLat(QtCore.QPointF(cell[1], cell[0]))
+                pe = self.scene.mapFromLonLat(QtCore.QPointF(cell[1] + self.coord_grid[1], cell[0]))
+                ps = self.scene.mapFromLonLat(QtCore.QPointF(cell[1], cell[0] - self.coord_grid[0]))
             x_d = pe.x() - p.x()
             y_d = ps.y() - p.y()
             self.resource_items.append(QtWidgets.QGraphicsRectItem(p.x(), p.y(), x_d, y_d))

@@ -31,9 +31,10 @@ except:
 import sys
 from PyQt5 import QtCore, QtWidgets
 import xlrd
-if sys.version_info[1] >= 9: # python 3.9 onwards
-    xlrd.xlsx.ensure_elementtree_imported(False, None)
-    xlrd.xlsx.Element_has_iter = True
+if xlrd.__version__[:2][0] == '1.': # if xlsx files still supported
+    if sys.version_info[1] >= 9: # python 3.9 onwards
+        xlrd.xlsx.ensure_elementtree_imported(False, None)
+        xlrd.xlsx.Element_has_iter = True
 
 
 class ClickableQLabel(QtWidgets.QLabel):
@@ -45,6 +46,123 @@ class ClickableQLabel(QtWidgets.QLabel):
     def mousePressEvent(self, event):
         QtWidgets.QApplication.widgetAt(event.globalPos()).setFocus()
         self.clicked.emit()
+
+# class to support  listwidget drag and drop between two lists
+# also supports using keys where drag and drop not working (e.g. Ubuntu 23.04)
+class ListWidget(QtWidgets.QListWidget):
+    def decode_data(self, bytearray):
+        data = []
+        ds = QtCore.QDataStream(bytearray)
+        while not ds.atEnd():
+            row = ds.readInt32()
+            column = ds.readInt32()
+            map_items = ds.readInt32()
+            for i in range(map_items):
+                key = ds.readInt32()
+                value = QtCore.QVariant()
+                ds >> value
+                data.append(value.value())
+        return data
+
+    def __init__(self, parent=None):
+        super(ListWidget, self).__init__(parent)
+        self.setDragDropMode(self.DragDrop)
+        self.setSelectionMode(self.ExtendedSelection)
+        self.setAcceptDrops(True)
+        self.updated = False
+        self._other = None
+        for child in self.parent().children():
+            if isinstance(child, ListWidget) and child != self: # will work if more than one ListWidget
+                self._other = child
+                self.setObjectName('Exclude')
+                child._other = self
+                child.setObjectName('Include')
+
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasUrls():
+            event.accept()
+        else:
+            super(ListWidget, self).dragEnterEvent(event)
+
+    def dragMoveEvent(self, event):
+        if event.mimeData().hasUrls():
+            event.setDropAction(QtCore.Qt.CopyAction)
+            event.accept()
+        else:
+            super(ListWidget, self).dragMoveEvent(event)
+
+    def dropEvent(self, event):
+        self.updated = True
+        if event.source() == self:
+            event.setDropAction(QtCore.Qt.MoveAction)
+            QtWidgets.QListWidget.dropEvent(self, event)
+        else:
+            ba = event.mimeData().data('application/x-qabstractitemmodeldatalist')
+            data_items = self.decode_data(ba)
+            event.setDropAction(QtCore.Qt.MoveAction)
+            event.source().deleteItems(data_items)
+            super(ListWidget, self).dropEvent(event)
+
+    def deleteItems(self, items):
+        for row in range(self.count() -1, -1, -1):
+            if self.item(row).text() in items:
+             #   r = self.row(item)
+                self.takeItem(row)
+
+    def keyPressEvent(self, event):
+        if self.currentRow() < 0:
+            return
+        action = ''
+        try:
+            if event.key() == 16777223:
+                action = 'Delete'
+            elif event.key() == 16777235:
+                action = 'Up'
+            elif event.key() == 16777237:
+                action = 'Down'
+            elif event.key() == 16777234:
+                if self.objectName == 'Include':
+                    return
+                action = 'Shift'
+            elif event.key() == 16777236:
+                if self.objectName == 'Exclude':
+                    return
+                action = 'Shift'
+            elif chr(event.key()) == 'U':
+                action = 'Up'
+            elif chr(event.key()) == 'D':
+                action = 'Down'
+            elif chr(event.key()) == '+' or chr(event.key()) == '=' or chr(event.key()) == 'I' or chr(event.key()) == 'L':
+                if self.objectName == 'Include':
+                    return
+                action = 'Shift'
+            elif chr(event.key()) == '-' or chr(event.key()) == 'E' or chr(event.key()) == 'R':
+                if self.objectName == 'Exclude':
+                    return
+                action = 'Shift'
+            self.updated = True
+        except:
+            return
+        if action == 'Shift':
+            background = self.currentItem().background()
+            self._other.addItem(self.currentItem().text())
+            self._other.item(self._other.count() - 1).setBackground(background)
+            self.takeItem(self.currentRow())
+        elif action == 'Up':
+            if self.currentRow() > 0:
+                background = self.currentItem().background()
+                self.insertItem(self.currentRow() - 1, self.currentItem().text())
+                self.takeItem(self.currentRow())
+                self.setCurrentRow(self.currentRow() - 1)
+                self.currentItem().setBackground(background)
+        elif action == 'Down':
+            if self.currentRow() < self.count() - 1:
+                background = self.currentItem().background()
+                self.insertItem(self.currentRow() + 2, self.currentItem().text())
+                row = self.currentRow()
+                self.takeItem(self.currentRow())
+                self.setCurrentRow(row + 1)
+                self.currentItem().setBackground(background)
 
 
 # Class to support input file as .csv, .xls, or .xlsx
@@ -58,16 +176,19 @@ class WorkBook(object):
         self._nrows = 0
         self._ncols = 0
 
-    def open_workbook(self, filename=None, on_demand=True, data_only=True):
+    def open_workbook(self, filename=None, on_demand=True, data_only=True, filetype=None):
         if not os.path.exists(filename):
             raise Exception('File not found')
-        self._type = filename[filename.rfind('.') + 1:]
+        if filetype is None:
+            self._type = filename[filename.rfind('.') + 1:]
+        else:
+            self._type = filetype
         self._data_only = data_only
         try:
             if self._type == 'xls':
                 self._book = xlrd.open_workbook(filename, on_demand=on_demand)
                 self._sheet_names = self._book.sheet_names()
-            elif self._type == 'xlsx':
+            elif self._type == 'xlsx' or self._type == 'xlsm':
                 self._book = oxl.load_workbook(filename, data_only=data_only)
                 self._sheet_names = self._book.sheetnames
             elif self._type == 'csv':
@@ -100,8 +221,13 @@ class WorkBook(object):
                 csv_file.close()
                 self.nrows = len(self._worksheet)
                 self.ncols = len(self._worksheet[0])
-        except:
-            raise Exception('Error opening file')
+            else:
+                raise Exception(f"Error with filetype - '{self._type}'")
+        except Exception as err:
+            if isinstance(err, Exception) and err.args[0][:19] == 'Error with filetype':
+                raise
+            else:
+                raise Exception('Error opening file')
 
     def release_resources(self):
         if self._type == 'xls':
@@ -131,7 +257,7 @@ class WorkBook(object):
                 self._sheet.name = self._book.sheet_names()[sheetx]
                 self._sheet.nrows = self._sheet._sheet.nrows
                 self._sheet.ncols = self._sheet._sheet.ncols
-            elif self._type == 'xlsx':
+            elif self._type == 'xlsx' or self._type == 'xlsm':
                 self._sheet._sheet = self._book.worksheets[sheetx]
                 self._sheet.name = self._book.sheetnames[sheetx]
                 self._sheet.nrows = self._sheet._sheet.max_row
@@ -161,7 +287,7 @@ class WorkBook(object):
         def cell_value(self, row, col):
             if self._type == 'xls':
                 return self._sheet.cell_value(row, col)
-            elif self._type == 'xlsx':
+            elif self._type == 'xlsx' or self._type == 'xlsm':
                 if self._data_only:
                     return self._sheet.cell(row=row + 1, column=col + 1).value
                 else:
@@ -176,7 +302,7 @@ class WorkBook(object):
                 return self._sheet[row][col]
 
         def cell_type(self, row, col):
-            if self._type == 'xlsx':
+            if self._type == 'xlsx' or self._type == 'xlsm':
                 return self._sheet.cell(row=row + 1, column=col + 1).data_type
             else:
                 return None
@@ -184,7 +310,7 @@ class WorkBook(object):
 #        def cell_write(self, row, col, value):
 #            if self._type == 'xls':
 #                self._sheet.write(row, col, value)
-#            elif self._type == 'xlsx':
+#            elif self._type == 'xlsx' or self._type == 'xlsm':
 #                self._sheet.cell(row=row + 1, column=col + 1).value = value
 #            elif self._type == 'csv':
 #                self._sheet[row][col] = value
@@ -222,6 +348,7 @@ def getUser():
 # clean up tech names
 def techClean(tech, full=False):
     cleantech = tech.replace('_', ' ').title()
+    cleantech = cleantech.replace('Bess', 'BESS')
     cleantech = cleantech.replace('Bm', 'BM')
     cleantech = cleantech.replace('Ccgt', 'CCGT')
     cleantech = cleantech.replace('Ccg', 'CCG')

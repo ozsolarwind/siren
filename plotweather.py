@@ -23,7 +23,7 @@ from math import asin, ceil, cos, radians, sin, sqrt
 import matplotlib
 if matplotlib.__version__ > '3.5.1':
     matplotlib.use('Qt5Agg')
-import pylab as plt
+import matplotlib.pyplot as plt
 from matplotlib.font_manager import FontProperties
 import matplotlib.lines as mlines
 import os
@@ -145,17 +145,17 @@ class PlotWeather():
         close_lat = 0
         close_lon = 0
         if wind:
-            filetype = '.srw'
+            filetype = ['.srw']
             technology = 'wind_index'
             index_file = self.wind_index
             folder = self.wind_files
         elif rain:
-            filetype = '.csv'
+            filetype = ['.csv']
             technology = 'rain_index'
             index_file = ''
             folder = self.rain_files
         else:
-            filetype = '.smw'
+            filetype = ['.csv', '.smw']
             technology = 'solar_index'
             index_file = self.solar_index
             folder = self.solar_files
@@ -163,7 +163,7 @@ class PlotWeather():
             if index_file == '':
                 fils = os.listdir(folder)
                 for fil in fils:
-                    if fil[-4:] == filetype or filetype != '.srw' and fil[-4:] == '.csv':
+                    if fil[-4:] in filetype:
                         bit = fil.split('_')
                         if bit[-1][:4] == str(self.base_year):
                             dist1 = self.haversine(float(bit[-3]), float(bit[-2]), latitude, longitude)

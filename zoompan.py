@@ -40,6 +40,10 @@ class ZoomPanX():
         self.base_zlim = None
         self.xlabel = None
         self.axis = 'x'
+        self.angle = 0
+        self.roll = 0
+        self.elev = 30
+        self.azim = -60
         self.d3 = False
         self.datapoint = None
         self.msg = None
@@ -53,8 +57,9 @@ class ZoomPanX():
         self.flex_ticks = False
         self.flex_on = False
         self.step = 168
+        self.pick = True
 
-    def zoom_pan(self, ax, base_scale=2., annotate=False, dropone=False, flex_ticks=False):
+    def zoom_pan(self, ax, base_scale=2., annotate=False, dropone=False, flex_ticks=False, pick=True):
         def set_flex():
             if self.flex_ticks:
                 cur_xlim = ax.get_xlim()
@@ -98,7 +103,7 @@ class ZoomPanX():
             else:
                 # deal with something that should never happen
                 scale_factor = 1
-                print('(92)', event.button)
+                print('(106)', event.button)
             # set new limits
             if self.d3:
                 z_left = ydata - cur_zlim[0]
@@ -122,7 +127,6 @@ class ZoomPanX():
             """
             if ax.M is None:
                 return {}
-
             xd, yd = event.xdata, event.ydata
             p = (xd, yd)
             edges = ax.tunit_edges()
@@ -157,9 +161,10 @@ class ZoomPanX():
                     x, y, z = get_xyz_mouse_click(event, ax)
                 except:
                     return
-             #   print(f'Clicked at: x={x}, y={y}, z={z}')
+                if not self.pick:
+                    return
                 self.datapoint = [[-1, x, y, z]]
-                self.msg = '{:d}: {}: {:.2f}\n{}: {:.2f}\n{}: {:.2f}'.format(self.datapoint[0][0],
+                self.msg = '{}: {:.2f}\n{}: {:.2f}\n{}: {:.2f}'.format(
                             ax.get_xlabel(), self.datapoint[0][1], ax.get_ylabel(),
                             self.datapoint[0][2], ax.get_zlabel(), self.datapoint[0][3])
                 # If we have previously displayed another label, remove it first
@@ -173,6 +178,7 @@ class ZoomPanX():
                 ax.label = ax.annotate(self.msg, xy = (x2, y2), xytext = (0, 20),
                            textcoords = 'offset points', ha = 'right', va = 'bottom',
                            bbox = dict(boxstyle = 'round,pad=0.5', alpha = 0.5),
+                           zorder=100,
                            arrowprops = dict(arrowstyle = '->',
                                              connectionstyle = 'arc3,rad=0'))
                 return
@@ -200,6 +206,8 @@ class ZoomPanX():
 
         def onRelease(event):
             self.press = None
+            if not self.pick:
+                return
             if self.datapoint is not None:
                 # If we have previously displayed another label, remove it first
                 if hasattr(ax, 'label'):
@@ -212,6 +220,7 @@ class ZoomPanX():
                 ax.label = ax.annotate(self.msg, xy = (x2, y2), xytext = (0, 20),
                            textcoords = 'offset points', ha = 'right', va = 'bottom',
                            bbox = dict(boxstyle = 'round,pad=0.5', alpha = 0.5),
+                           zorder=100,
                            arrowprops = dict(arrowstyle = '->',
                                              connectionstyle = 'arc3,rad=0'))
                 set_flex()
@@ -267,6 +276,8 @@ class ZoomPanX():
                             self.datapoint = None
                         ax.set_zlim(self.base_zlim)
                     set_flex()
+                    if self.d3:
+                        ax.view_init(elev=self.elev, azim=self.azim)
                     ax.figure.canvas.draw()
                     return
             if event_key == 'pageup':
@@ -447,17 +458,68 @@ class ZoomPanX():
                 set_flex()
                 ax.figure.canvas.draw()
             elif event_key == 'x':
-                if self.axis != 'x':
+                if self.d3:
+                    if self.axis == 'x':
+                        if self.angle <= 0:
+                            self.angle = 90
+                        else:
+                            self.angle = -90
+                    try:
+                        ax.view_init(elev=self.angle, azim=-self.angle, roll=0, vertical_axis='x')
+                    except:
+                        try:
+                            ax.view_init(elev=self.angle, azim=-self.angle, vertical_axis='x')
+                        except:
+                            ax.view_init(elev=self.angle, azim=-self.angle)
+                    ax.figure.canvas.draw()
+                elif self.axis != 'x':
                     self.press = None
                 self.axis = 'x'
             elif event_key == 'y':
-                if self.axis != 'y':
+                if self.d3:
+                    if self.axis == 'y':
+                        if self.angle <= 0:
+                            self.angle = 90
+                        else:
+                            self.angle = -90
+                    try:
+                        ax.view_init(elev=self.angle, azim=-self.angle, roll=0, vertical_axis='y')
+                    except:
+                        try:
+                            ax.view_init(elev=self.angle, azim=-self.angle, vertical_axis='y')
+                        except:
+                            ax.view_init(elev=self.angle, azim=-self.angle)
+                    ax.figure.canvas.draw()
+                elif self.axis != 'y':
                     self.press = None
                 self.axis = 'y'
-            elif event_key == 'z' and self.d3:
-                if self.axis != 'z':
+            elif event_key == 'z':
+                if self.d3:
+                    if self.axis == 'z':
+                        if self.angle <= 0:
+                            self.angle = 90
+                        else:
+                            self.angle = -90
+                    try:
+                        ax.view_init(elev=self.angle, azim=-self.angle, roll=0, vertical_axis='z')
+                    except:
+                        try:
+                            ax.view_init(elev=self.angle, azim=-self.angle, vertical_axis='z')
+                        except:
+                            ax.view_init(elev=self.angle, azim=-self.angle)
+                    ax.figure.canvas.draw()
+                elif self.axis != 'z':
                     self.press = None
                 self.axis = 'z'
+            elif self.d3 and (event.key == '>' or event.key == '.'):
+                self.roll = self.roll + 90
+                if self.roll > 270:
+                    self.roll = 0
+                try:
+                    ax.view_init(elev=self.angle, azim=-self.angle, roll=self.roll, vertical_axis=self.axis)
+                    ax.figure.canvas.draw()
+                except:
+                    pass
             elif event.key == 'right':
                 xlim = ax.get_xlim()
                 if xlim[1] >= self.base_xlim[1]:
@@ -494,6 +556,9 @@ class ZoomPanX():
             if not isinstance(event.artist, Path3DCollection): # just 3D picking for the moment
                 return
             if matplotlib_version > '3.0.3':
+
+                return
+            if not self.pick:
                 return
             self.datapoint = None
             if len(event.ind) > 0:
@@ -523,6 +588,7 @@ class ZoomPanX():
                 ax.figure.canvas.draw()
 
         the_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+        self.pick = pick
         self.xlabel = ax.get_xlabel()
         self.title = ax.get_title()
         self.base_xlim = ax.get_xlim() # remember x base
@@ -554,6 +620,8 @@ class ZoomPanX():
         try:
             self.base_zlim = ax.get_zlim() # remember z base for 3D
             self.d3 = True
+            self.elev = ax.elev
+            self.azim = ax.azim
         except:
             self.d3 = False
         if self.base_xlim[1] == 8784 or self.base_xlim[1] == 8784 * 2: # leap year

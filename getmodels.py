@@ -103,10 +103,12 @@ def getModelFile(*args):
         return siren_dir + ini_file
 
     models_dirs = []
-    if sys.platform == 'win32' or sys.platform == 'cygwin':
-       models_location = os.getenv('LOCALAPPDATA') + '\\siren\\siren_models_location.txt'
-    else:
-       models_location = os.path.expanduser('~') + '/.siren/siren_models_location.txt'
+    models_location = os.getcwd() + '/siren_models_location.txt'
+    if not os.path.exists(models_location):
+        if sys.platform == 'win32' or sys.platform == 'cygwin':
+           models_location = os.getenv('LOCALAPPDATA') + '\\siren\\siren_models_location.txt'
+        else:
+           models_location = os.path.expanduser('~') + '/.siren/siren_models_location.txt'
     if len(args) > 0:
         ini_file = args[0]
         if os.path.exists(models_location):

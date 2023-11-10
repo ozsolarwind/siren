@@ -126,7 +126,8 @@ ul {
 </head>
 <body>
 <h1 id="help"><img src="sen_icon32.png" alt="SIM">&nbsp;SIREN Help</h1>
-<p><strong>All acronyms used in this help are defined in the list of <a href="#acronyms">acronyms</a></strong></p>
+<p><strong>All acronyms used in this help are defined in the list of <a href="#acronyms">acronyms</a></strong>
+<br /><span style="font-size: 12px">(Click the small icon on the top right of the page to return to the top)</span></p>
 <h3>SIREN - SEN's Interactive Renewable Energy Network tool</h3>
 <p>The SEN SAM simulation, SIREN, is used to calculate energy generation for renewable energy power stations. The program uses the SAM SDK API for energy calculations. SAM is provided by the NREL. This help briefly describes how to use the simulation.</p>
 <h2>Contents</h2>
@@ -154,7 +155,7 @@ ul {
 <ul class="none">
 <li><a href="#popts">Power Model Options</a></li>
 <ul class="none">
-<li><a href="#charts">Charts</a></li>
+<li><a href="#charts">Charts</a> (including <a href="#powerplot">powerplot</a> and <a href="#flexiplot">flexiplot</a>)</li>
 <li><a href="#tables">Tables</a></li>
 </ul>
 <li><a href="#fopts">Financial Model Options</a></li>
@@ -303,7 +304,7 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 </tr>
 <tr class="none">
 <td class="none"><img src="line.png" alt="powerplot">&nbsp;&nbsp;powerplot</td>
-<td class="none">Invoke <code>powerplot</code> to create charts from PowerModel and Powermatch outputs (see <a href="#powerplot">Powerplot</a>)</td>
+<td class="none">Invoke <code>powerplot</code> to create charts from Powermodel and Powermatch outputs (see <a href="#powerplot">Powerplot</a>)</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="download.png" alt="sirenupd">&nbsp;&nbsp;sirenupd</td>
@@ -422,7 +423,7 @@ You can also use TMY files such as those provided with SAM. If you have a number
 <tr class="none">
 <td class="none"><dfn>Technology</dfn></td>
 <td class="none">One of the defined technologies:- Biomass, CST, Fixed PV, Geothermal, Offshore Wind, Rooftop PV, Single Axis PV, Solar Thermal, Dual Axis PV (Tracking PV), Wind (refer to <a href="#sam">SAM Models used by SIREN</a>), and
-<div class="experiment">Hydro, Wave and Other (refer to <a href="#nonsam">Other Models used by SIREN (experimental)</a>)</div>
+<div class="experiment">BESS (Battery), Hydro, Wave and Other (refer to <a href="#nonsam">Other Models used by SIREN (experimental)</a>)</div>
 <strong>Note:</strong> SIREN uses two of the SAM Concentrated Solar Power models. <em>Solar Thermal</em> is the SAM model for Power tower concentrating solar power (molten salt and direct steam) and <em>CST</em> is A simple "generic model" for conventional thermal
 </td>
 </tr>
@@ -594,7 +595,7 @@ The format is similar to a Windows INI file. If you want to create a new Model y
 </ul>
 <p><strong>Note:</strong> Technologies appear in two forms in the Preferences file. They appear in the Preferences Sections as words starting with an uppercase letter and separated by spaces (e.g <em>Fixed PV</em> with the Section name <em>[Fixed PV]</em>). In the Section Properties the technology names are changed to all lower case and spaces are replaced by underscores. Thus, <em>Fixed PV</em> will appear as <em>fixed_pv</em>. The lower case versions occur in the <em>[Colors]</em> Section and <em>[Grid] dispatchable</em>, <em>[Power] fossil_technologies</em>, and <em>[Power] technologies</em> variables.</p>
 <p>(Skip to <a href="#menus">Menus</a>)</p>
-<p>Shortcut to Sections:- <a href="#p_backtrack_pv">Backtrack PV</a>, <a href="#p_base">Base</a>, <a href="#p_biomass">Biomass</a>, <a href="#p_colors">Colors</a>, <a href="#p_cst">CST</a>,
+<p>Shortcut to Sections:- <a href="#p_backtrack_pv">Backtrack PV</a>, <a href="#p_base">Base</a>, <a href="#p_bess">BESS (Battery)</a>, <a href="#p_biomass">Biomass</a>, <a href="#p_colors">Colors</a>, <a href="#p_cst">CST</a>,
 <a href="#p_dataview">Dataview</a>, <a href="#p_dual_axis_pv">Dual Axis PV</a>, <a href="#p_files">Files</a>, <a href="#financial">Financial</a>, <a href="#p_fixed_pv">Fixed PV</a>,
 <a href="#p_flexiplot">Flexiplot</a>,
 <a href="#p_fossil_coal">Fossil Coal</a>, <a href="#p_fossil_cogen">Fossil Cogen</a>, <a href="#p_fossil_gas">Fossil Gas</a>,
@@ -658,6 +659,27 @@ The format is similar to a Windows INI file. If you want to create a new Model y
 <tr class="none">
 <td class="none"><dfn>years</dfn></td>
 <td class="none">Specify the range of years available for processing. This can be specified as a list separated by commas and/or a range of years separated by a hyphen. For example, <em>2008, 2010-2015</em></td>
+</tr>
+</table>
+</td></tr>
+<tr class="none" id="p_bess"><td><dfn><strong>[BESS]</strong></dfn></td>
+<td>Specifics on BESS (Battery) characteristics. Properties are:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>area</dfn></td>
+<td class="none">Estimated area in km<sup>2</sup> per MW</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>capital_cost</dfn></td>
+<td class="none">Capital cost per MWh. A suffix of K indicates thousands and M millions</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>icon</dfn></td>
+<td class="none">Icon to display for this technology. Default is bess_g.png</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>o_m_cost</dfn></td>
+<td class="none">Operations and Maintenance cost per MWh. A suffix of K indicates thousands and M millions</td>
 </tr>
 </table>
 </td></tr>
@@ -1911,6 +1933,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">Opacity of chart fill for values above target. Range is 1.0 (opaque) to 0.0 (translucent). Default value is 0.25</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>alpha_word</dfn></td>
+<td class="none">A list of categories separated by commas for a breakdown (TML) detail worksheet that should be removed when setting colours. Default value is <em>surplus,charge</em></td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>cmap</dfn></td>
 <td class="none">Identify the colour map (cmap) to be used to create Heat maps (refer to <a href="https://matplotlib.org/stable/gallery/color/colormap_reference.html" target="_blank">https://matplotlib.org/stable/gallery/color/colormap_reference.html</a>). A common colour map is <em>jet</em> or <em>jet_r</r>. The default is a red-amber-green colour map</td>
 </tr>
@@ -1938,6 +1964,9 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none"><dfn>grid (&ast;)</dfn></td>
 <td class="none">The gridlines to be included on the chart. Options are Both, Horizontal, Vertical and None. The default is None</td>
 </tr>
+<td class="none"><dfn>hatch_word</dfn></td>
+<td class="none">A list of categories separated by commas for a breakdown (TML) detail worksheet that have pattern (hatch) applied when setting colours. Default value is <em>charge</em></td>
+</tr>
 <tr class="none">
 <td class="none"><dfn>margin_of_error</dfn></td>
 <td class="none">In doing a chart with a target column there may be very minor differences that could cause a Shortfall or Spill legend item to be created. This setting will allow these small differences to be ignored. The default value is .0001</td>
@@ -1948,7 +1977,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>overlay (&ast;)</dfn></td>
-<td class="none">Include an overlay (of storage recharge) on the chart</td>
+<td class="none">Include an overlay (either of storage recharge or underlying load) on the chart</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>palette</dfn></td>
@@ -1964,7 +1993,11 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>plot (&ast;)</dfn></td>
-<td class="none">The type of chart. Options are Bar Chart, Cumulative, Heat Map, Line Chart, or Step Chart. The default is Bar Chart</td>
+<td class="none">The type of chart. Options are Bar Chart, Cumulative, Heat Map, Line Chart, or Step Chart. The default is Cumulative</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>select_day</dfn></td>
+<td class="none">If set to True, add menu options to produce a diurnal chart for a single day. Default is False</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>sheet (&ast;)</dfn></td>
@@ -1988,12 +2021,12 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td>Filenames, worksheet names and other variables used by <a href="#powermatch">Powermatch</a>. Properties are:</p>
 <table border="0", class="none">
 <tr class="none">
-<td class="none"><dfn>adjust_capacities</dfn></td>
-<td class="none">Contains a list of adjusted capacities (in MW) for generators</td>
-</tr>
-<tr class="none">
 <td class="none"><dfn>adjust_generators</dfn></td>
 <td class="none">Indicates whether to adjust generators capacity inputs or not. Default is False</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>adjusted_capacities</dfn></td>
+<td class="none">Contains a list of adjusted capacities (in MW) for generators</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>adjusted_lcoe</dfn></td>
@@ -2044,6 +2077,14 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">Worksheet name for generators (facilities) table</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>load</dfn></td>
+<td class="none">Folder location and file name format for load files. The default value is that used by SIREN (<em>load</em> property of the <a href="#p_files">[Files]</a> Section)</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>load_year<dfn></td>
+<td class="none">The last saved load year (or load file). Default is 'n/a'</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>log_status</dfn></td>
 <td class="none">Override the [Windows] <em>log_status</em> property. If set to False the status messages will not be logged in the status window</td>
 </tr>
@@ -2052,12 +2093,24 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">If set to True a number of additional tables and an additional chart will produced during Powermatch optimisation. Default is False</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>operational</dfn></td>
+<td class="none">A list of generators, separated by commas, to be treated as part of Operational rather than Underlying generators. This list enables a generator normally considered as Underlying, such as <em>Additional.Rooftop PV</em>, to be treated as an Opertional generator. The default is none</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>optimisation_file</dfn></td>
 <td class="none">Filename for optimisation spreadsheet</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>optimisation_sheet</dfn></td>
 <td class="none">Worksheet name for optimisation table</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>optimise_choice</dfn></td>
+<td class="none">The last saved optimisation choice. Possible values are: Both, LCOE (default), or Multi</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>(optimise_debug)</dfn></td>
+<td class="none">If set to True this will produce a file to help analyse the Optimisation process. Default is False. Probably only of value to the developer</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>optimise_default</dfn></td>
@@ -2069,7 +2122,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>optimise_multiplot</dfn></td>
-<td class="none">When running a multi optimisation you can choose to display a 3D plot of the best individuals from each iteration. Default is True</td>
+<td class="none">When running a multi optimisation you can choose to display a 3D plot of the best individuals from each iteration. Default is True (if set to <em>trisurf</em> the 3D plot will be a tri-surface plot; not very useful in this instance)</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>optimise_multitable</dfn></td>
@@ -2121,7 +2174,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><div class="experiment"><dfn>show_contribution</dfn></div></td>
-<td class="none"><div class="experiment">If set to True, show the percentage contribution of chosen components in meeting the target, e.g. Load. The default is False <Strong>Note:</strong> This Property is used by <code>Powerplot</code> and not <code>Powermatch</code></div></td>
+<td class="none"><div class="experiment">If set to True, show the percentage contribution of chosen components in meeting the target, e.g. Load. The default is False <Strong>Note:</strong> This Property is used by <code>powerplot</code> and not <code>powermatch</code></div></td>
 </tr>
 <tr class="none">
 <td class="none"><div class="experiment"><dfn>show_correlation</dfn></div></td>
@@ -2130,6 +2183,22 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <tr class="none">
 <td class="none"><dfn>show_multipliers</dfn></td>
 <td class="none">If set to True, technology multipliers will be shown on the Adjustment window. The default is False</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>summary_sources</dfn></td>
+<td class="none">If set to True the list of data sources will be added to the Summary report. The default is False></td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>tml_detail_file<dfn></td>
+<td class="none">The saved name of the TML detail file</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>tml_results_sheet<dfn></td>
+<td class="none">The Detail worksheet used as input to TML Detail</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>underlying</dfn></td>
+<td class="none">A list of generators, separated by commas, to be treated as part of Underlying generators. The default is <em>Rooftop PV</em></td>
 </tr>
 </table>
 </td></tr>
@@ -2944,7 +3013,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 </tr>
 <tr class="none">
 <td class="none"><img src="line.png" alt="powerplot">&nbsp;&nbsp;powerplot</td>
-<td class="none">Invoke <code>powerplot</code> to create charts from PowerModel and Powermatch outputs (see <a href="#powerplot">Powerplot</a>)</td>
+<td class="none">Invoke <code>powerplot</code> to create charts from Powermodel and Powermatch outputs (see <a href="#powerplot">Powerplot</a>)</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="list.png" alt="updateswis">&nbsp;&nbsp;updateswis</td>
@@ -3058,6 +3127,11 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 </table>
 <p><a href="#help">Back to top</a></p>
 <h2 id="usage">Using the Simulation</h2>
+<p>The simulation has two parts:</p>
+<ol>
+<li>Using SIREN to build scenarios for an energy mix as described in more detail below</li>
+<li>Using the Powermatch data produced to complete a costed renewable energy scenario. This is described in <a href="#powermatch">Powermatch</a></li>
+</ol>
 <p>The simulation allows you to build scenarios for the energy mix for your area of interest. It is based around the map of your chosen area and allows you to visualise the layout of the existing electricity network plus the additional stations you place on the map to build your scenario(s). The map initially shows the main skeleton of the existing electricity grid infrastructure and current generation stations.</p>
 <p>To add a new station simply right-click on the map at the desired location and then update the details for the station (Name, Technology, Capacity and so forth) and press <em>Save &amp; Exit</em>. You can also copy an existing station and other options as specified above. </p>
 <p>As you build your scenario, the simulation adds additional infrastructure to connect the new generation plants to the grid. The colours for the majority of the items on the map are as you specify in the Preferences file. You navigate around the map using normal mouse movements to scroll, zoom, etc. and interact with it as described previously (<a href="#menus">Menus</a>). Using the various menu options you can model your whole scenario, or by right-clicking you can deal with an individual station. There are a number of additional windows, such as menu options, that can be opened to assist with using SIREN (see <a href="#windows">Windows</a>)</p>
@@ -3219,7 +3293,7 @@ By default the size of charts produced is determined by matplotlib, or by the <e
 </ul>
 <p><strong>Note:</strong> For cumulative (stacked) charts produced by Powerplot this feature may perform slowly so please be a little patient</p>
 <h4 id="powerplot"><u>Powerplot</u></h4>
-<p><code>powerplot</code> is a standalone program that will produce either hourly, half-hourly or diurnal charts from a spreadsheet that conforms to certain constraints. It is intended to be used to chart (detailed) results either from Powermatch or some of the files produced by SIREN's PowerModels.
+<p><code>powerplot</code> is a standalone program that will produce either hourly, half-hourly or diurnal charts from a spreadsheet that conforms to certain constraints. It is intended to be used to chart (detailed) results either from Powermatch or some of the files produced by SIREN's Powermodel.
 <div class="experiment">
 The program can also be used to either:
 <ul>
@@ -3248,7 +3322,12 @@ The program displays a window of options. The default values are specified in th
 <td class="none">A pull-down list of column names. If the chart is intended to show how the chosen columns meet a target column, typically Load, this enables you to choose that column. Choosing <em>&lt;None&gt;</em> means no target field. If a target field is chosen the chart will show excess generation as lightly shaded areas above the target values (<em>target</em>)
 <div class="experiment">A target is required for Contribution and Correlation</div></td></tr>
 <tr><td class="lr"><dfn>Overlay</dfn></td>
-<td class="none">This option allows the total of energy used to recharge storage to be shown as an overlay on the chart; it provides an indication of how and when excess energy has been used for recharge. If a Target, e.g. Load, is chosen the target values will be added to the figure to indicate the use of excess energy above the target. It presents a pull-down list of options. At present the only options are <em>&lt;none&gt;</em> and <em>Charge</em> (<em>overlay</em>)
+<td class="none">This option allows an overlay on the chart. It presents a pull-down list of options:
+<ul>
+<li><em>&lt;none&gt;</em></li>
+<li><em>Charge</em> The total of energy used to recharge storage to be shown as an overlay on the chart; it provides an indication of how and when excess energy has been used for recharge. If a Target, e.g. Load, is chosen the target values will be added to the figure to indicate the use of excess energy above the target.</li>
+<li><em>Underlying load</em> If available underlying load will be displayed on the chart. Underlying load include the additional load met by Rooftop PV (DPV) rather than utility generation</li>
+</ul>
 </tr>
 <tr><td class="lr"><dfn>Title</dfn></td>
 <td class="none">Specify a title for the chart. There are two special strings which will be replaced in the title:
@@ -3268,6 +3347,12 @@ If it's not a diurnal chart (i.e. Period is <em>&lt;None&gt;</em>) any occurence
 <td class="none">Use this to set a suffix for Legend entries for spilled energy. If the field is blank no spilled energy labels will appear in the Legend (<em>spill_label</em>)</td></tr>
 <tr><td class="lr"><dfn>Show Grid</dfn></td>
 <td class="none">The gridlines to be included on the chart. Options are <em>Both</em>, <em>Horizontal</em>, <em>Vertical</em> and <em>None</em>. The default is <em>None</em> (<em>grid</em>)</td></tr>
+<tr><td class="lr"><div class="experiment"><dfn>Breakdowns</dfn></div></td>
+<td class="none"><div class="experiment">A TML Details worksheet breaks down RE generation into a number of categories. This option allows you to choose which categories to chart. You select those you wish to chart and drag them to the left hand column. To produce a chart that shows generation to meet load, charging of storage, and surplus you should drag <em>TML</em> and <em>Surplus</em> to the left hand column and drag <em>Charge &lt;battery&gt;</em> columns to the left hand Column Order above any other items. In producing the chart the first breakdown will have the normal colour for the technology while the others will have a translucent colour and possibly a pattern. This allows the breakdowns to be related by colour and yet distinguished by translucency. An example of options for plotting TML details might look something like this:
+<p>
+<img src="plot_tml.png" alt="TML Plot">
+</p>
+<p><strong>Note:</strong> After you create a TML Detail spreadsheet you need to open the spreadsheet and save it before it can be used.</div></td></tr>
 <tr><td class="lr"><dfn>Column Order</dfn></td>
 <td class="none">To produce the chart you select those columns to be included. This field consists of two tables (lists) of columns. Those in the left hand list will be included in the chart while those on the right will be excluded. The included columns will be charted in the chosen order. You can drag individual or a number of columns between the two lists to get the desired configuration. The chart colour for the column will be displayed as the background color for the column (<em>columns</em>)
 <div class="experiment">Contribution or Correlation will be performed between the target and each of the chosen columns</div></td></tr>
@@ -3409,6 +3494,12 @@ If it's not a diurnal chart (i.e. Period is <em>&lt;None&gt;</em>) any occurence
 </ul><p><a href="#help">Back to top</a></p>
 <h3 id="powermatch">Powermatch</h3>
 <p>Running the SIREN models will produce hourly generation figures which identify generation shortfalls and excesses against load (demand). One of the outputs from SIREN is a table of these generation shortfalls which could be met by storage (charged by surplus renewable generation) and dispatchable energy generation. The Powermatch (<code>powermatch</code>) component of SIREN can be used to match generation with demand (load) to quantify and cost this dispatchable energy generation, storage and CO<sub>2</sub>-e emissions. This enables you to complete a costed renewable energy scenario. If the input data spreadsheet has zones (of generation) the calculations will be performed for each zone.</p>
+<p><strong>A Note on Load.</strong>&nbsp;Load is a measure of demand on the electicity network. It can be grouped into two broad areas:
+<ul>
+<li>Operational Load, or simply Load, is the demand needed to be met by the (utility-scale) generators and storage on the network. This is the load that <code>Powermatch</code> meets using the proposed generators</li>
+<li>Underlying Load is Operational Load <u>plus</u> additional demand that is met by &ldquo;behind the meter&rdquo; generation such as Rooftop PV. <code>Powermatch</code> adds this generation both to generation by the network and generation to meet load. Thus, these generators have no shortfall or surplus. At present <stong>Batch</strong> doesn't handle Underlying load
+<br />Identification of underlying generation is via the <em>underlying</em> property of the <em>[Powermatch]</em> Section of the Preferences file. It is also possible to indicate a specific generator is operational rather than underlying via the <em>operational</em> property</li>
+</ul>
 <p>One of the outputs from Powermatch is calculated Levelised Cost figures for each Generator, LCOG, and Storage, LCOS, and an overall LCOE. The Levelised Costs are calculated based upon either Capital (Capex), Operations (Opex) and fuel costs or a Reference LCOE and Reference Capacity Factor (CF) for the generator or storage.
 Be aware that if a facility is not used it will have no costs associated with it (this is based upon the premise that the facility would not be included in any detailed modelling).
 Powermatch has three interpretations of levelised cost:
@@ -3418,6 +3509,36 @@ Powermatch has three interpretations of levelised cost:
 <li>LCOE with CO2 Cost. The average cost of electricity (LCOE) including carbon cost</li>
 </ol>
 <p><strong>Note:</strong> The SIREN Powermatch component was in part inspired by the Powerbalance worksheets developed by Ben Rose. For those who would prefer his spreadsheet approach an enhanced version, Powerbalance2, is available at <a href="https://cleanenergymodelling.com.au/powerbalance2/" target="_blank">https://cleanenergymodelling.com.au/powerbalance2/</a></p>
+<h4>Powermatch input (data) file formats</h4>
+<p>Powermatch has a number of input files which are generally in the form of a simple table stored in either a CSV or Excel (XLS or XLSX) file. Constraints, Generators and Optimisation tables can be stored as separate worksheets in the same Excel file (workbook). Further details on some of the file formats can be found below. The input files are:
+<table border="0", class="none" style="margin-left:35px">
+<tr class="none">
+<td class="none"><dfn>Constraints</dfn></td>
+<td class="none">A table of constraints on the performance of a generator, for example, the maximum discharge rate for a battery or the minimum capacity for a generator once it is turned on (lower operating limit). The columns in the table are described below. Each row contains details for a constraint</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>Generators</dfn></td>
+<td class="none">A table of generators and storage facilities providing details on costs, emissions, operating lifetime, and a pointer to the constraints on the facility. The columns in the table are described below. Each row contains details for a given facility (type), including the constraint for the facility as defined in the Constraints table</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>Optimisation</dfn></td>
+<td class="none">A table of optimisation inputs providing capacity ranges for each facility. The columns in the table are described below. Each row contains details for a Generator</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>Data</dfn></td>
+<td class="none">The input data of hourly load, capacities and hourly generation produced by the Powermodel component of SIREN. This is used with a dispatch order and the generators and constraints tables to calculate how hourly load can be met. This is in XLSX format</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>Batch</dfn></td>
+<td class="none">The first worksheet in the file gives a table of input capacities and report options as described above. The first column contains a list of Generators followed by the desired report details. Each subsequent column contains the details for a model. Each row contains capacity details for a Generator. The table can also have up to five &ldquo;header&rdquo; rows which will be copied to the output report worksheet</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>Dispatch Order</dfn></td>
+<td class="none">
+The order in which the dispatchable technologies will be processed by Powermatch. This is not a file, but one of the inputs in the <code>Powermatch</code> main menu</td>
+</tr>
+</table>
+<h4>Powermatch execution</h4>
 <p>The Powermatch options are as set out here. The options (Properties) are specified in the <a href="#p_pm">[Powermatch]</a> Section of the Preferences file. The associated property is indicated in brackets at the end of the description. All files are located in the SIREN Scenarios folder.</p>
 <table border="0" class="none" cellpadding="2">
 <tr><td class="top" style="width: 20%;"><dfn>Constraints File</dfn></td>
@@ -3443,16 +3564,16 @@ Powermatch has three interpretations of levelised cost:
 <tr><td class="lr"><dfn>Batch File</dfn></td>
 <td class="none">Filename for Batch option. Clicking on the field will allow you to choose another spreadsheet from the SIREN Scenarios folder (<em>batch_file</em>)</td></tr>
 <tr><td class="lr"><dfn>Replace Last</dfn></td>
-<td class="none">By checking this option you can choose to replace the latest Results and Charts worksheets when running the Batch option</td></tr>
+<td class="none">By checking this option when running a Batch report you can choose to replace the latest Results and Charts worksheets or an existing batch report workbook</td></tr>
 <tr><td class="lr"><dfn>Discount Rate</dfn></td>
 <td class="none">The default discount rate to be used if costs rather than a Reference LCOE are being used to calculate generation costs. <strong>Note:</strong> It is not uncommon to use WACC as a discount rate (<em>discount_rate</em>)</td></tr>
 <tr><td class="lr"><dfn>Carbon Price</dfn></td>
 <td class="none">If a carbon price is not included in LCOE figures you can use this option to set a carbon price between $0 and the maximum carbon price (<em>carbon_price_max</em>) (<em>carbon_price</em>)</td></tr>
 <tr><td class="lr"><dfn>Adjust Generators</dfn></td>
-<td class="none">If this option is checked you will be presented with a table to enable you to adjust the input capacity data for each generator technology. You can specify the required capacity or, if the <em>show_multipliers</em> property is set, a multiplier between 0 and the cap set by the <em>adjust_cap</em> property in the <a href="#power">[Power]</a> Section of the Preferences file; the default multiplier is 25. The original input values will be derived from the data sheet for renewables and the Generators table for dispatchable technologies. You can also <strong>Save</strong> and <strong>Restore</strong> the capacities to use again later or <strong>List</strong> saved capacities. With the list of saved capacities you can right-click on the desired list before you exit the list and capacities will be set to those values (<em>adjust_generators</em>)</td></tr>
+<td class="none">If this option is checked you will be presented with a table to enable you to adjust the input capacity data for each generator technology. You can specify the required capacity or, if the <em>show_multipliers</em> property is set, a multiplier between 0 and the cap set by the <em>adjust_cap</em> property in the <a href="#power">[Power]</a> Section of the Preferences file; the default multiplier is 25. The original input values will be derived from the data sheet for renewables and the Generators table for dispatchable technologies. If you have adjusted the capacities you can <strong>Reset</strong> the capacities or just <strong>Reset Load</strong>. You can also <strong>Save</strong> and <strong>Restore</strong> the capacities to use again later or <strong>List</strong> saved capacities. With the list of saved capacities you can right-click on the desired list before you exit the list and capacities will be set to those values. You can also <strong>Add to  Batch</strong> file. You press <strong>Proceed</strong> to execute <code>Powermatch</code>. (<em>adjust_generators</em>)</td></tr>
 <tr><td class="lr"><dfn>Dispatch Order</dfn></td>
 <td class="none">The order in which the dispatchable technologies will be processed by Powermatch. You can change the order by clicking on each value and moving it up and down the list. The initial order is derived from the generators (facilities) table. If you want to exclude a generator you can drag it to the right hand list (and drag it back to the left to re-include)</td></tr>
-<tr><td class="bottom"><strong>Done, Summary, Detail,<br />Batch, Optimise, Help</strong></td>
+<tr><td class="bottom"><strong>Done, Summary, Detail,<br />Batch, Optimise, Preferences,<br /> Help, TML Detail</strong></td>
 <td class="none">As well as the buttons beside the sheet options there are a number of buttons at the bottom of the menu, as described below:</td></tr>
 </table>
 <ul>
@@ -3496,6 +3617,8 @@ Powermatch has three interpretations of levelised cost:
 <tr><td class="none"><dfn>Static Variables</dfn></td><td class="none">The values for Carbon Price, Lifetime and default Discount Rate used for the execution. <strong>Note:</strong> Individual technologies may have different Discount Rates to the static value</td></tr>
 <tr><td class="none"><div class="experiment"<dfn>Correlation To Load</dfn></div></td><td class="none"><div class="experiment">If <em>show_correlation</em> is set there will be a number of additional lines giving a linear correlation between Load and three components used to meet Load - RE contribution, RE plus Storage (includes any minimum generation constraints), and the Total</td></div></tr>
 </table>
+<br />If there is Underlying generation the table will contain additional rows with the Underlying generation and present another set of additional figures
+<br />&nbsp;
 </li>
 <li><strong>Detail</strong>. Invoke Powermatch to produce a detailed spreadsheet of the Powermatch outputs. It provides detail on how demand was met for each hour of the year. If <em>save_tables</em> is set generators and constraints will be saved to spreadsheet. This option also produces a Summary worksheet as described above. This Detail worksheet allows for more detailed analysis on how each facility is utilised, for example, by using spreadsheet formulae:-
 <ul>
@@ -3526,8 +3649,9 @@ Powermatch has three interpretations of levelised cost:
 <tr><td class="none"><dfn>To Meet Load (MWh)<dfn></td><td class="none">How much generation or storage output was used to meet the load. It has rows for each non-RE generator, storage and a combined figure for RE</td></tr>
 <tr><td class="none"><dfn>Static Variables</dfn></td><td class="none">The values for Carbon Price, Lifetime and default Discount Rate used for the Model</td></tr>
 <tr><td class="none"><dfn>Data Sources<dfn></td><td class="none">Display the data sources used for the batch run (provides: Scenarios folder, Powermatch data file, Constraints worksheet and Facility worksheet)</td></tr>
-<tr><td class="none"><dfn>Optimisation Parameters<dfn></td><td class="none">If the model was added via Optimisation this will list the optimisation parameters used. This should be the last group entry</td></tr>
+<tr><td class="none"><dfn>Optimisation Parameters<dfn></td><td class="none">If the model was added via Optimisation this will list the optimisation parameters used. This should be the last entry (even below any Chart options)</td></tr>
 </table>
+<br />
 <dfn>Capacity (MW)</dfn> is required and must be the first entry. The other Report Groups can be <strong>in any order</strong>. <dfn>Carbon Price</dfn> allows you to input a different Carbon Price for each Model. <dfn>Discount Rate</dfn> allows you to input a different discount rate for each Model. If Carbon Price and/or Discount Rate are to be included they must appear immediately below the Total row for the Capacity inputs.
 <br />By default the resulting output will be appended as a new worksheet to the input file. You can create a new spreadsheet by setting the <em>batch_new_file</em> property to True
 <br />It is also possible to perform batch runs on zone data, but if so both the input data file and the batch file must have input capacities by zone. In this case the name for each facility identifies both the zone and technology in the form <em>zone.technology</em>.
@@ -3538,7 +3662,9 @@ Powermatch has three interpretations of levelised cost:
 <li><strong>Beware:</strong> If the batch input worksheet (capacity figures) contains formulae you need to be careful doing multiple batch executions. You may need to open the batch worksheet and save it before doing another batch execution.</li>
 <li>(in case you missed it). If you're modelling with zones both the input data file and the batch file must have input capacities by zone</li>
 <li>(At present) The same Load data is used for all models in a Batch execution</li>
+<li>At present Batch doesn't handle Underlying load</li>
 </ul>
+<br />
 </li>
 <li><strong>Optimise</strong>. Invoke the Optimise function. This will use an iterative approach to optimise the input generator capacities to produce a solution with (a) either a lower overall LCOE, (b) the lowest weight for six variables, or (c) both. It will complete by displaying a chart of how the value for LCOE has converged to a minimum, and either (if <em>optimise_multitable</em> and <em>more_details</em> are set) a three dimensional plot showing the three variables with the highest weightings or (if <em>optimise_multitable</em> is set) a table of all variables for the multi-variable approach. Depending on which options are specified you will be presented with a number of &ldquo;best picks&rdquo; where you can choose your preferred choice. This will then produce a summary table which will also contain details on the Optimisation parameters used. It will also update the adjustment values for each generator to enable you to produce a Powermatch spreadsheet. If you choose a solution this can be added to a batch input file (if <em>optimise_to_batch</em> is set).
 <ul>
@@ -3551,15 +3677,21 @@ Powermatch has three interpretations of levelised cost:
 <tr><td class="none"><dfn>Capacity (MW)<dfn></td><td class="none">&nbsp;</td></tr>
 <tr><td class="none"><dfn>Total<dfn></td><td class="none">&nbsp;</td></t&nbsp;r>
 <tr><td class="none"><dfn>To Meet Load (MWh)<dfn></td><td class="none">&nbsp;</td></tr>
-<tr><td class="none"><dfn>Optimisation Parameters<dfn></td><td class="none">If desired this should be the last group entry</td></tr>
+<tr><td class="none"><dfn>Optimisation Parameters<dfn></td><td class="none">If desired this should be the last entry (even below any Charts)</td></tr>
 </table>
 </ul>
 See below for more details on optimisation.</li>
+<li><strong>Preferences</strong>. Edit the Preferences file</li>
 <li><strong>Help</strong>. Display the Powermatch help</li>
 </ul>
+<div class="experiment">
+<ul>
+<li><strong>TML Detail</strong>. The detailed <strong>Detail</strong> spreadsheet produced by Powermatch contains generation figures for each RE technology but not how that generation has contributed &ldquo;to meet load&rdquo; and charge storage. This button will invoke a program, <a href="#pmtmldetail"><code>pmtmldetail</code></a>, that will create an additional workbook that has a worksheet that provides this additional detail. The file can be used as input to <a href="#powerplot"><code>powerplot</code></a>
+</ul>
+</div>
 <p>The Constraints, Generators and Optimisation tables can be edited, updated and saved and the revised table(s) used as inputs for the <strong>Summary</strong>, <strong>Powermatch</strong>, <strong>Batch</strong> and <strong>Optimise</strong> options. During the edit process the revised values can be exported as a new spreadsheet. If the table(s) is saved but not exported the revised values will not be available once Powermatch is exited. You can also choose another sheet, however, if the sheet you choose is not the correct format you may get unusual behaviour.</p>
 <h4>Generators</h4>
-<p>To address the shortfall in generation encountered by a renewable scenario other dispatchable generation and storage facilities can be used. These are defined in a Generators table. The Generators table can also be used to define the Reference <em>LCOE</em> and <em>LCOE CF</em> figures for Renewable technologies. The dispatchable facilities are dispatched after renewable generators. The fields are:
+<p>To address the shortfall in generation encountered by a renewable scenario other dispatchable generation and storage facilities can be used. These are defined in a Generators table. The Generators table is also used to define the Reference <em>LCOE</em> and <em>LCOE CF</em> figures for Renewable technologies. The dispatchable facilities are dispatched after renewable generators. The fields are:
 <table border="0" class="none" style="margin-left:35px">
 <tr><td class="none"><dfn>Name (*)</dfn></td><td class="none">Name of the Facility</td></tr>
 <tr><td class="none"><dfn>Capacity (*)</dfn></td><td class="none">The capacity for the facility in MW for generators and MWh, that is total energy content, for storage</td></tr>
@@ -3768,30 +3900,6 @@ If the best and worse values are the same for a variable and that value is not a
 <li>Optionally, present a table for the optimal solutions (<em>optimise_multitable</em>; default is False). The table shows the adjustment values and capacity for each generator followed by the estimated value for each of the six multi-variables prioritised by Weight. By pressing the appropriate button the adjustment values for the chosen solution will be made available for <strong>Summary</strong> and <strong>Powermatch</strong></li>
 </ol>
 </div>
-<h4>Powermatch input file formats</h4>
-<p>Powermatch has a number of input files which are generally in the form of a simple table stored in either a CSV or Excel (XLS or XLSX) file. Constraints, Generators and Optimisation tables can be stored as separate worksheets in the same Excel file (workbook). Further details on some of the file formats can be found above. The input files are:
-<table border="0", class="none" style="margin-left:35px">
-<tr class="none">
-<td class="none"><dfn>Constraints</dfn></td>
-<td class="none">A table of constraints. The columns in the table are described above. Each row contains details for a constraint</td>
-</tr>
-<tr class="none">
-<td class="none"><dfn>Generators</dfn></td>
-<td class="none">A table of generators and storage facilities. The columns in the table are described above. Each row contains details for a given facility (type), including the constraint for the facility as defined in the Constraints table</td>
-</tr>
-<tr class="none">
-<td class="none"><dfn>Optimisation</dfn></td>
-<td class="none">A table of optimisation inputs. The columns in the table are described above. Each row contains details for a Generator</td>
-</tr>
-<tr class="none">
-<td class="none"><dfn>Data</dfn></td>
-<td class="none">The input data of capacities and hourly generation produced by Powermodel. This is in XLSX format</td>
-</tr>
-<tr class="none">
-<td class="none"><dfn>Batch</dfn></td>
-<td class="none">The first worksheet in the file gives a table of input capacities and report options as described above. The first column contains a list of Generators followed by the desired report details. Each subsequent column contains the details for a model. Each row contains capacity details for a Generator. The table can also have up to five &ldquo;header&rdquo; rows which will be copied to the output report worksheet</td>
-</tr>
-</table>
 <h4>Minimal Preferences file for Powermatch</h4>
 <p>It is possible to run <code>powermatch</code> with a minimal Preferences file. If you have a Powermatch data file produced from SIREN you can use that as an input to Powermatch without having access to the full set of SIREN files. As well as the <a href="#p_pm">[Powermatch]</a> Section of the Preferences file the only properties required are:
 <ul>
@@ -3801,6 +3909,39 @@ If the best and worse values are the same for a variable and that value is not a
 <li>[Windows] <em>restorewindows</em> property to turn remember the window layout of the Powermatch main window</li>
 <li>If you want to use <code>powerplot</code> and have access to the same colours, periods, and seasons as the main Preferences file then you might also want the appropriate properties from the [Colors], [Power] and [Powerplot] Sections and the [Map] <em>map_choice</em> property</li>
 </ul>
+<p><a href="#help">Back to top</a></p>
+<div class="experiment">
+<h4 id="pmtmldetail"><u>pmtmldetail</u></h4>
+<p><code>pmtmldetail</code> is a small utility that will take a <code>powermatch</code> Detail worksheet and create a new worksheet that contains additional detail on the breakdown of generation for RE technology. The utility will breakdown hourly generation into four categories:
+<ol>
+<li>Generation. The original Generation figure as presented in the Detail worksheet</li>
+<li>TML. How much generation was used to meet load</li>
+<li>Charge. How much generation was used to recharge storage</li>
+<li>Surplus. Surplus or spilled generation</li>
+</ol>
+<p>The utility adds an additional row, <em>Split</em>, at the top of the worksheet to indicate which category the RE generation relates to. No changes are made to non_RE generation.
+<br /><strong>Note:</strong> You need to open the spreadsheet and save it before it can be used by <a href="#powerplot"><code>powerplot</code></a>.</p>
+<p>The program displays a window of options.</p>
+<p></p>
+<table border="0" class="none">
+<tr><td class="top" style="width: 20%;"><dfn>Results File</dfn></td>
+<td class="none">The input Powermatch Results file</td></tr>
+<tr><td class="lr"><dfn>Results Sheet</dfn></td>
+<td class="none">The Detail worksheet from the file</td></tr>
+<tr><td class="lr"><dfn>Tml Detail File</dfn></td>
+<td class="none">the name of the target file to contain the TML Detail worksheet</td></tr>
+<tr><td class="bottom"><strong>Done, TML Detail,<br />Preferences, Help</strong></td>
+<td class="none">At the bottom of the window are a number of buttons:
+<ul>
+<li><strong>Done</strong> Exit the program and save the input values. Preferences are saved in the [Powermatch] section of the Preferences</li>
+<li><strong>TML Detail</strong> Produce the detailed worksheet</li>
+<li><strong>Preferences</strong>. Edit the Preferences file</li>
+<li><strong>Help</strong>. Display the pmtmldetail help</li>
+</ul>
+</td></tr>
+</table>
+<p></p>
+</div>
 <p><a href="#help">Back to top</a></p>
 <h3 id="resourcegrid">Resource Grids</h3>
 <p>To assist with placement of renewable energy stations SIREN can display a grid of renewable resource attributes derived from the SAM weather files. The grid can be displayed by invoking the <em>Show Resource Grid</em> (Ctrl+B) menu option. The Resource Overlay menu presented has the following fields:</p>
@@ -3922,7 +4063,7 @@ Scale of the chart in the cell. A value of 1 fills the cell(<em>plot_scale</em>)
 <p><a href="#help">Back to top</a></p>
 <h2 id="files">SIREN File Formats</h2>
 <p>SIREN accepts a number of file formats for each of the data files it uses. In many cases input files can be either a CSV or Excel (XLS or XLSX) file. Due to the initial source for each data file the format for each may be different. For CSV and Excel files the first cell for each column is usually taken as the column name.</p>
-<p><strong>Note:</strong> Other than the Powermatch file, all Excel files output by SIREN are currently in XLS format (XLSX files require a different Python library to create them).</p>
+<p><strong>Note:</strong> Other than the Powermatch file, all Excel files output by SIREN are currently in XLS format (XLSX files require a different Python library to create them). Powermatch itself produces XLSX files.</p>
 <p>The files and formats are as follow:</p>
 <table border="0", class="none" style="margin-left:35px">
 <tr class="none">
@@ -4251,7 +4392,7 @@ You can alternate between these approaches to choose the desired area. If you ha
 <br />
 <strong>Note:</strong> The behaviour of the bounding coordinates fields are a little quirky in that they will adjust themselves so the west (left) value is always west of the east value and the north (upper) value is always higher than the south value
 </li>
-<li><em>Grid</em>. The size of the desired grid latitude and longitude. These can be in increments of 0.25 degrees up to a mximum of 3 degrees</li>
+<li><em>Grid</em>. The size of the desired grid latitude and longitude. These can be in increments of 0.25 degrees up to a maximum of 3 degrees</li>
 <li><em>Start month</em>. The first month to be downloaded. The CDS API is flexible on the range of dates that can be requested. For pragmatic purposes <code>getera5</code> requests data as a range of months</li>
 <li><em>End month</em>. The last month to be downloaded. If a Start month of 1 and an End month of 12 is chosen the program will request a year of data as a single file</li>
 <li><em>Target Folder</em>. Use this to specify the location for the ERA5 files. To change the location you need to click on the field and navigate to the correct folder (you can't type into the field)</li>
@@ -4520,7 +4661,7 @@ NASA MERRA-2 data allows weather files to be created on a grid of 0.625 degree o
 <li><em>Solar Format</em>. The solar option can produce weather files in either of two formats - SMW or CSV format. This option allows you to choose your preferred one. SMW format is suitable for SAM while it may have trouble with the CSV format</li>
 <li><em>Solar Variable</em>. There are two MERRA-2 solar variables to use to create weather files - <em>swgdn</em> or <em>swgnt</em>. The equivalent ERA5 variables are - <em>ssrd</em> and <em>ssr</em></li>
 <li><em>Hub height</em>. To extrapolate wind data above the 50 metre maximum in the MERRA-2 data, or 100 metres in ERA5 data. This can be used to cater for wind turbines with higher hub heights. SAM's <em>windpower</em> model expects wind data within 35 metres of the hub height.
-<br /><strong>Note</strong>: SIREN can dynamically extrapolate wind data when running Powermodel so if using SIREN theer is no need to produce extrapolated wind data</li>
+<br /><strong>Note</strong>: SIREN can dynamically extrapolate wind data when running Powermodel so if using SIREN there is no need to produce extrapolated wind data</li>
 <li>Extrapolation will use the chosen <em>law</em>, either <em>logarithmic</em>, the default, or <em>Hellmann</em> as described below</li>
 <li><em>Coordinates</em>. Rather than producing weather files for each grid cell in the chosen area you can restrict it by passing a string of comma-separated latitude and longitude values. The tool will then generate files for just these coordinates.
 <ul>
@@ -4829,7 +4970,7 @@ MERRA-2 Variables
 <p>&ldquo;ERA5 is the fifth generation ECMWF reanalysis for the global climate and weather for the past 8 decades. Data is available from 1940 onwards. ERA5 replaces the ERA-Interim reanalysis.
 <br />Reanalysis combines model data with observations from across the world into a globally complete and consistent dataset using the laws of physics. ... Reanalysis does not have the constraint of issuing timely forecasts, so there is more time to collect observations, and when going further back in time, to allow for the ingestion of improved versions of the original observations, which all benefit the quality of the reanalysis product.&rdquo;</p>
 <ul>
-<li>I interpret each grid is centred on the latitude / longitude for that set of variables, that is, the value extends outwards in all directions from that point. The actual data is point values at the grid point (refer <a href="https://confluence.ecmwf.int/display/CKB/ERA5%3A+What+is+the+spatial+reference" target="_blank">Visualisation of regular lat/lon data</a>) so the data points are 0.125 of a degree out</li>
+<li>I interpret each grid is centred on the latitude / longitude for that set of variables, that is, the value extends outwards in all directions from that point. The actual data is point values at the ERA5 grid point (refer <a href="https://confluence.ecmwf.int/display/CKB/ERA5%3A+What+is+the+spatial+reference" target="_blank">Visualisation of regular lat/lon data</a>) so the grids are equally spaced around a data point</li>
 </ul>
 <h4 id="merra7">Background on MERRA-2</h4>
 <p>&ldquo;The Modern Era Retrospective-analysis for Research and Applications, Version 2 (MERRA-2) is a NASA atmospheric data reanalysis for the satellite era using a major new version of the Goddard Earth Observing System Data Assimilation System Version 5 (GEOS-5). MERRA-2 focuses on historical analyses of the hydrological cycle on a broad range of weather and climate time scales, and places the NASA EOS suite of observations in a climate context.&rdquo;</p>
@@ -5311,6 +5452,8 @@ MERRA-2 Variables
 <div class="experiment">
 <h3 id="nonsam">Other Models used by SIREN (experimental)</h3>
 <p>SIREN will support models to accommodate other technologies not supported by SAM models. As well as this it is possible to provide a list of generation figures for a Station using the <em>Power File</em> field (see <a href="#stations">Stations</a>).
+<h4>BESS (Battery)</h4>
+<p>This is currently a &ldquo;placeholder&rdquo; for battery energy storage systems</p>
 <h4>Hydro</h4>
 <p>The Hydro model used in SIREN is a very simplistic model computed by multiplying station capacity by the defined capacity factor for Hydro.</p>
 <h4>Wave</h4>
@@ -5693,6 +5836,8 @@ MERRA-2 Variables
 <td class="none">Australian Energy Market Operator. Responsible for operating the WEM</td></tr>
 <tr><td class="none"><dfn>API</dfn></td>
 <td class="none">Application Programming Interface</td></tr>
+<tr><td class="none"><dfn>BESS</dfn></td>
+<td class="none">Battery Energy Storage System</td></tr>
 <tr><td class="none"><dfn>BOM</dfn></td>
 <td class="none">Australian Bureau of Meteorology</td></tr>
 <tr><td class="none"><dfn>CF</dfn></td>
@@ -5709,6 +5854,8 @@ MERRA-2 Variables
 <td class="none">Diffuse Horizontal Irradiance</td></tr>
 <tr><td class="none"><dfn>DNI</dfn></td>
 <td class="none">Direct Normal Irradiance</td></tr>
+<tr><td class="none"><dfn>DPV</dfn></td>
+<td class="none">Distributed, or Distribution network-connected, Solar Photovoltaic (aka Rooftop PV)</td></tr>
 <tr><td class="none"><dfn>DSCR</dfn></td>
 <td class="none">Debt-Service Coverage Ratio</td></tr>
 <tr><td class="none"><dfn>ECMWF</dfn></td>
@@ -5839,5 +5986,6 @@ MERRA-2 Variables
 <td class="none">Extensible Markup Language. A markup language that defines a set of rules for encoding documents in a format which is both human-readable and machine-readable.</td></tr>
 </table>
 <p><a href="#help">Back to top</a></p>
+<a style="position: fixed; top:2px;right:2px;" href="#" title="Back to Top"><img style="border: none;" src="sen_icon32.png"/></a>
 </body>
 </html>
