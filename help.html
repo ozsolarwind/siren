@@ -1924,9 +1924,8 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 </table>
 </div>
-</td></tr>
 <tr class="none" id="p_pp"><td><dfn><strong>[Powerplot]</strong></dfn></td>
-<td>Options for <a href="#powerplot">Powerplot</a>. Properties for individual files (columns, file, grid, maximum, percentage, period, chart (plot), sheet, spill_label, target, and title; marked with an asterisk, &ast;, below) can be repeated a number of times to allow a history of recent files to be accessed. These are suffixed with a number. Properties are as follows:</p>
+<td>Options for <a href="#powerplot">Powerplot</a>. Properties for individual files (e.g. columns; marked with an asterisk, &ast;, below) can be repeated a number of times to allow a history of recent files to be accessed. These are suffixed with a number. Properties are as follows:</p>
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><dfn>alpha</dfn></td>
@@ -1945,8 +1944,20 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">Add a colorbar to a Heat map. This gives a scale to what the colours represent. The default is True. If the colorbar is displayed it is possible to display additional values to indicate the minimum and maximum value encountered by setting <dfn>cbar2</dfn> to True.</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>cbar2</dfn></td>
+<td class="none">See <dfn>cbar</dfn></td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>columns (&ast;)</dfn></td>
 <td class="none">List (and order) for columns to be charted</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>constrained_layout</dfn></td>
+<td class="none">Use a constrained layout. This minimises whitespace. The default is False.</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>cperiod (&ast;)</dfn></td>
+<td class="none">Chosen end period for diurnal chart</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>file (&ast;)</dfn></td>
@@ -1980,6 +1991,14 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">Include an overlay (either of storage recharge or underlying load) on the chart</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>overlay_style (&ast;)</dfn></td>
+<td class="none">Define the style for the overlay line. The default is dotted</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>overlay_width (&ast;)</dfn></td>
+<td class="none">Define the width for the overlay line. The default is 1.5</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>palette</dfn></td>
 <td class="none">Invoke the Colours editor to create a palette of colours for selected columns. Default is True</td>
 </tr>
@@ -1999,17 +2018,47 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none"><dfn>select_day</dfn></td>
 <td class="none">If set to True, add menu options to produce a diurnal chart for a single day. Default is False</td>
 </tr>
+</table>
+<div class="experiment">
+<table border="0", class="none">
 <tr class="none">
-<td class="none"><dfn>sheet (&ast;)</dfn></td>
+<td class="none"><dfn>plot_12</dfn>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td class="none">This property provides a capability to produce wide charts to enable 12 monthly charts to fit on a page (e.g. A4) in portrait format. The default is False</td>
+</table>
+</div>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>sheet (&ast;)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</dfn></td>
 <td class="none">Worksheet name for chart</td>
 </tr>
+</table>
+<div class="experiment">
+<table border="0", class="none">
 <tr class="none">
-<td class="none"><dfn>spill_label (&ast;)</dfn></td>
+<td class="none"><dfn>short_legend</dfn>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td class="none">If a TML Detail file with Breakdowns is plotted it is possible to produce a shorter legend by setting this property to True. This shorter legend aids in readibility of the plot by shortening the length of the legend. The default is False</td>
+</table>
+</div>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>spill_label (&ast;)</dfn>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
 <td class="none">Suffix for Legend entries for spilled energy. Default is no entry</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>suptitle (&ast;)</dfn></td>
+<td class="none">Chart header</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>target (&ast;)</dfn></td>
 <td class="none">Target column (e.g. Load) or <em>none</em> if no target</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>target_style (&ast;)</dfn></td>
+<td class="none">Define the style for the target line. The default is solid</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>target_width (&ast;)</dfn></td>
+<td class="none">Define the width for the target line. The default is 2.5</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>title (&ast;)</dfn></td>
@@ -3318,8 +3367,10 @@ The program displays a window of options. The default values are specified in th
 <td class="none">A pull-down list to enable you to choose the desired worksheet (<em>sheet</em>)</td></tr>
 <tr><td class="lr"><dfn>Period(s)</dfn></td>
 <td class="none">A pull-down list for a full year, a month or other defined seasons or periods that may be defined in the Preferences file. If an option other than <em>&lt;None&gt;</em> is chosen the resulting chart will present an average diurnal chart for the chosen period (<em>period</em>). If the first period is a month a second pull-down list allows you to choose an ending month range. This can either be a later month in the year or, if earlier than the first value, months will wrap to the start of the year. For example, Period 1 of Nov and Period 2 of Feb will correlate Nov, Dec, Jan and Feb (<em>period2</em>)</td></tr>
-<tr><td class="lr"><dfn>Target</dfn></td>
-<td class="none">A pull-down list of column names. If the chart is intended to show how the chosen columns meet a target column, typically Load, this enables you to choose that column. Choosing <em>&lt;None&gt;</em> means no target field. If a target field is chosen the chart will show excess generation as lightly shaded areas above the target values (<em>target</em>)
+<tr><td class="lr"><dfn>Day</dfn></td>
+<td class="none">Produce a diurnal chart for a chosen day of the chosen period</td></tr>
+<tr><td class="lr"><dfn>Target; line width and style</dfn></td>
+<td class="none">A pull-down list of column names. If the chart is intended to show how the chosen columns meet a target column, typically Load, this enables you to choose that column. Choosing <em>&lt;None&gt;</em> means no target field. If a target field is chosen the chart will show excess generation as lightly shaded areas above the target values (<em>target</em>). You can also specify an alternate line width (<em>target_width</em>) and line style (<em>target_style</em>)
 <div class="experiment">A target is required for Contribution and Correlation</div></td></tr>
 <tr><td class="lr"><dfn>Overlay</dfn></td>
 <td class="none">This option allows an overlay on the chart. It presents a pull-down list of options:
@@ -3328,7 +3379,8 @@ The program displays a window of options. The default values are specified in th
 <li><em>Charge</em> The total of energy used to recharge storage to be shown as an overlay on the chart; it provides an indication of how and when excess energy has been used for recharge. If a Target, e.g. Load, is chosen the target values will be added to the figure to indicate the use of excess energy above the target.</li>
 <li><em>Underlying load</em> If available underlying load will be displayed on the chart. Underlying load include the additional load met by Rooftop PV (DPV) rather than utility generation</li>
 </ul>
-</tr>
+You can also specify an alternate line width (<em>overlay_width</em>) and line style (<em>overlay_style</em>)
+</td></tr>
 <tr><td class="lr"><dfn>Title</dfn></td>
 <td class="none">Specify a title for the chart. There are two special strings which will be replaced in the title:
 <ul>
@@ -3348,7 +3400,7 @@ If it's not a diurnal chart (i.e. Period is <em>&lt;None&gt;</em>) any occurence
 <tr><td class="lr"><dfn>Show Grid</dfn></td>
 <td class="none">The gridlines to be included on the chart. Options are <em>Both</em>, <em>Horizontal</em>, <em>Vertical</em> and <em>None</em>. The default is <em>None</em> (<em>grid</em>)</td></tr>
 <tr><td class="lr"><div class="experiment"><dfn>Breakdowns</dfn></div></td>
-<td class="none"><div class="experiment">A TML Details worksheet breaks down RE generation into a number of categories. This option allows you to choose which categories to chart. You select those you wish to chart and drag them to the left hand column. To produce a chart that shows generation to meet load, charging of storage, and surplus you should drag <em>TML</em> and <em>Surplus</em> to the left hand column and drag <em>Charge &lt;battery&gt;</em> columns to the left hand Column Order above any other items. In producing the chart the first breakdown will have the normal colour for the technology while the others will have a translucent colour and possibly a pattern. This allows the breakdowns to be related by colour and yet distinguished by translucency. An example of options for plotting TML details might look something like this:
+<td class="none"><div class="experiment">A TML Details worksheet breaks down RE generation into a number of categories. This option allows you to choose which categories to chart. You select those you wish to chart and drag them to the left hand column. To produce a chart that shows generation to meet load, charging of storage, and surplus you should drag <em>TML</em> and <em>Surplus</em> to the left hand column and drag <em>Charge &lt;battery&gt;</em> columns to the left hand Column Order above any other items. In producing the chart the first breakdown will have the normal colour for the technology while the others will have a translucent colour and possibly a pattern. This allows the breakdowns to be related by colour and yet distinguished by translucency. To aid in readability it is possible to produce a shorter legend that removes the breakdowns entries by setting the property <em>short_legend</em> property in the [Powerplot] section of the Preferences file to True. An example of options for plotting TML details might look something like this:
 <p>
 <img src="plot_tml.png" alt="TML Plot">
 </p>
@@ -3362,7 +3414,7 @@ If it's not a diurnal chart (i.e. Period is <em>&lt;None&gt;</em>) any occurence
 <li><strong>Done</strong> Exit the program and save the input values. Input preferences and colours are either saved in a SIREN preferences file or in a specific file, <em>powerplot.ini</em>, if no Peferences file is passed to the program</li>
 <li><strong>Plot</strong> Produce the chart. If there are missing colours you will be taken to the Colours window to add the colour. You need to set a colour and press the Save &amp; Exit button</li>
 <li><strong>Colours</strong> Press this button to change the chart colours or to add new colours. You can remove a chart colour by right-clicking the colour (it will be cleared and the item deleted when you Save &amp; Exit). Colours are held in the [Plot Colors] Section of the Preferences file.
-<br />If the palette property in the [Plot Colors] Section of the Preferences file is set to True you can create a palette sequence of colours for columns selected in both the included and excluded lists. If you select columns and then press the <strong>Colours</strong> button you will be given the option to set a starting and ending palette colour and the colours for the chosen columns will be updated to a range of colours between the chosen values</li>
+<br />If the <em>palette</em> property in the [Plot Colors] Section of the Preferences file is set to True you can create a palette sequence of colours for columns selected in both the included and excluded lists. If you select columns and then press the <strong>Colours</strong> button you will be given the option to set a starting and ending palette colour and the colours for the chosen columns will be updated to a range of colours between the chosen values</li>
 <li><div class="experiment">
 <strong>Co...</strong> Perform either an analysis of contribution or correlation to a target. These options are presented by setting either the <em>show_contribution</em> or <em>show_correlation</em> Property of the <a href="#p_pm">[Powermatch]</a> section of the Preferences file to True. If both properties are set <em>show_contribution</em> takes precedence.<br/>
 <p><strong>Contribution</strong> Calculate the percentage contribution of each chosen column in meeting the target. This will present a table showing the percentage contribution for each month in the chosen period.</p>
@@ -3370,7 +3422,9 @@ If it's not a diurnal chart (i.e. Period is <em>&lt;None&gt;</em>) any occurence
 <p>Correlation coefficients whose magnitude are between 0.9 and 1.0 indicate variables which can be considered <strong>very highly correlated</strong>. Correlation coefficients whose magnitude are between 0.7 and 0.9 indicate variables which can be considered <strong>highly correlated</strong>. Correlation coefficients whose magnitude are between 0.5 and 0.7 indicate variables which can be considered <strong>moderately correlated</strong>. Correlation coefficients whose magnitude are between 0.3 and 0.5 indicate variables which have a <strong>low correlation</strong>. Correlation coefficients whose magnitude are less than 0.3 have little if any (linear) correlation (from <a href="https://www.andrews.edu/~calkins/math/edrm611/edrm05.htm" target="_blank">https://www.andrews.edu/~calkins/math/edrm611/edrm05.htm</a>).</p>
 </div></li>
 <li><strong>Help</strong> Display the help for Powerplot</li>
-</ul>
+<li><div class="experiment">
+<strong>Plot 12</strong> If <em>plot_12</em> is set an additional button is presented to allow wide and low_height graphs to be produced. This allows monthly charts to be produced to fit on a page (e.g. A4) in portrait format. The individual charts can be produced using plot navigation (<em>m</em>), saved and then inserted into a page
+</div></li></ul>
 </td></tr>
 </table>
 <p>&nbsp;</p>

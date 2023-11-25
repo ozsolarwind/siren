@@ -41,6 +41,7 @@ from getmodels import getModelFile
 from senutils import ClickableQLabel, getParents, getUser, ListWidget, strSplit, techClean, WorkBook
 from zoompan import ZoomPanX
 
+mth_labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 col_letters = ' ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 def ss_col(col, base=0):
     if base == 1:
@@ -148,7 +149,6 @@ class PowerPlot(QtWidgets.QWidget):
                 self.colours[itm] = colour
         except:
             pass
-        mth_labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
         ifile = ''
         isheet = ''
         columns = []
@@ -186,6 +186,7 @@ class PowerPlot(QtWidgets.QWidget):
         self.show_contribution = False
         self.show_correlation = False
         self.select_day = False
+        self.plot_12 = False
         self.short_legend = ''
         ifiles = {}
         try:
@@ -225,6 +226,9 @@ class PowerPlot(QtWidgets.QWidget):
                 elif key == 'palette':
                     if value.lower() in ['false', 'no', 'off']:
                         self.palette = False
+                elif key == 'plot_12':
+                    if value.lower() in ['true', 'yes', 'on']:
+                        self.plot_12 = True
                 elif key == 'select_day':
                     if value.lower() in ['true', 'yes', 'on']:
                         self.select_day = True
@@ -324,7 +328,7 @@ class PowerPlot(QtWidgets.QWidget):
         self.grid.addWidget(QtWidgets.QLabel('Target:'), rw, 0)
         self.targets = QtWidgets.QComboBox()
         self.grid.addWidget(self.targets, rw, 1, 1, 2)
-        self.grid.addWidget(QtWidgets.QLabel('(e.g. Load)    Width:'), rw, 3)
+        self.grid.addWidget(QtWidgets.QLabel('(e.g. Load)    Width: / Style'), rw, 3)
         self.tgtSpin = QtWidgets.QDoubleSpinBox()
         self.tgtSpin.setDecimals(1)
         self.tgtSpin.setRange(1., 4.)
@@ -433,7 +437,11 @@ class PowerPlot(QtWidgets.QWidget):
         self.files.currentIndexChanged.connect(self.targetChanged)
         self.sheet.currentIndexChanged.connect(self.sheetChanged)
         self.targets.currentIndexChanged.connect(self.targetChanged)
+        self.tgtSpin.valueChanged.connect(self.somethingChanged)
+        self.tgtLine.currentIndexChanged.connect(self.somethingChanged)
         self.overlays.currentIndexChanged.connect(self.overlayChanged)
+        self.ovrSpin.valueChanged.connect(self.somethingChanged)
+        self.ovrLine.currentIndexChanged.connect(self.somethingChanged)
         self.suptitle.textChanged.connect(self.somethingChanged)
         self.title.textChanged.connect(self.somethingChanged)
         self.maxSpin.valueChanged.connect(self.somethingChanged)
@@ -475,6 +483,11 @@ class PowerPlot(QtWidgets.QWidget):
         self.grid.addWidget(help, rw, 5)
         help.clicked.connect(self.helpClicked)
         QtWidgets.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
+        if self.plot_12:
+            rw += 1
+            pp12 = QtWidgets.QPushButton('Plot 12', self)
+            self.grid.addWidget(pp12, rw, 1)
+            pp12.clicked.connect(self.ppClicked)
         frame = QtWidgets.QFrame()
         frame.setLayout(self.grid)
         if self.select_day:
@@ -687,6 +700,8 @@ class PowerPlot(QtWidgets.QWidget):
         self.setup[0] = False
 
     def periodChanged(self):
+        if self.period.currentText() not in mth_labels:
+            self.cperiod.setCurrentIndex(0)
         if self.select_day:
             self.adaylbl.setText('(Diurnal profile for a day of ' + self.period.currentText() + ')')
         if not self.setup[0]:
@@ -1108,8 +1123,15 @@ class PowerPlot(QtWidgets.QWidget):
                 return
         del config
         self.log.setText('')
-        ## to get 12 months on a page
-        # matplotlib.rcParams['figure.figsize'] = [18, 2.2]
+        do_12 = False
+        do_12_labels = None
+        try:
+            if self.sender().text() == 'Plot 12':
+                do_12 = True
+                do_12_save = matplotlib.rcParams['figure.figsize']
+                do_12_labels = mth_labels[:]
+        except:
+            pass
         i = self.file.text().rfind('/')
         if i > 0:
             matplotlib.rcParams['savefig.directory'] = self.file.text()[:i + 1]
@@ -1165,7 +1187,6 @@ class PowerPlot(QtWidgets.QWidget):
         the_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
         if self.leapyear: #rows == 8784: # leap year
             the_days[1] = 29
-        mth_labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
         hr_labels = ['0:00', '4:00', '8:00', '12:00', '16:00', '20:00', '23:00']
         figname = self.plottype.currentText().lower().replace(' ','') + '_' + str(year)
         breakdowns = []
@@ -1318,6 +1339,9 @@ class PowerPlot(QtWidgets.QWidget):
                 except:
                     self.log.setText('Data error with ' + self.overlay + '. Try opening and saving worksheet')
                     return
+            if do_12:
+                ## to get 12 months on a page
+                matplotlib.rcParams['figure.figsize'] = [18, 2.2]
             if self.plottype.currentText() == 'Line Chart':
                 fig = plt.figure(figname, constrained_layout=self.constrained_layout)
                 if suptitle != '':
@@ -1348,13 +1372,14 @@ class PowerPlot(QtWidgets.QWidget):
                           prop=lbl_font)
                 plt.ylim([miny, maxy])
                 plt.xlim([0, len(x)])
-                xticks = list(range(0, len(x), self.interval * days_per_label))
-                lc1.set_xticks(xticks)
-                lc1.set_xticklabels(day_labels[:len(xticks)], rotation='vertical')
-                lc1.set_xlabel('Period')
+                if not do_12:
+                    xticks = list(range(0, len(x), self.interval * days_per_label))
+                    lc1.set_xticks(xticks)
+                    lc1.set_xticklabels(day_labels[:len(xticks)], rotation='vertical')
+                    lc1.set_xlabel('Period')
                 lc1.set_ylabel('Power (MW)') # MWh?
                 zp = ZoomPanX()
-                f = zp.zoom_pan(lc1, base_scale=1.2, flex_ticks=flex_on) # enable scrollable zoom
+                f = zp.zoom_pan(lc1, base_scale=1.2, flex_ticks=flex_on, mth_labels=do_12_labels) # enable scrollable zoom
                 plt.show()
                 del zp
             elif self.plottype.currentText() in ['Cumulative', 'Step Chart']:
@@ -1368,7 +1393,8 @@ class PowerPlot(QtWidgets.QWidget):
                 if gridtype != '':
                     plt.grid(axis=gridtype)
                 cu1 = plt.subplot(111)
-                plt.title(titl)
+                if not do_12:
+                    plt.title(titl)
                 if self.percentage.isChecked():
                     totals = [0.] * len(x)
                     bottoms = [0.] * len(x)
@@ -1489,13 +1515,13 @@ class PowerPlot(QtWidgets.QWidget):
                 cu1.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 2), prop=lbl_font)
                 plt.ylim([miny, maxy])
                 plt.xlim([0, len(x)])
-                xticks = list(range(0, len(x), self.interval * days_per_label))
-                cu1.set_xticks(xticks)
-                ## to make 12 months to a page be presentable comment out next two lines
-                cu1.set_xticklabels(day_labels[:len(xticks)], rotation='vertical')
-                cu1.set_xlabel('Period')
+                if not do_12:
+                    xticks = list(range(0, len(x), self.interval * days_per_label))
+                    cu1.set_xticks(xticks)
+                    cu1.set_xticklabels(day_labels[:len(xticks)], rotation='vertical')
+                    cu1.set_xlabel('Period')
                 zp = ZoomPanX()
-                f = zp.zoom_pan(cu1, base_scale=1.2, flex_ticks=flex_on) # enable scrollable zoom
+                f = zp.zoom_pan(cu1, base_scale=1.2, flex_ticks=flex_on, mth_labels=do_12_labels) # enable scrollable zoom
                 plt.show()
                 del zp
             elif self.plottype.currentText() == 'Bar Chart':
@@ -1505,7 +1531,8 @@ class PowerPlot(QtWidgets.QWidget):
                 if gridtype != '':
                     plt.grid(axis=gridtype)
                 bc1 = plt.subplot(111)
-                plt.title(titl)
+                if not do_12:
+                    plt.title(titl)
                 if self.percentage.isChecked():
                     miny = 0
                     totals = [0.] * len(x)
@@ -1559,12 +1586,13 @@ class PowerPlot(QtWidgets.QWidget):
                 bc1.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 2), prop=lbl_font)
                 plt.ylim([miny, maxy])
                 plt.xlim([0, len(x)])
-                xticks = list(range(0, len(x), self.interval * days_per_label))
-                bc1.set_xticks(xticks)
-                bc1.set_xticklabels(day_labels[:len(xticks)], rotation='vertical')
-                bc1.set_xlabel('Period')
+                if not do_12:
+                    xticks = list(range(0, len(x), self.interval * days_per_label))
+                    bc1.set_xticks(xticks)
+                    bc1.set_xticklabels(day_labels[:len(xticks)], rotation='vertical')
+                    bc1.set_xlabel('Period')
                 zp = ZoomPanX()
-                f = zp.zoom_pan(bc1, base_scale=1.2, flex_ticks=flex_on) # enable scrollable zoom
+                f = zp.zoom_pan(bc1, base_scale=1.2, flex_ticks=flex_on, mth_labels=do_12_labels) # enable scrollable zoom
                 plt.show()
                 del zp
             elif self.plottype.currentText() == 'Heat Map':
@@ -1574,7 +1602,8 @@ class PowerPlot(QtWidgets.QWidget):
                 if gridtype != '':
                     plt.grid(axis=gridtype)
                 hm1 = plt.subplot(111)
-                plt.title(titl)
+                if not do_12:
+                    plt.title(titl)
                 hmdata = []
                 for hr in range(self.interval):
                     hmdata.append([])
@@ -1659,6 +1688,8 @@ class PowerPlot(QtWidgets.QWidget):
                 self.log.setText('Heat map value range: {} to {}'.format(fmt_str, fmt_str).format(miny, maxy))
                 QtCore.QCoreApplication.processEvents()
                 plt.show()
+            if do_12:
+                matplotlib.rcParams['figure.figsize'] = do_12_save
         else: # diurnal average
             if self.interval == 24:
                 ticks = list(range(0, 21, 4))

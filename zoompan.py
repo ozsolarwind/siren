@@ -59,7 +59,7 @@ class ZoomPanX():
         self.step = 168
         self.pick = True
 
-    def zoom_pan(self, ax, base_scale=2., annotate=False, dropone=False, flex_ticks=False, pick=True):
+    def zoom_pan(self, ax, base_scale=2., annotate=False, dropone=False, flex_ticks=False, pick=True, mth_labels=None):
         def set_flex():
             if self.flex_ticks:
                 cur_xlim = ax.get_xlim()
@@ -263,6 +263,9 @@ class ZoomPanX():
             if event_key == 'r': # reset
                 self.keys = ''
                 self.month = None
+                if mth_labels is not None:
+                    ax.set_ylabel(self.ylabel)
+                    ax.figure.canvas.manager.set_window_title(self.wtitle)
                 self.week = None
                 if self.base_xlim is not None:
                     ax.set_xlim(self.base_xlim)
@@ -329,6 +332,16 @@ class ZoomPanX():
                             self.month += 1
                     ax.set_xlim([self.mth_xlim[self.month], self.mth_xlim[self.month + 1]])
                 ax.figure.canvas.draw()
+            elif event_key == 'h': # hide legend
+                font = ax.get_legend().prop
+                handles, labels = ax.get_legend_handles_labels()
+                for l in range(len(labels)):
+                    labels[l] = '_' + labels[l]
+                # reverse the order
+                ax.legend(labels=labels)
+                if self.yformat is not None:
+                    ax.yaxis.set_major_formatter(self.yformat)
+                ax.figure.canvas.draw()
             elif event_key == 'l':
                 font = ax.get_legend().prop
                 handles, labels = ax.get_legend_handles_labels()
@@ -350,6 +363,9 @@ class ZoomPanX():
                     self.month = 0
                 else:
                     self.month += 1
+                if mth_labels is not None:
+                    ax.figure.canvas.manager.set_window_title(self.wtitle + f'-{self.month+1:02}')
+                    ax.set_ylabel(mth_labels[self.month] + '\n' + self.ylabel)
                 ax.set_xlim([self.mth_xlim[self.month], self.mth_xlim[self.month + 1]])
                 set_flex()
                 ax.figure.canvas.draw()
@@ -556,7 +572,6 @@ class ZoomPanX():
             if not isinstance(event.artist, Path3DCollection): # just 3D picking for the moment
                 return
             if matplotlib_version > '3.0.3':
-
                 return
             if not self.pick:
                 return
@@ -588,9 +603,12 @@ class ZoomPanX():
                 ax.figure.canvas.draw()
 
         the_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+        if mth_labels is not None:
+            self.ylabel = ax.get_ylabel()
+            self.window = ax.figure.canvas.manager.get_window_title()
         self.pick = pick
         self.xlabel = ax.get_xlabel()
-        self.title = ax.get_title()
+        self.wtitle = ax.figure.canvas.manager.get_window_title()
         self.base_xlim = ax.get_xlim() # remember x base
         if self.base_xlim[1] > 8784:
             self.step = 168 * 2 # 48 * 7 half-hours per week
