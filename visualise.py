@@ -446,6 +446,8 @@ class Visualise(QtWidgets.QDialog):
             self.viewSpin.setValue(self.viewSpin.value() - 1)
 
     def showPeriod(self, period):
+        mth_labels = ['January  ', 'February ', 'March    ', 'April    ', 'May      ', 'June     ',
+                      'July     ', 'August   ', 'September', 'October  ', 'November ', 'December ']
         self.visual_group.setVisible(False)
         while len(self.visual_items) > 0:
             self.visual_group.removeFromGroup(self.visual_items[-1])
@@ -475,6 +477,26 @@ class Visualise(QtWidgets.QDialog):
             self.visual_items.append(el)
             self.visual_group.addToGroup(self.visual_items[-1])
         if self.detailCombo.currentText() == 'Diurnal':
+            bit = self.periodCombo.currentText().split('-')
+            if len(bit) > 1:
+                try:
+                    txt = mth_labels[int(bit[1]) - 1]
+                except:
+                    txt = bit[1]
+                itm = QtWidgets.QGraphicsSimpleTextItem(txt)
+                new_font = itm.font()
+                new_font.setPointSizeF(self.scene.width() / 50)
+                itm.setFont(new_font)
+                itm.setBrush(QtGui.QColor(self.scene.colors['station_name']))
+                fh = int(QtGui.QFontMetrics(new_font).height() * 1.1)
+                p = QtCore.QPointF(self.scene.lower_right[0] - len(txt) * fh / 2, self.scene.upper_left[1] + fh / 2)
+                frll = self.scene.mapToLonLat(p)
+                p = self.scene.mapFromLonLat(QtCore.QPointF(frll.x(), frll.y()))
+                p = QtCore.QPoint(int(p.x()), int(p.y()))
+                itm.setPos(p.x(), p.y())
+                itm.setZValue(1)
+                self.visual_items.append(itm)
+                self.visual_group.addToGroup(self.visual_items[-1])
             txt = self.periodCombo.currentText() + ' ' + self.hourCombo.currentText()
         else:
             txt = self.periodCombo.currentText() + '-' + self.dayCombo.currentText() + ' ' + self.hourCombo.currentText()

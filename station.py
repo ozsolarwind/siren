@@ -276,7 +276,8 @@ class Stations:
                                             turbine = turb[1]
                                         else:
                                             turbine = turb[0]
-                                        sam.seek(0)
+                                        if sam is not None:
+                                            sam.seek(0)
                                         for turb in sam_turbines:
                                             if turb['Name'] == turbine:
                                                 rotor = turb['Rotor Diameter']

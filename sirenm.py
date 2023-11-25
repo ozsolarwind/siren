@@ -1948,8 +1948,8 @@ class MainWindow(QtWidgets.QMainWindow):
             elif full_view: # full map in view?
                 bottom.setX(0)
                 bottom.setY(0)
-                top.setX(self.view.scene().lower_right[0])
-                top.setY(self.view.scene().lower_right[1])
+                top.setX(int(self.view.scene().lower_right[0]))
+                top.setY(int(self.view.scene().lower_right[1]))
             else: # part of map in view
                 if bottom.x() < 0:
                     bottom.setX(0)
