@@ -54,12 +54,23 @@ class EdtDialog(QtWidgets.QDialog):
             ln = 36
             ln2 = 5
         QtWidgets.QDialog.__init__(self, parent)
+        self.findbwd = QtWidgets.QPushButton('<')
+        self.search = QtWidgets.QLineEdit('')
+        self.findfwd = QtWidgets.QPushButton('>')
         self.saveButton = QtWidgets.QPushButton(self.tr('&Save'))
         self.cancelButton = QtWidgets.QPushButton(self.tr('Cancel'))
         buttonLayout = QtWidgets.QHBoxLayout()
+        buttonLayout.addWidget(QtWidgets.QLabel('Find:'))
+        buttonLayout.addWidget(self.findbwd)
+        buttonLayout.addWidget(self.search)
+        buttonLayout.addWidget(self.findfwd)
+        self.findmsg = QtWidgets.QLabel('')
+        buttonLayout.addWidget(self.findmsg)
         buttonLayout.addStretch(1)
         buttonLayout.addWidget(self.saveButton)
         buttonLayout.addWidget(self.cancelButton)
+        self.findbwd.clicked.connect(self.findBwd)
+        self.findfwd.clicked.connect(self.findText)
         self.saveButton.clicked.connect(self.accept)
         self.cancelButton.clicked.connect(self.reject)
         if save_as:
@@ -98,6 +109,32 @@ class EdtDialog(QtWidgets.QDialog):
         size = self.geometry()
         self.move(int((screen.width() - size.width()) / 2), int((screen.height() - size.height()) / 2))
         self.widget.show()
+
+    def findBwd(self):
+        self.findmsg.setText('')
+        ft = self.search.text()
+        if self.widget.find(ft, QtGui.QTextDocument.FindBackward):
+            return
+        else:
+            self.findmsg.setText('Wrapped to bottom')
+            self.widget.moveCursor(QtGui.QTextCursor.End,
+                                   QtGui.QTextCursor.MoveAnchor)
+        #    self.widget.moveCursor(-1)
+       #     if self.widget.find(ft, QtGui.QTextDocument.FindBackward):
+        #        self.widget.moveCursor(QtGui.QTextCursor.End,
+         #                              QtGui.QTextCursor.MoveAnchor)
+
+    def findText(self):
+        self.findmsg.setText('')
+        ft = self.search.text()
+        if self.widget.find(ft):
+            return
+        else:
+            self.findmsg.setText('Wrapped to top')
+        #    self.widget.moveCursor(1)
+         #   if self.widget.find(ft):
+            self.widget.moveCursor(QtGui.QTextCursor.Start,
+                                   QtGui.QTextCursor.MoveAnchor)
 
     def accept(self):
         t = self.widget.toPlainText()
