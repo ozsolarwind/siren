@@ -356,6 +356,7 @@ def techClean(tech, full=False):
     cleantech = cleantech.replace('Lng', 'LNG')
     cleantech = cleantech.replace('Ocgt', 'OCGT')
     cleantech = cleantech.replace('Ocg', 'OCG')
+    cleantech = cleantech.replace('Phes', 'PHES')
     cleantech = cleantech.replace('Phs', 'PHS')
     cleantech = cleantech.replace('Pv', 'PV')
     if full:
