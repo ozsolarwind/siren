@@ -209,10 +209,10 @@ class PowerPlot(QtWidgets.QWidget):
                 elif key == 'constrained_layout':
                     if value.lower() in ['true', 'yes', 'on']:
                         self.constrained_layout = True
-                elif key == 'file_history':
-                    self.history = value.split(',')
                 elif key == 'file_choices':
                     self.max_files = int(value)
+                elif key == 'file_history':
+                    self.history = value.split(',')
                 elif key[:4] == 'file':
                     ifiles[key[4:]] = value.replace('$USER$', getUser())
                 if key == 'hatch_word':
@@ -900,46 +900,6 @@ class PowerPlot(QtWidgets.QWidget):
                     line += itm + ','
                 line = line[:-1]
                 lines.append('file_history=' + line)
-            lines.append('file' + choice + '=' + self.file.text().replace(getUser(), '$USER$'))
-            lines.append('grid' + choice + '=' + self.gridtype.currentText())
-            lines.append('sheet' + choice + '=' + self.sheet.currentText())
-            if self.overlay == '<none>':
-                overlay = ''
-            else:
-                overlay = self.overlay
-            lines.append('overlay' + choice + '=' + overlay)
-            lines.append('period' + choice + '=')
-            if self.period.currentText() != '<none>':
-                lines[-1] = lines[-1] + self.period.currentText()
-            lines.append('cperiod' + choice + '=')
-            if self.cperiod.currentText() != '<none>':
-                lines[-1] = lines[-1] + self.cperiod.currentText()
-            lines.append('spill_label' + choice + '=' + self.spill_label.text())
-            lines.append('suptitle' + choice + '=' + self.suptitle.text())
-            lines.append('target' + choice + '=' + self.target)
-            lines.append('title' + choice + '=' + self.title.text())
-            lines.append('maximum' + choice + '=')
-            if self.maxSpin.value() != 0:
-                lines[-1] = lines[-1] + str(self.maxSpin.value())
-            lines.append('percentage' + choice + '=')
-            if self.percentage.isChecked():
-                lines[-1] = lines[-1] + 'True'
-            lines.append('plot' + choice + '=' + self.plottype.currentText())
-            cols = 'columns' + choice + '='
-            for col in range(self.order.count()):
-                try:
-                    if self.order.item(col).text().index(',') >= 0:
-                        try:
-                            if self.order.item(col).text().index("'") >= 0:
-                                qte = '"'
-                        except:
-                            qte = "'"
-                except:
-                    qte = ''
-                cols += qte + self.order.item(col).text() + qte + ','
-            if cols[-1] != '=':
-                cols = cols[:-1]
-            lines.append(cols)
             cols = 'breakdown' + choice + '='
             for col in range(self.brk_order.count()):
                 try:
@@ -955,6 +915,46 @@ class PowerPlot(QtWidgets.QWidget):
             if cols[-1] != '=':
                 cols = cols[:-1]
             lines.append(cols)
+            cols = 'columns' + choice + '='
+            for col in range(self.order.count()):
+                try:
+                    if self.order.item(col).text().index(',') >= 0:
+                        try:
+                            if self.order.item(col).text().index("'") >= 0:
+                                qte = '"'
+                        except:
+                            qte = "'"
+                except:
+                    qte = ''
+                cols += qte + self.order.item(col).text() + qte + ','
+            if cols[-1] != '=':
+                cols = cols[:-1]
+            lines.append(cols)
+            lines.append('cperiod' + choice + '=')
+            if self.cperiod.currentText() != '<none>':
+                lines[-1] = lines[-1] + self.cperiod.currentText()
+            lines.append('file' + choice + '=' + self.file.text().replace(getUser(), '$USER$'))
+            lines.append('grid' + choice + '=' + self.gridtype.currentText())
+            lines.append('maximum' + choice + '=')
+            if self.maxSpin.value() != 0:
+                lines[-1] = lines[-1] + str(self.maxSpin.value())
+            if self.overlay == '<none>':
+                overlay = ''
+            else:
+                overlay = self.overlay
+            lines.append('overlay' + choice + '=' + overlay)
+            lines.append('percentage' + choice + '=')
+            if self.percentage.isChecked():
+                lines[-1] = lines[-1] + 'True'
+            lines.append('period' + choice + '=')
+            if self.period.currentText() != '<none>':
+                lines[-1] = lines[-1] + self.period.currentText()
+            lines.append('plot' + choice + '=' + self.plottype.currentText())
+            lines.append('sheet' + choice + '=' + self.sheet.currentText())
+            lines.append('spill_label' + choice + '=' + self.spill_label.text())
+            lines.append('suptitle' + choice + '=' + self.suptitle.text())
+            lines.append('target' + choice + '=' + self.target)
+            lines.append('title' + choice + '=' + self.title.text())
             updates['Powerplot'] = lines
         if self.colours_updated:
             lines = []
