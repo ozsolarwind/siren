@@ -534,6 +534,16 @@ class PowerPlot(QtWidgets.QWidget):
                         self.overlay = value
                     except:
                         pass
+                elif key == 'overlay_style' + choice:
+                    try:
+                        self.ovrLine.setCurrentIndex(self.ovrLine.findText(value))
+                    except:
+                        pass
+                elif key == 'overlay_width' + choice:
+                    try:
+                        self.ovrSpin.setValue(float(value))
+                    except:
+                        pass
                 elif key == 'percentage' + choice:
                     if value.lower() in ['true', 'yes', 'on']:
                         self.percentage.setCheckState(QtCore.Qt.Checked)
@@ -566,6 +576,16 @@ class PowerPlot(QtWidgets.QWidget):
                 elif key == 'target' + choice:
                     try:
                         self.target = value
+                    except:
+                        pass
+                elif key == 'target_style' + choice:
+                    try:
+                        self.tgtLine.setCurrentIndex(self.tgtLine.findText(value))
+                    except:
+                        pass
+                elif key == 'target_width' + choice:
+                    try:
+                        self.tgtSpin.setValue(float(value))
                     except:
                         pass
                 elif key == 'suptitle' + choice:
@@ -943,6 +963,12 @@ class PowerPlot(QtWidgets.QWidget):
             else:
                 overlay = self.overlay
             lines.append('overlay' + choice + '=' + overlay)
+            lines.append('overlay_style' + choice + '=')
+            if self.ovrLine.currentText() != 'dotted':
+                lines[-1] = lines[-1] + self.ovrLine.currentText()
+            lines.append('overlay_width' + choice + '=')
+            if self.ovrSpin.value() != 1.5:
+                lines[-1] = lines[-1] + str(self.ovrSpin.value())
             lines.append('percentage' + choice + '=')
             if self.percentage.isChecked():
                 lines[-1] = lines[-1] + 'True'
@@ -954,6 +980,12 @@ class PowerPlot(QtWidgets.QWidget):
             lines.append('spill_label' + choice + '=' + self.spill_label.text())
             lines.append('suptitle' + choice + '=' + self.suptitle.text())
             lines.append('target' + choice + '=' + self.target)
+            lines.append('target_style' + choice + '=')
+            if self.tgtLine.currentText() != 'solid':
+                lines[-1] = lines[-1] + self.tgtLine.currentText()
+            lines.append('target_width' + choice + '=')
+            if self.tgtSpin.value() != 2.5:
+                lines[-1] = lines[-1] + str(self.tgtSpin.value())
             lines.append('title' + choice + '=' + self.title.text())
             updates['Powerplot'] = lines
         if self.colours_updated:
