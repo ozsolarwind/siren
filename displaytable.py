@@ -51,7 +51,7 @@ class FakeObject:
 class Table(QtWidgets.QDialog):
     def __init__(self, objects, parent=None, fields=None, fossil=True, sumby=None, sumfields=None, units='', title=None,
                  save_folder='', edit=False, sortby=None, decpts=None, totfields=None, abbr=True, txt_align=None,
-                 reverse=False, txt_ok=None):
+                 reverse=False, txt_ok=None, span=None):
         super(Table, self).__init__(parent)
         self.oclass = None
         if len(objects) == 0:
@@ -114,6 +114,7 @@ class Table(QtWidgets.QDialog):
         self.recur = False
         self.replaced = None
         self.savedfile = None
+        self.span = span
         self.abbr = abbr
         if self.edit_table:
             self.title_word = ['Edit', 'Export']
@@ -216,7 +217,6 @@ class Table(QtWidgets.QDialog):
             self.order(self.fields.index(sortby))
             if reverse:
                 self.order(self.fields.index(sortby))
-
         if self.sumfields is not None:
             for i in range(len(self.sumfields) -1, -1, -1): # make sure sumfield has a field
                 try:
@@ -273,7 +273,8 @@ class Table(QtWidgets.QDialog):
                     self.table.setItem(rw, clv[len(self.sumfields) + f],
                         QtWidgets.QTableWidgetItem(fmat_str[len(self.sumfields) + f].format(self.totfields[f][1])))
                     self.table.item(rw, clv[len(self.sumfields) + f]).setTextAlignment(130)  # x'82'
-        self.table.resizeColumnsToContents()
+        if self.span is None:
+            self.table.resizeColumnsToContents()
         width = 0
         for cl in range(self.table.columnCount()):
             width += self.table.columnWidth(cl)
@@ -350,7 +351,7 @@ class Table(QtWidgets.QDialog):
                         else:
                             self.lens[prop] = [len(str(attr)), 0]
                     elif isinstance(attr, float):
-                        if self.labels[prop] == 'str' or  self.labels[prop] == 'int':
+                        if self.labels[prop] == 'str' or self.labels[prop] == 'int':
                             self.labels[prop] = 'float'
                         a = str(attr)
                         bits = a.split('.')
@@ -531,9 +532,15 @@ class Table(QtWidgets.QDialog):
                 self.table.horizontalHeaderItem(col).setIcon(QtGui.QIcon('arrowu.png'))
                 self.sort_asc = True
         self.entry = [self.entry[i] for i in torder]
+        in_span = False
         for rw in range(len(self.entry)):
+            if self.span is not None and not in_span:
+                self.table.resizeColumnsToContents()
             for key, value in sorted(list(self.entry[rw].items()), key=lambda i: self.fields.index(i[0])):
                 cl = self.fields.index(key)
+                if cl == 0:
+                    if self.span is not None and value == self.span:
+                        in_span = True
                 if key == 'technology':
                     icon = self.icons.getIcon(value)
                     icon_item = QtWidgets.QTableWidgetItem(value)
@@ -558,6 +565,10 @@ class Table(QtWidgets.QDialog):
                                 if self.txt_align == 'R':
                                     self.table.item(rw, cl).setTextAlignment(130)  # x'82'
                         else:
+                            if cl == 1 and in_span:
+                                self.table.setSpan(rw, cl, 1, len(self.fields) - 1)
+                                self.table.setItem(rw, cl, QtWidgets.QTableWidgetItem(value))
+                                continue
                             self.table.setItem(rw, cl, QtWidgets.QTableWidgetItem(value))
                             if self.labels[key] != 'str' or \
                                (self.txt_align is not None and self.txt_align == 'R'):
@@ -772,15 +783,19 @@ class Table(QtWidgets.QDialog):
             for ch in ['\\' , '/' , '*' , '?' , ':' , '[' , ']']:
                 if ch in iam:
                     iam = iam.replace(ch, '_')
+            if len(iam) > 31:
+                iam = iam[:31]
             ws = wb.add_sheet(iam)
             hdr_types = []
             dec_fmts = []
             xl_lens = []
             hdr_rows = 0
+            hdr_style = xlwt.XFStyle()
+            hdr_style.alignment.wrap = 1
             for cl in range(self.table.columnCount()):
                 hdr = self.table.horizontalHeaderItem(cl).text()
                 if hdr[0] != '%':
-                    ws.write(0, cl, hdr)
+                    ws.write(0, cl, hdr, hdr_style)
                 txt = self.hdrs[hdr]
                 try:
                     hdr_types.append(self.labels[txt.lower()])
@@ -807,12 +822,15 @@ class Table(QtWidgets.QDialog):
                 xl_lens.append(hl)
             if hdr_rows > 1:
                 ws.row(0).height = 250 * hdr_rows
+            in_span = False
             for rw in range(self.table.rowCount()):
                 for cl in range(self.table.columnCount()):
                     if self.table.item(rw, cl) is not None:
                         valu = self.table.item(rw, cl).text().strip()
                         if len(valu) < 1:
                             continue
+                        if self.span is not None and valu == self.span:
+                            in_span = True
                         style = dec_fmts[cl]
                         if valu[-1] == '%':
                             is_pct = True
@@ -861,7 +879,8 @@ class Table(QtWidgets.QDialog):
                                     valu = round(float(val1) / 100., dec_pts + 2)
                                 except:
                                     pass
-                        xl_lens[cl] = max(xl_lens[cl], len(str(valu)))
+                        if not in_span:
+                            xl_lens[cl] = max(xl_lens[cl], len(str(valu)))
                         ws.write(rw + 1, cl, valu, style)
             for cl in range(self.table.columnCount()):
                 if xl_lens[cl] * 275 > ws.col(cl).width:
@@ -979,8 +998,11 @@ class Table(QtWidgets.QDialog):
         self.close()
 
     def getValues(self):
-        if self.edit_table:
-            return self.replaced
+        try:
+            if self.edit_table:
+                return self.replaced
+        except:
+            pass
         return None
 
     def getItem(self, col):

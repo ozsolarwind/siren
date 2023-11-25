@@ -4752,9 +4752,11 @@ class powerMatch(QtWidgets.QWidget):
                     extra = [gsw, op_load_tot, sto_sum, re_sum, re_pct, sf_sums]
                     return multi_value, sp_data, extra
         #    list(map(list, list(zip(*sp_data))))
+            span = None
             if self.summary_sources: # want data sources
                 sp_data.append(' ')
                 sp_data.append('Data sources')
+                span = 'Data sources'
                 sp_data.append(['Scenarios folder', self.scenarios])
                 if pm_data_file[: len(self.scenarios)] == self.scenarios:
                     pm_data_file = pm_data_file[len(self.scenarios):]
@@ -4780,7 +4782,8 @@ class powerMatch(QtWidgets.QWidget):
             else:
                 atitle = self.sender().text()
             dialog = displaytable.Table(sp_data, title=atitle, fields=headers,
-                     save_folder=self.scenarios, sortby='', decpts=sp_pts)
+                     save_folder=self.scenarios, sortby='', decpts=sp_pts,
+                     span=span)
             dialog.exec_()
             self.progressbar.setValue(20)
             self.progressbar.setHidden(True)
