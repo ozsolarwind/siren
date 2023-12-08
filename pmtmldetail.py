@@ -162,7 +162,7 @@ class TMLDetail(QtWidgets.QWidget):
                             ndx = j
                     self.sheet.setCurrentIndex(ndx)
                     ws = ts.sheet_by_index(ndx)
-                    ts.release_resources()
+                    ts.close()
                     del ts
                 except:
                     self.sheet.addItem(self.isheet)
@@ -219,7 +219,10 @@ class TMLDetail(QtWidgets.QWidget):
             curfile = self.scenarios[:-1]
         else:
             curfile = self.get_filename(self.files[i].text())
-        if i == D:
+        if i == R:
+            newfile = QtWidgets.QFileDialog.getOpenFileName(self, 'Open ' + self.file_labels[R] + ' file',
+                      curfile)[0]
+        else: # i == D:
             if self.files[i].text() == '':
                 curfile = self.get_filename(self.files[R].text())
                 curfile = curfile.replace('Results', 'TML_Detail')
@@ -236,15 +239,6 @@ class TMLDetail(QtWidgets.QWidget):
                 curfile = self.get_filename(self.files[D].text())
             newfile = QtWidgets.QFileDialog.getSaveFileName(None, 'Save ' + self.file_labels[D] + ' file',
                       curfile, 'Excel Files (*.xlsx)')[0]
-        else: # i == R
-            newfile = QtWidgets.QFileDialog.getOpenFileName(self, 'Open ' + self.file_labels[R] + ' file',
-                      curfile)[0]
-            if self.files[D].text() != '':
-                rsltfile = newfile.replace('Results', 'TML_Detail')
-                rsltfile = rsltfile.replace('results', 'tml_detail')
-                curfile == self.get_filename(self.files[D].text())
-                if rsltfile != curfile:
-                    self.files[D].setText('')
         if newfile != '':
             if newfile[: len(self.scenarios)] == self.scenarios:
                 self.files[i].setText(newfile[len(self.scenarios):])
@@ -256,13 +250,17 @@ class TMLDetail(QtWidgets.QWidget):
                         pfx = ('..' + '/') * (len(bits) - 1)
                         newfile = pfx + newfile[that_len + 1:]
                 self.files[i].setText(newfile)
+            if i == R: # if results need to change details
+                rsltfile = self.files[i].text().replace('Results', 'TML_Detail')
+                rsltfile = rsltfile.replace('results', 'tml_detail')
+                self.files[D].setText(rsltfile)
             self.updated = True
 
     def sheetChanged(self):
         ts = WorkBook()
         ts.open_workbook(newfile)
         ws = ts.sheet_by_name(self.sheet.currentText())
-        ts.release_resources()
+        ts.close()
         del ts
 
     def helpClicked(self):
@@ -408,6 +406,7 @@ class TMLDetail(QtWidgets.QWidget):
         ws.row_dimensions[top_row].height = 30
         col = ws.max_column + 1
         col_s = col
+        # add columns for totals of other techs, e.g. Rooftop PV, Gas, ...
         splits = ['TML', 'Charge', 'Surplus']
         for s in range(3):
             if s == 1 and len(techs[1][0]) == 0:
