@@ -1327,7 +1327,7 @@ Options for <a href="#flexiplot">Flexiplot</a>. Properties for individual files 
 </tr>
 <tr class="none">
 <td class="none"><dfn>plot (&ast;)</dfn></td>
-<td class="none">The type of chart. Options are Bar Chart, Cumulative, Line Chart, or Step Chart. The default is Bar Chart</td>
+<td class="none">The type of chart. Options are Bar Chart, Cumulative, Heat Map, Line Chart, Pie Chart, or Step Chart. The default is Cumulative</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>random_colors, or<br />random_colours</dfn></td>
@@ -2010,9 +2010,18 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none"><dfn>period (&ast;)</dfn></td>
 <td class="none">Chosen period for diurnal chart</td>
 </tr>
+</table>
+<div class="experiment">
+<table border="0", class="none">
 <tr class="none">
-<td class="none"><dfn>plot (&ast;)</dfn></td>
-<td class="none">The type of chart. Options are Bar Chart, Cumulative, Heat Map, Line Chart, or Step Chart. The default is Cumulative</td>
+<td class="none"><dfn>pie_legend_on</dfn>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td class="none">If set to True labels for a Pie Chart will be placed on the chart, if False the legend will be presented a table. The default is True</td>
+</table>
+</div>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>plot (&ast;)</dfn>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td class="none">The type of chart. Options are Bar Chart, Cumulative, Heat Map, Line Chart, Pie Chart, or Step Chart. The default is Cumulative</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>select_day</dfn></td>
@@ -2235,7 +2244,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>summary_sources</dfn></td>
-<td class="none">If set to True the list of data sources will be added to the Summary report. The default is False></td>
+<td class="none">If set to True the list of data sources will be added to the Summary report. The default is True</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>tml_detail_file<dfn></td>
@@ -3333,8 +3342,10 @@ By default the size of charts produced is determined by matplotlib, or by the <e
 <li>Moving the mouse while holding down the left button will allow you to pan across the chart</li>
 <li>Clicking the right mouse button or pressing the <em>r</em> key will reset the chart to the original state. This will allow you to zoom out to the original state and then zoom in to another period on the chart</li>
 <li>Pressing the <em>f</em> key will expand the chart window to fullscreen. Pressing it again will return it to the previous size</li>
-<li>Pressing the <em>l</em> key will allow you to move the legend, although the behaviour may be a little erratic. Initially, the legend will be moved to the top right of the window and be arranged as a vertical list. By clicking the left mouse button within the legend and dragging the mouse you can move it to a different location. In the process it may cause the chart to also move or cause some odd behaviour with it. In these cases pressing the <em>r</em> key will reset the chart</li>
+<li>Pressing the <em>h</em> key will hide the legend. Pressing it again will restore the legend to the top right</li>
+<li>Pressing the <em>l</em> key will allow you to move the legend, although the behaviour may be a little erratic. Initially, the legend will be moved to the top right of the window and be arranged as a vertical list. By clicking the left mouse button within the legend and dragging the mouse you can move it to a different location. In the process it may cause the chart to also move or cause some odd behaviour with it. In these cases pressing the <em>r</em> key will reset the chart leaving the legend in the new position</li>
 <li>Pressing the <em>m</em> key will display a monthly chart. Each press will show the next month. You can also navigate to a chosen month by pressing the number for the month after the <em>m</em>. For example, pressing <em>m10</em> will display October</li>
+<li>Pressing the <em>t</em> key will display a two weekly chart. Each press will step forward one week (that is, move forward one week and display two weeks). If the <em>m</em> key has been pressed the (two) weeks for that month will be displayed</li>
 <li>Pressing the <em>w</em> key will display a weekly chart. Each press will show the next week. If the <em>m</em> key has been pressed the weeks for that month will be displayed</li>
 <li>Pressing <em>PageUp</em> or <em>PageDown</em> will display the previous or next week or month</li>
 <li>Pressing the <em>left</em> or <em>right</em> arrow will scroll the display to the left or right</li>
@@ -3392,7 +3403,7 @@ If it's not a diurnal chart (i.e. Period is <em>&lt;None&gt;</em>) any occurence
 <tr><td class="lr"><dfn>Maximum</dfn></td>
 <td class="none">You can specify a maximum value for the Power (y) axis. This allows you to produce a series of charts with the same scale (<em>maximum</em>)</td></tr>
 <tr><td class="lr"><dfn>Type of Plot</dfn></td>
-<td class="none">The type of chart to be produced. Options are <em>Bar Chart</em>, <em>Cumulative</em>, <em>Heat Map</em>, <em>Line Chart</em> and <em>Step Chart</em>. <em>Bar Chart</em>, <em>Cumulative</em> and <em>Step Chart</em> produce cumulative (stacked) charts and have filled areas by technology (or Columns). A Step Chart is similar to a Bar Chart but does not have spaces between the hourly bars; also it is a lot faster to display than a Bar Chart (a Bar Chart is not recommended for hourly charts). If a Target field (e.g. Load) is chosen the area above the Target value (i.e. excess generation) in the Cumulative and Step chart have a lightly shaded value (the degree of shading is chosen by the <em>alpha</em> property in the [Powerplot] Section of the Preferences file). A Heat Map visualises the total value of chosen columns to indicate the highest through lowest values of the range or, if a target column is chosen, an indication of how the total value meets the target value. Each &ldquo;square&rdquo; or &ldquo;cell&rdquo; of the map represents an hour; the vertical axis is hours in a day and the horizontal axis is days for the chosen period (<em>plot</em>)</td></tr>
+<td class="none">The type of chart to be produced. Options are <em>Bar Chart</em>, <em>Cumulative</em>, <em>Heat Map</em>, <em>Line Chart</em>, <em>Pie Chart</em> and <em>Step Chart</em>. <em>Bar Chart</em>, <em>Cumulative</em> and <em>Step Chart</em> produce cumulative (stacked) charts and have filled areas by technology (or Columns). A Step Chart is similar to a Bar Chart but does not have spaces between the hourly bars; also it is a lot faster to display than a Bar Chart (a Bar Chart is not recommended for hourly charts). If a Target field (e.g. Load) is chosen the area above the Target value (i.e. excess generation) in the Cumulative and Step chart have a lightly shaded value (the degree of shading is chosen by the <em>alpha</em> property in the [Powerplot] Section of the Preferences file). A Heat Map visualises the total value of chosen columns to indicate the highest through lowest values of the range or, if a target column is chosen, an indication of how the total value meets the target value. Each &ldquo;square&rdquo; or &ldquo;cell&rdquo; of the map represents an hour; the vertical axis is hours in a day and the horizontal axis is days for the chosen period.  (<em>plot</em>)</td></tr>
 <tr><td class="lr"><dfn>Percentage</dfn></td>
 <td class="none">Checking this option will produce a percentage (stacked) curve. The chart will have filled areas showing the percentage of generation for each technology. It is recommended to not set a Target field (i.e. set it to <em>&lt;None&gt;</em>) as this will merely remove the Target field (and it's data) from the chart (<em>percentage</em>)</td></tr>
 <tr><td class="lr"><dfn>Spill label</dfn></td>

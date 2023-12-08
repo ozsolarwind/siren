@@ -178,6 +178,7 @@ class PowerPlot(QtWidgets.QWidget):
         self.target = ''
         self.overlay = '<none>'
         self.palette = True
+        self.pie_legend_on = True
         self.hatch_word = ['charge']
         self.history = None
         self.max_files = 10
@@ -223,6 +224,9 @@ class PowerPlot(QtWidgets.QWidget):
                         self.margin_of_error = float(value)
                     except:
                         pass
+                elif key == 'pie_legend_on':
+                    if value.lower() in ['false', 'no', 'off']:
+                        self.pie_legend_on = False
                 elif key == 'palette':
                     if value.lower() in ['false', 'no', 'off']:
                         self.palette = False
@@ -382,7 +386,7 @@ class PowerPlot(QtWidgets.QWidget):
         self.grid.addWidget(QtWidgets.QLabel('(Handy if you want to produce a series of plots)'), rw, 3, 1, 3)
         rw += 1
         self.grid.addWidget(QtWidgets.QLabel('Type of Plot:'), rw, 0)
-        plots = ['Bar Chart', 'Cumulative', 'Heat Map', 'Line Chart', 'Step Chart']
+        plots = ['Cumulative', 'Bar Chart', 'Heat Map', 'Line Chart', 'Pie Chart', 'Step Chart']
         self.plottype = QtWidgets.QComboBox()
         for plot in plots:
              self.plottype.addItem(plot)
@@ -1794,8 +1798,50 @@ class PowerPlot(QtWidgets.QWidget):
             load = []
             tgt_col = -1
             data = []
-            label = []
-            if self.plottype.currentText() == 'Heat Map':
+            labels = []
+            colors = []
+            if self.plottype.currentText() == 'Pie Chart':
+                fig = plt.figure(figname)
+                plt.title(titl)
+                if suptitle != '':
+                    fig.suptitle(suptitle, fontsize=16)
+                if gridtype != '':
+                    plt.grid(axis=gridtype)
+                pi2 = plt.subplot(111)
+                for c in range(self.order.count() -1, -1, -1):
+                    col = self.order.item(c).text()
+                    for c2 in range(2, ws.ncols):
+                        try:
+                            column = ws.cell_value(self.toprow[0], c2).replace('\n',' ')
+                        except:
+                            column = str(ws.cell_value(self.toprow[0], c2))
+                        if self.zone_row > 0 and ws.cell_value(self.zone_row, c2) != '' and ws.cell_value(self.zone_row, c2) is not None:
+                            column = ws.cell_value(self.zone_row, c2).replace('\n',' ') + '.' + column
+                        if column == col:
+                            data.append(0.)
+                            labels.append(column)
+                            colors.append(self.set_colour(labels[-1]))
+                            tot_rows = 0
+                            for s in range(len(strt_row)):
+                                for row in range(strt_row[s] + 1, strt_row[s] + todo_rows[s] + 1):
+                                    try:
+                                        data[-1] = data[-1] + ws.cell_value(row, c2)
+                                    except:
+                                        break # part period
+                            break
+                tot = sum(data)
+                if self.pie_legend_on: # legend on chart
+                    patches, texts, autotexts = pi2.pie(data, labels=labels, autopct='%1.1f%%', colors=colors, startangle=90, pctdistance=.70)
+                else:
+                    patches, texts = pi2.pie(data, colors=colors, startangle=90)
+                    fig.legend(patches, labels, loc='lower right')
+                 ##maybe   plt.subplots_adjust(left=0.1, bottom=0.1, right=0.75)
+                p = plt.gcf()
+                p.gca().add_artist(plt.Circle((0, 0), 0.40, color='white'))
+            #    plt.text(-0.0, -0.0, f'{tot/1000:0,.0f} GWh', va='center', ha='center')
+                plt.show()
+                return
+            elif self.plottype.currentText() == 'Heat Map':
                 fig = plt.figure(figname)
                 if suptitle != '':
                     fig.suptitle(suptitle, fontsize=16)
