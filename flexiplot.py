@@ -456,7 +456,7 @@ class FlexiPlot(QtWidgets.QWidget):
             pass
         if not os.path.exists(ifile) and not os.path.exists(self.scenarios + ifile):
             if self.book is not None:
-                self.book.release_resources()
+                self.book.close()
                 self.book = None
             self.log.setText("Can't find file - " + ifile)
             msgbox = QtWidgets.QMessageBox()
@@ -532,7 +532,7 @@ class FlexiPlot(QtWidgets.QWidget):
         self.columns = []
         if ifile != '':
             if self.book is not None:
-                self.book.release_resources()
+                self.book.close()
                 self.book = None
             self.file.setText(ifile)
             if os.path.exists(ifile):
@@ -599,7 +599,7 @@ class FlexiPlot(QtWidgets.QWidget):
         newfile = QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', curfile)[0]
         if newfile != '':
             if self.book is not None:
-                self.book.release_resources()
+                self.book.close()
                 self.book = None
             isheet = self.sheet.currentText()
             self.setSheet(newfile, isheet)
@@ -785,7 +785,7 @@ class FlexiPlot(QtWidgets.QWidget):
 
     def doneClicked(self):
         if self.book is not None:
-            self.book.release_resources()
+            self.book.close()
         if not self.updated and not self.colours_updated:
             self.close()
         self.saveConfig()

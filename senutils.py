@@ -229,6 +229,11 @@ class WorkBook(object):
             else:
                 raise Exception('Error opening file')
 
+    def close(self):
+        if self._type == 'xlsx' or self._type == 'xlsm':
+            self._book.close()
+        self.release_resources()
+
     def release_resources(self):
         if self._type == 'xls':
             try:

@@ -533,7 +533,7 @@ class DataView(QtWidgets.QDialog):
 
     def openFile(self, ifile):
         if self.book is not None:
-            self.book.release_resources()
+            self.book.close()
             self.book = None
         self.book = WorkBook()
         try:
@@ -675,7 +675,7 @@ class DataView(QtWidgets.QDialog):
 
     def quitClicked(self):
         if self.book is not None:
-            self.book.release_resources()
+            self.book.close()
         if self.updated:
             self.saveConfig()
         self.close()

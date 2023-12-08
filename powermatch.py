@@ -1125,7 +1125,7 @@ class powerMatch(QtWidgets.QWidget):
                         self.getGenerators(ws)
                     elif i == O:
                         self.getOptimisation(ws)
-                    ts.release_resources()
+                    ts.close()
                     del ts
                 except:
                     self.sheets[i].addItem(self.isheets[i])
@@ -1389,7 +1389,7 @@ class powerMatch(QtWidgets.QWidget):
                     ws = ts.sheet_by_index(ndx)
                     self.getGenerators(ws)
                     self.setOrder()
-                ts.release_resources()
+                ts.close()
                 del ts
             if newfile[: len(self.scenarios)] == self.scenarios:
                 self.files[i].setText(newfile[len(self.scenarios):])
@@ -1436,7 +1436,7 @@ class powerMatch(QtWidgets.QWidget):
             self.setOrder()
         elif i == O:
             self.getOptimisation(ws)
-        ts.release_resources()
+        ts.close()
         del ts
 
     def loaddirChanged(self):
@@ -1739,7 +1739,7 @@ class powerMatch(QtWidgets.QWidget):
                         self.optimisation[key].capacity_max = round(cap_max, 3)
                         self.optimisation[key].capacity_step = None
         if ts is not None:
-            ts.release_resources()
+            ts.close()
             del ts
         newfile = dialog.savedfile
         if newfile is not None:
@@ -2177,7 +2177,7 @@ class powerMatch(QtWidgets.QWidget):
                 ts.open_workbook(self.get_filename(self.files[C].text()))
                 ws = ts.sheet_by_name(self.sheets[C].currentText())
                 self.getConstraints(ws)
-                ts.release_resources()
+                ts.close()
                 del ts
             except FileNotFoundError:
                 err_msg = 'Constraints file not found - ' + self.files[C].text()
@@ -2191,7 +2191,7 @@ class powerMatch(QtWidgets.QWidget):
                 ts.open_workbook(self.get_filename(self.files[G].text()))
                 ws = ts.sheet_by_name(self.sheets[G].currentText())
                 self.getGenerators(ws)
-                ts.release_resources()
+                ts.close()
                 del ts
             except FileNotFoundError:
                 if err_msg != '':
@@ -2211,13 +2211,13 @@ class powerMatch(QtWidgets.QWidget):
                 ts.open_workbook(self.get_filename(self.files[B].text()))
                 ws = ts.sheet_by_index(0)
                 if ws.ncols > 1024:
-                    ts.release_resources()
+                    ts.close()
                     self.clean_batch_sheet()
                     ts = WorkBook()
                     ts.open_workbook(self.get_filename(self.files[B].text()))
                     ws = ts.sheet_by_index(0)
                 ok = self.getBatch(ws)
-                ts.release_resources()
+                ts.close()
                 del ts
                 if not ok:
                     return
@@ -2231,7 +2231,7 @@ class powerMatch(QtWidgets.QWidget):
                 ts.open_workbook(self.get_filename(self.files[O].text()))
                 ws = ts.sheet_by_name(self.sheets[O].currentText())
                 self.getOptimisation(ws)
-                ts.release_resources()
+                ts.close()
                 del ts
                 if self.optimisation is None:
                     if err_msg != '':
