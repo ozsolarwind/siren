@@ -62,6 +62,20 @@ except:
 
 tech_names = ['Load', 'Onshore Wind', 'Offshore Wind', 'Rooftop PV', 'Fixed PV', 'Single Axis PV',
               'Dual Axis PV', 'Biomass', 'Geothermal', 'Other1', 'CST', 'Shortfall']
+# initialise tech_names from .ini file
+#            add dispatchable for re from [Grid] dispatchable?
+# load data file. If not in data file then include in order and flag as RE
+# tracking_pv is a synonym form dual_axis_pv
+# phes is a synonym for pumped_hydro
+# other1 is a synonym for other - or the other way around
+# [Grid]
+# dispatchable=pumped_hydro geothermal biomass solar_thermal cst
+# consider: hydrogen bess
+# [Power]
+# technologies=backtrack_pv bess biomass cst fixed_pv geothermal offshore_wind rooftop_pv single_axis_pv solar_thermal tracking_pv wave wind other other_wave
+#              add pumped_hydro hydrogen
+#              maybe drop bess?
+# fossil_technologies=fossil_ccgt fossil_coal fossil_cogen fossil_distillate fossil_gas fossil_mixed fossil_ocgt
 target_keys = ['lcoe', 'load_pct', 'surplus_pct', 're_pct', 'cost', 'co2']
 target_names = ['LCOE', 'Load%', 'Surplus%', 'RE%', 'Cost', 'CO2']
 target_fmats = ['$%.2f', '%.1f%%', '%.1f%%', '%.1f%%', '$%.1fpwr_chr', '%.1fpwr_chr']
@@ -898,6 +912,7 @@ class powerMatch(QtWidgets.QWidget):
         self.optimise_to_batch = True
         self.remove_cost = True
         self.results_prefix = ''
+        self.dispatchable = ['Biomass', 'Geothermal', 'Pumped Hydro', 'Solar Thermal', 'CST'] # RE dispatchable
         self.save_tables = False
         self.show_multipliers = False
         self.show_correlation = False
@@ -915,6 +930,27 @@ class powerMatch(QtWidgets.QWidget):
             else:
                 self.targets[target_keys[t]] = [target_names[t], 0., 0., -1, 0, target_fmats[t],
                                                  target_titles[t]]
+        try:
+            dts = config.get('Grid', 'dispatchable').split(' ')
+            dispatchable = []
+            for dt in dts:
+                dispatchable.append(techClean(dt.replace('_', ' ').title()))
+            self.dispatchable = dispatchable
+        except:
+            pass
+        try:
+            adjust_cap = config.get('Power', 'adjust_cap')
+            try:
+                self.adjust_cap = float(adjust_cap)
+            except:
+                try:
+                    self.adjust_cap = eval(adjust_cap)
+                except:
+                    pass
+            if self.adjust_cap < 0:
+                self.adjust_cap = pow(10, 12)
+        except:
+            pass
         try:
             items = config.items('Powermatch')
             for key, value in items:
@@ -1056,19 +1092,6 @@ class powerMatch(QtWidgets.QWidget):
             rw = config.get('Windows', 'restorewindows')
             if rw.lower() in ['true', 'yes', 'on']:
                 self.restorewindows = True
-        except:
-            pass
-        try:
-            adjust_cap = config.get('Power', 'adjust_cap')
-            try:
-                self.adjust_cap = float(adjust_cap)
-            except:
-                try:
-                    self.adjust_cap = eval(adjust_cap)
-                except:
-                    pass
-            if self.adjust_cap < 0:
-                self.adjust_cap = pow(10, 12)
         except:
             pass
         self.opt_progressbar = None
@@ -1269,11 +1292,11 @@ class powerMatch(QtWidgets.QWidget):
                 self.order.addItem(gen)
             try:
                 for gen in self.generators.keys():
-                    if gen in tech_names or gen in iorder:
+                    if (gen in tech_names and gen not in self.dispatchable) or gen in iorder:
                         continue
                     try:
                         chk = gen[gen.find('.') + 1:]
-                        if chk in tech_names:
+                        if chk in tech_names and chk not in self.dispatchable:
                             continue
                     except:
                         pass
@@ -2019,7 +2042,7 @@ class powerMatch(QtWidgets.QWidget):
         self.ignore.clear()
         self.re_capacity = {}
         if self.generators is None:
-            order = ['Storage', 'Biomass', 'PHS', 'Gas', 'CCG1', 'Other', 'Coal']
+            order = ['Storage', 'Biomass', 'PHES', 'Gas', 'CCG1', 'Other', 'Coal']
             for stn in order:
                 self.order.addItem(stn)
         else:
@@ -2028,12 +2051,12 @@ class powerMatch(QtWidgets.QWidget):
             for key, value in self.generators.items():
             #    if value.capacity == 0:
             #        continue
-                if key in tech_names:
+                if key in tech_names and key not in self.dispatchable:
                     self.re_capacity[key] = value.capacity
                     continue
                 try:
                     gen = key[key.find('.') + 1:]
-                    if gen in tech_names:
+                    if gen in tech_names and gen not in self.dispatchable:
                         self.re_capacity[key] = value.capacity
                         continue
                 except:
@@ -2581,7 +2604,10 @@ class powerMatch(QtWidgets.QWidget):
          #   batch_extra['Optimisation Parameters'] = []
             batch_extra['LCOE ($/MWh)'] = ['#,##0.00']
             for tech in self.batch_tech:
-                batch_extra['LCOE ($/MWh)'].append([tech])
+                if tech == 'Total':
+                    batch_extra['LCOE ($/MWh)'].append([tech + ' LCOE ($/MWh)'])
+                else:
+                    batch_extra['LCOE ($/MWh)'].append([tech])
             batch_extra['LCOE ($/MWh)'].append(['LCOE', st_lco])
             batch_extra['LCOE With CO2 ($/MWh)'] = ['#,##0.00']
             for tech in self.batch_tech:
@@ -2737,7 +2763,7 @@ class powerMatch(QtWidgets.QWidget):
                         else:
                             bs.cell(row=gndx + sp, column=1).value = batch_extra[key][sp][0]
                         if batch_extra[key][sp][0] in ['RE %age of Total Load', 'Total incl. Carbon Cost'] or \
-                          batch_extra[key][sp][0].find('LCOE') >= 0:
+                          batch_extra[key][sp][0].find('LCOE') >= 0 and batch_extra[key][sp][0].find('Total LCOE') < 0:
                             bs.cell(row=gndx + sp, column=1).font = bold
                         else:
                             bs.cell(row=gndx + sp, column=1).font = normal
@@ -2763,6 +2789,8 @@ class powerMatch(QtWidgets.QWidget):
                         if self.batch_report[g][0] == 'Max MWh' and self.batch_tech[sp] == 'Total':
                             max_load_row = gndx + sp + 1
                             bs.cell(row=max_load_row, column=1).value = 'Max Load'
+                        elif self.batch_tech[sp] == 'Total' and self.batch_report[g][0] != 'Capacity Factor':
+                            bs.cell(row=gndx + sp + 1, column=1).value = self.batch_tech[sp] + ' ' + self.batch_report[g][0]
                         bs.cell(row=gndx + sp + 1, column=1).font = normal
                     if self.batch_report[g][0] == 'Cost ($/Yr)' and batch_disc_row >= 0:
                         batch_disc_row = gndx + sp + 2
@@ -2932,7 +2960,7 @@ class powerMatch(QtWidgets.QWidget):
                                     col = batch_details['To Meet Load (MWh)'][0]
                                     bs.cell(row=re_tml_row + 1, column=column).value = sp_data[sp][col]
                                     bs.cell(row=re_tml_row + 1, column=column).number_format = batch_details['To Meet Load (MWh)'][1]
-                                    bs.cell(row=re_tml_row + 1  , column=column).font = normal
+                                    bs.cell(row=re_tml_row + 1, column=column).font = normal
                                 except:
                                     pass
                                 break
@@ -2943,7 +2971,7 @@ class powerMatch(QtWidgets.QWidget):
                                     col = batch_details['LCOE ($/MWh)'][0]
                                     bs.cell(row=re_tml_row + 1, column=column).value = sp_data[sp][col]
                                     bs.cell(row=re_tml_row + 1, column=column).number_format = batch_details['LCOE ($/MWh)'][1]
-                                    bs.cell(row=re_tml_row + 1  , column=column).font = normal
+                                    bs.cell(row=re_tml_row + 1, column=column).font = normal
                                 except:
                                     pass
                                 break
@@ -3642,6 +3670,7 @@ class powerMatch(QtWidgets.QWidget):
                                                          ss_col(st_tml+1) + str(ss_row - r)
             ss.cell(row=ss_row, column=st_cap+1).number_format = '#,##0.0%'
             ss_re_row = ss_row
+            ss_sto_row = -1
             # if storage
             if ns_sto_sum != '':
                 ss_row += 1
@@ -3657,13 +3686,15 @@ class powerMatch(QtWidgets.QWidget):
                 base_col = 'C'
                 if ss_sto_row >= 0:
                     for rw in range(ss_re_fst_row, ss_re_lst_row + 1):
-                        ss.cell(row=rw, column=st_lco+1).value = '=IF(' + ss_col(st_lcg+1) + str(rw) + '>0,' + \
+                        ss.cell(row=rw, column=st_lco+1).value = '=IF(AND(' + ss_col(st_lcg+1) + str(rw) + '<>"",' + \
+                                ss_col(st_lcg+1) + str(rw) + '>0),' + \
                                 ss_col(st_cst+1) + str(rw) + '/(' + ss_col(st_tml+1) + str(rw) + '+(' + \
                                 ss_col(st_tml+1) + '$' + str(ss_sto_row) + '*' + ss_col(st_tml+1) + str(rw) + \
                                 ')/' + ss_col(st_tml+1) + '$' + str(ss_re_row) + '),"")'
                         ss.cell(row=rw, column=st_lco+1).number_format = '$#,##0.00'
                         if self.carbon_price > 0:
-                            ss.cell(row=rw, column=st_lcc+1).value = '=IF(' + ss_col(st_emc+1) + str(rw) + '>0,(' + \
+                            ss.cell(row=rw, column=st_lcc+1).value = '=IF(AND(' + ss_col(st_emc+1) + str(rw) + '<>"",' + \
+                                    ss_col(st_emc+1) + str(rw) + '>0),(' + \
                                     ss_col(st_cst+1) + str(rw) + '+' + ss_col(st_emc+1) + str(rw) + ')/(' + \
                                     ss_col(st_tml+1) + str(rw) + '+(' + ss_col(st_tml+1) + '$' + str(ss_sto_row) + \
                                     '*' + ss_col(st_tml+1) + str(rw) + ')/' + ss_col(st_tml+1) + '$' + \
@@ -3675,15 +3706,19 @@ class powerMatch(QtWidgets.QWidget):
                                 ss_col(st_cst+1) + str(rw) + '/' + ss_col(st_tml+1) + str(rw) + '),"")'
                         ss.cell(row=rw, column=st_lco+1).number_format = '$#,##0.00'
                         if self.carbon_price > 0:
-                            ss.cell(row=rw, column=st_lcc+1).value = '=IF(' + ss_col(st_emc+1) + str(rw) + '>0,(' + \
+                            ss.cell(row=rw, column=st_lcc+1).value = '=IF(AND(' + ss_col(st_emc+1) + str(rw) + '<>"",' + \
+                                    ss_col(st_emc+1) + str(rw) + '>0),(' + \
                                     ss_col(st_cst+1) + str(rw) + ss_col(st_emc+1) + str(rw) + ')/' + \
                                     ss_col(st_tml+1) + str(rw) + '),"")'
                             ss.cell(row=rw, column=st_lcc+1).number_format = '$#,##0.00'
                 for rw in range(ss_re_lst_row + 1, ss_lst_row + 1):
-                    ss.cell(row=rw, column=st_lco+1).value = '=' + ss_col(st_lcg+1) + str(rw)
+                    ss.cell(row=rw, column=st_lco+1).value = '=IF(AND(' + ss_col(st_tml+1) + str(rw) + '<>"",' + \
+                                    ss_col(st_tml+1) + str(rw) + '>0),' + ss_col(st_cst+1) + str(rw) + \
+                                                             '/' + ss_col(st_tml+1) + str(rw) + ',"")'
                     ss.cell(row=rw, column=st_lco+1).number_format = '$#,##0.00'
                     if self.carbon_price > 0:
-                        ss.cell(row=rw, column=st_lcc+1).value = '=IF(' + ss_col(st_emc+1) + str(rw) + '>0,(' + \
+                        ss.cell(row=rw, column=st_lcc+1).value = '=IF(AND(' + ss_col(st_emc+1) + str(rw) + '<>"",' + \
+                                    ss_col(st_emc+1) + str(rw) + '>0),(' + \
                                 ss_col(st_cst+1) + str(rw) + '+' + ss_col(st_emc+1) + str(rw) + ')/' + \
                                 ss_col(st_tml+1) + str(rw) + ',"")'
                         ss.cell(row=rw, column=st_lcc+1).number_format = '$#,##0.00'
@@ -4121,13 +4156,21 @@ class powerMatch(QtWidgets.QWidget):
         short_taken_tot = 0
         for gen in dispatch_order:
             if pmss_details[gen].fac_type == 'G': # generators
-                if self.constraints[self.generators[gen].constraint].capacity_min != 0:
+                try:
+                    const = self.generators[gen].constraint
+                except:
+                    try:
+                        g2 = gen[gen.find('.') + 1:]
+                        const = self.generators[g2].constraint
+                    except:
+                        continue
+                if self.constraints[const].capacity_min != 0:
                     try:
                         short_taken[gen] = pmss_details[gen].capacity * pmss_details[gen].multiplier * \
-                            self.constraints[self.generators[gen].constraint].capacity_min
+                            self.constraints[const].capacity_min
                     except:
                         short_taken[gen] = pmss_details[gen].capacity * \
-                            self.constraints[self.generators[gen].constraint].capacity_min
+                            self.constraints[const].capacity_min
                     short_taken_tot += short_taken[gen]
                     for row in range(8760):
                         shortfall[row] = shortfall[row] - short_taken[gen]
@@ -4953,7 +4996,8 @@ class powerMatch(QtWidgets.QWidget):
                     ss.cell(row=ss_row, column=st_emi+1).value = '=Detail!' + ss_col(col + nc) + str(emi_row)
                 ss.cell(row=ss_row, column=st_emi+1).number_format = '#,##0'
                 if self.carbon_price > 0:
-                    ss.cell(row=ss_row, column=st_emc+1).value = '=IF(' + ss_col(st_emi+1) + str(ss_row) + '>0,' + \
+                    ss.cell(row=ss_row, column=st_emc+1).value = '=IF(AND(' + ss_col(st_emi+1) + str(ss_row) + '<>"",' + \
+                                                                 ss_col(st_emi+1) + str(ss_row) + '>0),' + \
                                                                  ss_col(st_emi+1) + str(ss_row) + '*carbon_price,"")'
                     ss.cell(row=ss_row, column=st_emc+1).number_format = '$#,##0'
             # max mwh
@@ -4995,10 +5039,12 @@ class powerMatch(QtWidgets.QWidget):
                         ',"' + sf_test[0] + '0")'
                 ns.cell(row=fall_row, column=col + 1).number_format = '#,##0'
                 col += 2
-            ss.cell(row=ss_row, column=st_lie+1).value = '=IF(' + ss_col(st_emi+1) + str(ss_row) + '>0,' + \
+            ss.cell(row=ss_row, column=st_lie+1).value = '=IF(AND(' + ss_col(st_emi+1) + str(ss_row) + '<>"",' + \
+                                                         ss_col(st_emi+1) + str(ss_row) + '>0),' + \
                                                          ss_col(st_emi+1) + str(ss_row) + '*lifetime,"")'
             ss.cell(row=ss_row, column=st_lie+1).number_format = '#,##0'
-            ss.cell(row=ss_row, column=st_lec+1).value = '=IF(' + ss_col(st_emc+1) + str(ss_row) + '>0,' + \
+            ss.cell(row=ss_row, column=st_lec+1).value = '=IF(AND(' + ss_col(st_emi+1) + str(ss_row) + '<>"",' + \
+                                                         ss_col(st_emi+1) + str(ss_row) + '>0),' + \
                                                          ss_col(st_emc+1) + str(ss_row) + '*lifetime,"")'
             ss.cell(row=ss_row, column=st_lec+1).number_format = '$#,##0'
         if is_storage:
@@ -5075,7 +5121,7 @@ class powerMatch(QtWidgets.QWidget):
         ss.cell(row=1, column=1).font = bold
         ss_lst_row = ss_row + 1
         ss_row, ss_re_row = detail_summary_total(ss_row, base_row='4')
-        if len(nsul_sum_cols) > 0:
+        if len(nsul_sum_cols) > 1: # if we have underlying there'll be more than one column
             ss_row += 2
             ss.cell(row=ss_row, column=1).value = 'Additional Underlying Load'
             ss.cell(row=ss_row, column=1).font = bold
