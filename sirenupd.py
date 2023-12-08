@@ -78,6 +78,17 @@ class UpdDialog(QtWidgets.QDialog):
                     self.new_versions.append([program['Program'], 'New Release' + local, version])
         versions.close()
 
+    def check_newold(self, new, old):
+        new_bit = new.split('.')
+        old_bit = old.split('.')
+        if len(new_bit) == len(old_bit):
+            for b in range(len(new_bit) - 1):
+                if not new_bit[b].zfill(4) >= old_bit[b].zfill(4):
+                    return False
+            if new_bit[-1].zfill(4) > old_bit[-1].zfill(4):
+                return True
+        return False
+
     def __init__(self, ini_file='getfiles.ini', parent=None):
         QtWidgets.QDialog.__init__(self, parent)
         self.setWindowTitle('SIREN Update (' + credits.fileVersion() + ') - Check for new versions')
@@ -249,9 +260,9 @@ class UpdDialog(QtWidgets.QDialog):
                         continue
                     else:
                         curver = credits.fileVersion(program=newprog + suffix)
-                        #  print(newprog, suffix, curver, self.table.item(p, 2).text())
+                        # print(newprog, suffix, curver, self.table.item(p, 2).text())
                         if curver != '?':
-                            if self.table.item(p, 2).text() < curver and self.table.item(p, 2).text() != 'New Program':
+                            if not self.check_newold(self.table.item(p, 2).text(), curver) and self.table.item(p, 2).text() != 'New Program':
                                 self.table.setItem(p, 3, QtWidgets.QTableWidgetItem('Current is newer'))
                                 continue
                     if not self.debug:
@@ -284,7 +295,7 @@ class UpdDialog(QtWidgets.QDialog):
                         if os.path.exists(newprog + 'new' + suffix):
                             newver = credits.fileVersion(program=newprog + 'new')
                             if newver != '?':
-                                if newver < self.table.item(p, 3).text() and self.table.item(p, 2).text() != 'New Program':
+                                if not self.check_newold(newver, self.table.item(p, 3).text()) and self.table.item(p, 2).text() != 'New Program':
                                     if not self.debug:
                                         os.rename(newprog + 'new' + suffix,
                                                   newprog + '.' + newver + suffix)
