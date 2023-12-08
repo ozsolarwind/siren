@@ -901,7 +901,7 @@ class powerMatch(QtWidgets.QWidget):
         self.save_tables = False
         self.show_multipliers = False
         self.show_correlation = False
-        self.summary_sources = False
+        self.summary_sources = True
         self.surplus_sign = 1 # Note: Preferences file has it called shortfall_sign
         # it's easier for the user to understand while for the program logic surplus is easier
         self.underlying = ['Rooftop PV'] # technologies contributing to underlying (but not operational) load
@@ -1042,8 +1042,8 @@ class powerMatch(QtWidgets.QWidget):
                     if value[0] == '+' or value[0].lower() == 'p':
                         self.surplus_sign = -1
                 elif key == 'summary_sources':
-                    if value.lower() in ['true', 'yes', 'on']:
-                        self.summary_sources = True
+                    if value.lower() in ['false', 'off', 'no']:
+                        self.summary_sources = False
                 elif key == 'underlying':
                     self.underlying = value.split(',')
                 elif key == 'operational':
