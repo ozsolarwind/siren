@@ -67,9 +67,13 @@ class makeFile():
             return
         datas = response.read().decode().split('\n')
         conn.close()
-        common_fields = ['Facility Code', 'Participant Name', 'Participant Code',
-                         'Facility Type', 'Balancing Status', 'Capacity Credits (MW)',
-                         'Maximum Capacity (MW)', 'Registered From']
+        common_fields = ['Participant Code', 'Participant Name', 'Facility Code', 'Facility Type',
+                         'Maximum Capacity (MW)', 'Balancing Status'] #, 'Remaining capacity from embedded generator (MW)']
+        old_new = {} # a fudge as some field names have changed
+        for field in common_fields:
+            old_new[field] = field
+        old_new['Facility Type'] = 'Facility Class'
+        old_new['Maximum Capacity (MW)'] = 'System Size (MW)'
         if not os.path.exists(self.tgt_fil):
             self.log = 'No target file (' + self.tgt_fil + ')'
             return
@@ -80,7 +84,7 @@ class makeFile():
         self.log = ''
         for new_field in new_facilities.fieldnames:
             for field in common_fields:
-                if new_field == field:
+                if new_field == old_new[field]:
                     break
             else:
                 if new_field != 'Extracted At':
@@ -91,9 +95,11 @@ class makeFile():
                 info = 'Extracted At: ' + new_facility['Extracted At']
             facile.seek(0)
             for facility in facilities:
-                if new_facility['Facility Code'] == facility['Facility Code']:
+                if new_facility[old_new['Facility Code']] == facility['Facility Code']:
                     for field in common_fields:
-                        if new_facility[field] != facility[field]:
+                        if field == 'Balancing Status':
+                            continue
+                        if new_facility[old_new[field]] != facility[field]:
                             if field == 'Registered From' and facility[field][0] != '2':
                                 new_time = time.strptime(new_facility[field], '%Y-%m-%d 00:00:00')
                                 new_date = time.strftime('%B %d %Y', new_time)
@@ -102,14 +108,14 @@ class makeFile():
                                     continue
                             try:
                                 field_was = float(facility[field])
-                                field_new = float(new_facility[field])
+                                field_new = float(new_facility[old_new[field]])
                                 if field_was == field_new:
                                     continue
                             except:
                                 pass
                             self.log += "Changed field in '%s:'\n    '%s' was '%s', now '%s'\n" % \
                                          (facility['Facility Code'], field, facility[field],
-                                          new_facility[field])
+                                          new_facility[old_new[field]])
                             changes += 1
                     break
             else:
@@ -151,7 +157,10 @@ class makeFile():
                         continue
                     new_line = []
                     for field in common_fields:
-                        new_line.append(new_facility[field])
+                        try:
+                            new_line.append(new_facility[old_new[field]])
+                        except:
+                            new_line.append('')
                     facile.seek(0)
                     for facility in facilities:
                         if new_facility['Facility Code'] == facility['Facility Code']:
@@ -431,6 +440,7 @@ class getParms(QtWidgets.QWidget):
             aemo_facilities = my_config.get('updateswis', 'aemo_facilities')
         except:
             aemo_facilities = '/datafiles/facilities/facilities.csv'
+            aemo_facilities = '/datafiles/post-facilities/facilities.csv'
         try:
             aemo_load = my_config.get('updateswis', 'aemo_load')
         except:
@@ -601,7 +611,7 @@ if "__main__" == __name__:
         try:
             furl = my_config.get('updateswis', 'aemo_facilities')
         except:
-            furl = '/datafiles/facilities/facilities.csv'
+            furl = '/datafiles/post-facilities/facilities.csv'
         try:
             lurl = my_config.get('updateswis', 'aemo_load')
         except:
