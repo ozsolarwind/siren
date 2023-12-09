@@ -355,6 +355,8 @@ class Table(QtWidgets.QDialog):
                             self.labels[prop] = 'float'
                         a = str(attr)
                         bits = a.split('.')
+                        if len(bits) == 1: # maybe other float format
+                            bits = a.split('e')
                         if self.decpts is None:
                             if prop in self.lens:
                                 for i in range(2):
