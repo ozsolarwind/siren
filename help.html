@@ -2015,7 +2015,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><dfn>pie_legend_on</dfn>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
-<td class="none">If set to True labels for a Pie Chart will be placed on the chart, if False the legend will be presented a table. The default is True</td>
+<td class="none">If set to True labels for a Pie Chart will be placed on the chart, if False the legend will be presented as a table. If set to Pct (Percent) the legend will be persented as a table and pie percentages will be placed on the chart. The default is True</td>
 </table>
 </div>
 <table border="0", class="none">
@@ -3662,7 +3662,7 @@ The order in which the dispatchable technologies will be processed by Powermatch
 <tr><td class="none"><dfn>Lifetime Cost</dfn></td><td class="none">The lifetime cost for the facility. This is the total (annual) cost multiplied by the longest lifetime for all chosen Generators</td></tr>
 <tr><td class="none"><dfn>Lifetime Emissions</dfn></td><td class="none">The lifetime emissions for the facility; tCO<sub>2</sub>&#x2011;e</td></tr>
 <tr><td class="none"><dfn>Lifetime Emissions Cost</dfn></td><td class="none">The lifetime cost of emissions for the facility</td></tr>
-<tr><td class="none"><dfn>Area<dfn></td><td class="none">The estimated land area for the facility in square kilometres</td></tr>
+<tr><td class="none"><dfn>Area<dfn></td><td class="none">The estimated land area for the facility in km<sup>2</sup>. Note: for Wind &ldquo;only about 3% of this area will be used for the development of actual turbines and supporting infrastructure.&rdquo; (<a href="https://ldcinfrastructure.com.au/wind-energy-lease-explained/" target="_blank">https://ldcinfrastructure.com.au/wind-energy-lease-explained</a>)</td></tr>
 <tr><td class="none"><dfn>Reference LCOE</dfn></td><td class="none">The reference LCOE for a facility where costs are calculated using a Reference LCOE and CF</td></tr>
 <tr><td class="none"><dfn>Reference CF</dfn></td><td class="none">The reference CF</td></tr>
 </table>
@@ -3694,7 +3694,7 @@ The order in which the dispatchable technologies will be processed by Powermatch
 <li><strong>Batch</strong>. Invoke Powermatch for a number of &ldquo;models&rdquo; with different capacities for each technology. This option produces a worksheet containing selected details from the Summary Output with one column per model. An input spreadsheet contains a column with the capacities for each model. A list of the desired details from the Summary Table can be specified below the list of technologies (capacities). The details can include any of the following Report Groups. Most groups will have rows pertaining to each group for each facility plus additional rows specific to each group.
 <table border="0" class="none" style="margin-left:35px">
 <tr><td class="none"><dfn>Capacity (MW)<dfn></td><td class="none">The input capacity for each facility. The dispatch order for the facilties is defined by the row order</td></tr>
-<tr><td class="none"><dfn>Area<dfn></td><td class="none">The estimated land area for the facility in square kilometres</td></tr>
+<tr><td class="none"><dfn>Area<dfn></td><td class="none">The estimated land area for the facility in km<sup>2</sup></td></tr>
 <tr><td class="none"><dfn>Capacity Factor<dfn></td><td class="none">The calculated capacity factor for each facility</td></tr>
 <tr><td class="none"><dfn>Capital Cost</dfn></td><td class="none">The capital cost for the facility</td></tr>
 <tr><td class="none"><dfn>Carbon<dfn></td><td class="none">Details on Carbon impacts. This will include lifetime carbon costs if the <em>Lifetime Cost</em> Report Group is specified</td></tr>
@@ -3761,7 +3761,7 @@ See below for more details on optimisation.</li>
 <p>To address the shortfall in generation encountered by a renewable scenario other dispatchable generation and storage facilities can be used. These are defined in a Generators table. The Generators table is also used to define the Reference <em>LCOE</em> and <em>LCOE CF</em> figures for Renewable technologies. The dispatchable facilities are dispatched after renewable generators. The fields are:
 <table border="0" class="none" style="margin-left:35px">
 <tr><td class="none"><dfn>Name (*)</dfn></td><td class="none">Name of the Facility</td></tr>
-<tr><td class="none"><dfn>Area</dfn></td><td class="none">The estimated land area per MW (or MWh) for the facility in square kilometres</td></tr>
+<tr><td class="none"><dfn>Area</dfn></td><td class="none">The estimated land area per MW (or MWh) for the facility in km<sup>2</sup></td></tr>
 <tr><td class="none"><dfn>Capacity (*)</dfn></td><td class="none">The capacity for the facility in MW for generators and MWh, that is total energy content, for storage</td></tr>
 <tr><td class="none"><dfn>Capex (or Capital) (c)</dfn></td><td class="none">The capital cost of the facility per MW for generators and MWh for storage</td></tr>
 <tr><td class="none"><dfn>Constraint (*)</dfn></td><td class="none">Name of the Constraint that applies to this facility</td></tr>

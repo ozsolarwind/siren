@@ -23,7 +23,7 @@ import configparser  # decode .ini file
 import os
 from PyQt5 import QtCore, QtGui, QtWidgets
 import sys
-from math import log10, ceil
+from math import log10, ceil, sqrt
 import matplotlib
 if matplotlib.__version__ > '3.5.1':
     matplotlib.use('Qt5Agg')
@@ -179,6 +179,7 @@ class PowerPlot(QtWidgets.QWidget):
         self.overlay = '<none>'
         self.palette = True
         self.pie_legend_on = True
+        self.pie_percent_on = True
         self.hatch_word = ['charge']
         self.history = None
         self.max_files = 10
@@ -225,8 +226,11 @@ class PowerPlot(QtWidgets.QWidget):
                     except:
                         pass
                 elif key == 'pie_legend_on':
-                    if value.lower() in ['false', 'no', 'off']:
+                    if value.lower() in ['pct', 'percentage', '%', '%age']:
                         self.pie_legend_on = False
+                    elif value.lower() in ['false', 'no', 'off']:
+                        self.pie_legend_on = False
+                        self.pie_percent_on = False
                 elif key == 'palette':
                     if value.lower() in ['false', 'no', 'off']:
                         self.palette = False
@@ -1098,6 +1102,60 @@ class PowerPlot(QtWidgets.QWidget):
      #   self.get_config()   # refresh config values
         config = configparser.RawConfigParser()
         config.read(self.config_file)
+        try:
+            items = config.items('Powerplot')
+            for key, value in items:
+                if key == 'alpha':
+                    try:
+                        self.alpha = float(value)
+                    except:
+                        self.alpha = 0.25
+                if key == 'alpha_word':
+                    self.alpha_word = value.split(',')
+                elif key == 'cbar':
+                    if value.lower() in ['false', 'no', 'off']:
+                        self.cbar = False
+                    else:
+                        self.cbar = True
+                elif key == 'cbar2':
+                    if value.lower() in ['false', 'no', 'off']:
+                        self.cbar2 = False
+                    else:
+                        self.cbar2 = True
+                elif key == 'cmap':
+                    self.cmap = value
+                elif key == 'constrained_layout':
+                    if value.lower() in ['true', 'yes', 'on']:
+                        self.constrained_layout = True
+                    else:
+                        self.constrained_layout = False
+                elif key == 'hatch_word':
+                    self.hatch_word = value.split(',')
+                elif key == 'margin_of_error':
+                    try:
+                        self.margin_of_error = float(value)
+                    except:
+                        self.margin_of_error = .0001
+                elif key == 'pie_legend_on':
+                    if value.lower() in ['pct', 'percentage', '%', '%age']:
+                        self.pie_legend_on = False
+                        self.pie_percent_on = True
+                    elif value.lower() in ['false', 'no', 'off']:
+                        self.pie_legend_on = False
+                        self.pie_percent_on = False
+                    else:
+                        self.pie_legend_on = True
+                        self.pie_percent_on = True
+                elif key == 'palette':
+                    if value.lower() in ['false', 'no', 'off']:
+                        self.palette = False
+                    else:
+                        self.palette = True
+                elif key == 'short_legend':
+                    if value.lower() in ['true', 'yes', 'on', '_']:
+                        self.short_legend = '_'
+        except:
+            pass
         self.log.setText(self.config_file + ' edited. Reload may be required.')
 
     def ppClicked(self):
@@ -1830,15 +1888,42 @@ class PowerPlot(QtWidgets.QWidget):
                                         break # part period
                             break
                 tot = sum(data)
+                # https://stackoverflow.com/questions/3942878/how-to-decide-font-color-in-white-or-black-depending-on-background-color
+                whites = []
+                if self.pie_percent_on:
+                    for c in range(len(colors)):
+                        intensity = 0.
+                        for i in range(1, 5, 2):
+                            colr = int(colors[c][i : i + 2], 16) / 255.0
+                            if colr <= 0.04045:
+                                colr = colr / 12.92
+                            else:
+                                colr = pow((c + 0.055) / 1.055, 2.4)
+                            if i == 1: #red
+                                intensity = colr * 0.216
+                            elif i == 3:
+                                intensity = colr * 0.7152
+                            else:
+                                intensity = colr * 0.0722
+                        if intensity < sqrt(1.05 * 0.05) - 0.05:
+                            whites.append(c)
                 if self.pie_legend_on: # legend on chart
-                    patches, texts, autotexts = pi2.pie(data, labels=labels, autopct='%1.1f%%', colors=colors, startangle=90, pctdistance=.70)
+                    if self.pie_percent_on:
+                        patches, texts, autotexts = pi2.pie(data, labels=labels, autopct='%1.1f%%', colors=colors, startangle=90, pctdistance=.70)
+                    else:
+                        patches, texts = pi2.pie(data, labels=labels, colors=colors, startangle=90, pctdistance=.70)
+                     #   fig.legend(patches, labels, loc='lower right')
                 else:
-                    patches, texts = pi2.pie(data, colors=colors, startangle=90)
+                    if self.pie_percent_on:
+                        patches, texts, autotexts = pi2.pie(data, labels=None, autopct='%1.1f%%', colors=colors, startangle=90, pctdistance=.70)
+                    else:
+                        patches, texts = pi2.pie(data, colors=colors, startangle=90)
                     fig.legend(patches, labels, loc='lower right')
+                for c in whites:
+                    autotexts[c].set_color('white')
                  ##maybe   plt.subplots_adjust(left=0.1, bottom=0.1, right=0.75)
                 p = plt.gcf()
                 p.gca().add_artist(plt.Circle((0, 0), 0.40, color='white'))
-            #    plt.text(-0.0, -0.0, f'{tot/1000:0,.0f} GWh', va='center', ha='center')
                 plt.show()
                 return
             elif self.plottype.currentText() == 'Heat Map':
@@ -2156,7 +2241,7 @@ class PowerPlot(QtWidgets.QWidget):
                 lc2 = plt.subplot(111)
                 plt.title(titl)
                 for c in range(len(data)):
-                    print(label[c], data[c])
+                  #  print(label[c], data[c])
                     lc2.plot(x, data[c], linewidth=1.5, label=label[c], color=self.set_colour(label[c]))
                 if len(load) > 0:
                     lc2.plot(x, load, linewidth=self.tgtSpin.value(), label=self.short_legend + self.target, color=self.set_colour(self.target),
