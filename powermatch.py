@@ -84,7 +84,7 @@ headers = ['Facility', 'Capacity\n(Gen, MW;\nStor, MWh)', 'To meet\nLoad (MWh)',
            'Subtotal\n(MWh)', 'CF', 'Cost ($/yr)', 'LCOG\nCost\n($/MWh)', 'LCOE\nCost\n($/MWh)',
            'Emissions\n(tCO2e)', 'Emissions\nCost', 'LCOE With\nCO2 Cost\n($/MWh)', 'Max.\nMWH',
            'Max.\nBalance', 'Capital\nCost', 'Lifetime\nCost', 'Lifetime\nEmissions',
-           'Lifetime\nEmissions\nCost', 'Reference\nLCOE', 'Reference\nCF']
+           'Lifetime\nEmissions\nCost', 'Area (km^2)', 'Reference\nLCOE', 'Reference\nCF']
 # set up columns for summary table. Hopefully to make it easier to add / alter columns
 st_fac = 0 # Facility
 st_cap = 1 # Capacity\n(Gen, MW;\nStor, MWh)
@@ -103,8 +103,9 @@ st_cac = 13 # Capital\nCost'
 st_lic = 14 # Lifetime\nCost'
 st_lie = 15 # Lifetime\nEmissions
 st_lec = 16 # Lifetime\nEmissions\nCost
-st_rlc = 17 # Reference\nLCOE
-st_rcf = 18 # Reference\nCF
+st_are = 17 # Area (km^2)
+st_rlc = 18 # Reference\nLCOE
+st_rcf = 19 # Reference\nCF
 
 # same order as self.file_labels
 C = 0 # Constraints - xls or xlsx
@@ -259,8 +260,9 @@ class Facility:
         self.constraint = ''
         self.order = 0
         self.lifetime = 20
+        self.area = None
         for attr in ['capacity', 'lcoe', 'lcoe_cf', 'emissions', 'initial', 'capex',
-                     'fixed_om', 'variable_om', 'fuel', 'disc_rate', 'lifetime']:
+                     'fixed_om', 'variable_om', 'fuel', 'disc_rate', 'lifetime', 'area']:
             setattr(self, attr, 0.)
         for key, value in kwargs.items():
             if value != '' and value is not None:
@@ -464,9 +466,10 @@ class Adjustments(MyQDialog):
         show = QtWidgets.QPushButton('Proceed', self)
         self.grid.addWidget(show, ctr, 1)
         show.clicked.connect(self.showClicked)
-        reset = QtWidgets.QPushButton('Reset', self)
-        self.grid.addWidget(reset, ctr, 2)
-        reset.clicked.connect(self.resetClicked)
+        if prefix is not None:
+            reset = QtWidgets.QPushButton('Reset', self)
+            self.grid.addWidget(reset, ctr, 2)
+            reset.clicked.connect(self.resetClicked)
         resetload = QtWidgets.QPushButton('Reset Load', self)
         self.grid.addWidget(resetload, ctr, 3)
         resetload.clicked.connect(self.resetloadClicked)
@@ -1513,8 +1516,16 @@ class powerMatch(QtWidgets.QWidget):
         fnr = self.file_labels.index(bit[1])
         curfile = self.get_filename(self.files[fnr].text())
         if not os.path.exists(curfile):
-            self.setStatus(self.file_labels[fnr] + ' not found.')
-            return
+            if fnr == R and self.results_pfx_fld.text() != '':
+                i = curfile.rfind('/')
+                curfile = curfile[:i + 1] + self.results_pfx_fld.text() + '_' + curfile[i+1:]
+                print(curfile)
+                if not os.path.exists(curfile):
+                    self.setStatus(self.file_labels[fnr] + ' not found.')
+                    return
+            else:
+                self.setStatus(self.file_labels[fnr] + ' not found.')
+                return
         if sys.platform == 'win32' or sys.platform == 'cygwin':
             os.startfile(curfile)
         elif sys.platform == 'darwin':
@@ -1746,6 +1757,8 @@ class powerMatch(QtWidgets.QWidget):
                         sp_pts.append(0)
                     elif prop == 'disc_rate' or prop == 'emissions':
                         sp_pts.append(3)
+                    elif prop == 'area':
+                        sp_pts.append(5)
                     else:
                         sp_pts.append(2)
             dialog = displaytable.Table(self.generators, title=self.sender().text(),
@@ -1887,7 +1900,7 @@ class powerMatch(QtWidgets.QWidget):
             self.setStatus('Not a ' + self.file_labels[G] + ' worksheet.')
             return
         args = ['name', 'order', 'constraint', 'capacity', 'lcoe', 'lcoe_cf', 'emissions', 'initial',
-                'capex', 'fixed_om', 'variable_om', 'fuel', 'disc_rate', 'lifetime']
+                'capex', 'fixed_om', 'variable_om', 'fuel', 'disc_rate', 'lifetime', 'area']
         possibles = {'name': 0}
         for col in range(ws.ncols):
             try:
@@ -2604,7 +2617,8 @@ class powerMatch(QtWidgets.QWidget):
                              'Capital Cost': [st_cac, '#,##0'],
                              'Lifetime Cost': [st_lic, '#,##0'],
                              'Lifetime Emissions': [st_lie, '#,##0'],
-                             'Lifetime Emissions Cost': [st_lec, '#,##0']}
+                             'Lifetime Emissions Cost': [st_lec, '#,##0'],
+                             'Area': [st_are, '#,###0.00']}
             batch_extra = {'RE': ['#,##0.00', ['RE %age', st_cap], ['Storage %age', st_cap], ['RE %age of Total Load', st_cap]],
                            'Load Analysis': ['#,##0', ['Load met', st_tml], ['Load met %age', st_cap], ['Shortfall', st_tml], ['Total Load', st_tml],
                            ['Largest Shortfall', st_cap], ['Storage losses', st_sub], ['Surplus', st_sub], ['Surplus %age', st_cap]],
@@ -3320,6 +3334,7 @@ class powerMatch(QtWidgets.QWidget):
             sp_d[st_lic] = lifetime_sum
             sp_d[st_lie] = lifetime_co2_sum
             sp_d[st_lec] = lifetime_co2_cost
+            sp_d[st_are] = total_area
             sp_data.append(sp_d)
             if (self.carbon_price > 0 or option == 'B'):
                 sp_d = [' '] * len(headers)
@@ -3636,6 +3651,10 @@ class powerMatch(QtWidgets.QWidget):
                                                          ss_col(st_emi+1) + str(ss_row) + '>0),' + \
                                                          ss_col(st_emc+1) + str(ss_row) + '*lifetime,"")'
             ss.cell(row=ss_row, column=st_lec+1).number_format = '$#,##0'
+            if self.generators[gen].area > 0:
+                ss.cell(row=ss_row, column=st_are+1).value = '=Detail!' + ss_col(col) + str(cap_row) +\
+                                                             '*' + str(self.generators[gen].area)
+                ss.cell(row=ss_row, column=st_are+1).number_format = '#,##0.00'
             return dd_tml_sum, dd_re_sum
 
         def detail_summary_total(ss_row, title='', base_row='', back_row=''):
@@ -3644,14 +3663,14 @@ class powerMatch(QtWidgets.QWidget):
             for col in range(1, len(headers) + 1):
                 ss.cell(row=3, column=col).font = bold
                 ss.cell(row=ss_row, column=col).font = bold
-            for col in [st_cap, st_tml, st_sub, st_cst, st_emi, st_emc, st_cac, st_lic, st_lie, st_lec]:
+            for col in [st_cap, st_tml, st_sub, st_cst, st_emi, st_emc, st_cac, st_lic, st_lie, st_lec, st_are]:
                 if back_row != '':
                     strt = ss_col(col, base=0) + back_row + '+'
                 else:
                     strt = ''
                 ss.cell(row=ss_row, column=col+1).value = '=' + strt + 'SUM(' + ss_col(col, base=0) + \
                         base_row + ':' + ss_col(col, base=0) + str(ss_row - 1) + ')'
-                if col in [st_cap]:
+                if col in [st_cap, st_are]:
                     ss.cell(row=ss_row, column=col+1).number_format = '#,##0.00'
                 elif col in [st_tml, st_sub, st_emi, st_lie]:
                     ss.cell(row=ss_row, column=col+1).number_format = '#,##0'
@@ -3989,6 +4008,7 @@ class powerMatch(QtWidgets.QWidget):
             ss.cell(row=3, column=st_lic+1).value = headers[st_lic] # lifetime cost
             ss.cell(row=3, column=st_lie+1).value = headers[st_lie] # lifetime emissions
             ss.cell(row=3, column=st_lec+1).value = headers[st_lec] # lifetime emissions cost
+            ss.cell(row=3, column=st_are+1).value = headers[st_are] # area
             ss.cell(row=3, column=st_rlc+1).value = headers[st_rlc] # reference lcoe
             ss.cell(row=3, column=st_rcf+1).value = headers[st_rcf] # reference cf
             ss_row = 3
@@ -4522,6 +4542,7 @@ class powerMatch(QtWidgets.QWidget):
             lifetime_sum = 0.
             lifetime_co2_sum = 0.
             lifetime_co2_cost = 0.
+            total_area = 0.
             for sp in range(len(sp_data)):
                 gen = sp_data[sp][st_fac]
                 if gen in storage_names:
@@ -4634,6 +4655,9 @@ class powerMatch(QtWidgets.QWidget):
                     lifetime_co2_cost += sp_data[sp][st_lec]
                 else:
                     sp_data[sp][st_lcc] = sp_data[sp][st_lco]
+                if self.generators[gen].area > 0:
+                    sp_data[sp][st_are] = sp_data[sp][st_cap] * self.generators[gen].area
+                    total_area += sp_data[sp][st_are]
             sf_sums = [0., 0., 0.]
             for sf in range(len(shortfall)):
                 if shortfall[sf] > 0:
@@ -4735,6 +4759,8 @@ class powerMatch(QtWidgets.QWidget):
                         lifetime_co2_cost += sp_d[st_lec]
                     else:
                         sp_d[st_lcc] = sp_d[st_lco]
+                    if self.generators[gen].area > 0:
+                        sp_d[st_are] = sp_d[st_cap] * self.generators[gen].area
                     sp_data.append(sp_d)
                 if gen_sum > 0:
                     gs = cost_sum / gen_sum
@@ -4779,7 +4805,7 @@ class powerMatch(QtWidgets.QWidget):
             if option == 'B':
                 if self.optimise_debug:
                     sp_pts = [0] * len(headers)
-                    for p in [st_cap, st_lcg, st_lco, st_lcc, st_max, st_bal, st_rlc]:
+                    for p in [st_cap, st_lcg, st_lco, st_lcc, st_max, st_bal, st_rlc, st_are]:
                         sp_pts[p] = 2
                     if corr_data is not None:
                         sp_pts[st_cap] = 3 # compromise between capacity (2) and correlation (4)
@@ -4831,7 +4857,7 @@ class powerMatch(QtWidgets.QWidget):
                 sp_data.append(['Generators worksheet', str(self.files[G].text()) \
                                 + '.' + str(self.sheets[G].currentText())])
             sp_pts = [0] * len(headers)
-            for p in [st_cap, st_lcg, st_lco, st_lcc, st_max, st_bal, st_rlc]:
+            for p in [st_cap, st_lcg, st_lco, st_lcc, st_max, st_bal, st_rlc, st_are]:
                 sp_pts[p] = 2
             if corr_data is not None:
                 sp_pts[st_cap] = 3 # compromise between capacity (2) and correlation (4)
@@ -6372,7 +6398,7 @@ class powerMatch(QtWidgets.QWidget):
                     except:
                         pickf = pick2
         op_pts = [0] * len(headers)
-        for p in [st_lcg, st_lco, st_lcc, st_max, st_bal, st_rlc]:
+        for p in [st_lcg, st_lco, st_lcc, st_max, st_bal, st_rlc, st_are]:
             op_pts[p] = 2
         op_pts[st_cap] = 3
         if self.more_details:
