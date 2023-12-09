@@ -1125,6 +1125,9 @@ class powerMatch(QtWidgets.QWidget):
             self.files[i].setText(ifiles[i])
             self.files[i].clicked.connect(self.fileChanged)
             self.grid.addWidget(self.files[i], r, 1, 1, 5)
+            button = QtWidgets.QPushButton(f'Open {self.file_labels[i]} file', self)
+            self.grid.addWidget(button, r, 6)
+            button.clicked.connect(self.openClicked)
             if i < D:
                 r += 1
                 self.grid.addWidget(QtWidgets.QLabel(self.file_labels[i] + ' Sheet:'), r, 0)
@@ -1504,6 +1507,21 @@ class powerMatch(QtWidgets.QWidget):
 
     def changes(self):
         self.updated = True
+
+    def openClicked(self):
+        bit = self.sender().text().split()
+        fnr = self.file_labels.index(bit[1])
+        curfile = self.get_filename(self.files[fnr].text())
+        if not os.path.exists(curfile):
+            self.setStatus(self.file_labels[fnr] + ' not found.')
+            return
+        if sys.platform == 'win32' or sys.platform == 'cygwin':
+            os.startfile(curfile)
+        elif sys.platform == 'darwin':
+            subprocess.call('open', curfile)
+        elif sys.platform == 'linux2' or sys.platform == 'linux':
+            subprocess.call(('xdg-open', curfile))
+        self.setStatus(self.file_labels[fnr] + ' file "launched".')
 
     def quitClicked(self):
         if self.updated or self.order.updated or self.ignore.updated:
