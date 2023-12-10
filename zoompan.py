@@ -31,6 +31,7 @@ from matplotlib import __version__ as matplotlib_version
 #from matplotlib.lines import Line2D
 #from matplotlib.collections import PathCollection
 from mpl_toolkits.mplot3d.art3d import Path3DCollection
+import warnings
 
 
 class ZoomPanX():
@@ -58,6 +59,7 @@ class ZoomPanX():
         self.flex_on = False
         self.step = 168
         self.pick = True
+        self.hide = False
 
     def zoom_pan(self, ax, base_scale=2., annotate=False, dropone=False, flex_ticks=False, pick=True, mth_labels=None):
         def set_flex():
@@ -103,7 +105,7 @@ class ZoomPanX():
             else:
                 # deal with something that should never happen
                 scale_factor = 1
-                print('(106)', event.button)
+                print('(107)', event.button)
             # set new limits
             if self.d3:
                 z_left = ydata - cur_zlim[0]
@@ -263,9 +265,9 @@ class ZoomPanX():
             if event_key == 'r': # reset
                 self.keys = ''
                 self.month = None
+                ax.figure.canvas.manager.set_window_title(self.wtitle)
                 if mth_labels is not None:
                     ax.set_ylabel(self.ylabel)
-                    ax.figure.canvas.manager.set_window_title(self.wtitle)
                 self.week = None
                 if self.base_xlim is not None:
                     ax.set_xlim(self.base_xlim)
@@ -335,14 +337,23 @@ class ZoomPanX():
             elif event_key == 'h': # hide legend
                 font = ax.get_legend().prop
                 handles, labels = ax.get_legend_handles_labels()
+                if self.hide:
+                    us = ''
+                    self.hide = False
+                else:
+                    us = '_'
+                    self.hide = True
                 for l in range(len(labels)):
-                    labels[l] = '_' + labels[l]
+                    labels[l] = us + labels[l]
                 # reverse the order
                 ax.legend(labels=labels)
+                # reverse the order
+                ax.legend(handles[::-1], labels[::-1], prop=font).set_draggable(True)
                 if self.yformat is not None:
                     ax.yaxis.set_major_formatter(self.yformat)
                 ax.figure.canvas.draw()
             elif event_key == 'l':
+                self.keys = 'l'
                 font = ax.get_legend().prop
                 handles, labels = ax.get_legend_handles_labels()
                 # reverse the order
@@ -363,8 +374,8 @@ class ZoomPanX():
                     self.month = 0
                 else:
                     self.month += 1
+                ax.figure.canvas.manager.set_window_title(self.wtitle + f'-{self.month+1:02}')
                 if mth_labels is not None:
-                    ax.figure.canvas.manager.set_window_title(self.wtitle + f'-{self.month+1:02}')
                     ax.set_ylabel(mth_labels[self.month] + '\n' + self.ylabel)
                 ax.set_xlim([self.mth_xlim[self.month], self.mth_xlim[self.month + 1]])
                 set_flex()
@@ -409,13 +420,28 @@ class ZoomPanX():
                 ax.set_xlim([strt, strt + self.step * 2])
                 set_flex()
                 ax.figure.canvas.draw()
-            elif event.key >= '0' and event.key <= '9':
+            elif event.key >= '0' and event.key <= '9' and len(self.keys) > 0:
                 if self.axis != 'x':
                     return
-                if self.keys[-2:] == 'm1':
+                if self.keys[-1] == 'l':
+                    if event.key == '0':
+                        ncol =1
+                    else:
+                        ncol = int(event.key)
+                    font = ax.get_legend().prop
+                    handles, labels = ax.get_legend_handles_labels()
+                    ax.legend(handles[::-1], labels[::-1], prop=font, ncol=ncol).set_draggable(True)
+                    if self.yformat is not None:
+                        ax.yaxis.set_major_formatter(self.yformat)
+                    ax.figure.canvas.draw()
+                    return
+                elif self.keys[-2:] == 'm1':
                     self.keys = ''
                     if event.key < '3':
                         self.month = 10 + int(event.key) - 1
+                        ax.figure.canvas.manager.set_window_title(self.wtitle + f'-{self.month+1:02}')
+                        if mth_labels is not None:
+                            ax.set_ylabel(mth_labels[self.month] + '\n' + self.ylabel)
                     else:
                         return
                 elif self.keys[-1:] == 'm':
@@ -423,6 +449,9 @@ class ZoomPanX():
                         self.month = 0
                     else:
                         self.month = int(event.key) - 1
+                        ax.figure.canvas.manager.set_window_title(self.wtitle + f'-{self.month+1:02}')
+                        if mth_labels is not None:
+                            ax.set_ylabel(mth_labels[self.month] + '\n' + self.ylabel)
                     self.keys += event.key
                 elif self.keys[-1] == 'w' or (len(self.keys) > 1 and self.keys[-2] == 'w'):
                     if self.keys[-1] == 'w':
@@ -602,6 +631,7 @@ class ZoomPanX():
                 set_flex()
                 ax.figure.canvas.draw()
 
+        warnings.filterwarnings('ignore', module ='.*zoompan.*') # ignore warnings include legend hide
         the_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
         if mth_labels is not None:
             self.ylabel = ax.get_ylabel()

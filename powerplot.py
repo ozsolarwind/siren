@@ -180,6 +180,7 @@ class PowerPlot(QtWidgets.QWidget):
         self.palette = True
         self.pie_legend_on = True
         self.pie_percent_on = True
+        self.pie_ncol = 1
         self.hatch_word = ['charge']
         self.history = None
         self.max_files = 10
@@ -231,6 +232,11 @@ class PowerPlot(QtWidgets.QWidget):
                     elif value.lower() in ['false', 'no', 'off']:
                         self.pie_legend_on = False
                         self.pie_percent_on = False
+                elif key == 'pie_ncol':
+                    try:
+                        self.pie_ncol = int(value)
+                    except:
+                        pass
                 elif key == 'palette':
                     if value.lower() in ['false', 'no', 'off']:
                         self.palette = False
@@ -1146,6 +1152,11 @@ class PowerPlot(QtWidgets.QWidget):
                     else:
                         self.pie_legend_on = True
                         self.pie_percent_on = True
+                elif key == 'pie_ncol':
+                    try:
+                        self.pie_ncol = int(value)
+                    except:
+                        pass
                 elif key == 'palette':
                     if value.lower() in ['false', 'no', 'off']:
                         self.palette = False
@@ -1256,6 +1267,7 @@ class PowerPlot(QtWidgets.QWidget):
         if self.breakdown_row >= 0:
             for c in range(self.brk_order.count()):
                 breakdowns.append(self.brk_order.item(c).text())
+        label = []
         if self.period.currentText() == '<none>' \
           or (self.period.currentText() == 'Year' and self.plottype.currentText() == 'Heat Map'): # full year of hourly figures
             m = 0
@@ -1278,7 +1290,6 @@ class PowerPlot(QtWidgets.QWidget):
             overlay_cols = []
             overlay = []
             data = []
-            label = []
             maxy = 0
             miny = 0
             titl = self.replace_words('y', self.title.text(), str(year))
@@ -1859,7 +1870,7 @@ class PowerPlot(QtWidgets.QWidget):
             labels = []
             colors = []
             if self.plottype.currentText() == 'Pie Chart':
-                fig = plt.figure(figname)
+                fig = plt.figure(figname, constrained_layout=self.constrained_layout)
                 plt.title(titl)
                 if suptitle != '':
                     fig.suptitle(suptitle, fontsize=16)
@@ -1917,8 +1928,13 @@ class PowerPlot(QtWidgets.QWidget):
                     if self.pie_percent_on:
                         patches, texts, autotexts = pi2.pie(data, labels=None, autopct='%1.1f%%', colors=colors, startangle=90, pctdistance=.70)
                     else:
+                        for i in range(len(data)):
+                            labels[i] = f'{labels[i]} ({data[i]/tot*100:0.1f}%)'
                         patches, texts = pi2.pie(data, colors=colors, startangle=90)
-                    fig.legend(patches, labels, loc='lower right')
+                      #  plt.subplots_adjust(left=0.1, bottom=0.1, right=0.75)
+                    lbl_font = FontProperties()
+                    lbl_font.set_size('small')
+                    fig.legend(patches, labels, loc='lower right', ncol=self.pie_ncol, prop=lbl_font).set_draggable(True)
                 for c in whites:
                     autotexts[c].set_color('white')
                  ##maybe   plt.subplots_adjust(left=0.1, bottom=0.1, right=0.75)

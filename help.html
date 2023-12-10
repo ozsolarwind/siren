@@ -2016,6 +2016,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <tr class="none">
 <td class="none"><dfn>pie_legend_on</dfn>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
 <td class="none">If set to True labels for a Pie Chart will be placed on the chart, if False the legend will be presented as a table. If set to Pct (Percent) the legend will be persented as a table and pie percentages will be placed on the chart. The default is True</td>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>pie_ncol</dfn>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td class="none">This property allows you to specify the number of legend columns for those Pie Charts with a legend</td>
 </table>
 </div>
 <table border="0", class="none">
@@ -3336,7 +3340,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 (<a href="http://matplotlib.org/users/navigation_toolbar.html" target="_blank">Interactive navigation</a>) to enable you to navigate and manipulate the chart (but doesn't allow you to change the chart data). It includes options to zoom into an area of the chart and to save the chart image (by default to the <em>scenarios</em> folder).
 By default the size of charts produced is determined by matplotlib, or by the <em>Maximise Plot windows</em> option (above). By using the <em>orientation</em>, <em>papersize</em>, and <em>save_format</em> Properties of the <em>[Power]</em> section it is possible to produce the charts in a number of formats, such as PDF format, and in a specific page size and layout. If you use these options you can save charts in a standardised format (these Properties can be added and removed by using the <em>Preferences -> Edit Section</em> menu option).</p>
 <p>For most charts the Pan/Zoom option (<img src="pan_zoom.png" alt="Pan/Zoom">) enables you to zoom in on the chart using the right mouse button and to pan across the chart using the left mouse button.</p>
-<p>For the two hourly charts (<em>Power by hour</em> and <em>Power by hour - augmented</em>) and charts produced by Powerplot there is a modified pan and zoom feature to enhance visual examination of the chart:</p>
+<p>For the two hourly charts (<em>Power by hour</em> and <em>Power by hour - augmented</em>) and charts produced by Powerplot, other than Pie Charts, there is a modified pan and zoom feature to enhance visual examination of the chart:</p>
 <ul>
 <li>You can use the mouse scroll wheel to zoom in and out on the time (x) axis. The position of the mouse within the chart determines where the zoom will centre upon (that is, that point will remain fixed and the rest of the chart will move away from or towards that point)</li>
 <li>Moving the mouse while holding down the left button will allow you to pan across the chart</li>
@@ -3351,6 +3355,7 @@ By default the size of charts produced is determined by matplotlib, or by the <e
 <li>Pressing the <em>left</em> or <em>right</em> arrow will scroll the display to the left or right</li>
 <li>Pressing the <em>up</em> or <em>down</em> arrow will scroll the display up or down</li>
 </ul>
+<p>It is also possible to move the legend for Pie Charts produced with a legend.</p>
 <p><strong>Note:</strong> For cumulative (stacked) charts produced by Powerplot this feature may perform slowly so please be a little patient</p>
 <h4 id="powerplot"><u>Powerplot</u></h4>
 <p><code>powerplot</code> is a standalone program that will produce either hourly, half-hourly or diurnal charts from a spreadsheet that conforms to certain constraints. It is intended to be used to chart (detailed) results either from Powermatch or some of the files produced by SIREN's Powermodel.
