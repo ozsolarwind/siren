@@ -54,6 +54,196 @@ def ss_col(col, base=0):
     return (col_letters[c1] + col_letters[c2] + col_letters[c3]).strip()
 
 
+class MyQDialog(QtWidgets.QDialog):
+    ignoreEnter = True
+
+    def keyPressEvent(self, qKeyEvent):
+        if qKeyEvent.key() == QtCore.Qt.Key_Return:
+            self.ignoreEnter = True
+        else:
+            self.ignoreEnter = False
+
+    def closeEvent(self, event):
+        if self.ignoreEnter:
+            self.ignoreEnter = False
+            event.ignore()
+        else:
+            event.accept()
+
+
+class ChangeFontProp(MyQDialog):
+    def __init__(self, what, font=None, legend=None):
+        super(ChangeFontProp, self).__init__()
+        self.what = what.split(' ')[0]
+        self._font = font
+        self.ignoreEnter = False
+         #                        'Weight': [['ultralight', 'light', 'normal', 'regular', 'book', 'medium', 'roman',
+         #                                    'semibold', 'demibold', 'demi', 'bold', 'heavy', 'extra bold', 'black'],
+         #                                    'normal'],
+        self._font_properties = {'Family': [['cursive', 'fantasy', 'monospace', 'sans-serif', 'serif'] ,'sans-serif'],
+                                 'Style': [['italic', 'normal', 'oblique'], 'normal'],
+                                 'Variant': [['normal', 'small-caps'], 'normal'],
+                                 'Stretch': [['ultra-condensed', 'extra-condensed', 'condensed', 'semi-condensed',
+                                              'normal', 'semi-expanded', 'expanded', 'extra-expanded',
+                                              'ultra-expanded'], 'normal'],
+                                 'Weight': [['ultralight', 'light', 'normal', 'bold', 'ultrabold'], 'normal'],
+                                 'Size': [['xx-small', 'x-small', 'small', 'medium', 'large', 'x-large', 'xx-large'],
+                                           'small']}
+        self._legend_properties = {'legend_ncol': ['Columns', ['1', '2', '3', '4', '5', '6', '7', '8', '9'], '1'],
+                                   'legend_on_pie': ['On pie', ['True', 'Pct', 'False'], 'True'],
+                                   'legend_side': ['Alignment', ['None', 'Left', 'Right'], 'None']}
+#constrained_layout=False
+#short_legend
+        self._size = [5.79, 6.94, 8.33, 10.0, 12.0, 14.4, 17.28]
+        self._legend = None
+        self._results = None
+        self.color = None
+        self.pattern = None
+        self.grid = QtWidgets.QGridLayout()
+        rw = 0
+        if self.what == 'Legend':
+            self.legend_items = {}
+            self.grid.addWidget(QtWidgets.QLabel('Legend properties'), rw, 0)
+            for key, value in self._legend_properties.items():
+                self.grid.addWidget(QtWidgets.QLabel(value[0]), rw, 1)
+                self.legend_items[key] = QtWidgets.QComboBox()
+                for i in range(len(value[1])):
+                    self.legend_items[key].addItem(value[1][i])
+                    if value[1][i] == value[2]:
+                        self.legend_items[key].setCurrentIndex(i)
+                self.grid.addWidget(self.legend_items[key], rw, 2)
+                rw += 1
+            if legend is not None:
+                for key in self._legend_properties:
+                    try:
+                        self.legend_items[key].setCurrentText(legend[key])
+                    except:
+                        pass
+            rw += 1
+        else:
+            self.color = '#000000' # black
+            if font is not None:
+                self._font = FontProperties()
+                font_str = ''
+                for key, value in font.items():
+                    if key == 'family':
+                        font_str += value.replace('-', "\\-") + ':'
+                    elif key == 'color':
+                        self.color = value
+                    else:
+                        font_str += key + '=' + str(value) + ':'
+                font_str = font_str[:-1]
+            self._font.set_fontconfig_pattern(font_str)
+        self.font_items = {}
+        self.grid.addWidget(QtWidgets.QLabel('Font properties'), rw, 0)
+        self.grid.addWidget(QtWidgets.QLabel('Name'), rw, 1)
+        self.name = QtWidgets.QLabel(self._font.get_name())
+        self.grid.addWidget(self.name, rw, 2)
+        rw += 1
+        for key, value in self._font_properties.items():
+            self.grid.addWidget(QtWidgets.QLabel(key), rw, 1)
+            self.font_items[key] = QtWidgets.QComboBox()
+            for i in range(len(value[0])):
+                self.font_items[key].addItem(value[0][i])
+                if value[0][i] == value[1]:
+                    self.font_items[key].setCurrentIndex(i)
+            self.grid.addWidget(self.font_items[key], rw, 2)
+            rw += 1
+        self.font_items['Family'].currentIndexChanged.connect(self.familyChange)
+        if self._font is not None:
+            try:
+                self.font_items['Family'].setCurrentText(self._font.get_family()[0])
+                self.font_items['Style'].setCurrentText(self._font.get_style())
+                self.font_items['Variant'].setCurrentText(self._font.get_variant())
+                self.font_items['Stretch'].setCurrentText(self._font.get_stretch())
+                self.font_items['Weight'].setCurrentText(self._font.get_weight())
+                sze = self._size.index(round(self._font.get_size(), 2))
+                self.font_items['Size'].setCurrentText(self._font_properties['Size'][0][sze])
+            except:
+                pass
+        if self.what != 'Header' and self.color is not None:
+            self.grid.addWidget(QtWidgets.QLabel('Colour'), rw, 1)
+            self.colbtn = QtWidgets.QPushButton('Color', self)
+            self.colbtn.clicked.connect(self.colorChanged)
+            if self.color == '#ffffff':
+                value = '#808080'
+            else:
+                value = self.color
+            self.colbtn.setStyleSheet('QPushButton {background-color: %s;}' % value)
+            self.font_items['Color'] = self.colbtn
+            self.grid.addWidget(self.font_items['Color'], rw, 2)
+            rw += 1
+        quit = QtWidgets.QPushButton('Quit', self)
+        self.grid.addWidget(quit, rw, 0)
+        quit.clicked.connect(self.quitClicked)
+        save = QtWidgets.QPushButton('Save', self)
+        self.grid.addWidget(save, rw, 1)
+        save.clicked.connect(self.saveClicked)
+        frame = QtWidgets.QFrame()
+        frame.setLayout(self.grid)
+        self.scroll = QtWidgets.QScrollArea()
+        self.scroll.setWidgetResizable(True)
+        self.scroll.setWidget(frame)
+        self.layout = QtWidgets.QVBoxLayout(self)
+        self.layout.addWidget(self.scroll)
+        self.setWindowTitle('SIREN - Powerplot - ' + self.what + ' Properties')
+        self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
+        QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
+        self.show()
+
+    def colorChanged(self):
+        col = QtWidgets.QColorDialog.getColor(QtGui.QColor(''))
+        if col.isValid():
+            self.color = col.name()
+            self.colbtn.setStyleSheet('QPushButton {background-color: %s;}' % col.name())
+            if self.color.lower() == '#ffffff':
+                self.colbtn.setStyleSheet('QPushButton {color: #808080;}')
+
+    def quitClicked(self):
+        self.ignoreEnter = False
+        self.close()
+
+    def saveClicked(self):
+        self.ignoreEnter = False
+        if self.what == 'Legend':
+            self._legend = {}
+            for key, value in self.legend_items.items():
+                self._legend[key] = value.currentText()
+            self._results = {}
+        self._font = FontProperties()
+        self._font.set_family(self.font_items['Family'].currentText())
+        self._font.set_style(self.font_items['Style'].currentText())
+        self._font.set_variant(self.font_items['Variant'].currentText())
+        self._font.set_stretch(self.font_items['Stretch'].currentText())
+        self._font.set_weight(self.font_items['Weight'].currentText())
+        self._font.set_size(self.font_items['Size'].currentText())
+        family = self.font_items['Family'].currentText().replace('-', "\\-")
+        self.pattern = f"{family}:" + \
+                  f"style={self.font_items['Style'].currentText()}:" + \
+                  f"variant={self.font_items['Variant'].currentText()}:" + \
+                  f"weight={self.font_items['Weight'].currentText()}:" + \
+                  f"stretch={self.font_items['Stretch'].currentText()}:" + \
+                  f"size={self._font.get_size()}"
+        try:
+            self.pattern += f':color={self.color}'
+        except:
+            pass
+        self.close()
+
+    def familyChange(self):
+        ffont = FontProperties()
+        ffont.set_family(self.font_items['Family'].currentText())
+        self.name.setText(ffont.get_name())
+
+    def getValues(self):
+        return self._legend, self._results
+
+    def getFont(self):
+            return self._font
+
+    def getFontDict(self):
+            return self.pattern
+
 class PowerPlot(QtWidgets.QWidget):
 
     def set_colour(self, item):
@@ -68,6 +258,25 @@ class PowerPlot(QtWidgets.QWidget):
             return self.colours[item.lower()]
         else:
             return self.colours[tgt.strip()] + self.alphahex
+
+    def set_fontdict(self, item=None, who=None):
+        if item is None:
+            bits = 'sans-serif:style=normal:variant=normal:weight=normal:stretch=normal:size=10.0'.split(':')
+        else:
+            bits = item.split(':')
+        fontdict = {}
+        for bit in bits:
+            bits2 = bit.split('=')
+            if len(bits2) == 1:
+                bit2 = bits2[0].replace("'", '')
+                bit2 = bit2.replace("\\", '')
+                fontdict['family'] = bit2
+            else:
+                try:
+                    fontdict[bits2[0]] = float(bits2[1])
+                except:
+                    fontdict[bits2[0]] = bits2[1]
+        return fontdict
 
     def set_hatch(self, item):
         tgt = item.lower()
@@ -178,9 +387,10 @@ class PowerPlot(QtWidgets.QWidget):
         self.target = ''
         self.overlay = '<none>'
         self.palette = True
-        self.pie_legend_on = True
-        self.pie_percent_on = True
-        self.pie_ncol = 1
+        self.legend_on_pie = True
+        self.percent_on_pie = True
+        self.legend_side = 'None'
+        self.legend_ncol = 1
         self.hatch_word = ['charge']
         self.history = None
         self.max_files = 10
@@ -191,6 +401,15 @@ class PowerPlot(QtWidgets.QWidget):
         self.select_day = False
         self.plot_12 = False
         self.short_legend = ''
+        self.legend_font = FontProperties()
+        self.legend_font.set_size('small')
+        self.fontprops = {}
+        self.fontprops['Header'] = self.set_fontdict()
+        self.fontprops['Header']['size'] = 16.
+        self.fontprops['Title']= self.set_fontdict()
+        self.fontprops['Title']['size'] = 14.
+        self.fontprops['Label']= self.set_fontdict()
+        self.fontprops['Label']['size'] = 10.
         ifiles = {}
         try:
             items = config.items('Powerplot')
@@ -221,20 +440,41 @@ class PowerPlot(QtWidgets.QWidget):
                     ifiles[key[4:]] = value.replace('$USER$', getUser())
                 if key == 'hatch_word':
                     self.hatch_word = value.split(',')
+                elif key == 'header_font':
+                    try:
+                        self.fontprops['Header'] = self.set_fontdict(value)
+                    except:
+                        pass
                 elif key == 'margin_of_error':
                     try:
                         self.margin_of_error = float(value)
                     except:
                         pass
-                elif key == 'pie_legend_on':
-                    if value.lower() in ['pct', 'percentage', '%', '%age']:
-                        self.pie_legend_on = False
-                    elif value.lower() in ['false', 'no', 'off']:
-                        self.pie_legend_on = False
-                        self.pie_percent_on = False
-                elif key == 'pie_ncol':
+                        self.short_legend = '_'
+                elif key == 'label_font':
                     try:
-                        self.pie_ncol = int(value)
+                        self.fontprops['Label'] = self.set_fontdict(value)
+                    except:
+                        pass
+                elif key == 'legend_font':
+                    try:
+                        self.legend_font.set_fontconfig_pattern(value)
+                    except:
+                        pass
+                elif key == 'legend_on_pie':
+                    if value.lower() in ['pct', 'percentage', '%', '%age']:
+                        self.legend_on_pie = False
+                    elif value.lower() in ['false', 'no', 'off']:
+                        self.legend_on_pie = False
+                        self.percent_on_pie = False
+                elif key == 'legend_ncol':
+                    try:
+                        self.legend_ncol = int(value)
+                    except:
+                        pass
+                elif key == 'legend_side':
+                    try:
+                        self.legend_side = value
                     except:
                         pass
                 elif key == 'palette':
@@ -249,6 +489,11 @@ class PowerPlot(QtWidgets.QWidget):
                 elif key == 'short_legend':
                     if value.lower() in ['true', 'yes', 'on', '_']:
                         self.short_legend = '_'
+                elif key == 'title_font':
+                    try:
+                        self.fontprops['Title'] = self.set_fontdict(value)
+                    except:
+                        pass
         except:
             pass
         self.alphahex = hex(int(self.alpha * 255))[2:]
@@ -382,10 +627,16 @@ class PowerPlot(QtWidgets.QWidget):
         self.grid.addWidget(QtWidgets.QLabel('Header:'), rw, 0)
         self.suptitle = QtWidgets.QLineEdit('')
         self.grid.addWidget(self.suptitle, rw, 1, 1, 2)
+        hdrfClicked = QtWidgets.QPushButton('Header Font', self)
+        self.grid.addWidget(hdrfClicked, rw, 3)
+        hdrfClicked.clicked.connect(self.doFont)
         rw += 1
         self.grid.addWidget(QtWidgets.QLabel('Title:'), rw, 0)
         self.title = QtWidgets.QLineEdit('')
         self.grid.addWidget(self.title, rw, 1, 1, 2)
+        ttlfClicked = QtWidgets.QPushButton('Title Font', self)
+        self.grid.addWidget(ttlfClicked, rw, 3)
+        ttlfClicked.clicked.connect(self.doFont)
         rw += 1
         self.grid.addWidget(QtWidgets.QLabel('Maximum:'), rw, 0)
         self.maxSpin = QtWidgets.QDoubleSpinBox()
@@ -466,6 +717,9 @@ class PowerPlot(QtWidgets.QWidget):
         self.order.itemSelectionChanged.connect(self.somethingChanged)
         self.brk_order.itemSelectionChanged.connect(self.somethingChanged)
         rw += 1
+        lblfClicked = QtWidgets.QPushButton('Label Font', self)
+        self.grid.addWidget(lblfClicked, rw, 0)
+        lblfClicked.clicked.connect(self.doFont)
         msg_palette = QtGui.QPalette()
         msg_palette.setColor(QtGui.QPalette.Foreground, QtCore.Qt.red)
         self.log.setPalette(msg_palette)
@@ -482,14 +736,9 @@ class PowerPlot(QtWidgets.QWidget):
         cb = QtWidgets.QPushButton('Colours', self)
         self.grid.addWidget(cb, rw, 2)
         cb.clicked.connect(self.editColours)
-        if self.show_contribution or self.show_correlation:
-            if self.show_contribution:
-                co = 'Contribution'
-            else:
-                co = 'Correlation'
-            corr = QtWidgets.QPushButton(co, self)
-            self.grid.addWidget(corr, rw, 3)
-            corr.clicked.connect(self.corrClicked)
+        legendClicked = QtWidgets.QPushButton('Legend Properties', self)
+        self.grid.addWidget(legendClicked, rw, 3)
+        legendClicked.clicked.connect(self.doFont)
         editini = QtWidgets.QPushButton('Preferences', self)
         self.grid.addWidget(editini, rw, 4)
         editini.clicked.connect(self.editIniFile)
@@ -497,11 +746,20 @@ class PowerPlot(QtWidgets.QWidget):
         self.grid.addWidget(help, rw, 5)
         help.clicked.connect(self.helpClicked)
         QtWidgets.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
-        if self.plot_12:
+        if self.plot_12 or self.show_contribution or self.show_correlation:
             rw += 1
-            pp12 = QtWidgets.QPushButton('Plot 12', self)
-            self.grid.addWidget(pp12, rw, 1)
-            pp12.clicked.connect(self.ppClicked)
+            if self.plot_12:
+                pp12 = QtWidgets.QPushButton('Plot 12', self)
+                self.grid.addWidget(pp12, rw, 1)
+                pp12.clicked.connect(self.ppClicked)
+            if self.show_contribution or self.show_correlation:
+                if self.show_contribution:
+                    co = 'Contribution'
+                else:
+                    co = 'Correlation'
+                corr = QtWidgets.QPushButton(co, self)
+                self.grid.addWidget(corr, rw, 3)
+                corr.clicked.connect(self.corrClicked)
         frame = QtWidgets.QFrame()
         frame.setLayout(self.grid)
         if self.select_day:
@@ -801,6 +1059,51 @@ class PowerPlot(QtWidgets.QWidget):
                 self.target = target
         self.updated = True
 
+    def doFont(self):
+        if self.sender().text()[:6] == 'Legend':
+            if self.legend_on_pie and self.percent_on_pie:
+                lop = 'True'
+            elif not self.legend_on_pie and self.percent_on_pie:
+                lop = 'Pct'
+            else:
+                lop = 'False'
+            legend_properties = {'legend_ncol': str(self.legend_ncol),
+                                 'legend_on_pie': lop,
+                                 'legend_side': self.legend_side}
+            legend = ChangeFontProp('Legend', self.legend_font, legend_properties)
+            legend.exec_()
+            values, font_values = legend.getValues()
+            if values is None:
+                return
+            for key, value in values.items():
+                if key == 'legend_ncol':
+                    self.legend_ncol = int(value)
+                elif key == 'legend_on_pie':
+                    if value.lower() in ['true', 'yes', 'on']:
+                        self.legend_on_pie = True
+                        self.percent_on_pie = True
+                    if value.lower() in ['pct', 'percentage', '%', '%age']:
+                        self.legend_on_pie = False
+                        self.percent_on_pie = True
+                    elif value.lower() in ['false', 'no', 'off']:
+                        self.legend_on_pie = False
+                        self.percent_on_pie = False
+                else:
+                    setattr(self, key, value)
+            self.legend_font = legend.getFont()
+            self.log.setText('Legend properties updated')
+            self.updated = True
+        else:
+            what = self.sender().text().split(' ')[0]
+            font = ChangeFontProp(what, self.fontprops[what])
+            font.exec()
+            if font.getFont() is None:
+                return
+            self.fontprops[what] = self.set_fontdict(font.getFontDict())
+            self.log.setText(what + ' font properties updated')
+            self.updated = True
+        return
+
     def setColumns(self, isheet, columns=[], breakdowns=[]):
         try:
             ws = self.book.sheet_by_name(isheet)
@@ -943,6 +1246,23 @@ class PowerPlot(QtWidgets.QWidget):
             except:
                 pass
             lines = []
+            lines.append('legend_font=' + self.legend_font.get_fontconfig_pattern())
+            lines.append('legend_on_pie=')
+            if not self.legend_on_pie and self.percent_on_pie:
+                lines[-1] += 'Pct'
+            elif not self.legend_on_pie and not self.percent_on_pie:
+                lines[-1] += 'False'
+            lines.append('legend_ncol=')
+            if self.legend_ncol != 1:
+                lines[-1] += str(self.legend_ncol)
+            lines.append('legend_side=')
+            if self.legend_side != 'None':
+                lines[-1] += self.legend_side
+            for key, value in self.fontprops.items():
+                lines.append(key.lower() + '_font=')
+                for key2, value2 in value.items():
+                    lines[-1] += f'{key2}={value2}:'
+                lines[-1] = lines[-1][:-1]
             if len(self.history) > 0:
                 line = ''
                 for itm in self.history:
@@ -1137,24 +1457,39 @@ class PowerPlot(QtWidgets.QWidget):
                         self.constrained_layout = False
                 elif key == 'hatch_word':
                     self.hatch_word = value.split(',')
+                elif key == 'header_font':
+                    try:
+                        self.fontprops['Header'] = self.set_fontdict(value)
+                    except:
+                        pass
+                elif key == 'label_font':
+                    try:
+                        self.fontprops['Label'] = self.set_fontdict(value)
+                    except:
+                        pass
                 elif key == 'margin_of_error':
                     try:
                         self.margin_of_error = float(value)
                     except:
                         self.margin_of_error = .0001
-                elif key == 'pie_legend_on':
-                    if value.lower() in ['pct', 'percentage', '%', '%age']:
-                        self.pie_legend_on = False
-                        self.pie_percent_on = True
-                    elif value.lower() in ['false', 'no', 'off']:
-                        self.pie_legend_on = False
-                        self.pie_percent_on = False
-                    else:
-                        self.pie_legend_on = True
-                        self.pie_percent_on = True
-                elif key == 'pie_ncol':
+                elif key == 'legend_font':
                     try:
-                        self.pie_ncol = int(value)
+                        self.legend_font.set_fontconfig_pattern(value)
+                    except:
+                        pass
+                elif key == 'legend_on_pie':
+                    if value.lower() in ['pct', 'percentage', '%', '%age']:
+                        self.legend_on_pie = False
+                        self.percent_on_pie = True
+                    elif value.lower() in ['false', 'no', 'off']:
+                        self.legend_on_pie = False
+                        self.percent_on_pie = False
+                    else:
+                        self.legend_on_pie = True
+                        self.percent_on_pie = True
+                elif key == 'legend_ncol':
+                    try:
+                        self.legend_ncol = int(value)
                     except:
                         pass
                 elif key == 'palette':
@@ -1165,6 +1500,11 @@ class PowerPlot(QtWidgets.QWidget):
                 elif key == 'short_legend':
                     if value.lower() in ['true', 'yes', 'on', '_']:
                         self.short_legend = '_'
+                elif key == 'title_font':
+                    try:
+                        self.fontprops['Title'] = self.set_fontdict(value)
+                    except:
+                        pass
         except:
             pass
         self.log.setText(self.config_file + ' edited. Reload may be required.')
@@ -1268,6 +1608,15 @@ class PowerPlot(QtWidgets.QWidget):
             for c in range(self.brk_order.count()):
                 breakdowns.append(self.brk_order.item(c).text())
         label = []
+        try:
+            self.tick_color = self.fontprops['Label']['color']
+        except:
+            self.tick_color = '#000000'
+        try:
+            self.header_color = self.fontprops['Header']['color']
+            del self.fontprops['Header']['color']
+        except:
+            pass
         if self.period.currentText() == '<none>' \
           or (self.period.currentText() == 'Year' and self.plottype.currentText() == 'Heat Map'): # full year of hourly figures
             m = 0
@@ -1418,11 +1767,16 @@ class PowerPlot(QtWidgets.QWidget):
             if self.plottype.currentText() == 'Line Chart':
                 fig = plt.figure(figname, constrained_layout=self.constrained_layout)
                 if suptitle != '':
-                    fig.suptitle(suptitle, fontsize=16)
+                    fig.suptitle(suptitle, fontproperties=self.fontprops['Header'])
                 if gridtype != '':
                     plt.grid(axis=gridtype)
                 lc1 = plt.subplot(111)
-                plt.title(titl)
+                if self.legend_side == 'Right':
+                    plt.subplots_adjust(left=0.1, bottom=0.1, right=0.75)
+                elif self.legend_side == 'Left':
+                    plt.subplots_adjust(left=0.25, bottom=0.1, right=0.9)
+                    loc = 'lower left'
+                plt.title(titl, fontdict=self.fontprops['Title'])
                 for c in range(len(data)):
                     lc1.plot(x, data[c], linewidth=1.5, label=label[c], color=self.set_colour(label[c]))
                 if len(load) > 0:
@@ -1439,18 +1793,17 @@ class PowerPlot(QtWidgets.QWidget):
                     except:
                         pass
              #   miny = 0
-                lbl_font = FontProperties()
-                lbl_font.set_size('small')
                 lc1.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 1),
-                          prop=lbl_font)
+                           prop=self.legend_font)
                 plt.ylim([miny, maxy])
                 plt.xlim([0, len(x)])
                 if not do_12:
                     xticks = list(range(0, len(x), self.interval * days_per_label))
                     lc1.set_xticks(xticks)
-                    lc1.set_xticklabels(day_labels[:len(xticks)], rotation='vertical')
-                    lc1.set_xlabel('Period')
-                lc1.set_ylabel('Power (MW)') # MWh?
+                    lc1.set_xticklabels(day_labels[:len(xticks)], rotation='vertical', fontdict=self.fontprops['Label'])
+                    lc1.set_xlabel('Period', fontdict=self.fontprops['Label'])
+                    lc1.tick_params(colors=self.tick_color, which='both')
+                lc1.set_ylabel('Power (MW)', fontdict=self.fontprops['Label']) # MWh?
                 zp = ZoomPanX()
                 f = zp.zoom_pan(lc1, base_scale=1.2, flex_ticks=flex_on, mth_labels=do_12_labels) # enable scrollable zoom
                 plt.show()
@@ -1462,12 +1815,17 @@ class PowerPlot(QtWidgets.QWidget):
                     step = 'pre'
                 fig = plt.figure(figname, constrained_layout=self.constrained_layout)
                 if suptitle != '':
-                    fig.suptitle(suptitle, fontsize=16)
+                    fig.suptitle(suptitle, fontproperties=self.fontprops['Header'])
                 if gridtype != '':
                     plt.grid(axis=gridtype)
                 cu1 = plt.subplot(111)
+                if self.legend_side == 'Right':
+                    plt.subplots_adjust(left=0.1, bottom=0.1, right=0.75)
+                elif self.legend_side == 'Left':
+                    plt.subplots_adjust(left=0.25, bottom=0.1, right=0.9)
+                    loc = 'lower left'
                 if not do_12:
-                    plt.title(titl)
+                    plt.title(titl, fontdict=self.fontprops['Title'])
                 if self.percentage.isChecked():
                     totals = [0.] * len(x)
                     bottoms = [0.] * len(x)
@@ -1485,7 +1843,7 @@ class PowerPlot(QtWidgets.QWidget):
                         cu1.fill_between(x, bottoms, values, label=label[c], color=self.set_colour(label[c]), hatch=self.set_hatch(label[c]),
                                         step=step)
                     maxy = 100
-                    cu1.set_ylabel('Power (%)')
+                    cu1.set_ylabel('Power (%)', fontdict=self.fontprops['Label'])
                 else:
                     if self.target == '<none>':
                         cu1.fill_between(x, 0, data[0], label=label[0], color=self.set_colour(label[0]), hatch=self.set_hatch(label[0]),
@@ -1581,18 +1939,17 @@ class PowerPlot(QtWidgets.QWidget):
                             maxy = ceil(maxy / rndup) * rndup
                         except:
                             pass
-                    cu1.set_ylabel('Power (MW)')
+                    cu1.set_ylabel('Power (MW)', fontdict=self.fontprops['Label'])
         #        miny = 0
-                lbl_font = FontProperties()
-                lbl_font.set_size('small')
-                cu1.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 2), prop=lbl_font)
+                cu1.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 2), prop=self.legend_font)
                 plt.ylim([miny, maxy])
                 plt.xlim([0, len(x)])
                 if not do_12:
                     xticks = list(range(0, len(x), self.interval * days_per_label))
                     cu1.set_xticks(xticks)
-                    cu1.set_xticklabels(day_labels[:len(xticks)], rotation='vertical')
-                    cu1.set_xlabel('Period')
+                    cu1.set_xticklabels(day_labels[:len(xticks)], rotation='vertical', fontdict=self.fontprops['Label'])
+                    cu1.set_xlabel('Period', fontdict=self.fontprops['Label'])
+                    cu1.tick_params(colors=self.tick_color, which='both')
                 zp = ZoomPanX()
                 f = zp.zoom_pan(cu1, base_scale=1.2, flex_ticks=flex_on, mth_labels=do_12_labels) # enable scrollable zoom
                 plt.show()
@@ -1600,12 +1957,17 @@ class PowerPlot(QtWidgets.QWidget):
             elif self.plottype.currentText() == 'Bar Chart':
                 fig = plt.figure(figname, constrained_layout=self.constrained_layout)
                 if suptitle != '':
-                    fig.suptitle(suptitle, fontsize=16)
+                    fig.suptitle(suptitle, fontproperties=self.fontprops['Header'])
                 if gridtype != '':
                     plt.grid(axis=gridtype)
                 bc1 = plt.subplot(111)
+                if self.legend_side == 'Right':
+                    plt.subplots_adjust(left=0.1, bottom=0.1, right=0.75)
+                elif self.legend_side == 'Left':
+                    plt.subplots_adjust(left=0.25, bottom=0.1, right=0.9)
+                    loc = 'lower left'
                 if not do_12:
-                    plt.title(titl)
+                    plt.title(titl, fontdict=self.fontprops['Title'])
                 if self.percentage.isChecked():
                     miny = 0
                     totals = [0.] * len(x)
@@ -1623,7 +1985,7 @@ class PowerPlot(QtWidgets.QWidget):
                             values[h] = data[c][h] / totals[h] * 100.
                         bc1.bar(x, values, bottom=bottoms, label=label[c], color=self.set_colour(label[c]), hatch=self.set_hatch(label[c]))
                     maxy = 100
-                    bc1.set_ylabel('Power (%)')
+                    bc1.set_ylabel('Power (%)', fontdict=self.fontprops['Label'])
                 else:
                     if self.target == '<none>':
                         bc1.bar(x, data[0], label=label[0], color=self.set_colour(label[0]), hatch=self.set_hatch(label[0]))
@@ -1652,18 +2014,17 @@ class PowerPlot(QtWidgets.QWidget):
                             maxy = ceil(maxy / rndup) * rndup
                         except:
                             pass
-                    bc1.set_ylabel('Power (MW)')
+                    bc1.set_ylabel('Power (MW)', fontdict=self.fontprops['Label'])
         #        miny = 0
-                lbl_font = FontProperties()
-                lbl_font.set_size('small')
-                bc1.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 2), prop=lbl_font)
+                bc1.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 2), prop=self.legend_font)
                 plt.ylim([miny, maxy])
                 plt.xlim([0, len(x)])
                 if not do_12:
                     xticks = list(range(0, len(x), self.interval * days_per_label))
                     bc1.set_xticks(xticks)
-                    bc1.set_xticklabels(day_labels[:len(xticks)], rotation='vertical')
-                    bc1.set_xlabel('Period')
+                    bc1.set_xticklabels(day_labels[:len(xticks)], rotation='vertical', fontdict=self.fontprops['Label'])
+                    bc1.set_xlabel('Period', fontdict=self.fontprops['Label'])
+                    bc1.tick_params(colors=self.tick_color, which='both')
                 zp = ZoomPanX()
                 f = zp.zoom_pan(bc1, base_scale=1.2, flex_ticks=flex_on, mth_labels=do_12_labels) # enable scrollable zoom
                 plt.show()
@@ -1671,12 +2032,12 @@ class PowerPlot(QtWidgets.QWidget):
             elif self.plottype.currentText() == 'Heat Map':
                 fig = plt.figure(figname)
                 if suptitle != '':
-                    fig.suptitle(suptitle, fontsize=16)
+                    fig.suptitle(suptitle, fontproperties=self.fontprops['Header'])
                 if gridtype != '':
                     plt.grid(axis=gridtype)
                 hm1 = plt.subplot(111)
                 if not do_12:
-                    plt.title(titl)
+                    plt.title(titl, fontdict=self.fontprops['Title'])
                 hmdata = []
                 for hr in range(self.interval):
                     hmdata.append([])
@@ -1721,15 +2082,13 @@ class PowerPlot(QtWidgets.QWidget):
                         vmax = None
                         vmin = None
                 im1 = hm1.imshow(hmdata, cmap=self.cmap, interpolation='nearest', aspect='auto', vmax=vmax, vmin=vmin)
-                lbl_font = FontProperties()
-                lbl_font.set_size('small')
                 day = -0.5
                 xticks = [day]
                 for m in range(len(the_days) - 1):
                     day += the_days[m]
                     xticks.append(day)
                 hm1.set_xticks(xticks)
-                hm1.set_xticklabels(mth_labels, ha='left')
+                hm1.set_xticklabels(mth_labels, ha='left', fontdict=self.fontprops['Label'])
                 yticks = [-0.5]
                 if self.interval == 24:
                     for y in range(0, 24, 4):
@@ -1739,9 +2098,9 @@ class PowerPlot(QtWidgets.QWidget):
                         yticks.append(y + 6.5)
                 hm1.invert_yaxis()
                 hm1.set_yticks(yticks)
-                hm1.set_yticklabels(hr_labels, va='bottom')
-                hm1.set_xlabel('Period')
-                hm1.set_ylabel('Hour')
+                hm1.set_yticklabels(hr_labels, va='bottom', fontdict=self.fontprops['Label'])
+                hm1.set_xlabel('Period', fontdict=self.fontprops['Label'])
+                hm1.set_ylabel('Hour', fontdict=self.fontprops['Label'])
                 if self.cbar:
                     fig.subplots_adjust(bottom=0.1, right=0.8, top=0.9)
                     cb_ax = fig.add_axes([0.85, 0.1, 0.025, 0.8])
@@ -1757,7 +2116,7 @@ class PowerPlot(QtWidgets.QWidget):
                             if curcticks[y] > vmin and curcticks[y] < vmax:
                                 cticks.append(curcticks[y])
                         cticks.sort()
-                        cbar.set_ticks(cticks)
+                        cbar.set_ticks(cticks, fontdict=self.fontprops['Label'])
                 self.log.setText('Heat map value range: {} to {}'.format(fmt_str, fmt_str).format(miny, maxy))
                 QtCore.QCoreApplication.processEvents()
                 plt.show()
@@ -1871,12 +2230,17 @@ class PowerPlot(QtWidgets.QWidget):
             colors = []
             if self.plottype.currentText() == 'Pie Chart':
                 fig = plt.figure(figname, constrained_layout=self.constrained_layout)
-                plt.title(titl)
+                plt.title(titl, fontdict=self.fontprops['Title'])
                 if suptitle != '':
-                    fig.suptitle(suptitle, fontsize=16)
+                    fig.suptitle(suptitle, fontproperties=self.fontprops['Header'])
                 if gridtype != '':
                     plt.grid(axis=gridtype)
                 pi2 = plt.subplot(111)
+                if self.legend_side == 'Right':
+                    plt.subplots_adjust(left=0.1, bottom=0.1, right=0.75)
+                elif self.legend_side == 'Left':
+                    plt.subplots_adjust(left=0.25, bottom=0.1, right=0.9)
+                    loc = 'lower left'
                 for c in range(self.order.count() -1, -1, -1):
                     col = self.order.item(c).text()
                     for c2 in range(2, ws.ncols):
@@ -1901,7 +2265,7 @@ class PowerPlot(QtWidgets.QWidget):
                 tot = sum(data)
                 # https://stackoverflow.com/questions/3942878/how-to-decide-font-color-in-white-or-black-depending-on-background-color
                 whites = []
-                if self.pie_percent_on:
+                if self.percent_on_pie:
                     for c in range(len(colors)):
                         intensity = 0.
                         for i in range(1, 5, 2):
@@ -1918,26 +2282,55 @@ class PowerPlot(QtWidgets.QWidget):
                                 intensity = colr * 0.0722
                         if intensity < sqrt(1.05 * 0.05) - 0.05:
                             whites.append(c)
-                if self.pie_legend_on: # legend on chart
-                    if self.pie_percent_on:
+                if self.legend_on_pie: # legend on chart
+                    if self.percent_on_pie:
                         patches, texts, autotexts = pi2.pie(data, labels=labels, autopct='%1.1f%%', colors=colors, startangle=90, pctdistance=.70)
+                        for text in autotexts:
+                            text.set_family(self.legend_font.get_family()[0])
+                            text.set_style(self.legend_font.get_style())
+                            text.set_variant(self.legend_font.get_variant())
+                            text.set_stretch(self.legend_font.get_stretch())
+                            text.set_weight(self.legend_font.get_weight())
+                            text.set_size(self.legend_font.get_size())
                     else:
                         patches, texts = pi2.pie(data, labels=labels, colors=colors, startangle=90, pctdistance=.70)
-                     #   fig.legend(patches, labels, loc='lower right')
+                    for text in texts:
+                        text.set_family(self.legend_font.get_family()[0])
+                        text.set_style(self.legend_font.get_style())
+                        text.set_variant(self.legend_font.get_variant())
+                        text.set_stretch(self.legend_font.get_stretch())
+                        text.set_weight(self.legend_font.get_weight())
+                        text.set_size(self.legend_font.get_size())
                 else:
-                    if self.pie_percent_on:
+                    loc = 'lower right'
+                    if self.percent_on_pie:
                         patches, texts, autotexts = pi2.pie(data, labels=None, autopct='%1.1f%%', colors=colors, startangle=90, pctdistance=.70)
+                        for text in autotexts:
+                            text.set_family(self.legend_font.get_family()[0])
+                            text.set_style(self.legend_font.get_style())
+                            text.set_variant(self.legend_font.get_variant())
+                            text.set_stretch(self.legend_font.get_stretch())
+                            text.set_weight(self.legend_font.get_weight())
+                            text.set_size(self.legend_font.get_size())
+                        for text in texts:
+                            text.set_family(self.legend_font.get_family()[0])
+                            text.set_style(self.legend_font.get_style())
+                            text.set_variant(self.legend_font.get_variant())
+                            text.set_stretch(self.legend_font.get_stretch())
+                            text.set_weight(self.legend_font.get_weight())
+                            text.set_size(self.legend_font.get_size())
                     else:
                         for i in range(len(data)):
                             labels[i] = f'{labels[i]} ({data[i]/tot*100:0.1f}%)'
                         patches, texts = pi2.pie(data, colors=colors, startangle=90)
-                      #  plt.subplots_adjust(left=0.1, bottom=0.1, right=0.75)
-                    lbl_font = FontProperties()
-                    lbl_font.set_size('small')
-                    fig.legend(patches, labels, loc='lower right', ncol=self.pie_ncol, prop=lbl_font).set_draggable(True)
+                    if self.legend_side == 'Right':
+                        plt.subplots_adjust(left=0.1, bottom=0.1, right=0.75)
+                    elif self.legend_side == 'Left':
+                        plt.subplots_adjust(left=0.25, bottom=0.1, right=0.9)
+                        loc = 'lower left'
+                    fig.legend(patches, labels, loc=loc, ncol=self.legend_ncol, prop=self.legend_font).set_draggable(True)
                 for c in whites:
                     autotexts[c].set_color('white')
-                 ##maybe   plt.subplots_adjust(left=0.1, bottom=0.1, right=0.75)
                 p = plt.gcf()
                 p.gca().add_artist(plt.Circle((0, 0), 0.40, color='white'))
                 plt.show()
@@ -1945,11 +2338,11 @@ class PowerPlot(QtWidgets.QWidget):
             elif self.plottype.currentText() == 'Heat Map':
                 fig = plt.figure(figname)
                 if suptitle != '':
-                    fig.suptitle(suptitle, fontsize=16)
+                    fig.suptitle(suptitle, fontproperties=self.fontprops['Header'])
                 if gridtype != '':
                     plt.grid(axis=gridtype)
                 hm2 = plt.subplot(111)
-                plt.title(titl)
+                plt.title(titl, fontdict=self.fontprops['Title'])
                 hmdata = []
                 days = int(sum(todo_rows) / self.interval)
                 for hr in range(self.interval):
@@ -2026,8 +2419,6 @@ class PowerPlot(QtWidgets.QWidget):
                         vmax = None
                         vmin = None
                 im2 = hm2.imshow(hmdata, cmap=self.cmap, interpolation='nearest', aspect='auto', vmax=vmax, vmin=vmin)
-                lbl_font = FontProperties()
-                lbl_font.set_size('small')
                 yticks = [-0.5]
                 if self.interval == 24:
                     for y in range(0, 24, 4):
@@ -2037,7 +2428,7 @@ class PowerPlot(QtWidgets.QWidget):
                         yticks.append(y + 6.5)
                 hm2.invert_yaxis()
                 hm2.set_yticks(yticks)
-                hm2.set_yticklabels(hr_labels, va='bottom')
+                hm2.set_yticklabels(hr_labels, va='bottom', fontdict=self.fontprops['Label'])
                 if len(hmdata[0]) > 31:
                     day = -0.5
                     xticks = []
@@ -2047,7 +2438,7 @@ class PowerPlot(QtWidgets.QWidget):
                         xticklbls.append(mth_labels[m])
                         day = day + the_days[m]
                     hm2.set_xticks(xticks)
-                    hm2.set_xticklabels(xticklbls, ha='left')
+                    hm2.set_xticklabels(xticklbls, ha='left', fontdict=self.fontprops['Label'])
                 else:
                     curxticks = hm2.get_xticks()
                     xticks = []
@@ -2057,9 +2448,9 @@ class PowerPlot(QtWidgets.QWidget):
                             xticklabels.append(str(int(curxticks[x] + 1)))
                             xticks.append(curxticks[x])
                     hm2.set_xticks(xticks)
-                    hm2.set_xticklabels(xticklabels)
-                hm2.set_xlabel('Day')
-                hm2.set_ylabel('Hour')
+                    hm2.set_xticklabels(xticklabels, fontdict=self.fontprops['Label'])
+                hm2.set_xlabel('Day', fontdict=self.fontprops['Label'])
+                hm2.set_ylabel('Hour', fontdict=self.fontprops['Label'])
                 if self.cbar:
                     fig.subplots_adjust(bottom=0.1, right=0.8, top=0.9)
                     cb_ax = fig.add_axes([0.85, 0.1, 0.025, 0.8])
@@ -2081,7 +2472,7 @@ class PowerPlot(QtWidgets.QWidget):
                                     continue
                             cticks.append(curcticks[y])
                         cticks.sort()
-                        cbar.set_ticks(cticks)
+                        cbar.set_ticks(cticks, fontdict=self.fontprops['Label'])
                 self.log.setText('Heat map value range: {} to {}'.format(fmt_str, fmt_str).format(miny, maxy))
                 QtCore.QCoreApplication.processEvents()
                 plt.show()
@@ -2247,17 +2638,22 @@ class PowerPlot(QtWidgets.QWidget):
                 for h in range(self.interval):
                     overlay[h] = overlay[h] / (tot_rows / self.interval)
                     maxy = max(maxy, overlay[h])
+            loc = 'lower right'
             if self.plottype.currentText() == 'Line Chart':
                 fig = plt.figure(figname + '_' + self.period.currentText().lower(),
                                  constrained_layout=self.constrained_layout)
                 if suptitle != '':
-                    fig.suptitle(suptitle, fontsize=16)
+                    fig.suptitle(suptitle, fontproperties=self.fontprops['Header'])
                 if gridtype != '':
                     plt.grid(axis=gridtype)
                 lc2 = plt.subplot(111)
-                plt.title(titl)
+                if self.legend_side == 'Right':
+                    plt.subplots_adjust(left=0.1, bottom=0.1, right=0.75)
+                elif self.legend_side == 'Left':
+                    plt.subplots_adjust(left=0.25, bottom=0.1, right=0.9)
+                    loc = 'lower left'
+                plt.title(titl, fontdict=self.fontprops['Title'])
                 for c in range(len(data)):
-                  #  print(label[c], data[c])
                     lc2.plot(x, data[c], linewidth=1.5, label=label[c], color=self.set_colour(label[c]))
                 if len(load) > 0:
                     lc2.plot(x, load, linewidth=self.tgtSpin.value(), label=self.short_legend + self.target, color=self.set_colour(self.target),
@@ -2273,16 +2669,15 @@ class PowerPlot(QtWidgets.QWidget):
                     except:
                         pass
            #     miny = 0
-                lbl_font = FontProperties()
-                lbl_font.set_size('small')
                 lc2.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 1),
-                              prop=lbl_font)
+                              prop=self.legend_font)
                 plt.ylim([miny, maxy])
                 plt.xlim([0, self.interval - 1])
                 lc2.set_xticks(ticks)
-                lc2.set_xticklabels(hr_labels)
-                lc2.set_xlabel('Hour of the Day')
-                lc2.set_ylabel('Power (MW)')
+                lc2.set_xticklabels(hr_labels, fontdict=self.fontprops['Label'])
+                lc2.set_xlabel('Hour of the Day', fontdict=self.fontprops['Label'])
+                lc2.set_ylabel('Power (MW)', fontdict=self.fontprops['Label'])
+                lc2.tick_params(colors=self.tick_color, which='both')
                 zp = ZoomPanX()
                 f = zp.zoom_pan(lc2, base_scale=1.2) # enable scrollable zoom
                 plt.show()
@@ -2295,11 +2690,16 @@ class PowerPlot(QtWidgets.QWidget):
                 fig = plt.figure(figname + '_' + self.period.currentText().lower(),
                                  constrained_layout=self.constrained_layout)
                 if suptitle != '':
-                    fig.suptitle(suptitle, fontsize=16)
+                    fig.suptitle(suptitle, fontproperties=self.fontprops['Header'])
                 if gridtype != '':
                     plt.grid(axis=gridtype)
                 cu2 = plt.subplot(111)
-                plt.title(titl)
+                if self.legend_side == 'Right':
+                    plt.subplots_adjust(left=0.1, bottom=0.1, right=0.75)
+                elif self.legend_side == 'Left':
+                    plt.subplots_adjust(left=0.25, bottom=0.1, right=0.9)
+                    loc = 'lower left'
+                plt.title(titl, fontdict=self.fontprops['Title'])
                 if self.percentage.isChecked():
                     totals = [0.] * len(x)
                     bottoms = [0.] * len(x)
@@ -2316,7 +2716,7 @@ class PowerPlot(QtWidgets.QWidget):
                             values[h] = values[h] + data[c][h] / totals[h] * 100.
                         cu2.fill_between(x, bottoms, values, label=label[c], color=self.set_colour(label[c]), hatch=self.set_hatch(label[c]), step=step)
                     maxy = 100
-                    cu2.set_ylabel('Power (%)')
+                    cu2.set_ylabel('Power (%)', fontdict=self.fontprops['Label'])
                 else:
                     if self.target == '<none>':
                         cu2.fill_between(x, 0, data[0], label=label[0], color=self.set_colour(label[0]), hatch=self.set_hatch(label[0]), step=step)
@@ -2400,16 +2800,15 @@ class PowerPlot(QtWidgets.QWidget):
                             maxy = ceil(maxy / rndup) * rndup
                         except:
                             pass
-                    cu2.set_ylabel('Power (MW)')
+                    cu2.set_ylabel('Power (MW)', fontdict=self.fontprops['Label'])
          #       miny = 0
-                lbl_font = FontProperties()
-                lbl_font.set_size('small')
-                cu2.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 2), prop=lbl_font)
+                cu2.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 2), prop=self.legend_font)
                 plt.ylim([miny, maxy])
                 plt.xlim([0, self.interval - 1])
                 cu2.set_xticks(ticks)
-                cu2.set_xticklabels(hr_labels)
-                cu2.set_xlabel('Hour of the Day')
+                cu2.set_xticklabels(hr_labels, fontdict=self.fontprops['Label'])
+                cu2.set_xlabel('Hour of the Day', fontdict=self.fontprops['Label'])
+                cu2.tick_params(colors=self.tick_color, which='both')
                 zp = ZoomPanX()
                 f = zp.zoom_pan(cu2, base_scale=1.2) # enable scrollable zoom
                 plt.show()
@@ -2418,11 +2817,16 @@ class PowerPlot(QtWidgets.QWidget):
                 fig = plt.figure(figname + '_' + self.period.currentText().lower(),
                                  constrained_layout=self.constrained_layout)
                 if suptitle != '':
-                    fig.suptitle(suptitle, fontsize=16)
+                    fig.suptitle(suptitle, fontproperties=self.fontprops['Header'])
                 if gridtype != '':
                     plt.grid(axis=gridtype)
                 bc2 = plt.subplot(111)
-                plt.title(titl)
+                if self.legend_side == 'Right':
+                    plt.subplots_adjust(left=0.1, bottom=0.1, right=0.75)
+                elif self.legend_side == 'Left':
+                    plt.subplots_adjust(left=0.25, bottom=0.1, right=0.9)
+                    loc = 'lower left'
+                plt.title(titl, fontdict=self.fontprops['Title'])
                 if self.percentage.isChecked():
                     miny = 0
                     totals = [0.] * len(x)
@@ -2440,7 +2844,7 @@ class PowerPlot(QtWidgets.QWidget):
                             values[h] = data[c][h] / totals[h] * 100.
                         bc2.bar(x, values, bottom=bottoms, label=label[c], color=self.set_colour(label[c]), hatch=self.set_hatch(label[c]))
                     maxy = 100
-                    bc2.set_ylabel('Power (%)')
+                    bc2.set_ylabel('Power (%)', fontdict=self.fontprops['Label'])
                 else:
                     if self.target == '<none>':
                         bc2.bar(x, data[0], label=label[0], color=self.set_colour(label[0]), hatch=self.set_hatch(label[0]))
@@ -2470,16 +2874,20 @@ class PowerPlot(QtWidgets.QWidget):
                             maxy = ceil(maxy / rndup) * rndup
                         except:
                             pass
-                    bc2.set_ylabel('Power (MW)')
+                    bc2.set_ylabel('Power (MW)', fontdict=self.fontprops['Label'])
         #        miny = 0
-                lbl_font = FontProperties()
-                lbl_font.set_size('small')
-                bc2.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 2), prop=lbl_font)
+                if self.legend_side == 'Right':
+                    plt.subplots_adjust(left=0.1, bottom=0.1, right=0.75)
+                elif self.legend_side == 'Left':
+                    plt.subplots_adjust(left=0.25, bottom=0.1, right=0.9)
+                    loc = 'lower left'
+                bc2.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 2), prop=self.legend_font)
                 plt.ylim([miny, maxy])
                 plt.xlim([0, self.interval - 1])
                 bc2.set_xticks(ticks)
-                bc2.set_xticklabels(hr_labels)
-                bc2.set_xlabel('Hour of the Day')
+                bc2.set_xticklabels(hr_labels, fontdict=self.fontprops['Label'])
+                bc2.set_xlabel('Hour of the Day', fontdict=self.fontprops['Label'])
+                bc2.tick_params(colors=self.tick_color, which='both')
                 zp = ZoomPanX()
                 f = zp.zoom_pan(bc2, base_scale=1.2) # enable scrollable zoom
                 plt.show()
