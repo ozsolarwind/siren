@@ -104,6 +104,9 @@ def checkFiles(tgt_dir, ini_file=None):
                     chk_src_files[ndx].append(fil)
         del fils
 
+    if not os.path.exists(tgt_dir):
+        msg_text = 'Target Folder not found'
+        return [msg_text]
     msg_text = ''
     config = configparser.RawConfigParser()
     config.read(ini_file)
@@ -137,12 +140,15 @@ def checkFiles(tgt_dir, ini_file=None):
             if len(period) == 4:
                 if fst_period == '':
                     fst_period = period + '01'
+                    lst_period = fst_period
                 elif int(period) != int(lst_period[:4]) + 1:
                     gap_periods.append(str(int(lst_period[:4]) + 1))
                 lst_period = period + '12'
             elif len(period) == 6:
+                if fst_period == '':
+                    fst_period = period
                 chk_period = the_period(period)
-                if chk_period != lst_period:
+                if lst_period != '' and chk_period != lst_period:
                     gap_periods.append(the_period(lst_period, '+'))
                 lst_period = period
             else:
@@ -183,7 +189,10 @@ def checkFiles(tgt_dir, ini_file=None):
         else:
             msg_text += ' to ' + lst_period + ' exist'
             if len(gap_periods) > 0:
-                msg_text += ' with ' + str(len(gap_periods)) + ' gaps'
+                msg_text += ' with ' + str(len(gap_periods)) + ' gaps ('
+#                for gap in gap_periods:
+ #                   msg_text += gap + ', '
+                msg_text = msg_text[:-2] + ')'
                 print(gap_periods)
         msg_text += reqd + ')'
     return [msg_text, latn, lats, lonw, lone, grd1, grd2, the_period(lst_period, '+')]
