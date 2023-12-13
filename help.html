@@ -1979,6 +1979,26 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">A list of categories separated by commas for a breakdown (TML) detail worksheet that have pattern (hatch) applied when setting colours. Default value is <em>charge</em></td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>header_font</dfn></td>
+<td class="none">Saved details on Header font properties</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>label_font</dfn></td>
+<td class="none">Saved details on font properties for Labels and chart &ldquo;tick marks&rdquo;</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>legend_font</dfn></td>
+<td class="none">Saved details on Legend font properties</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>legend_ncol</dfn></td>
+<td class="none">This property allows you to specify the number of legend columns for those Pie Charts with a legend. Default is 1</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>legend_on_pie</dfn></td>
+<td class="none">If set to <em>True</em> labels for a Pie Chart will be placed on the chart, if <em>False</em> the legend will be presented as a table. If set to <em>Pct</em> (Percent) the legend will be persented as a table and pie percentages will be placed on the chart. The default is True</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>margin_of_error</dfn></td>
 <td class="none">In doing a chart with a target column there may be very minor differences that could cause a Shortfall or Spill legend item to be created. This setting will allow these small differences to be ignored. The default value is .0001</td>
 </tr>
@@ -2010,19 +2030,6 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none"><dfn>period (&ast;)</dfn></td>
 <td class="none">Chosen period for diurnal chart</td>
 </tr>
-</table>
-<div class="experiment">
-<table border="0", class="none">
-<tr class="none">
-<td class="none"><dfn>pie_legend_on</dfn>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
-<td class="none">If set to True labels for a Pie Chart will be placed on the chart, if False the legend will be presented as a table. If set to Pct (Percent) the legend will be persented as a table and pie percentages will be placed on the chart. The default is True</td>
-<table border="0", class="none">
-<tr class="none">
-<td class="none"><dfn>pie_ncol</dfn>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
-<td class="none">This property allows you to specify the number of legend columns for those Pie Charts with a legend</td>
-</table>
-</div>
-<table border="0", class="none">
 <tr class="none">
 <td class="none"><dfn>plot (&ast;)</dfn>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
 <td class="none">The type of chart. Options are Bar Chart, Cumulative, Heat Map, Line Chart, Pie Chart, or Step Chart. The default is Cumulative</td>
@@ -2076,6 +2083,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <tr class="none">
 <td class="none"><dfn>title (&ast;)</dfn></td>
 <td class="none">Chart title</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>title_font</dfn></td>
+<td class="none">Saved details on Title font properties</td>
 </tr>
 </table>
 </td></tr>
@@ -3397,13 +3408,18 @@ The program displays a window of options. The default values are specified in th
 </ul>
 You can also specify an alternate line width (<em>overlay_width</em>) and line style (<em>overlay_style</em>)
 </td></tr>
-<tr><td class="lr"><dfn>Title</dfn></td>
-<td class="none">Specify a title for the chart. There are two special strings which will be replaced in the title:
+<tr><td class="lr"><dfn>Header</dfn>, <strong>Header Font</strong></td>
+<td class="none">Specify a header - super title - for the chart. There are two special strings which will be replaced in the header:
 <ul>
 <li><em>$YEAR$</em> will be replaced with the year (first Period value)</li>
 <li><em>$MTH$</em> or <em>$MONTH$</em> will be replaced with the chosen Period</li>
 </ul>
-If it's not a diurnal chart (i.e. Period is <em>&lt;None&gt;</em>) any occurence of &rsquo;Diurnal&lsquo; in the title wil be removed (<em>title</em>)
+If it's not a diurnal chart (i.e. Period is <em>&lt;None&gt;</em>) any occurence of &rsquo;Diurnal&lsquo; in the header wil be removed (<em>header</em>).
+<p>The button next to the Header field allows you to change the font attributes for the Header (<em>header_font</em>)
+</td></tr>
+<tr><td class="lr"><dfn>Title</dfn>, <strong>Title Font</strong></td>
+<td class="none">Specify a title for the chart. As for the header field the two special strings <em>$YEAR$</em> <em>$MTH$</em> or <em>$MONTH$</em> will be replaced with the chosen Period. If it's not a diurnal chart (i.e. Period is <em>&lt;None&gt;</em>) any occurence of &rsquo;Diurnal&lsquo; in the title wil be removed (<em>title</em>).
+<p>The button next to the Title field allows you to change the font attributes for the Title (<em>title_font</em>)
 </td></tr>
 <tr><td class="lr"><dfn>Maximum</dfn></td>
 <td class="none">You can specify a maximum value for the Power (y) axis. This allows you to produce a series of charts with the same scale (<em>maximum</em>)</td></tr>
@@ -3424,23 +3440,33 @@ If it's not a diurnal chart (i.e. Period is <em>&lt;None&gt;</em>) any occurence
 <tr><td class="lr"><dfn>Column Order</dfn></td>
 <td class="none">To produce the chart you select those columns to be included. This field consists of two tables (lists) of columns. Those in the left hand list will be included in the chart while those on the right will be excluded. The included columns will be charted in the chosen order. You can drag individual or a number of columns between the two lists to get the desired configuration. The chart colour for the column will be displayed as the background color for the column (<em>columns</em>)
 <div class="experiment">Contribution or Correlation will be performed between the target and each of the chosen columns</div></td></tr>
-<tr><td class="bottom"><strong>Done, Plot, Colours, Co..., Help</strong></td>
+<tr><td class="lr"> <strong>Label Font</title></td>
+<td class="none">This button you to change the font attributes for chart labels and label tick marks (<em>label_font</em>)
+<br /><br />
+</td></tr>
+<tr><td class="bottom"><strong>Done, Plot, Colours, Legend..., Pref...,Help</br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Plot 12, Co...</strong></td>
 <td class="none">At the bottom of the window are a number of buttons:
 <ul>
 <li><strong>Done</strong> Exit the program and save the input values. Input preferences and colours are either saved in a SIREN preferences file or in a specific file, <em>powerplot.ini</em>, if no Peferences file is passed to the program</li>
 <li><strong>Plot</strong> Produce the chart. If there are missing colours you will be taken to the Colours window to add the colour. You need to set a colour and press the Save &amp; Exit button</li>
 <li><strong>Colours</strong> Press this button to change the chart colours or to add new colours. You can remove a chart colour by right-clicking the colour (it will be cleared and the item deleted when you Save &amp; Exit). Colours are held in the [Plot Colors] Section of the Preferences file.
 <br />If the <em>palette</em> property in the [Plot Colors] Section of the Preferences file is set to True you can create a palette sequence of colours for columns selected in both the included and excluded lists. If you select columns and then press the <strong>Colours</strong> button you will be given the option to set a starting and ending palette colour and the colours for the chosen columns will be updated to a range of colours between the chosen values</li>
-<li><div class="experiment">
+<li><strong>Legend Properties</strong> Change the font attributes for the Legend (<em>legend_font</em>) plus other attributes for pie charts (<em>legend_ncol</em>, <em>legend_on_pie</em>)</li>
+<li><strong>Preferences</strong> Edit the Preferences file</li>
+<li><strong>Help</strong> Display the help for Powerplot</li>
+</ul>
+<div class="experiment">
+<ul>
+<li>
 <strong>Co...</strong> Perform either an analysis of contribution or correlation to a target. These options are presented by setting either the <em>show_contribution</em> or <em>show_correlation</em> Property of the <a href="#p_pm">[Powermatch]</a> section of the Preferences file to True. If both properties are set <em>show_contribution</em> takes precedence.<br/>
 <p><strong>Contribution</strong> Calculate the percentage contribution of each chosen column in meeting the target. This will present a table showing the percentage contribution for each month in the chosen period.</p>
 <p><strong>Correlation</strong> Perform linear correlations between the target and the chosen columns. This will present a table showing the correlations in descending order (i.e. best first)</p>
 <p>Correlation coefficients whose magnitude are between 0.9 and 1.0 indicate variables which can be considered <strong>very highly correlated</strong>. Correlation coefficients whose magnitude are between 0.7 and 0.9 indicate variables which can be considered <strong>highly correlated</strong>. Correlation coefficients whose magnitude are between 0.5 and 0.7 indicate variables which can be considered <strong>moderately correlated</strong>. Correlation coefficients whose magnitude are between 0.3 and 0.5 indicate variables which have a <strong>low correlation</strong>. Correlation coefficients whose magnitude are less than 0.3 have little if any (linear) correlation (from <a href="https://www.andrews.edu/~calkins/math/edrm611/edrm05.htm" target="_blank">https://www.andrews.edu/~calkins/math/edrm611/edrm05.htm</a>).</p>
-</div></li>
-<li><strong>Help</strong> Display the help for Powerplot</li>
-<li><div class="experiment">
+</li>
+<li>
 <strong>Plot 12</strong> If <em>plot_12</em> is set an additional button is presented to allow wide and low_height graphs to be produced. This allows monthly charts to be produced to fit on a page (e.g. A4) in portrait format. The individual charts can be produced using plot navigation (<em>m</em>), saved and then inserted into a page
-</div></li></ul>
+</li></ul></div>
 </td></tr>
 </table>
 <p>&nbsp;</p>
