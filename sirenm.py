@@ -1263,10 +1263,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.progressbar = None
         self.power_signal = None
         self.dataview = None
-        utilities = ['getmap', 'getmerra2', 'indexweather', 'makegrid', 'makeweatherfiles',
+        utilities = ['getera5', 'getmap', 'getmerra2', 'indexweather', 'makegrid', 'makeweatherfiles',
                      'powermatch', 'powerplot', 'updateswis', 'aggregate']
-        utilini = [True, False, True, True, False, True, True, True, True]
-        utilicon = ['map.png', 'download.png', 'list.png', 'grid.png', 'weather.png',
+        utilini = [False, True, False, True, True, False, True, True, True, True]
+        utilicon = ['download.png', 'map.png', 'download.png', 'list.png', 'grid.png', 'weather.png',
                     'power.png', 'line.png', 'list.png', 'gear_run.png']
         spawns = []
         icons = []
