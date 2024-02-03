@@ -22,7 +22,7 @@
 import csv
 import math
 import openpyxl as oxl
-# from openpyxl.formula import Tokenizer
+from openpyxl.formula import Tokenizer
 import os
 try:
     import pwd
@@ -35,7 +35,10 @@ if xlrd.__version__[:2][0] == '1.': # if xlsx files still supported
     if sys.version_info[1] >= 9: # python 3.9 onwards
         xlrd.xlsx.ensure_elementtree_imported(False, None)
         xlrd.xlsx.Element_has_iter = True
-
+try:
+    import pyexcel_odsr as odsr
+except:
+    odsr = None
 
 class ClickableQLabel(QtWidgets.QLabel):
     clicked = QtCore.pyqtSignal()
@@ -167,6 +170,7 @@ class ListWidget(QtWidgets.QListWidget):
 
 # Class to support input file as .csv, .xls, or .xlsx
 class WorkBook(object):
+
     def __init__(self):
         self._book = None
         self._data_only = None
@@ -221,6 +225,9 @@ class WorkBook(object):
                 csv_file.close()
                 self.nrows = len(self._worksheet)
                 self.ncols = len(self._worksheet[0])
+            elif self._type == 'ods' and odsr is not None:
+                self._book = odsr.get_data(filename)
+                self._sheet_names = list(self._book.keys())
             else:
                 raise Exception(f"Error with filetype - '{self._type}'")
         except Exception as err:
@@ -267,6 +274,14 @@ class WorkBook(object):
                 self._sheet.name = self._book.sheetnames[sheetx]
                 self._sheet.nrows = self._sheet._sheet.max_row
                 self._sheet.ncols = self._sheet._sheet.max_column
+            elif self._type == 'ods':
+              #  self._sheet._sheet = self._book.worksheets[sheetx]
+                self._sheet.name = self._sheet_names[sheetx]
+                self._sheet._sheet = self._book[self._sheet.name]
+                self._sheet.nrows = len(self._sheet._sheet)
+                self._sheet.ncols = 0
+                for row in range(self._sheet.nrows):
+                    self._sheet.ncols = max(self._sheet.ncols, len(self._sheet._sheet[row]))
             else: #if self._type == 'csv':
               #  self._sheet = self._book.worksheets[sheetx]
                 self._sheet.name = 'n/a'
@@ -281,6 +296,7 @@ class WorkBook(object):
         return self._sheet
 
     class WorkSheet(object):
+
         def __init__(self, sheet, typ, data_only):
             self.name = sheet
             self._sheet = None
@@ -290,27 +306,52 @@ class WorkBook(object):
             self._data_only = data_only
 
         def cell_value(self, row, col):
-            if self._type == 'xls':
-                return self._sheet.cell_value(row, col)
-            elif self._type == 'xlsx' or self._type == 'xlsm':
-                if self._data_only:
-                    return self._sheet.cell(row=row + 1, column=col + 1).value
-                else:
-                    return self._sheet.cell(row=row + 1, column=col + 1).value
-                    # sometime in the future
-                    # if self._sheet.cell(row=row + 1, column=col + 1).data_type == 'f':
-                    #     tok = Tokenizer(self._sheet.cell(row=row + 1, column=col + 1).value)
-                    #     print("\n".join("%12s%11s%9s" % (t.value, t.type, t.subtype) for t in tok.items))
-                    #     return self._sheet.cell(row=row + 1, column=col + 1).value
-                    # else:
-            else: #if self._type == 'csv':
-                return self._sheet[row][col]
+            try:
+                if self._type == 'xls':
+                    return self._sheet.cell_value(row, col)
+                elif self._type == 'xlsx' or self._type == 'xlsm':
+                    if self._data_only:
+                        return self._sheet.cell(row=row + 1, column=col + 1).value
+                    else:
+                        return self._sheet.cell(row=row + 1, column=col + 1).value
+                        # sometime in the future
+                    #    print(row + 1, col + 1, self._sheet.cell(row=row + 1, column=col + 1).data_type, self._sheet.cell(row=row + 1, column=col + 1).value)
+                     #   if self._sheet.cell(row=row + 1, column=col + 1).data_type == 'f':
+                      #      tok = Tokenizer(self._sheet.cell(row=row + 1, column=col + 1).value)
+                       #     if len(tok.items) == 1 and self._sheet.cell(row=row + 1, column=col + 1).value[:2] == "='":
+                        #        bits = self._sheet.cell(row=row + 1, column=col + 1).value[2:].split("'!")
+                         #       print('(320)', bits)
+                          #      sheet = super().sheet_by_name(bits[0])
+                           #     value = sheet[bits[1]]
+                            #print('(323)',
+                           # return value
+                        #else:
+                         #   return self._sheet.cell(row=row + 1, column=col + 1).value
+                elif self._type == 'ods':
+                    return self._sheet[row][col]
+                else: #if self._type == 'csv':
+                    return self._sheet[row][col]
+            except:
+             #   print(row + 1, col + 1, self._sheet.cell(row=row + 1, column=col + 1).data_type, self._sheet.cell(row=row + 1, column=col + 1).value)
+                return None
 
         def cell_type(self, row, col):
             if self._type == 'xlsx' or self._type == 'xlsm':
                 return self._sheet.cell(row=row + 1, column=col + 1).data_type
             else:
                 return None
+
+        def cell_rc(self, rc):
+            col_letters = ' ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+            for r in range(len(rc) -1, -1, -1):
+                if not rc.isdigit():
+                    break
+            row = int(rc[r - 1:]) - 1
+            col = 0
+            for c in range(r - 1):
+                col = col * 26 + col_letters.index(rc[c])
+            col -= 1
+            return self.cell_value(row, col)
 
 #        def cell_write(self, row, col, value):
 #            if self._type == 'xls':
