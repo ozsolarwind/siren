@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2022 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2023 Sustainable Energy Now Inc., Angus King
 #
 #  colours.py - This file is part of SIREN.
 #
@@ -39,6 +39,7 @@ class Colours(QtWidgets.QDialog):
             self.config_file = getModelFile('SIREN.ini')
         self.section = section
         self.underscore = underscore
+        self.cancelled = False
         config.read(self.config_file)
         groups = ['Fossil Technologies', 'Grid', 'Map', 'Plot', 'Resource', 'Technologies', 'The Rest']
         map_colours = ['background', 'border', 'fossil', 'fossil_name', 'station', 'station_name',
@@ -90,11 +91,16 @@ class Colours(QtWidgets.QDialog):
             except:
                 pass
         if palette is not None and len(palette) > 0: # set palette of colours
-            col = ['', '']
-            col[0] = QtWidgets.QColorDialog.getColor(QtCore.Qt.white, None, 'Select colour for item 1')
             if len(palette) > 1:
-                col[1] = QtWidgets.QColorDialog.getColor(QtCore.Qt.white, None,
-                         'Select colour for item ' + str(len(palette)))
+                col = ['', '']
+                col[0] = QtWidgets.QColorDialog.getColor(QtCore.Qt.white, None, 'Select colour for item 1')
+                if not col[0].isValid():
+                    self.cancelled = True
+                    self.close()
+                col[1] = QtWidgets.QColorDialog.getColor(QtCore.Qt.white, None, 'Select colour for item ' + str(len(palette)))
+                if not col[1].isValid():
+                    self.cancelled = True
+                    self.close()
                 inc = []
                 for c in range(3):
                     inc.append((col[1].getRgb()[c] - col[0].getRgb()[c]) / (len(palette) - 1))
@@ -104,14 +110,36 @@ class Colours(QtWidgets.QDialog):
                         colr.append(int(col[0].getRgb()[c] + inc[c] * i))
                     QtGui.QColor.setRgb(col[1], colr[0], colr[1], colr[2])
                     if self.underscore:
-                        self.colours[palette[i].lower()] = ['', col[1].name()]
-                    else:
                         self.colours[palette[i].lower().replace(' ', '_')] = ['', col[1].name()]
+                    else:
+                        self.colours[palette[i].lower()] = ['', col[1].name()]
             else:
                 if self.underscore:
-                    self.colours[palette[0].lower()] = ['', col[0].name()]
+                    key = palette[0].lower().replace(' ', '_')
                 else:
-                    self.colours[palette[0].lower().replace(' ', '_')] = ['', col[0].name()]
+                    key = palette[0].lower()
+                if key not in self.colours:
+                    self.colours[key] = ['', '']
+                col = QtWidgets.QColorDialog.getColor(QtGui.QColor(self.colours[key][1]), None, 'Select colour for ' + key.title())
+                if col.isValid():
+                    self.colours[key] = ['', col.name()]
+                else:
+                    self.cancelled = True
+                    if not add_colour:
+                        self.close()
+        if add_colour:
+            if self.underscore:
+                key = add_colour.lower()
+            else:
+                key = add_colour.lower().replace(' ', '_')
+            if key not in self.colours:
+                self.colours[key] = ['', '']
+            col = QtWidgets.QColorDialog.getColor(QtGui.QColor(self.colours[key][1]), None, 'Select colour for ' + key.title())
+            if col.isValid():
+                self.colours[key] = ['', col.name()]
+            else:
+                self.cancelled = True
+                self.close()
         group_colours = False
         try:
             gc = config.get('View', 'group_colours')
@@ -165,14 +193,6 @@ class Colours(QtWidgets.QDialog):
             for key, value in iter(sorted(self.colours.items())):
                 self.add_item(key, value, i)
                 i += 1
-        if add_colour:
-            if self.underscore:
-                key = add_colour.lower()
-            else:
-                key = add_colour.lower().replace(' ', '_')
-            self.colours[key] = ['', '']
-            self.add_item(key, ['', ''], -1)
-            self.showDialog(colour=key)
         buttonLayout = QtWidgets.QHBoxLayout()
         quit = QtWidgets.QPushButton('Quit', self)
         quit.setMaximumWidth(70)
@@ -289,7 +309,7 @@ class Colours(QtWidgets.QDialog):
             key = colour
             ndx = 1
         if self.colours[key][ndx] != '' and self.colours[key][ndx] != 'delete':
-            col = QtWidgets.QColorDialog.getColor(self.colours[key][ndx], None, 'Select colour for ' + key.title())
+            col = QtWidgets.QColorDialog.getColor(QtGui.QColor(self.colours[key][ndx]), None, 'Select colour for ' + key.title())
         else:
             col = QtWidgets.QColorDialog.getColor(QtGui.QColor('white'), None, 'Select colour for ' + key.title())
         if col.isValid():
@@ -316,9 +336,9 @@ class Colours(QtWidgets.QDialog):
         text, ok = QtWidgets.QInputDialog.getText(self, 'Add Colour Item', 'Enter name for colour item:')
         if ok:
             if self.underscore:
-                key = text.lower()
-            else:
                 key = text.lower().replace(' ', '_')
+            else:
+                key = text.lower()
             self.colours[key] = ['', '']
             self.add_item(key, ['', ''], -1)
 

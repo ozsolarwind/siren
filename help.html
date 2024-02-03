@@ -1310,6 +1310,22 @@ Options for <a href="#flexiplot">Flexiplot</a>. Properties for individual files 
 <td class="none">Font properties for chart labels</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>legend_font</dfn></td>
+<td class="none">Saved details on Legend font properties</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>legend_ncol</dfn></td>
+<td class="none">This property allows you to specify the number of legend columns for those Pie Charts with a legend. Default is 1</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>legend_on_pie</dfn></td>
+<td class="none">If set to <em>True</em> labels for a Pie Chart will be placed on the chart, if <em>False</em> the legend will be presented as a table. If set to <em>Pct</em> (Percent) the legend will be persented as a table and pie percentages will be placed on the chart. The default is True</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>legend_side</dfn></td>
+<td class="none">Indicate to adjust the chart area to place the legend. Values are <em>None</em> (the default), <em>Left</em> or <em>Right</em></td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>maximum (&ast;)</dfn></td>
 <td class="none">Maximum value for Series (y) axis. Default is 0 (meaning dynamic y axis)</td>
 </tr>
@@ -1999,6 +2015,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">If set to <em>True</em> labels for a Pie Chart will be placed on the chart, if <em>False</em> the legend will be presented as a table. If set to <em>Pct</em> (Percent) the legend will be persented as a table and pie percentages will be placed on the chart. The default is True</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>legend_side</dfn></td>
+<td class="none">Indicate to adjust the chart area to place the legend. Values are <em>None</em> (the default), <em>Left</em> or <em>Right</em></td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>margin_of_error</dfn></td>
 <td class="none">In doing a chart with a target column there may be very minor differences that could cause a Shortfall or Spill legend item to be created. This setting will allow these small differences to be ignored. The default value is .0001</td>
 </tr>
@@ -2079,6 +2099,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <tr class="none">
 <td class="none"><dfn>target_width (&ast;)</dfn></td>
 <td class="none">Define the width for the target line. The default is 2.5</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>ticks_font</dfn></td>
+<td class="none">Font properties for label tick marks</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>title (&ast;)</dfn></td>
@@ -3440,8 +3464,8 @@ If it's not a diurnal chart (i.e. Period is <em>&lt;None&gt;</em>) any occurence
 <tr><td class="lr"><dfn>Column Order</dfn></td>
 <td class="none">To produce the chart you select those columns to be included. This field consists of two tables (lists) of columns. Those in the left hand list will be included in the chart while those on the right will be excluded. The included columns will be charted in the chosen order. You can drag individual or a number of columns between the two lists to get the desired configuration. The chart colour for the column will be displayed as the background color for the column (<em>columns</em>)
 <div class="experiment">Contribution or Correlation will be performed between the target and each of the chosen columns</div></td></tr>
-<tr><td class="lr"> <strong>Label Font</title></td>
-<td class="none">This button you to change the font attributes for chart labels and label tick marks (<em>label_font</em>)
+<tr><td class="lr"> <strong>Label Font, Ticks Font</title></td>
+<td class="none">These buttons allow you to change the font attributes for chart labels and label tick marks (<em>label_font</em>, <em>ticks_font</em>)
 <br /><br />
 </td></tr>
 <tr><td class="bottom"><strong>Done, Plot, Colours, Legend..., Pref...,Help</br />
@@ -3452,7 +3476,7 @@ If it's not a diurnal chart (i.e. Period is <em>&lt;None&gt;</em>) any occurence
 <li><strong>Plot</strong> Produce the chart. If there are missing colours you will be taken to the Colours window to add the colour. You need to set a colour and press the Save &amp; Exit button</li>
 <li><strong>Colours</strong> Press this button to change the chart colours or to add new colours. You can remove a chart colour by right-clicking the colour (it will be cleared and the item deleted when you Save &amp; Exit). Colours are held in the [Plot Colors] Section of the Preferences file.
 <br />If the <em>palette</em> property in the [Plot Colors] Section of the Preferences file is set to True you can create a palette sequence of colours for columns selected in both the included and excluded lists. If you select columns and then press the <strong>Colours</strong> button you will be given the option to set a starting and ending palette colour and the colours for the chosen columns will be updated to a range of colours between the chosen values</li>
-<li><strong>Legend Properties</strong> Change the font attributes for the Legend (<em>legend_font</em>) plus other attributes for pie charts (<em>legend_ncol</em>, <em>legend_on_pie</em>)</li>
+<li><strong>Legend Properties</strong> Change the font attributes for the Legend (<em>legend_font</em>) plus other attributes (<em>legend_ncol</em>, <em>legend_on_pie</em>, <em>legend_side</em>)</li>
 <li><strong>Preferences</strong> Edit the Preferences file</li>
 <li><strong>Help</strong> Display the help for Powerplot</li>
 </ul>

@@ -24,7 +24,7 @@ import os
 from PyQt5 import QtCore, QtGui, QtWidgets
 import subprocess
 import sys
-from math import log10, ceil
+from math import log10, ceil, sqrt
 import matplotlib
 if matplotlib.__version__ > '3.5.1':
     matplotlib.use('Qt5Agg')
@@ -39,6 +39,7 @@ from colours import Colours
 from credits import fileVersion
 from editini import EditSect, SaveIni
 from getmodels import getModelFile
+from powerplot import MyQDialog, ChangeFontProp
 from senutils import ClickableQLabel, getParents, getUser, ListWidget, strSplit, techClean, WorkBook
 from zoompan import ZoomPanX
 
@@ -138,6 +139,25 @@ class CustomCombo(QtWidgets.QComboBox):
 
 class FlexiPlot(QtWidgets.QWidget):
 
+    def set_fontdict(self, item=None, who=None):
+        if item is None:
+            bits = 'sans-serif:style=normal:variant=normal:weight=normal:stretch=normal:size=10.0'.split(':')
+        else:
+            bits = item.split(':')
+        fontdict = {}
+        for bit in bits:
+            bits2 = bit.split('=')
+            if len(bits2) == 1:
+                bit2 = bits2[0].replace("'", '')
+                bit2 = bit2.replace("\\", '')
+                fontdict['family'] = bit2
+            else:
+                try:
+                    fontdict[bits2[0]] = float(bits2[1])
+                except:
+                    fontdict[bits2[0]] = bits2[1]
+        return fontdict
+
     def __init__(self, help='help.html'):
         super(FlexiPlot, self).__init__()
         self.help = help
@@ -206,10 +226,21 @@ class FlexiPlot(QtWidgets.QWidget):
         iper = '<none>'
         imax = 0
         self.alpha = 0.25
-        self.title_font = 'size=x-large' #'size=15'
-        self.label_font = '' #'size=x-large'
-        self.legend_font = '' #'size=x-large'
-        self.ticks_font = '' #'size=large'
+
+        self.legend_on_pie = True
+        self.percent_on_pie = True
+        self.legend_side = 'None'
+        self.legend_ncol = 1
+        self.legend_font = FontProperties()
+        self.legend_font.set_size('medium')
+        self.fontprops = {}
+        self.fontprops['Label']= self.set_fontdict()
+        self.fontprops['Label']['size'] = 10.
+        self.fontprops['Ticks']= self.set_fontdict()
+        self.fontprops['Ticks']['size'] = 10.
+        self.fontprops['Title']= self.set_fontdict()
+        self.fontprops['Title']['size'] = 14.
+
         self.constrained_layout = False
         self.series = []
         self.xvalues = []
@@ -250,6 +281,9 @@ class FlexiPlot(QtWidgets.QWidget):
         self.grid.addWidget(QtWidgets.QLabel('Title:'), rw, 0)
         self.title = QtWidgets.QLineEdit('')
         self.grid.addWidget(self.title, rw, 1, 1, 2)
+        ttlfClicked = QtWidgets.QPushButton('Title Font', self)
+        self.grid.addWidget(ttlfClicked, rw, 3)
+        ttlfClicked.clicked.connect(self.doFont)
         rw += 1
         self.grid.addWidget(QtWidgets.QLabel('Series:'), rw, 0)
         self.seriesi = CustomCombo()
@@ -257,14 +291,20 @@ class FlexiPlot(QtWidgets.QWidget):
             self.seriesi.addItem(series)
         self.seriesi.setEditable(True)
         self.grid.addWidget(self.seriesi, rw, 1, 1, 2)
-        self.grid.addWidget(QtWidgets.QLabel('(Cells for Series Categories; A1:B2 or r1,c1,r2,c2 format)'), rw, 3, 1, 2)
         showseries = QtWidgets.QPushButton('Show Series')
-        self.grid.addWidget(showseries, rw, 5)
+        self.grid.addWidget(showseries, rw, 3)
         showseries.clicked.connect(self.showClicked)
+        self.grid.addWidget(QtWidgets.QLabel('(Cells for Series Categories; A1:B2 or r1,c1,r2,c2 format)'), rw, 4, 1, 2)
         rw += 1
         self.grid.addWidget(QtWidgets.QLabel('Series Label:'), rw, 0)
         self.ylabel = QtWidgets.QLineEdit('')
         self.grid.addWidget(self.ylabel, rw, 1, 1, 2)
+        lblfClicked = QtWidgets.QPushButton('Label Font', self)
+        self.grid.addWidget(lblfClicked, rw, 3)
+        lblfClicked.clicked.connect(self.doFont)
+        ticfClicked = QtWidgets.QPushButton('Ticks Font', self)
+        self.grid.addWidget(ticfClicked, rw, 4)
+        ticfClicked.clicked.connect(self.doFont)
         rw += 1
         self.grid.addWidget(QtWidgets.QLabel('X Values:'), rw, 0)
         self.xvaluesi = CustomCombo()
@@ -272,10 +312,10 @@ class FlexiPlot(QtWidgets.QWidget):
             self.xvaluesi.addItem(xvalues)
         self.xvaluesi.setEditable(True)
         self.grid.addWidget(self.xvaluesi, rw, 1, 1, 2)
-        self.grid.addWidget(QtWidgets.QLabel('(Cells for X values; A1:B2 or r1,c1,r2,c2 format)'), rw, 3, 1, 2)
         showxvalues = QtWidgets.QPushButton('Show X values')
-        self.grid.addWidget(showxvalues, rw, 5)
+        self.grid.addWidget(showxvalues, rw, 3)
         showxvalues.clicked.connect(self.showClicked)
+        self.grid.addWidget(QtWidgets.QLabel('(Cells for X values; A1:B2 or r1,c1,r2,c2 format)'), rw, 4, 1, 2)
         rw += 1
         self.grid.addWidget(QtWidgets.QLabel('X Label:'), rw, 0)
         self.xlabel = QtWidgets.QLineEdit('')
@@ -289,7 +329,7 @@ class FlexiPlot(QtWidgets.QWidget):
         self.grid.addWidget(QtWidgets.QLabel('(Handy if you want to produce a series of charts)'), rw, 3, 1, 3)
         rw += 1
         self.grid.addWidget(QtWidgets.QLabel('Type of Chart:'), rw, 0)
-        plots = ['Bar Chart', 'Cumulative', 'Line Chart', 'Step Chart']
+        plots = ['Bar Chart', 'Cumulative', 'Line Chart', 'Pie Chart', 'Step Chart']
         self.plottype = QtWidgets.QComboBox()
         for plot in plots:
              self.plottype.addItem(plot)
@@ -352,11 +392,14 @@ class FlexiPlot(QtWidgets.QWidget):
         cb = QtWidgets.QPushButton('Colours', self)
         self.grid.addWidget(cb, rw, 2)
         cb.clicked.connect(self.editColours)
+        legendClicked = QtWidgets.QPushButton('Legend Properties', self)
+        self.grid.addWidget(legendClicked, rw, 3)
+        legendClicked.clicked.connect(self.doFont)
         ep = QtWidgets.QPushButton('Preferences', self)
-        self.grid.addWidget(ep, rw, 3)
+        self.grid.addWidget(ep, rw, 4)
         ep.clicked.connect(self.editIniFile)
         help = QtWidgets.QPushButton('Help', self)
-        self.grid.addWidget(help, rw, 4)
+        self.grid.addWidget(help, rw, 5)
         help.clicked.connect(self.helpClicked)
         QtWidgets.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
         frame = QtWidgets.QFrame()
@@ -415,9 +458,31 @@ class FlexiPlot(QtWidgets.QWidget):
                 elif key[:4] == 'file':
                     ifiles[key[4:]] = value.replace('$USER$', getUser())
                 elif key == 'label_font':
-                    self.label_font = value
+                    try:
+                        self.fontprops['Label'] = self.set_fontdict(value)
+                    except:
+                        pass
                 elif key == 'legend_font':
-                    self.legend_font = value
+                    try:
+                        self.legend_font.set_fontconfig_pattern(value)
+                    except:
+                        pass
+                elif key == 'legend_on_pie':
+                    if value.lower() in ['pct', 'percentage', '%', '%age']:
+                        self.legend_on_pie = False
+                    elif value.lower() in ['false', 'no', 'off']:
+                        self.legend_on_pie = False
+                        self.percent_on_pie = False
+                elif key == 'legend_ncol':
+                    try:
+                        self.legend_ncol = int(value)
+                    except:
+                        pass
+                elif key == 'legend_side':
+                    try:
+                        self.legend_side = value
+                    except:
+                        pass
                 elif key == 'palette':
                     if value.lower() in ['false', 'no', 'off']:
                         self.palette = False
@@ -435,10 +500,16 @@ class FlexiPlot(QtWidgets.QWidget):
                                 self.sparse_ticks = value.split(':')
                             else:
                                 self.sparse_ticks = value.split(',')
-                elif key == 'ticks_font':
-                    self.ticks_font = value
                 elif key == 'title_font':
-                    self.title_font = value
+                    try:
+                        self.fontprops['Title'] = self.set_fontdict(value)
+                    except:
+                        pass
+                elif key == 'ticks_font':
+                    try:
+                        self.fontprops['Ticks'] = self.set_fontdict(value)
+                    except:
+                        pass
         except:
             pass
         return ifiles
@@ -623,6 +694,51 @@ class FlexiPlot(QtWidgets.QWidget):
         self.popfileslist(self.files.currentText())
         self.log.setText('File "loaded"')
         self.setup[0] = False
+
+    def doFont(self):
+        if self.sender().text()[:6] == 'Legend':
+            if self.legend_on_pie and self.percent_on_pie:
+                lop = 'True'
+            elif not self.legend_on_pie and self.percent_on_pie:
+                lop = 'Pct'
+            else:
+                lop = 'False'
+            legend_properties = {'legend_ncol': str(self.legend_ncol),
+                                 'legend_on_pie': lop,
+                                 'legend_side': self.legend_side}
+            legend = ChangeFontProp('Legend', self.legend_font, legend_properties)
+            legend.exec_()
+            values, font_values = legend.getValues()
+            if values is None:
+                return
+            for key, value in values.items():
+                if key == 'legend_ncol':
+                    self.legend_ncol = int(value)
+                elif key == 'legend_on_pie':
+                    if value.lower() in ['true', 'yes', 'on']:
+                        self.legend_on_pie = True
+                        self.percent_on_pie = True
+                    if value.lower() in ['pct', 'percentage', '%', '%age']:
+                        self.legend_on_pie = False
+                        self.percent_on_pie = True
+                    elif value.lower() in ['false', 'no', 'off']:
+                        self.legend_on_pie = False
+                        self.percent_on_pie = False
+                else:
+                    setattr(self, key, value)
+            self.legend_font = legend.getFont()
+            self.log.setText('Legend properties updated')
+            self.updated = True
+        else:
+            what = self.sender().text().split(' ')[0]
+            font = ChangeFontProp(what, self.fontprops[what])
+            font.exec()
+            if font.getFont() is None:
+                return
+            self.fontprops[what] = self.set_fontdict(font.getFontDict())
+            self.log.setText(what + ' font properties updated')
+            self.updated = True
+        return
 
     def somethingChanged(self):
         if not self.setup[0]:
@@ -822,6 +938,23 @@ class FlexiPlot(QtWidgets.QWidget):
             except:
                 pass
             lines = []
+            lines.append('legend_font=' + self.legend_font.get_fontconfig_pattern())
+            lines.append('legend_on_pie=')
+            if not self.legend_on_pie and self.percent_on_pie:
+                lines[-1] += 'Pct'
+            elif not self.legend_on_pie and not self.percent_on_pie:
+                lines[-1] += 'False'
+            lines.append('legend_ncol=')
+            if self.legend_ncol != 1:
+                lines[-1] += str(self.legend_ncol)
+            lines.append('legend_side=')
+            if self.legend_side != 'None':
+                lines[-1] += self.legend_side
+            for key, value in self.fontprops.items():
+                lines.append(key.lower() + '_font=')
+                for key2, value2 in value.items():
+                    lines[-1] += f'{key2}={value2}:'
+                lines[-1] = lines[-1][:-1]
             if len(self.history) > 0:
                 line = ''
                 for itm in self.history:
@@ -893,7 +1026,8 @@ class FlexiPlot(QtWidgets.QWidget):
                 palette.append(item.text())
         dialr = Colours(section='Plot Colors', ini_file=self.config_file, add_colour=color,
                         palette=palette, underscore=True)
-        dialr.exec_()
+        if not dialr.cancelled:
+            dialr.exec_()
         self.colours = {}
         config = configparser.RawConfigParser()
         config.read(self.config_file)
@@ -1022,6 +1156,10 @@ class FlexiPlot(QtWidgets.QWidget):
                     xlabels.append(ws.cell_value(rocox[0], col))
         data = []
         label = []
+        try:
+            self.tick_color = self.fontprops['Ticks']['color']
+        except:
+            self.tick_color = '#000000'
         miny = 0
         maxy = 0
         titl = self.title.text() #.replace('$YEAR$', str(year))
@@ -1080,9 +1218,104 @@ class FlexiPlot(QtWidgets.QWidget):
         fig = plt.figure(figname, constrained_layout=self.constrained_layout)
         if gridtype != '':
             plt.grid(axis=gridtype)
+        loc = 'lower right'
         graph = plt.subplot(111)
-        plt.title(titl, fontdict=font_props(self.title_font))
-        if self.plottype.currentText() in ['Cumulative', 'Step Chart']:
+        if self.legend_side == 'Right':
+            plt.subplots_adjust(left=0.1, bottom=0.1, right=0.75)
+        elif self.legend_side == 'Left':
+            plt.subplots_adjust(left=0.25, bottom=0.1, right=0.9)
+            loc = 'lower left'
+        plt.title(titl, fontdict=self.fontprops['Title'])
+        if self.plottype.currentText() == 'Pie Chart':
+            fig = plt.figure(figname, constrained_layout=self.constrained_layout)
+            plt.title(titl, fontdict=self.fontprops['Title'])
+            if gridtype != '':
+                plt.grid(axis=gridtype)
+            datasum = []
+            colors = []
+            for dat in data:
+                datasum.append(sum(dat))
+                colors.append(self.colours[label[len(datasum) - 1].lower()])
+            tot = sum(datasum)
+            # https://stackoverflow.com/questions/3942878/how-to-decide-font-color-in-white-or-black-depending-on-background-color
+            whites = []
+            threshold = sqrt(1.05 * 0.05) - 0.05
+            if self.percent_on_pie:
+                for c in range(len(colors)):
+                    other = 0
+                    intensity = 0.
+                    for i in range(1, 5, 2):
+                        colnum = int(colors[c][i : i + 2], 16)
+                        colr = colnum / 255.0
+                        if colr <= 0.04045:
+                            colr = colr / 12.92
+                        else:
+                            colr = pow((colr + 0.055) / 1.055, 2.4)
+                        if i == 1: # red
+                            intensity += colr * 0.216
+                            other += colnum * 0.299
+                        elif i == 3: # green
+                            intensity += colr * 0.7152
+                            other += colnum * 0.587
+                        else: # blue
+                            intensity += colr * 0.0722
+                            other += colnum * 0.114
+                    if intensity < threshold:
+                        whites.append(c)
+            if self.legend_on_pie: # legend on chart
+                if self.percent_on_pie:
+                    patches, texts, autotexts = graph.pie(datasum, labels=label, autopct='%1.1f%%', colors=colors, startangle=90, pctdistance=.70)
+                    for text in autotexts:
+                        text.set_family(self.legend_font.get_family()[0])
+                        text.set_style(self.legend_font.get_style())
+                        text.set_variant(self.legend_font.get_variant())
+                        text.set_stretch(self.legend_font.get_stretch())
+                        text.set_weight(self.legend_font.get_weight())
+                        text.set_size(self.legend_font.get_size())
+                else:
+                    patches, texts = graph.pie(datasum, labels=label, colors=colors, startangle=90, pctdistance=.70)
+                for text in texts:
+                    text.set_family(self.legend_font.get_family()[0])
+                    text.set_style(self.legend_font.get_style())
+                    text.set_variant(self.legend_font.get_variant())
+                    text.set_stretch(self.legend_font.get_stretch())
+                    text.set_weight(self.legend_font.get_weight())
+                    text.set_size(self.legend_font.get_size())
+            else:
+                loc = 'lower right'
+                if self.percent_on_pie:
+                    patches, texts, autotexts = graph.pie(datasum, labels=None, autopct='%1.1f%%', colors=colors, startangle=90, pctdistance=.70)
+                    for text in autotexts:
+                        text.set_family(self.legend_font.get_family()[0])
+                        text.set_style(self.legend_font.get_style())
+                        text.set_variant(self.legend_font.get_variant())
+                        text.set_stretch(self.legend_font.get_stretch())
+                        text.set_weight(self.legend_font.get_weight())
+                        text.set_size(self.legend_font.get_size())
+                    for text in texts:
+                        text.set_family(self.legend_font.get_family()[0])
+                        text.set_style(self.legend_font.get_style())
+                        text.set_variant(self.legend_font.get_variant())
+                        text.set_stretch(self.legend_font.get_stretch())
+                        text.set_weight(self.legend_font.get_weight())
+                        text.set_size(self.legend_font.get_size())
+                else:
+                    for i in range(len(datasum)):
+                        label[i] = f'{label[i]} ({datasum[i]/tot*100:0.1f}%)'
+                    patches, texts = graph.pie(datasum, colors=colors, startangle=90)
+                if self.legend_side == 'Right':
+                    plt.subplots_adjust(left=0.1, bottom=0.1, right=0.75)
+                elif self.legend_side == 'Left':
+                    plt.subplots_adjust(left=0.25, bottom=0.1, right=0.9)
+                    loc = 'lower left'
+                fig.legend(patches, label, loc=loc, ncol=self.legend_ncol, prop=self.legend_font).set_draggable(True)
+            for c in whites:
+                autotexts[c].set_color('white')
+            p = plt.gcf()
+            p.gca().add_artist(plt.Circle((0, 0), 0.40, color='white'))
+            plt.show()
+            return
+        elif self.plottype.currentText() in ['Cumulative', 'Step Chart']:
             if self.plottype.currentText() == 'Cumulative':
                 step = None
             else:
@@ -1174,8 +1407,7 @@ class FlexiPlot(QtWidgets.QWidget):
                     maxy = ceil(maxy / rndup) * rndup
                 except:
                     pass
-        leg_font = font_props(self.legend_font, fontdict=False)
-        graph.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 2), prop=leg_font)
+        graph.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 2), prop=self.legend_font)
         plt.ylim([miny, maxy])
         plt.xlim([0, len(x) - 1])
         if self.sparse_ticks or len(self.sparse_ticks) > 0:
@@ -1205,14 +1437,16 @@ class FlexiPlot(QtWidgets.QWidget):
             xticks.append(len(xlabels) - 1)
             tick_labels.append(xlabels[-1])
             plt.xticks(xticks)
-            graph.set_xticklabels(tick_labels, rotation='vertical', fontdict=font_props(self.ticks_font))
+            graph.set_xticklabels(tick_labels, rotation='vertical', fontdict=self.fontprops['Ticks'])
+            graph.tick_params(colors=self.tick_color, which='both')
         else:
             plt.xticks(x, xlabels)
-            graph.set_xticklabels(xlabels, rotation='vertical', fontdict=font_props(self.ticks_font))
-        graph.set_xlabel(self.xlabel.text(), fontdict=font_props(self.label_font))
-        graph.set_ylabel(self.ylabel.text(), fontdict=font_props(self.label_font))
-        yticks = graph.get_yticklabels()
-        graph.set_yticklabels(yticks, fontdict=font_props(self.ticks_font))
+            graph.set_xticklabels(xlabels, rotation='vertical', fontdict=self.fontprops['Ticks'])
+        graph.set_xlabel(self.xlabel.text(), fontdict=self.fontprops['Label'])
+        graph.set_ylabel(self.ylabel.text(), fontdict=self.fontprops['Label'])
+     #   yticks = graph.get_yticklabels()
+     #   graph.set_yticklabels(yticks, fontdict=self.fontprops['Ticks'])
+        graph.tick_params(colors=self.tick_color, which='both')
         if self.percentage.isChecked():
             formatter = plt.FuncFormatter(lambda y, pos: '{:.0f}%'.format(y))
         else:

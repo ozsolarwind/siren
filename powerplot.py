@@ -74,6 +74,7 @@ class MyQDialog(QtWidgets.QDialog):
 class ChangeFontProp(MyQDialog):
     def __init__(self, what, font=None, legend=None):
         super(ChangeFontProp, self).__init__()
+        who = sys.argv[0][sys.argv[0].rfind('/') + 1: sys.argv[0].rfind('.')].title()
         self.what = what.split(' ')[0]
         self._font = font
         self.ignoreEnter = False
@@ -86,7 +87,7 @@ class ChangeFontProp(MyQDialog):
                                  'Stretch': [['ultra-condensed', 'extra-condensed', 'condensed', 'semi-condensed',
                                               'normal', 'semi-expanded', 'expanded', 'extra-expanded',
                                               'ultra-expanded'], 'normal'],
-                                 'Weight': [['ultralight', 'light', 'normal', 'bold', 'ultrabold'], 'normal'],
+                                 'Weight': [['ultralight', 'light', 'normal', 'bold'], 'normal'],
                                  'Size': [['xx-small', 'x-small', 'small', 'medium', 'large', 'x-large', 'xx-large'],
                                            'small']}
         self._legend_properties = {'legend_ncol': ['Columns', ['1', '2', '3', '4', '5', '6', '7', '8', '9'], '1'],
@@ -97,8 +98,8 @@ class ChangeFontProp(MyQDialog):
         self._size = [5.79, 6.94, 8.33, 10.0, 12.0, 14.4, 17.28]
         self._legend = None
         self._results = None
-        self.color = None
-        self.pattern = None
+        self._color = None
+        self._pattern = None
         self.grid = QtWidgets.QGridLayout()
         rw = 0
         if self.what == 'Legend':
@@ -121,7 +122,7 @@ class ChangeFontProp(MyQDialog):
                         pass
             rw += 1
         else:
-            self.color = '#000000' # black
+            self._color = '#000000' # black
             if font is not None:
                 self._font = FontProperties()
                 font_str = ''
@@ -129,7 +130,7 @@ class ChangeFontProp(MyQDialog):
                     if key == 'family':
                         font_str += value.replace('-', "\\-") + ':'
                     elif key == 'color':
-                        self.color = value
+                        self._color = value
                     else:
                         font_str += key + '=' + str(value) + ':'
                 font_str = font_str[:-1]
@@ -161,14 +162,14 @@ class ChangeFontProp(MyQDialog):
                 self.font_items['Size'].setCurrentText(self._font_properties['Size'][0][sze])
             except:
                 pass
-        if self.what != 'Header' and self.color is not None:
+        if self.what != 'Header' and self._color is not None:
             self.grid.addWidget(QtWidgets.QLabel('Colour'), rw, 1)
             self.colbtn = QtWidgets.QPushButton('Color', self)
             self.colbtn.clicked.connect(self.colorChanged)
-            if self.color == '#ffffff':
+            if self._color == '#ffffff':
                 value = '#808080'
             else:
-                value = self.color
+                value = self._color
             self.colbtn.setStyleSheet('QPushButton {background-color: %s;}' % value)
             self.font_items['Color'] = self.colbtn
             self.grid.addWidget(self.font_items['Color'], rw, 2)
@@ -179,6 +180,9 @@ class ChangeFontProp(MyQDialog):
         save = QtWidgets.QPushButton('Save', self)
         self.grid.addWidget(save, rw, 1)
         save.clicked.connect(self.saveClicked)
+        reset = QtWidgets.QPushButton('Reset', self)
+        self.grid.addWidget(reset, rw, 2)
+        reset.clicked.connect(self.resetClicked)
         frame = QtWidgets.QFrame()
         frame.setLayout(self.grid)
         self.scroll = QtWidgets.QScrollArea()
@@ -186,7 +190,7 @@ class ChangeFontProp(MyQDialog):
         self.scroll.setWidget(frame)
         self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
-        self.setWindowTitle('SIREN - Powerplot - ' + self.what + ' Properties')
+        self.setWindowTitle('SIREN - ' + who + ' - ' + self.what + ' Properties')
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
         self.show()
@@ -194,14 +198,30 @@ class ChangeFontProp(MyQDialog):
     def colorChanged(self):
         col = QtWidgets.QColorDialog.getColor(QtGui.QColor(''))
         if col.isValid():
-            self.color = col.name()
+            self._color = col.name()
             self.colbtn.setStyleSheet('QPushButton {background-color: %s;}' % col.name())
-            if self.color.lower() == '#ffffff':
+            if self._color.lower() == '#ffffff':
                 self.colbtn.setStyleSheet('QPushButton {color: #808080;}')
 
     def quitClicked(self):
         self.ignoreEnter = False
+        self._font = None
+        self._legend = None
+        self._pattern = None
+        self._results = None
         self.close()
+
+    def resetClicked(self):
+        for key, value in self._font_properties.items():
+            try:
+                self.font_items[key].setCurrentText(value[1])
+            except:
+                pass
+        if 'Color' in self.font_items.keys():
+            try:
+                self.colbtn.setStyleSheet('QPushButton {background-color: #000000;}')
+            except:
+                pass
 
     def saveClicked(self):
         self.ignoreEnter = False
@@ -218,14 +238,14 @@ class ChangeFontProp(MyQDialog):
         self._font.set_weight(self.font_items['Weight'].currentText())
         self._font.set_size(self.font_items['Size'].currentText())
         family = self.font_items['Family'].currentText().replace('-', "\\-")
-        self.pattern = f"{family}:" + \
+        self._pattern = f"{family}:" + \
                   f"style={self.font_items['Style'].currentText()}:" + \
                   f"variant={self.font_items['Variant'].currentText()}:" + \
                   f"weight={self.font_items['Weight'].currentText()}:" + \
                   f"stretch={self.font_items['Stretch'].currentText()}:" + \
                   f"size={self._font.get_size()}"
         try:
-            self.pattern += f':color={self.color}'
+            self._pattern += f':color={self._color}'
         except:
             pass
         self.close()
@@ -239,10 +259,10 @@ class ChangeFontProp(MyQDialog):
         return self._legend, self._results
 
     def getFont(self):
-            return self._font
+        return self._font
 
     def getFontDict(self):
-            return self.pattern
+        return self._pattern
 
 class PowerPlot(QtWidgets.QWidget):
 
@@ -259,7 +279,7 @@ class PowerPlot(QtWidgets.QWidget):
         else:
             return self.colours[tgt.strip()] + self.alphahex
 
-    def set_fontdict(self, item=None, who=None):
+    def set_fontdict(self, item=None):
         if item is None:
             bits = 'sans-serif:style=normal:variant=normal:weight=normal:stretch=normal:size=10.0'.split(':')
         else:
@@ -406,10 +426,12 @@ class PowerPlot(QtWidgets.QWidget):
         self.fontprops = {}
         self.fontprops['Header'] = self.set_fontdict()
         self.fontprops['Header']['size'] = 16.
-        self.fontprops['Title']= self.set_fontdict()
-        self.fontprops['Title']['size'] = 14.
         self.fontprops['Label']= self.set_fontdict()
         self.fontprops['Label']['size'] = 10.
+        self.fontprops['Ticks']= self.set_fontdict()
+        self.fontprops['Ticks']['size'] = 10.
+        self.fontprops['Title']= self.set_fontdict()
+        self.fontprops['Title']['size'] = 14.
         ifiles = {}
         try:
             items = config.items('Powerplot')
@@ -489,6 +511,11 @@ class PowerPlot(QtWidgets.QWidget):
                 elif key == 'short_legend':
                     if value.lower() in ['true', 'yes', 'on', '_']:
                         self.short_legend = '_'
+                elif key == 'ticks_font':
+                    try:
+                        self.fontprops['Ticks'] = self.set_fontdict(value)
+                    except:
+                        pass
                 elif key == 'title_font':
                     try:
                         self.fontprops['Title'] = self.set_fontdict(value)
@@ -720,10 +747,13 @@ class PowerPlot(QtWidgets.QWidget):
         lblfClicked = QtWidgets.QPushButton('Label Font', self)
         self.grid.addWidget(lblfClicked, rw, 0)
         lblfClicked.clicked.connect(self.doFont)
+        ticfClicked = QtWidgets.QPushButton('Ticks Font', self)
+        self.grid.addWidget(ticfClicked, rw, 1)
+        ticfClicked.clicked.connect(self.doFont)
         msg_palette = QtGui.QPalette()
         msg_palette.setColor(QtGui.QPalette.Foreground, QtCore.Qt.red)
         self.log.setPalette(msg_palette)
-        self.grid.addWidget(self.log, rw, 1, 1, 4)
+        self.grid.addWidget(self.log, rw, 2, 1, 4)
         rw += 1
         quit = QtWidgets.QPushButton('Done', self)
         self.grid.addWidget(quit, rw, 0)
@@ -1097,7 +1127,7 @@ class PowerPlot(QtWidgets.QWidget):
             what = self.sender().text().split(' ')[0]
             font = ChangeFontProp(what, self.fontprops[what])
             font.exec()
-            if font.getFont() is None:
+            if font.getFontDict() is None:
                 return
             self.fontprops[what] = self.set_fontdict(font.getFontDict())
             self.log.setText(what + ' font properties updated')
@@ -1357,7 +1387,8 @@ class PowerPlot(QtWidgets.QWidget):
                 palette.append(item.text())
         dialr = Colours(section='Plot Colors', ini_file=self.config_file, add_colour=color,
                         palette=palette)
-        dialr.exec()
+        if not dialr.cancelled:
+            dialr.exec_()
         self.colours = {}
         config = configparser.RawConfigParser()
         config.read(self.config_file)
@@ -1500,6 +1531,11 @@ class PowerPlot(QtWidgets.QWidget):
                 elif key == 'short_legend':
                     if value.lower() in ['true', 'yes', 'on', '_']:
                         self.short_legend = '_'
+                elif key == 'ticks_font':
+                    try:
+                        self.fontprops['Ticks'] = self.set_fontdict(value)
+                    except:
+                        pass
                 elif key == 'title_font':
                     try:
                         self.fontprops['Title'] = self.set_fontdict(value)
@@ -1608,10 +1644,6 @@ class PowerPlot(QtWidgets.QWidget):
             for c in range(self.brk_order.count()):
                 breakdowns.append(self.brk_order.item(c).text())
         label = []
-        try:
-            self.tick_color = self.fontprops['Label']['color']
-        except:
-            self.tick_color = '#000000'
         try:
             self.header_color = self.fontprops['Header']['color']
             del self.fontprops['Header']['color']
@@ -1800,9 +1832,9 @@ class PowerPlot(QtWidgets.QWidget):
                 if not do_12:
                     xticks = list(range(0, len(x), self.interval * days_per_label))
                     lc1.set_xticks(xticks)
-                    lc1.set_xticklabels(day_labels[:len(xticks)], rotation='vertical', fontdict=self.fontprops['Label'])
+                    lc1.set_xticklabels(day_labels[:len(xticks)], rotation='vertical', fontdict=self.fontprops['Ticks'])
                     lc1.set_xlabel('Period', fontdict=self.fontprops['Label'])
-                    lc1.tick_params(colors=self.tick_color, which='both')
+                    lc1.tick_params(colors=self.fontprops['Ticks']['color'], which='both')
                 lc1.set_ylabel('Power (MW)', fontdict=self.fontprops['Label']) # MWh?
                 zp = ZoomPanX()
                 f = zp.zoom_pan(lc1, base_scale=1.2, flex_ticks=flex_on, mth_labels=do_12_labels) # enable scrollable zoom
@@ -1947,9 +1979,9 @@ class PowerPlot(QtWidgets.QWidget):
                 if not do_12:
                     xticks = list(range(0, len(x), self.interval * days_per_label))
                     cu1.set_xticks(xticks)
-                    cu1.set_xticklabels(day_labels[:len(xticks)], rotation='vertical', fontdict=self.fontprops['Label'])
+                    cu1.set_xticklabels(day_labels[:len(xticks)], rotation='vertical', fontdict=self.fontprops['Ticks'])
                     cu1.set_xlabel('Period', fontdict=self.fontprops['Label'])
-                    cu1.tick_params(colors=self.tick_color, which='both')
+                    cu1.tick_params(colors=self.fontprops['Ticks']['color'], which='both')
                 zp = ZoomPanX()
                 f = zp.zoom_pan(cu1, base_scale=1.2, flex_ticks=flex_on, mth_labels=do_12_labels) # enable scrollable zoom
                 plt.show()
@@ -2022,9 +2054,9 @@ class PowerPlot(QtWidgets.QWidget):
                 if not do_12:
                     xticks = list(range(0, len(x), self.interval * days_per_label))
                     bc1.set_xticks(xticks)
-                    bc1.set_xticklabels(day_labels[:len(xticks)], rotation='vertical', fontdict=self.fontprops['Label'])
+                    bc1.set_xticklabels(day_labels[:len(xticks)], rotation='vertical', fontdict=self.fontprops['Ticks'])
                     bc1.set_xlabel('Period', fontdict=self.fontprops['Label'])
-                    bc1.tick_params(colors=self.tick_color, which='both')
+                    bc1.tick_params(colors=self.fontprops['Ticks']['color'], which='both')
                 zp = ZoomPanX()
                 f = zp.zoom_pan(bc1, base_scale=1.2, flex_ticks=flex_on, mth_labels=do_12_labels) # enable scrollable zoom
                 plt.show()
@@ -2088,7 +2120,7 @@ class PowerPlot(QtWidgets.QWidget):
                     day += the_days[m]
                     xticks.append(day)
                 hm1.set_xticks(xticks)
-                hm1.set_xticklabels(mth_labels, ha='left', fontdict=self.fontprops['Label'])
+                hm1.set_xticklabels(mth_labels, ha='left', fontdict=self.fontprops['Ticks'])
                 yticks = [-0.5]
                 if self.interval == 24:
                     for y in range(0, 24, 4):
@@ -2098,7 +2130,7 @@ class PowerPlot(QtWidgets.QWidget):
                         yticks.append(y + 6.5)
                 hm1.invert_yaxis()
                 hm1.set_yticks(yticks)
-                hm1.set_yticklabels(hr_labels, va='bottom', fontdict=self.fontprops['Label'])
+                hm1.set_yticklabels(hr_labels, va='bottom', fontdict=self.fontprops['Ticks'])
                 hm1.set_xlabel('Period', fontdict=self.fontprops['Label'])
                 hm1.set_ylabel('Hour', fontdict=self.fontprops['Label'])
                 if self.cbar:
@@ -2116,13 +2148,13 @@ class PowerPlot(QtWidgets.QWidget):
                             if curcticks[y] > vmin and curcticks[y] < vmax:
                                 cticks.append(curcticks[y])
                         cticks.sort()
-                        cbar.set_ticks(cticks, fontdict=self.fontprops['Label'])
+                        cbar.set_ticks(cticks, fontdict=self.fontprops['Ticks'])
                 self.log.setText('Heat map value range: {} to {}'.format(fmt_str, fmt_str).format(miny, maxy))
                 QtCore.QCoreApplication.processEvents()
                 plt.show()
             if do_12:
                 matplotlib.rcParams['figure.figsize'] = do_12_save
-        else: # diurnal average
+        else: # diurnal average - period chosen
             if self.interval == 24:
                 ticks = list(range(0, 21, 4))
                 ticks.append(23)
@@ -2233,15 +2265,13 @@ class PowerPlot(QtWidgets.QWidget):
                 plt.title(titl, fontdict=self.fontprops['Title'])
                 if suptitle != '':
                     fig.suptitle(suptitle, fontproperties=self.fontprops['Header'])
-                if gridtype != '':
-                    plt.grid(axis=gridtype)
                 pi2 = plt.subplot(111)
                 if self.legend_side == 'Right':
                     plt.subplots_adjust(left=0.1, bottom=0.1, right=0.75)
                 elif self.legend_side == 'Left':
                     plt.subplots_adjust(left=0.25, bottom=0.1, right=0.9)
                     loc = 'lower left'
-                for c in range(self.order.count() -1, -1, -1):
+                for c in range(self.order.count()):
                     col = self.order.item(c).text()
                     for c2 in range(2, ws.ncols):
                         try:
@@ -2265,6 +2295,7 @@ class PowerPlot(QtWidgets.QWidget):
                 tot = sum(data)
                 # https://stackoverflow.com/questions/3942878/how-to-decide-font-color-in-white-or-black-depending-on-background-color
                 whites = []
+                threshold = sqrt(1.05 * 0.05) - 0.05
                 if self.percent_on_pie:
                     for c in range(len(colors)):
                         intensity = 0.
@@ -2273,14 +2304,14 @@ class PowerPlot(QtWidgets.QWidget):
                             if colr <= 0.04045:
                                 colr = colr / 12.92
                             else:
-                                colr = pow((c + 0.055) / 1.055, 2.4)
+                                colr = pow((colr + 0.055) / 1.055, 2.4)
                             if i == 1: #red
                                 intensity = colr * 0.216
                             elif i == 3:
                                 intensity = colr * 0.7152
                             else:
                                 intensity = colr * 0.0722
-                        if intensity < sqrt(1.05 * 0.05) - 0.05:
+                        if intensity < threshold:
                             whites.append(c)
                 if self.legend_on_pie: # legend on chart
                     if self.percent_on_pie:
@@ -2428,7 +2459,7 @@ class PowerPlot(QtWidgets.QWidget):
                         yticks.append(y + 6.5)
                 hm2.invert_yaxis()
                 hm2.set_yticks(yticks)
-                hm2.set_yticklabels(hr_labels, va='bottom', fontdict=self.fontprops['Label'])
+                hm2.set_yticklabels(hr_labels, va='bottom', fontdict=self.fontprops['Ticks'])
                 if len(hmdata[0]) > 31:
                     day = -0.5
                     xticks = []
@@ -2438,7 +2469,7 @@ class PowerPlot(QtWidgets.QWidget):
                         xticklbls.append(mth_labels[m])
                         day = day + the_days[m]
                     hm2.set_xticks(xticks)
-                    hm2.set_xticklabels(xticklbls, ha='left', fontdict=self.fontprops['Label'])
+                    hm2.set_xticklabels(xticklbls, ha='left', fontdict=self.fontprops['Ticks'])
                 else:
                     curxticks = hm2.get_xticks()
                     xticks = []
@@ -2448,7 +2479,7 @@ class PowerPlot(QtWidgets.QWidget):
                             xticklabels.append(str(int(curxticks[x] + 1)))
                             xticks.append(curxticks[x])
                     hm2.set_xticks(xticks)
-                    hm2.set_xticklabels(xticklabels, fontdict=self.fontprops['Label'])
+                    hm2.set_xticklabels(xticklabels, fontdict=self.fontprops['Ticks'])
                 hm2.set_xlabel('Day', fontdict=self.fontprops['Label'])
                 hm2.set_ylabel('Hour', fontdict=self.fontprops['Label'])
                 if self.cbar:
@@ -2472,7 +2503,7 @@ class PowerPlot(QtWidgets.QWidget):
                                     continue
                             cticks.append(curcticks[y])
                         cticks.sort()
-                        cbar.set_ticks(cticks, fontdict=self.fontprops['Label'])
+                        cbar.set_ticks(cticks, fontdict=self.fontprops['Ticks'])
                 self.log.setText('Heat map value range: {} to {}'.format(fmt_str, fmt_str).format(miny, maxy))
                 QtCore.QCoreApplication.processEvents()
                 plt.show()
@@ -2674,10 +2705,10 @@ class PowerPlot(QtWidgets.QWidget):
                 plt.ylim([miny, maxy])
                 plt.xlim([0, self.interval - 1])
                 lc2.set_xticks(ticks)
-                lc2.set_xticklabels(hr_labels, fontdict=self.fontprops['Label'])
+                lc2.set_xticklabels(hr_labels, fontdict=self.fontprops['Ticks'])
                 lc2.set_xlabel('Hour of the Day', fontdict=self.fontprops['Label'])
                 lc2.set_ylabel('Power (MW)', fontdict=self.fontprops['Label'])
-                lc2.tick_params(colors=self.tick_color, which='both')
+                lc2.tick_params(colors=self.fontprops['Ticks']['color'], which='both')
                 zp = ZoomPanX()
                 f = zp.zoom_pan(lc2, base_scale=1.2) # enable scrollable zoom
                 plt.show()
@@ -2806,9 +2837,9 @@ class PowerPlot(QtWidgets.QWidget):
                 plt.ylim([miny, maxy])
                 plt.xlim([0, self.interval - 1])
                 cu2.set_xticks(ticks)
-                cu2.set_xticklabels(hr_labels, fontdict=self.fontprops['Label'])
+                cu2.set_xticklabels(hr_labels, fontdict=self.fontprops['Ticks'])
                 cu2.set_xlabel('Hour of the Day', fontdict=self.fontprops['Label'])
-                cu2.tick_params(colors=self.tick_color, which='both')
+                cu2.tick_params(colors=self.fontprops['Ticks']['color'], which='both')
                 zp = ZoomPanX()
                 f = zp.zoom_pan(cu2, base_scale=1.2) # enable scrollable zoom
                 plt.show()
@@ -2885,9 +2916,9 @@ class PowerPlot(QtWidgets.QWidget):
                 plt.ylim([miny, maxy])
                 plt.xlim([0, self.interval - 1])
                 bc2.set_xticks(ticks)
-                bc2.set_xticklabels(hr_labels, fontdict=self.fontprops['Label'])
+                bc2.set_xticklabels(hr_labels, fontdict=self.fontprops['Ticks'])
                 bc2.set_xlabel('Hour of the Day', fontdict=self.fontprops['Label'])
-                bc2.tick_params(colors=self.tick_color, which='both')
+                bc2.tick_params(colors=self.fontprops['Ticks']['color'], which='both')
                 zp = ZoomPanX()
                 f = zp.zoom_pan(bc2, base_scale=1.2) # enable scrollable zoom
                 plt.show()
