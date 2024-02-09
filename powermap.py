@@ -1,8 +1,9 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2023 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2024 Sustainable Energy Now Inc., Angus King
 #
-#  siren.py - This file is part of SIREN.
+#  powermap.py - This file is part of SIREN
+#  (formerly named sirenm.py).
 #
 #  SIREN is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Affero General Public License as
@@ -109,7 +110,7 @@ class Location(QtWidgets.QDialog):
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         grid.addWidget(buttons, 5, 0, 1, 2)
-        self.setWindowTitle('SIREN - Go to Location')
+        self.setWindowTitle('SIREN - Powermap - Go to Location')
 
     def location(self):
         return self.lat.value(), self.lon.value()
@@ -136,7 +137,7 @@ class Description(QtWidgets.QDialog):
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
-        self.setWindowTitle('SIREN - Save Scenario')
+        self.setWindowTitle('SIREN - Powermap - Save Scenario')
 
     def description(self):
         return self.text.toPlainText()
@@ -3299,8 +3300,7 @@ def main():
         return
     QtWidgets.QShortcut(QtGui.QKeySequence('q'), mw, mw.close)
     QtWidgets.QShortcut(QtGui.QKeySequence('x'), mw, mw.exit)
-    ver = fileVersion()
-    mw.setWindowTitle('SIREN (' + ver + ') - ' + scene.model_name + ' (' + scene.config_file + ')')
+    mw.setWindowTitle('SIREN - powermap (' + fileVersion() + ') - Powermap - ' + scene.model_name + ' (' + scene.config_file + ')')
     mw.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
     scene_ratio = float(mw.view.scene().width()) / mw.view.scene().height()
     screen = QtWidgets.QDesktopWidget().availableGeometry()

@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2016-2023 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2016-2024 Sustainable Energy Now Inc., Angus King
 #
 #  siren.py - This file is part of SIREN.
 #
@@ -81,7 +81,7 @@ class TabDialog(QtWidgets.QDialog):
         self.models_dirs = []
         if len(sys.argv) > 1:
             if sys.argv[1][-4:] == '.ini':
-                self.invoke('sirenm', sys.argv[1])
+                self.invoke('powermap', sys.argv[1])
                 sys.exit()
             elif os.path.isdir(sys.argv[1]):
                 models_dir = sys.argv[1]
@@ -201,10 +201,10 @@ class TabDialog(QtWidgets.QDialog):
                 spawnitem[-1].triggered.connect(partial(self.spawn, spawns[i]))
                 spawnMenu.addAction(spawnitem[-1])
             layout.setMenuBar(menubar)
-        self.model_tool = ['flexiplot', 'getmap', 'indexweather', 'makegrid', 'powermatch',
-                           'powerplot', 'sirenm', 'updateswis']
-        self.model_icon = ['line.png', 'map.png', 'list.png', 'grid.png', 'power.png',
-                           'line.png', 'sen_icon32.png', 'list.png']
+        self.model_tool = ['flexiplot', 'getmap', 'indexweather', 'makegrid', 'powermap',
+                           'powermatch', 'powerplot', 'updateswis']
+        self.model_icon = ['line.png', 'map.png', 'list.png', 'grid.png', 'sen_icon32.png',
+                           'power.png', 'line.png', 'list.png']
         help = QtWidgets.QAction(QtGui.QIcon('help.png'), 'Help', self)
         help.setShortcut('F1')
         help.setStatusTip('Help')
@@ -232,7 +232,7 @@ class TabDialog(QtWidgets.QDialog):
                     ent_dir = self.table.item(self.table.currentRow(), 3).text()
                 else:
                     ent_dir = self.models_dirs[0]
-                self.invoke('sirenm', ent_dir + ent)
+                self.invoke('powermap', ent_dir + ent)
                 self.quit()
             if (event.type() == QtCore.QEvent.MouseButtonPress or event.type() == QtCore.QEvent.MouseButtonRelease) and \
               event.button() == QtCore.Qt.RightButton:
@@ -372,7 +372,7 @@ class TabDialog(QtWidgets.QDialog):
         do_new = makeNew(self.models_dirs)
         do_new.exec_()
         if do_new.ini_file != '':
-            self.invoke('sirenm', do_new.ini_file)
+            self.invoke('powermap', do_new.ini_file)
             self.quit()
 
     def editIniFile(self, ini=None, line=None):
