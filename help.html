@@ -128,7 +128,7 @@ ul {
 <h1 id="help"><img src="sen_icon32.png" alt="SIM">&nbsp;SIREN Help</h1>
 <p><strong>All acronyms used in this help are defined in the list of <a href="#acronyms">acronyms</a></strong>
 <br /><span style="font-size: 12px">(Click the small icon on the top right of the page to return to the top)</span></p>
-<h3>SIREN - SEN's Interactive Renewable Energy Network tool</h3>
+<h2>SIREN - SEN's Interactive Renewable Energy Network tool</h2>
 <p>The SEN SAM simulation, SIREN, is used to calculate energy generation for renewable energy power stations. The program uses the SAM SDK API for energy calculations. SAM is provided by the NREL. This help briefly describes how to use the simulation.</p>
 <h2>Contents</h2>
 <ul class="none">
@@ -147,22 +147,34 @@ ul {
 <li><a href="#grid">Types of Grid Lines</a></li>
 </ul>
 <li><a href="#prefs">Preferences</a></li>
+<li><a href="#usage">Using the Simulation</a></li>
+<li><a href="#powermap">Powermap</a></li>
+<ul class="none">
 <li><a href="#menus">Menu Structure</a></li>
 <ul class="none">
 <li><a href="#mouse">Right Mouse Click</a></li>
 </ul>
-<li><a href="#usage">Using the Simulation</a></li>
-<ul class="none">
 <li><a href="#popts">Power Model Options</a></li>
 <ul class="none">
-<li><a href="#charts">Charts</a> (including <a href="#powerplot">powerplot</a> and <a href="#flexiplot">flexiplot</a>)</li>
+<li><a href="#charts">Charts</a></li>
 <li><a href="#tables">Tables</a></li>
 </ul>
 <li><a href="#fopts">Financial Model Options</a></li>
-<li><a href="#powermatch">Powermatch</a></li>
 <li><a href="#resourcegrid">Renewable Resource Grids</a></li>
 <li><a href="#dataview">Data View</a></li>
 <li><a href="#tricks">Performance and Execution Tricks</a></li>
+</ul>
+<li><a href="#powermatch">Powermatch</a></li>
+<ul class="none">
+<li><a href="#pmai">Inputs</a></li>
+<li><a href="#pmae">Execution</a></li>
+<li><a href="#pmab">Batch</a></li>
+<li><a href="#pmao">Optimisation</a></li>
+</ul>
+<li><a href="#othercharts">Other Charts</a>
+<ul class="none">
+<li><a href="#powerplot">Powerplot</a></li>
+<li><a href="#flexiplot">Flexiplot</a></li>
 </ul>
 <li><a href="#feedback">Feedback</a></li>
 <li><a href="#files">SIREN File Formats</a></li>
@@ -205,7 +217,6 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 <p><strong>Our Definition of Sustainable Energy</strong>: &ldquo;Energy that is renewable within a human lifetime and can be produced safely and equitably for all time with minimal impact on the environment and future inhabitants&rdquo;. We believe this does not include nuclear power with its many unresolved issues.</p>
 <p><strong>Our Focus</strong>: To raise awareness of how a mix of renewable energy technologies are able to meet WA's energy needs, with a particular focus on the main electricity grid, the SWIS.</p>
 <p><strong>Our Computer Simulation (SIREN)</strong>: To demonstrate how electricity demand on the SWIS may be met by a mix of renewable energy sources. Users are able to explore potential location and scale of renewable energy sources (stations, storage, transmission) to meet electricity demand.</p>
-<p><a href="#help">Back to top</a></p>
 <h2 id="install">Installation</h2>
 <p>At present there is a packaged version of the simulation for Windows available as a self-extracting zip file from <a href="https://sourceforge.net/projects/sensiren/" target="_blank">https://sourceforge.net/projects/sensiren/</a> (the package has been created with PyInstaller). There are a number of files available:
 <ul>
@@ -261,7 +272,7 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 <li><em>source</em> contains the Python source programs for SIREN</li>
 </ul>
 <p>The first time you open SIREN (without passing a target file or folder) it will present a window titled &lsquo;Choose location for SIREN model (preferences) files&rsquo; to allow you to choose the location for your SIREN Models. SIREN stores this location in <code>siren_models_location.txt</code> in a user folder and uses this as the location of the SIREN Models whenever you invoke SIREN without a target file or location. In windows the file is stored in the user's LocalAppData folder, <code>C:\User\&lt;user&gt;\AppData\Local\siren\</code>, and in Linux it is in <code>~/.siren/</code>. The file contains a single line with the location of the folder respective to the <em>siren</em> folder. It is possible to edit the file and manually add additional folders if desired.</p>
-<p>When you open SIREN you will be presented with a list of SIREN Models (Preferences files). Choose the SIREN Model you want by (left-) clicking on your choice. It is also possible to launch tools for the model by right-clicking on your choice - the tools are as described in <a href="#tools">Tools</a> - or you can edit the Model file. You can sort the list presented in order of either Preferences File, SIREN Model or Date modified (last time the Preferences file was saved) by right-clicking the appropriate column header. If a Model file has a syntax error this will be identified in the SIREN Model field; editing such a file will, where possible, highlight the line in error. If you want to use a specific Preferences file you can open the simulation passing the alternate filename, or a folder, as a parameter, as in these examples:</p>
+<p>When you open SIREN you will be presented with a list of SIREN Models (Preferences files). Choose the SIREN Model you want by (left-) clicking on your choice to invoke Powermap for that model. It is also possible to launch tools for the model by right-clicking on your choice - the tools are as described in <a href="#tools">Tools</a> - or you can edit the Model file. You can sort the list presented in order of either Preferences File, SIREN Model or Date modified (last time the Preferences file was saved) by right-clicking the appropriate column header. If a Model file has a syntax error this will be identified in the SIREN Model field; editing such a file will, where possible, highlight the line in error. If you want to use a specific Preferences file you can open the simulation passing the alternate filename, or a folder, as a parameter, as in these examples:</p>
 <pre>
       siren.exe
       siren.exe SIREN_NWIS.ini
@@ -373,7 +384,7 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 </tr>
 </table>
 <h3 id="sample">Sample SIREN Model</h3>
-<p>The sample SIREN model for the SWIS for 2014 and 2015. The default Preferences files, <em>SIREN.ini</em>, is set up for this data and assumes the <em>siren_sample</em> folder is located in the same parent folder as the <em>siren</em> folder. The sample data contains:
+<p>The sample SIREN model is for the SWIS for 2014 and 2015. The default Preferences files, <em>SIREN.ini</em>, is set up for this data and assumes the <em>siren_sample</em> folder is located in the same parent folder as the <em>siren</em> folder. The sample data contains:
 <ul class="none">
 <li><em>sample_files</em> contains a range of files for the SWIS such as maps, existing network and so forth</li>
 <li><em>solar_weather</em> contains solar (.smw) weather files for the SWIS for 2014 and 2015</li>
@@ -383,7 +394,6 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 <h3>Experimental features</h3>
 <p>There are some experimental features in SIREN which may or may not be further developed. These are identified within this help by a red bounding box.</p>
 </div>
-<p><a href="#help">Back to top</a></p>
 <h2 id="setup">Setting Up</h2>
 <p>The simulation uses external data files to model the potential for renewable energy generation for a geographic region. The approach is to model the data on an hourly basis for a desired year (ignoring leap days, that is, 8,760 hours). The following data files are required / desirable. Due to the initial source for each data file the format for each is different (see <a href="#files">SIREN File Formats</a> for further details). Please <a href="#feedback">feedback</a> any desired formats as it's relatively easy to accommodate standard file formats.</p>
 <ul>
@@ -402,7 +412,7 @@ You can also create additional stations, such as Rooftop PV, to be included in t
 <strong>Note:</strong> The intention of these two files is to describe the existing fossil and renewable Stations on the electricity network</li>
 <li>Optionally, the network can be divided into zones. This enables different renewable energy potential between zones to be analysed and utilised by <a href="#powermatch">Powermatch</a></li>
 <li>Hourly load details for the electricity grid. Either a CSV or Excel (XLS or XLSX) file with a single column of electrical load data for the 8,760 hours in the year of interest (identified by <em>load</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file). Each value is for one hour of load commencing on that hour.</li>
-<li>Hourly solar and weather details for the area of interest (identified by <em>solar_files</em> and <em>wind_files</em> properties of the <a href="#p_files">[Files]</a> Section of the Preferences file). This data is in formats required for input to SAM and contains entries for the 8,760 hours in the year of interest. A SAM weather file is a text file that contains one (calendar) year's worth of data describing the solar resource, wind speed, temperature, and other weather characteristics at a particular location. The approach we have adopted is to use NASA MERRA-2 data for the desired geographic area and year to create appropriately formatted weather files. This is described in <a href="#merra">Obtaining and Using NASA MERRA-2 Data for SAM weather files</a>. To enable more recent (part-year) data to be used it is possible to &ldquo;wrap&rdquo; the data by using the weather data for the prior year for the remaining part of the year.
+<li>Hourly solar and weather details for the area of interest (identified by <em>solar_files</em> and <em>wind_files</em> properties of the <a href="#p_files">[Files]</a> Section of the Preferences file). This data is in formats required for input to SAM and contains entries for the 8,760 hours in the year of interest. A SAM weather file is a text file that contains one (calendar) year's worth of data describing the solar resource, wind speed, temperature, and other weather characteristics at a particular location. The approach we have adopted is to use satellite data, either ECMWF ERA5 data or NASA MERRA-2 data, for the desired geographic area and year to create appropriately formatted weather files. This is described in <a href="#era">Obtaining and Using ECMWF ERA5 Data for SAM weather files</a>. To enable more recent (part-year) data to be used it is possible to &ldquo;wrap&rdquo; the data by using the weather data for the prior year for the remaining part of the year.
 <br>
 You can also use TMY files such as those provided with SAM. If you have a number of weather files you can create an index of these files for SIREN. This is described in <a href="#index">Using other Weather Files</a></li>
 <li>SIREN allows you to visualise renewable resource attributes. This utilises a summary file to avoid having to process all the weather files covered by the map (identified by <em>resource_grid</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file). This is described in <a href="#resource">Visualising Renewable Resource Attributes</a></li>
@@ -410,7 +420,6 @@ You can also use TMY files such as those provided with SAM. If you have a number
 <p>You can successfully use the simulation with just the map and weather data while existing load and network data enhance it's usefulness.
 <h3>A note about hours</h3>
 <p>Due to inconsistency between power (SAM) and weather data / files, hours of the day are portrayed differently. For example, looking at the hour between midnight and 1:00AM:- in power data the hour is shown as the start of the hour, <em>00:00</em>, while for weather data it is the end of the hour, <em>01:00</em>.</p>
-<p><a href="#help">Back to top</a></p>
 <h2 id="objects">Simulation Objects</h2>
 <p>The simulation has two main objects, stations and grid lines. Stations can be saved as scenarios in either an Excel (XLS) or CSV file format while grid lines are constructed during the simulation rather than being saved to a file (unless you have manually created the grid line).</p>
 <h3 id="stations">Stations</h3>
@@ -582,7 +591,6 @@ You can also use TMY files such as those provided with SAM. If you have a number
 </tr>
 </table>
 <p>Above 500MW it's a case of alternately adding 330_s and 330_d costs.</p>
-<p><a href="#help">Back to top</a></p>
 <h2 id="prefs">Preferences</h2>
 <p>Many options can be specified by a Preferences file. When you open SIREN you will be presented with a list of available Preferences files (SIREN Models) to choose from. These files reside in the same folder as SIREN itself (they may be placed in a different folder by passing that folder as a parameter when SIREN is invoked).
 The format is similar to a Windows INI file. If you want to create a new Model you can press the <em>New Model</em> button on the start up menu. You will be presented with a small list of Properties to update to create a new Preferences file.
@@ -594,7 +602,7 @@ The format is similar to a Windows INI file. If you want to create a new Model y
 <li><em>$dirn</em>&nbsp;will be replaced with the corresponding variable from the <em>[Parents]</em> Section</li>
 </ul>
 <p><strong>Note:</strong> Technologies appear in two forms in the Preferences file. They appear in the Preferences Sections as words starting with an uppercase letter and separated by spaces (e.g <em>Fixed PV</em> with the Section name <em>[Fixed PV]</em>). In the Section Properties the technology names are changed to all lower case and spaces are replaced by underscores. Thus, <em>Fixed PV</em> will appear as <em>fixed_pv</em>. The lower case versions occur in the <em>[Colors]</em> Section and <em>[Grid] dispatchable</em>, <em>[Power] fossil_technologies</em>, and <em>[Power] technologies</em> variables.</p>
-<p>(Skip to <a href="#menus">Menus</a>)</p>
+<p>(Skip to <a href="#usage">Using the Simulation</a>)</p>
 <p>Shortcut to Sections:- <a href="#p_backtrack_pv">Backtrack PV</a>, <a href="#p_base">Base</a>, <a href="#p_bess">BESS (Battery)</a>, <a href="#p_biomass">Biomass</a>, <a href="#p_colors">Colors</a>, <a href="#p_cst">CST</a>,
 <a href="#p_dataview">Dataview</a>, <a href="#p_dual_axis_pv">Dual Axis PV</a>, <a href="#p_files">Files</a>, <a href="#financial">Financial</a>, <a href="#p_fixed_pv">Fixed PV</a>,
 <a href="#p_flexiplot">Flexiplot</a>,
@@ -2797,9 +2805,37 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </table>
 </td></tr>
 </table>
-<p><a href="#help">Back to top</a></p>
-<h2 id="menus">Menu Structure</h2>
-<p>The menus allow you to interact with the full simulation while right-clicking the mouse allows you to interact at the detail of an individual station. The majority of the menu options have a keyboard shortcut. The layout of the menus are set out below (<strong>Note:</strong> Sometimes the menu options will disappear from the menu bar. The easiest solution is to maximise the main window and then restore it to it's normal size)</p>
+<h2 id="usage">Using the Simulation</h2>
+<p>The SIREN simulation has two parts:</p>
+<ol>
+<li>Using Powermap to build scenarios for an energy mix and calculating the renewable energy produced. It allows you to &ldquo;map&rdquo; renewable energy generation. This is described in <a href="#powermap">Powermap</a></li>
+<li>Using the Powermatch data produced by Powermap to complete a costed renewable energy scenario. It allows you to &ldquo;match&rdquo; renewable energy generation to demand. This is described in <a href="#powermatch">Powermatch</a></li>
+</ol>
+<p>There are also a few other programs that augment the results and data produced by Powermap and Powermatch.
+<h2 id="powermap">Powermap</h2>
+<p>Powermap allows you to build scenarios for the energy mix for your area of interest. It is based around the map of your chosen area and allows you to visualise the layout of the existing electricity network plus the additional stations you place on the map to build your scenario(s). The map initially shows the main skeleton of the existing electricity grid infrastructure and current generation stations.</p>
+<p>To add a new station simply right-click on the map at the desired location and then update the details for the station (Name, Technology, Capacity and so forth) and press <em>Save &amp; Exit</em>. You can also copy an existing station and other options as specified above. </p>
+<p>As you build your scenario, the simulation adds additional infrastructure to connect the new generation plants to the grid. The colours for the majority of the items on the map are as you specify in the Preferences file. You navigate around the map using normal mouse movements to scroll, zoom, etc. and interact with it as described in <a href="#menus">Menus</a>. Using the various menu options you can model your whole scenario, or by right-clicking you can deal with an individual station. There are a number of additional windows, such as menu options, that can be opened to assist with using Powermap (see <a href="#windows">Windows</a>)</p>
+<p>You can save multiple scenarios and add them and remove them as you wish. When you exit the simulation normally or <em>Save</em> scenarios (Ctrl+S) any modified scenarios will be saved. When you add new stations to your model they will be added as a new scenario which includes the date and time in its name, for example, Scenario_2015-06-09_1000. You can save all open scenarios as a single new scenario by using the <em>Save As...</em> option.</p>
+<p>The strength of the simulation is in running the SAM Power Models (e.g. Ctrl+P). This will run the appropriate SAM model for each station you have chosen or for all renewable stations in your current simulation. SAM calculates a list of power outputs for each hour of the year (8,760 points). If the <em>show_menu</em> property is True you will be presented with a menu to specify what processing and charts to produce (see <a href="#popts">Power Model Options</a> below). If you choose to run the Financial Models or Powermatch you will be presented with an additional menu of options.</p>
+<ul>
+<li>The various charting features allow you to visualise the renewable energy output and how it compares to demand</li>
+<li>The Financial Models option will invoke SAM Annual Output and Utility IPP/Commercial PPA Finance models. These enable a LCOE to be determined for the scenario</li>
+<li>Powermatch allows you to complete a costed renewable energy scenario. It will use dispatchable generation to meet shortfalls in the renewable energy generation mix to match generation with demand (load) to quantify and cost dispatchable energy generation, storage and CO<sub>2</sub>&#x2011;e emissions</li>
+</ul>
+<p><strong>Usage Notes:</strong>
+<ul>
+<li>To simplify the inputs required to run the SAM Power Models Powermap uses variable files for most of the input variables as described in <a href="#sam">SAM Models used by SIREN</a>. You can change the default inputs by editing or creating your own copy of the variable files. With the One variable you may want to adjust is the hub height in the <em>windpower</em> model</li>
+<li>If you run a simulation and get generation of 0 for a station it may be because SAM has returned an error; the error message will appear in the Status Window. If you don't normally have the Status Window open you can Open the window via the Powermap Windows sub-menu and rerun the Power models to find the error</li>
+</ul></p>
+<h4>Notes on Wind Stations</h4>
+<p>With increasing hub heights associated with larger turbines the SAM models are impacted by the lack of suitable wind speed data at greater heights. The MERRA-2 climate data has a maximum wind speed height of 50 metres which will cope with hub heights up to 85 metres (above that height the SAM <em>windpower</em> model will fail with an error - &ldquo;<em>... the closest wind speed measurement height (50 m) found is more than 35 m from the hub height specified</em>&rdquo;). To overcome the wind data limitation Powermap can extrapolate wind speeds to greater heights. To enable this you can use the <em>hub_formula</em> property of the <a href="#p_wind">[Wind]</a> and <a href="#p_offw">[Offshore Wind]</a> Sections of the Preferences file (behaviour can also be changed with the <em>hub_spread</em> property). This formula can be used to calculate a hub height (for rotor lengths greater than 85) and to extrapolate wind speed using either of two commonly used laws (models). The law to be used can be specified in the <em>extrapolate</em> property of the appropriate wind Section(s) and can be either <em>logarithmic</em>, the default, or <em>Hellmann</em>. This additional data will be added to the normal wind file and passed to the SAM windpower model. If you wish to use this you need update the <em>windpower</em> variables file to allow the default hub height (85 m) to be overridden.</p>
+<p>From &lsquo;Do we really need rotor equivalent wind speed?&rsquo; (Van Sark etal, <a href="https://onlinelibrary.wiley.com/doi/full/10.1002/we.2319#:~:text=For%20situations%20where%20the%20ratio,and%20the%20wind%20speed%20at" target="_blank">https://onlinelibrary.wiley.com/doi/full/10.1002/we.2319#:~:text=For%20situations%20where%20the%20ratio,and%20the%20wind%20speed%20at</a>) a possible formula for calculating hub height is - <code>H = 0.789 D + 14.9 m</code>. For the <em>hub_formula</em> property this can be set as:</p>
+<p><code>hub_formula=int(floor((0.789 * rotor + 14.9) / 5) * 5)</code></p>
+<p>Powermap will replace <code>rotor</code> with the rotor diameter for the station turbine and perform the calculation which will round the calculated hub height down to the nearest 5 metres. You can of course just set <code>hub_formula=90</code> to set a fixed height</p>
+<p>Discussions on the two wind profile laws can be found at <a href="https://en.wikipedia.org/wiki/Wind_profile_power_law" target="_blank">Wind profile power law</a> (aka Hellmann law) and <a href="https://en.wikipedia.org/wiki/Log_wind_profile" target="_blank">Log wind profile</a> (aka logarithmic law). The Hellmann law tends to give slightly higher wind speeds. &lsquo;Methodologies Used in the Extrapolation of Wind Speed Data at Different Heights and Its Impact in the Wind Energy Resource Assessment in a Region&rsquo; (<a href="https://www.researchgate.net/publication/221912731_Methodologies_Used_in_the_Extrapolation_of_Wind_Speed_Data_at_Different_Heights_and_Its_Impact_in_the_Wind_Energy_Resource_Assessment_in_a_Region" target="_blank">https://www.researchgate.net/publication/221912731_Methodologies_Used_in_the_Extrapolation_of_Wind_Speed_Data_at_Different_Heights_and_Its_Impact_in_the_Wind_Energy_Resource_Assessment_in_a_Region</a>) provides a fuller discussion on the topic.</p>
+<h3 id="menus">Menu Structure</h3>
+<p>The Powermap menus allow you to interact with the full simulation while right-clicking the mouse allows you to interact at the detail of an individual station. The majority of the menu options have a keyboard shortcut. The layout of the menus are set out below (<strong>Note:</strong> Sometimes the menu options will disappear from the menu bar. The easiest solution is to maximise the main window and then restore it to it's normal size)</p>
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><dfn><strong>Scenario</strong></dfn></td>
@@ -2942,7 +2978,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 </tr>
 <tr class="none">
 <td class="none"><img src="check-mark.png" alt="Show Existing Grid2">&nbsp;&nbsp;Show Existing Grid2 (Ctrl+2)</td>
-<td class="none">Display the existing detailed grid network if one is available (this grid is not utilised by SIREN; True)</td>
+<td class="none">Display the existing detailed grid network if one is available (this grid is not utilised by Powermap; True)</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="check-mark.png" alt="Show Grid Zones">&nbsp;&nbsp;Show Grid Zones</td>
@@ -3040,7 +3076,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 </tr>
 <tr class="none" id="windows">
 <td class="none"><dfn><strong>Windows</strong></dfn></td>
-<td class="none">Display additional (floating) windows. These windows can be opened and still allow interaction with the main SIREN window. if <em>restorewindows</em> is set SIREN will remember the placement of windows and restore them as closely as possible to these positions when they are next opened.</p>
+<td class="none">Display additional (floating) windows. These windows can be opened and still allow interaction with the main Powermap window. if <em>restorewindows</em> is set Powermap will remember the placement of windows and restore them as closely as possible to these positions when they are next opened.</p>
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><img src="about.png" alt="Credits">&nbsp;&nbsp;Credits (F2)</td>
@@ -3063,11 +3099,11 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 </tr>
 <tr class="none">
 <td class="none"><img src="list.png" alt="View Menu">&nbsp;&nbsp;Show Floating Menu</td>
-<td class="none">Invoke Floating menu window to display SIREN menu options</td>
+<td class="none">Invoke Floating menu window to display Powermap menu options</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="log.png" alt="View Status">&nbsp;&nbsp;Show Status Window</td>
-<td class="none">Invoke floating window to display a log of SIREN session activity and open scenarios</td>
+<td class="none">Invoke floating window to display a log of Powermap session activity and open scenarios</td>
 </tr>
 <tr class="none">
 <td class="none"><div class="experiment"><img src="grid.png" alt="View Status">&nbsp;&nbsp;Show Data View</div></td>
@@ -3086,7 +3122,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 </tr>
 <tr class="none">
 <td class="none"><img src="map.png" alt="getmap">&nbsp;&nbsp;getmap</td>
-<td class="none">Invoke <code>getmap</code> to create a map image for SIREN (see <a href="#map">Obtaining a Suitable Map Image</a>)</td>
+<td class="none">Invoke <code>getmap</code> to create a map image for Powermap (see <a href="#map">Obtaining a Suitable Map Image</a>)</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="download.png" alt="getmerra2">&nbsp;&nbsp;getmerra2</td>
@@ -3139,7 +3175,6 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <!--
 <p>Ctrl Keys: A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Z, 2
 -->
-<p><a href="#help">Back to top</a></p>
 <h3 id="mouse">Right Mouse Click</h3>
 <p>Clicking the right mouse button allows various actions for the nearest station. Dependent on the nearest station some options will not be available. The full list is as follows:</p>
 <table border="0", class="none" style="margin-left:35px">
@@ -3222,35 +3257,6 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <td class="none">Position legend here. Position will be approximate</td>
 </tr>
 </table>
-<p><a href="#help">Back to top</a></p>
-<h2 id="usage">Using the Simulation</h2>
-<p>The simulation has two parts:</p>
-<ol>
-<li>Using SIREN to build scenarios for an energy mix as described in more detail below</li>
-<li>Using the Powermatch data produced to complete a costed renewable energy scenario. This is described in <a href="#powermatch">Powermatch</a></li>
-</ol>
-<p>The simulation allows you to build scenarios for the energy mix for your area of interest. It is based around the map of your chosen area and allows you to visualise the layout of the existing electricity network plus the additional stations you place on the map to build your scenario(s). The map initially shows the main skeleton of the existing electricity grid infrastructure and current generation stations.</p>
-<p>To add a new station simply right-click on the map at the desired location and then update the details for the station (Name, Technology, Capacity and so forth) and press <em>Save &amp; Exit</em>. You can also copy an existing station and other options as specified above. </p>
-<p>As you build your scenario, the simulation adds additional infrastructure to connect the new generation plants to the grid. The colours for the majority of the items on the map are as you specify in the Preferences file. You navigate around the map using normal mouse movements to scroll, zoom, etc. and interact with it as described previously (<a href="#menus">Menus</a>). Using the various menu options you can model your whole scenario, or by right-clicking you can deal with an individual station. There are a number of additional windows, such as menu options, that can be opened to assist with using SIREN (see <a href="#windows">Windows</a>)</p>
-<p>You can save multiple scenarios and add them and remove them as you wish. When you exit the simulation normally or <em>Save</em> scenarios (Ctrl+S) any modified scenarios will be saved. When you add new stations to your model they will be added as a new scenario which includes the date and time in its name, for example, Scenario_2015-06-09_1000. You can save all open scenarios as a single new scenario by using the <em>Save As...</em> option.</p>
-<p>The strength of the simulation is in running the SAM Power Models (e.g. Ctrl+P). This will run the appropriate SAM model for each station you have chosen or for all renewable stations in your current simulation. SAM calculates a list of power outputs for each hour of the year (8,760 points). If the <em>show_menu</em> property is True you will be presented with a menu to specify what processing and charts to produce (see <a href="#popts">Power Model Options</a> below). If you choose to run the Financial Models or Powermatch you will be presented with an additional menu of options.</p>
-<ul>
-<li>The various charting features allow you to visualise the renewable energy output and how it compares to demand</li>
-<li>The Financial Models option will invoke SAM Annual Output and Utility IPP/Commercial PPA Finance models. These enable a LCOE to be determined for the scenario</li>
-<li>Powermatch allows you to complete a costed renewable energy scenario. It will use dispatchable generation to meet shortfalls in the renewable energy generation mix to match generation with demand (load) to quantify and cost dispatchable energy generation, storage and CO<sub>2</sub>&#x2011;e emissions</li>
-</ul>
-<p><strong>Usage Notes:</strong>
-<ul>
-<li>To simplify the inputs required to run the SAM Power Models SIREN uses variable files for most of the input variables as described in <a href="#sam">SAM Models used by SIREN</a>. You can change the default inputs by editing or creating your own copy of the variable files. With the One variable you may want to adjust is the hub height in the <em>windpower</em> model</li>
-<li>If you run a simulation and get generation of 0 for a station it may be because SAM has returned an error; the error message will appear in the Status Window. If you don't normally have the Status Window open you can Open the window via the SIREN Windows sub-menu and rerun the Power models to find the error</li>
-</ul></p>
-<h4>Notes on Wind Stations</h4>
-<p>With increasing hub heights associated with larger turbines the SAM models are impacted by the lack of suitable wind speed data at greater heights. The MERRA-2 climate data has a maximum wind speed height of 50 metres which will cope with hub heights up to 85 metres (above that height the SAM <em>windpower</em> model will fail with an error - &ldquo;<em>... the closest wind speed measurement height (50 m) found is more than 35 m from the hub height specified</em>&rdquo;). To overcome the wind data limitation SIREN can extrapolate wind speeds to greater heights. To enable this you can use the <em>hub_formula</em> property of the <a href="#p_wind">[Wind]</a> and <a href="#p_offw">[Offshore Wind]</a> Sections of the Preferences file (behaviour can also be changed with the <em>hub_spread</em> property). This formula can be used to calculate a hub height (for rotor lengths greater than 85) and to extrapolate wind speed using either of two commonly used laws (models). The law to be used can be specified in the <em>extrapolate</em> property of the appropriate wind Section(s) and can be either <em>logarithmic</em>, the default, or <em>Hellmann</em>. This additional data will be added to the normal wind file and passed to the SAM windpower model. If you wish to use this you need update the <em>windpower</em> variables file to allow the default hub height (85 m) to be overridden.</p>
-<p>From &lsquo;Do we really need rotor equivalent wind speed?&rsquo; (Van Sark etal, <a href="https://onlinelibrary.wiley.com/doi/full/10.1002/we.2319#:~:text=For%20situations%20where%20the%20ratio,and%20the%20wind%20speed%20at" target="_blank">https://onlinelibrary.wiley.com/doi/full/10.1002/we.2319#:~:text=For%20situations%20where%20the%20ratio,and%20the%20wind%20speed%20at</a>) a possible formula for calculating hub height is - <code>H = 0.789 D + 14.9 m</code>. For the <em>hub_formula</em> property this can be set as:</p>
-<p><code>hub_formula=int(floor((0.789 * rotor + 14.9) / 5) * 5)</code></p>
-<p>SIREN will replace <code>rotor</code> with the rotor diameter for the station turbine and perform the calculation which will round the calculated hub height down to the nearest 5 metres. You can of course just set <code>hub_formula=90</code> to set a fixed height</p>
-<p>Discussions on the two wind profile laws can be found at <a href="https://en.wikipedia.org/wiki/Wind_profile_power_law" target="_blank">Wind profile power law</a> (aka Hellmann law) and <a href="https://en.wikipedia.org/wiki/Log_wind_profile" target="_blank">Log wind profile</a> (aka logarithmic law). The Hellmann law tends to give slightly higher wind speeds. &lsquo;Methodologies Used in the Extrapolation of Wind Speed Data at Different Heights and Its Impact in the Wind Energy Resource Assessment in a Region&rsquo; (<a href="https://www.researchgate.net/publication/221912731_Methodologies_Used_in_the_Extrapolation_of_Wind_Speed_Data_at_Different_Heights_and_Its_Impact_in_the_Wind_Energy_Resource_Assessment_in_a_Region" target="_blank">https://www.researchgate.net/publication/221912731_Methodologies_Used_in_the_Extrapolation_of_Wind_Speed_Data_at_Different_Heights_and_Its_Impact_in_the_Wind_Energy_Resource_Assessment_in_a_Region</a>) provides a fuller discussion on the topic.</p>
-<p><a href="#help">Back to top</a></p>
 <h3 id="popts">Power Model Options</h3>
 <p>The Power Model options menu are as set out here. The default values are specified in the <a href="#power">[Power]</a> Section of the Preferences file. The associated property is indicated in brackets at the end of the description. If you hover over the window title bar or press F1 a help for the Options will be displayed.</p>
 <table border="0" class="none">
@@ -3370,154 +3376,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <li><em>Power - Load duration</em> option produces load duration curves which show how much generation is produced for a percentage of the year</li>
 <li><em>Power - Shortfall analysis</em> option produces a table and line charts that attempt to assist with analysing shortfalls on a daily basis. The analysis iterations option will produce average shortfalls for that number of days, for example, 3 iterations will produce average shortfall figures for one, two and three days. The figures are calculated by &ldquo;averaging&rdquo; the generation shortfall over the chosen number of days. This option will also produce cumulative shortfall charts that add the average hourly shortfall to generation to attempt to flatten out the shortfall over the year</li>
 </ul>
-<p><strong><u>Plot Navigation</u></strong></p>
-<p>The tool used to produce the charts, matplotlib, has a navigation toolbar
-(<a href="http://matplotlib.org/users/navigation_toolbar.html" target="_blank">Interactive navigation</a>) to enable you to navigate and manipulate the chart (but doesn't allow you to change the chart data). It includes options to zoom into an area of the chart and to save the chart image (by default to the <em>scenarios</em> folder).
-By default the size of charts produced is determined by matplotlib, or by the <em>Maximise Plot windows</em> option (above). By using the <em>orientation</em>, <em>papersize</em>, and <em>save_format</em> Properties of the <em>[Power]</em> section it is possible to produce the charts in a number of formats, such as PDF format, and in a specific page size and layout. If you use these options you can save charts in a standardised format (these Properties can be added and removed by using the <em>Preferences -> Edit Section</em> menu option).</p>
-<p>For most charts the Pan/Zoom option (<img src="pan_zoom.png" alt="Pan/Zoom">) enables you to zoom in on the chart using the right mouse button and to pan across the chart using the left mouse button.</p>
-<p>For the two hourly charts (<em>Power by hour</em> and <em>Power by hour - augmented</em>) and charts produced by Powerplot, other than Pie Charts, there is a modified pan and zoom feature to enhance visual examination of the chart:</p>
-<ul>
-<li>You can use the mouse scroll wheel to zoom in and out on the time (x) axis. The position of the mouse within the chart determines where the zoom will centre upon (that is, that point will remain fixed and the rest of the chart will move away from or towards that point)</li>
-<li>Moving the mouse while holding down the left button will allow you to pan across the chart</li>
-<li>Clicking the right mouse button or pressing the <em>r</em> key will reset the chart to the original state. This will allow you to zoom out to the original state and then zoom in to another period on the chart</li>
-<li>Pressing the <em>f</em> key will expand the chart window to fullscreen. Pressing it again will return it to the previous size</li>
-<li>Pressing the <em>h</em> key will hide the legend. Pressing it again will restore the legend to the top right</li>
-<li>Pressing the <em>l</em> key will allow you to move the legend, although the behaviour may be a little erratic. Initially, the legend will be moved to the top right of the window and be arranged as a vertical list. By clicking the left mouse button within the legend and dragging the mouse you can move it to a different location. In the process it may cause the chart to also move or cause some odd behaviour with it. In these cases pressing the <em>r</em> key will reset the chart leaving the legend in the new position</li>
-<li>Pressing the <em>m</em> key will display a monthly chart. Each press will show the next month. You can also navigate to a chosen month by pressing the number for the month after the <em>m</em>. For example, pressing <em>m10</em> will display October</li>
-<li>Pressing the <em>t</em> key will display a two weekly chart. Each press will step forward one week (that is, move forward one week and display two weeks). If the <em>m</em> key has been pressed the (two) weeks for that month will be displayed</li>
-<li>Pressing the <em>w</em> key will display a weekly chart. Each press will show the next week. If the <em>m</em> key has been pressed the weeks for that month will be displayed</li>
-<li>Pressing <em>PageUp</em> or <em>PageDown</em> will display the previous or next week or month</li>
-<li>Pressing the <em>left</em> or <em>right</em> arrow will scroll the display to the left or right</li>
-<li>Pressing the <em>up</em> or <em>down</em> arrow will scroll the display up or down</li>
-</ul>
-<p>It is also possible to move the legend for Pie Charts produced with a legend.</p>
-<p><strong>Note:</strong> For cumulative (stacked) charts produced by Powerplot this feature may perform slowly so please be a little patient</p>
-<h4 id="powerplot"><u>Powerplot</u></h4>
-<p><code>powerplot</code> is a standalone program that will produce either hourly, half-hourly or diurnal charts from a spreadsheet that conforms to certain constraints. It is intended to be used to chart (detailed) results either from Powermatch or some of the files produced by SIREN's Powermodel.
-<div class="experiment">
-The program can also be used to either:
-<ul>
-<li>determine the strength of the linear relationship, or linear correlation, between a target column, for example Load, and other columns within the input spreadsheet, or</li>
-<li>determine the percentage contribution of chosen columns in meeting the target</li>
-</ul>
-The correlation or contribution can be for the full year or a chosen period or range of months.
-</div>
-<p>The spreadsheet must have:</p>
-<ol>
-<li>A header row that defines the content of the underlying rows (this need not be the first row)</li>
-<li>The first (header) column should be <em>Hour</em> for hourly data or <em>Interval</em> for half-hourly data, and the second should be <em>Period</em> with a cell format of <em>yyyy-mm-dd hh:mm</em>. The program uses the year in the first period row to determine if the data is for a leap year</li>
-<li>The rows immediately following the header row should contain data for each hour or half-hour of the year (either 8,760 or 17,520 for a normal year and 8,784 or 17,568 for a leap; or a smaller number for an incomplete year)</li>
-</ol>
-The program displays a window of options. The default values are specified in the <a href="#p_pp">[Powerplot]</a> Section of the Preferences file. It is possible to have a number of entries for files (<em>file_choices</em>) listed in recent order (<em>file_history</em>).
-<table border="0" class="none">
-<tr><td class="top" style="width: 20%;"><dfn>Recent Files</dfn></td>
-<td class="none">A pull-down list of recent spreadsheets. Click on the desired spreadsheet to choose a different one from the list. The list will be ordered in terms of most recently accessed first (<em>file_history</em>)</td></tr>
-<tr><td class="lr"><dfn>File</dfn></td>
-<td class="none">Click on this field to choose the desired spreadsheet (<em>file</em>)</td></tr>
-<tr><td class="lr"><dfn>Sheet</dfn></td>
-<td class="none">A pull-down list to enable you to choose the desired worksheet (<em>sheet</em>)</td></tr>
-<tr><td class="lr"><dfn>Period(s)</dfn></td>
-<td class="none">A pull-down list for a full year, a month or other defined seasons or periods that may be defined in the Preferences file. If an option other than <em>&lt;None&gt;</em> is chosen the resulting chart will present an average diurnal chart for the chosen period (<em>period</em>). If the first period is a month a second pull-down list allows you to choose an ending month range. This can either be a later month in the year or, if earlier than the first value, months will wrap to the start of the year. For example, Period 1 of Nov and Period 2 of Feb will correlate Nov, Dec, Jan and Feb (<em>period2</em>)</td></tr>
-<tr><td class="lr"><dfn>Day</dfn></td>
-<td class="none">Produce a diurnal chart for a chosen day of the chosen period</td></tr>
-<tr><td class="lr"><dfn>Target; line width and style</dfn></td>
-<td class="none">A pull-down list of column names. If the chart is intended to show how the chosen columns meet a target column, typically Load, this enables you to choose that column. Choosing <em>&lt;None&gt;</em> means no target field. If a target field is chosen the chart will show excess generation as lightly shaded areas above the target values (<em>target</em>). You can also specify an alternate line width (<em>target_width</em>) and line style (<em>target_style</em>)
-<div class="experiment">A target is required for Contribution and Correlation</div></td></tr>
-<tr><td class="lr"><dfn>Overlay</dfn></td>
-<td class="none">This option allows an overlay on the chart. It presents a pull-down list of options:
-<ul>
-<li><em>&lt;none&gt;</em></li>
-<li><em>Charge</em> The total of energy used to recharge storage to be shown as an overlay on the chart; it provides an indication of how and when excess energy has been used for recharge. If a Target, e.g. Load, is chosen the target values will be added to the figure to indicate the use of excess energy above the target.</li>
-<li><em>Underlying load</em> If available underlying load will be displayed on the chart. Underlying load include the additional load met by Rooftop PV (DPV) rather than utility generation</li>
-</ul>
-You can also specify an alternate line width (<em>overlay_width</em>) and line style (<em>overlay_style</em>)
-</td></tr>
-<tr><td class="lr"><dfn>Header</dfn>, <strong>Header Font</strong></td>
-<td class="none">Specify a header - super title - for the chart. There are two special strings which will be replaced in the header:
-<ul>
-<li><em>$YEAR$</em> will be replaced with the year (first Period value)</li>
-<li><em>$MTH$</em> or <em>$MONTH$</em> will be replaced with the chosen Period</li>
-</ul>
-If it's not a diurnal chart (i.e. Period is <em>&lt;None&gt;</em>) any occurence of &rsquo;Diurnal&lsquo; in the header wil be removed (<em>header</em>).
-<p>The button next to the Header field allows you to change the font attributes for the Header (<em>header_font</em>)
-</td></tr>
-<tr><td class="lr"><dfn>Title</dfn>, <strong>Title Font</strong></td>
-<td class="none">Specify a title for the chart. As for the header field the two special strings <em>$YEAR$</em> <em>$MTH$</em> or <em>$MONTH$</em> will be replaced with the chosen Period. If it's not a diurnal chart (i.e. Period is <em>&lt;None&gt;</em>) any occurence of &rsquo;Diurnal&lsquo; in the title wil be removed (<em>title</em>).
-<p>The button next to the Title field allows you to change the font attributes for the Title (<em>title_font</em>)
-</td></tr>
-<tr><td class="lr"><dfn>Maximum</dfn></td>
-<td class="none">You can specify a maximum value for the Power (y) axis. This allows you to produce a series of charts with the same scale (<em>maximum</em>)</td></tr>
-<tr><td class="lr"><dfn>Type of Plot</dfn></td>
-<td class="none">The type of chart to be produced. Options are <em>Bar Chart</em>, <em>Cumulative</em>, <em>Heat Map</em>, <em>Line Chart</em>, <em>Pie Chart</em> and <em>Step Chart</em>. <em>Bar Chart</em>, <em>Cumulative</em> and <em>Step Chart</em> produce cumulative (stacked) charts and have filled areas by technology (or Columns). A Step Chart is similar to a Bar Chart but does not have spaces between the hourly bars; also it is a lot faster to display than a Bar Chart (a Bar Chart is not recommended for hourly charts). If a Target field (e.g. Load) is chosen the area above the Target value (i.e. excess generation) in the Cumulative and Step chart have a lightly shaded value (the degree of shading is chosen by the <em>alpha</em> property in the [Powerplot] Section of the Preferences file). A Heat Map visualises the total value of chosen columns to indicate the highest through lowest values of the range or, if a target column is chosen, an indication of how the total value meets the target value. Each &ldquo;square&rdquo; or &ldquo;cell&rdquo; of the map represents an hour; the vertical axis is hours in a day and the horizontal axis is days for the chosen period.  (<em>plot</em>)</td></tr>
-<tr><td class="lr"><dfn>Percentage</dfn></td>
-<td class="none">Checking this option will produce a percentage (stacked) curve. The chart will have filled areas showing the percentage of generation for each technology. It is recommended to not set a Target field (i.e. set it to <em>&lt;None&gt;</em>) as this will merely remove the Target field (and it's data) from the chart (<em>percentage</em>)</td></tr>
-<tr><td class="lr"><dfn>Spill label</dfn></td>
-<td class="none">Use this to set a suffix for Legend entries for spilled energy. If the field is blank no spilled energy labels will appear in the Legend (<em>spill_label</em>)</td></tr>
-<tr><td class="lr"><dfn>Show Grid</dfn></td>
-<td class="none">The gridlines to be included on the chart. Options are <em>Both</em>, <em>Horizontal</em>, <em>Vertical</em> and <em>None</em>. The default is <em>None</em> (<em>grid</em>)</td></tr>
-<tr><td class="lr"><div class="experiment"><dfn>Breakdowns</dfn></div></td>
-<td class="none"><div class="experiment">A TML Details worksheet breaks down RE generation into a number of categories. This option allows you to choose which categories to chart. You select those you wish to chart and drag them to the left hand column. To produce a chart that shows generation to meet load, charging of storage, and surplus you should drag <em>TML</em> and <em>Surplus</em> to the left hand column and drag <em>Charge &lt;battery&gt;</em> columns to the left hand Column Order above any other items. In producing the chart the first breakdown will have the normal colour for the technology while the others will have a translucent colour and possibly a pattern. This allows the breakdowns to be related by colour and yet distinguished by translucency. To aid in readability it is possible to produce a shorter legend that removes the breakdowns entries by setting the property <em>short_legend</em> property in the [Powerplot] section of the Preferences file to True. An example of options for plotting TML details might look something like this:
-<p>
-<img src="plot_tml.png" alt="TML Plot">
-</p>
-<p><strong>Note:</strong> After you create a TML Detail spreadsheet you need to open the spreadsheet and save it before it can be used.</div></td></tr>
-<tr><td class="lr"><dfn>Column Order</dfn></td>
-<td class="none">To produce the chart you select those columns to be included. This field consists of two tables (lists) of columns. Those in the left hand list will be included in the chart while those on the right will be excluded. The included columns will be charted in the chosen order. You can drag individual or a number of columns between the two lists to get the desired configuration. The chart colour for the column will be displayed as the background color for the column (<em>columns</em>)
-<div class="experiment">Contribution or Correlation will be performed between the target and each of the chosen columns</div></td></tr>
-<tr><td class="lr"> <strong>Label Font, Ticks Font</title></td>
-<td class="none">These buttons allow you to change the font attributes for chart labels and label tick marks (<em>label_font</em>, <em>ticks_font</em>)
-<br /><br />
-</td></tr>
-<tr><td class="bottom"><strong>Done, Plot, Colours, Legend..., Pref...,Help</br />
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Plot 12, Co...</strong></td>
-<td class="none">At the bottom of the window are a number of buttons:
-<ul>
-<li><strong>Done</strong> Exit the program and save the input values. Input preferences and colours are either saved in a SIREN preferences file or in a specific file, <em>powerplot.ini</em>, if no Peferences file is passed to the program</li>
-<li><strong>Plot</strong> Produce the chart. If there are missing colours you will be taken to the Colours window to add the colour. You need to set a colour and press the Save &amp; Exit button</li>
-<li><strong>Colours</strong> Press this button to change the chart colours or to add new colours. You can remove a chart colour by right-clicking the colour (it will be cleared and the item deleted when you Save &amp; Exit). Colours are held in the [Plot Colors] Section of the Preferences file.
-<br />If the <em>palette</em> property in the [Plot Colors] Section of the Preferences file is set to True you can create a palette sequence of colours for columns selected in both the included and excluded lists. If you select columns and then press the <strong>Colours</strong> button you will be given the option to set a starting and ending palette colour and the colours for the chosen columns will be updated to a range of colours between the chosen values</li>
-<li><strong>Legend Properties</strong> Change the font attributes for the Legend (<em>legend_font</em>) plus other attributes (<em>legend_ncol</em>, <em>legend_on_pie</em>, <em>legend_side</em>)</li>
-<li><strong>Preferences</strong> Edit the Preferences file</li>
-<li><strong>Help</strong> Display the help for Powerplot</li>
-</ul>
-<div class="experiment">
-<ul>
-<li>
-<strong>Co...</strong> Perform either an analysis of contribution or correlation to a target. These options are presented by setting either the <em>show_contribution</em> or <em>show_correlation</em> Property of the <a href="#p_pm">[Powermatch]</a> section of the Preferences file to True. If both properties are set <em>show_contribution</em> takes precedence.<br/>
-<p><strong>Contribution</strong> Calculate the percentage contribution of each chosen column in meeting the target. This will present a table showing the percentage contribution for each month in the chosen period.</p>
-<p><strong>Correlation</strong> Perform linear correlations between the target and the chosen columns. This will present a table showing the correlations in descending order (i.e. best first)</p>
-<p>Correlation coefficients whose magnitude are between 0.9 and 1.0 indicate variables which can be considered <strong>very highly correlated</strong>. Correlation coefficients whose magnitude are between 0.7 and 0.9 indicate variables which can be considered <strong>highly correlated</strong>. Correlation coefficients whose magnitude are between 0.5 and 0.7 indicate variables which can be considered <strong>moderately correlated</strong>. Correlation coefficients whose magnitude are between 0.3 and 0.5 indicate variables which have a <strong>low correlation</strong>. Correlation coefficients whose magnitude are less than 0.3 have little if any (linear) correlation (from <a href="https://www.andrews.edu/~calkins/math/edrm611/edrm05.htm" target="_blank">https://www.andrews.edu/~calkins/math/edrm611/edrm05.htm</a>).</p>
-</li>
-<li>
-<strong>Plot 12</strong> If <em>plot_12</em> is set an additional button is presented to allow wide and low_height graphs to be produced. This allows monthly charts to be produced to fit on a page (e.g. A4) in portrait format. The individual charts can be produced using plot navigation (<em>m</em>), saved and then inserted into a page
-</li></ul></div>
-</td></tr>
-</table>
-<p>&nbsp;</p>
-<div class="experiment">
-<h4 id="flexiplot"><u>Flexiplot</u></h4>
-<p><code>flexiplot</code> is a standalone program that can be used for &ldquo;prototyping&rdquo; a more conventional Excel spreadsheet where data is arranged in rows or columns. The program is very much experimental. If it proves useful it may be included as part of <code>powerplot</code> in the future. The program has a similar window of options to <code>powerplot</code> with the exception of <em>Period</em> and <em>Target</em>. The default values are specified in the <a href="#p_flexiplot">[Flexiplot]</a> Section of the Preferences file. It has a number of options that differ to <code>powerplot</code>.
-<table border="0" class="none">
-<tr><td class="top" style="width: 20%;"><strong>Open File</strong></td><td class="none">Pressing this button will open the current file to assist in setting the <dfn>Series</dfn> and <dfn>X Values</dfn> ranges</td></tr>
-<tr><td class="lr"><dfn>Series</dfn>, <strong>Show Series</strong></td>
-<td class="none">The location of the data series to be charted. The range is specified as either Excel columns and rows, e.g. <em>B1:H1</em>, or as four numbers defining the row and columns range, e.g. <em>1,2,1,7</em>. The series can either be in rows or columns but is expected to be a single row (as in the examples) or column. You then choose which series you want charted by moving them in the Column Order lists (<em>series</em>). Pressing the <strong>Show Series</strong> button will display the current series values in a table</td></tr>
-<tr><td class="lr"><dfn>Series Label</dfn></td>
-<td class="none">The label for the Series (y values) (<em>ylabel</em>)</td></tr>
-<tr><td class="lr"><dfn>X Values</dfn>, <strong>Show X values</strong</td>
-<td class="none">The data values to be charted. The range is specified as either Excel columns and rows, e.g. <em>A2:A29</em> or as four numbers defining the row and columns range, e.g. <em>2,1,2,29</em>. The series can either be in rows or columns but is expected to be a single row or column (as in the examples). The first column (A) is taken as the X labels and the data series chosen will be charted (<em>xvalues</em>). Pressing the <strong>Show X values</strong> button will display the first column/row of the current X values in a table</td></tr>
-<tr><td class="lr"><dfn>X Label</dfn></td>
-<td class="none">The label for the X Axis (x values) (<em>xlabel</em>)</td></tr>
-<tr><td class="bottom"><strong>Preferences</strong></td>
-<td class="none">In addition to the buttons in <code>powerplot</code>, <code>flexiplot</code> has a <strong>Preferences</strong> button to allow you to update the Flexiplot preferences. This allows you to adjust text sizes and the like, however, some values, such as details for an individual file, may be ignored for the active file.
-</td></tr>
-</table>
-<p><code>flexiplot</code> has a number of options to:
-<ul>
-<li>Adjust the font properties of the various text items on the chart. The properties are as described in <a href="https://matplotlib.org/3.1.1/api/font_manager_api.html#matplotlib.font_manager.FontProperties" target="_blank">FontProperties</a> but may be restricted by the matplotlib environment. To specify a property use the format as described in the link, e.g. <em>family=sans-serif,size=xxlarge</em>. The only non-default value is the chart title fontsize which is set to 'x-large'</li>
-<li>You can specify how often X Axis ticks appear, either by setting <em>sparse_xticks</em> to a single number ,&lsquo;n&rsquo;, for every &lsquo;n&rsquo;th tick to appear, or by setting a test for a change in the label value by specifying the start and end characters to examine, separated by a comma. For example, <em>1,3</em> could be used where you have labels in the form of <em>Jan, Feb</em></li>
-</ul>
-</div>
-<!-- Back to top< -->
+<p>Refer to <a href="#othercharts">Other Charts</a> for details about Plot Navigation.</p>
 <h3 id="tables">Tables</h3>
 <ul>
 <li><em>Save Hourly Data Output</em> option will save generation in MWh for each chosen station for each hour of the year (8,760 hours) as calculated by SAM. This can be used in detailed analysis or as an option to avoid having to reprocess the station in the future, by updating a Station's </em>Power File</em> field. The default filename can be set using the <em>data_file</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file; otherwise it will in the format of <em>Power_Table_yyyy-mm-dd_hhmm...</em></li>
@@ -3525,7 +3384,7 @@ If it's not a diurnal chart (i.e. Period is <em>&lt;None&gt;</em>) any occurence
 <li><em>Save (adjusted) Hourly Data Output by Technology</em> option will save generation in MWh for each technology and other options for each hour of the year (8,760 hours). This is the hourly output calculated by the SAM model multiplied by any adjustments. If appropriate Power Model options are chosen data for Generation, Excess, Load and Storage will also be saved. The default filename can be set using the <em>data_file</em> property of the [Files] Section of the Preferences file; otherwise it will in the format of <em>Power_Detail_Technology_yyyy-mm-dd_hhmm...</em></li>
 <li><em>Save Powermatch data</em> option will save save the input data for Powermatch (or Powerbalance). There are two possible output formats:
 <ol>
-<li>Powermatch uses scenario worksheets. If the <em>pm_template</em> property of the <em>[Files]</em> Section is set, SIREN will save the inputs in this format. The file can (only) be saved as an <em>.xlsx</em> format file</li>
+<li>Powermatch uses scenario worksheets. If the <em>pm_template</em> property of the <em>[Files]</em> Section is set, Powermap will save the inputs in this format. The file can (only) be saved as an <em>.xlsx</em> format file</li>
 <li>The original Powerbalance uses the hourly shortfalls and overall generation figures in its computations. This option saves this data in a spreadsheet to simplify copying it into a Powerbalance workbook. The cells required for Powerbalance are highlighted in colour. The worksheet contains the generation summary data followed by the shortfall data. The file can be saved as <em>.csv</em> for a CSV file or <em>.xls</em> for an Excel file</li>
 </ol>
 <li><em>Show Summary/Other Tables</em> option will cause various tables to be presented:
@@ -3611,9 +3470,121 @@ If it's not a diurnal chart (i.e. Period is <em>&lt;None&gt;</em>) any occurence
 <li>The table presents LCOE figures for each station and an overall LCOE estimate. The overall estimate is calculated by multiplying the LCOE for each station by the ratio of it's generation to total generation</li>
 <li>Strictly speaking LCOE does not include grid costs. The grid options are provided to enable the impact of this cost to be included in the model</li>
 <li>As mentioned previously, <em>Include full grid path in LCOE?</em> may over-inflate grid costs as each station path to the load centre is traced individually</li>
-</ul><p><a href="#help">Back to top</a></p>
-<h3 id="powermatch">Powermatch</h3>
-<p>Running the SIREN models will produce hourly generation figures which identify generation shortfalls and excesses against load (demand). One of the outputs from SIREN is a table of these generation shortfalls which could be met by storage (charged by surplus renewable generation) and dispatchable energy generation. The Powermatch (<code>powermatch</code>) component of SIREN can be used to match generation with demand (load) to quantify and cost this dispatchable energy generation, storage and CO<sub>2</sub>-e emissions. This enables you to complete a costed renewable energy scenario. If the input data spreadsheet has zones (of generation) the calculations will be performed for each zone.</p>
+</ul>
+<h3 id="resourcegrid">Resource Grids</h3>
+<p>To assist with placement of renewable energy stations Powermap can display a grid of renewable resource attributes derived from the SAM weather files. The grid can be displayed by invoking the <em>Show Resource Grid</em> (Ctrl+B) menu option. The Resource Overlay menu presented has the following fields:</p>
+<table border="0" class="none" cellpadding="2">
+<tr><td class="top" style="width: 15%;"><dfn>Weather Detail</dfn></td>
+<td class="none">If appropriate resource files are found you'll be presented with this menu option. Possible choices are:- <em>Daily By Month</em> (default), <em>Hourly By Month</em>, or <em>Hourly By Day</em></td></tr>
+<tr><td class="lr"><dfn>Weather Period</dfn></td>
+<td class="none">This row provides pull-down menus to allow you to choose a period, day and hour to display</td></tr>
+<tr><td class="lr"><dfn>&lt; &gt;</dfn></td>
+<td class="none"You can also navigate to a particular time period by dragging the slider bar. Clicking <strong>&lt;</strong> will step back one period while <strong>&gt;</strong> steps forward one period. You can also use <em>Page Down</em> and <em>Page Up</em> to step forward and back through the weather periods</td></tr>
+<tr><td class="lr"><dfn>Period Loop (secs)</dfn></td>
+<td class="none">You can also cause the visualisation to automatically loop through all time periods. The number field allows you to specify the delay in seconds between each period - between 0 and 10 in .2 second increments. You press the <strong>Loop</strong> button to start the loop. Press <em>Stop</em> (or the <em>Window -> Exit Visualise</em>, Ctrl+Z, menu option) to stop the loop</td></tr>
+<tr><td class="lr"><dfn>Weather Variable</dfn></td>
+<td class="none">This pull-down menu allows you to select the desired variable to display</td></tr>
+<tr><td class="lr"><dfn>Colour Steps</dfn></td>
+<td class="none">The grid displayed can have values grouped in to up to 10 steps. A value of 0 will give a smooth graduation rather than stepped colours</td></tr>
+<tr><td class="lr"><dfn>Opacity</dfn></td>
+<td class="none">Gives the degree of opacity of grid colours. A value of 1 is completely opaque while a value of 0 is completely transparent</td></tr>
+<tr><td class="lr"><dfn>Grid only</dfn></td>
+<td class="none">If this item is checked just the grid cell borders will be displayed</td></tr>
+<tr><td class="lr"><dfn>Low Colour</dfn> and <dfn>High Colour</dfn></td>
+<td class="none">These options present a set of buttons for each weather variable. Pressing the appropriate button will allow you to alter the upper or lower colour value for each variable. The range of colours steps will be displayed beside the buttons</td>
+<tr><td class="bottom"><strong>Quit, Show, Hide, Save, Help</strong></td>
+<td class="none">As well as the <strong>&lt;</strong>, <strong>&gt;</strong> and <strong>Loop</strong> buttons there are a number of buttons at the bottom of the menu, as described below</td></tr>
+</table>
+<p>Altering any field will cause the revised grid to be overlaid on the Powermap map. The buttons are:</p>
+<ul>
+<li><strong>Quit</strong>. Close the Resource Overlay menu. Any grid will continue to be displayed</li>
+<li><strong>Show</strong>. Cause the grid to be displayed. This allows you to display the grid without changing any of the fields</li>
+<li><strong>Hide</strong>. Hide the resource grid</li>
+<li><strong>Save</strong>. Save modified fields. This updates the Preferences file for future executions of Powermap</li>
+<li><strong>Help</strong>. Display the help for how to create the Resource grids</li>
+<li><strong>&lt;</strong> and <strong>&gt;</strong>. (see above)</li>
+<li><strong>Loop</strong>. (see <em>Period Loop (secs)</em> above)</li>
+</ul>
+<p>This feature utilises summary data stored in a file rather than having to process hourly data from the weather files (see <a href="#resource">Visualising Renewable Resource Attributes</a>).</p>
+<div class="experiment">
+<h3 id="dataview">Data View</h3>
+<p>This experimental feature overlays a set of pie charts or bar charts on the Powermap map, either at individual station locations or based upon the grid of MERRA-2 &ldquo;weather&rdquo; cells. It can be used to visualise the contribution to overall generation from a group of stations. This could assist with identifying optimal placement of stations. For example, identifying potential Renewable Energy Zones could be assisted by running SAM models for identically sized stations placed within each of the cells. When the program is invoked it will display Powermap's coordinates grid. By default the grid is based on geographic coordinates but can be set to show the MERRA-2 cells by setting the <em>merra2_grid</em> property of the <a href="#p_view">[View]</a> Section of the Preferences file to <em>True</em>. The program can accept data in two formats:</p>
+<ol>
+<li>A table of latitudes and longitudes containing the generation in each location for a number of RE technologies, or</li>
+<li>The summary table from a Powermodel execution from Powermap which contains a list of stations, their technology and generation. This format requires the stations in the list to be present in the Scenarios loaded into Powermap</li>
+</ol>
+<p>The program analyses the generation figures for each or all technologies and ovelays charts that show the relative generation for each station or weather cell compared to the maximum generation figure. In Bar Charts the bars are relative to the maximum generation for any technology while percentages are either relative to the total for the cell or for each technology. In Pie Charts the pie slices indicate the contribution of each technology and the total pie slices and percentages are relative to the maximum generation. The base size (scale) of the charts are the same size as the MERRA-2 cells.</p>
+<p>The Data View options (Properties) are specified in the <a href="#p_dataview">[Dataview]</a> Section of the Preferences file. The associated property is indicated in brackets at the end of the description. The Data View menu displayed by invoking the <em>Show Data View</em> menu option. The menu presented has the following fields:</p>
+<table border="0" class="none">
+<tr><td class="top" style="width: 15%;"><dfn>Recent Files</dfn></td>
+<td class="none">A pull-down list of recent spreadsheets. Click on the desired spreadsheet to choose a different one from the list. The list will be ordered in terms of most recently accessed first (<em>file_history</em>)</td></tr>
+<tr><td class="lr"><dfn>Data File</dfn></td>
+<td class="none">Click on this field to choose the desired spreadsheet (<em>file</em>)</td></tr>
+<tr><td class="lr"><dfn>Sheet</dfn> and<br />&nbsp;&nbsp;<dfn>exclude cells</dfn></td>
+<td class="none">A pull-down list to enable you to choose the desired worksheet (<em>sheet</em>). The second field allows you to choose another sheet in the same spreadsheet which can contain a list of cells to be excluded</td></tr>
+<tr><td class="lr"><dfn>Data Choices</dfn></td>
+<td class="none">This will provide a set of checkboxes for the technologies available in the spreadsheet to allow you to choose which ones to display</td></tr>
+<tr><td class="lr"><dfn>Type of Chart</dfn><br />&nbsp;&nbsp;<dfn>Vertical Bar Chart</dfn><br />&nbsp;&nbsp;<dfn>Centre in cell</dfn></td>
+<td class="none">The type of chart to be produced. Options are <em>Bar Chart</em> and <em>Pie Chart</em> (<em>plot</em>)<br />Check this to produce a vertical Bar Chart. The default is horizontal ()<br />Check this to centre the chart in the cell. Uncheck it to place the chart in the top left of the cell (<em>plot_rotate</em>)</td></tr>
+<tr><td class="lr"><dfn>Opacity</dfn><br />&nbsp;&nbsp;<dfn>Scale of chart in cell</dfn></td>
+<td class="none">Gives the degree of opacity of grid colours. A value of 1 is completely opaque while a value of 0 is completely transparent (<em>plot_opacity</em>)<br />
+Scale of the chart in the cell. A value of 1 fills the cell(<em>plot_scale</em>)</td></tr>
+<tr><td class="lr"><dfn>Show pct. values</dfn><br />&nbsp;&nbsp;<dfn>Show</dfn> and <dfn>Each</dfn><br />&nbsp;&nbsp;<dfn>Dynamic scale</dfn></td>
+<td class="none">Two checkboxes to indicate to display percentage values (<dfn>Show</dfn>; <em>number_show</em>) and display values for each technology for Bar Charts (<dfn>Each</dfn>; <em>number_multiple</em>). The <strong>Pct. colour</strong> allows you to set the colour for the percentage labels (<em>number_colour</em>)<br />Checking the Dynamic scale checkbox causes the size of Pct. labels to be adjusted according to the range of generation values (<em>number_dynamic</em>)</td></tr>
+<tr><td class="lr"><dfn>Show pct. >=</dfn></td>
+<td class="none">Only show data cells for those cells with percentages above this value (<em>number_min</em>)</td></tr>
+<tr><td class="lr"><dfn>Centre on grid</dfn></td>
+<td class="none">The location of charts will centre on the geographic location of the stations. By checking this option the charts will centre on the centre of MERRA-2 &ldquo;weather&rdquo; cells and will aggregate the figures for each station within the cell (<em>grid_centre</em>)</td></tr>
+<tr><td class="bottom"><strong>Done, Show, Hide, Help</strong></td>
+<td class="none">There are a number of buttons at the bottom of the menu, described below:</td></tr>
+</table>
+<ul>
+<li><strong>Done</strong>. Close the Data View menu and clear any charts</li>
+<li><strong>Show</strong>. Show the charts</li>
+<li><strong>Hide</strong>. Hide the charts</li>
+<li><strong>Help</strong>. Display the help for Data View</li>
+</ul>
+</div>
+<h3 id="tricks">Performance and Execution Tricks</h3>
+<p>Processing a simulation with a large number of stations can take a while to process, especially with Solar Thermal stations. You can minimise this processing by using either of these two options:</p>
+<ol>
+<li>When you invoke Power Model processing it allows you to process Chart (and Table) options multiple times without reprocessing the stations. You can then process Financial options multiple times. The process Powermap uses is as follows:
+<ol>
+<li>Displays the Power Model menu allowing you to specify initial options. This allows you to choose the stations of interest and the data options you want. This first display of the menu also allows you to save these options</li>
+<li>Calls the appropriate SAM module for each chosen station, or other options as specified</li>
+<li>Presents the tables and charts you have selected</li>
+<li>Re-displays the Power Model menu allowing you to specify different growth options, storage options and charts. A number of options, such as <em>Generation - from chosen stations</em> will no longer be available as they would require reprocessing the SAM models. To process these new options press the <strong>Proceed</strong> button. To exit this phase of processing press the
+<strong>All Done</strong> or <strong>Do Financials</strong> button</li>
+<li>If you have chosen to run the Financial Models the Financial Model menu will be displayed, allowing you to specify initial finance options. Press the <strong>Proceed</strong> button to continue with these options</li>
+<li>Calls the SAM financial module for each chosen station</li>
+<li>Presents the financial table</li>
+<li>Re displays the Financial Model menu allowing you to specify different options. Press the <strong>Proceed</strong> button to invoke these new options. To exit this phase of processing press the <strong>All Done</strong> button</li>
+</ol>
+<p>
+<li>If the location and size of stations haven't changed you can avoid reprocessing stations by used Power data from a previous simulation run, using the following approach.
+<ol>
+<li>Choose the <em>Save Hourly Data Output</em> (<em>save_data</em>) Power Model option</li>
+<li>Save the data file. This file contains power output for all stations in the current simulation. It should be located in the same folder as your scenario files (<em>scenarios</em> property of the <em>[Files]</em> Section). The data is saved as MWh with 4 decimal places because SAM uses kWh</li>
+<li>With your spreadsheet application (Excel) update the scenarios and stations that you want to use the saved data with. Either add or use the column headed <em>Power File</em> to specify the filename you've selected for the power output. For each station enter the full name and extension of the file, for example, <em>Power_Table_Saved.xls</em></li>
+<li>When you next run the simulation it will load this saved data rather than invoking the SAM module for each station that has an <em>Power File</em> entry</li>
+<li>If the file is not found the SAM module will be re-invoked. So you can simply delete or rename the Power data file and re-run the simulation to get a new set of data points</li>
+</ol>
+</li>
+</ol>
+<h4 id="optimise">Adjust Generation</h4>
+<p>The <em>Generation - adjust generation</em> option allows you to easily adjust the contribution of each technology to the overall model by allowing you to apply a multiplier to the generation figures. The multiplier multiplies each hourly generation figure to approximate increasing the station by this size. This enables you to assess changes to the technology mix without having to alter individual stations. If you also choose the <em>Generation - from chosen stations</em> option you can also do this adjustment for each station rather than each technology. This approach allows you to &ldquo;experiment&rdquo; with the generation mix without having to add or alter stations.</p>
+<strong>Note:</strong> that the multiplied figures are not passed to the Financial model(s).</p>
+<h4 id="augment">Augmented (non-renewable) Generation</h4>
+<p>You can roughly estimate how much augmented (non-renewable) generation is required to meet the Load by selecting some appropriate Power Model options. This approach will indicate how much hourly demand can be met by generation, with or without storage, in the same hour, and how much excess renewable generation is spilled. If you choose the <em>Save chart data</em> and <em>Power by hour - augmented</em> option three tables will be produced. The first is actual data as in the graph, the second will adjust values to indicate the amount of generation from each component, and the third is a summary of the totals for the second table. This final table summarises how much demand is met by renewables and storage, how much has to be met from other sources (Augment) and how much renewable generation is spilled (that is, not used to meet demand or add to storage). This gives a slightly more accurate figure on how well your scenario meets hourly Load.
+<h4>Saving the Current View</h4>
+<p>It is possible to save the current view of the main Powermap window using the <strong>Save View</strong> (Ctrl+V) option. Depending on the options chosen you can choose to crop the view at the map boundary (<em>crop_save</em>=True) or to save the full view, and to save either the underlying map (<em>scene_save</em>=True) or the screen view. The image resolution can be different in the two options, dependent upon screen resolution, image resolution, screen window size and how much of the map is being saved.
+</p>
+<div class="experiment">
+<p><strong>Optimise (experimental)</strong></p>
+<p>Powermap also has an experimental approach to optimise the mix of technologies. If Load data is available the menu presented to adjust generation will have an option to &ldquo;optimise&rdquo; the renewable energy mix to best meet the Load. You will be presented with an <em>Optimise for:</em> pull-down list of periods to optimise for. You choose the desired period and then press the <em>Optimise</em> button. This will then do a least squares solution for adjustment multipliers to produce a generation profile that best matches the total load and load profile for that period. The data analysis is performed on either the average 24 hour period or detailed hourly figures for the chosen period (<em>optimise</em> property of the <em>[Power]</em> Section). If you don't wish to include a technology or station then uncheck the checkbox (to the right of the multiplier) for that technology or station. The generation produced by that technology or station will be removed from the optimisation. Depending on the <em>optimise_load</em> property of the <em>[Power]</em> Section you can also remove the Load (multiplied by it's current multiplier) from the analysis. Any computed negative multiplier will be set to zero, which is likely to result in the computed generation exceeding the load. The <em>Check / Uncheck all zeroes</em> check box enables you to include or exclude all zeroed stations from any further optimisation. The analysis is based upon the stations in your scenario and doesn't take into account how well placed they are within the network. If you want to reset all multipliers just Optimise for <em>None</em>.
+</div>
+<h2 id="powermatch">Powermatch</h2>
+<p>Running the SIREN models will produce hourly generation figures which identify generation shortfalls and excesses against load (demand). One of the outputs from Powermap is a table of these generation shortfalls which could be met by storage (charged by surplus renewable generation) and dispatchable energy generation. The Powermatch (<code>powermatch</code>) component of SIREN can be used to match generation with demand (load) to quantify and cost this dispatchable energy generation, storage and CO<sub>2</sub>-e emissions. This enables you to complete a costed renewable energy scenario. If the input data spreadsheet has zones (of generation) the calculations will be performed for each zone.</p>
 <p><strong>A Note on Load.</strong>&nbsp;Load is a measure of demand on the electicity network. It can be grouped into two broad areas:
 <ul>
 <li>Operational Load, or simply Load, is the demand needed to be met by the (utility-scale) generators and storage on the network. This is the load that <code>Powermatch</code> meets using the proposed generators</li>
@@ -3629,7 +3600,7 @@ Powermatch has three interpretations of levelised cost:
 <li>LCOE with CO2 Cost. The average cost of electricity (LCOE) including carbon cost</li>
 </ol>
 <p><strong>Note:</strong> The SIREN Powermatch component was in part inspired by the Powerbalance worksheets developed by Ben Rose. For those who would prefer his spreadsheet approach an enhanced version, Powerbalance2, is available at <a href="https://cleanenergymodelling.com.au/powerbalance2/" target="_blank">https://cleanenergymodelling.com.au/powerbalance2/</a></p>
-<h4>Powermatch input (data) file formats</h4>
+<h3 id="pmai">Powermatch Inputs</h3>
 <p>Powermatch has a number of input files which are generally in the form of a simple table stored in either a CSV or Excel (XLS or XLSX) file. Constraints, Generators and Optimisation tables can be stored as separate worksheets in the same Excel file (workbook). Further details on some of the file formats can be found below. The input files are:
 <table border="0", class="none" style="margin-left:35px">
 <tr class="none">
@@ -3646,7 +3617,7 @@ Powermatch has three interpretations of levelised cost:
 </tr>
 <tr class="none">
 <td class="none"><dfn>Data</dfn></td>
-<td class="none">The input data of hourly load, capacities and hourly generation produced by the Powermodel component of SIREN. This is used with a dispatch order and the generators and constraints tables to calculate how hourly load can be met. This is in XLSX format</td>
+<td class="none">The input data of hourly load, capacities and hourly generation produced by the Powermodel component of Powermap. This is used with a dispatch order and the generators and constraints tables to calculate how hourly load can be met. This is in XLSX format</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>Batch</dfn></td>
@@ -3658,7 +3629,46 @@ Powermatch has three interpretations of levelised cost:
 The order in which the dispatchable technologies will be processed by Powermatch. This is not a file, but one of the inputs in the <code>Powermatch</code> main menu</td>
 </tr>
 </table>
-<h4>Powermatch execution</h4>
+<p>The Constraints, Generators and Optimisation tables can be edited, updated and saved and the revised table(s) used as inputs for the <strong>Summary</strong>, <strong>Powermatch</strong>, <strong>Batch</strong> and <strong>Optimise</strong> options. During the edit process the revised values can be exported as a new spreadsheet. If the table(s) is saved but not exported the revised values will not be available once Powermatch is exited. You can also choose another sheet, however, if the sheet you choose is not the correct format you may get unusual behaviour.</p>
+<h4>Generators</h4>
+<p>To address the shortfall in generation encountered by a renewable scenario other dispatchable generation and storage facilities can be used. These are defined in a Generators table. The Generators table is also used to define the Reference <em>LCOE</em> and <em>LCOE CF</em> figures for Renewable technologies. The dispatchable facilities are dispatched after renewable generators. The fields are:
+<table border="0" class="none" style="margin-left:35px">
+<tr><td class="none"><dfn>Name (*)</dfn></td><td class="none">Name of the Facility</td></tr>
+<tr><td class="none"><dfn>Area</dfn></td><td class="none">The estimated land area per MW (or MWh) for the facility in km<sup>2</sup></td></tr>
+<tr><td class="none"><dfn>Capacity (*)</dfn></td><td class="none">The capacity for the facility in MW for generators and MWh, that is total energy content, for storage</td></tr>
+<tr><td class="none"><dfn>Capex (or Capital) (c)</dfn></td><td class="none">The capital cost of the facility per MW for generators and MWh for storage</td></tr>
+<tr><td class="none"><dfn>Constraint (*)</dfn></td><td class="none">Name of the Constraint that applies to this facility</td></tr>
+<tr><td class="none"><dfn>Discount Rate (c)</dfn></td><td class="none">The discount rate to be applied if LCOEs are being calculated using capital, operations and fuel costs rather than a Reference LCOE. If not specified the default Discount Rate will be used</td></tr>
+<tr><td class="none"><dfn>Emissions (*)</dfn></td><td class="none">Specifies the carbon dioxide equivalent emissions in tonnes per unit of electricity (t CO<sub>2</sub>-e / MWh)</td></tr>
+<tr><td class="none"><dfn>Fixed OM (or FOM) (c)</dfn></td><td class="none">Fixed Operations and Maintenance costs per MW</td></tr>
+<tr><td class="none"><dfn>Fuel (c)</dfn></td><td class="none">Fuel costs per MWh. A cost per gigajoule can be calculated by multiplying the fuel cost by 3.6 and dividing by the generator efficiency</td></tr>
+<tr><td class="none"><dfn>Initial (*)</dfn></td><td class="none">For storage this species the initial level of storage as a percentage of total capacity</td></tr>
+<tr><td class="none"><dfn>LCOE (l)</dfn></td><td class="none">The Reference LCOE for the facility</td></tr>
+<tr><td class="none"><dfn>LCOE CF (l)</dfn></td><td class="none">The Reference capacity factor (CF) at which the Reference LCOE was determined. A combination of <em>LCOE</em> and <em>LCOE CF</em> allows the cost of the generation or storage to be determined. In undertaking any calculations Powermatch adjusts the resulting LCOE to reflect the difference between this CF and the calculated CF. If the Reference CF is zero the resulting LCOE will be used (that is, resulting LCOE will be the same as reference LCOE)</td></tr>
+<tr><td class="none"><dfn>Lifetime (c)</dfn></td><td class="none">The estimated lifetime of the facility in years. If a value of 0 is specified it will be set to 20</td></tr>
+<tr><td class="none"><dfn>(Dispatch) Order (*)</dfn></td><td class="none">Specifies the order in which the <u>dispatchable</u> facilities are used, with a value of 1 being the first in the order. Zero values are placed after those with a positive number</td></tr>
+<tr><td class="none"><dfn>Variable OM (or VOM) (c)</dfn></td><td class="none">Variable Operations and Maintenance costs per MW/h</td></tr>
+</table>
+<p>Powermatch will calculate costs in either of two ways, either by using a Reference LCOE and CF (<em>(l)</em> fields) or by using input costs (<em>(c)</em> fields) . If Capex is present it will use input costs otherwise it will use Reference LCOE. The option is chosen for each facility<em>(*)</em> fields are required for either method.</p>
+<h4>Constraints</h4>
+<p>Utilisation of each dispatchable generator and storage facility can be constrained by Powermatch in a number of ways. All figures are expressed as a percentage. In the tables the values will be displayed as a decimal fraction (0.00 to 1.00). All figures are hourly except for Parasitic Loss which is daily. The approach Powermatch uses is rather simplistic in that any losses need to cater for any loss of efficiency in storing energy or retrieving energy. The constraints are:
+<table border="0" class="none" style="margin-left:35px">
+<tr><td class="none"><dfn>Name</dfn></td><td class="none">Name of the Constraint</td></tr>
+<tr><td class="none"><dfn>Constraint</dfn></td><td class="none">Name of the Constraint (same as Name)</td></tr>
+<tr><td class="none"><dfn>Category</dfn></td><td class="none">The category of the constraint. Values are either Storage or Generator</td></tr>
+<tr><td class="none"><dfn>Capacity Max</dfn></td><td class="none">For a Generator the maximum rate the plant can run at. For Storage the maximum amount of storage that can be used</td></tr>
+<tr><td class="none"><dfn>Capacity Min</dfn></td><td class="none">For a Generator the minimum rate (other than zero) the plant can run at; which may cause spilled generation to occur. Also known as Lower Operating Limit (LOL) - the minimum amount of power a plant can generate once it is turned on. For Storage the facility should not be drained below this value</td></tr>
+<tr><td class="none"><dfn>Discharge Loss</dfn></td><td class="none">Losses when storage is used (discharged). If you have a storage technology with a round trip efficiency value you should specify the full loss in the Recharge Loss constraint.</td></tr>
+<tr><td class="none"><dfn>Discharge Max</dfn></td><td class="none">For Storage the maximum rate at which the storage can be used, that is the power rating of the storage with reference to total energy content. For example, a 400MW storage with 4,000MWh of capacity would have a Discharge Max of 10%</td></tr>
+<tr><td class="none"><dfn>Parasitic Losses</dfn></td><td class="none">Storage may lose capacity over time (e.g. batteries discharging, water evaporating). This constraint enables those losses to be catered for</td></tr>
+<tr><td class="none"><dfn>Rampdown Max</dfn></td><td class="none">The maximum rate that a generator can be ramped down (not fully implemented)</td></tr>
+<tr><td class="none"><dfn>Rampup Max</dfn></td><td class="none">The maximum rate that a generator can be ramped up (not fully implemented)</td></tr>
+<tr><td class="none"><dfn>Recharge Loss</dfn></td><td class="none">Losses when storage is increased (recharged). If you have a storage technology with a round trip efficiency value you should specify the full loss in this constraint (e.g. for a round trip efficiency of 30% you would set Recharge Loss to 70%).</td></tr>
+<tr><td class="none"><dfn>Recharge Max</dfn></td><td class="none">For Storage the maximum rate at which the storage can be increased</td></tr>
+<tr><td class="none"><dfn>Min Run Time</dfn></td><td class="none">For Storage some technologies may be better deployed if they can run for a number of hours. To simulate this Powermatch will not use the technology unless there are projected shortfalls for at least the desired number of hours</td></tr>
+<tr><td class="none"><dfn>Warmup Time</dfn></td><td class="none">For Storage some technologies may require a warmup period before they become operational. You can set a time period for this to occur, either in minutes or part of an hour (if an Initial value is set for the Storage it is assumed the warmup period has occurred prior to the first hour of the year). Also known as Ramp time (The amount of time it takes from the moment a generator is turned on to the moment it can start providing energy to the grid at its lower operating limit)</td></tr>
+</table>
+<h3 id="pmae">Powermatch Execution</h3>
 <p>The Powermatch options are as set out here. The options (Properties) are specified in the <a href="#p_pm">[Powermatch]</a> Section of the Preferences file. The associated property is indicated in brackets at the end of the description. All files are located in the SIREN Scenarios folder.</p>
 <table border="0" class="none" cellpadding="2">
 <tr><td class="top" style="width: 20%;"><dfn>Constraints File</dfn></td>
@@ -3811,44 +3821,101 @@ See below for more details on optimisation.</li>
 <li><strong>TML Detail</strong>. The detailed <strong>Detail</strong> spreadsheet produced by Powermatch contains generation figures for each RE technology but not how that generation has contributed &ldquo;to meet load&rdquo; and charge storage. This button will invoke a program, <a href="#pmtmldetail"><code>pmtmldetail</code></a>, that will create an additional workbook that has a worksheet that provides this additional detail. The file can be used as input to <a href="#powerplot"><code>powerplot</code></a>
 </ul>
 </div>
-<p>The Constraints, Generators and Optimisation tables can be edited, updated and saved and the revised table(s) used as inputs for the <strong>Summary</strong>, <strong>Powermatch</strong>, <strong>Batch</strong> and <strong>Optimise</strong> options. During the edit process the revised values can be exported as a new spreadsheet. If the table(s) is saved but not exported the revised values will not be available once Powermatch is exited. You can also choose another sheet, however, if the sheet you choose is not the correct format you may get unusual behaviour.</p>
-<h4>Generators</h4>
-<p>To address the shortfall in generation encountered by a renewable scenario other dispatchable generation and storage facilities can be used. These are defined in a Generators table. The Generators table is also used to define the Reference <em>LCOE</em> and <em>LCOE CF</em> figures for Renewable technologies. The dispatchable facilities are dispatched after renewable generators. The fields are:
-<table border="0" class="none" style="margin-left:35px">
-<tr><td class="none"><dfn>Name (*)</dfn></td><td class="none">Name of the Facility</td></tr>
-<tr><td class="none"><dfn>Area</dfn></td><td class="none">The estimated land area per MW (or MWh) for the facility in km<sup>2</sup></td></tr>
-<tr><td class="none"><dfn>Capacity (*)</dfn></td><td class="none">The capacity for the facility in MW for generators and MWh, that is total energy content, for storage</td></tr>
-<tr><td class="none"><dfn>Capex (or Capital) (c)</dfn></td><td class="none">The capital cost of the facility per MW for generators and MWh for storage</td></tr>
-<tr><td class="none"><dfn>Constraint (*)</dfn></td><td class="none">Name of the Constraint that applies to this facility</td></tr>
-<tr><td class="none"><dfn>Discount Rate (c)</dfn></td><td class="none">The discount rate to be applied if LCOEs are being calculated using capital, operations and fuel costs rather than a Reference LCOE. If not specified the default Discount Rate will be used</td></tr>
-<tr><td class="none"><dfn>Emissions (*)</dfn></td><td class="none">Specifies the carbon dioxide equivalent emissions in tonnes per unit of electricity (t CO<sub>2</sub>-e / MWh)</td></tr>
-<tr><td class="none"><dfn>Fixed OM (or FOM) (c)</dfn></td><td class="none">Fixed Operations and Maintenance costs per MW</td></tr>
-<tr><td class="none"><dfn>Fuel (c)</dfn></td><td class="none">Fuel costs per MWh. A cost per gigajoule can be calculated by multiplying the fuel cost by 3.6 and dividing by the generator efficiency</td></tr>
-<tr><td class="none"><dfn>Initial (*)</dfn></td><td class="none">For storage this species the initial level of storage as a percentage of total capacity</td></tr>
-<tr><td class="none"><dfn>LCOE (l)</dfn></td><td class="none">The Reference LCOE for the facility</td></tr>
-<tr><td class="none"><dfn>LCOE CF (l)</dfn></td><td class="none">The Reference capacity factor (CF) at which the Reference LCOE was determined. A combination of <em>LCOE</em> and <em>LCOE CF</em> allows the cost of the generation or storage to be determined. In undertaking any calculations Powermatch adjusts the resulting LCOE to reflect the difference between this CF and the calculated CF. If the Reference CF is zero the resulting LCOE will be used (that is, resulting LCOE will be the same as reference LCOE)</td></tr>
-<tr><td class="none"><dfn>Lifetime (c)</dfn></td><td class="none">The estimated lifetime of the facility in years. If a value of 0 is specified it will be set to 20</td></tr>
-<tr><td class="none"><dfn>(Dispatch) Order (*)</dfn></td><td class="none">Specifies the order in which the <u>dispatchable</u> facilities are used, with a value of 1 being the first in the order. Zero values are placed after those with a positive number</td></tr>
-<tr><td class="none"><dfn>Variable OM (or VOM) (c)</dfn></td><td class="none">Variable Operations and Maintenance costs per MW/h</td></tr>
+<h3 id="pmab">Powermatch Batch</h3>
+<p>To expand upon that described above there is also an ability to specify a range of values for technologies rather than having to repeat many input columns. This enables a large number of batch inputs to be specified in a compact manner. The input format for each technology to have multiple values is:
+<pre>
+      start;stop;step;order
+</pre>
+Where:
+<table border="0" class="none" style="margin-left:53px">
+<tr><td class="none"><code>start</code></td><td class="none">Starting capacity</td></tr>
+<tr><td class="none"><code>stop</code></td><td class="none">Ending capacity</td></tr>
+<tr><td class="none"><code>step</code></td><td class="none">Capacity increment</td></tr>
+<tr><td class="none"><code>order</code></td><td class="none">Make this technology the first set of ranges; this is only needed if this is not the first technology with a range</td></tr>
 </table>
-<p>Powermatch will calculate costs in either of two ways, either by using a Reference LCOE and CF (<em>(l)</em> fields) or by using input costs (<em>(c)</em> fields) . If Capex is present it will use input costs otherwise it will use Reference LCOE. The option is chosen for each facility<em>(*)</em> fields are required for either method.</p>
-<h4>Constraints</h4>
-<p>Utilisation of each dispatchable generator and storage facility can be constrained by Powermatch in a number of ways. All figures are expressed as a percentage. In the tables the values will be displayed as a decimal fraction (0.00 to 1.00). All figures are hourly except for Parasitic Loss which is daily. The approach Powermatch uses is rather simplistic in that any losses need to cater for any loss of efficiency in storing energy or retrieving energy. The constraints are:
-<table border="0" class="none" style="margin-left:35px">
-<tr><td class="none"><dfn>Name</dfn></td><td class="none">Name of the Constraint</td></tr>
-<tr><td class="none"><dfn>Constraint</dfn></td><td class="none">Name of the Constraint (same as Name)</td></tr>
-<tr><td class="none"><dfn>Category</dfn></td><td class="none">The category of the constraint. Values are either Storage or Generator</td></tr>
-<tr><td class="none"><dfn>Capacity Max</dfn></td><td class="none">For a Generator the maximum rate the plant can run at. For Storage the maximum amount of storage that can be used</td></tr>
-<tr><td class="none"><dfn>Capacity Min</dfn></td><td class="none">For a Generator the minimum rate (other than zero) the plant can run at; which may cause spilled generation to occur. Also known as Lower Operating Limit (LOL) - the minimum amount of power a plant can generate once it is turned on. For Storage the facility should not be drained below this value</td></tr>
-<tr><td class="none"><dfn>Discharge Loss</dfn></td><td class="none">Losses when storage is used (discharged). If you have a storage technology with a round trip efficiency value you should specify the full loss in the Recharge Loss constraint.</td></tr>
-<tr><td class="none"><dfn>Discharge Max</dfn></td><td class="none">For Storage the maximum rate at which the storage can be used, that is the power rating of the storage with reference to total energy content. For example, a 400MW storage with 4,000MWh of capacity would have a Discharge Max of 10%</td></tr>
-<tr><td class="none"><dfn>Parasitic Losses</dfn></td><td class="none">Storage may lose capacity over time (e.g. batteries discharging, water evaporating). This constraint enables those losses to be catered for</td></tr>
-<tr><td class="none"><dfn>Rampdown Max</dfn></td><td class="none">The maximum rate that a generator can be ramped down (not fully implemented)</td></tr>
-<tr><td class="none"><dfn>Rampup Max</dfn></td><td class="none">The maximum rate that a generator can be ramped up (not fully implemented)</td></tr>
-<tr><td class="none"><dfn>Recharge Loss</dfn></td><td class="none">Losses when storage is increased (recharged). If you have a storage technology with a round trip efficiency value you should specify the full loss in this constraint (e.g. for a round trip efficiency of 30% you would set Recharge Loss to 70%).</td></tr>
-<tr><td class="none"><dfn>Recharge Max</dfn></td><td class="none">For Storage the maximum rate at which the storage can be increased</td></tr>
-<tr><td class="none"><dfn>Min Run Time</dfn></td><td class="none">For Storage some technologies may be better deployed if they can run for a number of hours. To simulate this Powermatch will not use the technology unless there are projected shortfalls for at least the desired number of hours</td></tr>
-<tr><td class="none"><dfn>Warmup Time</dfn></td><td class="none">For Storage some technologies may require a warmup period before they become operational. You can set a time period for this to occur, either in minutes or part of an hour (if an Initial value is set for the Storage it is assumed the warmup period has occurred prior to the first hour of the year). Also known as Ramp time (The amount of time it takes from the moment a generator is turned on to the moment it can start providing energy to the grid at its lower operating limit)</td></tr>
+<p>If more than one technology is specified with a range the Batch report will have multiple output worksheets, one for each value in the first range. The sheets are named in number sequence starting from <strong>01</strong>. Subsequent technologies will be repeated for each &ldquo;higher&rdquo; level technology. The second technology will be presented as a Merged Group. The following example shows a batch input table (column) with three capacity ranges. Onshore Wind is the first technology and results in 7 worksheets of output, one for each technology step for Wind. Each worksheet contains 36 model outputs, for a total of 252 models. The worksheets have 6 Merged Groups, one for each step for Single Axis PV with each Merged Group having 6 values for Battery (4hr). In a real-world example this approach has been used to create 26 sheets with a total of over 17,500 models in a single execution of Powermatch.
+<table class="none">
+<table>
+<tr class="none">
+<td style="writing-mode: vertical-lr; margin-left: 35px; background: LightGray;">Batch input table</td>
+<td class="none">
+<table border="0", class="none">
+<tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td><strong>Model Label</strong></td><td>Model 1</td></tr>
+<tr><td><strong>Capacity (MW/MWh)</strong></td><td>MW</td></tr>
+<tr><td>Single Axis PV</td><td>0;3000;600</td></tr>
+<tr><td>Onshore Wind</td><td>0;6000;1000;1</td></tr>
+<tr><td>Battery (4hr)</td><td>0;5000;1000</td></tr>
+<tr><td>Gas OCGT</td><td class="right">1,800.00</td></tr>
+<tr><td>Gas Recip</td><td class="right">3,900.00</td></tr>
+<tr><td>Total</td><td></td></tr>
+<tr><td>Discount Rate</td><td class="right">0.07</td></tr>
+<tr><td>Carbon Price</td><td class="right">75.00</td></tr>
+<tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td><strong>RE</strong></td><td>&nbsp;</td></tr>
+<tr><td><strong>Load Analysis</strong></td><td>&nbsp;</td></tr>
+<tr><td><strong>To Meet Load (MWh)</strong></td><td>&nbsp;</td></tr>
+<tr><td><strong>LCOE ($/MWh)</strong></td><td>&nbsp;</td></tr>
+<tr><td><strong>Carbon</strong></td><td>&nbsp;</td></tr>
+<tr><td><strong>Emissions (tCO2e)</strong></td><td>&nbsp;</td></tr>
+<tr><td><strong>Generation (MWh)</strong></td><td>&nbsp;</td></tr>
+<tr><td><strong>Capacity Factor</strong></td><td>&nbsp;</td></tr>
+<tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+</table>
+</td><td class="none" style="margin-left: 35px;">&nbsp;&nbsp;</td>
+<td style="writing-mode: vertical-lr; margin-left: 35px; background: LightGray;">Batch report - partial output for worksheets 01 and 07</td>
+</td><td class="none">
+<table border="0", class="none">
+<tr><td>&nbsp;</td><td colspan="3">Onshore Wind_0_Single Axis PV_0</td><td>... PV_600</td></tr>
+<tr><td>&nbsp;</td><td>Model 1</td><td>Model 2</td><td>Model 3</td><td>Model 7</td></tr>
+<tr><td><strong>Capacity (MW/MWh)</strong></td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td>Single Axis PV</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td class="right">600</td></tr>
+<tr><td>Onshore Wind</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td>Battery (4hr)</td><td>&nbsp;</td><td class="right">1,000</td><td class="right">2,000</td><td>&nbsp;</td></tr>
+<tr><td>Gas OCGT</td><td class="right">1,800</td><td class="right">1,800</td><td class="right">1,800</td><td class="right">1,800</td></tr>
+<tr><td>Gas Recip</td><td class="right">3,900</td><td class="right">3,900</td><td class="right">3,900</td><td class="right">3,900</td></tr>
+<tr><td>Total Capacity (MW/MWh)</td><td class="right">5,700</td><td class="right">6,700</td><td class="right">7,700</td><td class="right">6,300</td></tr>
+<tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td><strong>RE</strong></td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td>RE %age</td><td class="right">0.0%</td><td class="right">0.0%</td><td class="right">0.0%</td><td class="right">0.0%</td></tr>
+<tr><td>Storage %age</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td><strong>RE %age of Total Load</strong></td><td class="right"><strong>0.0%</strong></td><td class="right">
+<strong>0.0%</strong></td><td class="right"><strong>0.0%</strong></td><td class="right"><strong>0.0%</strong></td></tr>
+<tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td><strong>Load Analysis</strong></td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td>Load met</td><td class="right">23,874,231</td><td class="right">23...</td><td class="right">23...</td><td class="right">23...</td></tr>
+<tr><td>Load met %age</td><td class="right">100.0%</td><td class="right">100.0%</td><td class="right">100.0%</td><td class="right">100.0%</td></tr>
+<tr><td>Shortfall</td><td class="right">7,769</td><td class="right">7...</td><td class="right">7...</td><td class="right">7...</td></tr>
+<tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td colspan="5"><strong>01</strong></td></tr>
+</table>
+</td><td class="none">
+<table border="0", class="none">
+<tr><td>&nbsp;</td><td colspan="4">Onshore Wind_6000_Single Axis PV_3000</td></tr>
+<tr><td>&nbsp;</td><td>Model 33</td><td>Model 34</td><td>Model 35</td><td>Model 36</td></tr>
+<tr><td><strong>Capacity (MW/MWh)</strong></td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td>Single Axis PV</td><td class="right">3,000</td><td class="right">3,000</td><td class="right">3,000</td><td class="right">3,000</td></tr>
+<tr><td>Onshore Wind</td><td class="right">6,000</td><td class="right">6,000</td><td class="right">6,000</td><td class="right">6,000</td></tr>
+<tr><td>Battery (4hr)</td><td class="right">2,000</td><td class="right">3,000</td><td class="right">4,000</td><td>5,000</td></tr>
+<tr><td>Gas OCGT</td><td class="right">1,800</td><td class="right">1,800</td><td class="right">1,800</td><td class="right">1,800</td></tr>
+<tr><td>Gas Recip</td><td class="right">3,900</td><td class="right">3,900</td><td class="right">3,900</td><td class="right">3,900</td></tr>
+<tr><td>Total Capacity (MW/MWh)</td><td class="right">16,700</td><td class="right">17,700</td><td class="right">18,700</td><td class="right">19,700</td></tr>
+<tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td><strong>RE</strong></td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td>RE %age</td><td class="right">81.4%</td><td class="right">81.4%</td><td class="right">81.4%</td><td class="right">81.4%</td></tr>
+<tr><td>Storage %age</td><td class="right">2.1%</td><td class="right">3.1%</td><td class="right">3.9%</td><td class="right">4.8%</td></tr>
+<tr><td><strong>RE %age of Total Load</strong></td><td class="right"><strong>83.6%</strong></td>
+<td class="right"><strong>84.5%</strong></td><td class="right"><strong>85.4%</strong></td><td class="right"><strong>86.2%</strong></td></tr>
+<tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td><strong>Load Analysis</strong></td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td>Load met</td><td class="right">23,882,000</td><td class="right">23...</td><td class="right">23...</td><td class="right">23...</td></tr>
+<tr><td>Load met %age</td><td class="right">100.0%</td><td class="right">100.0%</td><td class="right">100.0%</td><td class="right">100.0%</td></tr>
+<tr><td>Shortfall</td><td class="right">0</td><td class="right">0</td><td class="right">0</td><td class="right">0</td></tr>
+<tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td colspan="5"><strong>07</strong></td></tr>
+</table>
+</td></tr>
+</table>
 </table>
 <div class="experiment">
 <h4 id="pm_batch_charts">Batch charts</h4>
@@ -3914,10 +3981,10 @@ See below for more details on optimisation.</li>
 <td>Data row for the second Y axis. This can be repeated for multiple rows of data</td>
 </tr>
 </table>
-<p>As the Batch report contain repeating item values, one for each report group, Powermatch uses the Report group to identify the row of interest.</p>
+<p>As the Batch report contains repeating item values, one for each report group, Powermatch uses the Report group to identify the row of interest.</p>
 </div>
 <div class="experiment">
-<h4>Optimise and Optimisation</h4>
+<h3 id="pmao">Powermatch Optimisation</h3>
 <p>In an attempt to simplify the process of determining the optimal generation mix, Powermatch has an optimisation function. This function can assist in providing a starting point for determining the optimal mix rather than the optimal mix itself. The function uses a genetic algorithm to identify three possible optimal solutions:
 <ol>
 <li>A solution with the lowest LCOE for the input renewable and dispatchable technologies</li>
@@ -4024,7 +4091,7 @@ If the best and worse values are the same for a variable and that value is not a
 </ol>
 </div>
 <h4>Minimal Preferences file for Powermatch</h4>
-<p>It is possible to run <code>powermatch</code> with a minimal Preferences file. If you have a Powermatch data file produced from SIREN you can use that as an input to Powermatch without having access to the full set of SIREN files. As well as the <a href="#p_pm">[Powermatch]</a> Section of the Preferences file the only properties required are:
+<p>It is possible to run <code>powermatch</code> with a minimal Preferences file. If you have a Powermatch data file produced from Powermap you can use that as an input to Powermatch without having access to the full set of SIREN files. As well as the <a href="#p_pm">[Powermatch]</a> Section of the Preferences file the only properties required are:
 <ul>
 <li>If you want to access the same folders:- [Base] <em>year</em>, [Parents] Section properties, [Files] <em>scenario_prefix</em> and <em>scenarios</em> properties</li>
 <li>[Power] <em>adjust_cap</em> property if you want to use a different cap for Adjust Generators</li>
@@ -4032,7 +4099,6 @@ If the best and worse values are the same for a variable and that value is not a
 <li>[Windows] <em>restorewindows</em> property to turn remember the window layout of the Powermatch main window</li>
 <li>If you want to use <code>powerplot</code> and have access to the same colours, periods, and seasons as the main Preferences file then you might also want the appropriate properties from the [Colors], [Power] and [Powerplot] Sections and the [Map] <em>map_choice</em> property</li>
 </ul>
-<p><a href="#help">Back to top</a></p>
 <div class="experiment">
 <h4 id="pmtmldetail"><u>pmtmldetail</u></h4>
 <p><code>pmtmldetail</code> is a small utility that will take a <code>powermatch</code> Detail worksheet and create a new worksheet that contains additional detail on the breakdown of generation for RE technology. The utility will breakdown hourly generation into four categories:
@@ -4065,125 +4131,157 @@ If the best and worse values are the same for a variable and that value is not a
 </table>
 <p></p>
 </div>
-<p><a href="#help">Back to top</a></p>
-<h3 id="resourcegrid">Resource Grids</h3>
-<p>To assist with placement of renewable energy stations SIREN can display a grid of renewable resource attributes derived from the SAM weather files. The grid can be displayed by invoking the <em>Show Resource Grid</em> (Ctrl+B) menu option. The Resource Overlay menu presented has the following fields:</p>
-<table border="0" class="none" cellpadding="2">
-<tr><td class="top" style="width: 15%;"><dfn>Weather Detail</dfn></td>
-<td class="none">If appropriate resource files are found you'll be presented with this menu option. Possible choices are:- <em>Daily By Month</em> (default), <em>Hourly By Month</em>, or <em>Hourly By Day</em></td></tr>
-<tr><td class="lr"><dfn>Weather Period</dfn></td>
-<td class="none">This row provides pull-down menus to allow you to choose a period, day and hour to display</td></tr>
-<tr><td class="lr"><dfn>&lt; &gt;</dfn></td>
-<td class="none"You can also navigate to a particular time period by dragging the slider bar. Clicking <strong>&lt;</strong> will step back one period while <strong>&gt;</strong> steps forward one period. You can also use <em>Page Down</em> and <em>Page Up</em> to step forward and back through the weather periods</td></tr>
-<tr><td class="lr"><dfn>Period Loop (secs)</dfn></td>
-<td class="none">You can also cause the visualisation to automatically loop through all time periods. The number field allows you to specify the delay in seconds between each period - between 0 and 10 in .2 second increments. You press the <strong>Loop</strong> button to start the loop. Press <em>Stop</em> (or the <em>Window -> Exit Visualise</em>, Ctrl+Z, menu option) to stop the loop</td></tr>
-<tr><td class="lr"><dfn>Weather Variable</dfn></td>
-<td class="none">This pull-down menu allows you to select the desired variable to display</td></tr>
-<tr><td class="lr"><dfn>Colour Steps</dfn></td>
-<td class="none">The grid displayed can have values grouped in to up to 10 steps. A value of 0 will give a smooth graduation rather than stepped colours</td></tr>
-<tr><td class="lr"><dfn>Opacity</dfn></td>
-<td class="none">Gives the degree of opacity of grid colours. A value of 1 is completely opaque while a value of 0 is completely transparent</td></tr>
-<tr><td class="lr"><dfn>Grid only</dfn></td>
-<td class="none">If this item is checked just the grid cell borders will be displayed</td></tr>
-<tr><td class="lr"><dfn>Low Colour</dfn> and <dfn>High Colour</dfn></td>
-<td class="none">These options present a set of buttons for each weather variable. Pressing the appropriate button will allow you to alter the upper or lower colour value for each variable. The range of colours steps will be displayed beside the buttons</td>
-<tr><td class="bottom"><strong>Quit, Show, Hide, Save, Help</strong></td>
-<td class="none">As well as the <strong>&lt;</strong>, <strong>&gt;</strong> and <strong>Loop</strong> buttons there are a number of buttons at the bottom of the menu, as described below</td></tr>
-</table>
-<p>Altering any field will cause the revised grid to be overlaid on the SIREN map. The buttons are:</p>
+<h2 id="othercharts">Other Charts</h2>
+<p>There are two other programs available to produce charts from SIREN data. Powerplot is intended to handle columns of hourly or half hourly data produced by Powermatch. Flexiplot is an experimental feature intended to simplify producing charts from columns or rows of data.</p>
+<p><strong><u>Plot Navigation</u></strong></p>
+<p>The tool used to produce the charts, matplotlib, has a navigation toolbar
+(<a href="http://matplotlib.org/users/navigation_toolbar.html" target="_blank">Interactive navigation</a>) to enable you to navigate and manipulate the chart (but doesn't allow you to change the chart data). It includes options to zoom into an area of the chart and to save the chart image (by default to the <em>scenarios</em> folder).
+By default the size of charts produced is determined by matplotlib, or by the <em>Maximise Plot windows</em> option (above). By using the <em>orientation</em>, <em>papersize</em>, and <em>save_format</em> Properties of the <em>[Power]</em> section it is possible to produce the charts in a number of formats, such as PDF format, and in a specific page size and layout. If you use these options you can save charts in a standardised format (these Properties can be added and removed by using the <em>Preferences -> Edit Section</em> menu option).</p>
+<p>For most charts the Pan/Zoom option (<img src="pan_zoom.png" alt="Pan/Zoom">) enables you to zoom in on the chart using the right mouse button and to pan across the chart using the left mouse button.</p>
+<p>For the two hourly charts (<em>Power by hour</em> and <em>Power by hour - augmented</em>) and charts produced by Powerplot, other than Pie Charts, there is a modified pan and zoom feature to enhance visual examination of the chart:</p>
 <ul>
-<li><strong>Quit</strong>. Close the Resource Overlay menu. Any grid will continue to be displayed</li>
-<li><strong>Show</strong>. Cause the grid to be displayed. This allows you to display the grid without changing any of the fields</li>
-<li><strong>Hide</strong>. Hide the resource grid</li>
-<li><strong>Save</strong>. Save modified fields. This updates the Preferences file for future executions of SIREN</li>
-<li><strong>Help</strong>. Display the help for how to create the Resource grids</li>
-<li><strong>&lt;</strong> and <strong>&gt;</strong>. (see above)</li>
-<li><strong>Loop</strong>. (see <em>Period Loop (secs)</em> above)</li>
+<li>You can use the mouse scroll wheel to zoom in and out on the time (x) axis. The position of the mouse within the chart determines where the zoom will centre upon (that is, that point will remain fixed and the rest of the chart will move away from or towards that point)</li>
+<li>Moving the mouse while holding down the left button will allow you to pan across the chart</li>
+<li>Clicking the right mouse button or pressing the <em>r</em> key will reset the chart to the original state. This will allow you to zoom out to the original state and then zoom in to another period on the chart</li>
+<li>Pressing the <em>f</em> key will expand the chart window to fullscreen. Pressing it again will return it to the previous size</li>
+<li>Pressing the <em>h</em> key will hide the legend. Pressing it again will restore the legend to the top right</li>
+<li>Pressing the <em>l</em> key will allow you to move the legend, although the behaviour may be a little erratic. Initially, the legend will be moved to the top right of the window and be arranged as a vertical list. By clicking the left mouse button within the legend and dragging the mouse you can move it to a different location. In the process it may cause the chart to also move or cause some odd behaviour with it. In these cases pressing the <em>r</em> key will reset the chart leaving the legend in the new position</li>
+<li>Pressing the <em>m</em> key will display a monthly chart. Each press will show the next month. You can also navigate to a chosen month by pressing the number for the month after the <em>m</em>. For example, pressing <em>m10</em> will display October</li>
+<li>Pressing the <em>t</em> key will display a two weekly chart. Each press will step forward one week (that is, move forward one week and display two weeks). If the <em>m</em> key has been pressed the (two) weeks for that month will be displayed</li>
+<li>Pressing the <em>w</em> key will display a weekly chart. Each press will show the next week. If the <em>m</em> key has been pressed the weeks for that month will be displayed</li>
+<li>Pressing <em>PageUp</em> or <em>PageDown</em> will display the previous or next week or month</li>
+<li>Pressing the <em>left</em> or <em>right</em> arrow will scroll the display to the left or right</li>
+<li>Pressing the <em>up</em> or <em>down</em> arrow will scroll the display up or down</li>
 </ul>
-<p>This feature utilises summary data stored in a file rather than having to process hourly data from the weather files (see <a href="#resource">Visualising Renewable Resource Attributes</a>).</p>
-<p><a href="#help">Back to top</a></p>
+<p>It is also possible to move the legend for Pie Charts produced with a legend.</p>
+<p><strong>Note:</strong> For cumulative (stacked) charts produced by Powerplot this feature may perform slowly so please be a little patient</p>
+<h3 id="powerplot">Powerplot</h3>
+<p><code>powerplot</code> is a standalone program that will produce either hourly, half-hourly or diurnal charts from a spreadsheet that conforms to certain constraints. It is intended to be used to chart (detailed) results either from Powermatch or some of the files produced by Powermap's Powermodel.
 <div class="experiment">
-<h3 id="dataview">Data View</h3>
-<p>This experimental feature overlays a set of pie charts or bar charts on the SIREN map, either at individual station locations or based upon the grid of MERRA-2 &ldquo;weather&rdquo; cells. It can be used to visualise the contribution to overall generation from a group of stations. This could assist with identifying optimal placement of stations. For example, identifying potential Renewable Energy Zones could be assisted by running SAM models for identically sized stations placed within each of the cells. When the program is invoked it will display SIREN's coordinates grid. By default the grid is based on geographic coordinates but can be set to show the MERRA-2 cells by setting the <em>merra2_grid</em> property of the <a href="#p_view">[View]</a> Section of the Preferences file to <em>True</em>. The program can accept data in two formats:</p>
+The program can also be used to either:
+<ul>
+<li>determine the strength of the linear relationship, or linear correlation, between a target column, for example Load, and other columns within the input spreadsheet, or</li>
+<li>determine the percentage contribution of chosen columns in meeting the target</li>
+</ul>
+The correlation or contribution can be for the full year or a chosen period or range of months.
+</div>
+<p>The spreadsheet must have:</p>
 <ol>
-<li>A table of latitudes and longitudes containing the generation in each location for a number of RE technologies, or</li>
-<li>The summary table from a Powermodel execution from SIREN which contains a list of stations, their technology and generation. This format requires the stations in the list to be present in the Scenarios loaded into SIREN</li>
+<li>A header row that defines the content of the underlying rows (this need not be the first row)</li>
+<li>The first (header) column should be <em>Hour</em> for hourly data or <em>Interval</em> for half-hourly data, and the second should be <em>Period</em> with a cell format of <em>yyyy-mm-dd hh:mm</em>. The program uses the year in the first period row to determine if the data is for a leap year</li>
+<li>The rows immediately following the header row should contain data for each hour or half-hour of the year (either 8,760 or 17,520 for a normal year and 8,784 or 17,568 for a leap; or a smaller number for an incomplete year)</li>
 </ol>
-<p>The program analyses the generation figures for each or all technologies and ovelays charts that show the relative generation for each station or weather cell compared to the maximum generation figure. In Bar Charts the bars are relative to the maximum generation for any technology while percentages are either relative to the total for the cell or for each technology. In Pie Charts the pie slices indicate the contribution of each technology and the total pie slices and percentages are relative to the maximum generation. The base size (scale) of the charts are the same size as the MERRA-2 cells.</p>
-<p>The Data View options (Properties) are specified in the <a href="#p_dataview">[Dataview]</a> Section of the Preferences file. The associated property is indicated in brackets at the end of the description. The Data View menu displayed by invoking the <em>Show Data View</em> menu option. The menu presented has the following fields:</p>
+The program displays a window of options. The default values are specified in the <a href="#p_pp">[Powerplot]</a> Section of the Preferences file. It is possible to have a number of entries for files (<em>file_choices</em>) listed in recent order (<em>file_history</em>).
 <table border="0" class="none">
-<tr><td class="top" style="width: 15%;"><dfn>Recent Files</dfn></td>
+<tr><td class="top" style="width: 20%;"><dfn>Recent Files</dfn></td>
 <td class="none">A pull-down list of recent spreadsheets. Click on the desired spreadsheet to choose a different one from the list. The list will be ordered in terms of most recently accessed first (<em>file_history</em>)</td></tr>
-<tr><td class="lr"><dfn>Data File</dfn></td>
+<tr><td class="lr"><dfn>File</dfn></td>
 <td class="none">Click on this field to choose the desired spreadsheet (<em>file</em>)</td></tr>
-<tr><td class="lr"><dfn>Sheet</dfn> and<br />&nbsp;&nbsp;<dfn>exclude cells</dfn></td>
-<td class="none">A pull-down list to enable you to choose the desired worksheet (<em>sheet</em>). The second field allows you to choose another sheet in the same spreadsheet which can contain a list of cells to be excluded</td></tr>
-<tr><td class="lr"><dfn>Data Choices</dfn></td>
-<td class="none">This will provide a set of checkboxes for the technologies available in the spreadsheet to allow you to choose which ones to display</td></tr>
-<tr><td class="lr"><dfn>Type of Chart</dfn><br />&nbsp;&nbsp;<dfn>Vertical Bar Chart</dfn><br />&nbsp;&nbsp;<dfn>Centre in cell</dfn></td>
-<td class="none">The type of chart to be produced. Options are <em>Bar Chart</em> and <em>Pie Chart</em> (<em>plot</em>)<br />Check this to produce a vertical Bar Chart. The default is horizontal ()<br />Check this to centre the chart in the cell. Uncheck it to place the chart in the top left of the cell (<em>plot_rotate</em>)</td></tr>
-<tr><td class="lr"><dfn>Opacity</dfn><br />&nbsp;&nbsp;<dfn>Scale of chart in cell</dfn></td>
-<td class="none">Gives the degree of opacity of grid colours. A value of 1 is completely opaque while a value of 0 is completely transparent (<em>plot_opacity</em>)<br />
-Scale of the chart in the cell. A value of 1 fills the cell(<em>plot_scale</em>)</td></tr>
-<tr><td class="lr"><dfn>Show pct. values</dfn><br />&nbsp;&nbsp;<dfn>Show</dfn> and <dfn>Each</dfn><br />&nbsp;&nbsp;<dfn>Dynamic scale</dfn></td>
-<td class="none">Two checkboxes to indicate to display percentage values (<dfn>Show</dfn>; <em>number_show</em>) and display values for each technology for Bar Charts (<dfn>Each</dfn>; <em>number_multiple</em>). The <strong>Pct. colour</strong> allows you to set the colour for the percentage labels (<em>number_colour</em>)<br />Checking the Dynamic scale checkbox causes the size of Pct. labels to be adjusted according to the range of generation values (<em>number_dynamic</em>)</td></tr>
-<tr><td class="lr"><dfn>Show pct. >=</dfn></td>
-<td class="none">Only show data cells for those cells with percentages above this value (<em>number_min</em>)</td></tr>
-<tr><td class="lr"><dfn>Centre on grid</dfn></td>
-<td class="none">The location of charts will centre on the geographic location of the stations. By checking this option the charts will centre on the centre of MERRA-2 &ldquo;weather&rdquo; cells and will aggregate the figures for each station within the cell (<em>grid_centre</em>)</td></tr>
-<tr><td class="bottom"><strong>Done, Show, Hide, Help</strong></td>
-<td class="none">There are a number of buttons at the bottom of the menu, described below:</td></tr>
-</table>
+<tr><td class="lr"><dfn>Sheet</dfn></td>
+<td class="none">A pull-down list to enable you to choose the desired worksheet (<em>sheet</em>)</td></tr>
+<tr><td class="lr"><dfn>Period(s)</dfn></td>
+<td class="none">A pull-down list for a full year, a month or other defined seasons or periods that may be defined in the Preferences file. If an option other than <em>&lt;None&gt;</em> is chosen the resulting chart will present an average diurnal chart for the chosen period (<em>period</em>). If the first period is a month a second pull-down list allows you to choose an ending month range. This can either be a later month in the year or, if earlier than the first value, months will wrap to the start of the year. For example, Period 1 of Nov and Period 2 of Feb will correlate Nov, Dec, Jan and Feb (<em>period2</em>)</td></tr>
+<tr><td class="lr"><dfn>Day</dfn></td>
+<td class="none">Produce a diurnal chart for a chosen day of the chosen period</td></tr>
+<tr><td class="lr"><dfn>Target; line width and style</dfn></td>
+<td class="none">A pull-down list of column names. If the chart is intended to show how the chosen columns meet a target column, typically Load, this enables you to choose that column. Choosing <em>&lt;None&gt;</em> means no target field. If a target field is chosen the chart will show excess generation as lightly shaded areas above the target values (<em>target</em>). You can also specify an alternate line width (<em>target_width</em>) and line style (<em>target_style</em>)
+<div class="experiment">A target is required for Contribution and Correlation</div></td></tr>
+<tr><td class="lr"><dfn>Overlay</dfn></td>
+<td class="none">This option allows an overlay on the chart. It presents a pull-down list of options:
 <ul>
-<li><strong>Done</strong>. Close the Data View menu and clear any charts</li>
-<li><strong>Show</strong>. Show the charts</li>
-<li><strong>Hide</strong>. Hide the charts</li>
-<li><strong>Help</strong>. Display the help for Data View</li>
+<li><em>&lt;none&gt;</em></li>
+<li><em>Charge</em> The total of energy used to recharge storage to be shown as an overlay on the chart; it provides an indication of how and when excess energy has been used for recharge. If a Target, e.g. Load, is chosen the target values will be added to the figure to indicate the use of excess energy above the target.</li>
+<li><em>Underlying load</em> If available underlying load will be displayed on the chart. Underlying load include the additional load met by Rooftop PV (DPV) rather than utility generation</li>
 </ul>
-<p><a href="#help">Back to top</a></p>
-</div>
-<h3 id="tricks">Performance and Execution Tricks</h3>
-<p>Processing a simulation with a large number of stations can take a while to process, especially with Solar Thermal stations. You can minimise this processing by using either of these two options:</p>
-<ol>
-<li>When you invoke Power Model processing it allows you to process Chart (and Table) options multiple times without reprocessing the stations. You can then process Financial options multiple times. The process SIREN uses is as follows:
-<ol>
-<li>Displays the Power Model menu allowing you to specify initial options. This allows you to choose the stations of interest and the data options you want. This first display of the menu also allows you to save these options</li>
-<li>Calls the appropriate SAM module for each chosen station, or other options as specified</li>
-<li>Presents the tables and charts you have selected</li>
-<li>Re-displays the Power Model menu allowing you to specify different growth options, storage options and charts. A number of options, such as <em>Generation - from chosen stations</em> will no longer be available as they would require reprocessing the SAM models. To process these new options press the <strong>Proceed</strong> button. To exit this phase of processing press the
-<strong>All Done</strong> or <strong>Do Financials</strong> button</li>
-<li>If you have chosen to run the Financial Models the Financial Model menu will be displayed, allowing you to specify initial finance options. Press the <strong>Proceed</strong> button to continue with these options</li>
-<li>Calls the SAM financial module for each chosen station</li>
-<li>Presents the financial table</li>
-<li>Re displays the Financial Model menu allowing you to specify different options. Press the <strong>Proceed</strong> button to invoke these new options. To exit this phase of processing press the <strong>All Done</strong> button</li>
-</ol>
+You can also specify an alternate line width (<em>overlay_width</em>) and line style (<em>overlay_style</em>)
+</td></tr>
+<tr><td class="lr"><dfn>Header</dfn>, <strong>Header Font</strong></td>
+<td class="none">Specify a header - super title - for the chart. There are two special strings which will be replaced in the header:
+<ul>
+<li><em>$YEAR$</em> will be replaced with the year (first Period value)</li>
+<li><em>$MTH$</em> or <em>$MONTH$</em> will be replaced with the chosen Period</li>
+</ul>
+If it's not a diurnal chart (i.e. Period is <em>&lt;None&gt;</em>) any occurence of &rsquo;Diurnal&lsquo; in the header wil be removed (<em>header</em>).
+<p>The button next to the Header field allows you to change the font attributes for the Header (<em>header_font</em>)
+</td></tr>
+<tr><td class="lr"><dfn>Title</dfn>, <strong>Title Font</strong></td>
+<td class="none">Specify a title for the chart. As for the header field the two special strings <em>$YEAR$</em> <em>$MTH$</em> or <em>$MONTH$</em> will be replaced with the chosen Period. If it's not a diurnal chart (i.e. Period is <em>&lt;None&gt;</em>) any occurence of &rsquo;Diurnal&lsquo; in the title wil be removed (<em>title</em>).
+<p>The button next to the Title field allows you to change the font attributes for the Title (<em>title_font</em>)
+</td></tr>
+<tr><td class="lr"><dfn>Maximum</dfn></td>
+<td class="none">You can specify a maximum value for the Power (y) axis. This allows you to produce a series of charts with the same scale (<em>maximum</em>)</td></tr>
+<tr><td class="lr"><dfn>Type of Plot</dfn></td>
+<td class="none">The type of chart to be produced. Options are <em>Bar Chart</em>, <em>Cumulative</em>, <em>Heat Map</em>, <em>Line Chart</em>, <em>Pie Chart</em> and <em>Step Chart</em>. <em>Bar Chart</em>, <em>Cumulative</em> and <em>Step Chart</em> produce cumulative (stacked) charts and have filled areas by technology (or Columns). A Step Chart is similar to a Bar Chart but does not have spaces between the hourly bars; also it is a lot faster to display than a Bar Chart (a Bar Chart is not recommended for hourly charts). If a Target field (e.g. Load) is chosen the area above the Target value (i.e. excess generation) in the Cumulative and Step chart have a lightly shaded value (the degree of shading is chosen by the <em>alpha</em> property in the [Powerplot] Section of the Preferences file). A Heat Map visualises the total value of chosen columns to indicate the highest through lowest values of the range or, if a target column is chosen, an indication of how the total value meets the target value. Each &ldquo;square&rdquo; or &ldquo;cell&rdquo; of the map represents an hour; the vertical axis is hours in a day and the horizontal axis is days for the chosen period.  (<em>plot</em>)</td></tr>
+<tr><td class="lr"><dfn>Percentage</dfn></td>
+<td class="none">Checking this option will produce a percentage (stacked) curve. The chart will have filled areas showing the percentage of generation for each technology. It is recommended to not set a Target field (i.e. set it to <em>&lt;None&gt;</em>) as this will merely remove the Target field (and it's data) from the chart (<em>percentage</em>)</td></tr>
+<tr><td class="lr"><dfn>Spill label</dfn></td>
+<td class="none">Use this to set a suffix for Legend entries for spilled energy. If the field is blank no spilled energy labels will appear in the Legend (<em>spill_label</em>)</td></tr>
+<tr><td class="lr"><dfn>Show Grid</dfn></td>
+<td class="none">The gridlines to be included on the chart. Options are <em>Both</em>, <em>Horizontal</em>, <em>Vertical</em> and <em>None</em>. The default is <em>None</em> (<em>grid</em>)</td></tr>
+<tr><td class="lr"><div class="experiment"><dfn>Breakdowns</dfn></div></td>
+<td class="none"><div class="experiment">A TML Details worksheet breaks down RE generation into a number of categories. This option allows you to choose which categories to chart. You select those you wish to chart and drag them to the left hand column. To produce a chart that shows generation to meet load, charging of storage, and surplus you should drag <em>TML</em> and <em>Surplus</em> to the left hand column and drag <em>Charge &lt;battery&gt;</em> columns to the left hand Column Order above any other items. In producing the chart the first breakdown will have the normal colour for the technology while the others will have a translucent colour and possibly a pattern. This allows the breakdowns to be related by colour and yet distinguished by translucency. To aid in readability it is possible to produce a shorter legend that removes the breakdowns entries by setting the property <em>short_legend</em> property in the [Powerplot] section of the Preferences file to True. An example of options for plotting TML details might look something like this:
 <p>
-<li>If the location and size of stations haven't changed you can avoid reprocessing stations by used Power data from a previous simulation run, using the following approach.
-<ol>
-<li>Choose the <em>Save Hourly Data Output</em> (<em>save_data</em>) Power Model option</li>
-<li>Save the data file. This file contains power output for all stations in the current simulation. It should be located in the same folder as your scenario files (<em>scenarios</em> property of the <em>[Files]</em> Section). The data is saved as MWh with 4 decimal places because SAM uses kWh</li>
-<li>With your spreadsheet application (Excel) update the scenarios and stations that you want to use the saved data with. Either add or use the column headed <em>Power File</em> to specify the filename you've selected for the power output. For each station enter the full name and extension of the file, for example, <em>Power_Table_Saved.xls</em></li>
-<li>When you next run the simulation it will load this saved data rather than invoking the SAM module for each station that has an <em>Power File</em> entry</li>
-<li>If the file is not found the SAM module will be re-invoked. So you can simply delete or rename the Power data file and re-run the simulation to get a new set of data points</li>
-</ol>
-</li>
-</ol>
-<h4 id="optimise">Adjust Generation</h4>
-<p>The <em>Generation - adjust generation</em> option allows you to easily adjust the contribution of each technology to the overall model by allowing you to apply a multiplier to the generation figures. The multiplier multiplies each hourly generation figure to approximate increasing the station by this size. This enables you to assess changes to the technology mix without having to alter individual stations. If you also choose the <em>Generation - from chosen stations</em> option you can also do this adjustment for each station rather than each technology. This approach allows you to &ldquo;experiment&rdquo; with the generation mix without having to add or alter stations.</p>
-<strong>Note:</strong> that the multiplied figures are not passed to the Financial model(s).</p>
-<h4 id="augment">Augmented (non-renewable) Generation</h4>
-<p>You can roughly estimate how much augmented (non-renewable) generation is required to meet the Load by selecting some appropriate Power Model options. This approach will indicate how much hourly demand can be met by generation, with or without storage, in the same hour, and how much excess renewable generation is spilled. If you choose the <em>Save chart data</em> and <em>Power by hour - augmented</em> option three tables will be produced. The first is actual data as in the graph, the second will adjust values to indicate the amount of generation from each component, and the third is a summary of the totals for the second table. This final table summarises how much demand is met by renewables and storage, how much has to be met from other sources (Augment) and how much renewable generation is spilled (that is, not used to meet demand or add to storage). This gives a slightly more accurate figure on how well your scenario meets hourly Load.
-<h4>Saving the Current View</h4>
-<p>It is possible to save the current view of the main SIREN window using the <strong>Save View</strong> (Ctrl+V) option. Depending on the options chosen you can choose to crop the view at the map boundary (<em>crop_save</em>=True) or to save the full view, and to save either the underlying map (<em>scene_save</em>=True) or the screen view. The image resolution can be different in the two options, dependent upon screen resolution, image resolution, screen window size and how much of the map is being saved.
+<img src="plot_tml.png" alt="TML Plot">
 </p>
+<p><strong>Note:</strong> After you create a TML Detail spreadsheet you need to open the spreadsheet and save it before it can be used.</div></td></tr>
+<tr><td class="lr"><dfn>Column Order</dfn></td>
+<td class="none">To produce the chart you select those columns to be included. This field consists of two tables (lists) of columns. Those in the left hand list will be included in the chart while those on the right will be excluded. The included columns will be charted in the chosen order. You can drag individual or a number of columns between the two lists to get the desired configuration. The chart colour for the column will be displayed as the background color for the column (<em>columns</em>)
+<div class="experiment">Contribution or Correlation will be performed between the target and each of the chosen columns</div></td></tr>
+<tr><td class="lr"> <strong>Label Font, Ticks Font</title></td>
+<td class="none">These buttons allow you to change the font attributes for chart labels and label tick marks (<em>label_font</em>, <em>ticks_font</em>)
+<br /><br />
+</td></tr>
+<tr><td class="bottom"><strong>Done, Plot, Colours, Legend..., Pref...,Help</br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Plot 12, Co...</strong></td>
+<td class="none">At the bottom of the window are a number of buttons:
+<ul>
+<li><strong>Done</strong> Exit the program and save the input values. Input preferences and colours are either saved in a SIREN preferences file or in a specific file, <em>powerplot.ini</em>, if no Peferences file is passed to the program</li>
+<li><strong>Plot</strong> Produce the chart. If there are missing colours you will be taken to the Colours window to add the colour. You need to set a colour and press the Save &amp; Exit button</li>
+<li><strong>Colours</strong> Press this button to change the chart colours or to add new colours. You can remove a chart colour by right-clicking the colour (it will be cleared and the item deleted when you Save &amp; Exit). Colours are held in the [Plot Colors] Section of the Preferences file.
+<br />If the <em>palette</em> property in the [Plot Colors] Section of the Preferences file is set to True you can create a palette sequence of colours for columns selected in both the included and excluded lists. If you select columns and then press the <strong>Colours</strong> button you will be given the option to set a starting and ending palette colour and the colours for the chosen columns will be updated to a range of colours between the chosen values</li>
+<li><strong>Legend Properties</strong> Change the font attributes for the Legend (<em>legend_font</em>) plus other attributes (<em>legend_ncol</em>, <em>legend_on_pie</em>, <em>legend_side</em>)</li>
+<li><strong>Preferences</strong> Edit the Preferences file</li>
+<li><strong>Help</strong> Display the help for Powerplot</li>
+</ul>
 <div class="experiment">
-<p><strong>Optimise (experimental)</strong></p>
-<p>SIREN also has an experimental approach to optimise the mix of technologies. If Load data is available the menu presented to adjust generation will have an option to &ldquo;optimise&rdquo; the renewable energy mix to best meet the Load. You will be presented with an <em>Optimise for:</em> pull-down list of periods to optimise for. You choose the desired period and then press the <em>Optimise</em> button. This will then do a least squares solution for adjustment multipliers to produce a generation profile that best matches the total load and load profile for that period. The data analysis is performed on either the average 24 hour period or detailed hourly figures for the chosen period (<em>optimise</em> property of the <em>[Power]</em> Section). If you don't wish to include a technology or station then uncheck the checkbox (to the right of the multiplier) for that technology or station. The generation produced by that technology or station will be removed from the optimisation. Depending on the <em>optimise_load</em> property of the <em>[Power]</em> Section you can also remove the Load (multiplied by it's current multiplier) from the analysis. Any computed negative multiplier will be set to zero, which is likely to result in the computed generation exceeding the load. The <em>Check / Uncheck all zeroes</em> check box enables you to include or exclude all zeroed stations from any further optimisation. The analysis is based upon the stations in your scenario and doesn't take into account how well placed they are within the network. If you want to reset all multipliers just Optimise for <em>None</em>.
+<ul>
+<li>
+<strong>Co...</strong> Perform either an analysis of contribution or correlation to a target. These options are presented by setting either the <em>show_contribution</em> or <em>show_correlation</em> Property of the <a href="#p_pm">[Powermatch]</a> section of the Preferences file to True. If both properties are set <em>show_contribution</em> takes precedence.<br/>
+<p><strong>Contribution</strong> Calculate the percentage contribution of each chosen column in meeting the target. This will present a table showing the percentage contribution for each month in the chosen period.</p>
+<p><strong>Correlation</strong> Perform linear correlations between the target and the chosen columns. This will present a table showing the correlations in descending order (i.e. best first)</p>
+<p>Correlation coefficients whose magnitude are between 0.9 and 1.0 indicate variables which can be considered <strong>very highly correlated</strong>. Correlation coefficients whose magnitude are between 0.7 and 0.9 indicate variables which can be considered <strong>highly correlated</strong>. Correlation coefficients whose magnitude are between 0.5 and 0.7 indicate variables which can be considered <strong>moderately correlated</strong>. Correlation coefficients whose magnitude are between 0.3 and 0.5 indicate variables which have a <strong>low correlation</strong>. Correlation coefficients whose magnitude are less than 0.3 have little if any (linear) correlation (from <a href="https://www.andrews.edu/~calkins/math/edrm611/edrm05.htm" target="_blank">https://www.andrews.edu/~calkins/math/edrm611/edrm05.htm</a>).</p>
+</li>
+<li>
+<strong>Plot 12</strong> If <em>plot_12</em> is set an additional button is presented to allow wide and low_height graphs to be produced. This allows monthly charts to be produced to fit on a page (e.g. A4) in portrait format. The individual charts can be produced using plot navigation (<em>m</em>), saved and then inserted into a page
+</li></ul></div>
+</td></tr>
+</table>
+<p>&nbsp;</p>
+<div class="experiment">
+<h3 id="flexiplot">Flexiplot</h3>
+<p><code>flexiplot</code> is a standalone program that can be used for &ldquo;prototyping&rdquo; a more conventional Excel spreadsheet where data is arranged in rows or columns. The program is very much experimental. If it proves useful it may be included as part of <code>powerplot</code> in the future. The program has a similar window of options to <code>powerplot</code> with the exception of <em>Period</em> and <em>Target</em>. The default values are specified in the <a href="#p_flexiplot">[Flexiplot]</a> Section of the Preferences file. It has a number of options that differ to <code>powerplot</code>.
+<table border="0" class="none">
+<tr><td class="top" style="width: 20%;"><strong>Open File</strong></td><td class="none">Pressing this button will open the current file to assist in setting the <dfn>Series</dfn> and <dfn>X Values</dfn> ranges</td></tr>
+<tr><td class="lr"><dfn>Series</dfn>, <strong>Show Series</strong></td>
+<td class="none">The location of the data series to be charted. The range is specified as either Excel columns and rows, e.g. <em>B1:H1</em>, or as four numbers defining the row and columns range, e.g. <em>1,2,1,7</em>. The series can either be in rows or columns but is expected to be a single row (as in the examples) or column. You then choose which series you want charted by moving them in the Column Order lists (<em>series</em>). Pressing the <strong>Show Series</strong> button will display the current series values in a table</td></tr>
+<tr><td class="lr"><dfn>Series Label</dfn></td>
+<td class="none">The label for the Series (y values) (<em>ylabel</em>)</td></tr>
+<tr><td class="lr"><dfn>X Values</dfn>, <strong>Show X values</strong</td>
+<td class="none">The data values to be charted. The range is specified as either Excel columns and rows, e.g. <em>A2:A29</em> or as four numbers defining the row and columns range, e.g. <em>2,1,2,29</em>. The series can either be in rows or columns but is expected to be a single row or column (as in the examples). The first column (A) is taken as the X labels and the data series chosen will be charted (<em>xvalues</em>). Pressing the <strong>Show X values</strong> button will display the first column/row of the current X values in a table</td></tr>
+<tr><td class="lr"><dfn>X Label</dfn></td>
+<td class="none">The label for the X Axis (x values) (<em>xlabel</em>)</td></tr>
+<tr><td class="bottom"><strong>Preferences</strong></td>
+<td class="none">In addition to the buttons in <code>powerplot</code>, <code>flexiplot</code> has a <strong>Preferences</strong> button to allow you to update the Flexiplot preferences. This allows you to adjust text sizes and the like, however, some values, such as details for an individual file, may be ignored for the active file.
+</td></tr>
+</table>
+<p><code>flexiplot</code> has a number of options to:
+<ul>
+<li>Adjust the font properties of the various text items on the chart. The properties are as described in <a href="https://matplotlib.org/3.1.1/api/font_manager_api.html#matplotlib.font_manager.FontProperties" target="_blank">FontProperties</a> but may be restricted by the matplotlib environment. To specify a property use the format as described in the link, e.g. <em>family=sans-serif,size=xxlarge</em>. The only non-default value is the chart title fontsize which is set to 'x-large'</li>
+<li>You can specify how often X Axis ticks appear, either by setting <em>sparse_xticks</em> to a single number ,&lsquo;n&rsquo;, for every &lsquo;n&rsquo;th tick to appear, or by setting a test for a change in the label value by specifying the start and end characters to examine, separated by a comma. For example, <em>1,3</em> could be used where you have labels in the form of <em>Jan, Feb</em></li>
+</ul>
 </div>
-<p><a href="#help">Back to top</a></p>
 <h2 id="feedback">Feedback</h2>
 <p>This model is very much a work in progress. To improve it's usefulness to a wider community we encourage any feedback on how it might be improved. Feedback to <a href="mailto:siren@sen.asn.au?Subject=SIREN%20Feedback">siren@sen.asn.au</a>.
-<p><a href="#help">Back to top</a></p>
 <h2 id="files">SIREN File Formats</h2>
 <p>SIREN accepts a number of file formats for each of the data files it uses. In many cases input files can be either a CSV or Excel (XLS or XLSX) file. Due to the initial source for each data file the format for each may be different. For CSV and Excel files the first cell for each column is usually taken as the column name.</p>
 <p><strong>Note:</strong> Other than the Powermatch file, all Excel files output by SIREN are currently in XLS format (XLSX files require a different Python library to create them). Powermatch itself produces XLSX files.</p>
@@ -4314,7 +4412,6 @@ Scale of the chart in the cell. A value of 1 fills the cell(<em>plot_scale</em>)
 <h3 id="samwind">SAM Wind Turbines</h3>
 <p>SAM provides a file, <em>Wind Turbines.csv</em>, which is used to create power curves for wind turbines. The first four columns of data are self-explanatory; the last has generation output in .25 m/s increments used to produce the power curve. <em>Wind Turbines Subset.csv</em>, distributed with SIREN, has a subset of the to enable a shorter list to be displayed. You can create your own subset of files for SAM's file.</p>
 <p>To augment this list, to cater for both older turbines (e.g. 'Vestas V27-225Kw') and more recent ones (or those not in SAM's list; e.g. 'Vestas V150-4.2Mw'), SIREN also accepts <em>.pow</em> files as described above.</p>
-<p><a href="#help">Back to top</a></p>
 <h2 id="notes">Supporting Notes</h2>
 <h3 id="map">Obtaining a Suitable Map Image</h3>
 <p>Among other publicly available resources, OpenStreetMap provides a set of open map tiles (&ldquo;Slippy Map&rdquo; tiles. Refer <a href="http://wiki.openstreetmap.org/wiki/Slippy_Map" target="_blank">http://wiki.openstreetmap.org/wiki/Slippy_Map</a>) which can be stitched together into a single image. These produce a traditional map type. A satellite map can be obtained from MapQuest (<a href="https://www.mapquestapi.com/staticmap/" target="_blank">https://www.mapquestapi.com/staticmap/</a> or you can save an image from another source such as Google Maps. Map data copyright (&copy;) OpenStreetMap contributors CC-BY-SA <a href="http://www.openstreetmap.org/copyright" target="_blank"> http://www.openstreetmap.org/copyright</a>. You can obtain a suitable image using <code>getmap</code>.</p>
@@ -4394,7 +4491,6 @@ You can alternate between both approaches to choose the desired area. If you hav
 </td>
 </tr>
 </table>
-<p><a href="#help">Back to top</a></p>
 <h3 id="swisupd">Obtaining Current SWIS Facilities</h3>
 <p>The initial SWIS data provided with SIREN is for 2014 and 2015 with existing renewable stations at that time. Updates to this data are available on the <a href="http://data.wa.aemo.com.au/" target="_blank">AEMO Market Data website</a>. The SWIS data used by SIREN is as follows.</p>
 <h4>SWIS Network</h4>
@@ -4450,7 +4546,6 @@ Load data can also be downloaded for prior years to a filename defined by the <e
 <li><em>year=</em> Indicate which year to obtain load data for</li>
 </ul>
 </li>
-<p><a href="#help">Back to top</a></p>
 <h3 id="reanalysis">Obtaining and Using Satellite Reanalysis Data for SAM weather files</h3>
 <p>SAM uses meteorological solar and wind data to model output of various renewable energy technologies. Satellite data is a suitable source to generate data files containing all weather variables required for input to SAM. NASA MERRA-2 data has been used as one source of data by SIREN since 2015. More recently ECMWF ERA5 data has been identified as another source. Both sources provide the hourly data required for the SAM models and show strong correlation between generation calculated by the SAM models and actual SCADA generation data (<a href="http://data.wa.aemo.com.au/#facility-scada" target="_blank">AEMO facility SCADA data</a>) for the SWIS. In recent years the overall generation figures from MERRA-2-derived weather files is 25% to 30% higher than the actual SCADA generation figures while the ERA5-derived figures are around 2% higher suggesting ERA5 may be a better source for weather data (refer to <a href="#ecorr">Validation of ECMWF ERA5 Data and the SAM Models</a> and <a href="#corr">Validation of NASA MERRA-2 Data and the SAM Models</a>). A more detailed and (geographically) wider analysis is warranted.
 <h4 id="era">Obtaining and Using ECMWF ERA5 Data for SAM weather files</h3>
@@ -5101,7 +5196,6 @@ MERRA-2 Variables
 <li>Each time-averaged collection consists of a continuous sequence of data averaged over the indicated interval and time stamped with the central time of the interval. For hourly data, for example, these times are 00:30 GMT, 01:30 GMT, 02:30 GMT, etc..</li>
 <li>I interpret each grid is centred on the latitude / longitude for that set of variables, that is, the value extends outwards in all directions from that point</li>
 </ul>
-<p><a href="#help">Back to top</a></p>
 <h3 id="index">Using other Weather Files</h3>
 <p>The use of ERA5 or MERRA-2 data for the weather files is not necessary but provides a way of obtaining (gridded) weather data for any geographic area. Any weather files suitable for SAM can be used by SIREN. <a href="https://sam.nrel.gov/weather" target="_blank">Weather Data</a> describes these file formats and <a href="https://sam.nrel.gov/content/weather-data-non-us-locations" target="_blank">Weather Data for non-U.S. Locations</a> gives some details on where non-U.S. weather data may be obtained.</p>
 <p>SIREN has two approaches for obtaining weather files:</p>
@@ -5134,7 +5228,6 @@ MERRA-2 Variables
 <li><em>wind=</em> Location of the wind weather files</li>
 <li><em>target=</em> name of the index file to produce</li>
 </ul>
-<p><a href="#help">Back to top</a></p>
 <h3 id="resource">Visualising Renewable Resource Attributes</h3>
 <p>To assist with placement of renewable energy stations SIREN can display a grid of renewable resource attributes derived from the SAM format weather files. This feature utilises summary data stored in a file rather than having to process hourly data from the weather files. The weather data values available are:</p>
 <ul>
@@ -5190,7 +5283,6 @@ MERRA-2 Variables
 <li><em>target=</em> or <em>tgtfil=</em> Resource grid file to be produced</li>
 </ul>
 <p>If the source folder(s) contains other CSV files <code>makegrid</code> may fail. If this happens it is probably safer to copy the weather files to a separate folder.
-<p><a href="#help">Back to top</a></p>
 <h3 id="sam">SAM Models used by SIREN</h3>
 <p>SIREN uses the NREL SAM SDK API (or SSC) for energy calculations. The current SSC version is 206 (Feb 9 2019). This is a collection of tools developed by NREL for creating renewable energy system models. See <a href="https://sam.nrel.gov/sdk" target="_blank">SAM Simulation Core SDK</a> for details on the SDK. NREL also provide a user-friendly front end, <a href="https://sam.nrel.gov/" target="_blank">SAM</a>, to facilitate usage of the SAM models. The SAM front end will allow you to progress any modelling by SIREN to a greater level of detail.</p>
 <p>The SAM models are very comprehensive and can be quite complex. For example, there are around 200 input variables possible for the Solar Thermal model SIREN uses. To simplify the interface to SAM, SIREN uses a variable file for each technology to store default values for most variables and only requires a minimal number of variables to be set by the user, such as Capacity. The models used by SIREN and their variable files are as follows:</p>
@@ -5571,7 +5663,6 @@ MERRA-2 Variables
 </ol>
 </li>
 </ol>
-<p><a href="#help">Back to top</a></p>
 <div class="experiment">
 <h3 id="nonsam">Other Models used by SIREN (experimental)</h3>
 <p>SIREN will support models to accommodate other technologies not supported by SAM models. As well as this it is possible to provide a list of generation figures for a Station using the <em>Power File</em> field (see <a href="#stations">Stations</a>).
@@ -5608,7 +5699,6 @@ MERRA-2 Variables
      formula=pow(0.0070104 * ( wind * 1.94384)**2,2) * 0.45 * wind * 1.94384 * efficiency * .125
 </pre>
 </div>
-<p><a href="#help">Back to top</a></p>
 <h3 id="worldwindow">Select area on world map</h3>
 <p><code>worldwindow</code> can be used with <code>getmap</code> (see <a href="#map">Obtaining a Suitable Map Image</a>), <code>getera5</code> (see <a href="#getera5">Get ERA5 Files</a>) or <code>getmerra2</code> (see <a href="#getmerra2">Get MERRA-2 Files</a>) to choose the Area of Interest for a map or for downloading ERA5 or MERRA-2 data. It presents a world map and allows you to choose the area of interest by clicking within the map and updating the area values in the two calling programs</p>
 <h4>Using worldwindow</h4>
@@ -5952,7 +6042,6 @@ MERRA-2 Variables
 <!--
 <p>Ctrl Keys: A, E, G, M, R, U, V
 -->
-<p><a href="#help">Back to top</a></p>
 <h2 id="acronyms">Acronyms</h2>
 <table border="0" class="none">
 <tr><td class="none"><dfn>AEMO</dfn></td>
@@ -6108,7 +6197,6 @@ MERRA-2 Variables
 <tr><td class="none"><dfn>XML</dfn></td>
 <td class="none">Extensible Markup Language. A markup language that defines a set of rules for encoding documents in a format which is both human-readable and machine-readable.</td></tr>
 </table>
-<p><a href="#help">Back to top</a></p>
 <a style="position: fixed; top:2px;right:2px;" href="#" title="Back to Top"><img style="border: none;" src="sen_icon32.png"/></a>
 </body>
 </html>
