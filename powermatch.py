@@ -3025,6 +3025,23 @@ class powerMatch(QtWidgets.QWidget):
 
                 merge_col = 1
                 last_name = ''
+                # find first varying capacity to create model name
+                model_key = ''
+                model_nme = ''
+                if sht > 0:
+                    for key in self.batch_models[sht][0].keys():
+                        if key == 'name':
+                            continue
+                        try:
+                            if self.batch_models[sht][0][key] != self.batch_models[sht][1][key]:
+                                model_key = key
+                                bits = key.split('.')[-1].split(' ')
+                                for bit in bits:
+                                    model_nme += bit.strip('()')[0]
+                                model_nme += '-'
+                                break
+                        except:
+                            pass
                 for model, capacities in self.batch_models[sht].items():
                     # to cater for different load profiles (years) and generator costs (years) this loop would need to change, that is
                     # need to be able to change pmss_details and pmss_data[0]
@@ -3045,8 +3062,13 @@ class powerMatch(QtWidgets.QWidget):
                         if key in ['Carbon Price', 'Discount Rate', 'Total']:
                             continue
                         if key == 'name' and model_row_no > 0:
-                            bs.cell(row=model_row_no, column=column).value = f'Model {model + 1}'
+                            if model_key != '':
+                                bs.cell(row=model_row_no, column=column).value = f'{model_nme}{capacities[model_key]}'
+                            else:
+                                bs.cell(row=model_row_no, column=column).value = f'Model {model + 1}'
                             bs.cell(row=model_row_no, column=column).font = normal
+                            bs.cell(row=model_row_no, column=column).alignment = oxl.styles.Alignment(wrap_text=True,
+                                    vertical='bottom', horizontal='center')
                             continue
                         if key == 'year':
                             if capacity in load_columns.keys():

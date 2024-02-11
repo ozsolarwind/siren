@@ -80,6 +80,13 @@ td.bottom {
     padding: 3px;
     vertical-align: top;
 }
+td.center {
+    border: 1px solid black;
+    border-collapse: collapse;
+    padding: 3px;
+    text-align: center;
+    vertical-align: top;
+}
 td.right {
     border: 1px solid black;
     border-collapse: collapse;
@@ -3833,7 +3840,8 @@ Where:
 <tr><td class="none"><code>step</code></td><td class="none">Capacity increment</td></tr>
 <tr><td class="none"><code>order</code></td><td class="none">Make this technology the first set of ranges; this is only needed if this is not the first technology with a range</td></tr>
 </table>
-<p>If more than one technology is specified with a range the Batch report will have multiple output worksheets, one for each value in the first range. The sheets are named in number sequence starting from <strong>01</strong>. Subsequent technologies will be repeated for each &ldquo;higher&rdquo; level technology. The second technology will be presented as a Merged Group. The following example shows a batch input table (column) with three capacity ranges. Onshore Wind is the first technology and results in 7 worksheets of output, one for each technology step for Wind. Each worksheet contains 36 model outputs, for a total of 252 models. The worksheets have 6 Merged Groups, one for each step for Single Axis PV with each Merged Group having 6 values for Battery (4hr). In a real-world example this approach has been used to create 26 sheets with a total of over 17,500 models in a single execution of Powermatch.
+<p>If more than one technology is specified with a range the Batch report will have multiple output worksheets, one for each value in the first range. The sheets are named in number sequence starting from <strong>01</strong>. Subsequent technologies will be repeated for each &ldquo;higher&rdquo; level technology. The second technology will be presented as a Merged Group. Individual Model names will be derived from the third, or second, technology range.</p>
+<p>The following example shows a batch input table (column) with three capacity ranges. Onshore Wind is the first technology and results in 7 worksheets of output, one for each technology step for Wind. Each worksheet contains 36 model outputs, for a total of 252 models. The worksheets have 6 Merged Groups, one for each step for Single Axis PV with each Merged Group having 6 values for Battery (4hr) and individual Model names are derived from Battery capacity. In a real-world example this approach has been used to create 26 sheets with a total of over 17,500 models in a single execution of Powermatch.</p>
 <table class="none">
 <table>
 <tr class="none">
@@ -3867,7 +3875,7 @@ Where:
 </td><td class="none">
 <table border="0", class="none">
 <tr><td>&nbsp;</td><td colspan="3">Onshore Wind_0_Single Axis PV_0</td><td>... PV_600</td></tr>
-<tr><td>&nbsp;</td><td>Model 1</td><td>Model 2</td><td>Model 3</td><td>Model 7</td></tr>
+<tr><td>&nbsp;</td><td class="center">B4-0</td><td class="center">B4-1000</td><td class="center">B4-2000</td><td class="center">B4-0</td></tr>
 <tr><td><strong>Capacity (MW/MWh)</strong></td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
 <tr><td>Single Axis PV</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td class="right">600</td></tr>
 <tr><td>Onshore Wind</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
@@ -3892,7 +3900,7 @@ Where:
 </td><td class="none">
 <table border="0", class="none">
 <tr><td>&nbsp;</td><td colspan="4">Onshore Wind_6000_Single Axis PV_3000</td></tr>
-<tr><td>&nbsp;</td><td>Model 33</td><td>Model 34</td><td>Model 35</td><td>Model 36</td></tr>
+<tr><td>&nbsp;</td><td class="center">B4-2000</td><td class="center">B4-3000</td><td class="center">B4-4000</td><td class="center">B4-5000</td></tr>
 <tr><td><strong>Capacity (MW/MWh)</strong></td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
 <tr><td>Single Axis PV</td><td class="right">3,000</td><td class="right">3,000</td><td class="right">3,000</td><td class="right">3,000</td></tr>
 <tr><td>Onshore Wind</td><td class="right">6,000</td><td class="right">6,000</td><td class="right">6,000</td><td class="right">6,000</td></tr>
