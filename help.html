@@ -20,6 +20,17 @@
 -->
 <html>
 <head>
+<script type="text/javascript">
+function firstone() {
+    const queryString = window.location.search;
+    console.log(queryString);
+    const urlParams = new URLSearchParams(queryString);
+    if (urlParams.has('hideicon')) {
+        var x = document.getElementById("backtotop");
+        x.style.display = "none";
+    }
+}
+</script>
 <style>
 code {
     font-size: 125%;
@@ -131,7 +142,7 @@ ul {
 </style>
 <title>SIREN Help</title>
 </head>
-<body>
+<body onload="firstone();">
 <h1 id="help"><img src="sen_icon32.png" alt="SIM">&nbsp;SIREN Help</h1>
 <p><strong>All acronyms used in this help are defined in the list of <a href="#acronyms">acronyms</a></strong>
 <br /><span style="font-size: 12px">(Click the small icon on the top right of the page to return to the top)</span></p>
@@ -6205,6 +6216,6 @@ MERRA-2 Variables
 <tr><td class="none"><dfn>XML</dfn></td>
 <td class="none">Extensible Markup Language. A markup language that defines a set of rules for encoding documents in a format which is both human-readable and machine-readable.</td></tr>
 </table>
-<a style="position: fixed; top:2px;right:2px;" href="#" title="Back to Top"><img style="border: none;" src="sen_icon32.png"/></a>
+<a id="backtotop" style="position: fixed; top:2px;right:2px;" href="#" title="Back to Top"><img style="border: none;" src="sen_icon32.png"/></a>
 </body>
 </html>
