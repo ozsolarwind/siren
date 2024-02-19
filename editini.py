@@ -78,6 +78,7 @@ class EdtDialog(QtWidgets.QDialog):
             buttonLayout.addWidget(self.saveasButton)
             self.saveasButton.clicked.connect(self.saveas)
         self.widget = QtWidgets.QPlainTextEdit()
+        self.widget.setStyleSheet('selection-background-color: #06A9D6; selection-color: black')
         highlight = inisyntax.IniHighlighter(self.widget.document(), line=line)
         if sys.platform == 'linux' or sys.platform == 'linux2':
             self.widget.setFont(QtGui.QFont('Ubuntu Mono 13', 12))
