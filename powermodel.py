@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2022 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2024 Sustainable Energy Now Inc., Angus King
 #
 #  powermodel.py - This file is part of SIREN.
 #
@@ -21,6 +21,7 @@
 
 from copy import copy
 from math import asin, ceil, cos, fabs, floor, log10, pow, radians, sin, sqrt
+from PyQt5 import QtCore, QtGui, QtWidgets
 import matplotlib
 if matplotlib.__version__ > '3.5.1':
     matplotlib.use('Qt5Agg')
@@ -37,7 +38,6 @@ import time
 import xlwt
 
 import configparser  # decode .ini file
-from PyQt5 import Qt, QtCore, QtGui, QtWidgets
 
 from senutils import getParents, getUser, techClean
 import displayobject
@@ -2591,10 +2591,10 @@ class PowerModel():
             while True:
                 if self.plots['visualise'] and self.something is not None:
                     vis2 = Visualise(self.stn_outs, self.stn_pows, self.something, year=self.base_year)
-                    vis2.setWindowModality(Qt.Qt.WindowModal)
+                    vis2.setWindowModality(QtCore.Qt.WindowModal)
                     vis2.setWindowFlags(vis2.windowFlags() |
-                                 Qt.Qt.WindowSystemMenuHint |
-                                 Qt.Qt.WindowMinMaxButtonsHint)
+                                 QtCore.Qt.WindowSystemMenuHint |
+                                 QtCore.Qt.WindowMinMaxButtonsHint)
                     vis2.exec_()
                 wrkly = {}
                 summs = {}

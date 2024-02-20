@@ -27,7 +27,7 @@ import ssc
 import time
 
 import configparser  # decode .ini file
-from PyQt5 import Qt, QtCore, QtGui, QtWidgets
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 from getmodels import getModelFile
 from senutils import getParents, getUser, techClean, extrapolateWind, WorkBook

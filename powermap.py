@@ -25,7 +25,7 @@ import math
 import os
 import sys
 import time
-# import types
+from PyQt5 import QtCore, QtGui, QtWidgets
 import matplotlib
 if matplotlib.__version__ > '3.5.1':
     matplotlib.use('Qt5Agg')
@@ -36,7 +36,6 @@ import xlwt
 from functools import partial
 
 import configparser  # decode .ini file
-from PyQt5 import QtCore, QtGui, QtWidgets
 import ssc
 import subprocess
 

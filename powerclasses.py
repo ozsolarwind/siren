@@ -28,7 +28,7 @@ except:
     pass
 
 import configparser  # decode .ini file
-from PyQt5 import Qt, QtCore, QtGui, QtWidgets
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 from senutils import getParents, getUser, techClean, WorkBook
 import displayobject
