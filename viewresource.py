@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2022 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2024 Sustainable Energy Now Inc., Angus King
 #
 #  viewresource.py - This file is part of SIREN.
 #
@@ -699,6 +699,8 @@ class Resource(QtWidgets.QDialog):
             curr_row += 1
         while curr_row < num_rows:
             curr_row += 1
+            if self.resource_worksheet.cell_value(curr_row, self.resource_var['Latitude']) is None:
+                break
             a_lat = float(self.resource_worksheet.cell_value(curr_row, self.resource_var['Latitude']))
             a_lon = float(self.resource_worksheet.cell_value(curr_row, self.resource_var['Longitude']))
             in_the_map = False
