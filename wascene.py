@@ -587,10 +587,10 @@ class WAScene(QtWidgets.QGraphicsScene):
         self._lineGroup = QtWidgets.QGraphicsItemGroup() # stations lines group
         try:
             self._setupGrid()
-        except:
+        except Exception as e:
             msgbox = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Critical,
                                            'Error setting up grid.',
-                                           'May need to check map coordinates\n(upper_left' + self.map \
+                                            e.msg + '\n\nMay need to check map coordinates\n(upper_left' + self.map \
                                             + ' and lower_right' + self.map + ' in [Map]) or' \
                                             + '\nthe status of grid-related (KML) files.' \
                                             + '\nExecution aborted.',
