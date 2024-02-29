@@ -1111,7 +1111,7 @@ as embedded solar - Rooftop PV - installed on the grid but not registered with A
 </tr>
 <tr class="none">
 <td class="none"><dfn>load</dfn></td>
-<td class="none">Hourly load data for the grid. For the SWIS Grid these are obtained from AEMO Operational Load data (<a href="http://data.wa.aemo.com.au/#load-summary" target="_blank">http://data.wa.aemo.com.au/#load-summary</a>)</td>
+<td class="none">Hourly load data for the grid. For the SWIS Grid prior to October 2023 these were obtained from AEMO Operational Load data (<a href="http://data.wa.aemo.com.au/#load-summary" target="_blank">http://data.wa.aemo.com.au/#load-summary</a>)</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>pm_template</dfn></td>
@@ -3606,7 +3606,7 @@ Scale of the chart in the cell. A value of 1 fills the cell(<em>plot_scale</em>)
 <p><strong>A Note on Load.</strong>&nbsp;Load is a measure of demand on the electicity network. It can be grouped into two broad areas:
 <ul>
 <li>Operational Load, or simply Load, is the demand needed to be met by the (utility-scale) generators and storage on the network. This is the load that <code>Powermatch</code> meets using the proposed generators</li>
-<li>Underlying Load is Operational Load <u>plus</u> additional demand that is met by &ldquo;behind the meter&rdquo; generation such as Rooftop PV. <code>Powermatch</code> adds this generation both to generation by the network and generation to meet load. Thus, these generators have no shortfall or surplus. At present <stong>Batch</strong> doesn't handle Underlying load
+<li>Underlying Load is Operational Load <u>plus</u> additional demand that is met by &ldquo;behind the meter&rdquo; generation such as Rooftop PV. <code>Powermatch</code> adds this generation both to generation by the network and generation to meet load. Thus, these generators have no shortfall or surplus
 <br />Identification of underlying generation is via the <em>underlying</em> property of the <em>[Powermatch]</em> Section of the Preferences file. It is also possible to indicate a specific generator is operational rather than underlying via the <em>operational</em> property</li>
 </ul>
 <p>One of the outputs from Powermatch is calculated Levelised Cost figures for each Generator, LCOG, and Storage, LCOS, and an overall LCOE. The Levelised Costs are calculated based upon either Capital (Capex), Operations (Opex) and fuel costs or a Reference LCOE and Reference Capacity Factor (CF) for the generator or storage.
@@ -3812,7 +3812,7 @@ The order in which the dispatchable technologies will be processed by Powermatch
 <li><strong>Beware:</strong> If the batch input worksheet (capacity figures) contains formulae you need to be careful doing multiple batch executions. You may need to open the batch worksheet and save it before doing another batch execution.</li>
 <li>(in case you missed it). If you're modelling with zones both the input data file and the batch file must have input capacities by zone</li>
 <li>(At present) The same Load data is used for all models in a Batch execution</li>
-<li>At present Batch doesn't handle Underlying load</li>
+<li>If the input model has capacity for facilities contributing to Underlying load (e.g. Rooftop PV) the batch report will contain underlying totals</li>
 </ul>
 <br />
 </li>
@@ -4210,7 +4210,7 @@ The program displays a window of options. The default values are specified in th
 <ul>
 <li><em>&lt;none&gt;</em></li>
 <li><em>Charge</em> The total of energy used to recharge storage to be shown as an overlay on the chart; it provides an indication of how and when excess energy has been used for recharge. If a Target, e.g. Load, is chosen the target values will be added to the figure to indicate the use of excess energy above the target.</li>
-<li><em>Underlying load</em> If available underlying load will be displayed on the chart. Underlying load include the additional load met by Rooftop PV (DPV) rather than utility generation</li>
+<li><em>Underlying load</em> If available underlying load will be displayed on the chart. Underlying load includes the additional load met by Rooftop PV (DPV) rather than utility generation</li>
 </ul>
 You can also specify an alternate line width (<em>overlay_width</em>) and line style (<em>overlay_style</em>)
 </td></tr>
@@ -4518,7 +4518,7 @@ You can alternate between both approaches to choose the desired area. If you hav
 <h4 id="updateswis">Existing Stations (Facilities)</h4>
 <p>SIREN uses the list of <a href="http://data.wa.aemo.com.au/#facilities" target="_blank">registered facilities</a> available from AEMO (specifically <a href="http://data.wa.aemo.com.au/datafiles/facilities/facilities.csv" target="_blank">facilities.csv</a>) for it's existing stations. If you want an updated version you can use <code>updateswis</code> to obtain the current list (see below).</p>
 <h4>Load Data</h4>
-<p>The load data for the SWIS has been obtained from <a href="http://data.wa.aemo.com.au/#load-summary" target="_blank">Load Summary</a> data available from AEMO. SIREN uses hourly load data rather than half hourly. The figures used are derived by summing the &lsquo;Operational Load (MWh)&rsquo; data for the two half hourly intervals. You can use <code>updateswis</code> to obtain the latest load data (see below). The SWIS load data is generally available mid-month for two months prior.</p>
+<p>Prior to October 2023 the load data for the SWIS has been obtained from <a href="http://data.wa.aemo.com.au/#load-summary" target="_blank">Load Summary</a> data available from AEMO. SIREN uses hourly load data rather than half hourly. The figures used are derived by summing the &lsquo;Operational Load (MWh)&rsquo; data for the two half hourly intervals. You can use <code>updateswis</code> to obtain the latest load data (see below). The SWIS load data is generally available mid-month for two months prior.</p>
 <p>The AEMO also publish <a href="http://data.wa.aemo.com.au/#facility-scada" target="_blank">facility SCADA data</a>.</p>
 <h4>updateswis</h4>
 <p><code>updateswis.py</code> is a Python program that can be used to access the current list of facilities (power stations) for the SWIS and to obtain recent load data.

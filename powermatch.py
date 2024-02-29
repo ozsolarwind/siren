@@ -4382,26 +4382,39 @@ class powerMatch(QtWidgets.QWidget):
                     ns.cell(row=row, column=col).number_format = '#,##0.00'
             next_col = col
             col += 1
-        else:
+        else: # 'O', '1', 'B'
             sp_data = []
             sp_load = 0. # load from load curve
             hrows = 10
             load_max = 0
             load_hr = 0
-            load_col = 0
             tml = 0.
-            for fac in re_order:
-                if fac in underlying_facs:
-                    continue
-                if fac == 'Load':
-                    load_col = pmss_details[fac].col
+            try:
+                load_col = pmss_details['Load'].col
+            except:
+            load_col = 0
+            if option == 'B' and len(underlying_facs) > 0:
+                load_facs = underlying_facs[:]
+                load_facs.insert(0, 'Load')
+                for h in range(len(pmss_data[load_col])):
+                    amt = 0
+                    for fac in load_facs:
+                        amt += pmss_data[pmss_details[fac].col][h] * pmss_details[fac].multiplier
+                    if amt > load_max:
+                        load_max = amt
+                        load_hr = h
+                    sp_load += amt
+                underlying_facs = []
+            else:
+                fac = 'Load'
                     sp_load = sum(pmss_data[load_col]) * pmss_details[fac].multiplier
-                    load_max = 0
-                    for h in range(len(pmss_data[0])):
+                for h in range(len(pmss_data[load_col])):
                         amt = pmss_data[load_col][h] * pmss_details[fac].multiplier
                         if amt > load_max:
                             load_max = amt
                             load_hr = h
+            for fac in re_order:
+                if fac == 'Load' or fac in underlying_facs:
                     continue
                 if pmss_details[fac].capacity * pmss_details[fac].multiplier == 0:
                     continue
@@ -4415,11 +4428,11 @@ class powerMatch(QtWidgets.QWidget):
                 sp_d[st_sub] = sum(pmss_data[pmss_details[fac].col]) * pmss_details[fac].multiplier
                 sp_d[st_max] = max(pmss_data[pmss_details[fac].col]) * pmss_details[fac].multiplier
                 sp_data.append(sp_d)
-            for h in range(len(shortfall)):
-                if shortfall[h] < 0:
-                    tml += pmss_data[load_col][h] * pmss_details['Load'].multiplier
-                else:
-                    tml += pmss_data[load_col][h] * pmss_details['Load'].multiplier - shortfall[h]
+       #     for h in range(len(shortfall)):
+        #        if shortfall[h] < 0:
+         #           tml += pmss_data[load_col][h] * pmss_details['Load'].multiplier
+          #      else:
+           #         tml += pmss_data[load_col][h] * pmss_details['Load'].multiplier - shortfall[h]
         if option not in ['O', '1', 'B']:
             self.progressbar.setValue(6)
             QtWidgets.QApplication.processEvents()
