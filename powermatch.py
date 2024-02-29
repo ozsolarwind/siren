@@ -1709,6 +1709,7 @@ class powerMatch(QtWidgets.QWidget):
                             pass
 
         self.setStatus('')
+        msg = ''
         ts = None
         it = self.file_labels.index(self.sender().text())
         if it == C and self.constraints is not None:
@@ -1745,6 +1746,7 @@ class powerMatch(QtWidgets.QWidget):
             dialog.exec_()
             if dialog.getValues() is not None:
                 update_dictionary(it, dialog.getValues())
+                msg = ' table updated'
         elif it == G: # generators
             if self.generators is None:
                 try:
@@ -1772,6 +1774,7 @@ class powerMatch(QtWidgets.QWidget):
             if dialog.getValues() is not None:
                 update_dictionary(it, dialog.getValues())
                 self.setOrder()
+                msg = ' table updated'
         elif it == O: # self.optimisation
             if self.optimisation is None:
                 try:
@@ -1797,6 +1800,7 @@ class powerMatch(QtWidgets.QWidget):
                         self.optimisation[key].capacity_min = 0
                         self.optimisation[key].capacity_max = round(cap_max, 3)
                         self.optimisation[key].capacity_step = None
+                msg = ' table updated'
         if ts is not None:
             ts.close()
             del ts
@@ -1806,7 +1810,12 @@ class powerMatch(QtWidgets.QWidget):
                 self.files[it].setText(newfile[len(self.scenarios):])
             else:
                 self.files[it].setText(newfile)
-            self.setStatus(self.file_labels[it] + ' spreadsheet changed.')
+            if msg == '':
+                msg = ' table exported'
+            else:
+                msg += ' and exported'
+        if msg != '':
+            self.setStatus(self.file_labels[it] + msg)
 
     def getConstraints(self, ws):
         if ws is None:
