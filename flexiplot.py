@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2020-2023 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2020-2024 Sustainable Energy Now Inc., Angus King
 #
 #  flexiplot.py - This file is possibly part of SIREN.
 #
@@ -40,19 +40,8 @@ from credits import fileVersion
 from editini import EditSect, SaveIni
 from getmodels import getModelFile
 from powerplot import MyQDialog, ChangeFontProp
-from senutils import ClickableQLabel, getParents, getUser, ListWidget, strSplit, techClean, WorkBook
+from senutils import ClickableQLabel, getParents, getUser, ListWidget, ssCol, strSplit, techClean, WorkBook
 from zoompan import ZoomPanX
-
-col_letters = ' ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-def ss_col(col, base=0):
-    if base == 1:
-        col -= 1
-    c1 = 0
-    c2, c3 = divmod(col, 26)
-    c3 += 1
-    if c2 > 26:
-        c1, c2 = divmod(c2, 26)
-    return (col_letters[c1] + col_letters[c2] + col_letters[c3]).strip()
 
 def get_range(text, alphabet=None, base=0):
     if len(text) < 1:
@@ -881,7 +870,7 @@ class FlexiPlot(QtWidgets.QWidget):
         elif rocox[0] == rocox[2]:
             data_in_cols = False
         if data_in_cols:
-            ttr = 'Col ' + ss_col(rocox[1])
+            ttr = 'Col ' + ssCol(rocox[1], base=0)
             fields = ['Row']
             if rocox[2] >= ws.nrows:
                 rocox[2] = ws.nrows - 1
@@ -893,7 +882,7 @@ class FlexiPlot(QtWidgets.QWidget):
             if rocox[3] >= ws.ncols:
                 rocox[3] = ws.ncols - 1
             for col in range(rocox[1], rocox[3] + 1):
-                labels[ss_col(col)] = str(ws.cell_value(rocox[0], col))
+                labels[ssCol(col, base=0)] = str(ws.cell_value(rocox[0], col))
         fields.append(ttr)
         dialog = displaytable.Table(labels, title='Series labels', fields=fields)
         dialog.exec_()
@@ -1192,7 +1181,7 @@ class FlexiPlot(QtWidgets.QWidget):
                         miny = min(miny, data[-1][-1])
                         maxy = max(maxy, data[-1][-1])
                     except:
-                        self.log.setText('Data in cell ' + ss_col(col) + str(row + 1) + ' seems wrong - ' + data[-1][-1])
+                        self.log.setText('Data in cell ' + ssCol(col, base=0) + str(row + 1) + ' seems wrong - ' + data[-1][-1])
                         return
             else:
                 for col in range(rocox[1], rocox[3] + 1):
@@ -1204,7 +1193,7 @@ class FlexiPlot(QtWidgets.QWidget):
                         miny = min(miny, data[-1][-1])
                         maxy = max(maxy, data[-1][-1])
                     except:
-                        self.log.setText('Data in cell ' + ss_col(col) + str(row + 1) + ' seems wrong - ' + data[-1][-1])
+                        self.log.setText('Data in cell ' + ssCol(col, base=0) + str(row + 1) + ' seems wrong - ' + data[-1][-1])
                         return
         if self.gridtype.currentText() == 'Both':
             gridtype = 'both'

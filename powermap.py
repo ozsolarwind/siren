@@ -22,6 +22,7 @@
 
 import csv
 import math
+import openpyxl as oxl
 import os
 import sys
 import time
@@ -45,7 +46,7 @@ import displayobject
 import newstation
 from plotweather import PlotWeather
 from powermodel import PowerModel
-from senutils import getParents, getUser, techClean
+from senutils import getParents, getUser, ssCol, techClean
 from station import Station, Stations
 from wascene import WAScene
 from editini import EdtDialog, EditFileSections, EditTech, EditSect, SaveIni
@@ -62,7 +63,6 @@ from sirenicons import Icons
 def p2str(p):
     return '(%.4f,%.4f)' % (p.y(), p.x())
 
-
 def find_shortest(coords1, coords2):
 #               dist,  lat, lon, itm, prev_item
     shortest = [99999, -1., -1., -1, -1]
@@ -75,6 +75,7 @@ def find_shortest(coords1, coords2):
             shortest.append(i)
             shortest.append(ls)
     return shortest
+
 
 class Location(QtWidgets.QDialog):
     def __init__(self, upper_left, lower_right, parent=None):
@@ -849,7 +850,7 @@ class MainWindow(QtWidgets.QMainWindow):
         except:
             self.scenario = ''
         str1 = self.scenarios_filter[:-1]   # a bit of mucking about to remove duplicate leading/trailing chars
-        str2 = QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'yyyy-MM-dd_hhmm') + '.xls'
+        str2 = QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'yyyy-MM-dd_hhmm') + '.xlsx'
         ndx = 0
         for i in range(len(str1)):
             if str1[-i:] == str2[:i]:
@@ -3184,7 +3185,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if scenario[-4:] == '.csv' or scenario[-4:] == '.xls' or scenario[-5:] == '.xlsx':
             pass
         else:
-            the_scenario += '.xls'
+            the_scenario += '.xlsx'
         if not os.path.exists(self.scenarios): # create scenarios folder if missing
             os.mkdir(self.scenarios)
         elif os.path.exists(self.scenarios + the_scenario):
@@ -3241,7 +3242,7 @@ class MainWindow(QtWidgets.QMainWindow):
                         upd_writer.writerow(new_line)
                         ctr += 1
             upd_file.close()
-        else:
+        elif the_scenario[-4:] == '.xls':
             wb = xlwt.Workbook()
             fnt = xlwt.Font()
             fnt.bold = True
@@ -3284,6 +3285,60 @@ class MainWindow(QtWidgets.QMainWindow):
             ws.set_horz_split_pos(1 - d)  # in general, freeze after last heading row
             ws.set_remove_splits(True)  # if user does unfreeze, don't leave a split there
             wb.save(self.scenarios + the_scenario)
+        else: # .xlsx
+            wb = oxl.Workbook()
+            ws = wb.active
+            iam = the_scenario[:the_scenario.find('.')]
+            for ch in ['\\' , '/' , '*' , '?' , ':' , '[' , ']']:
+                if ch in iam:
+                    iam = iam.replace(ch, '_')
+            if len(iam) > 31:
+                iam = iam[:31]
+            ws.title = iam
+            lens = []
+            for i in range(len(field_names)):
+                lens.append(len(field_names[i]))
+            normal = oxl.styles.Font(name='Arial', size='10')
+            d = 0
+            if description != '':
+                ws.cell(row=ctr + 1, column=1).value = 'Description:'
+                ws.cell(row=ctr + 1, column=1).font = normal
+                i = 0
+                r = 0
+                while i >= 0:
+                    r += 1
+                    i = description.find('\n', i + 1)
+                ws.cell(row=ctr + 1, column=2).value = description
+                ws.cell(row=ctr + 1, column=2).font = normal
+                ws.merge_cells('B1:I1')
+                if r > 1:
+                    ws.cell(row=ctr + 1, column=1).alignment = oxl.styles.Alignment(vertical='center')
+                    ws.cell(row=ctr + 1, column=2).alignment = oxl.styles.Alignment(wrap_text=True,
+                      vertical='bottom')
+                    ws.row_dimensions[1].height = 12 * r
+                d = -1
+                ctr += 1
+            for i in range(len(field_names)):
+                ws.cell(row=ctr + 1, column=i + 1).value = field_names[i]
+                ws.cell(row=ctr + 1, column=i + 1).font = normal
+            for stn in self.view.scene()._stations.stations:
+                if stn.scenario != 'Existing':
+                    if stn.scenario == scenario or stn.scenario == the_scenario:
+                        ctr += 1
+                        for f in range(len(fields)):
+                            try:
+                                attr = getattr(stn, fields[f])
+                                ws.cell(row=ctr + 1, column=f + 1).value = attr
+                                ws.cell(row=ctr + 1, column=f + 1).font = normal
+                                lens[f] = max(lens[f], len(str(attr)))
+                            except:
+                                ws.cell(row=ctr + 1, column=f + 1).value = field_empty[f]
+                                ws.cell(row=ctr + 1, column=f + 1).font = normal
+            for cl in range(len(lens)):
+                ws.column_dimensions[ssCol(cl + 1)].width = lens[cl]
+            ws.freeze_panes = 'A' + str(2 - d)
+            wb.save(self.scenarios + the_scenario)
+            wb.close()
         if self.floatstatus and self.log_status:
             self.floatstatus.log('Saved %s station(s) to %s' % (str(ctr + d), the_scenario))
 

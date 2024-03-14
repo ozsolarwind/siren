@@ -39,7 +39,7 @@ import xlwt
 
 import configparser  # decode .ini file
 
-from senutils import getParents, getUser, techClean
+from senutils import getParents, getUser, ssCol, techClean
 import displayobject
 import displaytable
 from editini import SaveIni
@@ -235,6 +235,8 @@ class PowerModel():
                     mng.resize(*mng.window.maxsize())
             if self.plots['block']:
                 plt.show(block=True)
+                if matplotlib.__version__ > '3.5.1':
+                    plt.waitforbuttonpress()
             else:
                 plt.draw()
 
@@ -406,6 +408,8 @@ class PowerModel():
                     mng.resize(*mng.window.maxsize())
             if self.plots['block']:
                 plt.show(block=True)
+                if matplotlib.__version__ > '3.5.1':
+                    plt.waitforbuttonpress()
             else:
                 plt.draw()
 
@@ -778,6 +782,7 @@ class PowerModel():
                                     titl += stn.scenario + '; '
                             try:
                                 titl = titl[:-2]
+                                titl = titl.replace('.xlsx', '')
                                 titl = titl.replace('.xls', '')
                                 ws.cell(row=row, column=col).value = titl
                             except:
@@ -1437,6 +1442,8 @@ class PowerModel():
             f = zp.zoom_pan(hx, base_scale=1.2) # enable scrollable zoom
             if self.plots['block']:
                 plt.show(block=True)
+                if matplotlib.__version__ > '3.5.1':
+                    plt.waitforbuttonpress()
             else:
                 plt.draw()
             del zp
@@ -1610,6 +1617,8 @@ class PowerModel():
                     mng.resize(*mng.window.maxsize())
             if self.plots['block']:
                 plt.show(block=True)
+                if matplotlib.__version__ > '3.5.1':
+                    plt.waitforbuttonpress()
             else:
                 plt.draw()
             del zp
@@ -1703,6 +1712,8 @@ class PowerModel():
                     mng.resize(*mng.window.maxsize())
             if self.plots['block']:
                 plt.show(block=True)
+                if matplotlib.__version__ > '3.5.1':
+                    plt.waitforbuttonpress()
             else:
                 plt.draw()
             if self.do_load:
@@ -1785,6 +1796,8 @@ class PowerModel():
                         mng.resize(*mng.window.maxsize())
             if self.plots['block']:
                 plt.show(block=True)
+                if matplotlib.__version__ > '3.5.1':
+                    plt.waitforbuttonpress()
             else:
                 plt.draw()
         if not self.plots['block']:
@@ -1870,6 +1883,8 @@ class PowerModel():
                     else:
                         mng.resize(*mng.window.maxsize())
                 plt.show(block=True)
+                if matplotlib.__version__ > '3.5.1':
+                    plt.waitforbuttonpress()
                 h_storage = [-(shortfall[0][-1] / len(shortfall[0]))]  # average shortfall
                 for s in range(1, self.iterations + 1):
                     for i in range(len(self.x)):
@@ -1942,6 +1957,8 @@ class PowerModel():
                     else:
                         mng.resize(*mng.window.maxsize())
                 plt.show(block=True)
+                if matplotlib.__version__ > '3.5.1':
+                    plt.waitforbuttonpress()
                 for i in range(0, len(load)):
                     shortfall[0][i] = rgen[i] - load[i]
                 for s in range(1, self.iterations + 1):
@@ -1982,6 +1999,8 @@ class PowerModel():
                     else:
                         mng.resize(*mng.window.maxsize())
                 plt.show(block=True)
+                if matplotlib.__version__ > '3.5.1':
+                    plt.waitforbuttonpress()
             else:
                 for i in range(0, len(load)):
                     shortfall[0][i] = rgen[i] - load[i]
@@ -2141,6 +2160,8 @@ class PowerModel():
                     mng.resize(*mng.window.maxsize())
             if self.plots['block']:
                 plt.show(block=True)
+                if matplotlib.__version__ > '3.5.1':
+                    plt.waitforbuttonpress()
             else:
                 plt.draw()
         if self.plots['month']:
@@ -2163,7 +2184,7 @@ class PowerModel():
           or data_file[-5:] == '.xlsx':
             pass
         else:
-            data_file += '.xls'
+            data_file += '.xlsx'
         data_file = QtWidgets.QFileDialog.getSaveFileName(None, 'Save power data file',
                     self.scenarios + data_file, 'Excel Files (*.xls*);;CSV Files (*.csv)')[0]
         if data_file == '':
@@ -2176,7 +2197,7 @@ class PowerModel():
           or data_file[-5:] == '.xlsx':
             pass
         else:
-            data_file += '.xls'
+            data_file += '.xlsx'
         if os.path.exists(data_file):
             if os.path.exists(data_file + '~'):
                 os.remove(data_file + '~')
@@ -2206,7 +2227,7 @@ class PowerModel():
                 tf.write(lines[i] + '\n')
             tf.close()
             del lines
-        else:
+        elif data_file[-4:] == '.xls':
             wb = xlwt.Workbook()
             ws = wb.add_sheet('Detail')
             ws.write(0, 0, 'Hour')
@@ -2231,6 +2252,37 @@ class PowerModel():
             ws.set_horz_split_pos(1)  # in general, freeze after last heading row
             ws.set_remove_splits(True)  # if user does unfreeze, dont leave a split there
             wb.save(data_file)
+            del wb
+        else: # .xlsx
+            wb = oxl.Workbook()
+            ws = wb.active
+            ws.title = 'Detail'
+            normal = oxl.styles.Font(name='Arial', size='10')
+            ws.cell(row=1, column=1).value = 'Hour'
+            ws.cell(row=1, column=1).font = normal
+            ws.cell(row=1, column=2).value = 'Period'
+            ws.cell(row=1, column=2).font = normal
+            for i in range(len(self.x)):
+                ws.cell(row=i + 2, column=1).value = i + 1
+                ws.cell(row=i + 2, column=1).font = normal
+                ws.cell(row=i + 2, column=2).value = the_date(the_year, i)
+                ws.cell(row=i + 2, column=2).font = normal
+            ws.column_dimensions['B'].width = 16
+            c = 3
+            for key in keys:
+                if key[:4] == 'Load' and self.load_multiplier != 0:
+                    ws.cell(row=1, column=c).value = 'Load ' + self.load_year
+                else:
+                    ws.cell(row=1, column=c).value = key
+                ws.cell(row=1, column=c).font = normal
+                ws.column_dimensions[ssCol(c)].width = len(key)
+                for r in range(len(techs[key])):
+                    ws.cell(row=r + 2, column=c).value = round(techs[key][r], 3)
+                    ws.cell(row=r + 2, column=c).font = normal
+                c += 1
+            ws.freeze_panes = 'A2'
+            wb.save(data_file)
+            wb.close()
             del wb
 
 #       __init__ for PowerModel
@@ -2531,7 +2583,7 @@ class PowerModel():
             self.stn_zone = self.model.getStnZones()
         if self.plots['save_data']:
             if self.data_file == '':
-                data_file = 'Power_Table_%s.xls' % \
+                data_file = 'Power_Table_%s.xlsx' % \
                             QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),
                             'yyyy-MM-dd_hhmm')
             else:
@@ -2888,11 +2940,11 @@ class PowerModel():
                     for l in range(len(dos)):
                         if self.data_file == '':
                             if year is None:
-                                data_file = 'Power_Detail_%s%s.xls' % ( dos[l] ,
+                                data_file = 'Power_Detail_%s%s.xlsx' % ( dos[l] ,
                                 QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),
                                 'yyyy-MM-dd_hhmm'))
                             else:
-                                data_file = 'Power_Detail_%s%s_%s.xls' % ( dos[l] , str(year),
+                                data_file = 'Power_Detail_%s%s_%s.xlsx' % ( dos[l] , str(year),
                                 QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),
                                 'yyyy-MM-dd_hhmm'))
                         else:

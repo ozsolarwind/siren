@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-#  Copyright (C) 2019-2023 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2019-2024 Sustainable Energy Now Inc., Angus King
 #
 #  powerplot.py - This file is possibly part of SIREN.
 #
@@ -38,21 +38,10 @@ from credits import fileVersion
 from displaytable import Table
 from editini import EdtDialog, SaveIni
 from getmodels import getModelFile
-from senutils import ClickableQLabel, getParents, getUser, ListWidget, strSplit, techClean, WorkBook
+from senutils import ClickableQLabel, getParents, getUser, ListWidget, ssCol, strSplit, techClean, WorkBook
 from zoompan import ZoomPanX
 
 mth_labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-col_letters = ' ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-def ss_col(col, base=0):
-    if base == 1:
-        col -= 1
-    c1 = 0
-    c2, c3 = divmod(col, 26)
-    c3 += 1
-    if c2 > 26:
-        c1, c2 = divmod(c2, 26)
-    return (col_letters[c1] + col_letters[c2] + col_letters[c3]).strip()
-
 
 class MyQDialog(QtWidgets.QDialog):
     ignoreEnter = True
@@ -275,7 +264,13 @@ class PowerPlot(QtWidgets.QWidget):
         tgt = tgt.strip()
         tgt = tgt.lstrip('_')
         if tgt == item.lower():
-            return self.colours[item.lower()]
+            if item.lower() in self.colours:
+                return self.colours[item.lower()]
+            else:
+                try:
+                    return self.colours[item.lower().replace('_', ' ')]
+                except:
+                    return None
         else:
             return self.colours[tgt.strip()] + self.alphahex
 
@@ -1421,7 +1416,9 @@ class PowerPlot(QtWidgets.QWidget):
             return True
         except:
             pass
-        colr2 = colr.replace(' ', '_')
+        colr2 = colr.replace('_', ' ')
+        if colr2 in self.colours.keys():
+            return True
         if config is not None:
             try:
                 amap = config.get('Map', 'map_choice')
@@ -1723,7 +1720,7 @@ class PowerPlot(QtWidgets.QWidget):
                                     maxy = max(maxy, data[-1][-1])
                                     miny = min(miny, data[-1][-1])
                                 except:
-                                    self.log.setText("Invalid data - '" + column + "' (" + ss_col(c2) + ') row ' + str(row + 1) + " is '" + str(data[-1][-1]) + "'")
+                                    self.log.setText("Invalid data - '" + column + "' (" + ssCol(c2, base=0) + ') row ' + str(row + 1) + " is '" + str(data[-1][-1]) + "'")
                                     return
                 for breakdown in breakdowns[1:]:
                     for c in range(self.order.count() -1, -1, -1):
@@ -1750,7 +1747,7 @@ class PowerPlot(QtWidgets.QWidget):
                                         maxy = max(maxy, data[-1][-1])
                                         miny = min(miny, data[-1][-1])
                                     except:
-                                        self.log.setText("Invalid data - '" + column + "' (" + ss_col(c2) + ') row ' + str(row + 1) + " is '" + str(data[-1][-1]) + "'")
+                                        self.log.setText("Invalid data - '" + column + "' (" + ssCol(c2, base=0) + ') row ' + str(row + 1) + " is '" + str(data[-1][-1]) + "'")
                                         return
             else:
                 for c in range(self.order.count() -1, -1, -1):
@@ -1771,7 +1768,7 @@ class PowerPlot(QtWidgets.QWidget):
                                     maxy = max(maxy, data[-1][-1])
                                     miny = min(miny, data[-1][-1])
                                 except:
-                                    self.log.setText("Invalid data - '" + column + "' (" + ss_col(c2) + ') row ' + str(row + 1) + " is '" + str(data[-1][-1]) + "'")
+                                    self.log.setText("Invalid data - '" + column + "' (" + ssCol(c2, base=0) + ') row ' + str(row + 1) + " is '" + str(data[-1][-1]) + "'")
                                     return
                             break
             if tgt_col >= 0:

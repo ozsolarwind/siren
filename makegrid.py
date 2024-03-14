@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2023 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2024 Sustainable Energy Now Inc., Angus King
 #
 #  makegrid.py - This file is part of SIREN.
 #
@@ -19,16 +19,19 @@
 #  <http://www.gnu.org/licenses/>.
 #
 
+import openpyxl as oxl
 import os
 import sys
+import time
 from PyQt5 import QtCore, QtGui, QtWidgets
 import configparser   # decode .ini file
 import xlwt
 
 import displayobject
 from credits import fileVersion
+from floaters import ProgressBar
 from getmodels import getModelFile
-from senutils import ClickableQLabel, getParents, getUser
+from senutils import ClickableQLabel, getParents, getUser, ssCol
 
 
 class makeFile():
@@ -39,7 +42,19 @@ class makeFile():
     def getLog(self):
         return self.log, self.property
 
-    def __init__(self, src_year, src_dir, wnd_dir, tgt_fil, detail='Daily By Month', rain='', nonzero='False'):
+    def show_progress(self, msg):
+        if self.his_log is None:
+            return
+        tim = time.time() - self.started
+        if tim < 60:
+            tim = '%.1f secs' % tim
+        else:
+            hhmm = tim / 60.
+            tim = f'{int(hhmm)}:{int((hhmm-int(hhmm))*60.):0>2} mins'
+        self.his_log.setText(f'{msg} ({tim})')
+        QtWidgets.QApplication.processEvents()
+
+    def __init__(self, src_year, src_dir, wnd_dir, tgt_fil, detail='Daily By Month', rain='', nonzero='False', log=None):
         config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
@@ -80,6 +95,9 @@ class makeFile():
                 if periods[i][0] == seasons[j][0]:
                     periods[i][0] += '2'
                     break
+        self.his_log = log
+        self.started = time.time()
+        self.show_progress('Collecting solar data')
         self.log = ''
         self.property = ''
         self.src_year = src_year
@@ -263,6 +281,7 @@ class makeFile():
                 if self.daily:
                     daily_values[key] = vald
 # now get 50m wind speed
+        self.show_progress('Collected solar data')
         fils = os.listdir(self.wind_dir)
         val_col = the_cols.index('Wind @ 50m')
         wind_values = {}
@@ -369,6 +388,7 @@ class makeFile():
                                     wind_error = True
                                     self.log += 'Wind value missing: ' + key + '-' + str(mth) + '-' + str(dy) + ' ' + str(hr)
                                 daily_values[key][hr][dy][val_col] = 0.
+        self.show_progress('Collected wind data')
 # and possibly rain if we haven't already got it
         if self.do_rain and col[the_cols.index('Rainfall')] < 0:
             fils = os.listdir(self.rain_dir)
@@ -476,9 +496,285 @@ class makeFile():
                                     daily_values[key][hr][dy][val_col] = daily_rain_values[key][hr][dy]
                                 except:
                                     daily_values[key][hr][dy][val_col] = 0.
+            self.show_progress('Collected rainfall data')
         self.property = 'resource_grid=' + tgt_fil
         self.property = tgt_fil
-        if tgt_fil[-4:] == '.xls' or tgt_fil[-5:] == '.xlsx':
+        if tgt_fil[-5:] == '.xlsx':
+            yr_ndx = tgt_fil.rfind(self.src_year) + 4
+            if yr_ndx < 4:
+                yr_ndx = tgt_fil.rfind('.') - 1
+            wb = oxl.Workbook()
+            normal = oxl.styles.Font(name='Arial', size='10')
+            bold = oxl.styles.Font(name='Arial', bold=True, size='10')
+            ws = wb.active
+            ws.title = self.src_year
+            ws.cell(row=1, column=1).value = 'Latitude'
+            ws.cell(row=1, column=1).font = normal
+            ws.cell(row=1, column=2).value = 'Longitude'
+            ws.cell(row=1, column=2).font = normal
+            ws.cell(row=1, column=3).value = 'Period'
+            ws.cell(row=1, column=3).font = normal
+            per_len = 6
+            for i in range(len(the_cols)):
+                if drop_rainfall:
+                    if i == the_cols.index('Rainfall'):
+                        continue
+                ws.cell(row=1, column=i + 4).value = the_cols[i]
+                ws.cell(row=1, column=i + 4).font = normal
+            row = 3   # allow two rows for min & max
+            for key in all_values:
+                where = key.split('_')
+                value = all_values[key]
+                for i in range(len(value)):
+                    ws.cell(row=row + 1, column=1).value = where[0]
+                    ws.cell(row=row + 1, column=1).font = normal
+                    ws.cell(row=row + 1, column=2).value = where[1]
+                    ws.cell(row=row + 1, column=2).font = normal
+                    ws.cell(row=row + 1, column=3).value = where[2] + '-' + '{0:02d}'.format(i + 1)
+                    ws.cell(row=row + 1, column=3).font = normal
+                    for j in range(len(value[i])):
+                        if drop_rainfall:
+                            if j == the_cols.index('Rainfall'):
+                                continue
+                        valu = round(value[i][j] / (the_days[i] * the_hrs[j]), 1)
+                        ws.cell(row=row + 1, column=j + 4).value = valu
+                        ws.cell(row=row + 1, column=j + 4).font = normal
+                        if col_min[0][j] == None or valu < col_min[0][j]:
+                            if (self.nonzero and valu > 0) or j == the_cols.index('Temperature'):
+                                col_min[0][j] = valu
+                        if valu > col_max[0][j]:
+                            col_max[0][j] = valu
+                    row += 1
+                for j in range(len(seasons)):
+                    ws.cell(row=row + 1, column=1).value = where[0]
+                    ws.cell(row=row + 1, column=1).font = normal
+                    ws.cell(row=row + 1, column=2).value = where[1]
+                    ws.cell(row=row + 1, column=2).font = normal
+                    ssn = where[2] + '-' + seasons[j][0]
+                    per_len = max(per_len, len(ssn))
+                    ws.cell(row=row + 1, column=3).value = ssn
+                    ws.cell(row=row + 1, column=3).font = normal
+                    valu = []
+                    days = 0
+                    for k in range(len(the_cols)):
+                        valu.append(0)
+                    for k in range(1, len(seasons[j])):
+                        for l in range(len(the_cols)):
+                            valu[l] += value[seasons[j][k]][l]
+                        days += the_days[seasons[j][k]]
+                    for k in range(len(valu)):
+                        if drop_rainfall:
+                            if k == the_cols.index('Rainfall'):
+                                continue
+                        val = round(valu[k] / (days * the_hrs[k]), 1)
+                        ws.cell(row=row + 1, column=k + 4).value = val
+                        ws.cell(row=row + 1, column=k + 4).font = normal
+                    row += 1
+                for j in range(len(periods)):
+                    ws.cell(row=row + 1, column=1).value = where[0]
+                    ws.cell(row=row + 1, column=1).font = normal
+                    ws.cell(row=row + 1, column=2).value = where[1]
+                    ws.cell(row=row + 1, column=2).font = normal
+                    ssn = where[2] + '-' + periods[j][0]
+                    per_len = max(per_len, len(ssn))
+                    ws.cell(row=row + 1, column=3).value = ssn
+                    ws.cell(row=row + 1, column=3).font = normal
+                    valu = []
+                    days = 0
+                    for k in range(len(the_cols)):
+                        valu.append(0)
+                    for k in range(1, len(periods[j])):
+                        for l in range(len(the_cols)):
+                            valu[l] += value[periods[j][k]][l]
+                        days += the_days[periods[j][k]]
+                    for k in range(len(valu)):
+                        if drop_rainfall:
+                            if k == the_cols.index('Rainfall'):
+                                continue
+                        val = round(valu[k] / (days * the_hrs[k]), 1)
+                        ws.cell(row=row + 1, column=k + 4).value = val
+                        ws.cell(row=row + 1, column=k + 4).font = normal
+                    row += 1
+                ws.cell(row=row + 1, column=1).value = where[0]
+                ws.cell(row=row + 1, column=1).font = normal
+                ws.cell(row=row + 1, column=2).value = where[1]
+                ws.cell(row=row + 1, column=2).font = normal
+                ws.cell(row=row + 1, column=3).value = where[2]
+                ws.cell(row=row + 1, column=3).font = normal
+                valu = []
+                for k in range(len(the_cols)):
+                    valu.append(0)
+                for k in range(12):
+                    for l in range(len(the_cols)):
+                        valu[l] += value[k][l]
+                for k in range(len(valu)):
+                    if drop_rainfall:
+                        if k == the_cols.index('Rainfall'):
+                            continue
+                    val = round(valu[k] / (365 * the_hrs[k]), 1)
+                    ws.cell(row=row + 1, column=k + 4).value = val
+                    ws.cell(row=row + 1, column=k + 4).font = normal
+                row += 1
+            row = 1
+            ws.cell(row=row + 1, column=3).value = 'Min.'
+            ws.cell(row=row + 1, column=3).font = normal
+            ws.cell(row=row + 2, column=3).value = 'Max.'
+            ws.cell(row=row + 2, column=3).font = normal
+            for j in range(len(col_min[0])):   # n values
+                if drop_rainfall:
+                    if j == the_cols.index('Rainfall'):
+                        continue
+                if col_min[0][j] == None:
+                    ws.cell(row=row + 1, column=j + 4).value = 0.
+                else:
+                    ws.cell(row=row + 1, column=j + 4).value = round(col_min[0][j], 1)
+                ws.cell(row=row + 1, column=j + 4).font = normal
+                ws.cell(row=row + 2, column=j + 4).value = round(col_max[0][j], 1)
+                ws.cell(row=row + 2, column=j + 4).font = normal
+            lens = [8, 9, per_len + 1]
+            for i in range(len(the_cols)):
+                lens.append(len(the_cols[i]))
+            for c in range(len(lens)):
+                ws.column_dimensions[ssCol(c + 1)].width = lens[c]
+            ws.freeze_panes = 'A4'
+            wb.save(tgt_fil)
+            wb.close()
+            self.show_progress(f"Produced {tgt_fil[tgt_fil.rfind('/') + 1:]}")
+            if self.hourly:
+                for m in range(12):
+                    wb = oxl.Workbook()
+                    ws = wb.active
+                    ws.title = self.src_year + '-{0:02d}'.format(m + 1)
+                    ws.cell(row=1, column=1).value = 'Latitude'
+                    ws.cell(row=1, column=1).font = normal
+                    ws.cell(row=1, column=2).value = 'Longitude'
+                    ws.cell(row=1, column=2).font = normal
+                    ws.cell(row=1, column=3).value = 'Period'
+                    ws.cell(row=1, column=3).font = normal
+                    per_len = 13
+                    for i in range(len(the_cols)):
+                        if drop_rainfall:
+                            if i == the_cols.index('Rainfall'):
+                                continue
+                        ws.cell(row=1, column=i + 4).value = the_cols[i]
+                        ws.cell(row=1, column=i + 4).font = normal
+                    row = 1
+                    ws.cell(row=row + 1, column=3).value = 'Min.'
+                    ws.cell(row=row + 1, column=3).font = normal
+                    ws.cell(row=row + 2, column=3).value = 'Max.'
+                    ws.cell(row=row + 2, column=3).font = normal
+                    for j in range(len(col_min[1])):  # n values
+                        if drop_rainfall:
+                            if j == the_cols.index('Rainfall'):
+                                continue
+                        if col_min[1][j] == None:
+                            ws.cell(row=row + 1, column=j + 4).value = 0.
+                        else:
+                            ws.cell(row=row + 1, column=j + 4).value = round(col_min[1][j], 1)
+                        ws.cell(row=row + 1, column=j + 4).font = normal
+                        ws.cell(row=row + 2, column=j + 4).value = round(col_max[1][j], 1)
+                        ws.cell(row=row + 2, column=j + 4).font = normal
+                    row += 2
+                    for key in hrly_values:
+                        where = key.split('_')
+                        valueh = hrly_values[key]
+                        for h in range(len(valueh)):  # 24 hours
+                            ws.cell(row=row + 1, column=1).value = where[0]
+                            ws.cell(row=row + 1, column=1).font = normal
+                            ws.cell(row=row + 1, column=2).value = where[1]
+                            ws.cell(row=row + 1, column=2).font = normal
+                            ws.cell(row=row + 1, column=3).value = where[2] + '-' \
+                                    + '{0:02d}'.format(m + 1) + '_{0:02d}'.format(h + 1) + ':00'
+                            ws.cell(row=row + 1, column=3).font = normal
+                            for j in range(len(valueh[0][m])):  # n values
+                                if drop_rainfall:
+                                    if j == the_cols.index('Rainfall'):
+                                        continue
+                                valu = round(valueh[h][m][j] / the_days[m], 1)  # need to multiply by 24
+                                ws.cell(row=row + 1, column=j + 4).value = valu
+                                ws.cell(row=row + 1, column=j + 4).font = normal
+                            row += 1
+                    lens = [8, 9, per_len + 1]
+                    for i in range(len(the_cols)):
+                        lens.append(len(the_cols[i]))
+                    for c in range(len(lens)):
+                        ws.column_dimensions[ssCol(c + 1)].width = lens[c]
+                    ws.freeze_panes = 'A4'
+                    tgt = tgt_fil[:yr_ndx] + '-{0:02d}'.format(m + 1) + tgt_fil[yr_ndx:]
+                    wb.save(tgt)
+                    wb.close()
+                    self.show_progress(f"Produced {tgt[tgt.rfind('/') + 1:]}")
+            if self.daily:
+                mth = 0
+                d = 0
+                for dy in range(365):
+                    wb = oxl.Workbook()
+                    ws = wb.active
+                    if ((dy + 1) * 24) > the_hour[mth + 1]:
+                        mth += 1
+                        d = 0
+                    d += 1
+                    ws.title = self.src_year + '-{0:02d}'.format(mth + 1) + '-{0:02d}'.format(d)
+                    ws = wb.add_sheet(sht)
+                    ws.cell(row=1, column=1).value = 'Latitude'
+                    ws.cell(row=1, column=1).font = normal
+                    ws.cell(row=1, column=2).value = 'Longitude'
+                    ws.cell(row=1, column=2).font = normal
+                    ws.cell(row=1, column=3).value = 'Period'
+                    ws.cell(row=1, column=3).font = normal
+                    per_len = 17
+                    for i in range(len(the_cols)):
+                        if drop_rainfall:
+                            if i == the_cols.index('Rainfall'):
+                                continue
+                        ws.write(0, i + 3, the_cols[i])
+                    row = 1
+                    ws.cell(row=row + 1, column=3).value = 'Min.'
+                    ws.cell(row=row + 1, column=3).font = normal
+                    ws.cell(row=row + 2, column=3).value = 'Max.'
+                    ws.cell(row=row + 2, column=3).font = normal
+                    for j in range(len(col_min[1])):  # n values
+                        if drop_rainfall:
+                            if j == the_cols.index('Rainfall'):
+                                continue
+                        if col_min[1][j] == None:
+                            ws.cell(row=row + 1, column=j + 4).value = 0.
+                        else:
+                            ws.cell(row=row + 1, column=j + 4).value = round(col_min[1][j], 1)
+                        ws.cell(row=row + 1, column=j + 4).font = normal
+                        ws.cell(row=row + 2, column=j + 4).value = round(col_max[1][j], 1)
+                        ws.cell(row=row + 2, column=j + 4).font = normal
+                    row += 2
+                    for key in daily_values:
+                        where = key.split('_')
+                        valueh = daily_values[key]
+                        for h in range(len(valueh)):  # 24 hours
+                            ws.cell(row=row + 1, column=1).value = where[0]
+                            ws.cell(row=row + 1, column=1).font = normal
+                            ws.cell(row=row + 1, column=2).value = where[1]
+                            ws.cell(row=row + 1, column=2).font = normal
+                            ws.cell(row=row + 1, column=3).value = where[2] + '-{0:02d}'.format(mth + 1) \
+                                     + '-{0:02d}'.format(d) + '_{0:02d}'.format(h + 1) + ':00'
+                            ws.cell(row=row + 1, column=3).font = normal
+                            for j in range(len(valueh[0][dy])):  # n values
+                                if drop_rainfall:
+                                    if j == the_cols.index('Rainfall'):
+                                        continue
+                                valu = round(valueh[h][dy][j], 1)
+                                ws.cell(row=row + 1, column=j + 4).value = valu
+                                ws.cell(row=row + 1, column=j + 4).font = normal
+                            row += 1
+                    lens = [8, 9, per_len + 1]
+                    for i in range(len(the_cols)):
+                        lens.append(len(the_cols[i]))
+                    for c in range(len(lens)):
+                        ws.column_dimensions[ssCol(c + 1)].width = lens[c]
+                    ws.freeze_panes = 'A4'
+                    tgt = tgt_fil[:yr_ndx] + '-{0:02d}'.format(mth + 1) + '-{0:02d}'.format(d) + tgt_fil[yr_ndx:]
+                    wb.save(tgt)
+                    self.show_progress(f"Produced {tgt[tgt.rfind('/') + 1:]}")
+                    wb.close()
+        elif tgt_fil[-4:] == '.xls':
             yr_ndx = tgt_fil.rfind(self.src_year) + 4
             if yr_ndx < 4:
                 yr_ndx = tgt_fil.rfind('.') - 1
@@ -594,9 +890,10 @@ class makeFile():
                 if lens[c] * 275 > ws.col(c).width:
                     ws.col(c).width = lens[c] * 275
             ws.set_panes_frozen(True)  # frozen headings instead of split panes
-            ws.set_horz_split_pos(1)  # in general, freeze after last heading row
+            ws.set_horz_split_pos(3)  # in general, freeze after last heading row
             ws.set_remove_splits(True)  # if user does unfreeze, don't leave a split there
             wb.save(tgt_fil)
+            self.show_progress(f"Produced {tgt_fil[tgt_fil.rfind('/') + 1:]}")
             if self.hourly:
                 for m in range(12):
                     wb = xlwt.Workbook()
@@ -609,7 +906,7 @@ class makeFile():
                     ws.write(0, 0, 'Latitude')
                     ws.write(0, 1, 'Longitude')
                     ws.write(0, 2, 'Period')
-                    per_len = 6
+                    per_len = 13
                     for i in range(len(the_cols)):
                         if drop_rainfall:
                             if i == the_cols.index('Rainfall'):
@@ -650,10 +947,11 @@ class makeFile():
                         if lens[c] * 275 > ws.col(c).width:
                             ws.col(c).width = lens[c] * 275
                     ws.set_panes_frozen(True)  # frozen headings instead of split panes
-                    ws.set_horz_split_pos(1)  # in general, freeze after last heading row
+                    ws.set_horz_split_pos(3)  # in general, freeze after last heading row
                     ws.set_remove_splits(True)  # if user does unfreeze, don't leave a split there
                     tgt = tgt_fil[:yr_ndx] + '-{0:02d}'.format(m + 1) + tgt_fil[yr_ndx:]
                     wb.save(tgt)
+                    self.show_progress(f"Produced {tgt[tgt.rfind('/') + 1:]}")
             if self.daily:
                 mth = 0
                 d = 0
@@ -672,7 +970,7 @@ class makeFile():
                     ws.write(0, 0, 'Latitude')
                     ws.write(0, 1, 'Longitude')
                     ws.write(0, 2, 'Period')
-                    per_len = 6
+                    per_len = 17
                     for i in range(len(the_cols)):
                         if drop_rainfall:
                             if i == the_cols.index('Rainfall'):
@@ -713,10 +1011,11 @@ class makeFile():
                         if lens[c] * 275 > ws.col(c).width:
                             ws.col(c).width = lens[c] * 275
                     ws.set_panes_frozen(True)  # frozen headings instead of split panes
-                    ws.set_horz_split_pos(1)  # in general, freeze after last heading row
+                    ws.set_horz_split_pos(3)  # in general, freeze after last heading row
                     ws.set_remove_splits(True)  # if user does unfreeze, don't leave a split there
                     tgt = tgt_fil[:yr_ndx] + '-{0:02d}'.format(mth + 1) + '-{0:02d}'.format(d) + tgt_fil[yr_ndx:]
                     wb.save(tgt)
+                    self.show_progress(f"Produced {tgt[tgt.rfind('/') + 1:]}")
         else:
             tf = open(tgt_fil, 'w')
             hdr = 'Latitude,Longitude,Period'
@@ -773,8 +1072,8 @@ class makeFile():
                     line += ',' + str(val)
                 tf.write(line + '\n')
             tf.close()
+            self.show_progress(f'Produced {tgt_fil}')
         self.log += '%s created' % tgt_fil[tgt_fil.rfind('/') + 1:]
-
 
 class getParms(QtWidgets.QWidget):
 
@@ -862,7 +1161,7 @@ class getParms(QtWidgets.QWidget):
         except:
             self.resource_grid = ''
         if self.resource_grid == '':
-            self.resource_grid = self.solarfiles + '/resource_$YEAR$.xls'
+            self.resource_grid = self.solarfiles + '/resource_$YEAR$.xlsx'
         self.grid = QtWidgets.QGridLayout()
         row = 0
         self.grid.addWidget(QtWidgets.QLabel('Year:'), row, 0)
@@ -1023,7 +1322,7 @@ class getParms(QtWidgets.QWidget):
         if newtgt != '':
             i = newtgt.rfind('.')
             if i < 0:
-                newtgt += '.xls'
+                newtgt += '.xlsx'
             self.target.setText(newtgt)
 
     def helpClicked(self):
@@ -1045,7 +1344,8 @@ class getParms(QtWidgets.QWidget):
         else:
             rain_dir = ''
         resource = makeFile(year, self.source.text(), self.wsource.text(), self.target.text(),
-                   self.detailCombo.currentText(), rain=rain_dir, nonzero=str(self.nonzero.isChecked()))
+                   self.detailCombo.currentText(), rain=rain_dir, nonzero=str(self.nonzero.isChecked()),
+                   log=self.log)
         log, prop = resource.getLog()
         self.log.setText(log)
         l = 0

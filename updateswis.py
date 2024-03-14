@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2023 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2024 Sustainable Energy Now Inc., Angus King
 #
 #  updateswis.py - This file is part of SIREN.
 #
@@ -21,6 +21,7 @@
 
 import csv
 import http.client
+import openpyxl as oxl
 import os
 import sys
 import time
@@ -31,7 +32,7 @@ import xlwt
 import displayobject
 from credits import fileVersion
 from getmodels import getModelFile
-from senutils import ClickableQLabel, getParents, getUser
+from senutils import ClickableQLabel, getParents, getUser, ssCol
 from station import Stations
 
 the_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
@@ -206,7 +207,7 @@ class makeFile():
             if self.excel[-4:] == '.csv' or self.excel[-4:] == '.xls' or self.excel[-5:] == '.xlsx':
                 pass
             else:
-                self.excel += '.xls'
+                self.excel += '.xlsx'
             if os.path.exists(self.excel):
                 if os.path.exists(self.excel + '~'):
                     os.remove(self.excel + '~')
@@ -240,7 +241,7 @@ class makeFile():
                     upd_writer.writerow(new_line)
                     ctr += 1
                 upd_file.close()
-            else:
+            elif self.excel[-45:] == '.xls':
                 wb = xlwt.Workbook()
                 fnt = xlwt.Font()
                 fnt.bold = True
@@ -288,6 +289,56 @@ class makeFile():
                 ws.set_horz_split_pos(1 - d)   # in general, freeze after last heading row
                 ws.set_remove_splits(True)   # if user does unfreeze, don't leave a split there
                 wb.save(self.excel)
+            else: # .xlsx
+                lens = []
+                for i in range(len(fields)):
+                    lens.append(len(fields[i]))
+                wb = oxl.Workbook()
+                normal = oxl.styles.Font(name='Arial') #, size='10')
+                ws = wb.active
+                ws.title = 'Existing'
+                d = 0
+                ws.cell(row=ctr + 1, column=1).value = 'Description:'
+                ws.cell(row=ctr + 1, column=1).font = normal
+                ws.cell(row=ctr + 1, column=2).value = 'SWIS Existing Stations'
+                ws.cell(row=ctr + 1, column=2).font = normal
+                ws.merge_cells('B1:I1')
+                d = -1
+                ctr += 1
+                for i in range(len(fields)):
+                    ws.cell(row=ctr + 1, column=i + 1).value = fields[i]
+                    ws.cell(row=ctr + 1, column=i + 1).font = normal
+                for stn in stations.stations:
+                    ctr += 1
+                    ws.cell(row=ctr + 1, column=1).value = stn.name
+                    lens[0] = max(lens[0], len(stn.name))
+                    ws.cell(row=ctr + 1, column=2).value = stn.technology
+                    lens[1] = max(lens[1], len(stn.technology))
+                    ws.cell(row=ctr + 1, column=3).value = stn.lat
+                    lens[2] = max(lens[2], len(str(stn.lat)))
+                    ws.cell(row=ctr + 1, column=4).value = stn.lon
+                    lens[3] = max(lens[3], len(str(stn.lon)))
+                    ws.cell(row=ctr + 1, column=5).value = stn.capacity
+                    lens[4] = max(lens[4], len(str(stn.capacity)))
+                    if stn.technology == 'Wind':
+                        ws.cell(row=ctr + 1, column=6).value = stn.turbine
+                        lens[5] = max(lens[5], len(stn.turbine))
+                        ws.cell(row=ctr + 1, column=7).value = stn.rotor
+                        lens[6] = max(lens[6], len(str(stn.rotor)))
+                        ws.cell(row=ctr + 1, column=8).value = stn.no_turbines
+                        lens[7] = max(lens[7], len(str(stn.no_turbines)))
+                    else:
+                        ws.cell(row=ctr + 1, column=7).value = 0
+                        ws.cell(row=ctr + 1, column=8).value = 0
+                    ws.cell(row=ctr + 1, column=9).value = stn.area
+                    lens[8] = max(lens[8], len(str(stn.area)))
+                    for c in range(9):
+                        ws.cell(row=ctr + 1, column=c + 1).font = normal
+                for c in range(len(lens)):
+                    ws.column_dimensions[ssCol(c + 1)].width = lens[c]
+                ws.freeze_panes = 'A' + str(2 - d)
+                wb.save(self.excel)
+                wb.close()
 
 
 class makeLoadFile():

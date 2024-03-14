@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2022 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2022-2024 Sustainable Energy Now Inc., Angus King
 #
 #  dataview.py - This file is part of SIREN.
 #
@@ -23,7 +23,6 @@ import os
 import sys
 import time
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.Qt import QColor
 #
 import configparser   # decode .ini file
 import displayobject
@@ -575,7 +574,7 @@ class DataView(QtWidgets.QDialog):
             curfile = self.file.text()
         else:
             curfile = self.scenarios + self.file.text()
-        newfile = QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', curfile, 'Excel Files (*.xls*);;CSV Files (*.csv)')[0]
+        newfile = QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', curfile, 'Excel Files (*.xls*);;CSV Files (*.csv);;Calc Files (*.ods)')[0]
         if newfile == '':
             return
         if newfile != '':

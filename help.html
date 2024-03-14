@@ -439,7 +439,7 @@ You can also use TMY files such as those provided with SAM. If you have a number
 <h3>A note about hours</h3>
 <p>Due to inconsistency between power (SAM) and weather data / files, hours of the day are portrayed differently. For example, looking at the hour between midnight and 1:00AM:- in power data the hour is shown as the start of the hour, <em>00:00</em>, while for weather data it is the end of the hour, <em>01:00</em>.</p>
 <h2 id="objects">Simulation Objects</h2>
-<p>The simulation has two main objects, stations and grid lines. Stations can be saved as scenarios in either an Excel (XLS) or CSV file format while grid lines are constructed during the simulation rather than being saved to a file (unless you have manually created the grid line).</p>
+<p>The simulation has two main objects, stations and grid lines. Stations can be saved as scenarios in either an Excel (XLS or XLSX) or CSV file format while grid lines are constructed during the simulation rather than being saved to a file (unless you have manually created the grid line).</p>
 <h3 id="stations">Stations</h3>
 <p>Stations represent either existing generation stations on the grid or new ones you have created during a simulation session. The station files can be updated outside of the simulation. The fields for a station are:</p>
 <table border="0", class="none" style="margin-left:35px">
@@ -490,7 +490,7 @@ You can also use TMY files such as those provided with SAM. If you have a number
 </tr>
 <tr class="none">
 <td class="none"><dfn>Power File</dfn></td>
-<td class="none">If the technology you're interested in is not available in the simulation or you encounter problems you can provide your own power file which contains power output for each hour of the year. This can be produced using SAM itself. Within SAM you display output data, select the Hourly energy data and export the file as either CSV or Excel (XLS), and place the file in the same location as your scenario files. When the Power Model is run the program will use this data rather than invoking the SAM module for that station</td>
+<td class="none">If the technology you're interested in is not available in the simulation or you encounter problems you can provide your own power file which contains power output for each hour of the year. This can be produced using SAM itself. Within SAM you display output data, select the Hourly energy data and export the file as either CSV or Excel (XLS or XLSX), and place the file in the same location as your scenario files. When the Power Model is run the program will use this data rather than invoking the SAM module for that station</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>Storage Hours</dfn></td>
@@ -2857,7 +2857,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><dfn><strong>Scenario</strong></dfn></td>
-<td class="none">Work with scenarios. It is possible to edit the scenarios outside of the simulation as they are simple CSV or Excel (XLS) files. The type of file is indicated by the file type - <em>.csv</em> for a CSV file, or <em>.xls</em> or <em>.xlsx</em> for an Excel file. If the file type isn't specified any scenario will be saved in Excel format.</p>
+<td class="none">Work with scenarios. It is possible to edit the scenarios outside of the simulation as they are simple CSV or Excel (XLS or XLSX) files. The type of file is indicated by the file type - <em>.csv</em> for a CSV file, or <em>.xls</em> or <em>.xlsx</em> for an Excel file. If the file type isn't specified any scenario will be saved in Excel (XLSX) format.</p>
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><img src="open.png" alt="Open">&nbsp;&nbsp;Open (Ctrl+O)</td>
@@ -3583,7 +3583,7 @@ Scale of the chart in the cell. A value of 1 fills the cell(<em>plot_scale</em>)
 <ol>
 <li>Choose the <em>Save Hourly Data Output</em> (<em>save_data</em>) Power Model option</li>
 <li>Save the data file. This file contains power output for all stations in the current simulation. It should be located in the same folder as your scenario files (<em>scenarios</em> property of the <em>[Files]</em> Section). The data is saved as MWh with 4 decimal places because SAM uses kWh</li>
-<li>With your spreadsheet application (Excel) update the scenarios and stations that you want to use the saved data with. Either add or use the column headed <em>Power File</em> to specify the filename you've selected for the power output. For each station enter the full name and extension of the file, for example, <em>Power_Table_Saved.xls</em></li>
+<li>With your spreadsheet application (Excel) update the scenarios and stations that you want to use the saved data with. Either add or use the column headed <em>Power File</em> to specify the filename you've selected for the power output. For each station enter the full name and extension of the file, for example, <em>Power_Table_Saved.xlsx</em></li>
 <li>When you next run the simulation it will load this saved data rather than invoking the SAM module for each station that has an <em>Power File</em> entry</li>
 <li>If the file is not found the SAM module will be re-invoked. So you can simply delete or rename the Power data file and re-run the simulation to get a new set of data points</li>
 </ol>
@@ -4302,8 +4302,16 @@ If it's not a diurnal chart (i.e. Period is <em>&lt;None&gt;</em>) any occurence
 <h2 id="feedback">Feedback</h2>
 <p>This model is very much a work in progress. To improve it's usefulness to a wider community we encourage any feedback on how it might be improved. Feedback to <a href="mailto:siren@sen.asn.au?Subject=SIREN%20Feedback">siren@sen.asn.au</a>.
 <h2 id="files">SIREN File Formats</h2>
-<p>SIREN accepts a number of file formats for each of the data files it uses. In many cases input files can be either a CSV or Excel (XLS or XLSX) file. Due to the initial source for each data file the format for each may be different. For CSV and Excel files the first cell for each column is usually taken as the column name.</p>
-<p><strong>Note:</strong> Other than the Powermatch file, all Excel files output by SIREN are currently in XLS format (XLSX files require a different Python library to create them). Powermatch itself produces XLSX files.</p>
+<p>SIREN accepts a number of file formats for each of the data files it uses. In many cases input files can be either a CSV or Excel (XLS or XLSX) file.
+<!--
+In some instances OpenDocument Spreadsheet (ODS) files can also be used as input.
+-->
+Due to the initial source for each data file the format for each may be different. For CSV and Excel files the first cell for each column is usually taken as the column name.</p>
+<p><strong>Notes:</strong>
+<ol>
+<li>The majority of Excel files output by SIREN are in XLSX format by default, although in most instances XLS (or CSV) can be specified. Powermatch only produces XLSX files for Detail and Batch</li>
+<li>If KML files have &lt;styleUrl&gt; colour elements these may override <em>colour</em> Properties in the Preferences file</li>
+</ol>
 <p>The files and formats are as follow:</p>
 <table border="0", class="none" style="margin-left:35px">
 <tr class="none">
@@ -4522,7 +4530,7 @@ You can alternate between both approaches to choose the desired area. If you hav
 <p>The AEMO also publish <a href="http://data.wa.aemo.com.au/#facility-scada" target="_blank">facility SCADA data</a>.</p>
 <h4>updateswis</h4>
 <p><code>updateswis.py</code> is a Python program that can be used to access the current list of facilities (power stations) for the SWIS and to obtain recent load data.
-The program will download the list of existing stations and optionally update the file SIREN uses for existing stations (<em>grid_stations</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file). To aid readability you can optionally produce an additional file, either CSV or Excel (XLS), that will save the list in the same format as a SIREN scenario file.
+The program will download the list of existing stations and optionally update the file SIREN uses for existing stations (<em>grid_stations</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file). To aid readability you can optionally produce an additional file, either CSV or Excel (XLS or XLSX), that will save the list in the same format as a SIREN scenario file.
 Load data can also be downloaded for prior years to a filename defined by the <em>load</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file.</p>
 <p>You can run <code>updateswis</code> from the SIREN Tools menu or in Windows by running <code>updateswis.exe</code> in the <em>siren</em> folder. Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
 <ul>
@@ -5276,7 +5284,7 @@ MERRA-2 Variables
 <div class="experiment">
 <li><em>Rain Folder</em>. Source folder for the rain weather files (experimental)</li>
 </div>
-<li><em>Resource File</em>. Target file. This can be either a CSV or Excel (XLS) file. For an Excel file if you append <em>$MM$</em> to the year in the filename hourly variable values will be produced</li>
+<li><em>Resource File</em>. Target file. This can be either a CSV or Excel (XLS or XLSX) file. For an Excel file if you append <em>$MM$</em> to the year in the filename hourly variable values will be produced</li>
 <li><em>Properties</em>. This is a read only field that is filled in when the file is created. This property should be copied into the <a href="#p_files">[Files]</a> Section of the Preferences file</li>
 </ul>
 <p>There are three buttons:</p>
@@ -6212,7 +6220,7 @@ MERRA-2 Variables
 <tr><td class="none"><dfn>XLS</dfn> (or <dfn>xls</dfn>)</td>
 <td class="none">Original file format for Excel spreadsheets. XLS files are stored internally in binary format</td></tr>
 <tr><td class="none"><dfn>XLSX</dfn><br />(or <dfn>xlsx</dfn>)</td>
-<td class="none">Default file format for Excel spreadsheets since 2003. XLSX files are stored internally in an XML format</td></tr>
+<td class="none">Default file format for Excel spreadsheets since 2003. XLSX files are stored internally in an XML format. They are compressed files and are typically smaller than an equivalent XLS file</td></tr>
 <tr><td class="none"><dfn>XML</dfn></td>
 <td class="none">Extensible Markup Language. A markup language that defines a set of rules for encoding documents in a format which is both human-readable and machine-readable.</td></tr>
 </table>

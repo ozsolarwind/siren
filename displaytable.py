@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2023 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2024 Sustainable Energy Now Inc., Angus King
 #
 #  displaytable.py - This file is part of SIREN.
 #
@@ -19,6 +19,7 @@
 #  <http://www.gnu.org/licenses/>.
 #
 
+import openpyxl as oxl
 import os
 import xlwt
 from PyQt5 import QtCore, QtWidgets
@@ -26,7 +27,7 @@ from PyQt5 import QtGui, QtWidgets
 
 import displayobject
 from sirenicons import Icons
-from senutils import techClean
+from senutils import ssCol, techClean
 
 
 class FakeObject:
@@ -722,7 +723,7 @@ class Table(QtWidgets.QDialog):
             iam = getattr(self.objects[0], '__module__')
         else:
             iam = self.title
-        data_file = '%s_Table_%s.xls' % (iam,
+        data_file = '%s_Table_%s.xlsx' % (iam,
                     QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'yyyy-MM-dd_hhmm'))
         data_file = QtWidgets.QFileDialog.getSaveFileName(None, 'Save ' + iam + ' Table',
                     self.save_folder + data_file, 'Excel Files (*.xls*);;CSV Files (*.csv)')[0]
@@ -731,7 +732,7 @@ class Table(QtWidgets.QDialog):
         if data_file[-4:] == '.csv' or data_file[-4:] == '.xls' or data_file[-5:] == '.xlsx':
             pass
         else:
-            data_file += '.xls'
+            data_file += '.xlsx'
         if os.path.exists(data_file):
             if os.path.exists(data_file + '~'):
                 os.remove(data_file + '~')
@@ -780,7 +781,7 @@ class Table(QtWidgets.QDialog):
                             line += txt
                 tf.write(line + '\n')
             tf.close()
-        else:
+        elif data_file[-4:] == '.xls':
             wb = xlwt.Workbook()
             for ch in ['\\' , '/' , '*' , '?' , ':' , '[' , ']']:
                 if ch in iam:
@@ -891,7 +892,124 @@ class Table(QtWidgets.QDialog):
             ws.set_horz_split_pos(1)   # in general, freeze after last heading row
             ws.set_remove_splits(True)   # if user does unfreeze, don't leave a split there
             wb.save(data_file)
-            self.savedfile = data_file
+        else: # .xlsx
+            wb = oxl.Workbook()
+            ws = wb.active
+            for ch in ['\\' , '/' , '*' , '?' , ':' , '[' , ']']:
+                if ch in iam:
+                    iam = iam.replace(ch, '_')
+            if len(iam) > 31:
+                iam = iam[:31]
+            ws.title = iam
+            normal = oxl.styles.Font(name='Arial', size='10')
+        #    bold = oxl.styles.Font(name='Arial', bold=True)
+            hdr_types = []
+            dec_fmts = []
+            xl_lens = []
+            hdr_rows = 0
+        #    hdr_style = xlwt.XFStyle()
+        #    hdr_style.alignment.wrap = 1
+            for cl in range(self.table.columnCount()):
+                hdr = self.table.horizontalHeaderItem(cl).text()
+                if hdr[0] != '%':
+                    ws.cell(row=1, column=cl + 1).value = hdr
+                    ws.cell(row=1, column=cl + 1).font = normal
+                    ws.cell(row=1, column=cl + 1).alignment = oxl.styles.Alignment(wrap_text=True,
+                            vertical='bottom', horizontal='center')
+                txt = self.hdrs[hdr]
+                try:
+                    hdr_types.append(self.labels[txt.lower()])
+                    txt = txt.lower()
+                except:
+                    try:
+                        hdr_types.append(self.labels[txt])
+                    except:
+                        hdr_types.append('str')
+                style = ''
+                try:
+                    if self.lens[txt][1] > 0:
+                        style = '#,##0.' + '0' * self.lens[txt][1]
+                    elif self.labels[txt] == 'int' or self.labels[txt] == 'float':
+                        style = '#,##0'
+                except:
+                    pass
+                dec_fmts.append(style)
+                bits = hdr.split('\n')
+                hdr_rows = max(hdr_rows, len(bits))
+                hl = 0
+                for bit in bits:
+                    hl = max(hl, len(bit) + 1)
+                xl_lens.append(hl)
+            if hdr_rows > 1:
+                ws.row_dimensions[1].height = 12 * hdr_rows
+            in_span = False
+            for rw in range(self.table.rowCount()):
+                for cl in range(self.table.columnCount()):
+                    if self.table.item(rw, cl) is not None:
+                        valu = self.table.item(rw, cl).text().strip()
+                        if len(valu) < 1:
+                            continue
+                        if self.span is not None and valu == self.span:
+                            in_span = True
+                        style = dec_fmts[cl]
+                        if valu[-1] == '%':
+                            is_pct = True
+                            i = valu.rfind('.')
+                            if i >= 0:
+                                dec_pts = (len(valu) - i - 2)
+                                style = '#,##0.' + '0' * dec_pts + '%'
+                            else:
+                                dec_pts = 0
+                                style = '#,##0%'
+                        else:
+                            is_pct = False
+                        if hdr_types[cl] == 'int':
+                            try:
+                                val1 = valu
+                                if is_pct:
+                                    val1 = val1.strip('%')
+                                val1 = val1.replace(',', '')
+                                if is_pct:
+                                    valu = round(int(val1) / 100., dec_pts + 2)
+                                else:
+                                    valu = int(val1)
+                            except:
+                                pass
+                        elif hdr_types[cl] == 'float':
+                            try:
+                                val1 = valu
+                                if is_pct:
+                                    val1 = val1.strip('%')
+                                val1 = val1.replace(',', '')
+                                if is_pct:
+                                    valu = round(float(val1) / 100., dec_pts + 2)
+                                else:
+                                    valu = float(val1)
+                            except:
+                                pass
+                        else:
+                            if is_pct:
+                                try:
+                                    val1 = valu.strip('%')
+                                    val1 = val1.replace(',', '')
+                                    valu = round(float(val1) / 100., dec_pts + 2)
+                                except:
+                                    pass
+                        if not in_span:
+                            if is_pct:
+                                plus = 3
+                            else:
+                                plus = 0
+                            xl_lens[cl] = max(xl_lens[cl], len(str(valu)) + plus)
+                        ws.cell(row=rw + 2, column=cl + 1).value = valu
+                        ws.cell(row=rw + 2, column=cl + 1).font = normal
+                        ws.cell(row=rw + 2, column=cl + 1).number_format = style
+            for cl in range(self.table.columnCount()):
+                ws.column_dimensions[ssCol(cl + 1)].width = xl_lens[cl]
+            ws.freeze_panes = 'A2'
+            wb.save(data_file)
+            wb.close()
+        self.savedfile = data_file
         if not self.edit_table:
             self.close()
 
