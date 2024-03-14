@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2023 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2024 Sustainable Energy Now Inc., Angus King
 #
 #  senutils.py - This file is part of SIREN.
 #
@@ -537,3 +537,15 @@ def strSplit(string, char=',', dropquote=True):
     if last < len(string):
         splits.append(string[last:])
     return splits
+
+# create excel column letter from column number
+def ssCol(col, base=1):
+    col_letters = ' ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    if base == 1:
+        col -= 1
+    c1 = 0
+    c2, c3 = divmod(col, 26)
+    c3 += 1
+    if c2 > 26:
+        c1, c2 = divmod(c2, 26)
+    return (col_letters[c1] + col_letters[c2] + col_letters[c3]).strip()
