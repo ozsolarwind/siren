@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2023 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2024 Sustainable Energy Now Inc., Angus King
 #
 #  displayobject.py - This file is part of SIREN.
 #
@@ -95,18 +95,20 @@ class AnObject(QtWidgets.QDialog):
                    html[:5] == '<html':
                     html = html.replace('[VERSION]', credits.fileVersion())
                     if self.section is not None:
+                        hl = ''
                         line = html.split('\n')
                         html = ''
                         for i in range(len(line)):
                             html += line[i] + '\n'
-                            if line[i].strip() == '<body>':
+                            if line[i].strip() == '<body>' or line[i][:6] == '<body ':
                                break
                         for i in range(i, len(line)):
                             if line[i][:2] == '<h':
                                 if line[i].find('id="' + self.section + '"') > 0:
+                                    hl = line[i][2]
                                     break
                         for i in range(i, len(line)):
-                            if line[i].find('Back to top<') > 0:
+                            if line[i].find('Back to top<') > 0 or line[i + 1][:3] == '<h' + hl:
                                 break
                             j = line[i].find(' (see <a href=')
                             if j > 0:
