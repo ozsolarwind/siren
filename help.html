@@ -3721,7 +3721,7 @@ The order in which the dispatchable technologies will be processed by Powermatch
 <td class="none">If this option is checked you will be presented with a table to enable you to adjust the input capacity data for each generator technology. You can specify the required capacity or, if the <em>show_multipliers</em> property is set, a multiplier between 0 and the cap set by the <em>adjust_cap</em> property in the <a href="#power">[Power]</a> Section of the Preferences file; the default multiplier is 25. The original input values will be derived from the data sheet for renewables and the Generators table for dispatchable technologies. If you have adjusted the capacities you can <strong>Reset</strong> the capacities or just <strong>Reset Load</strong>. You can also <strong>Save</strong> and <strong>Restore</strong> the capacities to use again later or <strong>List</strong> saved capacities. With the list of saved capacities you can right-click on the desired list before you exit the list and capacities will be set to those values. You can also <strong>Add to  Batch</strong> file. You press <strong>Proceed</strong> to execute <code>Powermatch</code>. (<em>adjust_generators</em>)</td></tr>
 <tr><td class="lr"><dfn>Dispatch Order</dfn></td>
 <td class="none">The order in which the dispatchable technologies will be processed by Powermatch. You can change the order by clicking on each value and moving it up and down the list. The initial order is derived from the generators (facilities) table. If you want to exclude a generator you can drag it to the right hand list (and drag it back to the left to re-include)</td></tr>
-<tr><td class="bottom"><strong>Done, Summary, Detail,<br />Batch, Optimise, Preferences,<br /> Help, TML Detail</strong></td>
+<tr><td class="bottom"><strong>Done, Summary, Detail,<br />Batch, Transition, Optimise,<br />Preferences, Help, TML Detail</strong></td>
 <td class="none">As well as the buttons beside the sheet options there are a number of buttons at the bottom of the menu, as described below:</td></tr>
 </table>
 <ul>
@@ -3811,11 +3811,18 @@ The order in which the dispatchable technologies will be processed by Powermatch
 <li>If you want to include a Total row in the outputs you need to have a Total row (as the last row) in the <em>Capacity (MW)</em> Report Group</li>
 <li><strong>Beware:</strong> If the batch input worksheet (capacity figures) contains formulae you need to be careful doing multiple batch executions. You may need to open the batch worksheet and save it before doing another batch execution.</li>
 <li>(in case you missed it). If you're modelling with zones both the input data file and the batch file must have input capacities by zone</li>
-<li>(At present) The same Load data is used for all models in a Batch execution</li>
+<li>By default, the same Load data is used for all models in a Batch execution. If you add a <dfn>year</dfn> row immediately after the <dfn>Capacity (MW)</dfn> row, the load file can be changed to other years. The same Generators table is used for all models</li>
 <li>If the input model has capacity for facilities contributing to Underlying load (e.g. Rooftop PV) the batch report will contain underlying totals</li>
 </ul>
 <br />
 </li>
+</ul>
+<div class="experiment">
+<ul>
+<li><strong>Transition</strong>. This option can assist with modelling a transition from a &ldquo;current&rdquo; state to a future state with annual changes to technologies. The option uses a Batch file as input. You create a model for each year with the planned addtional capacities for that year. Powermatch will use the load profile and Generators for that year. It relies on the load profile and Generators table names (sheet names) to include the year. The year can be passed either in the <dfn>Model Label</dfn> or an addiitonal <drn>year</dfn> row. When using this option the <em>remove_cost</em> cost option is ignored (set to False) to ensure capital costs are captured for a new technology even if it is not used. The Generators table will required additional rows for technologies with zero capital costs which can be specified in, say, the format <dfn>Existing.Technology</dfn>
+</ul>
+</div>
+<ul>
 <li><strong>Optimise</strong>. Invoke the Optimise function. This will use an iterative approach to optimise the input generator capacities to produce a solution with (a) either a lower overall LCOE, (b) the lowest weight for six variables, or (c) both. It will complete by displaying a chart of how the value for LCOE has converged to a minimum, and either (if <em>optimise_multitable</em> and <em>more_details</em> are set) a three dimensional plot showing the three variables with the highest weightings or (if <em>optimise_multitable</em> is set) a table of all variables for the multi-variable approach. Depending on which options are specified you will be presented with a number of &ldquo;best picks&rdquo; where you can choose your preferred choice. This will then produce a summary table which will also contain details on the Optimisation parameters used. It will also update the adjustment values for each generator to enable you to produce a Powermatch spreadsheet. If you choose a solution this can be added to a batch input file (if <em>optimise_to_batch</em> is set).
 <ul>
 <li>If you are using generator adjustments it may be useful to invoke <strong>Summary</strong> to set or reset the starting capacities for the optimsation (using <strong>Reset</strong> to set initial values or <strong>Restore</strong> to restore previously saved values)</li>

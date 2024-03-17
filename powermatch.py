@@ -114,7 +114,9 @@ O = 2 # Optimisation - xls or xlsx
 D = 3 # Data - xlsx
 R = 4 # Results - xlsx
 B = 5 # Batch input - xlsx
-
+T = 6 # Transition input - xlsx
+S = 'S' # Summary
+O1 = 'O1'
 def get_value(ws, row, col):
     def get_range(text, alphabet=None, base=1):
         if len(text) < 1:
@@ -777,6 +779,72 @@ class Adjustments(MyQDialog):
         wb.save(self._batch_file)
         QtWidgets.QMessageBox.about(self, 'SIREN - Add to Batch', "Added to batch as '" + add_msg + "' (column " + ssCol(col) + ')')
 
+
+class setTransition(MyQDialog):
+    def niceSize(window, ctr): # works for Adjustments window (probably because less that 640*480)
+        height = window.frameSize().height() / 1.07
+        height = 65 + ctr * 32
+        width = window.frameSize().width()
+        screen = QtWidgets.QDesktopWidget().availableGeometry()
+        if height > (screen.height() - 70):
+            height = screen.height() - 70
+        if width > (screen.width() - 70):
+            width = screen.width() - 70
+        size = QtCore.QSize(QtCore.QSize(int(width), int(height)))
+        window.resize(size)
+
+    def __init__(self, parent, label, generators, sheet, year):
+        super(setTransition, self).__init__()
+        self._results = None
+        i = generators.rfind('/')
+        generator_file = generators[i + 1:]
+        self.grid = QtWidgets.QGridLayout()
+        r = 0
+        self.grid.addWidget(QtWidgets.QLabel(label + ' File:'), r, 0)
+        file_name = QtWidgets.QLabel(generator_file)
+        file_name.setStyleSheet("border: 1px inset grey; min-height: 22px; border-radius: 4px;")
+        self.grid.addWidget(file_name, r, 1, 1, 5)
+        r += 1
+        self.grid.addWidget(QtWidgets.QLabel(label + ' Sheet:'), r, 0)
+        self.sheet = QtWidgets.QLineEdit()
+        if sheet[-4:].isnumeric():
+            sheet = sheet[:-4] + '$YEAR$'
+        else:
+            sheet = sheet.replace(year, '$YEAR$')
+        self.sheet.setText(sheet)
+        self.grid.addWidget(self.sheet, r, 1, 1, 2)
+        r += 1
+        quit = QtWidgets.QPushButton('Quit', self)
+        self.grid.addWidget(quit, r, 0)
+        quit.clicked.connect(self.quitClicked)
+        show = QtWidgets.QPushButton('Proceed', self)
+        self.grid.addWidget(show, r, 1)
+        show.clicked.connect(self.showClicked)
+        frame = QtWidgets.QFrame()
+        frame.setLayout(self.grid)
+        self.scroll = QtWidgets.QScrollArea()
+        self.scroll.setWidgetResizable(True)
+        self.scroll.setWidget(frame)
+        self.layout = QtWidgets.QVBoxLayout(self)
+        self.layout.addWidget(self.scroll)
+        self.niceSize(r)
+        self.setWindowTitle('SIREN - Powermatch - Transition files')
+        self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
+        QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
+        self.show()
+
+    def quitClicked(self):
+        self.ignoreEnter = False
+        self.close()
+
+    def showClicked(self):
+        self.ignoreEnter = False
+        self._results = self.sheet.text()
+        self.close()
+
+    def getValues(self):
+        return self._results
+
 class powerMatch(QtWidgets.QWidget):
     log = QtCore.pyqtSignal()
     progress = QtCore.pyqtSignal()
@@ -1256,13 +1324,12 @@ class powerMatch(QtWidgets.QWidget):
         btch = QtWidgets.QPushButton('Batch', self)
         self.grid.addWidget(btch, r, 3)
         btch.clicked.connect(self.pmClicked)
+        trns = QtWidgets.QPushButton('Transition', self)
+        self.grid.addWidget(trns, r, 4)
+        trns.clicked.connect(self.pmClicked)
         opt = QtWidgets.QPushButton('Optimise', self)
-        self.grid.addWidget(opt, r, 4)
+        self.grid.addWidget(opt, r, 5)
         opt.clicked.connect(self.pmClicked)
-        editini = QtWidgets.QPushButton('Preferences', self)
-     #   editini.setMaximumWidth(wdth)
-        self.grid.addWidget(editini, r, 5)
-        editini.clicked.connect(self.editIniFile)
         help = QtWidgets.QPushButton('Help', self)
      #   help.setMaximumWidth(wdth)
       #  quit.setMaximumWidth(wdth)
@@ -1270,6 +1337,11 @@ class powerMatch(QtWidgets.QWidget):
         help.clicked.connect(self.helpClicked)
         QtWidgets.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
      #   self.grid.setColumnStretch(0, 2)
+        r += 1
+        editini = QtWidgets.QPushButton('Preferences', self)
+     #   editini.setMaximumWidth(wdth)
+        self.grid.addWidget(editini, r, 0)
+        editini.clicked.connect(self.editIniFile)
         do_tml = False
         if sys.platform == 'win32' or sys.platform == 'cygwin':
             if os.path.exists('pmtmldetail.exe'):
@@ -1277,9 +1349,8 @@ class powerMatch(QtWidgets.QWidget):
         elif os.path.exists('pmtmldetail.py'):
             do_tml = True
         if do_tml:
-            r += 1
             tmld = QtWidgets.QPushButton('TML Detail', self)
-            self.grid.addWidget(tmld, r, 0)
+            self.grid.addWidget(tmld, r, 1)
             tmld.clicked.connect(self.tmlClicked)
         self.setOrder()
         if len(iorder) > 0:
@@ -1986,7 +2057,7 @@ class powerMatch(QtWidgets.QWidget):
                 pass
         return
 
-    def getBatch(self, ws):
+    def getBatch(self, ws, option):
         global columns, rows, values
         def recurse(lvl):
             if lvl >= len(rows) - 1:
@@ -2074,6 +2145,8 @@ class powerMatch(QtWidgets.QWidget):
             if model is None:
                 break
             self.batch_models[0][col] = {'name': model}
+            if option == T and year_row < 0:
+                self.batch_models[0][col]['year'] = str(model)
             for row in range(istrt, istop):
                 if row == year_row:
                     if ws.cell_value(row, col) is not None and ws.cell_value(row, col) != '':
@@ -2206,7 +2279,7 @@ class powerMatch(QtWidgets.QWidget):
                 for stn in cat:
                     self.order.addItem(stn)
 
-    def data_sources(self, sheet, sheet_row, pm_data_file):
+    def data_sources(self, sheet, sheet_row, pm_data_file, option):
         normal = oxl.styles.Font(name='Arial')
         bold = oxl.styles.Font(name='Arial', bold=True)
         sheet.cell(row=sheet_row, column=1).value = 'Data sources'
@@ -2248,8 +2321,11 @@ class powerMatch(QtWidgets.QWidget):
         sheet_row += 1
         sheet.cell(row=sheet_row, column=1).value = 'Generators worksheet'
         sheet.cell(row=sheet_row, column=1).font = normal
-        sheet.cell(row=sheet_row, column=2).value = str(self.files[G].text()) \
-               + '.' + str(self.sheets[G].currentText())
+        if option == T:
+            sheet.cell(row=sheet_row, column=2).value = self.files[G].text()
+        else:
+            sheet.cell(row=sheet_row, column=2).value = self.files[G].text() \
+                   + '.' + self.sheets[G].currentText()
         sheet.cell(row=sheet_row, column=2).font = normal
         sheet.merge_cells('B' + str(sheet_row) + ':M' + str(sheet_row))
         return sheet_row
@@ -2311,15 +2387,17 @@ class powerMatch(QtWidgets.QWidget):
         col_letters = ' ABCDEFGHIJKLMNOPQRSTUVWXYZ'
         self.setStatus(self.sender().text() + ' processing started')
         if self.sender().text() == 'Detail': # detailed spreadsheet?
-            option = 'D'
+            option = D
         elif self.sender().text() == 'Optimise': # do optimisation?
-            option = 'O'
+            option = O
             self.optExit = False #??
         elif self.sender().text() == 'Batch': # do batch processsing
-            option = 'B'
+            option = B
+        elif self.sender().text() == 'Transition': # do transition processsing
+            option = T
         else:
-            option = 'S'
-        if option != 'O':
+            option = S
+        if option != O:
             self.progressbar.setMinimum(0)
             self.progressbar.setMaximum(20)
             self.progressbar.setHidden(False)
@@ -2359,7 +2437,7 @@ class powerMatch(QtWidgets.QWidget):
                 else:
                     err_msg = 'Error accessing Generators'
                 self.getGenerators(None)
-        if option == 'B': # has to be xlsx workbook
+        if option == B or option == T: # has to be xlsx workbook
             try:
                 ts = WorkBook()
                 bwbopen_start = time.time()
@@ -2378,7 +2456,7 @@ class powerMatch(QtWidgets.QWidget):
                     hhmm = tim / 60.
                     tim = f'{int(hhmm)}:{int((hhmm-int(hhmm))*60.):0>2} mins'
                 self.setStatus(f'{self.file_labels[B]} workbook opened ({tim})')
-                ok = self.getBatch(ws)
+                ok = self.getBatch(ws, option)
                 ts.close()
                 del ts
                 if not ok:
@@ -2387,7 +2465,7 @@ class powerMatch(QtWidgets.QWidget):
                 err_msg = 'Batch file not found - ' + self.files[B].text()
             except Exception as e:
                 err_msg = 'Error accessing Batch file ' + str(e)
-        if option == 'O' and self.optimisation is None:
+        if option == O and self.optimisation is None:
             try:
                 ts = WorkBook()
                 ts.open_workbook(self.get_filename(self.files[O].text()))
@@ -2537,7 +2615,7 @@ class powerMatch(QtWidgets.QWidget):
                 pmss_data[-1].append(ws.cell(row=row, column=col).value)
         pmss_details['Load'].capacity = sum(pmss_data[load_col])
         do_adjust = False
-        if option == 'O':
+        if option == O:
             for itm in range(self.order.count()):
                 gen = self.order.item(itm).text()
                 try:
@@ -2561,7 +2639,7 @@ class powerMatch(QtWidgets.QWidget):
             self.optClicked(year, option, pmss_details, pmss_data, re_order, dispatch_order,
                             None, None)
             return
-        if self.adjust.isChecked() and option != 'B':
+        if self.adjust.isChecked() and option != B and option != T:
             if self.adjustto is None:
                 self.adjustto = {}
                 self.adjustto['Load'] = 0
@@ -2696,8 +2774,22 @@ class powerMatch(QtWidgets.QWidget):
                 continue
             dispatch_order.append(gen)
             pmss_details[gen] = PM_Facility(gen, gen, self.generators[gen].capacity, typ, -1, 1)
-        if option == 'B':
-            if self.adjust.isChecked():
+        if option == B or option == T:
+            if option == T:
+                files = setTransition(self, self.file_labels[G], self.get_filename(self.files[G].text()),
+                                      self.sheets[G].currentText(), self.loadCombo.currentText())
+                files.exec_()
+                if files.getValues() is None:
+                    self.setStatus('Execution aborted.')
+                    self.progressbar.setHidden(True)
+                    return
+                gen_sheet = files.getValues()
+                trn_year = ''
+                newfile = self.get_filename(self.files[G].text())
+                gen_book = WorkBook()
+                gen_book.open_workbook(newfile)
+                pmss_details['Load'].multiplier = 1
+            elif self.adjust.isChecked():
                 generated = sum(pmss_data[load_col])
                 datain = [['Load', 'L', generated]]
                 adjustto = {'Load': generated}
@@ -2714,7 +2806,7 @@ class powerMatch(QtWidgets.QWidget):
             batch_details = {'Capacity (MW/MWh)': [st_cap, '#,##0.00'],
                              'To Meet Load (MWh)': [st_tml, '#,##0'],
                              'Generation (MWh)': [st_sub, '#,##0'],
-                             'Capacity Factor': [st_cfa, '#,##0%'],
+                             'Capacity Factor': [st_cfa, '#,##0.0%'],
                              'Cost ($/Yr)': [st_cst, '#,##0'],
                              'LCOG ($/MWh)': [st_lcg, '#,##0.00'],
                              'LCOE ($/MWh)': [st_lco, '#,##0.00'],
@@ -3042,8 +3134,18 @@ class powerMatch(QtWidgets.QWidget):
                         except:
                             pass
                 for model, capacities in self.batch_models[sht].items():
-                    # to cater for different load profiles (years) and generator costs (years) this loop would need to change, that is
-                    # need to be able to change pmss_details and pmss_data[0]
+                    if option == T:
+                        if capacities['year'] != trn_year:
+                            # get generators and load for new year
+                            trn_year = capacities['year']
+                            year = str(trn_year)
+                            ws = gen_book.sheet_by_name(gen_sheet.replace('$YEAR$', year))
+                            self.getGenerators(ws)
+                            if year not in load_columns.keys():
+                                load_columns[year] = len(pmss_data)
+                                pmss_data.append([])
+                                load_file = self.load_files.replace('$YEAR$', year)
+                                pmss_data[-1] = get_load_data(load_file)
                     for fac in pmss_details.keys():
                         if fac == 'Load':
                             pmss_details['Load'].capacity = sum(pmss_data[load_columns[year]])
@@ -3063,6 +3165,8 @@ class powerMatch(QtWidgets.QWidget):
                         if key == 'name' and model_row_no > 0:
                             if model_key != '':
                                 bs.cell(row=model_row_no, column=column).value = f'{model_nme}{capacities[model_key]}'
+                            elif option == T:
+                                bs.cell(row=model_row_no, column=column).value = f'{capacity}'
                             else:
                                 bs.cell(row=model_row_no, column=column).value = f'Model {model + 1}'
                             bs.cell(row=model_row_no, column=column).font = normal
@@ -3281,14 +3385,17 @@ class powerMatch(QtWidgets.QWidget):
                 self.setStatus(f'Processed sheet {sht + 1} of {len(self.batch_models)}; ({len(self.batch_models[sht])} models; {tim}. Total {timt})')
                 QtWidgets.QApplication.processEvents()
                 if total_load_row > 0:
-                    load_mult = ''
-                    try:
-                        mult = round(pmss_details['Load'].multiplier, 3)
-                        if mult != 1:
-                            load_mult = ' x ' + str(mult)
-                    except:
-                        pass
-                    bs.cell(row=total_load_row, column=1).value = 'Total Load - ' + year + load_mult
+                    if option == T:
+                        bs.cell(row=total_load_row, column=1).value = 'Total Load'
+                    else:
+                        load_mult = ''
+                        try:
+                            mult = round(pmss_details['Load'].multiplier, 3)
+                            if mult != 1:
+                                load_mult = ' x ' + str(mult)
+                        except:
+                            pass
+                        bs.cell(row=total_load_row, column=1).value = 'Total Load - ' + year + load_mult
                 if do_opt_parms[0]:
                     t_row = do_opt_parms[1]
                     for row in range(do_opt_parms[2], do_opt_parms[3] + 1):
@@ -3339,7 +3446,7 @@ class powerMatch(QtWidgets.QWidget):
                         cel = cell.column
                     bs.column_dimensions[cel].width = max(length * 1.05, 10)
                 if batch_data_sources_row > 0:
-                    i = self.data_sources(bs, batch_data_sources_row - len(del_rows), pm_data_file)
+                    i = self.data_sources(bs, batch_data_sources_row - len(del_rows), pm_data_file, option)
                 bs.freeze_panes = 'B' + str(self.batch_report[0][1])
                 bs.activeCell = 'B' + str(self.batch_report[0][1])
                 for sheet in wb:
@@ -3532,7 +3639,10 @@ class powerMatch(QtWidgets.QWidget):
             else:
                 annual_cost_capital = capital_cost / lifetime
             total_annual_cost = annual_cost_capital + annual_operating_cost
-            return total_annual_cost / annual_output
+            try:
+                return total_annual_cost / annual_output
+            except:
+                return total_annual_cost
 
         def format_period(per):
             hr = per % 24
@@ -3561,7 +3671,7 @@ class powerMatch(QtWidgets.QWidget):
             sp_d[st_lec] = lifetime_co2_cost
             sp_d[st_are] = total_area
             sp_data.append(sp_d)
-            if (self.carbon_price > 0 or option == 'B'):
+            if (self.carbon_price > 0 or option == B or option == T):
                 sp_d = [' '] * len(headers)
                 cc = co2_sum * self.carbon_price
                 cl = cc * max_lifetime
@@ -3605,7 +3715,7 @@ class powerMatch(QtWidgets.QWidget):
                 sp_d[st_cap] = '{:.1f}%'.format(sf_sums[0] * 100 / sp_load)
                 sp_d[st_tml] = sf_sums[0]
                 sp_data.append(sp_d)
-                if option == 'B':
+                if option == B or option == T:
                     sp_d = [' '] * len(headers)
                     sp_d[st_fac] = title + 'Total Load'
                     sp_d[st_tml] = sp_load
@@ -3623,7 +3733,7 @@ class powerMatch(QtWidgets.QWidget):
                     sp_d = [' '] * len(headers)
                     sp_d[st_fac] = 'Total ' + title + 'Load - ' + year + load_mult
                     sp_d[st_tml] = sp_load
-                    if title == '' or option == 'S':
+                    if title == '' or option == S:
                         sp_d[st_max] = load_max
                         sp_d[st_bal] = ' (' + format_period(load_hr)[5:] + ')'
                     sp_data.append(sp_d)
@@ -3658,7 +3768,7 @@ class powerMatch(QtWidgets.QWidget):
                 sp_d[st_sub] = round(max_short[1], 2)
                 sp_d[st_cfa] = ' (' + format_period(max_short[0])[5:] + ')'
                 sp_data.append(sp_d)
-            if option == 'O' or option == '1':
+            if option == O or option == O1:
                 return load_pct, surp_pct, re_pct
 
         def do_detail(fac, col, ss_row):
@@ -4140,7 +4250,7 @@ class powerMatch(QtWidgets.QWidget):
                 underlying_facs.append(fac)
                 continue
         load_col = pmss_details['Load'].col
-        for h in range(len(pmss_data[0])):
+        for h in range(len(pmss_data[load_col])):
             load_h = pmss_data[load_col][h] * pmss_details['Load'].multiplier
             shortfall[h] = load_h
             for fac in fac_tml.keys():
@@ -4187,7 +4297,7 @@ class powerMatch(QtWidgets.QWidget):
             corr_data.append(['RE Contribution', corr])
         else:
             corr_data = None
-        if option == 'D':
+        if option == D:
             wb = oxl.Workbook()
             ns = wb.active
             ns.title = 'Detail'
@@ -4372,7 +4482,7 @@ class powerMatch(QtWidgets.QWidget):
                     ns.cell(row=row, column=col).number_format = '#,##0.00'
             next_col = col
             col += 1
-        else: # 'O', '1', 'B'
+        else: # O, O1, B, T
             sp_data = []
             sp_load = 0. # load from load curve
             hrows = 10
@@ -4383,7 +4493,7 @@ class powerMatch(QtWidgets.QWidget):
                 load_col = pmss_details['Load'].col
             except:
                 load_col = 0
-            if option == 'B' and len(underlying_facs) > 0:
+            if (option == B or option == T) and len(underlying_facs) > 0:
                 load_facs = underlying_facs[:]
                 load_facs.insert(0, 'Load')
                 for h in range(len(pmss_data[load_col])):
@@ -4423,7 +4533,7 @@ class powerMatch(QtWidgets.QWidget):
          #           tml += pmss_data[load_col][h] * pmss_details['Load'].multiplier
           #      else:
            #         tml += pmss_data[load_col][h] * pmss_details['Load'].multiplier - shortfall[h]
-        if option not in ['O', '1', 'B']:
+        if option not in [O, O1, B, T]:
             self.progressbar.setValue(6)
             QtWidgets.QApplication.processEvents()
         storage_names = []
@@ -4468,7 +4578,7 @@ class powerMatch(QtWidgets.QWidget):
                 storage_names.append(gen)
                 storage = [0., 0., 0., 0.] # capacity, initial, min level, max drain
                 storage[0] = capacity
-                if option == 'D':
+                if option == D:
                     ns.cell(row=cap_row, column=col + 2).value = capacity
                     ns.cell(row=cap_row, column=col + 2).number_format = '#,##0.00'
                 try:
@@ -4504,7 +4614,7 @@ class powerMatch(QtWidgets.QWidget):
                     in_run[0] = False
                 warm_time = self.constraints[self.generators[gen].constraint].warm_time
                 storage_carry = storage[1] # self.generators[gen].initial
-                if option == 'D':
+                if option == D:
                     ns.cell(row=ini_row, column=col + 2).value = storage_carry
                     ns.cell(row=ini_row, column=col + 2).number_format = '#,##0.00'
                 storage_bal = []
@@ -4577,7 +4687,7 @@ class powerMatch(QtWidgets.QWidget):
                     storage_bal.append(storage_carry)
                     if storage_bal[-1] > sto_max:
                         sto_max = storage_bal[-1]
-                    if option == 'D':
+                    if option == D:
                         if can_use > 0:
                             ns.cell(row=row + hrows, column=col).value = 0
                             ns.cell(row=row + hrows, column=col + 2).value = can_use * self.surplus_sign
@@ -4596,7 +4706,7 @@ class powerMatch(QtWidgets.QWidget):
                         tot_sto_loss += storage_losses
                         if can_use > 0:
                             storage_can += can_use
-                if option == 'D':
+                if option == D:
                     ns.cell(row=sum_row, column=col).value = '=SUMIF(' + ssCol(col) + \
                             str(hrows) + ':' + ssCol(col) + str(hrows + 8759) + ',">0")'
                     ns.cell(row=sum_row, column=col).number_format = '#,##0'
@@ -4645,7 +4755,7 @@ class powerMatch(QtWidgets.QWidget):
                     min_gen = short_taken[gen]
                 else:
                     min_gen = 0
-                if option == 'D':
+                if option == D:
                     ns.cell(row=cap_row, column=col).value = capacity
                     ns.cell(row=cap_row, column=col).number_format = '#,##0.00'
                     for row in range(8760):
@@ -4715,7 +4825,7 @@ class powerMatch(QtWidgets.QWidget):
                     sp_d[st_sub] = gen_can
                     sp_d[st_max] = gen_max
                     sp_data.append(sp_d)
-#        if option == 'D': # Currently calculated elsewhere
+#        if option == D: # Currently calculated elsewhere
 #            if self.surplus_sign > 0:
 #                maxmin = 'MIN'
 #            else:
@@ -4723,7 +4833,7 @@ class powerMatch(QtWidgets.QWidget):
 #            ns.cell(row=max_row, column=col-1).value = '=' + maxmin + '(' + \
 #                    ssCol(col-1) + str(hrows) + ':' + ssCol(col - 1) + str(hrows + 8759) + ')'
 #            ns.cell(row=max_row, column=col-1).number_format = '#,##0.00'
-        if option not in ['O', '1', 'B']:
+        if option not in [O, O1, B, T]:
             self.progressbar.setValue(8)
             QtWidgets.QApplication.processEvents()
         if corr_data is not None:
@@ -4765,7 +4875,7 @@ class powerMatch(QtWidgets.QWidget):
                     corr_data[c].append('High')
                 else:
                     corr_data[c].append('Very high')
-        if option != 'D':
+        if option != D:
             load_col = pmss_details['Load'].col
             cap_sum = 0.
             gen_sum = 0.
@@ -4833,7 +4943,7 @@ class powerMatch(QtWidgets.QWidget):
                         ff_sum += sp_data[sp][ndx]
                 if self.generators[gen].capex > 0 or self.generators[gen].fixed_om > 0 \
                   or self.generators[gen].variable_om > 0 or self.generators[gen].fuel > 0:
-                    if self.remove_cost and sp_data[sp][ndx] == 0:
+                    if option != T and self.remove_cost and sp_data[sp][ndx] == 0:
                         sp_data[sp][st_cst] = 0
                         continue
                     capex = sp_data[sp][st_cap] * self.generators[gen].capex
@@ -4854,7 +4964,7 @@ class powerMatch(QtWidgets.QWidget):
                     cost_sum += sp_data[sp][st_cst]
                     sp_data[sp][st_cac] = capex
                 elif self.generators[gen].lcoe > 0:
-                    if self.remove_cost and sp_data[sp][ndx] == 0:
+                    if option != T and self.remove_cost and sp_data[sp][ndx] == 0:
                         sp_data[sp][st_cst] = 0
                         continue
                     if self.generators[gen].lcoe_cf > 0:
@@ -4870,7 +4980,7 @@ class powerMatch(QtWidgets.QWidget):
                     sp_data[sp][st_rlc] = self.generators[gen].lcoe
                     sp_data[sp][st_rcf] = '{:.1f}%'.format(lcoe_cf * 100.)
                 elif self.generators[gen].lcoe_cf == 0: # no cost facility
-                    if self.remove_cost and sp_data[sp][ndx] == 0:
+                    if option != T and self.remove_cost and sp_data[sp][ndx] == 0:
                         sp_data[sp][st_cst] = 0
                         continue
                     lcoe_cf = sp_data[sp][st_cfa]
@@ -4878,7 +4988,7 @@ class powerMatch(QtWidgets.QWidget):
                     cost_sum += sp_data[sp][st_cst]
                 sp_data[sp][st_lic] = sp_data[sp][st_cst] * max_lifetime
                 lifetime_sum += sp_data[sp][st_lic]
-                if self.generators[gen].emissions > 0:
+                if self.generators[gen].emissions > 0 and sp_data[sp][st_tml]> 0:
                     sp_data[sp][st_emi] = sp_data[sp][ndx] * self.generators[gen].emissions
                     co2_sum += sp_data[sp][st_emi]
                     sp_data[sp][st_emc] = sp_data[sp][st_emi] * self.carbon_price
@@ -4914,7 +5024,7 @@ class powerMatch(QtWidgets.QWidget):
             else:
                 gsw = ''
                 gswc = ''
-            if option == 'O' or option == '1':
+            if option == O or option == O1:
                 load_pct, surp_pct, re_pct = summary_totals()
             else:
                 summary_totals()
@@ -5011,10 +5121,11 @@ class powerMatch(QtWidgets.QWidget):
                     gsw = ''
                     gswc = ''
                 # find maximum underlying load
-                if option == 'S':
+                if option == S:
                     load_max = 0
                     load_hr = 0
-                    for h in range(len(pmss_data[0])):
+                    load_col = pmss_details['Load'].col
+                    for h in range(len(pmss_data[load_col])):
                         amt = pmss_data[load_col][h] * pmss_details['Load'].multiplier
                         for fac in underlying_facs:
                             amt += pmss_data[pmss_details[fac].col][h] * pmss_details[fac].multiplier
@@ -5040,18 +5151,18 @@ class powerMatch(QtWidgets.QWidget):
             sp_d[st_fac] = 'Discount Rate'
             sp_d[st_cap] = '{:.2%}'.format(self.discount_rate)
             sp_data.append(sp_d)
-            if option == 'B':
+            if option == B or option == T:
                 if self.optimise_debug:
                     sp_pts = [0] * len(headers)
                     for p in [st_cap, st_lcg, st_lco, st_lcc, st_max, st_bal, st_rlc, st_are]:
                         sp_pts[p] = 2
                     if corr_data is not None:
                         sp_pts[st_cap] = 3 # compromise between capacity (2) and correlation (4)
-                    dialog = displaytable.Table(sp_data, title=title, fields=headers,
+                    dialog = displaytable.Table(sp_data, title='Debug', fields=headers,
                              save_folder=self.scenarios, sortby='', decpts=sp_pts)
                     dialog.exec_()
                 return sp_data
-            if option == 'O' or option == '1':
+            if option == O or option == O1:
                 op_load_tot = pmss_details['Load'].capacity * pmss_details['Load'].multiplier
                 if gswc != '':
                     lcoe = gswc
@@ -5069,7 +5180,7 @@ class powerMatch(QtWidgets.QWidget):
                     're_pct': re_pct, # RE pct. higher better
                     'cost': cost_sum, # cost. lower better
                     'co2': co2_sum} # CO2. lower better
-                if option == 'O':
+                if option == O:
                     if multi_value['lcoe'] == '':
                         multi_value['lcoe'] = 0
                     return multi_value, sp_data, None
@@ -5468,7 +5579,7 @@ class powerMatch(QtWidgets.QWidget):
         ss.cell(row=ss_row, column=st_cap+1).value = self.discount_rate
         ss.cell(row=ss_row, column=st_cap+1).number_format = '#,##0.00%'
         ss_row += 2
-        ss_row = self.data_sources(ss, ss_row, pm_data_file)
+        ss_row = self.data_sources(ss, ss_row, pm_data_file, option)
         self.progressbar.setValue(14)
         QtWidgets.QApplication.processEvents()
         for row in range(1, ss_row + 1):
@@ -5747,9 +5858,9 @@ class powerMatch(QtWidgets.QWidget):
             multi_fitness_scores = [] # scores = multi-variable weight
             multi_values = [] # values for each of the six variables
             if len(population) == 1:
-                option = '1'
+                option = O1
             else:
-                option = 'O'
+                option = O
             if self.debug:
                 self.popn += 1
                 self.chrom = 0
