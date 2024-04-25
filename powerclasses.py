@@ -129,14 +129,14 @@ class ColumnData:
         if isinstance(value, list):
             for i in range(len(value)):
                 if values is not None:
-                    setattr(self, values[i], round(value[i], 2))
+                    setattr(self, values[i], round(value[i], 3))
                 else:
-                    setattr(self, 'value' + str(i + 1), round(value[i], 2))
+                    setattr(self, 'value' + str(i + 1), round(value[i], 3))
         else:
             if values is not None:
-                setattr(self, values, round(value, 2))
+                setattr(self, values, round(value, 3))
             else:
-                setattr(self, 'value', round(value, 2))
+                setattr(self, 'value', round(value, 3))
 
 
 class DailyData:
@@ -212,12 +212,12 @@ class whatPlots(QtWidgets.QDialog):
                     i += 1
                     label = QtWidgets.QLabel('        Storage capacity (GWh) & initial value')
                     self.storageSpin = QtWidgets.QDoubleSpinBox()
-                    self.storageSpin.setDecimals(3)
+                    self.storageSpin.setDecimals(4)
                     self.storageSpin.setRange(0, 500)
                     self.storageSpin.setValue(self.storage[0])
                     self.storageSpin.setSingleStep(5)
                     self.storpctSpin = QtWidgets.QDoubleSpinBox()
-                    self.storpctSpin.setDecimals(3)
+                    self.storpctSpin.setDecimals(4)
                     self.storpctSpin.setRange(0, 500)
                     self.storpctSpin.setValue(self.storage[1])
                     self.storpctSpin.setSingleStep(5)
@@ -227,7 +227,7 @@ class whatPlots(QtWidgets.QDialog):
                     i += 1
                     label = QtWidgets.QLabel('        Discharge cap (MW) & loss (%)')
                     self.dischargeSpin = QtWidgets.QDoubleSpinBox()
-                    self.dischargeSpin.setDecimals(3)
+                    self.dischargeSpin.setDecimals(4)
                     self.dischargeSpin.setRange(0, 50000)  # max is 10% of capacity
                     self.dischargeSpin.setValue(self.discharge[0])
                     self.dischargeSpin.setSingleStep(5)
@@ -240,7 +240,7 @@ class whatPlots(QtWidgets.QDialog):
                     i += 1
                     label = QtWidgets.QLabel('        Recharge cap (MW) & loss (%)')
                     self.rechargeSpin = QtWidgets.QDoubleSpinBox()
-                    self.rechargeSpin.setDecimals(3)
+                    self.rechargeSpin.setDecimals(4)
                     self.rechargeSpin.setRange(0, 50000)  # max is 10% of capacity
                     self.rechargeSpin.setValue(self.recharge[0])
                     self.rechargeSpin.setSingleStep(5)
