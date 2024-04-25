@@ -796,6 +796,10 @@ class WAScene(QtWidgets.QGraphicsScene):
             while curr_row < num_rows:
                 curr_row += 1
                 try:
+                    try:
+                        area = worksheet.cell_value(curr_row, var['Area'])
+                    except:
+                        area = 0
                     new_st = Station(str(worksheet.cell_value(curr_row, var['Station Name'])),
                                      str(worksheet.cell_value(curr_row, var['Technology'])),
                                      worksheet.cell_value(curr_row, var['Latitude']),
@@ -804,7 +808,7 @@ class WAScene(QtWidgets.QGraphicsScene):
                                      str(worksheet.cell_value(curr_row, var['Turbine'])),
                                      worksheet.cell_value(curr_row, var['Rotor Diam']),
                                      worksheet.cell_value(curr_row, var['No. turbines']),
-                                     worksheet.cell_value(curr_row, var['Area']),
+                                     area,
                                      scen_filter)
                     name_ok = False
                     new_name = new_st.name
@@ -864,7 +868,7 @@ class WAScene(QtWidgets.QGraphicsScene):
                     self._stations.stations.append(new_st)
                     self.addStation(self._stations.stations[-1])
                 except Exception as error:
-                    print(error)
+                    print('wascene error:', error)
                     pass
             self._scenarios.append([scen_filter, False, description])
 

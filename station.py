@@ -63,7 +63,10 @@ class Station:
             except:
                 pass
         self.no_turbines = no_turbines
-        self.area = area
+        if area is None:
+            self.area = 0
+        else:
+            self.area = area
         self.scenario = scenario
         self.generation = generation
         self.power_file = power_file
