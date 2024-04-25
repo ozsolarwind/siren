@@ -233,6 +233,8 @@ class PowerModel():
                         mng.window.showMaximized()
                 else:
                     mng.resize(*mng.window.maxsize())
+            zp = ZoomPanX()
+            f = zp.zoom_pan(bbdx, base_scale=1.2) # enable scrollable zoom
             if self.plots['block']:
                 plt.show(block=True)
                 if matplotlib.__version__ > '3.5.1':
@@ -406,6 +408,8 @@ class PowerModel():
                         mng.window.showMaximized()
                 else:
                     mng.resize(*mng.window.maxsize())
+            zp = ZoomPanX()
+            f = zp.zoom_pan(px, base_scale=1.2) # enable scrollable zoom
             if self.plots['block']:
                 plt.show(block=True)
                 if matplotlib.__version__ > '3.5.1':
@@ -1615,6 +1619,8 @@ class PowerModel():
                         mng.window.showMaximized()
                 else:
                     mng.resize(*mng.window.maxsize())
+            zp = ZoomPanX()
+            f = zp.zoom_pan(hx, base_scale=1.2) # enable scrollable zoom
             if self.plots['block']:
                 plt.show(block=True)
                 if matplotlib.__version__ > '3.5.1':
@@ -1710,6 +1716,8 @@ class PowerModel():
                         mng.window.showMaximized()
                 else:
                     mng.resize(*mng.window.maxsize())
+            zp = ZoomPanX()
+            f = zp.zoom_pan(dx, base_scale=1.2) # enable scrollable zoom
             if self.plots['block']:
                 plt.show(block=True)
                 if matplotlib.__version__ > '3.5.1':
@@ -1794,6 +1802,8 @@ class PowerModel():
                             mng.window.showMaximized()
                     else:
                         mng.resize(*mng.window.maxsize())
+            zp = ZoomPanX()
+            f = zp.zoom_pan(lx, base_scale=1.2) # enable scrollable zoom
             if self.plots['block']:
                 plt.show(block=True)
                 if matplotlib.__version__ > '3.5.1':
@@ -1882,6 +1892,8 @@ class PowerModel():
                             mng.window.showMaximized()
                     else:
                         mng.resize(*mng.window.maxsize())
+                zp = ZoomPanX()
+                f = zp.zoom_pan(sdfx, base_scale=1.2) # enable scrollable zoom
                 plt.show(block=True)
                 if matplotlib.__version__ > '3.5.1':
                     plt.waitforbuttonpress()
@@ -1956,6 +1968,8 @@ class PowerModel():
                             mng.window.showMaximized()
                     else:
                         mng.resize(*mng.window.maxsize())
+                zp = ZoomPanX()
+                f = zp.zoom_pan(sfx, base_scale=1.2) # enable scrollable zoom
                 plt.show(block=True)
                 if matplotlib.__version__ > '3.5.1':
                     plt.waitforbuttonpress()
@@ -1998,6 +2012,8 @@ class PowerModel():
                             mng.window.showMaximized()
                     else:
                         mng.resize(*mng.window.maxsize())
+                zp = ZoomPanX()
+                f = zp.zoom_pan(sfx, base_scale=1.2) # enable scrollable zoom
                 plt.show(block=True)
                 if matplotlib.__version__ > '3.5.1':
                     plt.waitforbuttonpress()
@@ -2158,6 +2174,8 @@ class PowerModel():
                         mng.window.showMaximized()
                 else:
                     mng.resize(*mng.window.maxsize())
+            zp = ZoomPanX()
+            f = zp.zoom_pan(tx, base_scale=1.2) # enable scrollable zoom
             if self.plots['block']:
                 plt.show(block=True)
                 if matplotlib.__version__ > '3.5.1':
