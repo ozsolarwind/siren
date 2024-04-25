@@ -71,7 +71,10 @@ class SSCAPI:
                 try:
                     _dll = CDLL(sam_sdk + "/linux64/ssc.so")
                 except:
-                    print('SAM SDK library not found')
+                    try:
+                        _dll = CDLL(sam_sdk + "/linux_64/ssc.so")
+                    except:
+                        print('SAM SDK library not found')
 #               return _dll
         else:
                 print("Platform not supported ", sys.platform)
