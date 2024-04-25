@@ -504,6 +504,10 @@ You can also use TMY files such as those provided with SAM. If you have a number
 <td class="none"><dfn>Direction</dfn></td>
 <td class="none">For PV stations you can specify the direction in which the panels are facing as a character representation of the direction. Acceptable values are:- N, NNE, NE, ENE, E, ESE, SE, SSE, S, SSW, SW, WSW, W, WNW, NW or NNW. The default is N for southern latitude stations and S for northern latitude (that is, towards the midday sun)</td>
 </tr>
+<tr class="none">
+<td class="none"><dfn>Tilt</dfn></td>
+<td class="none">For PV stations you can specify the angle at which the panels are tilted. By default the tilt angle is set to the latitude of the station</td>
+</tr>
 </table>
 <p>When you display a Station with SIREN it will also show the Scenario the Station is in. For new Stations (i.e. not Existing) it is possible to update this value to one of the other scenarios that are currently &ldquo;open&ldquo;. This will move the Station into that scenario and, if the scenario is saved move it permanently into that Scenario.</p>
 <h3 id="gridlines">Grid Lines</h3>
@@ -3819,7 +3823,7 @@ The order in which the dispatchable technologies will be processed by Powermatch
 </ul>
 <div class="experiment">
 <ul>
-<li><strong>Transition</strong>. This option can assist with modelling a transition from a &ldquo;current&rdquo; state to a future state with annual changes to technologies. The option uses a Batch file as input. You create a model for each year with the planned addtional capacities for that year. Powermatch will use the load profile and Generators for that year. It relies on the load profile and Generators table names (sheet names) to include the year. The year can be passed either in the <dfn>Model Label</dfn> or an addiitonal <drn>year</dfn> row. When using this option the <em>remove_cost</em> cost option is ignored (set to False) to ensure capital costs are captured for a new technology even if it is not used. The Generators table will required additional rows for technologies with zero capital costs which can be specified in, say, the format <dfn>Existing.Technology</dfn>
+<li><strong>Transition</strong>. This option can assist with modelling a transition from a &ldquo;current&rdquo; state to a future state with annual changes to technologies. The option uses a Batch file as input. You create a model for each year with the planned additional capacities for that year. Powermatch will use the load profile for that year. To determine the capital cost for Generators it will calculate the average cost based upon the capacities for each year. To work corectly the models (may) need to be in assending order by year. It relies on the load profile and Generators table names (sheet names) to include the year. The year can be passed either in the <dfn>Model Label</dfn> or an addiitonal <drn>year</dfn> row. When using this option the <em>remove_cost</em> cost option is ignored (set to False) to ensure capital costs are captured for a new technology even if it is not used. The report for each year is the cumulative cost up to that point and not the incremental cost
 </ul>
 </div>
 <ul>
@@ -4216,7 +4220,7 @@ The program displays a window of options. The default values are specified in th
 <td class="none">This option allows an overlay on the chart. It presents a pull-down list of options:
 <ul>
 <li><em>&lt;none&gt;</em></li>
-<li><em>Charge</em> The total of energy used to recharge storage to be shown as an overlay on the chart; it provides an indication of how and when excess energy has been used for recharge. If a Target, e.g. Load, is chosen the target values will be added to the figure to indicate the use of excess energy above the target.</li>
+<li><em>Charge</em> The total of energy used to recharge storage to be shown as an overlay on the chart; it provides an indication of how and when excess energy has been used for recharge. If a Target, e.g. Load, is chosen the <u>target values will be added to the figure</u> to indicate the use of excess energy above the target.</li>
 <li><em>Underlying load</em> If available underlying load will be displayed on the chart. Underlying load includes the additional load met by Rooftop PV (DPV) rather than utility generation</li>
 </ul>
 You can also specify an alternate line width (<em>overlay_width</em>) and line style (<em>overlay_style</em>)

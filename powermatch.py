@@ -783,7 +783,7 @@ class Adjustments(MyQDialog):
 class setTransition(MyQDialog):
     def niceSize(window, ctr): # works for Adjustments window (probably because less that 640*480)
         height = window.frameSize().height() / 1.07
-        height = 65 + ctr * 32
+        height = 70 + ctr * 32
         width = window.frameSize().width()
         screen = QtWidgets.QDesktopWidget().availableGeometry()
         if height > (screen.height() - 70):
@@ -3133,6 +3133,10 @@ class powerMatch(QtWidgets.QWidget):
                                 break
                         except:
                             pass
+                if option == T:
+                    capex_table = {}
+                    for fac in pmss_details.keys():
+                        capex_table[fac] = {'cum': 0}
                 for model, capacities in self.batch_models[sht].items():
                     if option == T:
                         if capacities['year'] != trn_year:
@@ -3204,6 +3208,31 @@ class powerMatch(QtWidgets.QWidget):
                             pmss_details[fac].multiplier = capacities[fac] * 1.0 / pmss_details[fac].capacity
                         except:
                             pass
+                        if option == T:
+                            if fac not in capex_table.keys():
+                                capex_table[fac] = {'cum': 0}
+                            if year not in capex_table[fac].keys():
+                                try:
+                                    capex_table[fac][year] = [self.generators[fac].capex, 0]
+                                except:
+                                    capex_table[fac][year] = [self.generators[fac[fac.find('.') + 1:]].capex, 0]
+                            capx = pmss_details[fac].multiplier * pmss_details[fac].capacity
+                            capex_table[fac][year][1] = capx - capex_table[fac]['cum']
+                            capex_table[fac]['cum'] = capx
+                    if option == T:
+                        for fac in capex_table.keys():
+                            if capex_table[fac]['cum'] == 0:
+                                continue
+                            capx = 0
+                            for key, detail in capex_table[fac].items():
+                                if key == 'cum':
+                                    continue
+                                capx = capx + detail[0] * detail[1]
+                            capx = capx / capex_table[fac]['cum']
+                            try:
+                                self.generators[fac].capex = round(capx)
+                            except:
+                                self.generators[fac[fac.find('.') + 1:]].capex = round(capx)
                     save_carbon_price = None
                     if 'Carbon Price' in capacities.keys():
                         save_carbon_price = self.carbon_price
