@@ -946,6 +946,7 @@ class powerMatch(QtWidgets.QWidget):
         self.isheets = self.file_labels[:]
         del self.isheets[-2:]
         self.batch_new_file = False
+        self.batch_prefix = False
         self.more_details = False
         self.constraints = None
         self.generators = None
@@ -1018,6 +1019,9 @@ class powerMatch(QtWidgets.QWidget):
                 if key == 'batch_new_file':
                     if value.lower() in ['true', 'on', 'yes']:
                         self.batch_new_file = True
+                elif key == 'batch_prefix':
+                    if value.lower() in ['true', 'on', 'yes']:
+                        self.batch_prefix = True
                 elif key[:4] == 'tml_':
                     continue
                 elif key[-5:] == '_file':
@@ -1253,7 +1257,15 @@ class powerMatch(QtWidgets.QWidget):
             msg = '(check to replace last Results worksheet in Batch spreadsheet)'
         self.replace_last = QtWidgets.QCheckBox(msg, self)
         self.replace_last.setCheckState(QtCore.Qt.Unchecked)
-        self.grid.addWidget(self.replace_last, r, 1, 1, 4)
+        self.grid.addWidget(self.replace_last, r, 1, 1, 3)
+        self.grid.addWidget(QtWidgets.QLabel('Prefix facility names in Batch report:'), r, 4)
+        self.batch_prefix_check = QtWidgets.QCheckBox('', self)
+        if self.batch_prefix:
+            self.batch_prefix_check.setCheckState(QtCore.Qt.Checked)
+        else:
+            self.batch_prefix_check.setCheckState(QtCore.Qt.Unchecked)
+        self.grid.addWidget(self.batch_prefix_check, r, 5)
+        self.batch_prefix_check.stateChanged.connect(self.bpcchanged)
         r += 1
         self.grid.addWidget(QtWidgets.QLabel('Discount Rate:'), r, 0)
         self.discount = QtWidgets.QDoubleSpinBox()
@@ -1573,6 +1585,13 @@ class powerMatch(QtWidgets.QWidget):
     def changes(self):
         self.updated = True
 
+    def bpcchanged(self):
+        if self.batch_prefix_check.isChecked():
+            self.batch_prefix = True
+        else:
+            self.batch_prefix = False
+        self.updated = True
+
     def openClicked(self):
         bit = self.sender().text().split()
         fnr = self.file_labels.index(bit[1])
@@ -1608,6 +1627,10 @@ class powerMatch(QtWidgets.QWidget):
                     line += '{}={:.1f},'.format(key, value)
                 if line != '':
                     lines.append('adjusted_capacities=' + line[:-1])
+            line = 'batch_prefix='
+            if self.batch_prefix:
+                line += 'True'
+            lines.append(line)
             lines.append('carbon_price=' + str(self.carbon_price))
             lines.append('discount_rate=' + str(self.discount_rate))
             line = ''
@@ -1719,6 +1742,14 @@ class powerMatch(QtWidgets.QWidget):
             self.batch_new_file = False
             msg = '(check to replace last Results worksheet in Batch spreadsheet)'
         self.replace_last = QtWidgets.QCheckBox(msg, self)
+        try:
+            st = config.get('Powermatch', 'batch_prefix')
+        except:
+            st = 'False'
+        if st.lower() in ['true', 'yes', 'on']:
+            self.batch_prefix = True
+        else:
+            self.batch_prefix = False
         QtWidgets.QApplication.processEvents()
         self.setStatus(config_file + ' edited. Reload may be required.')
 
@@ -2384,6 +2415,23 @@ class powerMatch(QtWidgets.QWidget):
                     load_data.append(float(lines[i].rstrip()))
             return load_data
 
+        def get_batch_prefix(report_group):
+            if report_group == 'Lifetime Emissions':
+                return 'LES_'
+            if report_group in ['Correlation To Load', 'Static Variables']:
+                return ''
+            bits = report_group.split(' ')
+            for i in range(len(bits) -1, -1, -1):
+                if bits[i][0] == '(' and bits[i][-1] == ')':
+                    del bits[i]
+            if len(bits) == 1:
+                abr = bits[0][0] + bits[0][-1]
+            else:
+                abr = ''
+                for bit in bits:
+                    abr += bit[0]
+            return abr.upper() + '_'
+
         col_letters = ' ABCDEFGHIJKLMNOPQRSTUVWXYZ'
         self.setStatus(self.sender().text() + ' processing started')
         if self.sender().text() == 'Detail': # detailed spreadsheet?
@@ -3038,6 +3086,10 @@ class powerMatch(QtWidgets.QWidget):
                     if self.batch_report[g][0] not in batch_details.keys() and self.batch_report[g][0] not in batch_extra.keys():
                         continue
                     self.batch_report[g][1] = gndx
+                    if self.batch_prefix:
+                        batch_pfx = get_batch_prefix(self.batch_report[g][0])
+                    else:
+                        batch_pfx = ''
                     bs.cell(row=gndx, column=1).value = self.batch_report[g][0]
                     bs.cell(row=gndx, column=1).font = bold
                     if self.batch_report[g][0] in batch_extra.keys():
@@ -3059,13 +3111,13 @@ class powerMatch(QtWidgets.QWidget):
                             if batch_extra[key][sp][0] == 'Total Load':
                                 total_load_row = gndx + sp
                             elif batch_extra[key][sp][0] == 'Carbon Price':
-                                bs.cell(row=gndx + sp, column=1).value = batch_extra[key][sp][0] + ' ($/tCO2e)'
+                                bs.cell(row=gndx + sp, column=1).value = batch_pfx + batch_extra[key][sp][0] + ' ($/tCO2e)'
                             elif batch_extra[key][sp][0] == 'Lifetime':
-                                bs.cell(row=gndx + sp, column=1).value = batch_extra[key][sp][0] + ' (years)'
+                                bs.cell(row=gndx + sp, column=1).value = batch_pfx + batch_extra[key][sp][0] + ' (years)'
                             elif batch_extra[key][sp][0] == 'Total incl. Carbon Cost':
-                                bs.cell(row=gndx + sp, column=1).value = 'LCOE incl. Carbon Cost'
+                                bs.cell(row=gndx + sp, column=1).value = batch_pfx + 'LCOE incl. Carbon Cost'
                             else:
-                                bs.cell(row=gndx + sp, column=1).value = batch_extra[key][sp][0]
+                                bs.cell(row=gndx + sp, column=1).value = batch_pfx + batch_extra[key][sp][0]
                             if batch_extra[key][sp][0] in ['RE %age of Total Load', 'Total incl. Carbon Cost'] or \
                               batch_extra[key][sp][0].find('LCOE') >= 0 and batch_extra[key][sp][0].find('Total LCOE') < 0:
                                 bs.cell(row=gndx + sp, column=1).font = bold
@@ -3085,20 +3137,24 @@ class powerMatch(QtWidgets.QWidget):
                     else:
                         if self.batch_report[g][0] not in batch_details.keys():
                             continue
+                        if self.batch_prefix:
+                            batch_pfx = get_batch_prefix(self.batch_report[g][0])
+                        else:
+                            batch_pfx = ''
                         for sp in range(len(self.batch_tech)):
                         #    if self.batch_report[g][0] == 'To Meet Load (MWh)' and sp == 0:
                          #       bs.cell(row=gndx + sp + 1, column=1).value = 'RE Contribution To Load'
                             if self.batch_report[g][0] != 'Capacity Factor' or self.batch_tech[sp] != 'Total':
-                                bs.cell(row=gndx + sp + 1, column=1).value = self.batch_tech[sp]
+                                bs.cell(row=gndx + sp + 1, column=1).value = batch_pfx + self.batch_tech[sp]
                             if self.batch_report[g][0] == 'Max MWh' and self.batch_tech[sp] == 'Total':
                                 max_load_row = gndx + sp + 1
-                                bs.cell(row=max_load_row, column=1).value = 'Max Load'
+                                bs.cell(row=max_load_row, column=1).value = batch_pfx + 'Max Load'
                             elif self.batch_tech[sp] == 'Total' and self.batch_report[g][0] != 'Capacity Factor':
-                                bs.cell(row=gndx + sp + 1, column=1).value = self.batch_tech[sp] + ' ' + self.batch_report[g][0]
+                                bs.cell(row=gndx + sp + 1, column=1).value = batch_pfx + self.batch_tech[sp] + ' ' + self.batch_report[g][0]
                             bs.cell(row=gndx + sp + 1, column=1).font = normal
                         if self.batch_report[g][0] == 'Cost ($/Yr)' and batch_disc_row >= 0:
                             batch_disc_row = gndx + sp + 2
-                            bs.cell(row=batch_disc_row, column=1).value = 'Discount Rate'
+                            bs.cell(row=batch_disc_row, column=1).value = batch_pfx + 'Discount Rate'
                             bs.cell(row=batch_disc_row, column=1).font = normal
                         if self.batch_report[g][0] == 'Capacity Factor' and self.batch_tech[-1] == 'Total':
                             gndx += len(self.batch_tech) + 1
@@ -3108,12 +3164,11 @@ class powerMatch(QtWidgets.QWidget):
                             gndx += 1
                         if self.batch_report[g][0] == 'To Meet Load (MWh)':
                             re_tml_row = gndx - 1
-                            bs.cell(row=re_tml_row, column=1).value = 'RE Contribution To Load'
+                            bs.cell(row=re_tml_row, column=1).value = batch_pfx + 'RE Contribution To Load'
                             bs.cell(row=re_tml_row, column=1).font = normal
-                            bs.cell(row=re_tml_row + 1, column=1).value = 'Storage Contribution To Load'
+                            bs.cell(row=re_tml_row + 1, column=1).value = batch_pfx + 'Storage Contribution To Load'
                             bs.cell(row=re_tml_row + 1, column=1).font = normal
                             gndx += 2
-
                 merge_col = 1
                 last_name = ''
                 # find first varying capacity to create model name
@@ -3414,8 +3469,10 @@ class powerMatch(QtWidgets.QWidget):
                 self.setStatus(f'Processed sheet {sht + 1} of {len(self.batch_models)}; ({len(self.batch_models[sht])} models; {tim}. Total {timt})')
                 QtWidgets.QApplication.processEvents()
                 if total_load_row > 0:
+                    if self.batch_prefix:
+                        batch_pfx = get_batch_prefix('Load Analysis')
                     if option == T:
-                        bs.cell(row=total_load_row, column=1).value = 'Total Load'
+                        bs.cell(row=total_load_row, column=1).value = batch_pfx + 'Total Load'
                     else:
                         load_mult = ''
                         try:
@@ -3424,7 +3481,7 @@ class powerMatch(QtWidgets.QWidget):
                                 load_mult = ' x ' + str(mult)
                         except:
                             pass
-                        bs.cell(row=total_load_row, column=1).value = 'Total Load - ' + year + load_mult
+                        bs.cell(row=total_load_row, column=1).value = batch_pfx + 'Total Load - ' + year + load_mult
                 if do_opt_parms[0]:
                     t_row = do_opt_parms[1]
                     for row in range(do_opt_parms[2], do_opt_parms[3] + 1):
