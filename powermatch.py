@@ -2495,7 +2495,7 @@ class powerMatch(QtWidgets.QWidget):
             return
         pm_data_file = self.get_filename(self.files[D].text())
         if pm_data_file[-5:] != '.xlsx': #xlsx format only
-            self.setStatus('Not a Powermatch data spreadsheet')
+            self.setStatus('Not a Powermatch data spreadsheet (1)')
             self.progressbar.setHidden(True)
             return
         try:
@@ -2510,7 +2510,7 @@ class powerMatch(QtWidgets.QWidget):
         top_row = ws.max_row - 8760
         if top_row < 1 or (ws.cell(row=top_row, column=1).value != 'Hour' \
                            or ws.cell(row=top_row, column=2).value != 'Period'):
-            self.setStatus('Not a Powermatch data spreadsheet')
+            self.setStatus(f'Not a Powermatch data spreadsheet (2; {top_row})')
             self.progressbar.setHidden(True)
             return
         typ_row = top_row - 1
@@ -4957,7 +4957,7 @@ class powerMatch(QtWidgets.QWidget):
                     lifetime = self.generators[gen].lifetime
                     sp_data[sp][st_lcg] = calcLCOE(sp_data[sp][ndx], capex, opex, disc_rate, lifetime)
                     sp_data[sp][st_cst] = sp_data[sp][ndx] * sp_data[sp][st_lcg]
-                    if gen in tech_names:
+                    if gen in tech_names or gen2 in tech_names:
                         sp_data[sp][st_lco] = sp_data[sp][st_cst] / (sp_data[sp][st_tml] + (sto_sum * sp_data[sp][st_tml] / fac_tml_sum))
                     else:
                         sp_data[sp][st_lco] = sp_data[sp][st_lcg]
