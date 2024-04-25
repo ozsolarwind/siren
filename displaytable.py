@@ -572,7 +572,10 @@ class Table(QtWidgets.QDialog):
                                 self.table.setSpan(rw, cl, 1, len(self.fields) - 1)
                                 self.table.setItem(rw, cl, QtWidgets.QTableWidgetItem(value))
                                 continue
-                            self.table.setItem(rw, cl, QtWidgets.QTableWidgetItem(value))
+                            try:
+                                self.table.setItem(rw, cl, QtWidgets.QTableWidgetItem(value))
+                            except: # allow for other things e.g. Widgets
+                                self.table.setCellWidget(rw, cl, value)
                             if self.labels[key] != 'str' or \
                                (self.txt_align is not None and self.txt_align == 'R'):
                                 self.table.item(rw, cl).setTextAlignment(130)   # x'82'
@@ -1112,6 +1115,11 @@ class Table(QtWidgets.QDialog):
                         valu = self.table.item(rw, cl).text()
                 else:
                     valu = ''
+                    try:
+                        if isinstance(self.table.cellWidget(rw, cl), QtWidgets.QComboBox):
+                            valu = self.table.cellWidget(rw, cl).currentText()
+                    except:
+                        pass
                 if valu != '':
                     values.append(self.fields[cl] + '=' + valu)
             self.replaced[key] = values

@@ -1373,7 +1373,7 @@ Options for <a href="#flexiplot">Flexiplot</a>. Properties for individual files 
 </tr>
 <tr class="none">
 <td class="none"><dfn>plot (&ast;)</dfn></td>
-<td class="none">The type of chart. Options are Bar Chart, Cumulative, Heat Map, Line Chart, Pie Chart, or Step Chart. The default is Cumulative</td>
+<td class="none">The type of chart. Options are Bar Chart, Cumulative, Heat Map, Line Chart, Pie Chart, Step Line Chart or Step Day Chart. The default is Cumulative</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>random_colors, or<br />random_colours</dfn></td>
@@ -2006,6 +2006,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">Chosen end period for diurnal chart</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>extra</dfn></td>
+<td class="none">If set to True an additional button will be presented to allow some additional properties to be set. The default is False</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>file (&ast;)</dfn></td>
 <td class="none">Spreadsheet filename</td>
 </tr>
@@ -2061,8 +2065,16 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">Include an overlay (either of storage recharge or underlying load) on the chart</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>overlay_color (&ast;)</dfn></td>
+<td class="none">Specify a colour for the overlay line. The default is Black</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>overlay_style (&ast;)</dfn></td>
 <td class="none">Define the style for the overlay line. The default is dotted</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>overlay_type (&ast;)</dfn></td>
+<td class="none">Define the values for the overlay line for a Step Day Chart. The default is Average</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>overlay_width (&ast;)</dfn></td>
@@ -2082,7 +2094,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>plot (&ast;)</dfn>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
-<td class="none">The type of chart. Options are Bar Chart, Cumulative, Heat Map, Line Chart, Pie Chart, or Step Chart. The default is Cumulative</td>
+<td class="none">The type of chart. Options are Bar Chart, Cumulative, Heat Map, Line Chart, Pie Chart, Step Line Chart or Step Day Chart. The default is Cumulative</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>select_day</dfn></td>
@@ -2142,6 +2154,18 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none"><dfn>title_font</dfn></td>
 <td class="none">Saved details on Title font properties</td>
 </tr>
+<tr class="none">
+<td class="none"><dfn>y2_label (&ast;)</dfn></td>
+<td class="none">Label for a secondary Y axis</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>y2_inverse (&ast;)</dfn></td>
+<td class="none">Inverse formula for a secondary Y axis</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>y2_transform (&ast;)</dfn></td>
+<td class="none">Transform formula for a secondary Y axis</td>
+</tr>
 </table>
 </td></tr>
 <tr class="none" id="p_pm"><td><dfn><strong>[Powermatch]</strong></dfn></td>
@@ -2162,6 +2186,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <tr class="none">
 <td class="none"><dfn>batch_new_file</dfn></td>
 <td class="none">Batch report file. If set to True a new report file will be produced for Batch. The default is to append a new worksheet to the input file. Default is False</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>batch_prefix</dfn></td>
+<td class="none">If set to True Facility names in a Batch report will be prefixed with a unique identifier for each report group. Default is False</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>carbon_price</dfn></td>
@@ -3656,7 +3684,9 @@ The order in which the dispatchable technologies will be processed by Powermatch
 <p>To address the shortfall in generation encountered by a renewable scenario other dispatchable generation and storage facilities can be used. These are defined in a Generators table. The Generators table is also used to define the Reference <em>LCOE</em> and <em>LCOE CF</em> figures for Renewable technologies. The dispatchable facilities are dispatched after renewable generators. The fields are:
 <table border="0" class="none" style="margin-left:35px">
 <tr><td class="none"><dfn>Name (*)</dfn></td><td class="none">Name of the Facility</td></tr>
+<!--
 <tr><td class="none"><dfn>Area</dfn></td><td class="none">The estimated land area per MW (or MWh) for the facility in km<sup>2</sup></td></tr>
+-->
 <tr><td class="none"><dfn>Capacity (*)</dfn></td><td class="none">The capacity for the facility in MW for generators and MWh, that is total energy content, for storage</td></tr>
 <tr><td class="none"><dfn>Capex (or Capital) (c)</dfn></td><td class="none">The capital cost of the facility per MW for generators and MWh for storage</td></tr>
 <tr><td class="none"><dfn>Constraint (*)</dfn></td><td class="none">Name of the Constraint that applies to this facility</td></tr>
@@ -3717,6 +3747,8 @@ The order in which the dispatchable technologies will be processed by Powermatch
 <td class="none">Filename for Batch option. Clicking on the field will allow you to choose another spreadsheet from the SIREN Scenarios folder (<em>batch_file</em>)</td></tr>
 <tr><td class="lr"><dfn>Replace Last</dfn></td>
 <td class="none">By checking this option when running a Batch report you can choose to replace the latest Results and Charts worksheets or an existing batch report workbook</td></tr>
+<tr><td class="lr"><dfn>Prefix facility names in Batch report</dfn></td>
+<td class="none">By checking this option when running a Batch report Facility names will be prefixed with a unique identifier for each report group</td></tr>
 <tr><td class="lr"><dfn>Discount Rate</dfn></td>
 <td class="none">The default discount rate to be used if costs rather than a Reference LCOE are being used to calculate generation costs. <strong>Note:</strong> It is not uncommon to use WACC as a discount rate (<em>discount_rate</em>)</td></tr>
 <tr><td class="lr"><dfn>Carbon Price</dfn></td>
@@ -3749,7 +3781,9 @@ The order in which the dispatchable technologies will be processed by Powermatch
 <tr><td class="none"><dfn>Lifetime Cost</dfn></td><td class="none">The lifetime cost for the facility. This is the total (annual) cost multiplied by the longest lifetime for all chosen Generators</td></tr>
 <tr><td class="none"><dfn>Lifetime Emissions</dfn></td><td class="none">The lifetime emissions for the facility; tCO<sub>2</sub>&#x2011;e</td></tr>
 <tr><td class="none"><dfn>Lifetime Emissions Cost</dfn></td><td class="none">The lifetime cost of emissions for the facility</td></tr>
+<!--
 <tr><td class="none"><dfn>Area<dfn></td><td class="none">The estimated land area for the facility in km<sup>2</sup>. Note: for Wind &ldquo;only about 3% of this area will be used for the development of actual turbines and supporting infrastructure.&rdquo; (<a href="https://ldcinfrastructure.com.au/wind-energy-lease-explained/" target="_blank">https://ldcinfrastructure.com.au/wind-energy-lease-explained</a>)</td></tr>
+-->
 <tr><td class="none"><dfn>Reference LCOE</dfn></td><td class="none">The reference LCOE for a facility where costs are calculated using a Reference LCOE and CF</td></tr>
 <tr><td class="none"><dfn>Reference CF</dfn></td><td class="none">The reference CF</td></tr>
 </table>
@@ -3778,29 +3812,32 @@ The order in which the dispatchable technologies will be processed by Powermatch
 <li>Assuming a generator is listed in column L.<br />Calculate the percentage of time it is running below 55% of capacity - <code>=COUNTIF(L2:L8771,">"&L1*0.55)/8760</code></li>
 <li>Assuming a storage facility is listed in column I, it's balance will be in column J.<br />Calculate the percentage of time it is at full capacity - <code>=COUNTIF(J2:J8771,"="&I1)/8760</code><br />and at less than or equal to 10% capacity - <code>=COUNTIF(J2:J8771,"<="&I1*0.1)/8760</code></li>
 </ul>
-<li><strong>Batch</strong>. Invoke Powermatch for a number of &ldquo;models&rdquo; with different capacities for each technology. This option produces a worksheet containing selected details from the Summary Output with one column per model. An input spreadsheet contains a column with the capacities for each model. A list of the desired details from the Summary Table can be specified below the list of technologies (capacities). The details can include any of the following Report Groups. Most groups will have rows pertaining to each group for each facility plus additional rows specific to each group.
+<li><strong>Batch</strong>. Invoke Powermatch for a number of &ldquo;models&rdquo; with different capacities for each technology. This option produces a worksheet containing selected details from the Summary Output with one column per model. An input spreadsheet contains a column with the capacities for each model. A list of the desired details from the Summary Table can be specified below the list of technologies (capacities). The details can include any of the following Report Groups. Most groups will have rows pertaining to each group for each facility plus additional rows specific to each group. If the option is chosen Facility names will be prefixed with a unique identifier for each report group; the prefix for each group is shown in curly brackets
 <table border="0" class="none" style="margin-left:35px">
-<tr><td class="none"><dfn>Capacity (MW)<dfn></td><td class="none">The input capacity for each facility. The dispatch order for the facilties is defined by the row order</td></tr>
-<tr><td class="none"><dfn>Area<dfn></td><td class="none">The estimated land area for the facility in km<sup>2</sup></td></tr>
-<tr><td class="none"><dfn>Capacity Factor<dfn></td><td class="none">The calculated capacity factor for each facility</td></tr>
-<tr><td class="none"><dfn>Capital Cost</dfn></td><td class="none">The capital cost for the facility</td></tr>
-<tr><td class="none"><dfn>Carbon<dfn></td><td class="none">Details on Carbon impacts. This will include lifetime carbon costs if the <em>Lifetime Cost</em> Report Group is specified</td></tr>
+<tr><td class="none"><dfn>Capacity (MW) {CY_}<dfn></td><td class="none">The input capacity for each facility. The dispatch order for the facilties is defined by the row order</td></tr>
+<!--
+<tr><td class="none"><dfn>Area {AA_}<dfn></td><td class="none">The estimated land area for the facility in km<sup>2</sup></td></tr>
+-->
+<tr><td class="none"><dfn>Capacity Factor {CF_}<dfn></td><td class="none">The calculated capacity factor for each facility</td></tr>
+<tr><td class="none"><dfn>Capital Cost {CC_}</dfn></td><td class="none">The capital cost for the facility</td></tr>
+<tr><td class="none"><dfn>Carbon {CN_}<dfn></td><td class="none">Details on Carbon impacts. This will include lifetime carbon costs if the <em>Lifetime Cost</em> Report Group is specified</td></tr>
 <tr><td class="none"><dfn>Carbon Price<dfn></td><td class="none">This is not strictly an output but allows a different carbon price to be set for each input Model</td></tr>
 <tr><td class="none"><div class="experiment"<dfn>Correlation To Load</dfn></div></td><td class="none"><div class="experiment">If <em>show_correlation</em> is set there will be a number of additional lines giving a linear correlation between Load and three components used to meet Load - RE contribution, RE plus Storage (includes any minimum generation constraints), and the Total</td></div></tr>
-<tr><td class="none"><dfn>Cost ($/Yr)<dfn></td><td class="none">The calculated cost for each facility</td></tr>
+<tr><td class="none"><dfn>Cost ($/Yr) {CT_}<dfn></td><td class="none">The calculated cost for each facility</td></tr>
 <tr><td class="none"><dfn>Discount Rate</dfn><br />(or <dfn>WACC</dfn>)</td><td class="none">This is not strictly an output but allows a different discount rate to be set for each input Model</td></tr>
-<tr><td class="none"><dfn>Emissions (tCO2e)<dfn></td><td class="none">The estimated emissions for each facility</td></tr>
-<tr><td class="none"><dfn>Emissions Cost<dfn></td><td class="none">The estimated cost emissions for each facility</td></tr>
-<tr><td class="none"><dfn>Generation (MWh)<dfn></td><td class="none">Generation for each generator</td></tr>
-<tr><td class="none"><dfn>LCOE ($/MWh)</dfn><br />(or <dfn>Levelised Cost</dfn>)</td><td class="none">Levelised Cost for each facility</td></tr>
-<tr><td class="none"><dfn>LCOE with CO2 Cost($/MWh)</dfn></td><td class="none">Levelised Cost for each facility including carbon cost</td></tr>
-<tr><td class="none"><dfn>Lifetime Cost</dfn></td><td class="none">The lifetime cost for each facility</td></tr>
-<tr><td class="none"><dfn>Lifetime Emissions</dfn></td><td class="none">The lifetime emissions for each facility</td></tr>
-<tr><td class="none"><dfn>Lifetime Emissions Cost</dfn></td><td class="none">The lifetime cost of emissions for each facility</td></tr>
-<tr><td class="none"><dfn>Load Analysis<dfn></td><td class="none">Details on how much of the load was met, shortfalls, storage losses, and surpluses</td></tr>
-<tr><td class="none"><dfn>Max MWh<dfn></td><td class="none">he maximum generation or contribution to meeting load for the facility</td></tr>
-<tr><td class="none"><dfn>RE<dfn></td><td class="none">The percentage of RE and storage used to meet the load</td></tr>
-<tr><td class="none"><dfn>To Meet Load (MWh)<dfn></td><td class="none">How much generation or storage output was used to meet the load. It has rows for each non-RE generator, storage and a combined figure for RE</td></tr>
+<tr><td class="none"><dfn>Emissions (tCO2e) {ES_}<dfn></td><td class="none">The estimated emissions for each facility</td></tr>
+<tr><td class="none"><dfn>Emissions Cost {EC_}<dfn></td><td class="none">The estimated cost emissions for each facility</td></tr>
+<tr><td class="none"><dfn>Generation (MWh) {GN_}<dfn></td><td class="none">Generation for each generator</td></tr>
+<tr><td class="none"><dfn>LCOE ($/MWh) {LE_}</dfn><br />(or <dfn>Levelised Cost</dfn>)</td><td class="none">Levelised Cost for each facility</td></tr>
+<tr><td class="none"><dfn>LCOE with CO2 Cost ($/MWh)</dfn></td><td class="none">Levelised Cost for each facility including carbon cost</td></tr>
+<tr><td class="none"><dfn>LCOG ($/MWh) {LG_}</dfn></td><td class="none">Levelised Cost of Generation for each facility</td></tr>
+<tr><td class="none"><dfn>Lifetime Cost {LC_}</dfn></td><td class="none">The lifetime cost for each facility</td></tr>
+<tr><td class="none"><dfn>Lifetime Emissions {LES_}</dfn></td><td class="none">The lifetime emissions for each facility</td></tr>
+<tr><td class="none"><dfn>Lifetime Emissions Cost {LEC_}</dfn></td><td class="none">The lifetime cost of emissions for each facility</td></tr>
+<tr><td class="none"><dfn>Load Analysis {LA_}<dfn></td><td class="none">Details on how much of the load was met, shortfalls, storage losses, and surpluses</td></tr>
+<tr><td class="none"><dfn>Max MWh {MM_}<dfn></td><td class="none">he maximum generation or contribution to meeting load for the facility</td></tr>
+<tr><td class="none"><dfn>RE {RE_}<dfn></td><td class="none">The percentage of RE and storage used to meet the load</td></tr>
+<tr><td class="none"><dfn>To Meet Load (MWh) {TML_}<dfn></td><td class="none">How much generation or storage output was used to meet the load. It has rows for each non-RE generator, storage and a combined figure for RE</td></tr>
 <tr><td class="none"><dfn>Static Variables</dfn></td><td class="none">The values for Carbon Price, Lifetime and default Discount Rate used for the Model</td></tr>
 <tr><td class="none"><dfn>Data Sources<dfn></td><td class="none">Display the data sources used for the batch run (provides: Scenarios folder, Powermatch data file, Constraints worksheet and Facility worksheet)</td></tr>
 <tr><td class="none"><dfn>Optimisation Parameters<dfn></td><td class="none">If the model was added via Optimisation this will list the optimisation parameters used. This should be the last entry (even below any Chart options)</td></tr>
@@ -4222,8 +4259,9 @@ The program displays a window of options. The default values are specified in th
 <li><em>&lt;none&gt;</em></li>
 <li><em>Charge</em> The total of energy used to recharge storage to be shown as an overlay on the chart; it provides an indication of how and when excess energy has been used for recharge. If a Target, e.g. Load, is chosen the <u>target values will be added to the figure</u> to indicate the use of excess energy above the target.</li>
 <li><em>Underlying load</em> If available underlying load will be displayed on the chart. Underlying load includes the additional load met by Rooftop PV (DPV) rather than utility generation</li>
+<li><div class="experiment">It is also possible to choose a different overlay variable by &ldquo;dragging&rdquo; an entry from the Column Order tables to the Overlay field and then choosing it from the Overlay pull-down</div></li>
 </ul>
-You can also specify an alternate line width (<em>overlay_width</em>) and line style (<em>overlay_style</em>)
+You can also specify an alternate line colour (<em>overlay_colur</em>), width (<em>overlay_width</em>) and line style (<em>overlay_style</em>)
 </td></tr>
 <tr><td class="lr"><dfn>Header</dfn>, <strong>Header Font</strong></td>
 <td class="none">Specify a header - super title - for the chart. There are two special strings which will be replaced in the header:
@@ -4241,7 +4279,9 @@ If it's not a diurnal chart (i.e. Period is <em>&lt;None&gt;</em>) any occurence
 <tr><td class="lr"><dfn>Maximum</dfn></td>
 <td class="none">You can specify a maximum value for the Power (y) axis. This allows you to produce a series of charts with the same scale (<em>maximum</em>)</td></tr>
 <tr><td class="lr"><dfn>Type of Plot</dfn></td>
-<td class="none">The type of chart to be produced. Options are <em>Bar Chart</em>, <em>Cumulative</em>, <em>Heat Map</em>, <em>Line Chart</em>, <em>Pie Chart</em> and <em>Step Chart</em>. <em>Bar Chart</em>, <em>Cumulative</em> and <em>Step Chart</em> produce cumulative (stacked) charts and have filled areas by technology (or Columns). A Step Chart is similar to a Bar Chart but does not have spaces between the hourly bars; also it is a lot faster to display than a Bar Chart (a Bar Chart is not recommended for hourly charts). If a Target field (e.g. Load) is chosen the area above the Target value (i.e. excess generation) in the Cumulative and Step chart have a lightly shaded value (the degree of shading is chosen by the <em>alpha</em> property in the [Powerplot] Section of the Preferences file). A Heat Map visualises the total value of chosen columns to indicate the highest through lowest values of the range or, if a target column is chosen, an indication of how the total value meets the target value. Each &ldquo;square&rdquo; or &ldquo;cell&rdquo; of the map represents an hour; the vertical axis is hours in a day and the horizontal axis is days for the chosen period.  (<em>plot</em>)</td></tr>
+<td class="none">The type of chart to be produced. Options are <em>Bar Chart</em>, <em>Cumulative</em>, <em>Heat Map</em>, <em>Line Chart</em>, <em>Pie Chart</em>, <em>Step Day Chart</em> and <em>Step Line Chart</em>. <em>Bar Chart</em>, <em>Cumulative</em> and <em>Step Chart</em> produce cumulative (stacked) charts and have filled areas by technology (or Columns). A Step Chart is similar to a Bar Chart but does not have spaces between the hourly bars; also it is a lot faster to display than a Bar Chart (a Bar Chart is not recommended for hourly charts). If a Target field (e.g. Load) is chosen the area above the Target value (i.e. excess generation) in the Cumulative and Step chart have a lightly shaded value (the degree of shading is chosen by the <em>alpha</em> property in the [Powerplot] Section of the Preferences file). A Heat Map visualises the total value of chosen columns to indicate the highest through lowest values of the range or, if a target column is chosen, an indication of how the total value meets the target value. Each &ldquo;square&rdquo; or &ldquo;cell&rdquo; of the map represents an hour; the vertical axis is hours in a day and the horizontal axis is days for the chosen period.  (<em>plot</em>)
+<div class="experiment">A </em>Step Day Chart</em> presents a step chart with daily figures calculated by summing the 24 hours of each day</div>
+</td></tr>
 <tr><td class="lr"><dfn>Percentage</dfn></td>
 <td class="none">Checking this option will produce a percentage (stacked) curve. The chart will have filled areas showing the percentage of generation for each technology. It is recommended to not set a Target field (i.e. set it to <em>&lt;None&gt;</em>) as this will merely remove the Target field (and it's data) from the chart (<em>percentage</em>)</td></tr>
 <tr><td class="lr"><dfn>Spill label</dfn></td>
@@ -4262,7 +4302,7 @@ If it's not a diurnal chart (i.e. Period is <em>&lt;None&gt;</em>) any occurence
 <br /><br />
 </td></tr>
 <tr><td class="bottom"><strong>Done, Plot, Colours, Legend..., Pref...,Help</br />
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Plot 12, Co...</strong></td>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Plot 12, Extras, Co...</strong></td>
 <td class="none">At the bottom of the window are a number of buttons:
 <ul>
 <li><strong>Done</strong> Exit the program and save the input values. Input preferences and colours are either saved in a SIREN preferences file or in a specific file, <em>powerplot.ini</em>, if no Peferences file is passed to the program</li>
@@ -4276,14 +4316,26 @@ If it's not a diurnal chart (i.e. Period is <em>&lt;None&gt;</em>) any occurence
 <div class="experiment">
 <ul>
 <li>
+<strong>Plot 12</strong> If <em>plot_12</em> is set an additional button is presented to allow wide and low_height graphs to be produced. This allows monthly charts to be produced to fit on a page (e.g. A4) in portrait format. The individual charts can be produced using plot navigation (<em>m</em>), saved and then inserted into a page
+</li>
+<li>
+<strong>Extras</strong> If <em>extras</em> is set an additional button is presented to allow some experimental variables to be set.<br>
+Three allow a secondary Y axis to be displayed. At present the secondary axis is calculated by transforming values from the first Y axis.
+<ul>
+<li><em>y2_label</em> sets the secondary axis label</li>
+<li><em>y2_transform</em> allows the transform formula to be set as some action against Y, e.g. <code>y*.03</code></li>
+<li><em>y2_inverse</em> allows an inverse formula to be set, e.g <code>y/.03</code>. If not specified <y2_transform> will be used by &ldquo;inverting&rdquo; the operators - * and /</li>
+</ul>
+The final variable is
+<ul><li><em>overlay_type</em> which describes how the overlay value will be calculated for a Step Day Chart. The options are <em>Average</em>, <em>Sum</em>, or an individual hour of the day, e.g. <em>00:00</em>. An example of usage could be where you overlay a battery balance, say at end of each day, where battery balance at a specific hour could be useful</li></ul>
+</li>
+<li>
 <strong>Co...</strong> Perform either an analysis of contribution or correlation to a target. These options are presented by setting either the <em>show_contribution</em> or <em>show_correlation</em> Property of the <a href="#p_pm">[Powermatch]</a> section of the Preferences file to True. If both properties are set <em>show_contribution</em> takes precedence.<br/>
 <p><strong>Contribution</strong> Calculate the percentage contribution of each chosen column in meeting the target. This will present a table showing the percentage contribution for each month in the chosen period.</p>
 <p><strong>Correlation</strong> Perform linear correlations between the target and the chosen columns. This will present a table showing the correlations in descending order (i.e. best first)</p>
 <p>Correlation coefficients whose magnitude are between 0.9 and 1.0 indicate variables which can be considered <strong>very highly correlated</strong>. Correlation coefficients whose magnitude are between 0.7 and 0.9 indicate variables which can be considered <strong>highly correlated</strong>. Correlation coefficients whose magnitude are between 0.5 and 0.7 indicate variables which can be considered <strong>moderately correlated</strong>. Correlation coefficients whose magnitude are between 0.3 and 0.5 indicate variables which have a <strong>low correlation</strong>. Correlation coefficients whose magnitude are less than 0.3 have little if any (linear) correlation (from <a href="https://www.andrews.edu/~calkins/math/edrm611/edrm05.htm" target="_blank">https://www.andrews.edu/~calkins/math/edrm611/edrm05.htm</a>).</p>
 </li>
-<li>
-<strong>Plot 12</strong> If <em>plot_12</em> is set an additional button is presented to allow wide and low_height graphs to be produced. This allows monthly charts to be produced to fit on a page (e.g. A4) in portrait format. The individual charts can be produced using plot navigation (<em>m</em>), saved and then inserted into a page
-</li></ul></div>
+</ul></div>
 </td></tr>
 </table>
 <p>&nbsp;</p>
