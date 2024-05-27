@@ -85,6 +85,10 @@ class TabDialog(QtWidgets.QDialog):
                 sys.exit()
             elif os.path.isdir(sys.argv[1]):
                 models_dir = sys.argv[1]
+            else:
+                ini_dir = sys.argv[1].replace('$USER$', getUser())
+                if os.path.isdir(ini_dir):
+                    models_dir = ini_dir
             if sys.platform == 'win32' or sys.platform == 'cygwin':
                 if models_dir[-1] != '\\' and models_dir[-1] != '/':
                     models_dir += '\\'
