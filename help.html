@@ -28,6 +28,8 @@ function firstone() {
     if (urlParams.has('hideicon')) {
         var x = document.getElementById("backtotop");
         x.style.display = "none";
+        var y = document.getElementById("iconcmt");
+        y.style.display = "none";
     }
 }
 </script>
@@ -145,7 +147,7 @@ ul {
 <body onload="firstone();">
 <h1 id="help"><img src="sen_icon32.png" alt="SIM">&nbsp;SIREN Help</h1>
 <p><strong>All acronyms used in this help are defined in the list of <a href="#acronyms">acronyms</a></strong>
-<br /><span style="font-size: 12px">(Click the small icon on the top right of the page to return to the top)</span></p>
+<span id="iconcmt" style="font-size: 12px; display:inline"><br />(Click the small icon on the top right of the page to return to the top)</span>
 <h2>SIREN - SEN's Interactive Renewable Energy Network tool</h2>
 <p>The SEN SAM simulation, SIREN, is used to calculate energy generation for renewable energy power stations. The program uses the SAM SDK API for energy calculations. SAM is provided by the NREL. This help briefly describes how to use the simulation.</p>
 <h2>Contents</h2>
