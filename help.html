@@ -240,6 +240,7 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 <h2 id="install">Installation</h2>
 <p>At present there is a packaged version of the simulation for Windows available as a self-extracting zip file from <a href="https://sourceforge.net/projects/sensiren/" target="_blank">https://sourceforge.net/projects/sensiren/</a> (the package has been created with PyInstaller). There are a number of files available:
 <ul>
+<li><code>siren.msi</code> is in Microsoft Software Installer format and contains the full SIREN toolkit. <strong>Note:</strong> If SIREN is installed in a read-only location you may do some initial set up - see <code>sirensetup</code> below</li>
 <li><code>siren_toolkit.exe</code> contains the full SIREN toolkit, It contains the contents of three other files in this list</li>
 <li><code>siren_application.exe</code> contains the packaged Windows version of the SIREN application</li>
 <li><code>siren_sample.exe</code> contains the files and data for the sample SIREN simulation of the SWIS</li>
@@ -249,6 +250,8 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 <p>To install the required package you can just open/launch it and extract it to your desired location. It may be necessary to execute the program as Administrator.</p>
 <p>It is also possible to install and run the Python programs. <a href="https://github.com/ozsolarwind/siren/blob/master/SIREN_notes.html" target="_blank">SIREN_Notes.html</a> provides some guidance on how to do this</a>.</p>
 <p><strong>Note:</strong> This help file may refer to individual programs either with or without the program suffix, for example <code>powermap</code>, <code>powermap.exe</code> or <code>powermap.py</code>. You may have to use the appropriate suffix for your environment.
+<h3>sirensetup</h3>
+<p>If SIREN is installed in a read-only location as may happen if it is installed using the MSI package you may need to do some additional setup. For SIREN to execute correctly it needs the location for the SIREN Models (Preference files) and the Scenario folder to be writable. <code>sirensetup</code> can be used to copy the sample SIREN Preferences file, SIREN.ini, and sample Scenario files to a location of your choosing. It also creates a small file, <code>run_siren.bat</code> in the same location which can be used to invoke SIREN using your Scenario folder and the SIREN sample files.</p>
 <h3>Possible folder setup for SIREN</h3>
 <p>To enable new versions of SIREN to be installed without affecting your work a folder structure similar to the following is suggested.</p>
 <table border="0", class="none">
@@ -2965,7 +2968,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 </tr>
 <tr class="none">
 <td class="none"><img src="blank.png">&nbsp;&nbsp;Save Stations (as KML)</td>
-<td class="none">Save the current stations as a KML file which can be displayed in Google Earth. The stations will display as a small pin; hovering over a station will display it's name</td>
+<td class="none">Save the current stations as a KML file which can be displayed in Google Earth. Each stations will display as a small pin with a square or circle indicating the approximate area the station may occupy; hovering over a station will display it's name and capacity</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="blank.png">&nbsp;&nbsp;Save Grid (as KML)</td>
