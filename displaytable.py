@@ -52,7 +52,7 @@ class FakeObject:
 class Table(QtWidgets.QDialog):
     def __init__(self, objects, parent=None, fields=None, fossil=True, sumby=None, sumfields=None, units='', title=None,
                  save_folder='', edit=False, sortby=None, decpts=None, totfields=None, abbr=True, txt_align=None,
-                 reverse=False, txt_ok=None, span=None):
+                 reverse=False, txt_ok=None, span=None, year=''):
         super(Table, self).__init__(parent)
         self.oclass = None
         if len(objects) == 0:
@@ -116,6 +116,10 @@ class Table(QtWidgets.QDialog):
         self.replaced = None
         self.savedfile = None
         self.span = span
+        if year != '':
+            self.year = year + '_'
+        else:
+            self.year = year
         self.abbr = abbr
         if self.edit_table:
             self.title_word = ['Edit', 'Export']
@@ -726,7 +730,7 @@ class Table(QtWidgets.QDialog):
             iam = getattr(self.objects[0], '__module__')
         else:
             iam = self.title
-        data_file = '%s_Table_%s.xlsx' % (iam,
+        data_file = '%s_Table_%s%s.xlsx' % (iam, self.year,
                     QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'yyyy-MM-dd_hhmm'))
         data_file = QtWidgets.QFileDialog.getSaveFileName(None, 'Save ' + iam + ' Table',
                     self.save_folder + data_file, 'Excel Files (*.xls*);;CSV Files (*.csv)')[0]

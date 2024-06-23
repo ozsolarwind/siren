@@ -192,10 +192,10 @@ class PowerModel():
             else:
                 miny = 0
             if self.plots['save_plot']:
-                titl = 'By_' + period
+                titl = f'By {period}'
                 decpts = [3] * len(sp_vals)
                 decpts[0] = decpts[1] = 0
-                dialog = displaytable.Table(list(map(list, list(zip(*sp_data)))), title=titl, fields=sp_vals,
+                dialog = displaytable.Table(list(map(list, list(zip(*sp_data)))), title=titl, year=self.base_year, fields=sp_vals,
                                             save_folder=self.scenarios, decpts=decpts)
                 dialog.exec_()
                 del dialog, sp_data, sp_vals
@@ -1408,10 +1408,10 @@ class PowerModel():
             else:
                 miny = 0
             if self.plots['save_plot']:
-                titl = 'Hour'
+                titl = f'Hour'
                 decpts = [3] * len(sp_vals)
                 decpts[0] = decpts[1] = 0
-                dialog = displaytable.Table(list(map(list, list(zip(*sp_data)))), title=titl, fields=sp_vals,
+                dialog = displaytable.Table(list(map(list, list(zip(*sp_data)))), title=titl, year=self.base_year, fields=sp_vals,
                                             save_folder=self.scenarios, decpts=decpts)
                 dialog.exec_()
                 del dialog, sp_data, sp_vals
@@ -1559,7 +1559,7 @@ class PowerModel():
                 sp_tots.append(0.)
                 sp_pts.append(4)
                 titl = 'Augmented'
-                dialog = displaytable.Table(list(map(list, list(zip(*sp_data)))), title=titl, fields=sp_vals,
+                dialog = displaytable.Table(list(map(list, list(zip(*sp_data)))), title=titl, year=self.base_year, fields=sp_vals,
                                             save_folder=self.scenarios, decpts=sp_pts)
                 dialog.exec_()
                 del dialog
@@ -1585,8 +1585,8 @@ class PowerModel():
                     for i in range(len(sp_data[e])):
                         sp_data[e][i] = sp_data[l][i] - sp_data[r][i]
                         sp_tots[e] += sp_data[e][i]
-                titl = 'augmented2'
-                dialog = displaytable.Table(list(map(list, list(zip(*sp_data)))), title=titl, fields=sp_vals,
+                titl = 'Augmented2'
+                dialog = displaytable.Table(list(map(list, list(zip(*sp_data)))), title=titl, year=self.base_year, fields=sp_vals,
                                             save_folder=self.scenarios, decpts=sp_pts)
                 dialog.exec_()
                 fields = ['row', 'component', 'MWh', 'Load %']
@@ -1595,8 +1595,8 @@ class PowerModel():
                 for i in range(2, len(sp_vals)):
                     values.append([i - 1, sp_vals[i].title(), sp_tots[i], 0.])
                     values[-1][-1] = (sp_tots[i] * 100.) / sp_tots[l]
-                titl = 'augmented3'
-                dialog = displaytable.Table(values, fields=fields, title=titl, save_folder=self.scenarios, decpts=sp_pts)
+                titl = 'Augmented3'
+                dialog = displaytable.Table(values, fields=fields, title=titl, year=self.base_year, save_folder=self.scenarios, decpts=sp_pts)
                 dialog.exec_()
                 del dialog, sp_vals, sp_data, sp_tots
             plt.ylim([miny, maxy])
@@ -1850,7 +1850,8 @@ class PowerModel():
                                       [d_short[0][i], d_short[1][i], d_short[2][i]], values=vals))
                 vals.insert(0, 'date')
                 vals.insert(0, 'day')
-                dialog = displaytable.Table(shortstuff, title='Daily Shortfall',
+                titl = 'Daily Shortfall'
+                dialog = displaytable.Table(shortstuff, title=titl, year=self.base_year,
                          save_folder=self.scenarios, fields=vals)
                 dialog.exec_()
                 del dialog
@@ -2038,7 +2039,8 @@ class PowerModel():
             vals.insert(0, 'period')
             vals.insert(0, 'hour')
             if self.plots['shortfall_detail'] and self.plots['save_plot']:
-                dialog = displaytable.Table(shortstuff, title='Hourly Shortfall',
+                titl = 'Hourly Shortfall'
+                dialog = displaytable.Table(shortstuff, title=titl, year=self.base_year,
                                             save_folder=self.scenarios, fields=vals)
                 dialog.exec_()
                 del dialog
@@ -2142,7 +2144,7 @@ class PowerModel():
                 titl = 'Total'
                 decpts = [3] * len(sp_vals)
                 decpts[0] = 0
-                dialog = displaytable.Table(list(map(list, list(zip(*sp_data)))), title=titl, fields=sp_vals,
+                dialog = displaytable.Table(list(map(list, list(zip(*sp_data)))), title=titl, year=self.base_year, fields=sp_vals,
                                             save_folder=self.scenarios, decpts=decpts)
                 dialog.exec_()
                 del dialog, sp_data, sp_vals
@@ -2341,7 +2343,7 @@ class PowerModel():
             scenario_prefix = ''
         try:
             self.scenarios = config.get('Files', 'scenarios')
-            if scenario_prefix != '' :
+            if scenario_prefix != '':
                 self.scenarios += '/' + scenario_prefix
             for key, value in parents:
                 self.scenarios = self.scenarios.replace(key, value)
@@ -2625,7 +2627,8 @@ class PowerModel():
             if self.plots['save_zone']:
                 fields.insert(1, 'zone')
                 decpts.insert(1, 0)
-            dialog = displaytable.Table(self.power_summary, sumfields=sumfields,
+            titl = 'Summary'
+            dialog = displaytable.Table(self.power_summary, sumfields=sumfields, title=titl, year=self.base_year,
                      units='capacity=MW generation=MWh transmitted=MWh', sumby='technology',
                      decpts=decpts, fields=fields, save_folder=self.scenarios)
             dialog.exec_()
@@ -2826,7 +2829,8 @@ class PowerModel():
                                                   values=['load', 'generation', 'storage_used',
                                                           'storage_loss', 'storage_balance',
                                                           'shortfall', 'excess']))
-                            dialog = displaytable.Table(shortstuff, title='Storage',
+                            titl = 'Storage'
+                            dialog = displaytable.Table(shortstuff, title=titl, year=self.base_year,
                                                         save_folder=self.scenarios,
                                                         fields=['hour', 'period', 'load', 'generation',
                                                                 'storage_used', 'storage_loss',
@@ -2859,7 +2863,8 @@ class PowerModel():
                                                    shortfall, excess],
                                                   values=['load', 'generation',
                                                           'shortfall', 'excess']))
-                            dialog = displaytable.Table(shortstuff, title='Hourly Shortfall',
+                            titl = 'Hourly Shortfall'
+                            dialog = displaytable.Table(shortstuff, title=titl, year=self.base_year,
                                                         save_folder=self.scenarios,
                                                         fields=['hour', 'period', 'load', 'generation',
                                                                 'shortfall', 'excess'])
@@ -2943,7 +2948,8 @@ class PowerModel():
                             value[0] = round(value[0], 2)
                         except:
                             pass
-                    dialog = displaytable.Table(summs, title='Generation Summary',
+                    titl = 'Generation Summary'
+                    dialog = displaytable.Table(summs, title=titl, year=self.base_year,
                                                 save_folder=self.scenarios,
                                                 fields=['component', 'capacity', 'multiplier', 'generation', 'row'],
                                                 units='generation=MWh', sortby='row')
@@ -3053,9 +3059,10 @@ class PowerModel():
                 tot_fields = [['cf', tot_generation / tot_capacity / 8760],
                               ['lcoe_real', tot_lcoe_real[0]],
                               ['lcoe_nominal', tot_lcoe_nom[0]]]
+                titl = 'Financials'
                 dialog = displaytable.Table(self.financials.stations, fields=fin_fields,
                          sumfields=fin_sumfields, units=fin_units, sumby='technology',
-                         save_folder=self.scenarios, title='Financials', totfields=tot_fields)
+                         save_folder=self.scenarios, title=titl, year=self.base_year, totfields=tot_fields)
                 dialog.exec_()
                 del dialog
         self.something.power_signal = None
