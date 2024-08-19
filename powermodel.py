@@ -2300,7 +2300,7 @@ class PowerModel():
                     ws.cell(row=r + 2, column=c).value = round(techs[key][r], 3)
                     ws.cell(row=r + 2, column=c).font = normal
                 c += 1
-            ws.freeze_panes = 'A2'
+            ws.freeze_panes = 'C2'
             wb.save(data_file)
             wb.close()
             del wb
