@@ -681,7 +681,7 @@ class getMERRA2(QtWidgets.QDialog):
                 self.westSpin.setValue(self.eastSpin.value())
                 self.eastSpin.setValue(x)
             self.lonwSpin.setValue(self.eastSpin.value() - self.westSpin.value())
-            self.lonwSpin.setValue(self.eastSpin.value() - (self.eastSpin.value() - self.westSpin.value()) / 2.)
+            self.lonSpin.setValue(self.eastSpin.value() - (self.eastSpin.value() - self.westSpin.value()) / 2.)
             self.ignore = False
         elif self.sender().objectName() == 'lat':
             self.ignore = True
