@@ -22,6 +22,7 @@
 from copy import copy
 import os
 import sys
+import datetime
 import time
 from PyQt5 import QtCore, QtGui, QtWidgets
 import displayobject
@@ -186,9 +187,15 @@ class MyQDialog(QtWidgets.QDialog):
 
 
 class Constraint:
-    def __init__(self, name, category, capacity_min, capacity_max, rampup_max, rampdown_max,
-                 recharge_max, recharge_loss, discharge_max, discharge_loss, parasitic_loss,
-                 min_run_time, warm_time):
+    def __init__(self, name, category,
+                 capacity_min, capacity_max,
+                 discharge_loss, discharge_max, discharge_start,
+                 min_run_time, parasitic_loss,
+                 rampdown_max, rampup_max,
+                 recharge_loss, recharge_max, recharge_start,
+                 warm_time):
+        #after name and category all variables are passed in alphabetical order
+        # Constraint(key, '<category>', 0., 1., 0, 1., 0, 0., 1., 1., 0., 1., 0., 0, 0)
         self.name = name.strip()
         self.category = category
         try:
@@ -200,37 +207,59 @@ class Constraint:
         except:
             self.capacity_max = 1.
         try:
-            self.recharge_max = float(recharge_max) # can't charge more than this per hour
+            self.discharge_loss = float(discharge_loss)
         except:
-            self.recharge_max = 1.
-        try:
-            self.recharge_loss = float(recharge_loss)
-        except:
-            self.recharge_loss = 0.
+            self.discharge_loss = 0.
         try:
             self.discharge_max = float(discharge_max) # can't discharge more than this per hour
         except:
             self.discharge_max = 1.
         try:
-            self.discharge_loss = float(discharge_loss)
+            if isinstance(discharge_start, datetime.time):
+                self.discharge_start = discharge_start.hour
+            else:
+                self.discharge_start = float(discharge_start)
+                if self.discharge_start >= 1:
+                    self.discharge_start = int(self.discharge_start)
+                else:
+                    self.discharge_start = int((self.discharge_start + 1/3600) * 24)
         except:
-            self.discharge_loss = 0.
+            self.discharge_start = 0
+        try:
+            self.min_run_time = int(min_run_time)
+        except:
+            self.min_run_time = 0
         try:
             self.parasitic_loss = float(parasitic_loss) # daily parasitic loss / hourly ?
         except:
             self.parasitic_loss = 0.
         try:
-            self.rampup_max = float(rampup_max)
-        except:
-            self.rampup_max = 1.
-        try:
             self.rampdown_max = float(rampdown_max)
         except:
             self.rampdown_max = 1.
         try:
-            self.min_run_time = int(min_run_time)
+            self.rampup_max = float(rampup_max)
         except:
-            self.min_run_time = 0
+            self.rampup_max = 1.
+        try:
+            self.recharge_loss = float(recharge_loss)
+        except:
+            self.recharge_loss = 0.
+        try:
+            self.recharge_max = float(recharge_max) # can't charge more than this per hour
+        except:
+            self.recharge_max = 1.
+        try:
+            if isinstance(recharge_start, datetime.time):
+                self.recharge_start = recharge_start.hour
+            else:
+                self.recharge_start = float(recharge_start)
+                if self.recharge_start >= 1:
+                    self.recharge_start = int(self.recharge_start)
+                else:
+                    self.recharge_start = int((self.recharge_start + 1/3600) * 24)
+        except:
+            self.recharge_start = 0
         try:
             self.warm_time = float(warm_time)
             if self.warm_time >= 1:
@@ -1610,7 +1639,14 @@ class powerMatch(QtWidgets.QWidget):
         if sys.platform == 'win32' or sys.platform == 'cygwin':
             os.startfile(curfile)
         elif sys.platform == 'darwin':
-            subprocess.call('open', curfile)
+            try:
+                subprocess.call('open', curfile)
+            except:
+                try:
+                    subprocess.call('open', '-a', 'Microsoft Excel', curfile)
+                except:
+                    self.setStatus("Can't 'launch' '" + self.file_labels[fnr] + "' file")
+                    return
         elif sys.platform == 'linux2' or sys.platform == 'linux':
             subprocess.call(('xdg-open', curfile))
         self.setStatus(self.file_labels[fnr] + ' file "launched".')
@@ -1765,8 +1801,8 @@ class powerMatch(QtWidgets.QWidget):
                     else:
                         del self.constraints[key]
                 for key in new_keys:
-                    self.constraints[key] = Constraint(key, '<category>', 0., 1., 1., 1., 1., 0.,
-                                                       1., 0., 0., 0, 0)
+                    self.constraints[key] = Constraint(key, '<category>',
+                                            0., 1., 0, 1., 0, 0., 1., 1., 0., 1., 0., 0, 0)
                 target = self.constraints
             elif it == G:
                 old_keys = list(self.generators.keys())
@@ -1829,10 +1865,10 @@ class powerMatch(QtWidgets.QWidget):
                     self.getConstraints(ws)
                 except:
                     return
-            sp_pts = [2] * 13
+            sp_pts = [2] * 15
             sp_pts[4] = 3 # discharge loss
-            sp_pts[6] = 3 # parasitic loss
-            sp_pts[9] = 3 # recharge loss
+            sp_pts[8] = 3 # parasitic loss
+            sp_pts[11] = 3 # recharge loss
             dialog = displaytable.Table(self.constraints, title=self.sender().text(),
                  save_folder=self.scenarios, edit=True, decpts=sp_pts, abbr=False)
             dialog.exec_()
@@ -1910,90 +1946,92 @@ class powerMatch(QtWidgets.QWidget):
             self.setStatus(self.file_labels[it] + msg)
 
     def getConstraints(self, ws):
+        name = '<name>'
+        category = '<category>'
+        capacity_min = 0.
+        capacity_max = 1.
+        discharge_loss = 0.
+        discharge_max = 1.
+        discharge_start = 0
+        min_run_time = 0
+        parasitic_loss = 0.
+        rampdown_max = 1.
+        rampup_max = 1.
+        recharge_loss = 0.
+        recharge_max = 1.
+        recharge_start = 0
+        warm_time = 0
         if ws is None:
             self.constraints = {}
-            self.constraints['<name>'] = Constraint('<name>', '<category>', 0., 1.,
-                                              1., 1., 1., 0., 1., 0., 0., 0, 0)
+            self.constraints['<name>'] = Constraint(name, category, capacity_min,
+                                         capacity_max, discharge_loss, discharge_max,
+                                         discharge_start, min_run_time, parasitic_loss,
+                                         rampdown_max, rampup_max, recharge_loss,
+                                         recharge_max, recharge_start, warm_time)
             return
-        wait_col = -1
-        warm_col = -1
-        min_run_time = 0
-        warm_time = 0
+        col_names = ['Name', 'Category', 'Capacity Min', 'Capacity Max', 'Discharge Loss',
+                     'Discharge Max', 'Discharge Start', 'Min Run Time', 'Parasitic Loss',
+                     'Rampdown Max', 'Rampup Max', 'Recharge Loss', 'Recharge Max',
+                     'Recharge Start', 'Warmup Time']
+        col_no = [-1] * len(col_names)
         if ws.cell_value(1, 0) == 'Name' and ws.cell_value(1, 1) == 'Category':
-            cat_col = 1
-            for col in range(ws.ncols):
-                if ws.cell_value(0, col)[:8] == 'Capacity':
-                    cap_col = [col, col + 1]
-                elif ws.cell_value(0, col)[:9] == 'Ramp Rate':
-                    ramp_col = [col, col + 1]
-                elif ws.cell_value(0, col)[:8] == 'Recharge':
-                    rec_col = [col, col + 1]
-                elif ws.cell_value(0, col)[:9] == 'Discharge':
-                    dis_col = [col, col + 1]
-                elif ws.cell_value(1, col)[:9] == 'Parasitic':
-                    par_col = col
-                elif ws.cell_value(1, col)[:9] == 'Wait Time':
-                    wait_col = col
-                elif ws.cell_value(1, col)[:11] == 'Warmup Time':
-                    warm_col = col
+            col = 0
+            while col < ws.ncols:
+                if ws.cell_value(0, col) == 'Capacity':
+                    for c2 in range(col, col + 2):
+                       try:
+                           ndx = col_names.index('Capacity ' + ws.cell_value(1, c2))
+                           col_no[ndx] = c2
+                       except:
+                            pass
+                    col += 2
+                elif ws.cell_value(0, col) == 'Discharge':
+                    for c2 in range(col, col + 3):
+                       try:
+                           ndx = col_names.index('Discharge ' + ws.cell_value(1, c2))
+                           col_no[ndx] = c2
+                       except:
+                            pass
+                    col += 3
+                elif ws.cell_value(0, col) == 'Recharge':
+                    for c2 in range(col, col + 3):
+                       try:
+                           ndx = col_names.index('Recharge ' + ws.cell_value(1, c2))
+                           col_no[ndx] = c2
+                       except:
+                            pass
+                    col += 3
+                else:
+                    try:
+                        ndx = col_names.index(ws.cell_value(1, col))
+                        col_no[ndx] = col
+                    except:
+                        pass
+                    col += 1
             strt_row = 2
         elif ws.cell_value(0, 0) == 'Name': # saved file
-            cap_col = [-1, -1]
-            ramp_col = [-1, -1]
-            rec_col = [-1, -1]
-            dis_col = [-1, -1]
             for col in range(ws.ncols):
-                if ws.cell_value(0, col)[:8] == 'Category':
-                    cat_col = col
-                elif ws.cell_value(0, col)[:8] == 'Capacity':
-                    if ws.cell_value(0, col)[-3:] == 'Min':
-                        cap_col[0] = col
-                    else:
-                        cap_col[1] = col
-                elif ws.cell_value(0, col)[:6] == 'Rampup':
-                    ramp_col[0] = col
-                elif ws.cell_value(0, col)[:8] == 'Rampdown':
-                    ramp_col[1] = col
-                elif ws.cell_value(0, col)[:8] == 'Recharge':
-                    if ws.cell_value(0, col)[-3:] == 'Max':
-                        rec_col[0] = col
-                    else:
-                        rec_col[1] = col
-                elif ws.cell_value(0, col)[:9] == 'Discharge':
-                    if ws.cell_value(0, col)[-3:] == 'Max':
-                        dis_col[0] = col
-                    else:
-                        dis_col[1] = col
-                elif ws.cell_value(0, col)[:9] == 'Parasitic':
-                    par_col = col
-                elif ws.cell_value(0, col)[:9] == 'Wait Time':
-                    wait_col = col
-                elif ws.cell_value(0, col)[:12] == 'Min Run Time':
-                    wait_col = col
-                elif ws.cell_value(0, col)[:11] == 'Warmup Time':
-                    warm_col = col
+                try:
+                    ndx = col_names.index(ws.cell_value(0, col))
+                    col_no[ndx] = col
+                except:
+                    pass
             strt_row = 1
         else:
             self.setStatus('Not a ' + self.file_labels[C] + ' worksheet.')
             return
-        try:
-            cat_col = cat_col
-        except:
+        if col_no[0] < 0:
             self.setStatus('Not a ' + self.file_labels[C] + ' worksheet.')
             return
         self.constraints = {}
+        data = [name, category, capacity_min, capacity_max, discharge_loss, discharge_max,
+                discharge_start, min_run_time, parasitic_loss, rampdown_max, rampup_max,
+                recharge_loss, recharge_max, recharge_start, warm_time]
         for row in range(strt_row, ws.nrows):
-            if wait_col >= 0:
-                min_run_time = ws.cell_value(row, wait_col)
-            if warm_col >= 0:
-                warm_time = ws.cell_value(row, warm_col)
-            self.constraints[str(ws.cell_value(row, 0))] = Constraint(str(ws.cell_value(row, 0)),
-                                     str(ws.cell_value(row, cat_col)),
-                                     ws.cell_value(row, cap_col[0]), ws.cell_value(row, cap_col[1]),
-                                     ws.cell_value(row, ramp_col[0]), ws.cell_value(row, ramp_col[1]),
-                                     ws.cell_value(row, rec_col[0]), ws.cell_value(row, rec_col[1]),
-                                     ws.cell_value(row, dis_col[0]), ws.cell_value(row, dis_col[1]),
-                                     ws.cell_value(row, par_col), min_run_time, warm_time)
+            for ndx in range(len(col_no)):
+                 if col_no[ndx] >= 0:
+                     data[ndx] = ws.cell_value(row, col_no[ndx])
+            self.constraints[str(data[0])] = Constraint(*data)
         return
 
     def getGenerators(self, ws):
@@ -2795,7 +2833,8 @@ class powerMatch(QtWidgets.QWidget):
             data_file = self.get_filename(self.files[R].text())
         if self.results_prefix != '':
             j = data_file.rfind('/')
-            data_file = data_file[: j + 1] + self.results_prefix + '_' + data_file[j + 1:]
+            if data_file[j + 1:j + 1 + len(self.results_prefix)] != self.results_prefix:
+                data_file = data_file[: j + 1] + self.results_prefix + '_' + data_file[j + 1:]
         for itm in range(self.order.count()):
             gen = self.order.item(itm).text()
             try:
@@ -4716,53 +4755,62 @@ class powerMatch(QtWidgets.QWidget):
                         storage_carry = storage_carry - loss
                         storage_losses -= loss
                     if shortfall[row] < 0:  # excess generation
-                        if min_run_time > 0:
-                            in_run[0] = False
-                        if warm_time > 0:
-                            in_run[1] = False
-                        can_use = - (storage[0] - storage_carry) * (1 / (1 - recharge[1]))
-                        if can_use < 0: # can use some
-                            if shortfall[row] > can_use:
-                                can_use = shortfall[row]
-                            if can_use < - recharge[0] * (1 / (1 - recharge[1])):
-                                can_use = - recharge[0]
-                        else:
-                            can_use = 0.
-                        # for later: record recharge loss
-                        storage_losses += can_use * recharge[1]
-                        storage_carry -= (can_use * (1 - recharge[1]))
-                        shortfall[row] -= can_use
-                        if corr_data is not None:
-                            corr_src[row] += can_use
-                    else: # shortfall
-                        if min_run_time > 0 and shortfall[row] > 0:
-                            if not in_run[0]:
-                                if row + min_run_time <= 8759:
-                                    for i in range(row + 1, row + min_run_time + 1):
-                                        if shortfall[i] <= 0:
-                                            break
-                                    else:
-                                        in_run[0] = True
-                        if in_run[0]:
-                            can_use = shortfall[row] * (1 / (1 - discharge[1]))
-                            can_use = min(can_use, discharge[0])
-                            if can_use > storage_carry - storage[2]:
-                                can_use = storage_carry - storage[2]
-                            if warm_time > 0 and not in_run[1]:
-                                in_run[1] = True
-                                can_use = can_use * (1 - warm_time)
-                        else:
-                            can_use = 0
-                        if can_use > 0:
-                            storage_loss = can_use * discharge[1]
-                            storage_losses -= storage_loss
-                            storage_carry -= can_use
-                            can_use = can_use - storage_loss
+                        if row % 24 >= self.constraints[self.generators[gen].constraint].recharge_start:
+                            if min_run_time > 0:
+                                in_run[0] = False
+                            if warm_time > 0:
+                                in_run[1] = False
+                            can_use = - (storage[0] - storage_carry) * (1 / (1 - recharge[1]))
+                            if can_use < 0: # can use some
+                                if shortfall[row] > can_use:
+                                    can_use = shortfall[row]
+                                if can_use < - recharge[0] * (1 / (1 - recharge[1])):
+                                    can_use = - recharge[0]
+                            else:
+                                can_use = 0.
+                            # for later: record recharge loss
+                            storage_losses += can_use * recharge[1]
+                            storage_carry -= (can_use * (1 - recharge[1]))
                             shortfall[row] -= can_use
                             if corr_data is not None:
-                                corr_src[row] += can_use
-                            if storage_carry < 0:
-                                storage_carry = 0
+                               corr_src[row] += can_use
+                        else:
+                            can_use = 0
+                    else: # shortfall
+                        # This is code to support delaying battery usage until a certain time
+                        # to implement fully need an additional facility variable to indicate start time
+                        # Ref 2024 WEM ESOO 2.5 (ESROI)
+                        if row % 24 >= self.constraints[self.generators[gen].constraint].discharge_start:
+                            if min_run_time > 0 and shortfall[row] > 0:
+                                if not in_run[0]:
+                                    if row + min_run_time <= 8759:
+                                        for i in range(row + 1, row + min_run_time + 1):
+                                            if shortfall[i] <= 0:
+                                                break
+                                        else:
+                                            in_run[0] = True
+                            if in_run[0]:
+                                can_use = shortfall[row] * (1 / (1 - discharge[1]))
+                                can_use = min(can_use, discharge[0])
+                                if can_use > storage_carry - storage[2]:
+                                    can_use = storage_carry - storage[2]
+                                if warm_time > 0 and not in_run[1]:
+                                    in_run[1] = True
+                                    can_use = can_use * (1 - warm_time)
+                            else:
+                                can_use = 0
+                            if can_use > 0:
+                                storage_loss = can_use * discharge[1]
+                                storage_losses -= storage_loss
+                                storage_carry -= can_use
+                                can_use = can_use - storage_loss
+                                shortfall[row] -= can_use
+                                if corr_data is not None:
+                                    corr_src[row] += can_use
+                                if storage_carry < 0:
+                                    storage_carry = 0
+                            else:
+                                can_use = 0.
                         else:
                             can_use = 0.
                     if can_use < 0:
@@ -5652,11 +5700,17 @@ class powerMatch(QtWidgets.QWidget):
             ss.cell(row=ss_row, column=st_cap+1).number_format = '$#,##0.00'
             attr_text = 'Summary!$' + ssCol(st_cap+1) + '$' + str(ss_row)
             carbon_cell = oxl.workbook.defined_name.DefinedName('carbon_price', attr_text=attr_text)
-            wb.defined_names.append(carbon_cell)
+            try: # openpyxl 3.1.x
+                wb.defined_names['carbon_price'] = carbon_cell
+            except: # openpyxl 3.1.x
+                wb.defined_names.append(carbon_cell)
         ss_row += 1
         attr_text = 'Summary!$' + ssCol(st_cap+1) + '$' + str(ss_row)
         lifetime_cell = oxl.workbook.defined_name.DefinedName('lifetime', attr_text=attr_text)
-        wb.defined_names.append(lifetime_cell)
+        try:
+            wb.defined_names['lifetime'] = lifetime_cell
+        except:
+            wb.defined_names.append(lifetime_cell)
         ss.cell(row=ss_row, column=1).value = 'Lifetime (years)'
         ss.cell(row=ss_row, column=st_cap+1).value = max_lifetime
         ss.cell(row=ss_row, column=st_cap+1).number_format = '#,##0'
