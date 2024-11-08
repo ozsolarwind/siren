@@ -23,7 +23,6 @@
 <script type="text/javascript">
 function firstone() {
     const queryString = window.location.search;
-    console.log(queryString);
     const urlParams = new URLSearchParams(queryString);
     if (urlParams.has('hideicon')) {
         var x = document.getElementById("backtotop");
@@ -1983,6 +1982,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">Opacity of chart fill for values above target. Range is 1.0 (opaque) to 0.0 (translucent). Default value is 0.25</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>alpha_fill</dfn></td>
+<td class="none">Opacity of chart fill (below target and for no target). Range is 1.0 (opaque) to 0.0 (translucent). Default value is 1.</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>alpha_word</dfn></td>
 <td class="none">A list of categories separated by commas for a breakdown (TML) detail worksheet that should be removed when setting colours. Default value is <em>surplus,charge</em></td>
 </tr>
@@ -2064,6 +2067,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <tr class="none">
 <td class="none"><dfn>maximum (&ast;)</dfn></td>
 <td class="none">Maximum value for Power (y) axis. Default is 0 (meaning dynamic y axis)</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>no_of_overlays</dfn></td>
+<td class="none">Set a number of overlay fields. The default is one. If you set a higher number the overlay fields for the other fields will be suffixed with <em>_&lt;n&gt;_</em></td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>overlay (&ast;)</dfn></td>
@@ -3708,22 +3715,35 @@ The order in which the dispatchable technologies will be processed by Powermatch
 </table>
 <p>Powermatch will calculate costs in either of two ways, either by using a Reference LCOE and CF (<em>(l)</em> fields) or by using input costs (<em>(c)</em> fields) . If Capex is present it will use input costs otherwise it will use Reference LCOE. The option is chosen for each facility<em>(*)</em> fields are required for either method.</p>
 <h4>Constraints</h4>
-<p>Utilisation of each dispatchable generator and storage facility can be constrained by Powermatch in a number of ways. All figures are expressed as a percentage. In the tables the values will be displayed as a decimal fraction (0.00 to 1.00). All figures are hourly except for Parasitic Loss which is daily. The approach Powermatch uses is rather simplistic in that any losses need to cater for any loss of efficiency in storing energy or retrieving energy. The constraints are:
+<p>Utilisation of each dispatchable generator and storage facility can be constrained by Powermatch in a number of ways. All figures, other than times (<em>... Start</em> and <em>... Time</em>), are expressed as a percentage. In the tables the values will be displayed as a decimal fraction (0.00 to 1.00). All figures are hourly except for Parasitic Loss which is daily. The approach Powermatch uses is rather simplistic in that any losses need to cater for any loss of efficiency in storing energy or retrieving energy. The constraints are:
 <table border="0" class="none" style="margin-left:35px">
-<tr><td class="none"><dfn>Name</dfn></td><td class="none">Name of the Constraint</td></tr>
+<tr><td class="none" style="width: 8%;"><dfn>Name</dfn></td><td class="none">Name of the Constraint</td></tr>
 <tr><td class="none"><dfn>Constraint</dfn></td><td class="none">Name of the Constraint (same as Name)</td></tr>
 <tr><td class="none"><dfn>Category</dfn></td><td class="none">The category of the constraint. Values are either Storage or Generator</td></tr>
 <tr><td class="none"><dfn>Capacity Max</dfn></td><td class="none">For a Generator the maximum rate the plant can run at. For Storage the maximum amount of storage that can be used</td></tr>
 <tr><td class="none"><dfn>Capacity Min</dfn></td><td class="none">For a Generator the minimum rate (other than zero) the plant can run at; which may cause spilled generation to occur. Also known as Lower Operating Limit (LOL) - the minimum amount of power a plant can generate once it is turned on. For Storage the facility should not be drained below this value</td></tr>
 <tr><td class="none"><dfn>Discharge Loss</dfn></td><td class="none">Losses when storage is used (discharged). If you have a storage technology with a round trip efficiency value you should specify the full loss in the Recharge Loss constraint.</td></tr>
-<tr><td class="none"><dfn>Discharge Max</dfn></td><td class="none">For Storage the maximum rate at which the storage can be used, that is the power rating of the storage with reference to total energy content. For example, a 400MW storage with 4,000MWh of capacity would have a Discharge Max of 10%</td></tr>
+</table>
+<div class="experiment">
+<table border="0" class="none" style="margin-left:35px">
+<tr><td class="none"><dfn>Discharge Start</dfn></td><td class="none">For Storage, if specified, the hour at which storage usage can commence</td></tr>
+</table>
+</div>
+<table border="0" class="none" style="margin-left:35px">
+<tr><td class="none" style="width: 8%;"><dfn>Min Run Time</dfn></td><td class="none">For Storage some technologies may be better deployed if they can run for a number of hours. To simulate this Powermatch will not use the technology unless there are projected shortfalls for at least the desired number of hours</td></tr>
 <tr><td class="none"><dfn>Parasitic Losses</dfn></td><td class="none">Storage may lose capacity over time (e.g. batteries discharging, water evaporating). This constraint enables those losses to be catered for</td></tr>
 <tr><td class="none"><dfn>Rampdown Max</dfn></td><td class="none">The maximum rate that a generator can be ramped down (not fully implemented)</td></tr>
 <tr><td class="none"><dfn>Rampup Max</dfn></td><td class="none">The maximum rate that a generator can be ramped up (not fully implemented)</td></tr>
 <tr><td class="none"><dfn>Recharge Loss</dfn></td><td class="none">Losses when storage is increased (recharged). If you have a storage technology with a round trip efficiency value you should specify the full loss in this constraint (e.g. for a round trip efficiency of 30% you would set Recharge Loss to 70%).</td></tr>
 <tr><td class="none"><dfn>Recharge Max</dfn></td><td class="none">For Storage the maximum rate at which the storage can be increased</td></tr>
-<tr><td class="none"><dfn>Min Run Time</dfn></td><td class="none">For Storage some technologies may be better deployed if they can run for a number of hours. To simulate this Powermatch will not use the technology unless there are projected shortfalls for at least the desired number of hours</td></tr>
-<tr><td class="none"><dfn>Warmup Time</dfn></td><td class="none">For Storage some technologies may require a warmup period before they become operational. You can set a time period for this to occur, either in minutes or part of an hour (if an Initial value is set for the Storage it is assumed the warmup period has occurred prior to the first hour of the year). Also known as Ramp time (The amount of time it takes from the moment a generator is turned on to the moment it can start providing energy to the grid at its lower operating limit)</td></tr>
+</table>
+<div class="experiment">
+<table border="0" class="none" style="margin-left:35px">
+<tr><td class="none"><dfn>Recharge Start</dfn></td><td class="none">For Storage, if specified, the hour at which storage recharge can commence</td></tr>
+</table>
+</div>
+<table border="0" class="none" style="margin-left:35px">
+<tr><td class="none" style="width: 8%;"><dfn>Warmup Time</dfn></td><td class="none">For Storage some technologies may require a warmup period before they become operational. You can set a time period for this to occur, either in minutes or part of an hour (if an Initial value is set for the Storage it is assumed the warmup period has occurred prior to the first hour of the year). Also known as Ramp time (The amount of time it takes from the moment a generator is turned on to the moment it can start providing energy to the grid at its lower operating limit)</td></tr>
 </table>
 <h3 id="pmae">Powermatch Execution</h3>
 <p>The Powermatch options are as set out here. The options (Properties) are specified in the <a href="#p_pm">[Powermatch]</a> Section of the Preferences file. The associated property is indicated in brackets at the end of the description. All files are located in the SIREN Scenarios folder.</p>
@@ -4215,6 +4235,7 @@ By default the size of charts produced is determined by matplotlib, or by the <e
 <li>You can use the mouse scroll wheel to zoom in and out on the time (x) axis. The position of the mouse within the chart determines where the zoom will centre upon (that is, that point will remain fixed and the rest of the chart will move away from or towards that point)</li>
 <li>Moving the mouse while holding down the left button will allow you to pan across the chart</li>
 <li>Clicking the right mouse button or pressing the <em>r</em> key will reset the chart to the original state. This will allow you to zoom out to the original state and then zoom in to another period on the chart</li>
+<li>Pressing the <em>d</em> key will display a daily chart for a numbers of days. Each press will advance the chart by one day. By default the period is 3 days but you can change the number of days by pressing a number between 1 and 9 after the <em>d</em></li>
 <li>Pressing the <em>f</em> key will expand the chart window to fullscreen. Pressing it again will return it to the previous size</li>
 <li>Pressing the <em>h</em> key will hide the legend. Pressing it again will restore the legend to the top right</li>
 <li>Pressing the <em>l</em> key will allow you to move the legend, although the behaviour may be a little erratic. Initially, the legend will be moved to the top right of the window and be arranged as a vertical list. By clicking the left mouse button within the legend and dragging the mouse you can move it to a different location. In the process it may cause the chart to also move or cause some odd behaviour with it. In these cases pressing the <em>r</em> key will reset the chart leaving the legend in the new position</li>
@@ -4242,6 +4263,11 @@ The correlation or contribution can be for the full year or a chosen period or r
 <li>A header row that defines the content of the underlying rows (this need not be the first row)</li>
 <li>The first (header) column should be <em>Hour</em> for hourly data or <em>Interval</em> for half-hourly data, and the second should be <em>Period</em> with a cell format of <em>yyyy-mm-dd hh:mm</em>. The program uses the year in the first period row to determine if the data is for a leap year</li>
 <li>The rows immediately following the header row should contain data for each hour or half-hour of the year (either 8,760 or 17,520 for a normal year and 8,784 or 17,568 for a leap; or a smaller number for an incomplete year)</li>
+<li>If you encounter an error &ldquo;Data error with <em>column</em> (<em>&lt;Column&gt;&lt;Row&gt;</em>). Period may be incomplete (<em>n</em>)&rdquo; it may be because the spreadsheet has incomplete data (not enough rows) or it may be worthwhile opening and the saving the spreadsheet<br/>
+<div class="experiment">
+(this error is likely to be encountered with a <em>Step Day Chart</em> for an incomplete year)
+</div>
+</li>
 </ol>
 The program displays a window of options. The default values are specified in the <a href="#p_pp">[Powerplot]</a> Section of the Preferences file. It is possible to have a number of entries for files (<em>file_choices</em>) listed in recent order (<em>file_history</em>).
 <table border="0" class="none">
@@ -4258,15 +4284,16 @@ The program displays a window of options. The default values are specified in th
 <tr><td class="lr"><dfn>Target; line width and style</dfn></td>
 <td class="none">A pull-down list of column names. If the chart is intended to show how the chosen columns meet a target column, typically Load, this enables you to choose that column. Choosing <em>&lt;None&gt;</em> means no target field. If a target field is chosen the chart will show excess generation as lightly shaded areas above the target values (<em>target</em>). You can also specify an alternate line width (<em>target_width</em>) and line style (<em>target_style</em>)
 <div class="experiment">A target is required for Contribution and Correlation</div></td></tr>
-<tr><td class="lr"><dfn>Overlay</dfn></td>
-<td class="none">This option allows an overlay on the chart. It presents a pull-down list of options:
+<tr><td class="lr"><dfn>Overlays</dfn></td>
+<td class="none">This option allows overlays on the chart. It presents a pull-down list of options:
 <ul>
 <li><em>&lt;none&gt;</em></li>
 <li><em>Charge</em> The total of energy used to recharge storage to be shown as an overlay on the chart; it provides an indication of how and when excess energy has been used for recharge. If a Target, e.g. Load, is chosen the <u>target values will be added to the figure</u> to indicate the use of excess energy above the target.</li>
 <li><em>Underlying load</em> If available underlying load will be displayed on the chart. Underlying load includes the additional load met by Rooftop PV (DPV) rather than utility generation</li>
 <li><div class="experiment">It is also possible to choose a different overlay variable by &ldquo;dragging&rdquo; an entry from the Column Order tables to the Overlay field and then choosing it from the Overlay pull-down</div></li>
 </ul>
-You can also specify an alternate line colour (<em>overlay_colur</em>), width (<em>overlay_width</em>) and line style (<em>overlay_style</em>)
+You can also specify an alternate line colour (<em>overlay_colur</em>), width (<em>overlay_width</em>) and line style (<em>overlay_style</em>)<br />
+By default there is one overlay field but you can set a higher number by setting <em>no_of_overlays</em>
 </td></tr>
 <tr><td class="lr"><dfn>Header</dfn>, <strong>Header Font</strong></td>
 <td class="none">Specify a header - super title - for the chart. There are two special strings which will be replaced in the header:
@@ -4284,7 +4311,7 @@ If it's not a diurnal chart (i.e. Period is <em>&lt;None&gt;</em>) any occurence
 <tr><td class="lr"><dfn>Maximum</dfn></td>
 <td class="none">You can specify a maximum value for the Power (y) axis. This allows you to produce a series of charts with the same scale (<em>maximum</em>)</td></tr>
 <tr><td class="lr"><dfn>Type of Plot</dfn></td>
-<td class="none">The type of chart to be produced. Options are <em>Bar Chart</em>, <em>Cumulative</em>, <em>Heat Map</em>, <em>Line Chart</em>, <em>Pie Chart</em>, <em>Step Day Chart</em> and <em>Step Line Chart</em>. <em>Bar Chart</em>, <em>Cumulative</em> and <em>Step Chart</em> produce cumulative (stacked) charts and have filled areas by technology (or Columns). A Step Chart is similar to a Bar Chart but does not have spaces between the hourly bars; also it is a lot faster to display than a Bar Chart (a Bar Chart is not recommended for hourly charts). If a Target field (e.g. Load) is chosen the area above the Target value (i.e. excess generation) in the Cumulative and Step chart have a lightly shaded value (the degree of shading is chosen by the <em>alpha</em> property in the [Powerplot] Section of the Preferences file). A Heat Map visualises the total value of chosen columns to indicate the highest through lowest values of the range or, if a target column is chosen, an indication of how the total value meets the target value. Each &ldquo;square&rdquo; or &ldquo;cell&rdquo; of the map represents an hour; the vertical axis is hours in a day and the horizontal axis is days for the chosen period.  (<em>plot</em>)
+<td class="none">The type of chart to be produced. Options are <em>Bar Chart</em>, <em>Cumulative</em>, <em>Heat Map</em>, <em>Line Chart</em>, <em>Pie Chart</em>, <em>Step Day Chart</em> and <em>Step Line Chart</em>. <em>Bar Chart</em>, <em>Cumulative</em> and <em>Step Chart</em> produce cumulative (stacked) charts and have filled areas by technology (or Columns). A Step Chart is similar to a Bar Chart but does not have spaces between the hourly bars; also it is a lot faster to display than a Bar Chart (a Bar Chart is not recommended for hourly charts). If a Target field (e.g. Load) is chosen the area above the Target value (i.e. excess generation) in the Cumulative and Step chart have a lightly shaded value (the degree of shading is chosen by the <em>alpha</em> property in the [Powerplot] Section of the Preferences file). A Heat Map visualises the total value of chosen columns to indicate the highest through lowest values of the range or, if a target column is chosen, an indication of how the total value meets the target value. Each &ldquo;square&rdquo; or &ldquo;cell&rdquo; of the map represents an hour; the vertical axis is hours in a day and the horizontal axis is days for the chosen period. (<em>plot</em>)
 <div class="experiment">A </em>Step Day Chart</em> presents a step chart with daily figures calculated by summing the 24 hours of each day</div>
 </td></tr>
 <tr><td class="lr"><dfn>Percentage</dfn></td>
@@ -4343,7 +4370,11 @@ The final variable is
 </ul></div>
 </td></tr>
 </table>
-<p>&nbsp;</p>
+<p><strong>Notes:</strong>
+<ul>
+<li>If <em>constrained_layout</em> is set to True charts wil be produced with minimal whitespace which can be useful for saving charts with no borders. However, if you choose this option when the chart is first displayed it may be presented in a &ldquo;condensed&rdquo; format. If you press one (or two) of the Plot Navigation keys (e.g. <em>l</em> or <em>f</em>; see above) the chart should present normally</li>
+</ul>
+</p>
 <div class="experiment">
 <h3 id="flexiplot">Flexiplot</h3>
 <p><code>flexiplot</code> is a standalone program that can be used for &ldquo;prototyping&rdquo; a more conventional Excel spreadsheet where data is arranged in rows or columns. The program is very much experimental. If it proves useful it may be included as part of <code>powerplot</code> in the future. The program has a similar window of options to <code>powerplot</code> with the exception of <em>Period</em> and <em>Target</em>. The default values are specified in the <a href="#p_flexiplot">[Flexiplot]</a> Section of the Preferences file. It has a number of options that differ to <code>powerplot</code>.
@@ -4956,7 +4987,7 @@ NASA MERRA-2 data allows weather files to be created on a grid of 0.625 degree o
 <p><code>makeweatherfiles</code> is a program that can be used to produce solar and/or wind weather files for input to SAM. The program generates SMW (preferred for SAM) or CSV format solar resource files and SRW format wind resource files. These file formats have been chosen as they're easier to generate than other formats. Using the program you specify the source folder for either the ERA5 or  MERRA-2 data files, the time zone for the area of interest, a file format and target folder for the weather files. The program will generate files for each of the ERA5 or MERRA-2 grid squares within the chosen data files or optionally for a number of latitude and longitude positions. You can invoke the program either by choosing <code>makeweatherfiles</code> from the SIREN Tools menu or in Windows by running <code>makeweatherfiles.exe</code> in the <em>siren</em> (or <em>makeweatherfiles</em>) folder. Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
 <ul>
 <li><em>Year</em>. Year of interest. The naming conventions for MERRA-2 files include the date so this defines the date range. The tool processes dates from the last day of the prior year through to the first day of the next year (ignoring 29 February)</li>
-<li><em>Wrap to prior year</em>. To enable you to use (more) recent weather data this option will indicate that weather data should wrap to the prior year. As an example, if you have downloaded data up until April for the current year <code>makeweatherfiles</code> will use weather data from the prior year for May onwards to give a full year of data. The     data for both years must reside in the same folder (or the next sub-folder if yearly folders are used) and have the same dimensions for latitude and longitude</li>
+<li><em>Wrap to prior year</em>. To enable you to use (more) recent weather data this option will indicate that weather data should wrap to the prior year. As an example, if you have downloaded data up until April for the current year <code>makeweatherfiles</code> will use weather data from the prior year for May onwards to give a full year of data. The data for both years must reside in the same folder (or the next sub-folder if yearly folders are used) and have the same dimensions for latitude and longitude</li>
 <li><em>Ignore data gaps</em>. This option will cater for individual MERRA-2 files containing different dimensions for latitude and longitude. If this option is selected the program will create weather files where there are gaps for 21 days or less. If there are more gaps the file will not be created.
 <ul>
 <li>MERRA-2
@@ -5036,6 +5067,7 @@ NASA MERRA-2 data allows weather files to be created on a grid of 0.625 degree o
 <li>All files of the same type (solar or wind) being in the same folder</em>
 <li>If you download two copies of the same file wget will append a number to the second copy filename, e.g. ...nc4.1. At present these will be ignored</li>
 </ul></li>
+<li><strong>Note:</strong> If you encounter an error such as <em>No &lt;Solar&gt;/&lt;Wind&gt; file found for &lt;YYYY1231&gt;/&lt;YYYY0101&gt;</em> it may be because the file suffix for (e.g. <em>SUB.nc</em>) may be different for the file associated with the last day of the prior year or the first day of the next year</li>
 </ul>
 </li>
 <li>ERA5
