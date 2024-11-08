@@ -104,7 +104,7 @@ class TabDialog(QtWidgets.QDialog):
             self.help = 'help.html'
             self.about = 'about.html'
             self.config = configparser.RawConfigParser()
-            ignore = ['flexiplot.ini', 'powerplot.ini', 'siren_default.ini']
+            ignore = ['siren_default.ini']
             errors = ''
             for fil in sorted(fils):
                 if fil[-4:] == '.ini':
@@ -229,7 +229,7 @@ class TabDialog(QtWidgets.QDialog):
             if event.type() == QtCore.QEvent.MouseButtonRelease and \
               event.button() == QtCore.Qt.LeftButton:
                 ent = self.table.item(self.table.currentRow(), 0).text()
-                if ent == 'getfiles.ini':
+                if ent in ['getfiles.ini', 'flexiplot.ini', 'powerplot.ini']:
                     return QtCore.QObject.event(source, event)
                 self.table.viewport().removeEventFilter(self)
                 if len(self.models_dirs) > 1:
@@ -249,7 +249,15 @@ class TabDialog(QtWidgets.QDialog):
                     selectionModel.Rows)
                 menu = QtWidgets.QMenu()
                 actions =  []
-                if ent == 'getfiles.ini':
+                if ent in ['getfiles.ini', 'flexiplot.ini', 'powerplot.ini']:
+                    tool = ent[:ent.find('.')]
+                    try:
+                        i = self.model_tool.index(tool)
+                        actions.append(menu.addAction(QtGui.QIcon(self.model_icon[i]),
+                                                     'Execute ' + self.model_tool[i]))
+                        actions[-1].setIconVisibleInMenu(True)
+                    except:
+                        pass
                     actions.append(menu.addAction(QtGui.QIcon('edit.png'), 'Edit Preferences'))
                     actions[-1].setIconVisibleInMenu(True)
                 else:
@@ -649,10 +657,9 @@ class makeNew(QtWidgets.QDialog):
         self.show()
 
     def filenameChanged(self):
-        if self.fields[0][4].text().lower() == 'siren_default.ini' or \
-          self.fields[0][4].text().lower() == 'siren_default' or \
-          self.fields[0][4].text().lower() == 'getfiles' or \
-          self.fields[0][4].text().lower() == 'getfiles.ini':
+        if self.fields[0][4].text().lower() in ['getfiles', 'getfiles.ini',
+                                                'siren_default', 'siren_default.ini']:
+            # and maybe flexiplot and powerplot
             self.msg.setText('Proposed file name not allowed.')
         else:
             self.msg.setText('')
