@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2019-2023 Angus King
+#  Copyright (C) 2019-2024 Angus King
 #
 #  zoompan.py - This file is used by SIREN.
 #
@@ -60,8 +60,9 @@ class ZoomPanX():
         self.step = 168
         self.pick = True
         self.hide = False
+        self.days = 3
 
-    def zoom_pan(self, ax, base_scale=2., annotate=False, dropone=False, flex_ticks=False, pick=True, mth_labels=None):
+    def zoom_pan(self, ax, base_scale=2., annotate=False, dropone=False, flex_ticks=False, pick=True, mth_labels=None, days=3):
         def set_flex():
             if self.flex_ticks:
                 cur_xlim = ax.get_xlim()
@@ -105,7 +106,7 @@ class ZoomPanX():
             else:
                 # deal with something that should never happen
                 scale_factor = 1
-                print('(107)', event.button)
+                print('(109)', event.button)
             # set new limits
             if self.d3:
                 z_left = ydata - cur_zlim[0]
@@ -334,6 +335,19 @@ class ZoomPanX():
                             self.month += 1
                     ax.set_xlim([self.mth_xlim[self.month], self.mth_xlim[self.month + 1]])
                 ax.figure.canvas.draw()
+            elif event_key == 'd':
+                if self.axis != 'x':
+                    return
+                if self.keys == 'd':
+                    incr1 = self.step / 7
+                else:
+                    incr1 = 0
+                incr2 = incr1 + (self.step / 7) * self.days
+                self.keys = 'd'
+                xlim = ax.get_xlim()
+                ax.set_xlim(xlim[0] + incr1, xlim[0] + incr2)
+                set_flex()
+                ax.figure.canvas.draw()
             elif event_key == 'h': # hide legend
                 font = ax.get_legend().prop
                 handles, labels = ax.get_legend_handles_labels()
@@ -423,7 +437,16 @@ class ZoomPanX():
             elif event.key >= '0' and event.key <= '9' and len(self.keys) > 0:
                 if self.axis != 'x':
                     return
-                if self.keys[-1] == 'l':
+                if self.keys == 'd':
+                    self.days = int(event.key)
+                    incr1 = 0
+                    incr2 = incr1 + (self.step / 7) * self.days
+                    xlim = ax.get_xlim()
+                    ax.set_xlim(xlim[0] + incr1, xlim[0] + incr2)
+                    set_flex()
+                    ax.figure.canvas.draw()
+                    return
+                elif self.keys[-1] == 'l':
                     if event.key == '0':
                         ncol =1
                     else:
@@ -646,6 +669,7 @@ class ZoomPanX():
             self.step = 168 # 24 * 7 hours per week
         self.base_ylim = ax.get_ylim() # remember y base
         self.flex_ticks = flex_ticks
+        self.days = days
         if self.flex_ticks:
             self.x_ticks = []
             self.x_labels = []
