@@ -182,7 +182,7 @@ class WorkBook(object):
 
     def open_workbook(self, filename=None, on_demand=True, data_only=True, filetype=None):
         if not os.path.exists(filename):
-            raise Exception('File not found')
+            raise Exception(f'File not found - {filename}')
         if filetype is None:
             self._type = filename[filename.rfind('.') + 1:]
         else:
@@ -233,6 +233,9 @@ class WorkBook(object):
         except Exception as err:
             if isinstance(err, Exception) and err.args[0][:19] == 'Error with filetype':
                 raise
+            elif isinstance(err, Exception) and err.args[0][:30] == 'Excel xlsx file; not supported' \
+              and self._type == 'xls': # try as xlsx
+                return
             else:
                 raise Exception('Error opening file')
 
@@ -418,7 +421,7 @@ def techClean(tech, full=False):
 #
 # add another windspeed height
 def extrapolateWind(wind_file, tgt_height, law='logarithmic', replace=False, spread=None):
-    if tgt_height < 60:
+    if tgt_height < 50:
         return False
     if not os.path.exists(wind_file):
         if replace:
