@@ -756,8 +756,12 @@ class WorldWindow(QtWidgets.QMainWindow):
         self.move(win_left, win_top)
 
     def editIniFile(self):
+        before = os.stat(self.config_file).st_mtime
         dialr = EdtDialog(self.config_file)
         dialr.exec_()
+        after = os.stat(config_file).st_mtime
+        if after == before:
+            return
         self.get_config()   # refresh config values
         comment = self.config_file + ' edited. Reload may be required.'
         self.view.statusmsg.emit(comment)

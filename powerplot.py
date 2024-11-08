@@ -1689,9 +1689,12 @@ class PowerPlot(QtWidgets.QWidget):
         return True
 
     def editIniFile(self):
+        before = os.stat(self.config_file).st_mtime
         dialr = EdtDialog(self.config_file, section='[Powerplot]')
         dialr.exec_()
-     #   self.get_config()   # refresh config values
+        after = os.stat(self.config_file).st_mtime
+        if after == before:
+            return
         config = configparser.RawConfigParser()
         config.read(self.config_file)
         try:

@@ -1730,8 +1730,12 @@ class powerMatch(QtWidgets.QWidget):
             config_file = sys.argv[1]
         else:
             config_file = getModelFile('SIREN.ini')
+        before = os.stat(config_file).st_mtime
         dialr = EdtDialog(config_file, section='[Powermatch]')
         dialr.exec_()
+        after = os.stat(config_file).st_mtime
+        if after == before:
+            return
      #   self.get_config()   # refresh config values
         config = configparser.RawConfigParser()
         config.read(config_file)
