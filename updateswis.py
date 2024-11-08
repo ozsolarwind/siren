@@ -100,6 +100,12 @@ class makeFile():
                     for field in common_fields:
                         if field == 'Balancing Status':
                             continue
+                        try:
+                            if new_facility[old_new[field]] != facility[field]:
+                                pass
+                        except:
+                            self.log = 'It seems you might be accessing the pre-reform AEMO facilities file. Need to update the datafiles File location (URL)'
+                            return
                         if new_facility[old_new[field]] != facility[field]:
                             if field == 'Registered From' and facility[field][0] != '2':
                                 new_time = time.strptime(new_facility[field], '%Y-%m-%d 00:00:00')
