@@ -866,7 +866,8 @@ class WAScene(QtWidgets.QGraphicsScene):
                     except:
                         pass
                     self._stations.stations.append(new_st)
-                    self.addStation(self._stations.stations[-1])
+                    if not self.addStation(self._stations.stations[-1]):
+                        del self._stations.stations[-1]
                 except Exception as error:
                     print('wascene error:', error)
                     pass
@@ -933,7 +934,10 @@ class WAScene(QtWidgets.QGraphicsScene):
 
     def addStation(self, st):
         self._stationGroups[st.name] = []
-        p = self.mapFromLonLat(QtCore.QPointF(st.lon, st.lat))
+        try:
+            p = self.mapFromLonLat(QtCore.QPointF(st.lon, st.lat))
+        except:
+            return False
         try:
             if len(self.linesz.lines) > 0:
                 st.zone = self.linesz.getZone(st.lat, st.lon)
@@ -1042,7 +1046,7 @@ class WAScene(QtWidgets.QGraphicsScene):
             self._fnameGroup.addToGroup(txt)
         else:
             self._nameGroup.addToGroup(txt)
-        return
+        return True
 
     def addGeneration(self, st):
         if (st.technology[:6] != 'Fossil' or self.show_fossil) and st.generation > 0:
