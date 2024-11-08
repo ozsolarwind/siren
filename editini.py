@@ -147,7 +147,9 @@ class EdtDialog(QtWidgets.QDialog):
         s = open(self.in_file, 'w')
         for lin in bits:
             if len(lin) > 0:
-                s.write(lin + '\n')
+                l = lin.find('=') + 1
+                if l < len(lin):
+                    s.write(lin + '\n')
         s.close()
         self.close()
 
