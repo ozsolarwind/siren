@@ -775,6 +775,8 @@ class DataView(QtWidgets.QDialog):
         def in_map(a_min, a_max, b_min, b_max):
             return (a_min <= b_max) and (b_min <= a_max)
 
+        lat_dim = self.scene.coord_grid[0]
+        lon_dim = self.scene.coord_grid[1]
         self.clear_DataView()
         self.dataview_vars = {}
         self.dataview_items = []
@@ -817,9 +819,9 @@ class DataView(QtWidgets.QDialog):
                     else:
                         a_lat = 0
                         a_lon = 0
-                    if in_map(a_lat - 0.25, a_lat + 0.25, self.scene.map_lower_right[0],
+                    if in_map(a_lat - lat_dim / 2., a_lat + lat_dim / 2., self.scene.map_lower_right[0],
                               self.scene.map_upper_left[0]) \
-                      and in_map(a_lon - 0.3333, a_lon + 0.3333,
+                      and in_map(a_lon - lon_dim / 2., a_lon + lon_dim / 2.,
                                  self.scene.map_upper_left[1], self.scene.map_lower_right[1]):
                         self.datacells.append([stn.lat, stn.lon])
                         for i in tmp_tech:
@@ -839,9 +841,9 @@ class DataView(QtWidgets.QDialog):
                 except:
                     continue
                 a_lon = float(self.dataview_worksheet.cell_value(curr_row, self.dataview_vars['Longitude']))
-                if in_map(a_lat - 0.25, a_lat + 0.25, self.scene.map_lower_right[0],
+                if in_map(a_lat - lat_dim / 2., a_lat + lat_dim / 2., self.scene.map_lower_right[0],
                           self.scene.map_upper_left[0]) \
-                  and in_map(a_lon - 0.3333, a_lon + 0.3333,
+                  and in_map(a_lon - lon_dim / 2., a_lon + lon_dim / 2.,
                           self.scene.map_upper_left[1], self.scene.map_lower_right[1]):
                     try:
                         self.datacells.append([float(self.dataview_worksheet.cell_value(curr_row, self.dataview_vars['Latitude'])),
@@ -896,15 +898,17 @@ class DataView(QtWidgets.QDialog):
             self.dataview_items.append(txt)
             self.scene.addItem(self.dataview_items[-1])
 
+        lat_dim = self.scene.coord_grid[0]
+        lon_dim = self.scene.coord_grid[1]
         self.clear_DataView()
         opacity = self.opacitySpin.value()
         plot_scale = self.scaleSpin.value()
-        lon_cell = .3125
+        lon_cell = lon_dim / 2.
         cells = []
         if self.xsheet.currentText() == 'Exclude':
             for cell in self.datacells:
-                lat = round(round(cell[0] / 0.5, 0) * 0.5, 4)
-                lon = round(round(cell[1] / 0.625, 0) * 0.625, 4)
+                lat = round(round(cell[0] / lat_dim, 0) * lat_dim, 4)
+                lon = round(round(cell[1] / lon_dim, 0) * lon_dim, 4)
                 ignore = False
                 for exclude in self.exclude:
                     if exclude[0] == lat and exclude[1] == lon:
@@ -919,8 +923,8 @@ class DataView(QtWidgets.QDialog):
         if self.gridcentre.isChecked():
             lat_lons = {}
             for cel in range(len(cells) -1, -1, -1):
-                lat = round(round(cells[cel][0] / 0.5, 0) * 0.5, 4)
-                lon = round(round(cells[cel][1] / 0.625, 0) * 0.625, 4)
+                lat = round(round(cells[cel][0] / lat_dim, 0) * lat_dim, 4)
+                lon = round(round(cells[cel][1] / lon_dim, 0) * lon_dim, 4)
                 lat_lon = str(lat) + '_' + str(lon)
                 if lat_lon in lat_lons.keys():
                     tc = lat_lons[lat_lon]
@@ -1002,9 +1006,9 @@ class DataView(QtWidgets.QDialog):
                     continue
             lat = cell[0]
             lon = cell[1]
-            p = self.scene.mapFromLonLat(QtCore.QPointF(lon - lon_cell, lat + .25))
-            pe = self.scene.mapFromLonLat(QtCore.QPointF(lon + lon_cell, lat + .25))
-            ps = self.scene.mapFromLonLat(QtCore.QPointF(lon - lon_cell, lat - .25))
+            p = self.scene.mapFromLonLat(QtCore.QPointF(lon - lon_cell, lat + lat_dim / 2.))
+            pe = self.scene.mapFromLonLat(QtCore.QPointF(lon + lon_cell, lat + lat_dim / 2.))
+            ps = self.scene.mapFromLonLat(QtCore.QPointF(lon - lon_cell, lat - lat_dim / 2.))
             if plot_scale != 1.:
                 x_di = (pe.x() - p.x()) * (1 - plot_scale) / 2.
                 y_di = (ps.y() - p.y()) * (1 - plot_scale) / 2.
