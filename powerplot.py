@@ -21,6 +21,8 @@
 
 import configparser  # decode .ini file
 import os
+import plotly.graph_objects as go
+import plotly
 from PyQt5 import QtCore, QtGui, QtWidgets
 import sys
 from math import ceil, log10, sqrt
@@ -33,11 +35,16 @@ from matplotlib.font_manager import FontProperties
 import numpy as np
 import matplotlib.pyplot as plt
 import displayobject
+import displaytable
 from colours import Colours
 from credits import fileVersion
 from displaytable import Table
 from editini import EdtDialog, SaveIni
 from getmodels import getModelFile
+try:
+    from senplot3d import PowerPlot3D
+except:
+    PowerPlot3D = None
 from senutils import ClickableQLabel, getParents, getUser, ListWidget, ssCol, strSplit, techClean, WorkBook
 from zoompan import ZoomPanX
 
@@ -676,6 +683,9 @@ class PowerPlot(QtWidgets.QWidget):
         self.grid.addWidget(QtWidgets.QLabel('Sheet:'), rw, 0)
         self.sheet = QtWidgets.QComboBox()
         self.grid.addWidget(self.sheet, rw, 1, 1, 2)
+        listfiles = QtWidgets.QPushButton('List Files')
+        self.grid.addWidget(listfiles, rw, 4)
+        listfiles.clicked.connect(self.listfilesClicked)
         rw += 1
         self.grid.addWidget(QtWidgets.QLabel('Period:'), rw, 0)
         self.period = QtWidgets.QComboBox()
@@ -777,6 +787,8 @@ class PowerPlot(QtWidgets.QWidget):
         self.grid.addWidget(QtWidgets.QLabel('Type of Plot:'), rw, 0)
         plots = ['Cumulative', 'Bar Chart', 'Heat Map', 'Line Chart', 'Pie Chart', 'Step Chart', 'Step Day Chart',
                  'Step Line Chart']
+        if PowerPlot3D is not None:
+            plots.append('3D Surface Chart')
         self.plottype = QtWidgets.QComboBox()
         for plot in plots:
              self.plottype.addItem(plot)
@@ -943,6 +955,28 @@ class PowerPlot(QtWidgets.QWidget):
         ifile = ''
         config = configparser.RawConfigParser()
         config.read(self.config_file)
+        try: # get list of files if any
+            ifile = config.get('Powerplot', 'file' + choice).replace('$USER$', getUser())
+        except:
+            pass
+        if not os.path.exists(ifile) and not os.path.exists(self.scenarios + ifile):
+            if self.book is not None:
+                self.book.close()
+                self.book = None
+            self.log.setText("Can't find file - " + ifile)
+            msgbox = QtWidgets.QMessageBox()
+            msgbox.setWindowTitle('SIREN - powerplot file not found')
+            msgbox.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
+            fname = ifile[ifile.rfind('/') + 1:]
+            msgbox.setText("Can't find '" + fname + "'\nDo you want to remove it from file history (Y)?")
+            msgbox.setDetailedText(self.log.text())
+            msgbox.setIcon(QtWidgets.QMessageBox.Question)
+            msgbox.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+            reply = msgbox.exec_()
+            if reply == QtWidgets.QMessageBox.Yes:
+                self.file_cleanup(choice)
+                self.files.removeItem(self.files.currentIndex())
+            return
         breakdowns = []
         columns = []
         self.period.setCurrentIndex(0)
@@ -1101,15 +1135,31 @@ class PowerPlot(QtWidgets.QWidget):
             self.history = ['']
             ifiles = {'': ifile}
         else:
-            for i in range(len(self.history)):
-                if ifile == ifiles[self.history[i]]:
-                    self.history.insert(0, self.history.pop(i)) # make this entry first
-                    break
+            for i in range(len(self.history) - 1, -1, -1):
+                try:
+                    if ifile == ifiles[self.history[i]]:
+                        ihist = self.history[i]
+                        del self.history[i]
+                        self.history.insert(0, ihist) # make this entry first
+                        break
+                except KeyError:
+                    del self.history[i]
+                except:
+                    pass
             else:
+            # find new entry
                 if len(self.history) >= self.max_files:
                     self.history.insert(0, self.history.pop(-1)) # make last entry first
                 else:
                     hist = sorted(self.history)
+                    if hist[0] == '':
+                        hist = [int(x) for x in hist[1:]]
+                        hist.sort()
+                        hist.insert(0, '')
+                    else:
+                        hist = [int(x) for x in hist[1:]]
+                        hist.sort()
+                    hist = [str(x) for x in hist]
                     if hist[0] != '':
                         ent = ''
                     else:
@@ -1320,7 +1370,6 @@ class PowerPlot(QtWidgets.QWidget):
         values = dialog.getValues()
         if values is None:
             return
-        print(values)
         for key, value in values.items():
             if len(value) == 0:
                 setattr(self, key, '')
@@ -1454,6 +1503,59 @@ class PowerPlot(QtWidgets.QWidget):
         dialog = displayobject.AnObject(QtWidgets.QDialog(), self.help,
                  title='Help for powerplot (' + fileVersion() + ')', section='powerplot')
         dialog.exec()
+
+    def listfilesClicked(self):
+        ifiles = {}
+        for i in range(self.files.count()):
+             if self.history[i] == '':
+                 ifiles[' '] = self.files.itemText(i)
+             else:
+                 ifiles[self.history[i]] = self.files.itemText(i)
+        fields = ['Choice', 'File name']
+        dialog = displaytable.Table(ifiles, title='Files', fields=fields, sortby='', edit='delete')
+        dialog.exec_()
+        if dialog.getValues() is not None:
+            ofiles = dialog.getValues()
+            dels = []
+            for key in ifiles.keys():
+                if key not in ofiles.keys():
+                    if key == ' ':
+                        key = ''
+                    dels.append(key)
+            for choice in dels:
+                self.file_cleanup(choice)
+                for i in range(self.files.count()):
+                     if self.files.itemText(i) == ifiles[choice]:
+                         self.files.removeItem(i)
+        del dialog
+        self.filesChanged()
+
+    def file_cleanup(self, choice):
+        if choice == ' ':
+            choice = ''
+        line = ''
+        for i in range(len(self.history) -1, -1, -1):
+            if self.history[i] == choice:
+                 del self.history[i]
+            else:
+                line = self.history[i] + ',' + line
+        line = line[:-1]
+        lines = ['file_history=' + line]
+        for prop in ['breakdown', 'columns', 'cperiod', 'cumulative', 'file', 'grid', 'line_style',
+                     'line_width', 'maximum', 'period', 'percentage', 'plot', 'sheet', 'spill_label',
+                     'suptitle', 'target', 'target_style', 'target_width', 'title', 'y2_label',
+                     'y2_inverse', 'y2_transform' ]:
+            lines.append(prop + choice + '=')
+        for o in range(self.no_of_overlays):
+            if o == 0:
+                ovr = ''
+            else:
+                ovr = f'_{o}_'
+            for prop in ['', '_colour', '_style', '_type', '_width']:
+                lines.append('overlay' + prop + ovr + choice + '=')
+        updates = {'Powerplot': lines}
+        SaveIni(updates, ini_file=self.config_file)
+        self.log.setText('File removed from file history')
 
     def quitClicked(self):
         if self.book is not None:
@@ -1828,12 +1930,8 @@ class PowerPlot(QtWidgets.QWidget):
         if isheet == '':
             self.log.setText('Sheet not set.')
             return
-        if len(sys.argv) > 1:
-            config_file = sys.argv[1]
-            config = configparser.RawConfigParser()
-            config.read(self.config_file)
-        else:
-            config = None
+        config = configparser.RawConfigParser()
+        config.read(self.config_file)
         for c in range(self.order.count()):
             if not self.check_colour(self.order.item(c).text(), config):
                 return
@@ -1842,6 +1940,33 @@ class PowerPlot(QtWidgets.QWidget):
                 return
             if not self.check_colour('shortfall', config):
                 return
+        if self.plottype.currentText() == '3D Surface Chart':
+            d3_contours = False
+            d3_background = True
+            d3_html = False
+            d3_months = 3
+            try:
+                chk = config.get('Powerplot', 'contours_3d')
+                if chk.lower() in ['true', 'on', 'yes']:
+                    d3_contours = True
+            except:
+                pass
+            try:
+                chk = config.get('Powerplot', 'background_3d')
+                if chk.lower() in ['false', 'off', 'no']:
+                    d3_background = False
+            except:
+                pass
+            try:
+                chk = config.get('Powerplot', 'html_3d')
+                if chk.lower() in ['true', 'on', 'yes']:
+                    d3_html = True
+            except:
+                pass
+            try:
+                d3_months = int(config.get('Powerplot', 'months_3d'))
+            except:
+                pass
         del config
         do_12 = False
         do_12_labels = None
@@ -1915,6 +2040,30 @@ class PowerPlot(QtWidgets.QWidget):
   #          if ws.nrows - self.toprow[1] - 1 > 8760:
    #             the_days[1] = 29
         hr_labels = ['0:00', '4:00', '8:00', '12:00', '16:00', '20:00', '23:00']
+        if self.plottype.currentText() == '3D Surface Chart':
+            order = []
+            for o in range(self.order.count()):
+                order.append(self.order.item(o).text())
+            if d3_html:
+                saveit = self.file.text()[:self.file.text().rfind('.')] + '.html'
+            else:
+                saveit = None
+            colours = {}
+            nocolour = []
+            for o in range(len(order)):
+                try:
+                    colours[order[o].lower()] = self.colours[order[o].lower()]
+                except:
+                    nocolour.append(order[o].lower().lower())
+            if len(nocolour) > 0:
+                if len(nocolour) > 0:
+                    more_colour = PlotPalette(nocolour, palette=self.plot_palette)
+                    colours = {**colours, **more_colour}
+            PowerPlot3D(colours, self.cperiod.currentText(), self.interval, order, self.period.currentText(), self.rows, self.seasons,
+                        the_days, self.title.text(), self.toprow, ws, year, self.zone_row,
+                        html=saveit, background=d3_background, contours=d3_contours, months=d3_months)
+            self.log.setText("3D Chart complete (You'll need to close the browser window yourself).")
+            return
         figname = self.plottype.currentText().lower().replace(' ','') + '_' + str(year)
         breakdowns = []
         suptitle = self.suptitle.text()
@@ -3114,7 +3263,7 @@ class PowerPlot(QtWidgets.QWidget):
                         try:
                             load[h] = load[h] + ws.cell_value(row, tgt_col)
                         except:
-                            print('(3023)', h, row, tgt_col, ws.cell_value(row, tgt_col), strt_row, todo_rows)
+                            print('(3255)', h, row, tgt_col, ws.cell_value(row, tgt_col), strt_row, todo_rows)
                         h += 1
                         if h >= self.interval:
                            h = 0
@@ -3137,6 +3286,8 @@ class PowerPlot(QtWidgets.QWidget):
                                 try:
                                     overlay[o][h] = overlay[o][h] + ws.cell_value(row, col)
                                 except:
+                               #     if row >= ws.nrows:
+                                #        break
                                     self.log.setText(f'Data error with {self.overlay[o]} ({ssCol(col, base=0)}{row + 1}). Period may be incomplete (8)')
                                     return
                             h += 1

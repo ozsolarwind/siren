@@ -1310,19 +1310,28 @@ as embedded solar - Rooftop PV - installed on the grid but not registered with A
 </td></tr>
 <tr class="none" id="p_flexiplot"><td><div class="experiment"><dfn><strong>[Flexiplot]</strong></dfn><br />(experimental)</div></td>
 <td><div class="experiment">
-Options for <a href="#flexiplot">Flexiplot</a>. Properties for individual files (columns, file, grid, maximum, percentage, period, chart (plot), series, sheet, title, xlabel, xvalues, and ylabel; marked with an asterisk, &ast;, below) can be repeated a number of times to allow a history of recent files to be accessed. These are suffixed with a number. Properties are as follows:</p>
+Options for <a href="#flexiplot">Flexiplot</a>. Properties for individual files (file, grid, maximum, percentage, period, plot (chart), sheet, title, xextra, xlabel, xoffset, xseries, ylabel, yseries, and zlabel; marked with an asterisk, &ast;, below) can be repeated a number of times to allow a history of recent files to be accessed. These are suffixed with a number. Properties are as follows:</p>
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><dfn>alpha</dfn></td>
 <td class="none">Opacity of chart fill for values above target. Range is 1.0 (opaque) to 0.0 (translucent). Default value is 0.25</td>
 </tr>
 <tr class="none">
-<td class="none"><dfn>columns (&ast;)</dfn></td>
-<td class="none">List (and order) for columns to be charted</td>
+<td class="none"><dfn>background_3d</dfn></td>
+<td class="none">If set to True a pale grey background colour is display for axes in 3D Surface Charts. Default is False</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>colourbars_3d</dfn></td>
+<td class="none">Define colour bars for surfaces in 3D Surface Charts. Indidual colour bars can be defined by enclosing a series of html colours between brackets, for example <em>(#006633,#ff7800,#e8001f),(#ffff00,#00a933,#ff0000)</em> defines two colour bars - green,orange,red and yellow,orange,red</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>constrained_layout</dfn></td>
 <td class="none">Produce a chart layout with no whitespace around the graph. Default is False</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>contours_3d</dfn></td>
+<td class="none">If set to True contour lines will be displayed on 3D Surface Charts. The default is False</td>
+</tr>
 <tr class="none">
 <td class="none"><dfn>file (&ast;)</dfn></td>
 <td class="none">Spreadsheet filename</td>
@@ -1338,6 +1347,10 @@ Options for <a href="#flexiplot">Flexiplot</a>. Properties for individual files 
 <tr class="none">
 <td class="none"><dfn>grid (&ast;)</dfn></td>
 <td class="none">The gridlines to be included on the chart. Options are Both, Horizontal, Vertical and None. The default is None</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>html_3d</dfn></td>
+<td class="none">If set to True a HTML version of a 3D Surface Charts will be created. The file will be saved in the sane folder and name as the file being displayed with a file type of <em>html</em>. The default is False</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>label_font</dfn></td>
@@ -1364,6 +1377,10 @@ Options for <a href="#flexiplot">Flexiplot</a>. Properties for individual files 
 <td class="none">Maximum value for Series (y) axis. Default is 0 (meaning dynamic y axis)</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>minimum_3d</dfn></td>
+<td class="none"><code>flexiplot</code> attempts to identify if input data is possibly in table format suitable for a 3D Surface Chart by identifying duplicate data rows. If the count of duplicate rows is greater than the threshold it will &ldquo;hide&rdquo; the duplicate rows from Ordinate (Y) series. The default is 10</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>legend_font</dfn></td>
 <td class="none">Font properties for chart legend</td>
 </tr>
@@ -1380,12 +1397,8 @@ Options for <a href="#flexiplot">Flexiplot</a>. Properties for individual files 
 <td class="none">The type of chart. Options are Bar Chart, Cumulative, Heat Map, Line Chart, Pie Chart, Step Line Chart or Step Day Chart. The default is Cumulative</td>
 </tr>
 <tr class="none">
-<td class="none"><dfn>random_colors, or<br />random_colours</dfn></td>
-<td class="none">If a colour for the series has not been defined a random colour will be generated. Setting this value to False will enable a new colour to be defined, and saved, for each series. The default is True</td>
-</tr>
-<tr class="none">
-<td class="none"><dfn>series (&ast;)</dfn></td>
-<td class="none">The series to be included in the chart defined as a set of Excel cells. A number of ranges can be defined</td>
+<td class="none"><dfn>plot_palette</dfn></td>
+<td class="none">A colour palette to be used for data series without a defined colour. Values can be <em>random</em>, <em>15</em> or <em>24</em>. The default is <em>random</em>. <em>15</em> and <em>24</em> are colour palettes for colour blindness while <em>random</em> generates a random colour</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>sheet (&ast;)</dfn></td>
@@ -1412,16 +1425,32 @@ Options for <a href="#flexiplot">Flexiplot</a>. Properties for individual files 
 <td class="none">Font properties for chart title. Default fontsize is x-large</td>
 </tr>
 <tr class="none">
-<td class="none"><dfn>xlabel</dfn></td>
-<td class="none">The label for the series (X) axis</td>
+<td class="none"><dfn>xextra (&ast;)</dfn></td>
+<td class="none">Add an additional cell to identify the X series</td>
 </tr>
 <tr class="none">
-<td class="none"><dfn>xvalues</dfn></td>
-<td class="none">The list of values to be included in the chart defined as a set of Excel cells. A number of ranges can be defined. The values specify the row or column that defines the column or row headings</td>
+<td class="none"><dfn>xlabel (&ast;)</dfn></td>
+<td class="none">The label for the X series (axis)</td>
 </tr>
 <tr class="none">
-<td class="none"><dfn>ylabel</dfn></td>
-<td class="none">The label for the Y axis</td>
+<td class="none"><dfn>xoffset (&ast;)</dfn></td>
+<td class="none">The cell identifying the row or column for X and Y series</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>xseries (&ast;)</dfn></td>
+<td class="none">The cell value identifying the start of the X series</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>ylabel (&ast;)</dfn></td>
+<td class="none">The label for the Y series (axis)</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>yseries (&ast;)</dfn></td>
+<td class="none">The cell values to be included in the chart, the Y series (axis)</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>zlabel (&ast;)</dfn></td>
+<td class="none">The label for the Z series (axis)</td>
 </tr>
 </table>
 </td></tr>
@@ -1769,7 +1798,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </table>
 </td></tr>
 <tr class="none" id="p_pc"><td><dfn><strong>[Plot Colors]</strong></dfn></td>
-<td>Colours for <a href="#powerplot">Powerplot</a>. These may be populated from the other Colors Sections</td>
+<td>Colours for <a href="#flexiplot">Flexiplot</a> and <a href="#powerplot">Powerplot</a>. These may be populated from the other Colors Sections</td>
 </tr>
 <tr class="none" id="power"><td><dfn><strong>[Power]</strong></dfn></td>
 <td>What processing, output and charts to produce for power model processing. Properties are True or False. Power options can be changed and saved when the Power Models menu option is selected. Properties are:</p>
@@ -1976,9 +2005,9 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </div>
 <tr class="none" id="p_pp"><td><dfn><strong>[Powerplot]</strong></dfn></td>
 <td>Options for <a href="#powerplot">Powerplot</a>. Properties for individual files (e.g. columns; marked with an asterisk, &ast;, below) can be repeated a number of times to allow a history of recent files to be accessed. These are suffixed with a number. Properties are as follows:</p>
-<table border="0", class="none">
+<table border="0", class="none" style="width:100%">
 <tr class="none">
-<td class="none"><dfn>alpha</dfn></td>
+<td class="none" style="width:8%"><dfn>alpha</dfn></td>
 <td class="none">Opacity of chart fill for values above target. Range is 1.0 (opaque) to 0.0 (translucent). Default value is 0.25</td>
 </tr>
 <tr class="none">
@@ -1989,8 +2018,17 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none"><dfn>alpha_word</dfn></td>
 <td class="none">A list of categories separated by commas for a breakdown (TML) detail worksheet that should be removed when setting colours. Default value is <em>surplus,charge</em></td>
 </tr>
+</table>
+<div class="experiment">
+<table border="0", class="none" style="width:100%">
 <tr class="none">
-<td class="none"><dfn>cmap</dfn></td>
+<td class="none" style="width:8%"><dfn>background_3d</dfn>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td class="none">If set to True a pale grey background colour is display for axes in 3D Surface Charts. Default is False</td>
+</table>
+</div>
+<table border="0", class="none" style="width:100%">
+<tr class="none">
+<td class="none" style="width:8%"><dfn>cmap</dfn></td>
 <td class="none">Identify the colour map (cmap) to be used to create Heat maps (refer to <a href="https://matplotlib.org/stable/gallery/color/colormap_reference.html" target="_blank">https://matplotlib.org/stable/gallery/color/colormap_reference.html</a>). A common colour map is <em>jet</em> or <em>jet_r</r>. The default is a red-amber-green colour map</td>
 </tr>
 <tr class="none">
@@ -2009,8 +2047,17 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none"><dfn>constrained_layout</dfn></td>
 <td class="none">Use a constrained layout. This minimises whitespace. The default is False.</td>
 </tr>
+</table>
+<div class="experiment">
+<table border="0", class="none" style="width:100%">
 <tr class="none">
-<td class="none"><dfn>cperiod (&ast;)</dfn></td>
+<td class="none" style="width:8%"><dfn>contours_3d</dfn>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td class="none">If set to True contour lines will be displayed on 3D Surface Charts. The default is False</td>
+</table>
+</div>
+<table border="0", class="none" style="width:100%">
+<tr class="none">
+<td class="none" style="width:8%"><dfn>cperiod (&ast;)</dfn></td>
 <td class="none">Chosen end period for diurnal chart</td>
 </tr>
 <tr class="none">
@@ -2040,8 +2087,17 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none"><dfn>header_font</dfn></td>
 <td class="none">Saved details on Header font properties</td>
 </tr>
+</table>
+<div class="experiment">
+<table border="0", class="none" style="width:100%">
 <tr class="none">
-<td class="none"><dfn>label_font</dfn></td>
+    <td class="none" style="width:8%"><dfn>html_3d</dfn>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td class="none">If set to True a HTML version of a 3D Surface Charts will be created. The file will be saved in the sane folder and name as the file being displayed with a file type of <em>html</em>. The default is False</td>
+</table>
+</div>
+<table border="0", class="none" style="width:100%">
+<tr class="none">
+<td class="none" style="width:8%"><dfn>label_font</dfn></td>
 <td class="none">Saved details on font properties for Labels and chart &ldquo;tick marks&rdquo;</td>
 </tr>
 <tr class="none">
@@ -2068,8 +2124,17 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none"><dfn>maximum (&ast;)</dfn></td>
 <td class="none">Maximum value for Power (y) axis. Default is 0 (meaning dynamic y axis)</td>
 </tr>
+</table>
+<div class="experiment">
+<table border="0", class="none" style="width:100%">
 <tr class="none">
-<td class="none"><dfn>no_of_overlays</dfn></td>
+<td class="none" style="width:8%"><dfn>months_3d</dfn>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td class="none">For 3D Surface Charts this value indicates the number of months to present a chart as either dailys or monthly. Values greater than this will present a monthly chart. The default value is <em>3</em></td>
+</table>
+</div>
+<table border="0", class="none" style="width:100%">
+<tr class="none">
+<td class="none" style="width:8%"><dfn>no_of_overlays</dfn></td>
 <td class="none">Set a number of overlay fields. The default is one. If you set a higher number the overlay fields for the other fields will be suffixed with <em>_&lt;n&gt;_</em></td>
 </tr>
 <tr class="none">
@@ -2106,7 +2171,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>plot (&ast;)</dfn>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
-<td class="none">The type of chart. Options are Bar Chart, Cumulative, Heat Map, Line Chart, Pie Chart, Step Line Chart or Step Day Chart. The default is Cumulative</td>
+<td class="none">The type of chart. Options are Bar Chart, Cumulative, Heat Map, Line Chart, Pie Chart, Step Line Chart, Step Day Chart or 3D Surface Chart. The default is Cumulative</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>select_day</dfn></td>
@@ -2114,28 +2179,28 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 </table>
 <div class="experiment">
-<table border="0", class="none">
+<table border="0", class="none" style="width:100%">
 <tr class="none">
-<td class="none"><dfn>plot_12</dfn>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td class="none" style="width:8%"><dfn>plot_12</dfn>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
 <td class="none">This property provides a capability to produce wide charts to enable 12 monthly charts to fit on a page (e.g. A4) in portrait format. The default is False</td>
 </table>
 </div>
-<table border="0", class="none">
+<table border="0", class="none" style="width:100%">
 <tr class="none">
-<td class="none"><dfn>sheet (&ast;)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</dfn></td>
+<td class="none" style="width:8%"><dfn>sheet (&ast;)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</dfn></td>
 <td class="none">Worksheet name for chart</td>
 </tr>
 </table>
 <div class="experiment">
-<table border="0", class="none">
+<table border="0", class="none" style="width:100%">
 <tr class="none">
-<td class="none"><dfn>short_legend</dfn>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td class="none" style="width:8%"><dfn>short_legend</dfn>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
 <td class="none">If a TML Detail file with Breakdowns is plotted it is possible to produce a shorter legend by setting this property to True. This shorter legend aids in readibility of the plot by shortening the length of the legend. The default is False</td>
 </table>
 </div>
-<table border="0", class="none">
+<table border="0", class="none" style="width:100%">
 <tr class="none">
-<td class="none"><dfn>spill_label (&ast;)</dfn>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td class="none" style="width:8%"><dfn>spill_label (&ast;)</dfn>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
 <td class="none">Suffix for Legend entries for spilled energy. Default is no entry</td>
 </tr>
 <tr class="none">
@@ -2194,6 +2259,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <tr class="none">
 <td class="none"><dfn>adjusted_lcoe</dfn></td>
 <td class="none">In producing the reports and optimisation use the adjusted (corrected) LCOE or not. The default is True</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>batch_file</dfn></td>
+<td class="none">Filename for Powermatch Batch spreadsheet</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>batch_new_file</dfn></td>
@@ -2362,6 +2431,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <tr class="none">
 <td class="none"><dfn>tml_results_sheet<dfn></td>
 <td class="none">The Detail worksheet used as input to TML Detail</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>transition_file</dfn></td>
+<td class="none">Filename for Powermatch Transition spreadsheet</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>underlying</dfn></td>
@@ -3770,6 +3843,8 @@ The order in which the dispatchable technologies will be processed by Powermatch
 <td class="none">Filename for Powermatch output (report) spreadsheet. Clicking on the field will allow you to choose the name for the report spreadsheet. <strong>Note:</strong> If the <em>change_results</em> property of the <em>[Powermatch]</em> Section is set changes to the input spreadsheet name will cause this Results spreadsheet name to change (<em>results_file</em>)</td></tr>
 <tr><td class="lr"><dfn>Batch File</dfn></td>
 <td class="none">Filename for Batch option. Clicking on the field will allow you to choose another spreadsheet from the SIREN Scenarios folder (<em>batch_file</em>)</td></tr>
+<tr><td class="lr"><dfn>Transition File</dfn></td>
+<td class="none">Filename for Transition option. Clicking on the field will allow you to choose another spreadsheet from the SIREN Scenarios folder (<em>transition_file</em>)</td></tr>
 <tr><td class="lr"><dfn>Replace Last</dfn></td>
 <td class="none">By checking this option when running a Batch report you can choose to replace the latest Results and Charts worksheets or an existing batch report workbook</td></tr>
 <tr><td class="lr"><dfn>Prefix facility names in Batch report</dfn></td>
@@ -3779,14 +3854,15 @@ The order in which the dispatchable technologies will be processed by Powermatch
 <tr><td class="lr"><dfn>Carbon Price</dfn></td>
 <td class="none">If a carbon price is not included in LCOE figures you can use this option to set a carbon price between $0 and the maximum carbon price (<em>carbon_price_max</em>) (<em>carbon_price</em>)</td></tr>
 <tr><td class="lr"><dfn>Adjust Generators</dfn></td>
-<td class="none">If this option is checked you will be presented with a table to enable you to adjust the input capacity data for each generator technology. You can specify the required capacity or, if the <em>show_multipliers</em> property is set, a multiplier between 0 and the cap set by the <em>adjust_cap</em> property in the <a href="#power">[Power]</a> Section of the Preferences file; the default multiplier is 25. The original input values will be derived from the data sheet for renewables and the Generators table for dispatchable technologies. If you have adjusted the capacities you can <strong>Reset</strong> the capacities or just <strong>Reset Load</strong>. You can also <strong>Save</strong> and <strong>Restore</strong> the capacities to use again later or <strong>List</strong> saved capacities. With the list of saved capacities you can right-click on the desired list before you exit the list and capacities will be set to those values. You can also <strong>Add to  Batch</strong> file. You press <strong>Proceed</strong> to execute <code>Powermatch</code>. (<em>adjust_generators</em>)</td></tr>
+<td class="none">If this option is checked you will be presented with a table to enable you to adjust the input capacity data for each generator technology. You can specify the required capacity or, if the <em>show_multipliers</em> property is set, a multiplier between 0 and the cap set by the <em>adjust_cap</em> property in the <a href="#power">[Power]</a> Section of the Preferences file; the default multiplier is 25. The original input values will be derived from the data sheet for renewables and the Generators table for dispatchable technologies. If you have adjusted the capacities you can <strong>Reset</strong> the capacities or just <strong>Reset Load</strong>. If you Reset the capacities and get small values (less than or equal to 1) you can reset these to 0 by pressing the reset button again. You can also <strong>Save</strong> and <strong>Restore</strong> the capacities to use again later or <strong>List</strong> saved capacities. With the list of saved capacities you can right-click on the desired list before you exit the list and capacities will be set to those values. You can also <strong>Add to  Batch</strong> file. You press <strong>Proceed</strong> to execute <code>Powermatch</code>. (<em>adjust_generators</em>)</td></tr>
 <tr><td class="lr"><dfn>Dispatch Order</dfn></td>
 <td class="none">The order in which the dispatchable technologies will be processed by Powermatch. You can change the order by clicking on each value and moving it up and down the list. The initial order is derived from the generators (facilities) table. If you want to exclude a generator you can drag it to the right hand list (and drag it back to the left to re-include)</td></tr>
 <tr><td class="bottom"><strong>Done, Summary, Detail,<br />Batch, Transition, Optimise,<br />Preferences, Help, TML Detail</strong></td>
 <td class="none">As well as the buttons beside the sheet options there are a number of buttons at the bottom of the menu, as described below:</td></tr>
 </table>
 <ul>
-<li><strong>Done</strong>. Exit Powermatch. Any changed options will be saved</li>
+<li><strong>Done</strong>. Exit Powermatch. Any changed options will be saved
+</p></li>
 <li><strong>Summary</strong>. Invoke Powermatch with (just) Summary Output. This option produces a summary table of the Powermatch outputs allowing you to examine and adjust inputs without having to access the Powermatch outputs (Detail) spreadsheet. The table columns are:
 <table border="0" class="none" style="margin-left:35px">
 <tr><td class="none"><dfn>Facility</dfn></td><td class="none">Name of the facility (generator or storage)</td></tr>
@@ -3836,6 +3912,7 @@ The order in which the dispatchable technologies will be processed by Powermatch
 <ul>
 <li>Assuming a generator is listed in column L.<br />Calculate the percentage of time it is running below 55% of capacity - <code>=COUNTIF(L2:L8771,">"&L1*0.55)/8760</code></li>
 <li>Assuming a storage facility is listed in column I, it's balance will be in column J.<br />Calculate the percentage of time it is at full capacity - <code>=COUNTIF(J2:J8771,"="&I1)/8760</code><br />and at less than or equal to 10% capacity - <code>=COUNTIF(J2:J8771,"<="&I1*0.1)/8760</code></li>
+</p>
 </ul>
 <li><strong>Batch</strong>. Invoke Powermatch for a number of &ldquo;models&rdquo; with different capacities for each technology. This option produces a worksheet containing selected details from the Summary Output with one column per model. An input spreadsheet contains a column with the capacities for each model. A list of the desired details from the Summary Table can be specified below the list of technologies (capacities). The details can include any of the following Report Groups. Most groups will have rows pertaining to each group for each facility plus additional rows specific to each group. If the option is chosen Facility names will be prefixed with a unique identifier for each report group; the prefix for each group is shown in curly brackets
 <table border="0" class="none" style="margin-left:35px">
@@ -3867,12 +3944,12 @@ The order in which the dispatchable technologies will be processed by Powermatch
 <tr><td class="none"><dfn>Data Sources<dfn></td><td class="none">Display the data sources used for the batch run (provides: Scenarios folder, Powermatch data file, Constraints worksheet and Facility worksheet)</td></tr>
 <tr><td class="none"><dfn>Optimisation Parameters<dfn></td><td class="none">If the model was added via Optimisation this will list the optimisation parameters used. This should be the last entry (even below any Chart options)</td></tr>
 </table>
-<br />
+</p>
 <dfn>Capacity (MW)</dfn> is required and must be the first entry. The other Report Groups can be <strong>in any order</strong>. <dfn>Carbon Price</dfn> allows you to input a different Carbon Price for each Model. <dfn>Discount Rate</dfn> allows you to input a different discount rate for each Model. If Carbon Price and/or Discount Rate are to be included they must appear immediately below the Total row for the Capacity inputs.
 <br />By default the resulting output will be appended as a new worksheet to the input file. You can create a new spreadsheet by setting the <em>batch_new_file</em> property to True
 <br />It is also possible to perform batch runs on zone data, but if so both the input data file and the batch file must have input capacities by zone. In this case the name for each facility identifies both the zone and technology in the form <em>zone.technology</em>.
-<br />The Batch option also has a prototype chart facility that can be used to do sensitivity analysis on a suite of batch models - see <a href="#pm_batch_charts">below</a>
-<br /><strong>Usage notes:</strong>
+</p>The Batch option also has a prototype chart facility that can be used to do sensitivity analysis on a suite of batch models - see <a href="#pm_batch_charts">below</a>
+</p><strong>Usage notes:</strong>
 <ul>
 <li>If you want to include a Total row in the outputs you need to have a Total row (as the last row) in the <em>Capacity (MW)</em> Report Group</li>
 <li><strong>Beware:</strong> If the batch input worksheet (capacity figures) contains formulae you need to be careful doing multiple batch executions. You may need to open the batch worksheet and save it before doing another batch execution.</li>
@@ -3880,15 +3957,13 @@ The order in which the dispatchable technologies will be processed by Powermatch
 <li>By default, the same Load data is used for all models in a Batch execution. If you add a <dfn>year</dfn> row immediately after the <dfn>Capacity (MW)</dfn> row, the load file can be changed to other years. The same Generators table is used for all models</li>
 <li>If the input model has capacity for facilities contributing to Underlying load (e.g. Rooftop PV) the batch report will contain underlying totals</li>
 </ul>
-<br />
+</p>
 </li>
-</ul>
 <div class="experiment">
-<ul>
-<li><strong>Transition</strong>. This option can assist with modelling a transition from a &ldquo;current&rdquo; state to a future state with annual changes to technologies. The option uses a Batch file as input. You create a model for each year with the planned additional capacities for that year. Powermatch will use the load profile for that year. To determine the capital cost for Generators it will calculate the average cost based upon the capacities for each year. To work corectly the models (may) need to be in assending order by year. It relies on the load profile and Generators table names (sheet names) to include the year. The year can be passed either in the <dfn>Model Label</dfn> or an addiitonal <drn>year</dfn> row. When using this option the <em>remove_cost</em> cost option is ignored (set to False) to ensure capital costs are captured for a new technology even if it is not used. The report for each year is the cumulative cost up to that point and not the incremental cost
-</ul>
+<li><strong>Transition</strong>. This option can assist with modelling a transition from a &ldquo;current&rdquo; state to a future state with annual changes to technologies. The option uses a Batch file as input. For convenience there is an additional menu field for a Transition file, however, the file is idential to a Batch file. You create a model for each year with the planned additional capacities for that year. Powermatch will use the load profile for that year. To determine the capital cost for Generators it will calculate the average cost based upon the capacities for each year. To work corectly the models (may) need to be in ascending order by year. It relies on the load profile and Generators table names (sheet names) to include the year. The year can be passed either in the <dfn>Model Label</dfn> or an addiitonal <drn>year</dfn> row. When using this option the <em>remove_cost</em> cost option is ignored (set to False) to ensure capital costs are captured for a new technology even if it is not used. The report for each year is the cumulative cost up to that point and not the incremental cost
+</li>
 </div>
-<ul>
+</p>
 <li><strong>Optimise</strong>. Invoke the Optimise function. This will use an iterative approach to optimise the input generator capacities to produce a solution with (a) either a lower overall LCOE, (b) the lowest weight for six variables, or (c) both. It will complete by displaying a chart of how the value for LCOE has converged to a minimum, and either (if <em>optimise_multitable</em> and <em>more_details</em> are set) a three dimensional plot showing the three variables with the highest weightings or (if <em>optimise_multitable</em> is set) a table of all variables for the multi-variable approach. Depending on which options are specified you will be presented with a number of &ldquo;best picks&rdquo; where you can choose your preferred choice. This will then produce a summary table which will also contain details on the Optimisation parameters used. It will also update the adjustment values for each generator to enable you to produce a Powermatch spreadsheet. If you choose a solution this can be added to a batch input file (if <em>optimise_to_batch</em> is set).
 <ul>
 <li>If you are using generator adjustments it may be useful to invoke <strong>Summary</strong> to set or reset the starting capacities for the optimsation (using <strong>Reset</strong> to set initial values or <strong>Restore</strong> to restore previously saved values)</li>
@@ -3903,15 +3978,17 @@ The order in which the dispatchable technologies will be processed by Powermatch
 <tr><td class="none"><dfn>Optimisation Parameters<dfn></td><td class="none">If desired this should be the last entry (even below any Charts)</td></tr>
 </table>
 </ul>
-See below for more details on optimisation.</li>
-<li><strong>Preferences</strong>. Edit the Preferences file</li>
-<li><strong>Help</strong>. Display the Powermatch help</li>
-</ul>
+</p>See below for more details on optimisation.
+</p></li>
+<li><strong>Preferences</strong>. Edit the Preferences file
+</p></li>
+<li><strong>Help</strong>. Display the Powermatch help
+</p></li>
 <div class="experiment">
-<ul>
 <li><strong>TML Detail</strong>. The detailed <strong>Detail</strong> spreadsheet produced by Powermatch contains generation figures for each RE technology but not how that generation has contributed &ldquo;to meet load&rdquo; and charge storage. This button will invoke a program, <a href="#pmtmldetail"><code>pmtmldetail</code></a>, that will create an additional workbook that has a worksheet that provides this additional detail. The file can be used as input to <a href="#powerplot"><code>powerplot</code></a>
-</ul>
+</li>
 </div>
+</ul>
 <h3 id="pmab">Powermatch Batch</h3>
 <p>To expand upon that described above there is also an ability to specify a range of values for technologies rather than having to repeat many input columns. This enables a large number of batch inputs to be specified in a compact manner. The input format for each technology to have multiple values is:
 <pre>
@@ -4248,6 +4325,16 @@ By default the size of charts produced is determined by matplotlib, or by the <e
 </ul>
 <p>It is also possible to move the legend for Pie Charts produced with a legend.</p>
 <p><strong>Note:</strong> For cumulative (stacked) charts produced by Powerplot this feature may perform slowly so please be a little patient</p>
+<div class="experiment">
+<p><strong><u>3D Plot Navigation</u></strong></p>
+<p>3D charts are produced by a different tool, plotly.
+<ul>
+<li>The produced chart is displayed in a browser window and control passes to the browser. You'll need to close the window yourself</li>
+<li>The chart view can be changed using the mouse and navigated using the menu icons at the top right of the window</li>
+<li>The chart has a legend towads the right of the displayed chart. This allows you to toggle individual surfaces on of off</li>
+<li>The <em>html_3d</em> property can be used to have a html version of the chart saved for later use</li>
+</ul>
+</div>
 <h3 id="powerplot">Powerplot</h3>
 <p><code>powerplot</code> is a standalone program that will produce either hourly, half-hourly or diurnal charts from a spreadsheet that conforms to certain constraints. It is intended to be used to chart (detailed) results either from Powermatch or some of the files produced by Powermap's Powermodel.
 <div class="experiment">
@@ -4277,8 +4364,9 @@ The program displays a window of options. The default values are specified in th
 <td class="none">Click on this field to choose the desired spreadsheet (<em>file</em>)</td></tr>
 <tr><td class="lr"><dfn>Sheet</dfn></td>
 <td class="none">A pull-down list to enable you to choose the desired worksheet (<em>sheet</em>)</td></tr>
-<tr><td class="lr"><dfn>Period(s)</dfn></td>
-<td class="none">A pull-down list for a full year, a month or other defined seasons or periods that may be defined in the Preferences file. If an option other than <em>&lt;None&gt;</em> is chosen the resulting chart will present an average diurnal chart for the chosen period (<em>period</em>). If the first period is a month a second pull-down list allows you to choose an ending month range. This can either be a later month in the year or, if earlier than the first value, months will wrap to the start of the year. For example, Period 1 of Nov and Period 2 of Feb will correlate Nov, Dec, Jan and Feb (<em>period2</em>)</td></tr>
+<tr><td class="lr"><dfn>Period(s)</dfn>, <strong>List Files</strong></td>
+<td class="none">A pull-down list for a full year, a month or other defined seasons or periods that may be defined in the Preferences file. If an option other than <em>&lt;None&gt;</em> is chosen the resulting chart will present an average diurnal chart for the chosen period (<em>period</em>). If the first period is a month a second pull-down list allows you to choose an ending month range. This can either be a later month in the year or, if earlier than the first value, months will wrap to the start of the year. For example, Period 1 of Nov and Period 2 of Feb will correlate Nov, Dec, Jan and Feb (<em>period2</em>)<br />
+The List Files button allows you to list the recent files list and optionally remove entries from the list. To remove an entry you right-click on the Row number, click yes to delete the file (from teh list) and then press the Save button</td></tr>
 <tr><td class="lr"><dfn>Day</dfn></td>
 <td class="none">Produce a diurnal chart for a chosen day of the chosen period</td></tr>
 <tr><td class="lr"><dfn>Target; line width and style</dfn></td>
@@ -4292,7 +4380,7 @@ The program displays a window of options. The default values are specified in th
 <li><em>Underlying load</em> If available underlying load will be displayed on the chart. Underlying load includes the additional load met by Rooftop PV (DPV) rather than utility generation</li>
 <li><div class="experiment">It is also possible to choose a different overlay variable by &ldquo;dragging&rdquo; an entry from the Column Order tables to the Overlay field and then choosing it from the Overlay pull-down</div></li>
 </ul>
-You can also specify an alternate line colour (<em>overlay_colur</em>), width (<em>overlay_width</em>) and line style (<em>overlay_style</em>)<br />
+You can also specify an alternate line colour (<em>overlay_colour</em>), width (<em>overlay_width</em>) and line style (<em>overlay_style</em>)<br />
 By default there is one overlay field but you can set a higher number by setting <em>no_of_overlays</em>
 </td></tr>
 <tr><td class="lr"><dfn>Header</dfn>, <strong>Header Font</strong></td>
@@ -4311,8 +4399,9 @@ If it's not a diurnal chart (i.e. Period is <em>&lt;None&gt;</em>) any occurence
 <tr><td class="lr"><dfn>Maximum</dfn></td>
 <td class="none">You can specify a maximum value for the Power (y) axis. This allows you to produce a series of charts with the same scale (<em>maximum</em>)</td></tr>
 <tr><td class="lr"><dfn>Type of Plot</dfn></td>
-<td class="none">The type of chart to be produced. Options are <em>Bar Chart</em>, <em>Cumulative</em>, <em>Heat Map</em>, <em>Line Chart</em>, <em>Pie Chart</em>, <em>Step Day Chart</em> and <em>Step Line Chart</em>. <em>Bar Chart</em>, <em>Cumulative</em> and <em>Step Chart</em> produce cumulative (stacked) charts and have filled areas by technology (or Columns). A Step Chart is similar to a Bar Chart but does not have spaces between the hourly bars; also it is a lot faster to display than a Bar Chart (a Bar Chart is not recommended for hourly charts). If a Target field (e.g. Load) is chosen the area above the Target value (i.e. excess generation) in the Cumulative and Step chart have a lightly shaded value (the degree of shading is chosen by the <em>alpha</em> property in the [Powerplot] Section of the Preferences file). A Heat Map visualises the total value of chosen columns to indicate the highest through lowest values of the range or, if a target column is chosen, an indication of how the total value meets the target value. Each &ldquo;square&rdquo; or &ldquo;cell&rdquo; of the map represents an hour; the vertical axis is hours in a day and the horizontal axis is days for the chosen period. (<em>plot</em>)
-<div class="experiment">A </em>Step Day Chart</em> presents a step chart with daily figures calculated by summing the 24 hours of each day</div>
+<td class="none">The type of chart to be produced. Options are <em>Bar Chart</em>, <em>Cumulative</em>, <em>Heat Map</em>, <em>Line Chart</em>, <em>Pie Chart</em>, <em>Step Day Chart</em>, <em>Step Line Chart</em> and <em>3D Surface Chart</em>. <em>Bar Chart</em>, <em>Cumulative</em> and <em>Step Chart</em> produce cumulative (stacked) charts and have filled areas by technology (or Columns). A Step Chart is similar to a Bar Chart but does not have spaces between the hourly bars; also it is a lot faster to display than a Bar Chart (a Bar Chart is not recommended for hourly charts). If a Target field (e.g. Load) is chosen the area above the Target value (i.e. excess generation) in the Cumulative and Step chart have a lightly shaded value (the degree of shading is chosen by the <em>alpha</em> property in the [Powerplot] Section of the Preferences file). A Heat Map visualises the total value of chosen columns to indicate the highest through lowest values of the range or, if a target column is chosen, an indication of how the total value meets the target value. Each &ldquo;square&rdquo; or &ldquo;cell&rdquo; of the map represents an hour; the vertical axis is hours in a day and the horizontal axis is days for the chosen period. (<em>plot</em>)
+<div class="experiment">A <em>Step Day Chart</em> presents a step chart with daily figures calculated by summing the 24 hours of each day<br />
+A <em>3D Surface Chart</em> will present the data as a 3D Surface Chart. It will either produce daily charts or monthly charts for months greater than the <em>months_3d</em> property</div>
 </td></tr>
 <tr><td class="lr"><dfn>Percentage</dfn></td>
 <td class="none">Checking this option will produce a percentage (stacked) curve. The chart will have filled areas showing the percentage of generation for each technology. It is recommended to not set a Target field (i.e. set it to <em>&lt;None&gt;</em>) as this will merely remove the Target field (and it's data) from the chart (<em>percentage</em>)</td></tr>
@@ -4377,25 +4466,69 @@ The final variable is
 </p>
 <div class="experiment">
 <h3 id="flexiplot">Flexiplot</h3>
-<p><code>flexiplot</code> is a standalone program that can be used for &ldquo;prototyping&rdquo; a more conventional Excel spreadsheet where data is arranged in rows or columns. The program is very much experimental. If it proves useful it may be included as part of <code>powerplot</code> in the future. The program has a similar window of options to <code>powerplot</code> with the exception of <em>Period</em> and <em>Target</em>. The default values are specified in the <a href="#p_flexiplot">[Flexiplot]</a> Section of the Preferences file. It has a number of options that differ to <code>powerplot</code>.
+<p><code>flexiplot</code> is a standalone program that can be used for &ldquo;prototyping&rdquo; a more conventional Excel spreadsheet where data is arranged in rows or columns. The program is very much experimental. If it proves useful it may be included as part of <code>powerplot</code> in the future. The program has a similar window of options to <code>powerplot</code> but with a number of different options. The default values are specified in the <a href="#p_flexiplot">[Flexiplot]</a> Section of the Preferences file.
+<p>The program uses the terms Abscissa (or X), Ordinate (or Y) and Applicate (or Z) for the three axes of the charts. The Applicate axis only relates to 3D Surface Charts.</p>
 <table border="0" class="none">
-<tr><td class="top" style="width: 20%;"><strong>Open File</strong></td><td class="none">Pressing this button will open the current file to assist in setting the <dfn>Series</dfn> and <dfn>X Values</dfn> ranges</td></tr>
-<tr><td class="lr"><dfn>Series</dfn>, <strong>Show Series</strong></td>
-<td class="none">The location of the data series to be charted. The range is specified as either Excel columns and rows, e.g. <em>B1:H1</em>, or as four numbers defining the row and columns range, e.g. <em>1,2,1,7</em>. The series can either be in rows or columns but is expected to be a single row (as in the examples) or column. You then choose which series you want charted by moving them in the Column Order lists (<em>series</em>). Pressing the <strong>Show Series</strong> button will display the current series values in a table</td></tr>
-<tr><td class="lr"><dfn>Series Label</dfn></td>
-<td class="none">The label for the Series (y values) (<em>ylabel</em>)</td></tr>
-<tr><td class="lr"><dfn>X Values</dfn>, <strong>Show X values</strong</td>
-<td class="none">The data values to be charted. The range is specified as either Excel columns and rows, e.g. <em>A2:A29</em> or as four numbers defining the row and columns range, e.g. <em>2,1,2,29</em>. The series can either be in rows or columns but is expected to be a single row or column (as in the examples). The first column (A) is taken as the X labels and the data series chosen will be charted (<em>xvalues</em>). Pressing the <strong>Show X values</strong> button will display the first column/row of the current X values in a table</td></tr>
-<tr><td class="lr"><dfn>X Label</dfn></td>
-<td class="none">The label for the X Axis (x values) (<em>xlabel</em>)</td></tr>
-<tr><td class="bottom"><strong>Preferences</strong></td>
-<td class="none">In addition to the buttons in <code>powerplot</code>, <code>flexiplot</code> has a <strong>Preferences</strong> button to allow you to update the Flexiplot preferences. This allows you to adjust text sizes and the like, however, some values, such as details for an individual file, may be ignored for the active file.
+<tr><td class="top" style="width: 20%;"><dfn>Recent Files</dfn></td>
+<td class="none">(as above)</td></tr>
+<tr><td class="lr"><dfn>File</dfn></td>
+<td class="none">(as above)</td></tr>
+<tr><td class="lr"><dfn>Sheet</dfn>, <strong>Open File</strong>, <strong>List Files</strong></td>
+<td class="none">(as above). The Open File button allows you to open the file to examine the content to assist in setting the field values</td></tr>
+<tr><td class="lr"><dfn>Title</dfn>, <strong>Title Font</strong></td>
+<td class="none">Specify a title for the chart. As for the header field the two special strings <em>$YEAR$</em> <em>$MTH$</em> or <em>$MONTH$</em> will be replaced with the chosen Period. If it's not a diurnal chart (i.e. Period is <em>&lt;None&gt;</em>) any occurence of &rsquo;Diurnal&lsquo; in the title wil be removed (<em>title</em>).
+<p>The button next to the Title field allows you to change the font attributes for the Title (<em>title_font</em>)
+</td></tr>
+<tr><td class="lr"><dfn>Abscissa (X)</dfn>, <dfn>Data direction</dfn>, <dfn>Data Row/Column</dfn></td>
+<td class="none">These fields indicates whether the data is in rows or columns and which row or column identifies the label (title) for the data. For example, if the data is a time series and the times/dates are in columns the data direction would be <em>Data in Rows</em> with the offset fields specfiying the label column. This convention is chosen as the actual data series will be in rows</td></tr>
+<tr><td class="lr"><dfn>Abscissa Series</dfn>, <strong>Show X Series</strong>, <dfn>other X Series</dfn></td>
+<td class="none">The first field is a pull-down list to enable you to identify the Abscissa row or column. The pull-down list contains row / column values with the actual Excel-style cell in brackets after the value<br />
+The Show X Series button will display the values in a simple table<br />
+The final field allows you to choose another cell in the same row /column</td></tr>
+<tr><td class="lr"><dfn>Abscissa Label</dfn>, <strong>Label Font</strong>, <strong>Ticks Font</strong></td>
+<td class="none">This allows you to type in a text value for the Abscissa (X) label; the default value is the Abscissa Series</td></tr>
+<tr><td class="lr"><dfn>Ordinate Series (Y)</dfn></td>
+<td class="none">To produce the chart you select those columns to be included. This field consists of two tables (lists) of columns. Those in the left hand list will be included in the chart while those on the right will be excluded. The included columns will be charted in the chosen order. You can drag individual or a number of columns between the two lists to get the desired configuration. If it is defined the chart colour for the column will be displayed as the background color for the column (<em>columns</em>)<br />
+The list contains row / column values with the actual Excel-style cell in brackets after the value<br />
+<code>flexiplot</code> attempts to identify if input data is possibly in table format suitable for a 3D Surface Chart by identifying duplicate data rows. This may result in the list &ldquo;hiding&rdquo; some data. If this is the case adjusting the <em>minimum_3d</em> property</td></tr>
+<tr><td class="lr"><dfn>Ordinate Label</dfn>, <strong>Show Y Series</strong></td>
+<td class="none">This allows you to enter a text value for the Ordinate (Y) label<br />
+The Show Y Series button will display the values for the chosen data in a simple table. If the data is for a 3D chart these will likely be blank</td></tr>
+<tr><td class="lr"><dfn>Applicate (Z) Label</dfn></td>
+<td class="none">This allows you to enter a text value for the Applicate (Z) label<br />
+The Show Y Series button will display the values for the chosen data in a simple table. If the data is for a 3D chart these will likely be blank</td></tr>
+
+<tr><td class="lr"><dfn>Maximum</dfn></td>
+<td class="none">You can specify a maximum value for the Power (y) axis. This allows you to produce a series of charts with the same scale (<em>maximum</em>)</td></tr>
+<tr><td class="lr"><dfn>Type of Chart</dfn></td>
+<td class="none">The type of chart to be produced. Options are <em>Bar Chart</em>, <em>Cumulative</em>, <em>Line Chart</em>, <em>Pie Chart</em>, <em>Step Chart</em> and <em>3D Surface Chart</em>. <em>Bar Chart</em>, <em>Cumulative</em> and <em>Step Chart</em> produce cumulative (stacked) charts and have filled areas by technology (or Columns). A Step Chart is similar to a Bar Chart but does not have spaces between the hourly bars; also it is a lot faster to display than a Bar Chart (a Bar Chart is not recommended for large sets of data).<br />
+A <em>3D Surface Chart</em> will present the data as a 3D Surface Chart</td></tr>
+<tr><td class="lr"><dfn>Percentage</dfn></td>
+<td class="none">Checking this option will produce a percentage (stacked) curve. The chart will have filled areas showing the percentage of generation for each technology. It is recommended to not set a Target field (i.e. set it to <em>&lt;None&gt;</em>) as this will merely remove the Target field (and it's data) from the chart (<em>percentage</em>)</td></tr>
+<tr><td class="lr"><dfn>Show Grid</dfn></td>
+<td class="none">The gridlines to be included on the chart. Options are <em>Both</em>, <em>Horizontal</em>, <em>Vertical</em> and <em>None</em>. The default is <em>None</em> (<em>grid</em>)</td></tr>
+
+<tr><td class="bottom"><strong>Done, Chart, Colours, Legend..., Pref...,Help</td>
+<td class="none">At the bottom of the window are a number of buttons:
+<ul>
+<li><strong>Done</strong> Exit the program and save the input values. Input preferences and colours are either saved in a SIREN preferences file or in a specific file, <em>flexiplot.ini</em>, if no Peferences file is passed to the program</li>
+<li><strong>Plot</strong> Produce the chart. If there are missing colours you will be taken to the Colours window to add the colour. You need to set a colour and press the Save &amp; Exit button</li>
+<li><strong>Colours</strong> Press this button to change the chart colours or to add new colours. You can remove a chart colour by right-clicking the colour (it will be cleared and the item deleted when you Save &amp; Exit). Colours are held in the [Plot Colors] Section of the Preferences file.
+<br />If the <em>palette</em> property in the [Plot Colors] Section of the Preferences file is set to True you can create a palette sequence of colours for columns selected in both the included and excluded lists. If you select columns and then press the <strong>Colours</strong> button you will be given the option to set a starting and ending palette colour and the colours for the chosen columns will be updated to a range of colours between the chosen values</li>
+<li><strong>Legend Properties</strong> Change the font attributes for the Legend (<em>legend_font</em>) plus other attributes (<em>legend_ncol</em>, <em>legend_on_pie</em>, <em>legend_side</em>)</li>
+<li><strong>Preferences</strong> Edit the Preferences file</li>
+<li><strong>Help</strong> Display the help for Powerplot</li>
+</ul>
 </td></tr>
 </table>
-<p><code>flexiplot</code> has a number of options to:
+<p><strong>Notes:</strong></p>
+<ul>
+<li><code>flexiplot</code> has a number of options to:
 <ul>
 <li>Adjust the font properties of the various text items on the chart. The properties are as described in <a href="https://matplotlib.org/3.1.1/api/font_manager_api.html#matplotlib.font_manager.FontProperties" target="_blank">FontProperties</a> but may be restricted by the matplotlib environment. To specify a property use the format as described in the link, e.g. <em>family=sans-serif,size=xxlarge</em>. The only non-default value is the chart title fontsize which is set to 'x-large'</li>
-<li>You can specify how often X Axis ticks appear, either by setting <em>sparse_xticks</em> to a single number ,&lsquo;n&rsquo;, for every &lsquo;n&rsquo;th tick to appear, or by setting a test for a change in the label value by specifying the start and end characters to examine, separated by a comma. For example, <em>1,3</em> could be used where you have labels in the form of <em>Jan, Feb</em></li>
+<li>You can specify how often X Axis ticks appear, either by setting <em>sparse_ticks</em> to a single number ,&lsquo;n&rsquo;, for every &lsquo;n&rsquo;th tick to appear, or by setting a test for a change in the label value by specifying the start and end characters to examine, separated by a comma. For example, <em>1,3</em> could be used where you have labels in the form of <em>Jan, Feb, Mar</em></li>
+</ul>
+<li>The program is attempting to deal with both 2D and 3D data which due to it's experimental nature may lead to some odd behaviour</li>
 </ul>
 </div>
 <h2 id="feedback">Feedback</h2>

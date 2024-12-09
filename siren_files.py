@@ -5,7 +5,7 @@ source_files = ['check_siren.py', 'colours', 'credits', 'dataview', 'dijkstra_4'
                 'getera5', 'getmap', 'getmerra2', 'getmodels', 'grid', 'indexweather',
                 'inisyntax', 'makegrid', 'makeweatherfiles', 'newstation',
                 'plotweather', 'powerclasses', 'powermap', 'powermatch', 'powermodel',
-                'powerplot', 'pmtmldetail', 'sammodels', 'samrun',
+                'powerplot', 'pmtmldetail', 'sammodels', 'samrun', 'senplot3d',
                 'senutils', 'siren', 'sirenicons', 'sirensetup', 'sirenupd', 'ssc',
                 'station', 'superpower', 'towns', 'turbine', 'updateswis',
                 'viewresource', 'visualise', 'wascene', 'worldwindow', 'zoompan',
