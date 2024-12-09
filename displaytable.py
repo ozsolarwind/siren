@@ -108,7 +108,15 @@ class Table(QtWidgets.QDialog):
         self.totfields = totfields
         self.units = units
         self.title = title
-        self.edit_table = edit
+        self.edit_table = False
+        self.edit_delete = False
+        if edit:
+            self.edit_table = edit
+            try:
+                if edit.lower() == 'delete':
+                    self.edit_delete = True
+            except:
+                pass
         self.decpts = decpts
         self.txt_align = txt_align
         self.txt_ok = txt_ok
@@ -122,7 +130,10 @@ class Table(QtWidgets.QDialog):
             self.year = year
         self.abbr = abbr
         if self.edit_table:
-            self.title_word = ['Edit', 'Export']
+            if self.edit_delete:
+                self.title_word = ['List', 'Export']
+            else:
+                self.title_word = ['Edit', 'Export']
         else:
             self.title_word = ['Display', 'Save']
         self.save_folder = save_folder
@@ -148,7 +159,7 @@ class Table(QtWidgets.QDialog):
             self.setWindowTitle('SIREN - ' + self.title_word[0] + ' ' + self.title)
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         msg = '(Right click column header to sort)'
-        if self.edit_table and self.fields[0] == 'name':
+        if self.edit_table and (self.fields[0] == 'name' or self.edit_delete):
             msg = msg[:-1] + '; right click row number to delete)'
         try:
             if getattr(objects[0], '__module__') == 'Station':
@@ -161,11 +172,12 @@ class Table(QtWidgets.QDialog):
         buttonLayout.addWidget(self.quitButton)
         self.quitButton.clicked.connect(self.quit)
         if self.edit_table:
-            if isinstance(objects, dict):
-                if fields[0] == 'property' or fields[0] == 'name':
-                    self.addButton = QtWidgets.QPushButton(self.tr('Add'))
-                    buttonLayout.addWidget(self.addButton)
-                    self.addButton.clicked.connect(self.addtotbl)
+            if not self.edit_delete:
+                if isinstance(objects, dict):
+                    if fields[0] == 'property' or fields[0] == 'name':
+                        self.addButton = QtWidgets.QPushButton(self.tr('Add'))
+                        buttonLayout.addWidget(self.addButton)
+                        self.addButton.clicked.connect(self.addtotbl)
             self.replaceButton = QtWidgets.QPushButton(self.tr('Save'))
             buttonLayout.addWidget(self.replaceButton)
             self.replaceButton.clicked.connect(self.replacetbl)
@@ -200,7 +212,7 @@ class Table(QtWidgets.QDialog):
       #   self.table.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
         if self.edit_table:
             self.table.setEditTriggers(QtWidgets.QAbstractItemView.CurrentChanged)
-            if self.fields[0] == 'name':
+            if self.fields[0] == 'name' or self.edit_delete:
                 self.rows = self.table.verticalHeader()
                 self.rows.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
                 self.rows.customContextMenuRequested.connect(self.row_click)
@@ -293,7 +305,7 @@ class Table(QtWidgets.QDialog):
         self.resize(size)
         self.updated = QtCore.pyqtSignal(QtWidgets.QLabel)   # ??
         QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.quit)
-        if self.edit_table:
+        if self.edit_table and not self.edit_delete:
             self.table.cellChanged.connect(self.item_changed)
         else:
             self.table.cellClicked.connect(self.item_selected)
@@ -606,11 +618,20 @@ class Table(QtWidgets.QDialog):
         reply = msgbox.exec_()
         if reply == QtWidgets.QMessageBox.Yes:
             for i in range(len(self.entry)):
-                if self.entry[i]['name'] == self.table.item(row, 0).text():
+                if self.edit_delete:
+                    if self.entry[i][self.fields[0]] == self.table.item(row, 0).text():
+                        del self.entry[i]
+                        break
+                elif self.entry[i]['name'] == self.table.item(row, 0).text():
                     del self.entry[i]
                     break
             for i in range(len(self.objects)):
-                if self.objects[i].name == self.table.item(row, 0).text():
+                if self.edit_delete:
+                    value = getattr(self.objects[i], self.fields[0])
+                    if value == self.table.item(row, 0).text():
+                        del self.objects[i]
+                        break
+                elif self.objects[i].name == self.table.item(row, 0).text():
                     del self.objects[i]
                     break
             self.table.removeRow(row)
