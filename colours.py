@@ -24,6 +24,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import configparser  # decode .ini file
 from editini import SaveIni
 from getmodels import getModelFile
+import random
 from senutils import techClean
 
 class Colours(QtWidgets.QDialog):
@@ -210,7 +211,7 @@ class Colours(QtWidgets.QDialog):
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(buttons)
         layout.addLayout(self.grid)
-        layout.addWidget(buttons)
+   #     layout.addWidget(buttons)
         self.setLayout(layout)
         self.grid.setColumnMinimumWidth(0, self.width[0])
         self.grid.setColumnMinimumWidth(1, self.width[0])
@@ -361,3 +362,103 @@ class Colours(QtWidgets.QDialog):
 
     def getValues(self):
         return self.anobject
+
+# create a colour blindness palette
+def PlotPalette(keys, palette=15, black=False, lower=True):
+    # https://mk.bcgsc.ca/colorblind/palettes.mhtml#15-color-palette-for-colorbliness
+    colour_dict = {}
+    if palette == 15 or palette == '15':
+        colours = [[0,0,0],
+                   [0,73,73],
+                   [0,146,146],
+                   [255,109,182],
+                   [255,182,219],
+                   [73,0,146],
+                   [0,109,219],
+                   [182,109,255],
+                   [109,182,255],
+                   [182,219,255],
+                   [146,0,0],
+                   [146,73,0],
+                   [219,109,0],
+                   [36,255,36],
+                   [255,255,109]
+                  ]
+        # colour order to "separate" similar colours
+        order = [3, 1, 14, 2, 10, 13, 4, 7, 5, 11, 9, 8, 6, 12]
+        if black:
+            order.insert(0, 0)
+    elif palette == 24 or palette == '24':
+        colours = [[0,61,48],
+                   [0,87,69],
+                   [0,115,92],
+                   [0,145,117],
+                   [0,175,142],
+                   [0,203,167],
+                   [0,235,193],
+                   [134,255,222],
+                   [0,48,111],
+                   [0,72,158],
+                   [0,95,204],
+                   [0,121,250],
+                   [0,159,250],
+                   [0,194,249],
+                   [0,229,248],
+                   [124,255,250],
+                   [255,213,253],
+                   [0,64,2],
+                   [95,9,20],
+                   [0,90,1],
+                   [134,8,28],
+                   [0,119,2],
+                   [178,7,37],
+                   [0,149,3],
+                   [222,13,46],
+                   [0,180,8],
+                   [255,66,53],
+                   [0,211,2],
+                   [255,135,53],
+                   [0,244,7],
+                   [255,185,53],
+                   [255,226,57]]
+        order = []
+        for o in range(len(colours)):
+            order.append(o)
+    elif palette[0].lower() == 'r': #random
+        for key in keys:
+            r = lambda: random.randint(0,255)
+            new_colr = '#%02X%02X%02X' % (r(),r(),r())
+            colour_dict[key] = new_colr
+        return colour_dict
+    else: # later version of 15 palette
+        colours = [[104,2,63],
+                   [0,129,105],
+                   [239,0,150],
+                   [0,220,181],
+                   [255,207,226],
+                   [0,60,134],
+                   [148,0,230],
+                   [0,159,250],
+                   [255,113,253],
+                   [124,255,250],
+                   [106,2,19],
+                   [0,134,7],
+                   [246,2,57],
+                   [0,227,7],
+                   [255,220,61]
+              ]
+        # colour order to "separate" similar colours
+        order = [0, 5, 9, 13, 14, 1, 2, 6, 3, 12, 11, 7, 4, 8, 10]
+    o = -1
+    for key in keys:
+        o += 1
+        if o >= len(order):
+            o = 0
+        colr = '#'
+        for j in range(3):
+            colr += str(hex(colours[order[o]][j]))[2:].upper().zfill(2)
+        if lower:
+            colour_dict[key.lower()] = colr
+        else:
+            colour_dict[key] = colr
+    return colour_dict
