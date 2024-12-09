@@ -410,12 +410,24 @@ class makeWeather():
      #   v100     100m u-component of wind               m/s
      #   alnip    near_ir_albedo_for_direct_radiation
      #   aluvp    uv_visible_albedo_for_direct_radiation
+        localswg = self.swg
+        if not self.make_wind:
+            variables = list(cdf_file.variables.keys())
+            if self.vars[localswg] not in variables:
+                if localswg == 'swgdn':
+                    localswg = 'swgnt'
+                else:
+                   localswg = 'swgdn'
+                if self.vars[localswg] not in variables:
+                    self.log += f'Terminating as no solar variable found in - {inp_file}\n'
+                    cdf_file.close()
+                    self.return_code = 12
+                    return
         expver = False
         keys = list(cdf_file.dimensions.keys())
         if 'expver' in keys:
             self.logMsg('ERA5 and ERA5T data in {}'.format(inp_file[inp_file.rfind('/') + 1:]))
             expver = True
-        keys = list(cdf_file.variables.keys())
         if 'time' in keys:
             self.vars['time'] = 'time'
         elif 'valid_time' in keys:
@@ -540,8 +552,6 @@ class makeWeather():
                 self.caller.daybar.setValue(4)
                 QtCore.QCoreApplication.processEvents()
             try:
-                if self.vars[self.swg] not in cdf_file.variables.keys():
-                    self.swg = 'swgnt'
                 tmp_var = []
                 for t in range(len(self.tims)):
                     tmp_var.append([])
@@ -549,7 +559,7 @@ class makeWeather():
                         tmp_var[-1].append([])
                         for lo in range(len(self.lons)):
                             tmp_var[-1][-1].append([])
-                tmi = cdf_file.variables[self.vars[self.swg]][t1 : t2]
+                tmi = cdf_file.variables[self.vars[localswg]][t1 : t2]
                 for t in range(len(tmp_var)):
                     for la in range(len(tmp_var[t])):
                         for lo in range(len(tmp_var[t][la])):
@@ -620,9 +630,7 @@ class makeWeather():
                 self.caller.daybar.setValue(4)
                 QtCore.QCoreApplication.processEvents()
             try:
-                if self.vars[self.swg] not in cdf_file.variables.keys():
-                    self.swg = 'swgnt'
-                self.ghi += self.getGHI(cdf_file.variables[self.vars[self.swg]][t1 : t2], watts=False)
+                self.ghi += self.getGHI(cdf_file.variables[self.vars[localswg]][t1 : t2], watts=False)
                 if self.show_progress:
                     self.caller.daybar.setValue(5)
                     QtCore.QCoreApplication.processEvents()
