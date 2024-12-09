@@ -149,7 +149,7 @@ def getModelFile(*args):
             msgbox.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
             msgbox.setText('SIREN Models folder missing')
             msgbox.setInformativeText('Do you want to reset the Models location (Y)?')
-            msgbox.setDetailedText("Can't find " + model_dir + '. ' + \
+            msgbox.setDetailedText("Can't find locations in\n'" + models_location + "'.\n" + \
                "If you reply 'Y'es you can choose a new location for the Models.")
             msgbox.setIcon(QtWidgets.QMessageBox.Question)
             msgbox.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
