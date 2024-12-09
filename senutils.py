@@ -50,7 +50,7 @@ class ClickableQLabel(QtWidgets.QLabel):
         QtWidgets.QApplication.widgetAt(event.globalPos()).setFocus()
         self.clicked.emit()
 
-# class to support  listwidget drag and drop between two lists
+# class to support listwidget drag and drop between two lists
 # also supports using keys where drag and drop not working (e.g. Ubuntu 23.04)
 class ListWidget(QtWidgets.QListWidget):
     def decode_data(self, bytearray):
@@ -259,7 +259,15 @@ class WorkBook(object):
 
     def sheet_by_name(self, sheet_name):
         try:
-            sheetx = self._sheet_names.index(sheet_name)
+            if self._type == 'xlsx' or self._type == 'xlsm':
+                for s in range(len(self._book.worksheets)):
+                    if self._book.worksheets[s].title == sheet_name:
+                        sheetx = s
+                        break
+                else:
+                    raise Exception('No sheet named <%r>' % sheet_name)
+            else:
+                sheetx = self._sheet_names.index(sheet_name)
         except ValueError:
             raise Exception('No sheet named <%r>' % sheet_name)
         return self.sheet_by_index(sheetx)
@@ -347,11 +355,11 @@ class WorkBook(object):
         def cell_rc(self, rc):
             col_letters = ' ABCDEFGHIJKLMNOPQRSTUVWXYZ'
             for r in range(len(rc) -1, -1, -1):
-                if not rc.isdigit():
+                if not rc[r].isdigit():
                     break
-            row = int(rc[r - 1:]) - 1
+            row = int(rc[r + 1:]) - 1
             col = 0
-            for c in range(r - 1):
+            for c in range(r + 1):
                 col = col * 26 + col_letters.index(rc[c])
             col -= 1
             return self.cell_value(row, col)
