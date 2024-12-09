@@ -2082,6 +2082,8 @@ class MainWindow(QtWidgets.QMainWindow):
             self.reshow_FloatLegend()
 
         pos = self.view.scene().last_locn
+        if pos is None:
+            return
         where = self.view.mapToLonLat(self.view.scene().last_locn)
         menu = QtWidgets.QMenu()
         station = None
