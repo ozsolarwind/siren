@@ -849,7 +849,7 @@ class setTransition(MyQDialog):
         size = QtCore.QSize(QtCore.QSize(int(width), int(height)))
         window.resize(size)
 
-    def __init__(self, parent, label, generators, sheet, year):
+    def __init__(self, parent, label, generators, sheet, year, loads):
         super(setTransition, self).__init__()
         self._results = None
         i = generators.rfind('/')
@@ -868,8 +868,22 @@ class setTransition(MyQDialog):
         else:
             sheet = sheet.replace(year, '$YEAR$')
         self.sheet.setText(sheet)
+   #     self.sheet.textChanged.connect(self.shtChanged)
         self.grid.addWidget(self.sheet, r, 1, 1, 2)
         r += 1
+        self.grid.addWidget(QtWidgets.QLabel('Load Files:'), r, 0)
+        i = loads.rfind('/')
+        load_name = QtWidgets.QLabel(loads[i + 1:])
+        load_name.setStyleSheet("border: 1px inset grey; min-height: 22px; border-radius: 4px;")
+        self.grid.addWidget(load_name, r, 1, 1, 2)
+        r += 1
+        note = QtWidgets.QLabel('If the input worksheet (capacity figures) contain formulae you may need to open the worksheet and save it before proceeding')
+        msg_palette = QtGui.QPalette()
+        msg_palette.setColor(QtGui.QPalette.Foreground, QtCore.Qt.red)
+        note.setPalette(msg_palette)
+        note.setWordWrap(True)
+        self.grid.addWidget(note, r, 0, 2, 4)
+        r += 2
         quit = QtWidgets.QPushButton('Quit', self)
         self.grid.addWidget(quit, r, 0)
         quit.clicked.connect(self.quitClicked)
@@ -925,8 +939,13 @@ class powerMatch(QtWidgets.QWidget):
         i = self.load_files.find('$YEAR$')
         if i < 0:
             return load_years
-        j = len(self.load_files) - i - 6
-        files = glob.glob(self.load_files[:i] + '*' + self.load_files[i + 6:])
+        if self.load_dir.text() != self._load_folder:
+            load_files = self.get_filename(self.load_files)
+        else:
+            load_files = self.load_files
+        i = load_files.find('$YEAR$')
+        j = len(load_files) - i - 6
+        files = glob.glob(load_files[:i] + '*' + load_files[i + 6:])
         for fil in files:
             load_years.append(fil[i:len(fil) - j])
         return sorted(load_years, reverse=True)
@@ -984,8 +1003,15 @@ class powerMatch(QtWidgets.QWidget):
             for key, value in parents:
                 self.load_files = self.load_files.replace(key, value)
             self.load_files = self.load_files.replace('$USER$', getUser())
+            self.load_files = self.get_filename(self.load_files)
+            that_len = len(commonprefix([self.scenarios, self.load_files]))
+            if that_len > 0:
+                bits = self.scenarios[that_len:].split('/')
+                pfx = ('..' + '/') * (len(bits) - 1)
+                self.load_files = pfx + self.load_files[that_len + 1:]
         except:
             self.load_files = ''
+        # load folder from Files section
         try:
             self._load_folder = self.load_files[:self.load_files.rfind('/')]
         except:
@@ -1125,6 +1151,12 @@ class powerMatch(QtWidgets.QWidget):
                         for ky, valu in parents:
                             self.load_files = self.load_files.replace(ky, valu)
                         self.load_files = self.load_files.replace('$USER$', getUser())
+                        if self.load_files.rfind('/') > 0:
+                            that_len = len(commonprefix([self.scenarios, self.load_files]))
+                            if that_len > 0:
+                                bits = self.scenarios[that_len:].split('/')
+                                pfx = ('..' + '/') * (len(bits) - 1)
+                                self.load_files = pfx + self.load_files[that_len + 1:]
                     except:
                         pass
                 elif key == 'load_year':
@@ -1221,10 +1253,6 @@ class powerMatch(QtWidgets.QWidget):
         self.floatstatus = None # status window
    #     self.tabs = QtGui.QTabWidget()    # Create tabs
    #     tab1 = QtGui.QWidget()
-   #     tab2 = QtGui.QWidget()
-   #     tab3 = QtGui.QWidget()
-   #     tab4 = QtGui.QWidget()
-   #     tab5 = QtGui.QWidget()
         self.grid = QtWidgets.QGridLayout()
         self.labels = [None] * len(self.file_labels)
         self.files = [None] * len(self.file_labels)
@@ -1606,7 +1634,7 @@ class powerMatch(QtWidgets.QWidget):
         del ts
 
     def loaddirChanged(self):
-        curdir = self.load_dir.text()
+        curdir = self.get_filename(self.load_dir.text())
         newdir = QtWidgets.QFileDialog.getExistingDirectory(self, 'Choose Load File Folder',
                  curdir, QtWidgets.QFileDialog.ShowDirsOnly)
         if newdir != '':
@@ -1663,7 +1691,6 @@ class powerMatch(QtWidgets.QWidget):
             if fnr == R and self.results_pfx_fld.text() != '':
                 i = curfile.rfind('/')
                 curfile = curfile[:i + 1] + self.results_pfx_fld.text() + '_' + curfile[i+1:]
-                print(curfile)
                 if not os.path.exists(curfile):
                     self.setStatus(self.file_labels[fnr] + ' not found.')
                     return
@@ -1713,6 +1740,12 @@ class powerMatch(QtWidgets.QWidget):
                 lines.append(self.file_labels[i].lower() + '_sheet=' + self.sheets[i].currentText())
             line = 'load='
             if self.load_dir.text() != self._load_folder:
+                if self.load_files.rfind('/') > 0:
+                    that_len = len(commonprefix([self.scenarios, self.load_files]))
+                    if that_len > 0:
+                        bits = self.scenarios[that_len:].split('/')
+                        pfx = ('..' + '/') * (len(bits) - 1)
+                        self.load_files = pfx + self.load_files[that_len + 1:]
                 line += self.load_files.replace(getUser(), '$USER$')
             lines.append(line)
             line = 'load_year='
@@ -2416,6 +2449,7 @@ class powerMatch(QtWidgets.QWidget):
         sheet_row += 1
         try:
             if self.loadCombo.currentText() != 'n/a':
+       #     if self.loadCombo.currentText() != 'n/a' or self.load_dir.text() != self._load_folder:
                 sheet.cell(row=sheet_row, column=1).value = 'Load file'
                 sheet.cell(row=sheet_row, column=1).font = normal
                 load_file = self.load_files.replace('$YEAR$', self.loadCombo.currentText())
@@ -2909,8 +2943,8 @@ class powerMatch(QtWidgets.QWidget):
             pmss_details[gen] = PM_Facility(gen, gen, self.generators[gen].capacity, typ, -1, 1)
         if option == B or option == T:
             if option == T:
-                files = setTransition(self, self.file_labels[G], self.get_filename(self.files[G].text()),
-                                      self.sheets[G].currentText(), self.loadCombo.currentText())
+                files = setTransition(self, self.file_labels[G], self.get_filename(self.files[G].text()), self.sheets[G].currentText(),
+                                      self.loadCombo.currentText(), self.load_files)
                 files.exec_()
                 if files.getValues() is None:
                     self.setStatus('Execution aborted.')
@@ -3285,13 +3319,21 @@ class powerMatch(QtWidgets.QWidget):
                             year = str(trn_year)
                             ws = gen_book.sheet_by_name(gen_sheet.replace('$YEAR$', year))
                             self.getGenerators(ws)
+                            # get load for new year
+                    # to cater for different load profiles (years) and generator costs (years) this loop would need to change, that is
+                    # need to be able to change pmss_details and pmss_data[0] and self.generators
                             if year not in load_columns.keys():
                                 load_columns[year] = len(pmss_data)
                                 pmss_data.append([])
                                 load_file = self.load_files.replace('$YEAR$', year)
+                                if self.load_dir.text() != self._load_folder:
+                                    load_file = self.get_filename(load_file)
                                 pmss_data[-1] = get_load_data(load_file)
+                                if pmss_data[-1] is None:
+                                    self.setStatus(f"Missing load file - '{load_file}'")
+                                    return
                     for fac in pmss_details.keys():
-                        if fac == 'Load':
+                        if fac == 'Load' and (option == B or option == T):
                             pmss_details['Load'].capacity = sum(pmss_data[load_columns[year]])
                             pmss_details['Load'].col = load_columns[year]
                             continue
@@ -7229,7 +7271,7 @@ class powerMatch(QtWidgets.QWidget):
                             newfile += '.xlsx'
                         self.files[B].setText(newfile)
                 if wb.worksheets[0].max_column > 1024:
-                    self.clean_batch_sheet()
+                    self.clean_batch_sheet(B)
                     ds = oxl.load_workbook(self.get_filename(self.files[B].text()))
                 batch_input_sheet = wb.worksheets[0]
                 batch_input_sheet.protection.sheet = False
