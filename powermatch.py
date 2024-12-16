@@ -286,7 +286,7 @@ class Facility:
                      'fixed_om', 'variable_om', 'fuel', 'disc_rate', 'lifetime', 'area']:
             setattr(self, attr, 0.)
         for key, value in kwargs.items():
-            if value != '' and value is not None:
+            if value != '' and value is not None and value != '#N/A':
                 if key == 'lifetime' and value == 0:
                     setattr(self, key, 20)
                 else:
@@ -406,6 +406,7 @@ class Adjustments(MyQDialog):
                 self._batch_file = batch_file
         self._ignore = False
         self._results = None
+        self._reset_last = False
         self.grid = QtWidgets.QGridLayout()
         self._data = {}
         ctr = 0
@@ -481,6 +482,14 @@ class Adjustments(MyQDialog):
                 if self.show_multipliers:
                     self.grid.addWidget(QtWidgets.QLabel('Multiplier'), ctr, 3)
                 ctr += 1
+        if prefix is None: # batch option
+            note = QtWidgets.QLabel('If the input worksheet (capacity figures) contain formulae you may need to open the worksheet and save it before proceeding')
+            msg_palette = QtGui.QPalette()
+            msg_palette.setColor(QtGui.QPalette.Foreground, QtCore.Qt.red)
+            note.setPalette(msg_palette)
+            note.setWordWrap(True)
+            self.grid.addWidget(note, ctr, 0, 2, 4)
+            ctr += 2
         quit = QtWidgets.QPushButton('Quit', self)
         self.grid.addWidget(quit, ctr, 0)
         quit.clicked.connect(self.quitClicked)
@@ -532,6 +541,7 @@ class Adjustments(MyQDialog):
      #   if not self._ignore:
       #      self._adjust_val[key].setText(mwstr)
         self._ignore = False
+        self._reset_last = False
 
     def adjustCap(self):
         if self._ignore:
@@ -556,6 +566,7 @@ class Adjustments(MyQDialog):
         self._ignore = True
         self._adjust_rnd[key].setValue(round(adj, 4))
         self._ignore = False
+        self._reset_last = False
 
     def quitClicked(self):
         self.ignoreEnter = False
@@ -575,8 +586,12 @@ class Adjustments(MyQDialog):
                     self._adjust_cty[key].setValue(0.)
             else:
                 for key in self._adjust_cty.keys():
-                    self._adjust_cty[key].setValue(self._data[key][0])
+                    if self._reset_last and self._data[key][0] <= 1.:
+                        self._adjust_cty[key].setValue(0.)
+                    else:
+                        self._adjust_cty[key].setValue(self._data[key][0])
         self.pfx_fld.setText('')
+        self._reset_last = True
 
     def resetloadClicked(self, to):
         if isinstance(to, bool):
@@ -585,6 +600,7 @@ class Adjustments(MyQDialog):
             self._adjust_rnd['Load'].setValue(to)
         else:
             self._adjust_cty['Load'].setValue(self._data['Load'][0])
+        self._reset_last = False
 
     def restoreClicked(self):
         ini_file = QtWidgets.QFileDialog.getOpenFileName(self, 'Open Adjustments file',
@@ -599,6 +615,7 @@ class Adjustments(MyQDialog):
             except:
                 prefix = ''
             self.getIt(config, prefix)
+        self._reset_last = False
 
     def getIt(self, config, prefix=''):
         try:
@@ -618,9 +635,16 @@ class Adjustments(MyQDialog):
                     self._adjust_mul[key] = float(bi[1]) / (self._data[key][0] * pow(10, self._data[key][1]))
                     self._adjust_rnd[key].setValue(round(self._adjust_mul[key], 4))
             except:
+                msgbox = QtWidgets.QMessageBox()
+                msgbox.setWindowTitle('SIREN - Powermatch - Adjust generators')
+                msgbox.setText(f'Generator - {key} - not found in generators list and will be ignored.')
+                msgbox.setIcon(QtWidgets.QMessageBox.Warning)
+                msgbox.setStandardButtons(QtWidgets.QMessageBox.Ok)
+                reply = msgbox.exec_()
                 pass
         self._ignore = False
         self.pfx_fld.setText(prefix)
+        self._reset_last = False
 
     def listClicked(self):
         if os.path.exists(self._save_folder):
@@ -668,6 +692,7 @@ class Adjustments(MyQDialog):
             config.read(self._save_folder + chosen + '.ini')
             self.getIt(config, chosen)
             del dialog
+        self._reset_last = False
 
     def saveClicked(self):
         line = ''
@@ -688,6 +713,7 @@ class Adjustments(MyQDialog):
                 if inifile[-4:] != '.ini':
                     inifile = inifile + '.ini'
                 SaveIni(updates, ini_file=inifile)
+        self._reset_last = False
 
     def showClicked(self):
         self.ignoreEnter = False
@@ -807,6 +833,7 @@ class Adjustments(MyQDialog):
                 new_cell.alignment = copy(cell.alignment)
         wb.save(self._batch_file)
         QtWidgets.QMessageBox.about(self, 'SIREN - Add to Batch', "Added to batch as '" + add_msg + "' (column " + ssCol(col) + ')')
+        self._reset_last = False
 
 
 class setTransition(MyQDialog):
@@ -1042,6 +1069,7 @@ class powerMatch(QtWidgets.QWidget):
                 self.adjust_cap = pow(10, 12)
         except:
             pass
+        pref_errors = []
         try:
             items = config.items('Powermatch')
             for key, value in items:
@@ -1180,7 +1208,7 @@ class powerMatch(QtWidgets.QWidget):
                 elif key == 'operational':
                     self.operational = value.split(',')
         except:
-            print('PME1: Error with', key)
+            pref_errors.append(f"PME1: Error with '{key}' property in '{config_file}[Powermatch]'")
             pass
         self.restorewindows = False
         try:
@@ -1255,7 +1283,7 @@ class powerMatch(QtWidgets.QWidget):
                 edit[i] = QtWidgets.QPushButton(self.file_labels[i], self)
                 self.grid.addWidget(edit[i], r, 4, 1, 2)
                 edit[i].clicked.connect(self.editClicked)
-            elif i == D and self.load_files != '':
+            elif i == D: # and self.load_files != '': always show this option
                 r += 1
                 self.grid.addWidget(QtWidgets.QLabel('Load Folder:'), r, 0)
                 self.load_dir = ClickableQLabel()
@@ -1453,7 +1481,13 @@ class powerMatch(QtWidgets.QWidget):
         else:
             self.center()
             self.resize(int(self.sizeHint().width() * 1.2), int(self.sizeHint().height() * 1.2))
+        if len(pref_errors) > 0:
+            self.log_status = True
         self.show_FloatStatus() # status window
+        if len(pref_errors) > 0:
+            for error in pref_errors:
+                self.setStatus(error)
+            self.setStatus('These errors may cause issues with other properties.')
         self.show()
 
     def center(self):
@@ -1763,6 +1797,14 @@ class powerMatch(QtWidgets.QWidget):
             self.optimise_to_batch = True
         else:
             self.optimise_to_batch = False
+        try:
+            st = config.get('Powermatch', 'remove_cost')
+        except:
+            st = 'True'
+        if st.lower() in ['false', 'no', 'off']:
+            self.remove_cost = False
+        else:
+            self.remove_cost = True
         try:
             st = config.get('Powermatch', 'show_multipliers')
         except:
@@ -5042,6 +5084,7 @@ class powerMatch(QtWidgets.QWidget):
                         re_sum += sp_data[sp][st_sub]
             for sp in range(len(sp_data)):
                 gen = sp_data[sp][st_fac]
+                gen2 = gen
                 if gen in storage_names:
                     ndx = 2
                 else:
@@ -5050,6 +5093,7 @@ class powerMatch(QtWidgets.QWidget):
                     else:
                         try:
                             gen = gen[gen.find('.') + 1:]
+                            gen2 = gen
                         except:
                             pass
                     ndx = 3
@@ -5094,7 +5138,10 @@ class powerMatch(QtWidgets.QWidget):
                         disc_rate = self.discount_rate
                     lifetime = self.generators[gen].lifetime
                     sp_data[sp][st_lcg] = calcLCOE(sp_data[sp][ndx], capex, opex, disc_rate, lifetime)
-                    sp_data[sp][st_cst] = sp_data[sp][ndx] * sp_data[sp][st_lcg]
+                    if sp_data[sp][ndx] == 0:
+                        sp_data[sp][st_cst] = sp_data[sp][st_lcg]
+                    else:
+                        sp_data[sp][st_cst] = sp_data[sp][ndx] * sp_data[sp][st_lcg]
                     if gen in tech_names or gen2 in tech_names:
                         sp_data[sp][st_lco] = sp_data[sp][st_cst] / (sp_data[sp][st_tml] + (sto_sum * sp_data[sp][st_tml] / fac_tml_sum))
                     else:
