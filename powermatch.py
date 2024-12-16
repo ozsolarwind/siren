@@ -753,7 +753,7 @@ class Adjustments(MyQDialog):
         for row in range(1, batch_input_sheet.max_row + 1):
             if batch_input_sheet.cell(row=row, column=1).value is None:
                 continue
-            if batch_input_sheet.cell(row=row, column=1).value in ['Model', 'Model Label', 'Technology']:
+            if batch_input_sheet.cell(row=row, column=1).value in ['Model', 'Model Label', 'Technology', 'Year']:
                 new_cell = batch_input_sheet.cell(row=row, column=col)
                 new_cell.value = QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'MM-dd hh:mm')
                 add_msg = new_cell.value
@@ -1339,7 +1339,7 @@ class powerMatch(QtWidgets.QWidget):
         if self.batch_new_file:
             msg = '(check to replace an existing Results workbook)'
         else:
-            msg = '(check to replace last Results worksheet in Batch spreadsheet)'
+            msg = '(check to replace last Results worksheet in Batch/Transition spreadsheet)'
         self.replace_last = QtWidgets.QCheckBox(msg, self)
         self.replace_last.setCheckState(QtCore.Qt.Unchecked)
         self.grid.addWidget(self.replace_last, r, 1, 1, 3)
@@ -1551,7 +1551,7 @@ class powerMatch(QtWidgets.QWidget):
                 curfile = self.get_filename(self.files[R].text())
             newfile = QtWidgets.QFileDialog.getSaveFileName(None, 'Save ' + self.file_labels[i] + ' file',
                       curfile, 'Excel Files (*.xlsx)')[0]
-        elif i == B and not self.batch_new_file:
+        elif (i == B or i == T) and not self.batch_new_file:
             options = QtWidgets.QFileDialog.Options()
             # options |= QFileDialog.DontUseNativeDialog
             newfile = QtWidgets.QFileDialog.getSaveFileName(None, 'Open/Create and save ' + self.file_labels[i] + ' file',
@@ -1855,7 +1855,7 @@ class powerMatch(QtWidgets.QWidget):
             msg = '(check to replace an existing Results workbook)'
         else:
             self.batch_new_file = False
-            msg = '(check to replace last Results worksheet in Batch spreadsheet)'
+            msg = '(check to replace last Results worksheet in Batch/Transition spreadsheet)'
         self.replace_last = QtWidgets.QCheckBox(msg, self)
         try:
             st = config.get('Powermatch', 'batch_prefix')
@@ -2234,7 +2234,7 @@ class powerMatch(QtWidgets.QWidget):
             return strt, stop, step, frst
 
         if ws is None:
-            self.setStatus(self.file_labels[B] + ' worksheet missing.')
+            self.setStatus(self.file_labels[option] + ' worksheet missing.')
             return False
         istrt = 0
         year_row = -1
@@ -2243,7 +2243,7 @@ class powerMatch(QtWidgets.QWidget):
                 istrt = row + 1
                 break
         else:
-            self.setStatus('Not a ' + self.file_labels[B] + ' worksheet.')
+            self.setStatus('Not a ' + self.file_labels[option] + ' worksheet.')
             return False
         self.batch_models = [{}] # cater for a range of capacities
         self.batch_report = [['Capacity (MW/MWh)', 1]]
@@ -2261,7 +2261,7 @@ class powerMatch(QtWidgets.QWidget):
                     if tech.find('.') > 0:
                         tech = tech[tech.find('.') + 1:]
                     if tech != 'Total' and tech not in self.generators.keys():
-                        self.setStatus('Unknown technology - ' + tech + ' - in batch file.')
+                        self.setStatus(f'Unknown technology - {tech} - in {self.file_labels[option]} file.')
                         return False
                     self.batch_tech.append(ws.cell_value(row, 0))
                 else:
@@ -2273,7 +2273,7 @@ class powerMatch(QtWidgets.QWidget):
                 istop = row + 1
                 break
         if len(self.batch_tech) == 0:
-            self.setStatus('No input technologies found in ' + self.file_labels[B] + ' worksheet (try opening and re-saving the workbook).')
+            self.setStatus('No input technologies found in ' + self.file_labels[option] + ' worksheet (try opening and re-saving the workbook).')
             return False
         carbon_row = -1
         discount_row = -1
@@ -2332,7 +2332,7 @@ class powerMatch(QtWidgets.QWidget):
                 elif isinstance(ws.cell_value(discount_row, col), int):
                     self.batch_models[0][col]['Discount Rate'] = float(ws.cell_value(discount_row, col))
         if len(self.batch_models[0]) == 0:
-            self.setStatus('No models found in ' + self.file_labels[B] + ' worksheet (try opening and re-saving the workbook).')
+            self.setStatus('No models found in ' + self.file_labels[option] + ' worksheet (try opening and re-saving the workbook).')
             return False
         if len(range_rows) == 0:
             return True
@@ -2479,16 +2479,16 @@ class powerMatch(QtWidgets.QWidget):
         sheet.merge_cells('B' + str(sheet_row) + ':M' + str(sheet_row))
         return sheet_row
 
-    def clean_batch_sheet(self):
+    def clean_batch_sheet(self, option):
         msgbox = QtWidgets.QMessageBox()
-        msgbox.setWindowTitle('SIREN - Powermatch Batch')
-        msgbox.setText("Batch worksheet has more that 1,024 columns.\nSome may be invalid/empty. Would you like these to be removed")
+        msgbox.setWindowTitle(f'SIREN - Powermatch {self.file_labels[option]}')
+        msgbox.setText(f"{self.file_labels[option]} worksheet has more that 1,024 columns.\nSome may be invalid/empty. Would you like these to be removed")
         msgbox.setIcon(QtWidgets.QMessageBox.Warning)
         msgbox.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
         reply = msgbox.exec_()
         if reply != QtWidgets.QMessageBox.Yes:
             return
-        batch_report_file = self.get_filename(self.files[B].text())
+        batch_report_file = self.get_filename(self.files[option].text())
         if os.path.exists(batch_report_file + '~'):
             os.remove(batch_report_file + '~')
         shutil.copy2(batch_report_file, batch_report_file + '~')
@@ -2496,7 +2496,7 @@ class powerMatch(QtWidgets.QWidget):
         ws = wb.worksheets[0]
         for row in range(1, 4):
             try:
-                if ws.cell(row=row, column=1).value.lower() in ['model', 'model label', 'technology']:
+                if ws.cell(row=row, column=1).value.lower() in ['model', 'model label', 'technology', 'year']:
                     break
             except:
                 pass
@@ -2607,13 +2607,13 @@ class powerMatch(QtWidgets.QWidget):
             try:
                 ts = WorkBook()
                 bwbopen_start = time.time()
-                ts.open_workbook(self.get_filename(self.files[B].text()))
+                ts.open_workbook(self.get_filename(self.files[option].text()))
                 ws = ts.sheet_by_index(0)
                 if ws.ncols > 1024:
                     ts.close()
-                    self.clean_batch_sheet()
+                    self.clean_batch_sheet(option)
                     ts = WorkBook()
-                    ts.open_workbook(self.get_filename(self.files[B].text()))
+                    ts.open_workbook(self.get_filename(self.files[option].text()))
                     ws = ts.sheet_by_index(0)
                 tim = time.time() - bwbopen_start
                 if tim < 60:
@@ -2621,16 +2621,16 @@ class powerMatch(QtWidgets.QWidget):
                 else:
                     hhmm = tim / 60.
                     tim = f'{int(hhmm)}:{int((hhmm-int(hhmm))*60.):0>2} mins'
-                self.setStatus(f'{self.file_labels[B]} workbook opened ({tim})')
+                self.setStatus(f'{self.file_labels[option]} workbook opened ({tim})')
                 ok = self.getBatch(ws, option)
                 ts.close()
                 del ts
                 if not ok:
                     return
             except FileNotFoundError:
-                err_msg = 'Batch file not found - ' + self.files[B].text()
+                err_msg = f'{self.file_labels[option]} file not found - {self.files[option].text()}'
             except Exception as e:
-                err_msg = 'Error accessing Batch file ' + str(e)
+                err_msg = f'Error accessing {self.file_labels[option]} file {str(e)}'
         if option == O and self.optimisation is None:
             try:
                 ts = WorkBook()
@@ -3014,22 +3014,22 @@ class powerMatch(QtWidgets.QWidget):
             batch_extra['LCOE With CO2 ($/MWh)'].append(['LCOE incl. Carbon Cost', st_lcc])
          #   batch_extra['To Meet Load (MWh)'] = ['#,##0.00', ['Total', st_tml]]
             wbopen_start = time.time()
-            wb = oxl.load_workbook(self.get_filename(self.files[B].text()))
+            wb = oxl.load_workbook(self.get_filename(self.files[option].text()))
             tim = time.time() - wbopen_start
             if tim < 60:
                 tim = '%.1f secs' % tim
             else:
                 hhmm = tim / 60.
                 tim = f'{int(hhmm)}:{int((hhmm-int(hhmm))*60.):0>2} mins'
-            self.setStatus(f'{self.file_labels[B]} workbook re-opened for update ({tim})')
+            self.setStatus(f'{self.file_labels[option]} workbook re-opened for update ({tim})')
             batch_input_sheet = wb.worksheets[0]
             rpt_time = QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'yyyy-MM-dd_hhmm')
             if self.batch_new_file:
                 wb.close()
-                i = self.files[B].text().rfind('.')
+                i = self.files[option].text().rfind('.')
                 suffix = '_report_' + rpt_time
-                batch_report_file = self.get_filename(self.files[B].text()[:i] + suffix + self.files[B].text()[i:])
-                batch_report_file = QtWidgets.QFileDialog.getSaveFileName(None, 'Save Batch Report file',
+                batch_report_file = self.get_filename(self.files[option].text()[:i] + suffix + self.files[option].text()[i:])
+                batch_report_file = QtWidgets.QFileDialog.getSaveFileName(None, f'Save {self.file_labels[option]} Report file',
                                     batch_report_file, 'Excel Files (*.xlsx)')[0]
                 if batch_report_file == '':
                     self.setStatus(self.sender().text() + ' aborted')
@@ -3044,7 +3044,7 @@ class powerMatch(QtWidgets.QWidget):
                     bs = wb.active
                     bs.title = 'Results_' + rpt_time
             else:
-                batch_report_file = self.get_filename(self.files[B].text())
+                batch_report_file = self.get_filename(self.files[option].text())
                 if self.replace_last.isChecked():
                     del_sht = ''
                     for sht in wb.sheetnames:
@@ -3082,7 +3082,7 @@ class powerMatch(QtWidgets.QWidget):
                    model_row = False
                    model_cols = len(self.batch_models[sht])
                    for row in range(1, self.batch_report[0][1] + 2):
-                       if batch_input_sheet.cell(row=row, column=1).value in ['Model', 'Model Label', 'Technology']:
+                       if batch_input_sheet.cell(row=row, column=1).value in ['Model', 'Model Label', 'Technology', 'Year']:
                            model_row = True
                            model_row_no = row
                        else:
@@ -3745,7 +3745,7 @@ class powerMatch(QtWidgets.QWidget):
                         elif batch_input_sheet.cell(row=row, column=1).value.lower() in ['categories', 'y-labels', 'data', 'data2']:
                             dgrp = get_value(batch_input_sheet, row, 2)
                             if batch_input_sheet.cell(row=row, column=1).value.lower() == 'categories' \
-                              and dgrp.lower() in ['model', 'model label', 'technology']: # models as categories
+                              and dgrp.lower() in ['model', 'model label', 'technology', 'year']: # models as categories
                                 rw = self.batch_report[0][1] - 1
                                 cats = Reference(bs, min_col=min_col, min_row=rw, max_col=max_col, max_row=rw)
                                 continue
@@ -7294,7 +7294,7 @@ class powerMatch(QtWidgets.QWidget):
                 for row in range(1, batch_input_sheet.max_row + 1):
                     if batch_input_sheet.cell(row=row, column=1).value is None:
                         continue
-                    if batch_input_sheet.cell(row=row, column=1).value in ['Model', 'Model Label', 'Technology']:
+                    if batch_input_sheet.cell(row=row, column=1).value in ['Model', 'Model Label', 'Technology', 'Year']:
                         new_cell = batch_input_sheet.cell(row=row, column=col)
                         new_cell.value = QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'MM-dd hh:mm')
                         msg += " Added to batch as '" + new_cell.value + "' (column " + ssCol(col) + ')'
