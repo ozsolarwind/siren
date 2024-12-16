@@ -2239,7 +2239,7 @@ class powerMatch(QtWidgets.QWidget):
         istrt = 0
         year_row = -1
         for row in range(3):
-            if ws.cell_value(row, 0) in ['Model', 'Model Label', 'Technology']:
+            if ws.cell_value(row, 0) in ['Model', 'Model Label', 'Technology', 'Year']:
                 istrt = row + 1
                 break
         else:
@@ -2895,26 +2895,26 @@ class powerMatch(QtWidgets.QWidget):
         if self.files[R].text() == '':
             i = pm_data_file.rfind('/')
             if i >= 0:
-                data_file = pm_data_file[i + 1:]
+                rslts_file = pm_data_file[i + 1:]
             else:
-                data_file = pm_data_file
-            data_file = data_file.replace('data', 'results')
-            data_file = data_file.replace('Data', 'Results')
-            if data_file == pm_data_file[i + 1:]:
-                j = data_file.find(' ')
+                rslts_file = pm_data_file
+            rslts_file = rslts_file.replace('data', 'results')
+            rslts_file = rslts_file.replace('Data', 'Results')
+            if rslts_file == pm_data_file[i + 1:]:
+                j = rslts_file.find(' ')
                 if j > 0:
                     jnr = ' '
                 else:
                     jnr = '_'
-                j = data_file.rfind('.')
-                data_file = data_file[:j] + jnr + 'Results' + data_file[j:]
-            self.files[R].setText(data_file)
+                j = rslts_file.rfind('.')
+                rslts_file = rslts_file[:j] + jnr + 'Results' + rslts_file[j:]
+            self.files[R].setText(rslts_file)
         else:
-            data_file = self.get_filename(self.files[R].text())
+            rslts_file = self.get_filename(self.files[R].text())
         if self.results_prefix != '':
-            j = data_file.rfind('/')
-            if data_file[j + 1:j + 1 + len(self.results_prefix)] != self.results_prefix:
-                data_file = data_file[: j + 1] + self.results_prefix + '_' + data_file[j + 1:]
+            j = rslts_file.rfind('/')
+            if rslts_file[j + 1:j + 1 + len(self.results_prefix)] != self.results_prefix:
+                rslts_file = rslts_file[: j + 1] + self.results_prefix + '_' + rslts_file[j + 1:]
         for itm in range(self.order.count()):
             gen = self.order.item(itm).text()
             try:
@@ -3398,23 +3398,23 @@ class powerMatch(QtWidgets.QWidget):
                                     capex_table[fac][year] = [self.generators[fac].capex, 0]
                                 except:
                                     capex_table[fac][year] = [self.generators[fac[fac.find('.') + 1:]].capex, 0]
-                            capx = pmss_details[fac].multiplier * pmss_details[fac].capacity
-                            capex_table[fac][year][1] = capx - capex_table[fac]['cum']
-                            capex_table[fac]['cum'] = capx
+                            capacity = pmss_details[fac].multiplier * pmss_details[fac].capacity
+                            capex_table[fac][year][1] = capacity - capex_table[fac]['cum']
+                            capex_table[fac]['cum'] = capacity
                     if option == T:
                         for fac in capex_table.keys():
                             if capex_table[fac]['cum'] == 0:
                                 continue
-                            capx = 0
+                            capex = 0
                             for key, detail in capex_table[fac].items():
                                 if key == 'cum':
                                     continue
-                                capx = capx + detail[0] * detail[1]
-                            capx = capx / capex_table[fac]['cum']
+                                capex = capex + detail[0] * detail[1]
+                            capex = capex / capex_table[fac]['cum']
                             try:
-                                self.generators[fac].capex = round(capx)
+                                self.generators[fac].capex = round(capex)
                             except:
-                                self.generators[fac[fac.find('.') + 1:]].capex = round(capx)
+                                self.generators[fac[fac.find('.') + 1:]].capex = round(capex)
                     save_carbon_price = None
                     if 'Carbon Price' in capacities.keys():
                         save_carbon_price = self.carbon_price
@@ -3423,7 +3423,7 @@ class powerMatch(QtWidgets.QWidget):
                         save_discount_rate = self.discount_rate
                         self.discount_rate = capacities['Discount Rate']
                     sp_data = self.doDispatch(year, option, pmss_details, pmss_data, re_order, dispatch_order,
-                              pm_data_file, data_file, title=capacities['name'])
+                              pm_data_file, rslts_file, title=capacities['name'])
                     if 'Carbon Price' in capacities.keys():
                         self.carbon_price = save_carbon_price
                     # first the Facility/technology table at the top of sp_data
@@ -3840,10 +3840,10 @@ class powerMatch(QtWidgets.QWidget):
                     except:
                         pass
         self.doDispatch(year, option, pmss_details, pmss_data, re_order, dispatch_order,
-                        pm_data_file, data_file)
+                        pm_data_file, rslts_file)
 
     def doDispatch(self, year, option, pmss_details, pmss_data, re_order, dispatch_order,
-                   pm_data_file, data_file, title=None):
+                   pm_data_file, rslts_file, title=None):
         def calcLCOE(annual_output, capital_cost, annual_operating_cost, discount_rate, lifetime):
             # Compute levelised cost of electricity
             if discount_rate > 0:
@@ -3996,15 +3996,16 @@ class powerMatch(QtWidgets.QWidget):
                 ns.cell(row=zone_row, column=col).value = pmss_details[fac].zone
                 ns.cell(row=zone_row, column=col).alignment = oxl.styles.Alignment(wrap_text=True,
                     vertical='bottom', horizontal='center')
+            # facility
             try:
                 ns.cell(row=what_row, column=col).value = fac[fac.find('.') + 1:]
             except:
                 ns.cell(row=what_row, column=col).value = fac # gen
             ns.cell(row=what_row, column=col).alignment = oxl.styles.Alignment(wrap_text=True,
                     vertical='bottom', horizontal='center')
+            # capacity
             ns.cell(row=cap_row, column=col).value = sp_cap[-1]
             ns.cell(row=cap_row, column=col).number_format = '#,##0.00'
-            # capacity
             ns.cell(row=sum_row, column=col).value = '=SUM(' + ssCol(col) \
                     + str(hrows) + ':' + ssCol(col) + str(hrows + 8759) + ')'
             ns.cell(row=sum_row, column=col).number_format = '#,##0'
@@ -4434,7 +4435,7 @@ class powerMatch(QtWidgets.QWidget):
         max_lifetime = 0
         # find max. lifetime years for all technologies selected
         for key in pmss_details.keys():
-            if key == 'Load'or key == 'Total':
+            if key == 'Load' or key == 'Total':
                 continue
             if pmss_details[key].capacity * pmss_details[key].multiplier > 0:
              #   gen = key.split('.')[-1]
@@ -5215,7 +5216,7 @@ class powerMatch(QtWidgets.QWidget):
                     cost_sum += sp_data[sp][st_cst]
                 sp_data[sp][st_lic] = sp_data[sp][st_cst] * max_lifetime
                 lifetime_sum += sp_data[sp][st_lic]
-                if self.generators[gen].emissions > 0 and sp_data[sp][st_tml]> 0:
+                if self.generators[gen].emissions > 0 and sp_data[sp][st_tml] > 0:
                     sp_data[sp][st_emi] = sp_data[sp][ndx] * self.generators[gen].emissions
                     co2_sum += sp_data[sp][st_emi]
                     sp_data[sp][st_emc] = sp_data[sp][st_emi] * self.carbon_price
@@ -5946,13 +5947,13 @@ class powerMatch(QtWidgets.QWidget):
                         pass
             cs.freeze_panes = 'B2'
             cs.activeCell = 'B2'
-        wb.save(data_file)
+        wb.save(rslts_file)
         self.progressbar.setValue(20)
         QtWidgets.QApplication.processEvents()
-        j = data_file.rfind('/')
-        data_file = data_file[j + 1:]
-        msg = '%s created (%.2f seconds)' % (data_file, time.time() - start_time)
-        msg = '%s created.' % data_file
+        j = rslts_file.rfind('/')
+        rslts_file = rslts_file[j + 1:]
+        msg = '%s created (%.2f seconds)' % (rslts_file, time.time() - start_time)
+        msg = '%s created.' % rslts_file
         self.setStatus(msg)
         self.progressbar.setHidden(True)
         self.progressbar.setValue(0)
@@ -6004,7 +6005,7 @@ class powerMatch(QtWidgets.QWidget):
         self.close()
 
     def optClicked(self, in_year, in_option, in_pmss_details, in_pmss_data, in_re_order,
-                   in_dispatch_order, pm_data_file, data_file):
+                   in_dispatch_order, pm_data_file, rslts_file):
 
         def create_starting_population(individuals, chromosome_length):
             # Set up an initial array of all zeros
@@ -6109,7 +6110,7 @@ class powerMatch(QtWidgets.QWidget):
                     except:
                         print('PME2:', gen, capacity, pmss_details[fac].capacity)
                 multi_value, op_data, extra = self.doDispatch(year, option, pmss_details, pmss_data, re_order,
-                                              dispatch_order, pm_data_file, data_file)
+                                              dispatch_order, pm_data_file, rslts_file)
                 if multi_value['load_pct'] < self.targets['load_pct'][3]:
                     if multi_value['load_pct'] == 0:
                         print('PME3:', multi_value['lcoe'], self.targets['load_pct'][3], multi_value['load_pct'])
