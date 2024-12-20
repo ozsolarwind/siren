@@ -2720,6 +2720,8 @@ class powerMatch(QtWidgets.QWidget):
                 load_columns[self.loadCombo.currentText()] = len(pmss_data)
                 pmss_data.append([])
                 load_file = self.load_files.replace('$YEAR$', self.loadCombo.currentText())
+                if self.load_dir.text() != self._load_folder:
+                    load_file = self.get_filename(load_file)
                 pmss_data[-1] = get_load_data(load_file)
                 re_order.append('Load')
         except:
@@ -3360,6 +3362,8 @@ class powerMatch(QtWidgets.QWidget):
                                 load_columns[capacity] = len(pmss_data)
                                 pmss_data.append([])
                                 load_file = self.load_files.replace('$YEAR$', capacity)
+                                if self.load_dir.text() != self._load_folder:
+                                    load_file = self.get_filename(load_file)
                                 pmss_data[-1] = get_load_data(load_file)
                                 pmss_details['Load'].col = load_columns[capacity]
                             pmss_details['Load'].capacity = sum(pmss_data[pmss_details['Load'].col])
