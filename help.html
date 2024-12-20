@@ -3956,6 +3956,7 @@ The order in which the dispatchable technologies will be processed by Powermatch
 <li>(in case you missed it). If you're modelling with zones both the input data file and the batch file must have input capacities by zone</li>
 <li>By default, the same Load data is used for all models in a Batch execution. If you add a <dfn>year</dfn> row immediately after the <dfn>Capacity (MW)</dfn> row, the load file can be changed to other years. The same Generators table is used for all models</li>
 <li>If the input model has capacity for facilities contributing to Underlying load (e.g. Rooftop PV) the batch report will contain underlying totals</li>
+<li>If you have the <em>remove_cost</em> property set to the default value of True you may get change in batch output figures, such as LCOE, that are due to removing these costs rather than a more optimal set of input capacities</li>
 </ul>
 </p>
 </li>
