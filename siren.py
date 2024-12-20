@@ -409,11 +409,12 @@ class TabDialog(QtWidgets.QDialog):
             if os.path.exists(who[0]):
                 if sys.platform == 'win32' or sys.platform == 'cygwin':
                     if who[0][-3:] == '.py':
-                        pid = subprocess.Popen([who], shell=True).pid
+                        pid = subprocess.Popen(who, shell=True).pid
                     else:
-                        pid = subprocess.Popen([who]).pid
+                        pid = subprocess.Popen(who).pid
                 else:
-                    pid = subprocess.Popen(['python3', who[0], who[1]]).pid
+                    who.insert(0, 'python3')
+                    pid = subprocess.Popen(who).pid
         else:
             if os.path.exists(who):
                 if sys.platform == 'win32' or sys.platform == 'cygwin':
