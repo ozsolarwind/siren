@@ -2568,7 +2568,7 @@ class powerMatch(QtWidgets.QWidget):
             self.progressbar.setMaximum(20)
             self.progressbar.setHidden(False)
             QtWidgets.QApplication.processEvents()
-        err_msg = ''
+        err_msgs = []
         if self.constraints is None:
             try:
                 ts = WorkBook()
@@ -2578,10 +2578,10 @@ class powerMatch(QtWidgets.QWidget):
                 ts.close()
                 del ts
             except FileNotFoundError:
-                err_msg = 'Constraints file not found - ' + self.files[C].text()
+                err_msgs.append('Constraints file not found - ' + self.files[C].text())
                 self.getConstraints(None)
             except:
-                err_msg = 'Error accessing Constraints'
+                err_msgs.append('Error accessing Constraints')
                 self.getConstraints(None)
         if self.generators is None:
             try:
@@ -2592,18 +2592,17 @@ class powerMatch(QtWidgets.QWidget):
                 ts.close()
                 del ts
             except FileNotFoundError:
-                if err_msg != '':
-                    err_msg += ' nor Generators - ' + self.files[G].text()
-                else:
-                    err_msg = 'Generators file not found - ' + self.files[G].text()
+                err_msgs.append('Generators file not found - ' + self.files[G].text())
                 self.getGenerators(None)
             except:
-                if err_msg != '':
-                    err_msg += ' and Generators'
-                else:
-                    err_msg = 'Error accessing Generators'
+                err_msgs.append('Error accessing Generators')
                 self.getGenerators(None)
-        if option == B or option == T: # has to be xlsx workbook
+        pm_data_file = self.get_filename(self.files[D].text())
+        if pm_data_file[-5:] != '.xlsx': #xlsx format only
+            err_msgs.append('Not a Powermatch data spreadsheet (1)')
+        elif not os.path.exists(pm_data_file):
+                err_msgs.append('Data file not found - ' + self.files[D].text())
+        if (option == B or option == T) and len(err_msgs) == 0: # has to be xlsx workbook
             try:
                 ts = WorkBook()
                 bwbopen_start = time.time()
@@ -2628,10 +2627,10 @@ class powerMatch(QtWidgets.QWidget):
                 if not ok:
                     return
             except FileNotFoundError:
-                err_msg = f'{self.file_labels[option]} file not found - {self.files[option].text()}'
+                err_msgs.append(f'{self.file_labels[option]} file not found - {self.files[option].text()}')
             except Exception as e:
-                err_msg = f'Error accessing {self.file_labels[option]} file {str(e)}'
-        if option == O and self.optimisation is None:
+                err_msgs.append(f'Error accessing {self.file_labels[option]} file {str(e)}')
+        if option == O and self.optimisation is None and len(err_msgs) == 0:
             try:
                 ts = WorkBook()
                 ts.open_workbook(self.get_filename(self.files[O].text()))
@@ -2640,29 +2639,24 @@ class powerMatch(QtWidgets.QWidget):
                 ts.close()
                 del ts
                 if self.optimisation is None:
-                    if err_msg != '':
-                        err_msg += ' not an Optimisation worksheet'
-                    else:
-                        err_msg = 'Not an optimisation worksheet'
+                    err_msgs.append('Not an optimisation worksheet')
             except FileNotFoundError:
-                if err_msg != '':
-                    err_msg += ' nor Optimisation - ' + self.files[O].text()
-                else:
-                    err_msg = 'Optimisation file not found - ' + self.files[O].text()
+                err_msgs.append('Optimisation file not found - ' + self.files[O].text())
             except:
-                if err_msg != '':
-                    err_msg += ' and Optimisation'
-                else:
-                    err_msg = 'Error accessing Optimisation'
+                err_msgs.append('Error accessing Optimisation')
             if self.optimisation is None:
                 self.getOptimisation(None)
-        if err_msg != '':
-            self.setStatus(err_msg)
-            return
-        pm_data_file = self.get_filename(self.files[D].text())
-        if pm_data_file[-5:] != '.xlsx': #xlsx format only
-            self.setStatus('Not a Powermatch data spreadsheet (1)')
+        if len(err_msgs) > 1:
+            self.log_status = True
+            self.show_FloatStatus() # status window
+        if len(err_msgs) > 0:
             self.progressbar.setHidden(True)
+            if len(err_msgs) == 1:
+                self.setStatus(err_msgs[0])
+            else:
+                for error in err_msgs:
+                    self.setStatus(error)
+                self.setStatus('Execution aborted.')
             return
         try:
             ts = oxl.load_workbook(pm_data_file)
@@ -2688,7 +2682,7 @@ class powerMatch(QtWidgets.QWidget):
                 break
             typ_row -= 1
         else:
-            self.setStatus('no suitable data')
+            self.setStatus('No suitable data (in data file)')
             return
         do_zone = False
         zone_row = typ_row - 1
@@ -2704,7 +2698,7 @@ class powerMatch(QtWidgets.QWidget):
                 break
             icap_row += 1
         else:
-            self.setStatus('no capacity data')
+            self.setStatus('No capacity data (in data file)')
             return
         year = ws.cell(row=top_row + 1, column=2).value[:4]
         pmss_details = {} # contains name, generator, capacity, fac_type, col, multiplier
