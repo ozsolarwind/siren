@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2023 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2024 Sustainable Energy Now Inc., Angus King
 #
 #  turbine.py - This file is part of SIREN.
 #
@@ -144,7 +144,10 @@ class Turbine:
              turbines = csv.DictReader(turb_fil)
              for turbine in turbines:
                  if turbine['Name'].strip()  == name:
-                     self.capacity = float(turbine['KW Rating'])
+                     try:
+                         self.capacity = float(turbine['KW Rating'])
+                     except:
+                         self.capacity = float(turbine['kW Rating'])
                      self.cutin = 0
                      self.powers = turbine['Power Curve Array'].split('|')
                      self.rotor = float(turbine['Rotor Diameter'])

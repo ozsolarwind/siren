@@ -63,7 +63,10 @@ class Station:
             except:
                 pass
         self.no_turbines = no_turbines
-        self.area = area
+        if area is None:
+            self.area = 0
+        else:
+            self.area = area
         self.scenario = scenario
         self.generation = generation
         self.power_file = power_file
@@ -276,7 +279,8 @@ class Stations:
                                             turbine = turb[1]
                                         else:
                                             turbine = turb[0]
-                                        sam.seek(0)
+                                        if sam is not None:
+                                            sam.seek(0)
                                         for turb in sam_turbines:
                                             if turb['Name'] == turbine:
                                                 rotor = turb['Rotor Diameter']

@@ -1,5 +1,6 @@
+#!/usr/bin/env python3
 #
-#  Copyright (C) 2019-2023 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2019-2024 Sustainable Energy Now Inc., Angus King
 #
 #  powerplot.py - This file is possibly part of SIREN.
 #
@@ -20,9 +21,11 @@
 
 import configparser  # decode .ini file
 import os
+import plotly.graph_objects as go
+import plotly
 from PyQt5 import QtCore, QtGui, QtWidgets
 import sys
-from math import log10, ceil
+from math import ceil, log10, sqrt
 import matplotlib
 if matplotlib.__version__ > '3.5.1':
     matplotlib.use('Qt5Agg')
@@ -32,39 +35,313 @@ from matplotlib.font_manager import FontProperties
 import numpy as np
 import matplotlib.pyplot as plt
 import displayobject
+import displaytable
 from colours import Colours
 from credits import fileVersion
 from displaytable import Table
 from editini import EdtDialog, SaveIni
 from getmodels import getModelFile
-from senutils import ClickableQLabel, getParents, getUser, ListWidget, strSplit, techClean, WorkBook
+try:
+    from senplot3d import PowerPlot3D
+except:
+    PowerPlot3D = None
+from senutils import ClickableQLabel, getParents, getUser, ListWidget, ssCol, strSplit, techClean, WorkBook
 from zoompan import ZoomPanX
 
-col_letters = ' ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-def ss_col(col, base=0):
-    if base == 1:
-        col -= 1
-    c1 = 0
-    c2, c3 = divmod(col, 26)
-    c3 += 1
-    if c2 > 26:
-        c1, c2 = divmod(c2, 26)
-    return (col_letters[c1] + col_letters[c2] + col_letters[c3]).strip()
+mth_labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
+class MyQDialog(QtWidgets.QDialog):
+    ignoreEnter = True
+
+    def keyPressEvent(self, qKeyEvent):
+        if qKeyEvent.key() == QtCore.Qt.Key_Return:
+            self.ignoreEnter = True
+        else:
+            self.ignoreEnter = False
+
+    def closeEvent(self, event):
+        if self.ignoreEnter:
+            self.ignoreEnter = False
+            event.ignore()
+        else:
+            event.accept()
+
+
+class MyCombo(QtWidgets.QComboBox):
+    def decode_data(self, bytearray):
+        data = []
+        ds = QtCore.QDataStream(bytearray)
+        while not ds.atEnd():
+            row = ds.readInt32()
+            column = ds.readInt32()
+            map_items = ds.readInt32()
+            for i in range(map_items):
+                key = ds.readInt32()
+                value = QtCore.QVariant()
+                ds >> value
+                data.append(value.value())
+        return data
+
+    def __init__(self, parent):
+        super(MyCombo, self).__init__()
+        self.setAcceptDrops(True)
+
+    def dragEnterEvent(self, event):
+        ba = event.mimeData().data('application/x-qabstractitemmodeldatalist')
+        data_items = self.decode_data(ba)
+        for item in data_items:
+            if isinstance(item, str):
+                for i in range(self.count()):
+                    if self.itemText(i) == item:
+                        break
+                else:
+                    self.addItem(item)
+        event.acceptProposedAction()
+
+
+class ChangeFontProp(MyQDialog):
+    def __init__(self, what, font=None, legend=None):
+        super(ChangeFontProp, self).__init__()
+        who = sys.argv[0][sys.argv[0].rfind('/') + 1: sys.argv[0].rfind('.')].title()
+        self.what = what.split(' ')[0]
+        self._font = font
+        self.ignoreEnter = False
+         #                        'Weight': [['ultralight', 'light', 'normal', 'regular', 'book', 'medium', 'roman',
+         #                                    'semibold', 'demibold', 'demi', 'bold', 'heavy', 'extra bold', 'black'],
+         #                                    'normal'],
+        self._font_properties = {'Family': [['cursive', 'fantasy', 'monospace', 'sans-serif', 'serif'] ,'sans-serif'],
+                                 'Style': [['italic', 'normal', 'oblique'], 'normal'],
+                                 'Variant': [['normal', 'small-caps'], 'normal'],
+                                 'Stretch': [['ultra-condensed', 'extra-condensed', 'condensed', 'semi-condensed',
+                                              'normal', 'semi-expanded', 'expanded', 'extra-expanded',
+                                              'ultra-expanded'], 'normal'],
+                                 'Weight': [['ultralight', 'light', 'normal', 'bold'], 'normal'],
+                                 'Size': [['xx-small', 'x-small', 'small', 'medium', 'large', 'x-large', 'xx-large'],
+                                           'small']}
+        self._legend_properties = {'legend_ncol': ['Columns', ['1', '2', '3', '4', '5', '6', '7', '8', '9'], '1'],
+                                   'legend_on_pie': ['On pie', ['True', 'Pct', 'False'], 'True'],
+                                   'legend_side': ['Alignment', ['None', 'Left', 'Right'], 'None']}
+#constrained_layout=False
+#short_legend
+        self._size = [5.79, 6.94, 8.33, 10.0, 12.0, 14.4, 17.28]
+        self._legend = None
+        self._results = None
+        self._color = None
+        self._pattern = None
+        self.grid = QtWidgets.QGridLayout()
+        rw = 0
+        if self.what == 'Legend':
+            self.legend_items = {}
+            self.grid.addWidget(QtWidgets.QLabel('Legend properties'), rw, 0)
+            for key, value in self._legend_properties.items():
+                self.grid.addWidget(QtWidgets.QLabel(value[0]), rw, 1)
+                self.legend_items[key] = QtWidgets.QComboBox()
+                for i in range(len(value[1])):
+                    self.legend_items[key].addItem(value[1][i])
+                    if value[1][i] == value[2]:
+                        self.legend_items[key].setCurrentIndex(i)
+                self.grid.addWidget(self.legend_items[key], rw, 2)
+                rw += 1
+            if legend is not None:
+                for key in self._legend_properties:
+                    try:
+                        self.legend_items[key].setCurrentText(legend[key])
+                    except:
+                        pass
+            rw += 1
+        else:
+            self._color = '#000000' # black
+            if font is not None:
+                self._font = FontProperties()
+                font_str = ''
+                for key, value in font.items():
+                    if key == 'family':
+                        font_str += value.replace('-', "\\-") + ':'
+                    elif key == 'color':
+                        self._color = value
+                    else:
+                        font_str += key + '=' + str(value) + ':'
+                font_str = font_str[:-1]
+            self._font.set_fontconfig_pattern(font_str)
+        self.font_items = {}
+        self.grid.addWidget(QtWidgets.QLabel('Font properties'), rw, 0)
+        self.grid.addWidget(QtWidgets.QLabel('Name'), rw, 1)
+        self.name = QtWidgets.QLabel(self._font.get_name())
+        self.grid.addWidget(self.name, rw, 2)
+        rw += 1
+        for key, value in self._font_properties.items():
+            self.grid.addWidget(QtWidgets.QLabel(key), rw, 1)
+            self.font_items[key] = QtWidgets.QComboBox()
+            for i in range(len(value[0])):
+                self.font_items[key].addItem(value[0][i])
+                if value[0][i] == value[1]:
+                    self.font_items[key].setCurrentIndex(i)
+            self.grid.addWidget(self.font_items[key], rw, 2)
+            rw += 1
+        self.font_items['Family'].currentIndexChanged.connect(self.familyChange)
+        if self._font is not None:
+            try:
+                self.font_items['Family'].setCurrentText(self._font.get_family()[0])
+                self.font_items['Style'].setCurrentText(self._font.get_style())
+                self.font_items['Variant'].setCurrentText(self._font.get_variant())
+                self.font_items['Stretch'].setCurrentText(self._font.get_stretch())
+                self.font_items['Weight'].setCurrentText(self._font.get_weight())
+                sze = self._size.index(round(self._font.get_size(), 2))
+                self.font_items['Size'].setCurrentText(self._font_properties['Size'][0][sze])
+            except:
+                pass
+        if self.what != 'Header' and self._color is not None:
+            self.grid.addWidget(QtWidgets.QLabel('Colour'), rw, 1)
+            self.colbtn = QtWidgets.QPushButton('Color', self)
+            self.colbtn.clicked.connect(self.colorChanged)
+            if self._color == '#ffffff':
+                value = '#808080'
+            else:
+                value = self._color
+            self.colbtn.setStyleSheet('QPushButton {background-color: %s;}' % value)
+            self.font_items['Color'] = self.colbtn
+            self.grid.addWidget(self.font_items['Color'], rw, 2)
+            rw += 1
+        quit = QtWidgets.QPushButton('Quit', self)
+        self.grid.addWidget(quit, rw, 0)
+        quit.clicked.connect(self.quitClicked)
+        save = QtWidgets.QPushButton('Save', self)
+        self.grid.addWidget(save, rw, 1)
+        save.clicked.connect(self.saveClicked)
+        reset = QtWidgets.QPushButton('Reset', self)
+        self.grid.addWidget(reset, rw, 2)
+        reset.clicked.connect(self.resetClicked)
+        frame = QtWidgets.QFrame()
+        frame.setLayout(self.grid)
+        self.scroll = QtWidgets.QScrollArea()
+        self.scroll.setWidgetResizable(True)
+        self.scroll.setWidget(frame)
+        self.layout = QtWidgets.QVBoxLayout(self)
+        self.layout.addWidget(self.scroll)
+        self.setWindowTitle('SIREN - ' + who + ' - ' + self.what + ' Properties')
+        self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
+        QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
+        self.show()
+
+    def colorChanged(self):
+        col = QtWidgets.QColorDialog.getColor(QtGui.QColor(''))
+        if col.isValid():
+            self._color = col.name()
+            self.colbtn.setStyleSheet('QPushButton {background-color: %s;}' % col.name())
+            if self._color.lower() == '#ffffff':
+                self.colbtn.setStyleSheet('QPushButton {color: #808080;}')
+
+    def quitClicked(self):
+        self.ignoreEnter = False
+        self._font = None
+        self._legend = None
+        self._pattern = None
+        self._results = None
+        self.close()
+
+    def resetClicked(self):
+        for key, value in self._font_properties.items():
+            try:
+                self.font_items[key].setCurrentText(value[1])
+            except:
+                pass
+        if 'Color' in self.font_items.keys():
+            try:
+                self.colbtn.setStyleSheet('QPushButton {background-color: #000000;}')
+            except:
+                pass
+
+    def saveClicked(self):
+        self.ignoreEnter = False
+        if self.what == 'Legend':
+            self._legend = {}
+            for key, value in self.legend_items.items():
+                self._legend[key] = value.currentText()
+            self._results = {}
+        self._font = FontProperties()
+        self._font.set_family(self.font_items['Family'].currentText())
+        self._font.set_style(self.font_items['Style'].currentText())
+        self._font.set_variant(self.font_items['Variant'].currentText())
+        self._font.set_stretch(self.font_items['Stretch'].currentText())
+        self._font.set_weight(self.font_items['Weight'].currentText())
+        self._font.set_size(self.font_items['Size'].currentText())
+        family = self.font_items['Family'].currentText().replace('-', "\\-")
+        self._pattern = f"{family}:" + \
+                  f"style={self.font_items['Style'].currentText()}:" + \
+                  f"variant={self.font_items['Variant'].currentText()}:" + \
+                  f"weight={self.font_items['Weight'].currentText()}:" + \
+                  f"stretch={self.font_items['Stretch'].currentText()}:" + \
+                  f"size={self._font.get_size()}"
+        try:
+            self._pattern += f':color={self._color}'
+        except:
+            pass
+        self.close()
+
+    def familyChange(self):
+        ffont = FontProperties()
+        ffont.set_family(self.font_items['Family'].currentText())
+        self.name.setText(ffont.get_name())
+
+    def getValues(self):
+        return self._legend, self._results
+
+    def getFont(self):
+        return self._font
+
+    def getFontDict(self):
+        return self._pattern
 
 class PowerPlot(QtWidgets.QWidget):
 
-    def set_colour(self, item):
+    def overlayDialog(self):
+        for o in range(len(self.overlays)):
+            if self.overlay_button[o].hasFocus():
+                break
+        col = QtWidgets.QColorDialog.getColor(QtGui.QColor(self.overlay[o]), None, f'Select colour for Overlay{o}')
+        if col.isValid():
+            self.overlay_colour[o] = col.name()
+            self.overlay_button[o].setStyleSheet('QPushButton {background-color: %s; color: %s;}' % (col.name(), col.name()))
+            self.updated = True
+        return
+
+    def set_colour(self, item, default=None):
         tgt = item.lower()
         alpha = ''
         for alph in self.alpha_word:
             tgt = tgt.replace(alph, '')
         tgt = tgt.replace('  ', ' ')
         tgt = tgt.strip()
+        tgt = tgt.lstrip('_')
         if tgt == item.lower():
-            return self.colours[item.lower()]
+            if item.lower() in self.colours:
+                return self.colours[item.lower()]
+            else:
+                try:
+                    return self.colours[item.lower().replace('_', ' ')]
+                except:
+                    return default
         else:
             return self.colours[tgt.strip()] + self.alphahex
+
+    def set_fontdict(self, item=None):
+        if item is None:
+            bits = 'sans-serif:style=normal:variant=normal:weight=normal:stretch=normal:size=10.0:color=black'.split(':')
+        else:
+            bits = item.split(':')
+        fontdict = {}
+        for bit in bits:
+            bits2 = bit.split('=')
+            if len(bits2) == 1:
+                bit2 = bits2[0].replace("'", '')
+                bit2 = bit2.replace("\\", '')
+                fontdict['family'] = bit2
+            else:
+                try:
+                    fontdict[bits2[0]] = float(bits2[1])
+                except:
+                    fontdict[bits2[0]] = bits2[1]
+        return fontdict
 
     def set_hatch(self, item):
         tgt = item.lower()
@@ -98,6 +375,28 @@ class PowerPlot(QtWidgets.QWidget):
                 tgt_str = tgt_str.replace(wrd, tgt)
                 tgt_str = tgt_str.replace(wrd.lower(), tgt)
         return tgt_str
+
+    def transform_y2(self, y):
+        if self.y2_transform is not None:
+            return eval(self.y2_transform)
+        else:
+            return y
+
+    def inverse_y2(self, y):
+        if self.y2_inverse is not None:
+            return eval(self.y2_inverse)
+        elif self.y2_transform is not None:
+            inverse = ''
+            for c in self.y2_transform:
+                if c == '/':
+                    inverse += '*'
+                elif c == '*':
+                    inverse += '/'
+                else:
+                    inverse += c
+            return eval(inverse)
+        else:
+            return y
 
     def __init__(self, help='help.html'):
         super(PowerPlot, self).__init__()
@@ -146,7 +445,6 @@ class PowerPlot(QtWidgets.QWidget):
                 self.colours[itm] = colour
         except:
             pass
-        mth_labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
         ifile = ''
         isheet = ''
         columns = []
@@ -155,7 +453,7 @@ class PowerPlot(QtWidgets.QWidget):
         self.book = None
         self.error = False
         # create a colour map based on traffic lights
-        cvals  = [-2., -1, 2]
+        cvals = [-2., -1, 2]
         colors = ['red' ,'orange', 'green']
         norm=plt.Normalize(min(cvals), max(cvals))
         tuples = list(zip(map(norm, cvals), colors))
@@ -170,12 +468,20 @@ class PowerPlot(QtWidgets.QWidget):
         iper = '<none>'
         imax = 0
         self.alpha = 0.25
+        self.alpha_fill = 1.
         self.alpha_word = ['surplus', 'charge']
         self.margin_of_error = .0001
         self.constrained_layout = False
         self.target = ''
-        self.overlay = '<none>'
+        self.no_of_overlays = 1
+        self.overlay = ['<none>']
+        self.overlay_colour = ['black']
+        self.overlay_type = ['Average']
         self.palette = True
+        self.legend_on_pie = True
+        self.percent_on_pie = True
+        self.legend_side = 'None'
+        self.legend_ncol = 1
         self.hatch_word = ['charge']
         self.history = None
         self.max_files = 10
@@ -184,6 +490,23 @@ class PowerPlot(QtWidgets.QWidget):
         self.show_contribution = False
         self.show_correlation = False
         self.select_day = False
+        self.plot_12 = False
+        self.extras = False
+        self.short_legend = ''
+        self.legend_font = FontProperties()
+        self.legend_font.set_size('small')
+        self.fontprops = {}
+        self.fontprops['Header'] = self.set_fontdict()
+        self.fontprops['Header']['size'] = 16.
+        self.fontprops['Label']= self.set_fontdict()
+        self.fontprops['Label']['size'] = 10.
+        self.fontprops['Ticks']= self.set_fontdict()
+        self.fontprops['Ticks']['size'] = 10.
+        self.fontprops['Title']= self.set_fontdict()
+        self.fontprops['Title']['size'] = 14.
+        self.y2_inverse = None
+        self.y2_label = ''
+        self.y2_transform = None
         ifiles = {}
         try:
             items = config.items('Powerplot')
@@ -193,7 +516,12 @@ class PowerPlot(QtWidgets.QWidget):
                         self.alpha = float(value)
                     except:
                         pass
-                if key == 'alpha_word':
+                elif key == 'alpha_fill':
+                    try:
+                        self.alpha_fill = float(value)
+                    except:
+                        pass
+                elif key == 'alpha_word':
                     self.alpha_word = value.split(',')
                 elif key == 'cbar':
                     if value.lower() in ['false', 'no', 'off']:
@@ -202,29 +530,96 @@ class PowerPlot(QtWidgets.QWidget):
                     if value.lower() in ['false', 'no', 'off']:
                         self.cbar2 = False
                 elif key == 'cmap':
-                    self.cmap = value
+                    if value.find(',') > 0:
+                        tuples = list(zip(map(norm, cvals), value.split(',')))
+                        self.cmap = matplotlib.colors.LinearSegmentedColormap.from_list('', tuples)
+                    else:
+                        self.cmap = value
                 elif key == 'constrained_layout':
                     if value.lower() in ['true', 'yes', 'on']:
                         self.constrained_layout = True
-                elif key == 'file_history':
-                    self.history = value.split(',')
+                elif key == 'cvals':
+                    if value.find(',') > 0:
+                        cvals = list(map(float, value.split(',')))
+                        norm=plt.Normalize(min(cvals), max(cvals))
+                        tuples = list(zip(map(norm, cvals), value.split(',')))
+                elif key == 'extras':
+                    if value.lower() in ['true', 'yes', 'on']:
+                        self.extras = True
                 elif key == 'file_choices':
                     self.max_files = int(value)
+                elif key == 'file_history':
+                    self.history = value.split(',')
                 elif key[:4] == 'file':
                     ifiles[key[4:]] = value.replace('$USER$', getUser())
                 if key == 'hatch_word':
                     self.hatch_word = value.split(',')
+                elif key == 'header_font':
+                    try:
+                        self.fontprops['Header'] = self.set_fontdict(value)
+                    except:
+                        pass
                 elif key == 'margin_of_error':
                     try:
                         self.margin_of_error = float(value)
                     except:
                         pass
+                elif key == 'no_of_overlays':
+                    try:
+                        self.no_of_overlays = int(value)
+                        self.overlay = ['<none>'] * self.no_of_overlays
+                        self.overlay_colour = ['black'] * self.no_of_overlays
+                        self.overlay_type = ['Average'] * self.no_of_overlays
+                    except:
+                        pass
+                elif key == 'label_font':
+                    try:
+                        self.fontprops['Label'] = self.set_fontdict(value)
+                    except:
+                        pass
+                elif key == 'legend_font':
+                    try:
+                        self.legend_font.set_fontconfig_pattern(value)
+                    except:
+                        pass
+                elif key == 'legend_on_pie':
+                    if value.lower() in ['pct', 'percentage', '%', '%age']:
+                        self.legend_on_pie = False
+                    elif value.lower() in ['false', 'no', 'off']:
+                        self.legend_on_pie = False
+                        self.percent_on_pie = False
+                elif key == 'legend_ncol':
+                    try:
+                        self.legend_ncol = int(value)
+                    except:
+                        pass
+                elif key == 'legend_side':
+                    try:
+                        self.legend_side = value
+                    except:
+                        pass
                 elif key == 'palette':
                     if value.lower() in ['false', 'no', 'off']:
                         self.palette = False
+                elif key == 'plot_12':
+                    if value.lower() in ['true', 'yes', 'on']:
+                        self.plot_12 = True
                 elif key == 'select_day':
                     if value.lower() in ['true', 'yes', 'on']:
                         self.select_day = True
+                elif key == 'short_legend':
+                    if value.lower() in ['true', 'yes', 'on', '_']:
+                        self.short_legend = '_'
+                elif key == 'ticks_font':
+                    try:
+                        self.fontprops['Ticks'] = self.set_fontdict(value)
+                    except:
+                        pass
+                elif key == 'title_font':
+                    try:
+                        self.fontprops['Title'] = self.set_fontdict(value)
+                    except:
+                        pass
         except:
             pass
         self.alphahex = hex(int(self.alpha * 255))[2:]
@@ -288,6 +683,9 @@ class PowerPlot(QtWidgets.QWidget):
         self.grid.addWidget(QtWidgets.QLabel('Sheet:'), rw, 0)
         self.sheet = QtWidgets.QComboBox()
         self.grid.addWidget(self.sheet, rw, 1, 1, 2)
+        listfiles = QtWidgets.QPushButton('List Files')
+        self.grid.addWidget(listfiles, rw, 4)
+        listfiles.clicked.connect(self.listfilesClicked)
         rw += 1
         self.grid.addWidget(QtWidgets.QLabel('Period:'), rw, 0)
         self.period = QtWidgets.QComboBox()
@@ -318,47 +716,105 @@ class PowerPlot(QtWidgets.QWidget):
         self.grid.addWidget(QtWidgets.QLabel('Target:'), rw, 0)
         self.targets = QtWidgets.QComboBox()
         self.grid.addWidget(self.targets, rw, 1, 1, 2)
-        self.grid.addWidget(QtWidgets.QLabel('(e.g. Load)'), rw, 3, 1, 2)
+        self.grid.addWidget(QtWidgets.QLabel('(e.g. Load)    Width: / Style'), rw, 3)
+        self.tgtSpin = QtWidgets.QDoubleSpinBox()
+        self.tgtSpin.setDecimals(1)
+        self.tgtSpin.setRange(1., 4.)
+        self.tgtSpin.setSingleStep(.5)
+        self.tgtSpin.setValue(2.5)
+        self.grid.addWidget(self.tgtSpin, rw, 4)
+        self.tgtLine = QtWidgets.QComboBox()
+        self.tgtLine.addItem('solid')
+        self.tgtLine.addItem('dashed')
+        self.tgtLine.addItem('dotted')
+        self.tgtLine.addItem('dashdot')
+        self.tgtLine.setCurrentIndex(0)
+        self.grid.addWidget(self.tgtLine, rw, 5)
         rw += 1
-        self.grid.addWidget(QtWidgets.QLabel('Overlay:'), rw, 0)
-        self.overlays = QtWidgets.QComboBox()
-        self.overlays.addItem('<none>')
-        self.overlays.addItem('Charge')
-        self.overlays.addItem('Underlying Load')
-        self.overlays.setCurrentIndex(0)
-        self.grid.addWidget(self.overlays, rw, 1, 1, 2)
-        self.grid.addWidget(QtWidgets.QLabel('(e.g. Charge)'), rw, 3, 1, 2)
-        rw += 1
+        self.grid.addWidget(QtWidgets.QLabel('Overlays:'), rw, 0)
+        self.overlays = []
+        self.overlay_button = []
+        self.ovrSpin = []
+        self.ovrLine = []
+        for o in range(self.no_of_overlays):
+            self.overlays.append(MyCombo(self))
+            self.overlays[o].addItem('<none>')
+            self.overlays[o].addItem('Charge')
+            self.overlays[o].addItem('Underlying Load')
+            self.overlays[o].setCurrentIndex(0)
+            self.grid.addWidget(self.overlays[o], rw, 1, 1, 1)
+            self.grid.addWidget(QtWidgets.QLabel('Colour / Width / Style:'), rw, 2)
+            self.overlay_button.append(QtWidgets.QPushButton(f'Overlay{o}', self))
+            self.overlay_button[o].setStyleSheet('QPushButton {background-color: %s; color: %s;}' % (self.overlay_colour[o], self.overlay_colour[o]))
+            self.overlay_button[o].clicked.connect(self.overlayDialog)
+            self.grid.addWidget(self.overlay_button[o], rw, 3)
+            self.ovrSpin.append(QtWidgets.QDoubleSpinBox())
+            self.ovrSpin[o].setDecimals(1)
+            self.ovrSpin[o].setRange(1., 4.)
+            self.ovrSpin[o].setSingleStep(.5)
+            self.ovrSpin[o].setValue(1.5)
+            self.grid.addWidget(self.ovrSpin[o], rw, 4)
+            self.ovrLine.append(QtWidgets.QComboBox())
+            self.ovrLine[o].addItem('solid')
+            self.ovrLine[o].addItem('dashed')
+            self.ovrLine[o].addItem('dotted')
+            self.ovrLine[o].addItem('dashdot')
+            self.ovrLine[o].setCurrentIndex(2)
+            self.grid.addWidget(self.ovrLine[o], rw, 5)
+            rw += 1
         self.grid.addWidget(QtWidgets.QLabel('Header:'), rw, 0)
         self.suptitle = QtWidgets.QLineEdit('')
         self.grid.addWidget(self.suptitle, rw, 1, 1, 2)
+        hdrfClicked = QtWidgets.QPushButton('Header Font', self)
+        self.grid.addWidget(hdrfClicked, rw, 3)
+        hdrfClicked.clicked.connect(self.doFont)
         rw += 1
         self.grid.addWidget(QtWidgets.QLabel('Title:'), rw, 0)
         self.title = QtWidgets.QLineEdit('')
         self.grid.addWidget(self.title, rw, 1, 1, 2)
+        ttlfClicked = QtWidgets.QPushButton('Title Font', self)
+        self.grid.addWidget(ttlfClicked, rw, 3)
+        ttlfClicked.clicked.connect(self.doFont)
         rw += 1
         self.grid.addWidget(QtWidgets.QLabel('Maximum:'), rw, 0)
         self.maxSpin = QtWidgets.QDoubleSpinBox()
-        self.maxSpin.setDecimals(1)
+        self.maxSpin.setDecimals(2)
         self.maxSpin.setRange(0, 10000)
         self.maxSpin.setSingleStep(500)
         self.grid.addWidget(self.maxSpin, rw, 1)
-        self.grid.addWidget(QtWidgets.QLabel('(Handy if you want to produce a series of plots)'), rw, 3, 1, 3)
+        self.grid.addWidget(QtWidgets.QLabel('(Handy if you want to produce a series of plots)'), rw, 2, 1, 3)
         rw += 1
         self.grid.addWidget(QtWidgets.QLabel('Type of Plot:'), rw, 0)
-        plots = ['Bar Chart', 'Cumulative', 'Heat Map', 'Line Chart', 'Step Chart']
+        plots = ['Cumulative', 'Bar Chart', 'Heat Map', 'Line Chart', 'Pie Chart', 'Step Chart', 'Step Day Chart',
+                 'Step Line Chart']
+        if PowerPlot3D is not None:
+            plots.append('3D Surface Chart')
         self.plottype = QtWidgets.QComboBox()
         for plot in plots:
              self.plottype.addItem(plot)
         self.plottype.setCurrentIndex(2) # default to cumulative
         self.grid.addWidget(self.plottype, rw, 1) #, 1, 2)
-        self.grid.addWidget(QtWidgets.QLabel('(Type of plot - stacked except for Line Chart)'), rw, 3, 1, 3)
+        self.grid.addWidget(QtWidgets.QLabel('(Stacked except for Line Charts)'), rw, 2, 1, 2)
+        self.grid.addWidget(QtWidgets.QLabel(' Line Charts Width / Style:'), rw, 3, 1, 2)
+        self.linSpin = QtWidgets.QDoubleSpinBox()
+        self.linSpin.setDecimals(1)
+        self.linSpin.setRange(1., 4.)
+        self.linSpin.setSingleStep(.5)
+        self.linSpin.setValue(1.5)
+        self.grid.addWidget(self.linSpin, rw, 4)
+        self.linLine = QtWidgets.QComboBox()
+        self.linLine.addItem('solid')
+        self.linLine.addItem('dashed')
+        self.linLine.addItem('dotted')
+        self.linLine.addItem('dashdot')
+        self.linLine.setCurrentIndex(0)
+        self.grid.addWidget(self.linLine, rw, 5)
         rw += 1
         self.grid.addWidget(QtWidgets.QLabel('Percentage:'), rw, 0)
         self.percentage = QtWidgets.QCheckBox()
         self.percentage.setCheckState(QtCore.Qt.Unchecked)
         self.grid.addWidget(self.percentage, rw, 1) #, 1, 2)
-        self.grid.addWidget(QtWidgets.QLabel('(Check for percentage distribution)'), rw, 3, 1, 3)
+        self.grid.addWidget(QtWidgets.QLabel('(Check for percentage distribution)'), rw, 2, 1, 3)
         rw += 1
         self.grid.addWidget(QtWidgets.QLabel('Spill label:'), rw, 0)
         self.spill_label = QtWidgets.QLineEdit('')
@@ -371,7 +827,7 @@ class PowerPlot(QtWidgets.QWidget):
         for grid in grids:
              self.gridtype.addItem(grid)
         self.grid.addWidget(self.gridtype, rw, 1) #, 1, 2)
-        self.grid.addWidget(QtWidgets.QLabel('(Choose gridlines)'), rw, 3, 1, 3)
+        self.grid.addWidget(QtWidgets.QLabel('(Choose gridlines)'), rw, 2, 1, 3)
         rw += 1
         self.brk_label = QtWidgets.QLabel('Breakdowns:')
         self.grid.addWidget(self.brk_label, rw, 0)
@@ -401,7 +857,14 @@ class PowerPlot(QtWidgets.QWidget):
         self.files.currentIndexChanged.connect(self.targetChanged)
         self.sheet.currentIndexChanged.connect(self.sheetChanged)
         self.targets.currentIndexChanged.connect(self.targetChanged)
-        self.overlays.currentIndexChanged.connect(self.overlayChanged)
+        self.tgtSpin.valueChanged.connect(self.somethingChanged)
+        self.tgtLine.currentIndexChanged.connect(self.somethingChanged)
+        for o in range(self.no_of_overlays):
+            self.overlays[o].currentIndexChanged.connect(self.overlayChanged)
+            self.ovrSpin[o].valueChanged.connect(self.somethingChanged)
+            self.ovrLine[o].currentIndexChanged.connect(self.somethingChanged)
+        self.linSpin.valueChanged.connect(self.somethingChanged)
+        self.linLine.currentIndexChanged.connect(self.somethingChanged)
         self.suptitle.textChanged.connect(self.somethingChanged)
         self.title.textChanged.connect(self.somethingChanged)
         self.maxSpin.valueChanged.connect(self.somethingChanged)
@@ -412,10 +875,16 @@ class PowerPlot(QtWidgets.QWidget):
         self.order.itemSelectionChanged.connect(self.somethingChanged)
         self.brk_order.itemSelectionChanged.connect(self.somethingChanged)
         rw += 1
+        lblfClicked = QtWidgets.QPushButton('Label Font', self)
+        self.grid.addWidget(lblfClicked, rw, 0)
+        lblfClicked.clicked.connect(self.doFont)
+        ticfClicked = QtWidgets.QPushButton('Ticks Font', self)
+        self.grid.addWidget(ticfClicked, rw, 1)
+        ticfClicked.clicked.connect(self.doFont)
         msg_palette = QtGui.QPalette()
         msg_palette.setColor(QtGui.QPalette.Foreground, QtCore.Qt.red)
         self.log.setPalette(msg_palette)
-        self.grid.addWidget(self.log, rw, 1, 1, 4)
+        self.grid.addWidget(self.log, rw, 2, 1, 4)
         rw += 1
         quit = QtWidgets.QPushButton('Done', self)
         self.grid.addWidget(quit, rw, 0)
@@ -428,14 +897,9 @@ class PowerPlot(QtWidgets.QWidget):
         cb = QtWidgets.QPushButton('Colours', self)
         self.grid.addWidget(cb, rw, 2)
         cb.clicked.connect(self.editColours)
-        if self.show_contribution or self.show_correlation:
-            if self.show_contribution:
-                co = 'Contribution'
-            else:
-                co = 'Correlation'
-            corr = QtWidgets.QPushButton(co, self)
-            self.grid.addWidget(corr, rw, 3)
-            corr.clicked.connect(self.corrClicked)
+        legendClicked = QtWidgets.QPushButton('Legend Properties', self)
+        self.grid.addWidget(legendClicked, rw, 3)
+        legendClicked.clicked.connect(self.doFont)
         editini = QtWidgets.QPushButton('Preferences', self)
         self.grid.addWidget(editini, rw, 4)
         editini.clicked.connect(self.editIniFile)
@@ -443,6 +907,28 @@ class PowerPlot(QtWidgets.QWidget):
         self.grid.addWidget(help, rw, 5)
         help.clicked.connect(self.helpClicked)
         QtWidgets.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
+        if self.extras or self.plot_12 or self.show_contribution or self.show_correlation:
+            rw += 1
+            c = 0
+            if self.plot_12:
+                c += 1
+                pp12 = QtWidgets.QPushButton('Plot 12', self)
+                self.grid.addWidget(pp12, rw, c)
+                pp12.clicked.connect(self.ppClicked)
+            if self.extras:
+                c += 1
+                extra = QtWidgets.QPushButton('Extras', self)
+                self.grid.addWidget(extra, rw, c)
+                extra.clicked.connect(self.doExtras)
+            if self.show_contribution or self.show_correlation:
+                c += 1
+                if self.show_contribution:
+                    co = 'Contribution'
+                else:
+                    co = 'Correlation'
+                corr = QtWidgets.QPushButton(co, self)
+                self.grid.addWidget(corr, rw, c)
+                corr.clicked.connect(self.corrClicked)
         frame = QtWidgets.QFrame()
         frame.setLayout(self.grid)
         if self.select_day:
@@ -469,12 +955,38 @@ class PowerPlot(QtWidgets.QWidget):
         ifile = ''
         config = configparser.RawConfigParser()
         config.read(self.config_file)
+        try: # get list of files if any
+            ifile = config.get('Powerplot', 'file' + choice).replace('$USER$', getUser())
+        except:
+            pass
+        if not os.path.exists(ifile) and not os.path.exists(self.scenarios + ifile):
+            if self.book is not None:
+                self.book.close()
+                self.book = None
+            self.log.setText("Can't find file - " + ifile)
+            msgbox = QtWidgets.QMessageBox()
+            msgbox.setWindowTitle('SIREN - powerplot file not found')
+            msgbox.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
+            fname = ifile[ifile.rfind('/') + 1:]
+            msgbox.setText("Can't find '" + fname + "'\nDo you want to remove it from file history (Y)?")
+            msgbox.setDetailedText(self.log.text())
+            msgbox.setIcon(QtWidgets.QMessageBox.Question)
+            msgbox.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+            reply = msgbox.exec_()
+            if reply == QtWidgets.QMessageBox.Yes:
+                self.file_cleanup(choice)
+                self.files.removeItem(self.files.currentIndex())
+            return
         breakdowns = []
         columns = []
         self.period.setCurrentIndex(0)
         self.cperiod.setCurrentIndex(0)
         self.gridtype.setCurrentIndex(0)
         self.plottype.setCurrentIndex(3)
+        for o in range(self.no_of_overlays):
+            for c in range(self.overlays[o].count() -1, 2, -1):
+                self.overlays[o].removeItem(c)
+            self.overlays[o].setCurrentIndex(0)
         try: # get list of files if any
             items = config.items('Powerplot')
             for key, value in items:
@@ -492,16 +1004,52 @@ class PowerPlot(QtWidgets.QWidget):
                     ifile = value.replace('$USER$', getUser())
                 elif key == 'grid' + choice:
                     self.gridtype.setCurrentIndex(self.gridtype.findText(value))
-                elif key == 'overlay' + choice:
+                elif key == 'line_style' + choice:
                     try:
-                        i = self.overlays.findText(value, QtCore.Qt.MatchExactly)
-                        if i >= 0:
-                            self.overlays.setCurrentIndex(i)
-                        else:
-                            self.overlays.setCurrentIndex(0)
-                        self.overlay = value
+                        self.linLine.setCurrentIndex(self.linLine.findText(value))
                     except:
                         pass
+                elif key == 'line_width' + choice:
+                    try:
+                        self.linSpin.setValue(float(value))
+                    except:
+                        pass
+                elif key[:7] == 'overlay':
+                    for i in range(len(key) -1, -1, -1):
+                        if not key[i].isdigit():
+                            break
+                    if key[i+1:] == choice:
+                        bits = key[7:i+1].strip('_').split('_')
+                        if bits[-1].isdigit():
+                            o = int(bits[-1])
+                        else:
+                            o = 0
+                        if bits[0] == 'colour':
+                            self.overlay_colour[o] = value
+                            self.overlay_button[o].setStyleSheet('QPushButton {background-color: %s; color: %s;}' % (self.overlay_colour[o], self.overlay_colour[o]))
+                        elif bits[0] == 'type':
+                            self.overlay_type[o] = value
+                        elif bits[0] == 'style':
+                            try:
+                                self.ovrLine[o].setCurrentIndex(self.ovrLine[o].findText(value))
+                            except:
+                                pass
+                        elif bits[0] == 'width':
+                            try:
+                                self.ovrSpin[o].setValue(float(value))
+                            except:
+                                pass
+                        else:
+                            try:
+                                i = self.overlays[o].findText(value, QtCore.Qt.MatchExactly)
+                                if i >= 0:
+                                    self.overlays[o].setCurrentIndex(i)
+                                else:
+                                    self.overlays[o].addItem(value)
+                                    self.overlays[o].setCurrentIndex(self.overlays[o].count() - 1)
+                                self.overlay[o] = value
+                            except:
+                                pass
                 elif key == 'percentage' + choice:
                     if value.lower() in ['true', 'yes', 'on']:
                         self.percentage.setCheckState(QtCore.Qt.Checked)
@@ -536,15 +1084,31 @@ class PowerPlot(QtWidgets.QWidget):
                         self.target = value
                     except:
                         pass
+                elif key == 'target_style' + choice:
+                    try:
+                        self.tgtLine.setCurrentIndex(self.tgtLine.findText(value))
+                    except:
+                        pass
+                elif key == 'target_width' + choice:
+                    try:
+                        self.tgtSpin.setValue(float(value))
+                    except:
+                        pass
                 elif key == 'suptitle' + choice:
                     self.suptitle.setText(value)
                 elif key == 'title' + choice:
                     self.title.setText(value)
+                elif key == 'y2_label' + choice:
+                    self.y2_label = value
+                elif key == 'y2_inverse' + choice:
+                    self.y2_inverse = value
+                elif key == 'y2_transform' + choice:
+                    self.y2_transform = value
         except:
              pass
         if ifile != '':
             if self.book is not None:
-                self.book.release_resources()
+                self.book.close()
                 self.book = None
                 self.toprow = None
             self.file.setText(ifile)
@@ -571,15 +1135,31 @@ class PowerPlot(QtWidgets.QWidget):
             self.history = ['']
             ifiles = {'': ifile}
         else:
-            for i in range(len(self.history)):
-                if ifile == ifiles[self.history[i]]:
-                    self.history.insert(0, self.history.pop(i)) # make this entry first
-                    break
+            for i in range(len(self.history) - 1, -1, -1):
+                try:
+                    if ifile == ifiles[self.history[i]]:
+                        ihist = self.history[i]
+                        del self.history[i]
+                        self.history.insert(0, ihist) # make this entry first
+                        break
+                except KeyError:
+                    del self.history[i]
+                except:
+                    pass
             else:
+            # find new entry
                 if len(self.history) >= self.max_files:
                     self.history.insert(0, self.history.pop(-1)) # make last entry first
                 else:
                     hist = sorted(self.history)
+                    if hist[0] == '':
+                        hist = [int(x) for x in hist[1:]]
+                        hist.sort()
+                        hist.insert(0, '')
+                    else:
+                        hist = [int(x) for x in hist[1:]]
+                        hist.sort()
+                    hist = [str(x) for x in hist]
                     if hist[0] != '':
                         ent = ''
                     else:
@@ -608,7 +1188,7 @@ class PowerPlot(QtWidgets.QWidget):
         newfile = QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', curfile)[0]
         if newfile != '':
             if self.book is not None:
-                self.book.release_resources()
+                self.book.close()
                 self.book = None
             self.toprow = None
             isheet = self.sheet.currentText()
@@ -635,6 +1215,8 @@ class PowerPlot(QtWidgets.QWidget):
         self.setup[0] = False
 
     def periodChanged(self):
+        if self.period.currentText() not in mth_labels:
+            self.cperiod.setCurrentIndex(0)
         if self.select_day:
             self.adaylbl.setText('(Diurnal profile for a day of ' + self.period.currentText() + ')')
         if not self.setup[0]:
@@ -644,7 +1226,8 @@ class PowerPlot(QtWidgets.QWidget):
        # if self.plottype.currentText() == 'Bar Chart' and self.period.currentText() == '<none>' and 1 == 2:
        #     self.plottype.setCurrentIndex(self.plottype.currentIndex() + 1) # set to something else
        # el
-        if self.plottype.currentText() == 'Line Chart' and self.percentage.isChecked():
+        if self.percentage.isChecked() and \
+          self.plottype.currentText() in ['Line Chart', 'Step Day Chart', 'Step Line Chart', 'Pie Chart']:
             self.percentage.setCheckState(QtCore.Qt.Unchecked)
         if not self.setup[0]:
             self.updated = True
@@ -681,9 +1264,12 @@ class PowerPlot(QtWidgets.QWidget):
 
     def overlayChanged(self):
         self.log.setText('')
-        overlay = self.overlays.currentText()
-        if overlay != self.overlay:
-            self.overlay = overlay
+        for o in range(len(self.overlays)):
+            if self.overlays[o].hasFocus():
+                break
+        overlay = self.overlays[o].currentText()
+        if overlay != self.overlay[o]:
+            self.overlay[o] = overlay
             self.updated = True
 
     def targetChanged(self):
@@ -714,10 +1300,84 @@ class PowerPlot(QtWidgets.QWidget):
                         tgt.replace(alph, '')
                     tgt.replace('  ', ' ')
                     try:
-                        self.ignore.item(self.ignore.count() - 1).setBackground(QtGui.QColor(tgt))
+                        self.ignore.item(self.ignore.count() - 1).setBackground(QtGui.QColor(self.set_colour(tgt, default='white')))
                     except:
                         pass
                 self.target = target
+        self.updated = True
+
+    def doFont(self):
+        if self.sender().text()[:6] == 'Legend':
+            if self.legend_on_pie and self.percent_on_pie:
+                lop = 'True'
+            elif not self.legend_on_pie and self.percent_on_pie:
+                lop = 'Pct'
+            else:
+                lop = 'False'
+            legend_properties = {'legend_ncol': str(self.legend_ncol),
+                                 'legend_on_pie': lop,
+                                 'legend_side': self.legend_side}
+            legend = ChangeFontProp('Legend', self.legend_font, legend_properties)
+            legend.exec_()
+            values, font_values = legend.getValues()
+            if values is None:
+                return
+            for key, value in values.items():
+                if key == 'legend_ncol':
+                    self.legend_ncol = int(value)
+                elif key == 'legend_on_pie':
+                    if value.lower() in ['true', 'yes', 'on']:
+                        self.legend_on_pie = True
+                        self.percent_on_pie = True
+                    if value.lower() in ['pct', 'percentage', '%', '%age']:
+                        self.legend_on_pie = False
+                        self.percent_on_pie = True
+                    elif value.lower() in ['false', 'no', 'off']:
+                        self.legend_on_pie = False
+                        self.percent_on_pie = False
+                else:
+                    setattr(self, key, value)
+            self.legend_font = legend.getFont()
+            self.log.setText('Legend properties updated')
+            self.updated = True
+        else:
+            what = self.sender().text().split(' ')[0]
+            font = ChangeFontProp(what, self.fontprops[what])
+            font.exec()
+            if font.getFontDict() is None:
+                return
+            self.fontprops[what] = self.set_fontdict(font.getFontDict())
+            self.log.setText(what + ' font properties updated')
+            self.updated = True
+        return
+
+    def doExtras(self):
+        extra_dict = {}
+        extra_dict['y2_inverse'] = self.y2_inverse
+        extra_dict['y2_label'] = self.y2_label
+        extra_dict['y2_transform'] = self.y2_transform
+        combo = QtWidgets.QComboBox(self)
+        otypes = ['Average', 'Sum']
+        for h in range(24):
+            otypes.append(f'{h:02}:00')
+        for o in otypes:
+            combo.addItem(o)
+        i = combo.findText(self.overlay_type, QtCore.Qt.MatchExactly)
+        combo.setCurrentIndex(i)
+        extra_dict['overlay_type'] = combo
+        dialog = Table(extra_dict, fields=['property', 'value'], title='Extra options', edit=True)
+        dialog.exec_()
+        values = dialog.getValues()
+        if values is None:
+            return
+        for key, value in values.items():
+            if len(value) == 0:
+                setattr(self, key, '')
+            else:
+                try:
+                    setattr(self, key, value[0].split('=')[1])
+                except:
+                    pass
         self.updated = True
 
     def setColumns(self, isheet, columns=[], breakdowns=[]):
@@ -818,21 +1478,23 @@ class PowerPlot(QtWidgets.QWidget):
                             self.ignore.addItem(column)
                             try:
                                 self.ignore.item(self.ignore.count() - \
-                                 1).setBackground(QtGui.QColor(self.set_colour(column)))
+                                 1).setBackground(QtGui.QColor(self.set_colour(column, default='white')))
                             except:
                                 pass
                 for column in columns:
                     if column != self.target:
                         self.order.addItem(column)
                         try:
-                            self.order.item(self.order.count() - 1).setBackground(QtGui.QColor(self.set_colour(column)))
+                            self.order.item(self.order.count() - 1).setBackground(QtGui.QColor(self.set_colour(column, default='white')))
                         except:
-                            pass
+                            return None
                 break
             row += 1
         else:
             self.log.setText(isheet + ' sheet format incorrect')
         if self.breakdown_row < 0:
+            self.brk_order.clear()
+            self.brk_ignore.clear()
             self.brk_label.setHidden(True)
             self.brk_order.setHidden(True)
             self.brk_ignore.setHidden(True)
@@ -842,9 +1504,62 @@ class PowerPlot(QtWidgets.QWidget):
                  title='Help for powerplot (' + fileVersion() + ')', section='powerplot')
         dialog.exec()
 
+    def listfilesClicked(self):
+        ifiles = {}
+        for i in range(self.files.count()):
+             if self.history[i] == '':
+                 ifiles[' '] = self.files.itemText(i)
+             else:
+                 ifiles[self.history[i]] = self.files.itemText(i)
+        fields = ['Choice', 'File name']
+        dialog = displaytable.Table(ifiles, title='Files', fields=fields, sortby='', edit='delete')
+        dialog.exec_()
+        if dialog.getValues() is not None:
+            ofiles = dialog.getValues()
+            dels = []
+            for key in ifiles.keys():
+                if key not in ofiles.keys():
+                    if key == ' ':
+                        key = ''
+                    dels.append(key)
+            for choice in dels:
+                self.file_cleanup(choice)
+                for i in range(self.files.count()):
+                     if self.files.itemText(i) == ifiles[choice]:
+                         self.files.removeItem(i)
+        del dialog
+        self.filesChanged()
+
+    def file_cleanup(self, choice):
+        if choice == ' ':
+            choice = ''
+        line = ''
+        for i in range(len(self.history) -1, -1, -1):
+            if self.history[i] == choice:
+                 del self.history[i]
+            else:
+                line = self.history[i] + ',' + line
+        line = line[:-1]
+        lines = ['file_history=' + line]
+        for prop in ['breakdown', 'columns', 'cperiod', 'cumulative', 'file', 'grid', 'line_style',
+                     'line_width', 'maximum', 'period', 'percentage', 'plot', 'sheet', 'spill_label',
+                     'suptitle', 'target', 'target_style', 'target_width', 'title', 'y2_label',
+                     'y2_inverse', 'y2_transform' ]:
+            lines.append(prop + choice + '=')
+        for o in range(self.no_of_overlays):
+            if o == 0:
+                ovr = ''
+            else:
+                ovr = f'_{o}_'
+            for prop in ['', '_colour', '_style', '_type', '_width']:
+                lines.append('overlay' + prop + ovr + choice + '=')
+        updates = {'Powerplot': lines}
+        SaveIni(updates, ini_file=self.config_file)
+        self.log.setText('File removed from file history')
+
     def quitClicked(self):
         if self.book is not None:
-            self.book.release_resources()
+            self.book.close()
         if not self.updated and not self.colours_updated:
             self.close()
         self.saveConfig()
@@ -862,52 +1577,29 @@ class PowerPlot(QtWidgets.QWidget):
             except:
                 pass
             lines = []
+            lines.append('legend_font=' + self.legend_font.get_fontconfig_pattern())
+            lines.append('legend_on_pie=')
+            if not self.legend_on_pie and self.percent_on_pie:
+                lines[-1] += 'Pct'
+            elif not self.legend_on_pie and not self.percent_on_pie:
+                lines[-1] += 'False'
+            lines.append('legend_ncol=')
+            if self.legend_ncol != 1:
+                lines[-1] += str(self.legend_ncol)
+            lines.append('legend_side=')
+            if self.legend_side != 'None':
+                lines[-1] += self.legend_side
+            for key, value in self.fontprops.items():
+                lines.append(key.lower() + '_font=')
+                for key2, value2 in value.items():
+                    lines[-1] += f'{key2}={value2}:'
+                lines[-1] = lines[-1][:-1]
             if len(self.history) > 0:
                 line = ''
                 for itm in self.history:
                     line += itm + ','
                 line = line[:-1]
                 lines.append('file_history=' + line)
-            lines.append('file' + choice + '=' + self.file.text().replace(getUser(), '$USER$'))
-            lines.append('grid' + choice + '=' + self.gridtype.currentText())
-            lines.append('sheet' + choice + '=' + self.sheet.currentText())
-            if self.overlay == '<none>':
-                overlay = ''
-            else:
-                overlay = self.overlay
-            lines.append('overlay' + choice + '=' + overlay)
-            lines.append('period' + choice + '=')
-            if self.period.currentText() != '<none>':
-                lines[-1] = lines[-1] + self.period.currentText()
-            lines.append('cperiod' + choice + '=')
-            if self.cperiod.currentText() != '<none>':
-                lines[-1] = lines[-1] + self.cperiod.currentText()
-            lines.append('spill_label' + choice + '=' + self.spill_label.text())
-            lines.append('suptitle' + choice + '=' + self.suptitle.text())
-            lines.append('target' + choice + '=' + self.target)
-            lines.append('title' + choice + '=' + self.title.text())
-            lines.append('maximum' + choice + '=')
-            if self.maxSpin.value() != 0:
-                lines[-1] = lines[-1] + str(self.maxSpin.value())
-            lines.append('percentage' + choice + '=')
-            if self.percentage.isChecked():
-                lines[-1] = lines[-1] + 'True'
-            lines.append('plot' + choice + '=' + self.plottype.currentText())
-            cols = 'columns' + choice + '='
-            for col in range(self.order.count()):
-                try:
-                    if self.order.item(col).text().index(',') >= 0:
-                        try:
-                            if self.order.item(col).text().index("'") >= 0:
-                                qte = '"'
-                        except:
-                            qte = "'"
-                except:
-                    qte = ''
-                cols += qte + self.order.item(col).text() + qte + ','
-            if cols[-1] != '=':
-                cols = cols[:-1]
-            lines.append(cols)
             cols = 'breakdown' + choice + '='
             for col in range(self.brk_order.count()):
                 try:
@@ -923,6 +1615,92 @@ class PowerPlot(QtWidgets.QWidget):
             if cols[-1] != '=':
                 cols = cols[:-1]
             lines.append(cols)
+            cols = 'columns' + choice + '='
+            for col in range(self.order.count()):
+                try:
+                    if self.order.item(col).text().index(',') >= 0:
+                        try:
+                            if self.order.item(col).text().index("'") >= 0:
+                                qte = '"'
+                        except:
+                            qte = "'"
+                except:
+                    qte = ''
+                cols += qte + self.order.item(col).text() + qte + ','
+            if cols[-1] != '=':
+                cols = cols[:-1]
+            lines.append(cols)
+            lines.append('cperiod' + choice + '=')
+            if self.cperiod.currentText() != '<none>':
+                lines[-1] = lines[-1] + self.cperiod.currentText()
+            lines.append('file' + choice + '=' + self.file.text().replace(getUser(), '$USER$'))
+            lines.append('grid' + choice + '=' + self.gridtype.currentText())
+            lines.append('line_style' + choice + '=')
+            if self.linLine.currentText() != 'dotted':
+                lines[-1] = lines[-1] + self.linLine.currentText()
+            lines.append('line_width' + choice + '=')
+            if self.linSpin.value() != 1.5:
+                lines[-1] = lines[-1] + str(self.linSpin.value())
+            lines.append('maximum' + choice + '=')
+            if self.maxSpin.value() != 0:
+                lines[-1] = lines[-1] + str(self.maxSpin.value())
+            for o in range(self.no_of_overlays):
+                if o == 0:
+                    ovr = ''
+                else:
+                    ovr = f'_{o}_'
+                if self.overlay[o] == '<none>':
+                    overlay = ''
+                else:
+                    overlay = self.overlay[o]
+                lines.append('overlay' + ovr + choice + '=' + overlay)
+                if self.overlay_colour[o] == 'black':
+                    overlay_colour = ''
+                else:
+                    overlay_colour = self.overlay_colour[o]
+                lines.append('overlay_colour' + ovr + choice + '=' + overlay_colour)
+                lines.append('overlay_style' + ovr + choice + '=')
+                if self.ovrLine[o].currentText() != 'dotted':
+                    lines[-1] = lines[-1] + self.ovrLine[o].currentText()
+      #          lines.append('overlay_type' + ovr + choice + '=' + '' if self.overlay_type[o] == 'Average' else self.overlay_type[o])
+                if self.overlay_type[o] == 'Average':
+                    overlay_type = ''
+                else:
+                    overlay_type = self.overlay_type[o]
+                lines.append('overlay_type' + ovr + choice + '=' + overlay_type)
+                lines.append('overlay_width' + ovr + choice + '=')
+                if self.ovrSpin[o].value() != 1.5:
+                    lines[-1] = lines[-1] + str(self.ovrSpin[o].value())
+            lines.append('percentage' + choice + '=')
+            if self.percentage.isChecked():
+                lines[-1] = lines[-1] + 'True'
+            lines.append('period' + choice + '=')
+            if self.period.currentText() != '<none>':
+                lines[-1] = lines[-1] + self.period.currentText()
+            lines.append('plot' + choice + '=' + self.plottype.currentText())
+            lines.append('sheet' + choice + '=' + self.sheet.currentText())
+            lines.append('spill_label' + choice + '=' + self.spill_label.text())
+            lines.append('suptitle' + choice + '=' + self.suptitle.text())
+            lines.append('target' + choice + '=' + self.target)
+            lines.append('target_style' + choice + '=')
+            if self.tgtLine.currentText() != 'solid':
+                lines[-1] = lines[-1] + self.tgtLine.currentText()
+            lines.append('target_width' + choice + '=')
+            if self.tgtSpin.value() != 2.5:
+                lines[-1] = lines[-1] + str(self.tgtSpin.value())
+            lines.append('title' + choice + '=' + self.title.text())
+            try:
+                lines.append('y2_label' + choice + '=' + self.y2_label)
+            except:
+                pass
+            try:
+                lines.append('y2_inverse' + choice + '=' + self.y2_inverse)
+            except:
+                pass
+            try:
+                lines.append('y2_transform' + choice + '=' + self.y2_transform)
+            except:
+                pass
             updates['Powerplot'] = lines
         if self.colours_updated:
             lines = []
@@ -944,7 +1722,8 @@ class PowerPlot(QtWidgets.QWidget):
                 palette.append(item.text())
         dialr = Colours(section='Plot Colors', ini_file=self.config_file, add_colour=color,
                         palette=palette)
-        dialr.exec()
+        if not dialr.cancelled:
+            dialr.exec_()
         self.colours = {}
         config = configparser.RawConfigParser()
         config.read(self.config_file)
@@ -958,13 +1737,13 @@ class PowerPlot(QtWidgets.QWidget):
         for c in range(self.order.count()):
             col = self.order.item(c).text()
             try:
-                self.order.item(c).setBackground(QtGui.QColor(self.set_colour(col)))
+                self.order.item(c).setBackground(QtGui.QColor(self.set_colour(col, default='white')))
             except:
                 pass
         for c in range(self.ignore.count()):
             col = self.ignore.item(c).text()
             try:
-                self.ignore.item(c).setBackground(QtGui.QColor(self.set_colour(col)))
+                self.ignore.item(c).setBackground(QtGui.QColor(self.set_colour(col, default='white')))
             except:
                 pass
 
@@ -977,7 +1756,9 @@ class PowerPlot(QtWidgets.QWidget):
             return True
         except:
             pass
-        colr2 = colr.replace(' ', '_')
+        colr2 = colr.replace('_', ' ')
+        if colr2 in self.colours.keys():
+            return True
         if config is not None:
             try:
                 amap = config.get('Map', 'map_choice')
@@ -1010,30 +1791,147 @@ class PowerPlot(QtWidgets.QWidget):
         return True
 
     def editIniFile(self):
-        dialr = EdtDialog(self.config_file, section='[Powermatch]')
+        before = os.stat(self.config_file).st_mtime
+        dialr = EdtDialog(self.config_file, section='[Powerplot]')
         dialr.exec_()
-     #   self.get_config()   # refresh config values
+        after = os.stat(self.config_file).st_mtime
+        if after == before:
+            return
         config = configparser.RawConfigParser()
         config.read(self.config_file)
+        try:
+            self.alpha = 0.25
+            self.alpha_fill = 1.
+            self.constrained_layout = False
+            self.margin_of_error = .0001
+            items = config.items('Powerplot')
+            for key, value in items:
+                if key == 'alpha':
+                    try:
+                        self.alpha = float(value)
+                    except:
+                        pass
+                elif key == 'alpha_fill':
+                    try:
+                        self.alpha_fill = float(value)
+                    except:
+                        pass
+                elif key == 'alpha_word':
+                    self.alpha_word = value.split(',')
+                elif key == 'cbar':
+                    if value.lower() in ['false', 'no', 'off']:
+                        self.cbar = False
+                    else:
+                        self.cbar = True
+                elif key == 'cbar2':
+                    if value.lower() in ['false', 'no', 'off']:
+                        self.cbar2 = False
+                    else:
+                        self.cbar2 = True
+                elif key == 'cmap':
+                    self.cmap = value
+                elif key == 'constrained_layout':
+                    if value.lower() in ['true', 'yes', 'on']:
+                        self.constrained_layout = True
+                    else:
+                        pass
+                elif key == 'hatch_word':
+                    self.hatch_word = value.split(',')
+                elif key == 'header_font':
+                    try:
+                        self.fontprops['Header'] = self.set_fontdict(value)
+                    except:
+                        pass
+                elif key == 'label_font':
+                    try:
+                        self.fontprops['Label'] = self.set_fontdict(value)
+                    except:
+                        pass
+                elif key == 'margin_of_error':
+                    try:
+                        self.margin_of_error = float(value)
+                    except:
+                        pass
+                elif key == 'legend_font':
+                    try:
+                        self.legend_font.set_fontconfig_pattern(value)
+                    except:
+                        pass
+                elif key == 'legend_on_pie':
+                    if value.lower() in ['pct', 'percentage', '%', '%age']:
+                        self.legend_on_pie = False
+                        self.percent_on_pie = True
+                    elif value.lower() in ['false', 'no', 'off']:
+                        self.legend_on_pie = False
+                        self.percent_on_pie = False
+                    else:
+                        self.legend_on_pie = True
+                        self.percent_on_pie = True
+                elif key == 'legend_ncol':
+                    try:
+                        self.legend_ncol = int(value)
+                    except:
+                        pass
+                elif key == 'palette':
+                    if value.lower() in ['false', 'no', 'off']:
+                        self.palette = False
+                    else:
+                        self.palette = True
+                elif key == 'short_legend':
+                    if value.lower() in ['true', 'yes', 'on', '_']:
+                        self.short_legend = '_'
+                    elif value.lower() in ['false', 'no', 'off']:
+                        self.short_legend = ''
+                elif key == 'ticks_font':
+                    try:
+                        self.fontprops['Ticks'] = self.set_fontdict(value)
+                    except:
+                        pass
+                elif key == 'title_font':
+                    try:
+                        self.fontprops['Title'] = self.set_fontdict(value)
+                    except:
+                        pass
+        except:
+            pass
         self.log.setText(self.config_file + ' edited. Reload may be required.')
 
     def ppClicked(self):
+        def set_ylimits(ymin, ymax):
+            if self.maxSpin.value() > 0:
+                ymax = self.maxSpin.value()
+            else:
+                try:
+                    rndup = pow(10, round(log10(ymax * 1.5) - 1)) / 2
+                    ymax = ceil(ymax / rndup) * rndup
+                except:
+                    pass
+            if ymin < 0:
+                if self.percentage.isChecked():
+                    ymin = 0
+                else:
+                    try:
+                        rndup = pow(10, round(log10(abs(ymin) * 1.5) - 1)) / 2
+                        ymin = -ceil(abs(ymin) / rndup) * rndup
+                    except:
+                        pass
+            return [ymin, ymax]
+
+        self.log.setText('')
+        QtCore.QCoreApplication.processEvents()
         if self.book is None:
             self.log.setText('Error accessing Workbook.')
             return
-        if self.order.count() == 0 and self.target == '<none>' and self.plottype.currentText() != 'Line Chart':
+        if self.order.count() == 0 and self.target == '<none>' and self.plottype.currentText() != 'Line Chart' \
+          and self.plottype.currentText() != 'Step Line Chart':
             self.log.setText('Nothing to plot.')
             return
         isheet = self.sheet.currentText()
         if isheet == '':
             self.log.setText('Sheet not set.')
             return
-        if len(sys.argv) > 1:
-            config_file = sys.argv[1]
-            config = configparser.RawConfigParser()
-            config.read(self.config_file)
-        else:
-            config = None
+        config = configparser.RawConfigParser()
+        config.read(self.config_file)
         for c in range(self.order.count()):
             if not self.check_colour(self.order.item(c).text(), config):
                 return
@@ -1042,8 +1940,43 @@ class PowerPlot(QtWidgets.QWidget):
                 return
             if not self.check_colour('shortfall', config):
                 return
+        if self.plottype.currentText() == '3D Surface Chart':
+            d3_contours = False
+            d3_background = True
+            d3_html = False
+            d3_months = 3
+            try:
+                chk = config.get('Powerplot', 'contours_3d')
+                if chk.lower() in ['true', 'on', 'yes']:
+                    d3_contours = True
+            except:
+                pass
+            try:
+                chk = config.get('Powerplot', 'background_3d')
+                if chk.lower() in ['false', 'off', 'no']:
+                    d3_background = False
+            except:
+                pass
+            try:
+                chk = config.get('Powerplot', 'html_3d')
+                if chk.lower() in ['true', 'on', 'yes']:
+                    d3_html = True
+            except:
+                pass
+            try:
+                d3_months = int(config.get('Powerplot', 'months_3d'))
+            except:
+                pass
         del config
-        self.log.setText('')
+        do_12 = False
+        do_12_labels = None
+        try:
+            if self.sender().text() == 'Plot 12':
+                do_12 = True
+                do_12_save = matplotlib.rcParams['figure.figsize']
+                do_12_labels = mth_labels[:]
+        except:
+            pass
         i = self.file.text().rfind('/')
         if i > 0:
             matplotlib.rcParams['savefig.directory'] = self.file.text()[:i + 1]
@@ -1081,6 +2014,12 @@ class PowerPlot(QtWidgets.QWidget):
                     self.rows = ws.nrows - (row + 1)
                     break
                 row += 1
+        ignore_end = True
+        if ignore_end:
+            for row in range(ws.nrows -1, -1, -1):
+                if ws.cell_value(row, 0) is not None:
+                    self.rows = row
+                    break
         try:
             year = int(ws.cell_value(self.toprow[1] + 1, 1)[:4])
             if year % 4 == 0 and year % 100 != 0 or year % 400 == 0:
@@ -1092,22 +2031,63 @@ class PowerPlot(QtWidgets.QWidget):
             year = ''
         the_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
         if self.leapyear: #rows == 8784: # leap year
-            the_days[1] = 29
-        mth_labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+            feb29_row = self.toprow[1] + (the_days[0] + the_days[1]) * self.interval + 1
+            try:
+                if ws.cell_value(feb29_row, 1)[5:10] == '02-29':
+                    the_days[1] = 29
+            except:
+                pass
+  #          if ws.nrows - self.toprow[1] - 1 > 8760:
+   #             the_days[1] = 29
         hr_labels = ['0:00', '4:00', '8:00', '12:00', '16:00', '20:00', '23:00']
+        if self.plottype.currentText() == '3D Surface Chart':
+            order = []
+            for o in range(self.order.count()):
+                order.append(self.order.item(o).text())
+            if d3_html:
+                saveit = self.file.text()[:self.file.text().rfind('.')] + '.html'
+            else:
+                saveit = None
+            colours = {}
+            nocolour = []
+            for o in range(len(order)):
+                try:
+                    colours[order[o].lower()] = self.colours[order[o].lower()]
+                except:
+                    nocolour.append(order[o].lower().lower())
+            if len(nocolour) > 0:
+                if len(nocolour) > 0:
+                    more_colour = PlotPalette(nocolour, palette=self.plot_palette)
+                    colours = {**colours, **more_colour}
+            PowerPlot3D(colours, self.cperiod.currentText(), self.interval, order, self.period.currentText(), self.rows, self.seasons,
+                        the_days, self.title.text(), self.toprow, ws, year, self.zone_row,
+                        html=saveit, background=d3_background, contours=d3_contours, months=d3_months)
+            self.log.setText("3D Chart complete (You'll need to close the browser window yourself).")
+            return
         figname = self.plottype.currentText().lower().replace(' ','') + '_' + str(year)
         breakdowns = []
         suptitle = self.suptitle.text()
         if self.breakdown_row >= 0:
             for c in range(self.brk_order.count()):
                 breakdowns.append(self.brk_order.item(c).text())
+        label = []
+        try:
+            self.header_color = self.fontprops['Header']['color']
+            del self.fontprops['Header']['color']
+        except:
+            pass
         if self.period.currentText() == '<none>' \
-          or (self.period.currentText() == 'Year' and self.plottype.currentText() == 'Heat Map'): # full year of hourly figures
+          or (self.period.currentText() == 'Year' and self.plottype.currentText() == 'Heat Map') \
+          or self.plottype.currentText() == 'Step Day Chart': # full year of hourly figures
             m = 0
             d = 1
             day_labels = []
-            days_per_label = 1 # set to 1 and flex_on to True to have some flexibilty in x_labels
             flex_on = True
+            if self.plottype.currentText() == 'Step Day Chart':
+                days_per_label = 7
+                flex_on = False
+            else:
+                days_per_label = 1 # set to 1 and flex_on to True to have some flexibilty in x_labels
             while m < len(the_days):
                 day_labels.append('%s %s' % (str(d), mth_labels[m]))
                 d += days_per_label
@@ -1115,15 +2095,19 @@ class PowerPlot(QtWidgets.QWidget):
                     d = d - the_days[m]
                     m += 1
             x = []
-            len_x = self.rows
+            len_x = self.rows - self.toprow[1]
+            if self.plottype.currentText() == 'Step Day Chart':
+                len_x = int((len_x + self.interval - 1) / self.interval)
             for i in range(len_x):
                 x.append(i)
             load = []
             tgt_col = -1
             overlay_cols = []
             overlay = []
+            for o in range(self.no_of_overlays):
+                overlay_cols.append([])
+                overlay.append([])
             data = []
-            label = []
             maxy = 0
             miny = 0
             titl = self.replace_words('y', self.title.text(), str(year))
@@ -1148,46 +2132,22 @@ class PowerPlot(QtWidgets.QWidget):
                     column = ws.cell_value(self.zone_row, c2).replace('\n',' ') + '.' + column
                 if column == self.target:
                     tgt_col = c2
-                if self.overlay != '<none>':
-                    if column == self.target or column[:len(self.overlay)] == self.overlay:
-                        overlay_cols.append(c2)
-            if len(breakdowns) > 0:
-                for c in range(self.order.count() -1, -1, -1):
-                    col = self.order.item(c).text()
-                    for c2 in range(2, ws.ncols):
-                        try:
-                            brkdown = ws.cell_value(self.breakdown_row, c2)
-                            if brkdown is not None and brkdown != '' and brkdown != breakdowns[0]:
-                                continue
-                        except:
-                            pass
-                        try:
-                            column = ws.cell_value(self.toprow[0], c2).replace('\n',' ')
-                        except:
-                            column = str(ws.cell_value(self.toprow[0], c2))
-                        if self.zone_row > 0 and ws.cell_value(self.zone_row, c2) != '' and ws.cell_value(self.zone_row, c2) is not None:
-                            column = ws.cell_value(self.zone_row, c2).replace('\n',' ') + '.' + column
-                        if column == col:
-                            data.append([])
-                            label.append(column)
-                            for row in range(self.toprow[1] + 1, self.toprow[1] + self.rows + 1):
-                                data[-1].append(ws.cell_value(row, c2))
-                                try:
-                                    maxy = max(maxy, data[-1][-1])
-                                    miny = min(miny, data[-1][-1])
-                                except:
-                                    self.log.setText("Invalid data - '" + column + "' (" + ss_col(c2) + ') row ' + str(row + 1) + " is '" + str(data[-1][-1]) + "'")
-                                    return
-                for breakdown in breakdowns[1:]:
+                for o in range(self.no_of_overlays):
+                    if self.overlay[o] != '<none>':
+                        if column[:len(self.overlay[o])] == self.overlay[o] or \
+                          ((self.overlay[o] == 'Charge' or self.overlay[o] == 'Underlying Load') and column == self.target):
+                            overlay_cols[o].append(c2)
+            if self.plottype.currentText() != 'Step Day Chart':
+                if len(breakdowns) > 0:
                     for c in range(self.order.count() -1, -1, -1):
                         col = self.order.item(c).text()
                         for c2 in range(2, ws.ncols):
                             try:
                                 brkdown = ws.cell_value(self.breakdown_row, c2)
-                                if brkdown != breakdown:
+                                if brkdown is not None and brkdown != '' and brkdown != breakdowns[0]:
                                     continue
                             except:
-                                continue
+                                pass
                             try:
                                 column = ws.cell_value(self.toprow[0], c2).replace('\n',' ')
                             except:
@@ -1196,88 +2156,273 @@ class PowerPlot(QtWidgets.QWidget):
                                 column = ws.cell_value(self.zone_row, c2).replace('\n',' ') + '.' + column
                             if column == col:
                                 data.append([])
-                                label.append(column + ' ' + breakdown)
-                                for row in range(self.toprow[1] + 1, self.toprow[1] + self.rows + 1):
+                                label.append(column)
+                                for row in range(self.toprow[1] + 1, self.rows + 1):
                                     data[-1].append(ws.cell_value(row, c2))
                                     try:
                                         maxy = max(maxy, data[-1][-1])
                                         miny = min(miny, data[-1][-1])
                                     except:
-                                        self.log.setText("Invalid data - '" + column + "' (" + ss_col(c2) + ') row ' + str(row + 1) + " is '" + str(data[-1][-1]) + "'")
+                                        self.log.setText(f'Data error with {column} ({ssCol(c2, base=0)}{row + 1}). Period may be incomplete (1)')
                                         return
-            else:
-                for c in range(self.order.count() -1, -1, -1):
-                    col = self.order.item(c).text()
-                    for c2 in range(2, ws.ncols):
-                        try:
-                            column = ws.cell_value(self.toprow[0], c2).replace('\n',' ')
-                        except:
-                            column = str(ws.cell_value(self.toprow[0], c2))
-                        if self.zone_row > 0 and ws.cell_value(self.zone_row, c2) != '' and ws.cell_value(self.zone_row, c2) is not None:
-                            column = ws.cell_value(self.zone_row, c2).replace('\n',' ') + '.' + column
-                        if column == col:
-                            data.append([])
-                            label.append(column)
-                            for row in range(self.toprow[1] + 1, self.toprow[1] + self.rows + 1):
-                                data[-1].append(ws.cell_value(row, c2))
+                    for breakdown in breakdowns[1:]:
+                        for c in range(self.order.count() -1, -1, -1):
+                            col = self.order.item(c).text()
+                            for c2 in range(2, ws.ncols):
                                 try:
+                                    brkdown = ws.cell_value(self.breakdown_row, c2)
+                                    if brkdown != breakdown:
+                                        continue
+                                except:
+                                    continue
+                                try:
+                                    column = ws.cell_value(self.toprow[0], c2).replace('\n',' ')
+                                except:
+                                    column = str(ws.cell_value(self.toprow[0], c2))
+                                if self.zone_row > 0 and ws.cell_value(self.zone_row, c2) != '' and ws.cell_value(self.zone_row, c2) is not None:
+                                    column = ws.cell_value(self.zone_row, c2).replace('\n',' ') + '.' + column
+                                if column == col:
+                                    data.append([])
+                                    label.append(self.short_legend + column + ' ' + breakdown)
+                                    for row in range(self.toprow[1] + 1, self.rows + 1):
+                                        data[-1].append(ws.cell_value(row, c2))
+                                        try:
+                                            maxy = max(maxy, data[-1][-1])
+                                            miny = min(miny, data[-1][-1])
+                                        except:
+                                            self.log.setText(f'Data error with {column} ({ssCol(c2, base=0)}{row + 1}). Period may be incomplete (2)')
+                                            return
+                else:
+                    for c in range(self.order.count() -1, -1, -1):
+                        col = self.order.item(c).text()
+                        for c2 in range(2, ws.ncols):
+                            try:
+                                column = ws.cell_value(self.toprow[0], c2).replace('\n',' ')
+                            except:
+                                column = str(ws.cell_value(self.toprow[0], c2))
+                            if self.zone_row > 0 and ws.cell_value(self.zone_row, c2) != '' and ws.cell_value(self.zone_row, c2) is not None:
+                                column = ws.cell_value(self.zone_row, c2).replace('\n',' ') + '.' + column
+                            if column == col:
+                                data.append([])
+                                label.append(column)
+                                for row in range(self.toprow[1] + 1, self.rows + 1):
+                                    data[-1].append(ws.cell_value(row, c2))
+                                    try:
+                                        maxy = max(maxy, data[-1][-1])
+                                        miny = min(miny, data[-1][-1])
+                                    except:
+                                        self.log.setText(f'Data error with {column} ({ssCol(c2, base=0)}{row + 1}). Period may be incomplete (3)')
+                                        return
+                                break
+                if tgt_col >= 0:
+                    for row in range(self.toprow[1] + 1, self.rows + 1):
+                        load.append(ws.cell_value(row, tgt_col))
+                        maxy = max(maxy, load[-1])
+                        miny = min(miny, load[-1])
+                for o in range(self.no_of_overlays):
+                    if len(overlay_cols[o]) > 0:
+                        for row in range(self.toprow[1] + 1, self.rows + 1):
+                            overlay[o].append(0.)
+                        if self.overlay[o] == 'Charge':
+                            for row in range(self.toprow[1] + 1, self.rows + 1):
+                                for col in overlay_cols[o]:
+                                    overlay[o][row - self.toprow[1] - 1] += ws.cell_value(row, col)
+                        elif self.overlay[o] == 'Underlying Load':
+                            for row in range(self.toprow[1] + 1, self.rows + 1):
+                                overlay[o][row - self.toprow[1] - 1] = ws.cell_value(row, overlay_cols[o][-1])
+                        else:
+                            for row in range(self.toprow[1] + 1, self.rows + 1):
+                                overlay[o][row - self.toprow[1] - 1] = ws.cell_value(row, overlay_cols[o][-1])
+                        for h in range(len(overlay[o])):
+                            maxy = max(maxy, overlay[o][h])
+                            miny = min(miny, overlay[o][h])
+            else: # 'Step Day Chart'
+                if len(breakdowns) > 0:
+                    for c in range(self.order.count() -1, -1, -1):
+                        col = self.order.item(c).text()
+                        for c2 in range(2, ws.ncols):
+                            try:
+                                brkdown = ws.cell_value(self.breakdown_row, c2)
+                                if brkdown is not None and brkdown != '' and brkdown != breakdowns[0]:
+                                    continue
+                            except:
+                                pass
+                            try:
+                                column = ws.cell_value(self.toprow[0], c2).replace('\n',' ')
+                            except:
+                                column = str(ws.cell_value(self.toprow[0], c2))
+                            if self.zone_row > 0 and ws.cell_value(self.zone_row, c2) != '' and ws.cell_value(self.zone_row, c2) is not None:
+                                column = ws.cell_value(self.zone_row, c2).replace('\n',' ') + '.' + column
+                            if column == col:
+                                data.append([])
+                                label.append(column)
+                                for row in range(self.toprow[1] + 1, self.rows + 1, self.interval):
+                                    data[-1].append(0)
+                                    for r2 in range(row, row + self.interval):
+                                        data[-1][-1] += ws.cell_value(r2, c2)
+                                    try:
+                                        maxy = max(maxy, data[-1][-1])
+                                        miny = min(miny, data[-1][-1])
+                                    except:
+                                        self.log.setText(f'Data error with {column} ({ssCol(c2, base=0)}{row + 1}). Period may be incomplete (4)')
+                                        return
+                    for breakdown in breakdowns[1:]:
+                        for c in range(self.order.count() -1, -1, -1):
+                            col = self.order.item(c).text()
+                            for c2 in range(2, ws.ncols):
+                                try:
+                                    brkdown = ws.cell_value(self.breakdown_row, c2)
+                                    if brkdown != breakdown:
+                                        continue
+                                except:
+                                    continue
+                                try:
+                                    column = ws.cell_value(self.toprow[0], c2).replace('\n',' ')
+                                except:
+                                    column = str(ws.cell_value(self.toprow[0], c2))
+                                if self.zone_row > 0 and ws.cell_value(self.zone_row, c2) != '' and ws.cell_value(self.zone_row, c2) is not None:
+                                    column = ws.cell_value(self.zone_row, c2).replace('\n',' ') + '.' + column
+                                if column == col:
+                                    data.append([])
+                                    label.append(self.short_legend + column + ' ' + breakdown)
+                                    for row in range(self.toprow[1] + 1, self.rows + 1, self.interval):
+                                        data[-1].append(0)
+                                        for r2 in range(row, row + self.interval):
+                                            data[-1][-1] += ws.cell_value(r2, c2)
+                                        try:
+                                            maxy = max(maxy, data[-1][-1])
+                                            miny = min(miny, data[-1][-1])
+                                        except:
+                                            self.log.setText(f'Data error with {column} ({ssCol(c2, base=0)}{row + 1}). Period may be incomplete (5)')
+                                            return
+                else:
+                    for c in range(self.order.count() -1, -1, -1):
+                        col = self.order.item(c).text()
+                        for c2 in range(2, ws.ncols):
+                            try:
+                                column = ws.cell_value(self.toprow[0], c2).replace('\n',' ')
+                            except:
+                                column = str(ws.cell_value(self.toprow[0], c2))
+                            if self.zone_row > 0 and ws.cell_value(self.zone_row, c2) != '' and ws.cell_value(self.zone_row, c2) is not None:
+                                column = ws.cell_value(self.zone_row, c2).replace('\n',' ') + '.' + column
+                            if column == col:
+                                data.append([])
+                                label.append(column)
+                                for row in range(self.toprow[1] + 1, self.rows + 1, self.interval):
+                                    data[-1].append(0)
+                                    for r2 in range(row, row + self.interval):
+                                        try:
+                                            data[-1][-1] += ws.cell_value(r2, c2)
+                                        except:
+                                            if r2 >= ws.nrows:
+                                                break
+                                            self.log.setText(f'Data error with {column} ({ssCol(c2, base=0)}{r2 + 1}). Period may be incomplete (6)')
+                                            return
                                     maxy = max(maxy, data[-1][-1])
                                     miny = min(miny, data[-1][-1])
-                                except:
-                                    self.log.setText("Invalid data - '" + column + "' (" + ss_col(c2) + ') row ' + str(row + 1) + " is '" + str(data[-1][-1]) + "'")
-                                    return
-                            break
-            if tgt_col >= 0:
-                for row in range(self.toprow[1] + 1, self.toprow[1] + self.rows + 1):
-                    load.append(ws.cell_value(row, tgt_col))
-                    maxy = max(maxy, load[-1])
-            if len(overlay_cols) > 0:
-                for row in range(self.toprow[1] + 1, self.toprow[1] + self.rows + 1):
-                    overlay.append(0.)
-                if self.overlay == 'Charge':
-                    for row in range(self.toprow[1] + 1, self.toprow[1] + self.rows + 1):
-                        for col in overlay_cols:
-                            overlay[row - self.toprow[1] - 1] += ws.cell_value(row, col)
-                else:
-                    for row in range(self.toprow[1] + 1, self.toprow[1] + self.rows + 1):
-                        overlay[row - self.toprow[1] - 1] = ws.cell_value(row, overlay_cols[-1])
-                maxy = max(maxy, overlay[row - self.toprow[1] - 1])
-            if self.plottype.currentText() == 'Line Chart':
+                                break
+                if tgt_col >= 0:
+                    for row in range(self.toprow[1] + 1, self.rows + 1, self.interval):
+                        load.append(0)
+                        for r2 in range(row, row + self.interval):
+                            load[-1] += ws.cell_value(r2, tgt_col)
+                        maxy = max(maxy, load[-1])
+                        miny = min(miny, load[-1])
+                for o in range(self.no_of_overlays):
+                    if len(overlay_cols[o]) > 0:
+                        if self.overlay[o] == 'Charge':
+                            for row in range(self.toprow[1] + 1, self.rows + 1, self.interval):
+                                overlay[o].append(0.)
+                                for col in overlay_cols[o]:
+                                    for r2 in range(row, row + self.interval):
+                                        overlay[o][-1] += ws.cell_value(r2, col)
+                        elif self.overlay[o] == 'Underlying Load':
+                            for row in range(self.toprow[1] + 1, self.rows + 1, self.interval):
+                                overlay[o].append(0.)
+                                for r2 in range(row, row + self.interval):
+                                    overlay[o][-1] += ws.cell_value(row, overlay_cols[o][-1])
+                        else:
+                            if self.overlay_type[o] in ['Average', 'Sum']:
+                                for row in range(self.toprow[1] + 1, self.rows + 1, self.interval):
+                                    overlay[o].append(0.)
+                                    for r2 in range(row, row + self.interval):
+                                        try:
+                                            overlay[o][-1] += ws.cell_value(r2, overlay_cols[o][-1])
+                                        except:
+                                            self.log.setText(f'Data error with {column} ({ssCol(c2, base=0)}{row + 1}). Period may be incomplete (7)')
+                                            return
+                                    if self.overlay_type[o] == 'Average':
+                                        overlay[o][-1] = overlay[o][-1] / self.interval
+                            else:
+                                h = int(self.overlay_type[:2])
+                                for row in range(self.toprow[1] + 1, self.rows + 1, self.interval):
+                                    overlay[o].append(ws.cell_value(row + h, overlay_cols[o][-1]))
+                        for h in range(len(overlay[o])):
+                            maxy = max(maxy, overlay[o][h])
+                            miny = min(miny, overlay[o][h])
+            if do_12:
+                ## to get 12 months on a page
+                matplotlib.rcParams['figure.figsize'] = [18, 2.2]
+            if self.plottype.currentText() == 'Line Chart' or self.plottype.currentText() == 'Step Line Chart' \
+              or self.plottype.currentText() == 'Step Day Chart':
                 fig = plt.figure(figname, constrained_layout=self.constrained_layout)
                 if suptitle != '':
-                    fig.suptitle(suptitle, fontsize=16)
+                    fig.suptitle(suptitle, fontproperties=self.fontprops['Header'])
                 if gridtype != '':
                     plt.grid(axis=gridtype)
                 lc1 = plt.subplot(111)
-                plt.title(titl)
-                for c in range(len(data)):
-                    lc1.plot(x, data[c], linewidth=1.5, label=label[c], color=self.set_colour(label[c]))
-                if len(load) > 0:
-                    lc1.plot(x, load, linewidth=2.5, label=self.target, color=self.set_colour(self.target))
-                if len(overlay) > 0:
-                    lc1.plot(x, overlay, linewidth=1.5, label=self.overlay, color='black', linestyle='dotted')
-                if self.maxSpin.value() > 0:
-                    maxy = self.maxSpin.value()
+                if self.legend_side == 'Right':
+                    plt.subplots_adjust(left=0.1, bottom=0.1, right=0.75)
+                elif self.legend_side == 'Left':
+                    plt.subplots_adjust(left=0.25, bottom=0.1, right=0.9)
+                    loc = 'lower left'
+                plt.title(titl, fontdict=self.fontprops['Title'])
+                if self.plottype.currentText() == 'Line Chart':
+                    for c in range(len(data)):
+                        lc1.plot(x, data[c], linewidth=1.5, label=label[c], color=self.set_colour(label[c]))
+                    if len(load) > 0:
+                        lc1.plot(x, load, linewidth=self.tgtSpin.value(), label=self.short_legend + self.target,
+                                 color=self.set_colour(self.target), linestyle=self.tgtLine.currentText())
+                    for o in range(self.no_of_overlays):
+                        if len(overlay[o]) > 0:
+                            lc1.plot(x, overlay[o], linewidth=self.ovrSpin[o].value(), label=self.short_legend + self.overlay[o],
+                                     color=self.overlay_colour[o], linestyle=self.ovrLine[o].currentText())
                 else:
-                    try:
-                        rndup = pow(10, round(log10(maxy * 1.5) - 1)) / 2
-                        maxy = ceil(maxy / rndup) * rndup
-                    except:
-                        pass
-             #   miny = 0
-                lbl_font = FontProperties()
-                lbl_font.set_size('small')
+                    for c in range(len(data)):
+                        lc1.step(x, data[c], linewidth=self.linSpin.value(), label=label[c],
+                                 color=self.set_colour(label[c]), linestyle=self.linLine.currentText())
+                    if len(load) > 0:
+                        lc1.step(x, load, linewidth=self.tgtSpin.value(), label=self.short_legend + self.target,
+                                 color=self.set_colour(self.target), linestyle=self.tgtLine.currentText())
+                    for o in range(self.no_of_overlays):
+                        if len(overlay[o]) > 0:
+                            lc1.step(x, overlay[o], linewidth=self.ovrSpin[o].value(), label=self.short_legend + self.overlay[o],
+                                     color=self.overlay_colour[o], linestyle=self.ovrLine[o].currentText())
+                yminmax = set_ylimits(miny, maxy)
                 lc1.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 1),
-                          prop=lbl_font)
-                plt.ylim([miny, maxy])
+                           prop=self.legend_font)
+                plt.ylim(yminmax)
                 plt.xlim([0, len(x)])
-                xticks = list(range(0, len(x), self.interval * days_per_label))
-                lc1.set_xticks(xticks)
-                lc1.set_xticklabels(day_labels[:len(xticks)], rotation='vertical')
-                lc1.set_xlabel('Period')
-                lc1.set_ylabel('Power (MW)') # MWh?
+                if not do_12:
+                    if self.plottype.currentText() != 'Step Day Chart':
+                        xticks = list(range(0, len(x), self.interval * days_per_label))
+                        xticklabels = day_labels[:len(xticks)]
+                    else:
+                        xticks = [0]
+                        xticklabels = [mth_labels[0]]
+                        for m in range(len(the_days) - 1):
+                            xticks.append(xticks[-1] + the_days[m])
+                            xticklabels.append(mth_labels[m + 1])
+                    lc1.set_xticks(xticks)
+                    lc1.set_xticklabels(xticklabels, rotation='vertical', fontdict=self.fontprops['Ticks'])
+                    lc1.set_xlabel('Period', fontdict=self.fontprops['Label'])
+                    lc1.tick_params(colors=self.fontprops['Ticks']['color'], which='both')
+                lc1.set_ylabel('Power (MW/MWh)', fontdict=self.fontprops['Label']) # MWh?
+                if self.y2_label != '':
+                    secax = lc1.secondary_yaxis(location='right', functions=(self.transform_y2, self.inverse_y2))
+                    secax.set_ylabel(self.y2_label)
                 zp = ZoomPanX()
-                f = zp.zoom_pan(lc1, base_scale=1.2, flex_ticks=flex_on) # enable scrollable zoom
+                f = zp.zoom_pan(lc1, base_scale=1.2, flex_ticks=flex_on, mth_labels=do_12_labels) # enable scrollable zoom
                 plt.show()
                 del zp
             elif self.plottype.currentText() in ['Cumulative', 'Step Chart']:
@@ -1287,11 +2432,17 @@ class PowerPlot(QtWidgets.QWidget):
                     step = 'pre'
                 fig = plt.figure(figname, constrained_layout=self.constrained_layout)
                 if suptitle != '':
-                    fig.suptitle(suptitle, fontsize=16)
+                    fig.suptitle(suptitle, fontproperties=self.fontprops['Header'])
                 if gridtype != '':
                     plt.grid(axis=gridtype)
                 cu1 = plt.subplot(111)
-                plt.title(titl)
+                if self.legend_side == 'Right':
+                    plt.subplots_adjust(left=0.1, bottom=0.1, right=0.75)
+                elif self.legend_side == 'Left':
+                    plt.subplots_adjust(left=0.25, bottom=0.1, right=0.9)
+                    loc = 'lower left'
+                if not do_12:
+                    plt.title(titl, fontdict=self.fontprops['Title'])
                 if self.percentage.isChecked():
                     totals = [0.] * len(x)
                     bottoms = [0.] * len(x)
@@ -1301,25 +2452,26 @@ class PowerPlot(QtWidgets.QWidget):
                             totals[h] = totals[h] + data[c][h]
                     for h in range(len(data[0])):
                         values[h] = data[0][h] / totals[h] * 100.
-                    cu1.fill_between(x, 0, values, label=label[0], color=self.set_colour(label[0]), hatch=self.set_hatch(label[0]), step=step)
+                    cu1.fill_between(x, 0, values, label=label[0], color=self.set_colour(label[0]), hatch=self.set_hatch(label[0]),
+                                     alpha=self.alpha_fill, step=step)
                     for c in range(1, len(data)):
                         for h in range(len(data[c])):
                             bottoms[h] = values[h]
                             values[h] = values[h] + data[c][h] / totals[h] * 100.
                         cu1.fill_between(x, bottoms, values, label=label[c], color=self.set_colour(label[c]), hatch=self.set_hatch(label[c]),
-                                        step=step)
+                                         alpha=self.alpha_fill, step=step)
                     maxy = 100
-                    cu1.set_ylabel('Power (%)')
+                    cu1.set_ylabel('Power (%)', fontdict=self.fontprops['Label'])
                 else:
                     if self.target == '<none>':
                         cu1.fill_between(x, 0, data[0], label=label[0], color=self.set_colour(label[0]), hatch=self.set_hatch(label[0]),
-                                        step=step)
+                                         alpha=self.alpha_fill, step=step)
                         for c in range(1, len(data)):
                             for h in range(len(data[c])):
                                 data[c][h] = data[c][h] + data[c - 1][h]
                                 maxy = max(maxy, data[c][h])
                             cu1.fill_between(x, data[c - 1], data[c], label=label[c], color=self.set_colour(label[c]), hatch=self.set_hatch(label[c]),
-                                            step=step)
+                                             alpha=self.alpha_fill, step=step)
                         top = data[0][:]
                         for d in range(1, len(data)):
                             for h in range(len(top)):
@@ -1335,7 +2487,7 @@ class PowerPlot(QtWidgets.QWidget):
                         for h in range(len(load)):
                            full.append(min(load[h], data[0][h]))
                         cu1.fill_between(x, 0, full, label=label[0], color=self.set_colour(label[0]), hatch=self.set_hatch(label[0]),
-                                        step=step)
+                                         alpha=self.alpha_fill, step=step)
                         for h in range(len(data[0])):
                             if data[0][h] > full[h]:
                                 if self.spill_label.text() != '':
@@ -1343,7 +2495,7 @@ class PowerPlot(QtWidgets.QWidget):
                                         label=label[0] + ' ' + self.spill_label.text(), step=step)
                                 else:
                                     cu1.fill_between(x, full, data[c], alpha=self.alpha, color=self.set_colour(label[c]), hatch=self.set_hatch(label[c]),
-                                                    step=step)
+                                                     step=step)
                                 break
                         for c in range(1, len(data)):
                             full = []
@@ -1352,15 +2504,15 @@ class PowerPlot(QtWidgets.QWidget):
                                 maxy = max(maxy, data[c][h])
                                 full.append(max(min(load[h], data[c][h]), data[c - 1][h]))
                             cu1.fill_between(x, data[c - 1], full, label=label[c], color=self.set_colour(label[c]), hatch=self.set_hatch(label[c]),
-                                            step=step)
+                                             alpha=self.alpha_fill, step=step)
                             for h in range(len(data[c])):
                                 if data[c][h] > full[h] + self.margin_of_error:
                                     if self.spill_label.text() != '':
-                                        cu1.fill_between(x, full, data[c], alpha=self.alpha, color=self.set_colour(label[c]), hatch=self.set_hatch(label[c]),
-                                                        label=label[c] + ' ' + self.spill_label.text(), step=step)
+                                        cu1.fill_between(x, full, data[c], color=self.set_colour(label[c]), hatch=self.set_hatch(label[c]),
+                                                         alpha=self.alpha_fill, label=label[c] + ' ' + self.spill_label.text(), step=step)
                                     else:
                                         cu1.fill_between(x, full, data[c], alpha=self.alpha, color=self.set_colour(label[c]), hatch=self.set_hatch(label[c]),
-                                                        step=step)
+                                                         step=step)
                                     break
                         top = data[0][:]
                         for d in range(1, len(data)):
@@ -1384,48 +2536,64 @@ class PowerPlot(QtWidgets.QWidget):
                                 do_short = True
                             short.append(max(data[c][h], load[h]))
                         if do_short:
-                            cu1.fill_between(x, data[c], short, label='Shortfall', color=self.set_colour('shortfall'),
-                                            step=step)
+                            if self.colours['shortfall'][0].lower() != 'w' and self.colours['shortfall'].lower() != '#ffffff':
+                                cu1.fill_between(x, data[c], short, label='Shortfall', color=self.set_colour('shortfall'),
+                                                 alpha=self.alpha_fill, step=step)
                         if self.plottype.currentText() == 'Cumulative':
-                            cu1.plot(x, load, linewidth=2.5, label=self.target, color=self.set_colour(self.target))
+                            cu1.plot(x, load, linewidth=self.tgtSpin.value(), label=self.short_legend + self.target,
+                                     color=self.set_colour(self.target), linestyle=self.tgtLine.currentText())
                         else:
-                            cu1.step(x, load, linewidth=2.5, label=self.target, color=self.set_colour(self.target))
-                    if len(overlay) > 0:
-                        if self.plottype.currentText() == 'Cumulative':
-                            cu1.plot(x, overlay, linewidth=1.5, label=self.overlay, color='black', linestyle='dotted')
-                        else:
-                            cu1.step(x, overlay, linewidth=1.5, label=self.overlay, color='black', linestyle='dotted')
-                    if self.maxSpin.value() > 0:
-                        maxy = self.maxSpin.value()
-                    else:
-                        try:
-                            rndup = pow(10, round(log10(maxy * 1.5) - 1)) / 2
-                            maxy = ceil(maxy / rndup) * rndup
-                        except:
-                            pass
-                    cu1.set_ylabel('Power (MW)')
+                            cu1.step(x, load, linewidth=self.tgtSpin.value(), label=self.short_legend + self.target,
+                                     color=self.set_colour(self.target), linestyle=self.tgtLine.currentText())
+                    for o in range(self.no_of_overlays):
+                        if len(overlay[o]) > 0:
+                            if self.plottype.currentText() == 'Cumulative':
+                                cu1.plot(x, overlay[o], linewidth=self.ovrSpin[o].value(), label=self.short_legend + self.overlay[o],
+                                         color=self.overlay_colour[o], linestyle=self.ovrLine[o].currentText())
+                            else:
+                                cu1.step(x, overlay[o], linewidth=self.ovrSpin[o].value(), label=self.short_legend + self.overlay[o],
+                                         color=self.overlay_colour[o], linestyle=self.ovrLine[o].currentText())
+                    cu1.set_ylabel('Power (MW/MWh)', fontdict=self.fontprops['Label'])
         #        miny = 0
-                lbl_font = FontProperties()
-                lbl_font.set_size('small')
-                cu1.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 2), prop=lbl_font)
-                plt.ylim([miny, maxy])
+                yminmax = set_ylimits(miny, maxy)
+                cu1.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 2), prop=self.legend_font)
+                plt.ylim(yminmax)
                 plt.xlim([0, len(x)])
-                xticks = list(range(0, len(x), self.interval * days_per_label))
-                cu1.set_xticks(xticks)
-                cu1.set_xticklabels(day_labels[:len(xticks)], rotation='vertical')
-                cu1.set_xlabel('Period')
+                if not do_12:
+                    xticks = list(range(0, len(x), self.interval * days_per_label))
+                    cu1.set_xticks(xticks)
+                    cu1.set_xticklabels(day_labels[:len(xticks)], rotation='vertical', fontdict=self.fontprops['Ticks'])
+                    cu1.set_xlabel('Period', fontdict=self.fontprops['Label'])
+                    cu1.tick_params(colors=self.fontprops['Ticks']['color'], which='both')
+                if self.y2_label != '':
+                    secax = cu1.secondary_yaxis(location='right', functions=(self.transform_y2, self.inverse_y2))
+                    secax.set_ylabel(self.y2_label)
                 zp = ZoomPanX()
-                f = zp.zoom_pan(cu1, base_scale=1.2, flex_ticks=flex_on) # enable scrollable zoom
+                f = zp.zoom_pan(cu1, base_scale=1.2, flex_ticks=flex_on, mth_labels=do_12_labels) # enable scrollable zoom
                 plt.show()
                 del zp
             elif self.plottype.currentText() == 'Bar Chart':
+                msgbox = QtWidgets.QMessageBox()
+                msgbox.setWindowTitle('powerplot - Bar Chart')
+                msgbox.setText("This could take a while to display. Are you sure?")
+                msgbox.setIcon(QtWidgets.QMessageBox.Question)
+                msgbox.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+                reply = msgbox.exec_()
+                if reply != QtWidgets.QMessageBox.Yes:
+                    return
                 fig = plt.figure(figname, constrained_layout=self.constrained_layout)
                 if suptitle != '':
-                    fig.suptitle(suptitle, fontsize=16)
+                    fig.suptitle(suptitle, fontproperties=self.fontprops['Header'])
                 if gridtype != '':
                     plt.grid(axis=gridtype)
                 bc1 = plt.subplot(111)
-                plt.title(titl)
+                if self.legend_side == 'Right':
+                    plt.subplots_adjust(left=0.1, bottom=0.1, right=0.75)
+                elif self.legend_side == 'Left':
+                    plt.subplots_adjust(left=0.25, bottom=0.1, right=0.9)
+                    loc = 'lower left'
+                if not do_12:
+                    plt.title(titl, fontdict=self.fontprops['Title'])
                 if self.percentage.isChecked():
                     miny = 0
                     totals = [0.] * len(x)
@@ -1436,64 +2604,71 @@ class PowerPlot(QtWidgets.QWidget):
                             totals[h] = totals[h] + data[c][h]
                     for h in range(len(data[0])):
                         values[h] = data[0][h] / totals[h] * 100.
-                    bc1.bar(x, values, label=label[0], color=self.set_colour(label[0]), hatch=self.set_hatch(label[0]))
+                    bc1.bar(x, values, label=label[0], color=self.set_colour(label[0]), alpha=self.alpha_fill,
+                            hatch=self.set_hatch(label[0]))
                     for c in range(1, len(data)):
                         for h in range(len(data[c])):
                             bottoms[h] = bottoms[h] + values[h]
                             values[h] = data[c][h] / totals[h] * 100.
-                        bc1.bar(x, values, bottom=bottoms, label=label[c], color=self.set_colour(label[c]), hatch=self.set_hatch(label[c]))
+                        bc1.bar(x, values, bottom=bottoms, label=label[c], color=self.set_colour(label[c]), alpha=self.alpha_fill,
+                                hatch=self.set_hatch(label[c]))
                     maxy = 100
-                    bc1.set_ylabel('Power (%)')
+                    bc1.set_ylabel('Power (%)', fontdict=self.fontprops['Label'])
                 else:
                     if self.target == '<none>':
-                        bc1.bar(x, data[0], label=label[0], color=self.set_colour(label[0]), hatch=self.set_hatch(label[0]))
+                        bc1.bar(x, data[0], label=label[0], color=self.set_colour(label[0]), alpha=self.alpha_fill,
+                                hatch=self.set_hatch(label[0]))
                         bottoms = [0.] * len(x)
                         for c in range(1, len(data)):
                             for h in range(len(data[c])):
                                 bottoms[h] = bottoms[h] + data[c - 1][h]
                                 maxy = max(maxy, data[c][h])
-                            bc1.bar(x, data[c], bottom=bottoms, label=label[c], color=self.set_colour(label[c]), hatch=self.set_hatch(label[c]))
+                            bc1.bar(x, data[c], bottom=bottoms, label=label[c], color=self.set_colour(label[c]), alpha=self.alpha_fill,
+                                    hatch=self.set_hatch(label[c]))
                     else:
-                        bc1.bar(x, data[0], label=label[0], color=self.set_colour(label[0]), hatch=self.set_hatch(label[0]))
+                        bc1.bar(x, data[0], label=label[0], color=self.set_colour(label[0]), alpha=self.alpha_fill,
+                                hatch=self.set_hatch(label[0]))
                         bottoms = [0.] * len(x)
                         for c in range(1, len(data)):
                             for h in range(len(data[c])):
                                 bottoms[h] = bottoms[h] + data[c - 1][h]
                                 maxy = max(maxy, data[c][h])
-                            bc1.bar(x, data[c], bottom=bottoms, label=label[c], color=self.set_colour(label[c]), hatch=self.set_hatch(label[c]))
-                        bc1.plot(x, load, linewidth=2.5, label=self.target, color=self.set_colour(self.target))
-                        bc1.plot(x, overlay, linewidth=1.5, label=self.overlay, color='black', linestyle='dotted')
-                    if self.maxSpin.value() > 0:
-                        maxy = self.maxSpin.value()
-                    else:
-                        try:
-                            rndup = pow(10, round(log10(maxy * 1.5) - 1)) / 2
-                            maxy = ceil(maxy / rndup) * rndup
-                        except:
-                            pass
-                    bc1.set_ylabel('Power (MW)')
+                            bc1.bar(x, data[c], bottom=bottoms, label=label[c], color=self.set_colour(label[c]), alpha=self.alpha_fill,
+                                    hatch=self.set_hatch(label[c]))
+                        bc1.plot(x, load, linewidth=self.tgtSpin.value(), label=self.short_legend + self.target, color=self.set_colour(self.target),
+                                 linestyle=self.tgtLine.currentText())
+     # bug here i think
+                        for o in range(self.no_of_overlays):
+                            bc1.plot(x, overlay[o], linewidth=self.ovrSpin[o].value(), label=self.short_legend + self.overlay[o],
+                                     color=self.overlay_colour[o], linestyle=self.ovrLine[o].currentText())
+                    bc1.set_ylabel('Power (MW/MWh)', fontdict=self.fontprops['Label'])
         #        miny = 0
-                lbl_font = FontProperties()
-                lbl_font.set_size('small')
-                bc1.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 2), prop=lbl_font)
-                plt.ylim([miny, maxy])
+                yminmax = set_ylimits(miny, maxy)
+                bc1.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 2), prop=self.legend_font)
+                plt.ylim(yminmax)
                 plt.xlim([0, len(x)])
-                xticks = list(range(0, len(x), self.interval * days_per_label))
-                bc1.set_xticks(xticks)
-                bc1.set_xticklabels(day_labels[:len(xticks)], rotation='vertical')
-                bc1.set_xlabel('Period')
+                if not do_12:
+                    xticks = list(range(0, len(x), self.interval * days_per_label))
+                    bc1.set_xticks(xticks)
+                    bc1.set_xticklabels(day_labels[:len(xticks)], rotation='vertical', fontdict=self.fontprops['Ticks'])
+                    bc1.set_xlabel('Period', fontdict=self.fontprops['Label'])
+                    bc1.tick_params(colors=self.fontprops['Ticks']['color'], which='both')
+                if self.y2_label != '':
+                    secax = bc1.secondary_yaxis(location='right', functions=(self.transform_y2, self.inverse_y2))
+                    secax.set_ylabel(self.y2_label)
                 zp = ZoomPanX()
-                f = zp.zoom_pan(bc1, base_scale=1.2, flex_ticks=flex_on) # enable scrollable zoom
+                f = zp.zoom_pan(bc1, base_scale=1.2, flex_ticks=flex_on, mth_labels=do_12_labels) # enable scrollable zoom
                 plt.show()
                 del zp
             elif self.plottype.currentText() == 'Heat Map':
                 fig = plt.figure(figname)
                 if suptitle != '':
-                    fig.suptitle(suptitle, fontsize=16)
+                    fig.suptitle(suptitle, fontproperties=self.fontprops['Header'])
                 if gridtype != '':
                     plt.grid(axis=gridtype)
                 hm1 = plt.subplot(111)
-                plt.title(titl)
+                if not do_12:
+                    plt.title(titl, fontdict=self.fontprops['Title'])
                 hmdata = []
                 for hr in range(self.interval):
                     hmdata.append([])
@@ -1516,7 +2691,10 @@ class PowerPlot(QtWidgets.QWidget):
                         if y > self.interval - 1:
                             x += 1
                             y = 0
-                        hmdata[y][x] = hmdata[y][x] / load[hr]
+                        try:
+                            hmdata[y][x] = hmdata[y][x] / load[hr]
+                        except:
+                            pass
                 miny = 999999
                 maxy = 0
                 for y in range(len(hmdata)):
@@ -1538,15 +2716,13 @@ class PowerPlot(QtWidgets.QWidget):
                         vmax = None
                         vmin = None
                 im1 = hm1.imshow(hmdata, cmap=self.cmap, interpolation='nearest', aspect='auto', vmax=vmax, vmin=vmin)
-                lbl_font = FontProperties()
-                lbl_font.set_size('small')
                 day = -0.5
                 xticks = [day]
                 for m in range(len(the_days) - 1):
                     day += the_days[m]
                     xticks.append(day)
                 hm1.set_xticks(xticks)
-                hm1.set_xticklabels(mth_labels, ha='left')
+                hm1.set_xticklabels(mth_labels, ha='left', fontdict=self.fontprops['Ticks'])
                 yticks = [-0.5]
                 if self.interval == 24:
                     for y in range(0, 24, 4):
@@ -1556,9 +2732,9 @@ class PowerPlot(QtWidgets.QWidget):
                         yticks.append(y + 6.5)
                 hm1.invert_yaxis()
                 hm1.set_yticks(yticks)
-                hm1.set_yticklabels(hr_labels, va='bottom')
-                hm1.set_xlabel('Period')
-                hm1.set_ylabel('Hour')
+                hm1.set_yticklabels(hr_labels, va='bottom', fontdict=self.fontprops['Ticks'])
+                hm1.set_xlabel('Period', fontdict=self.fontprops['Label'])
+                hm1.set_ylabel('Hour', fontdict=self.fontprops['Label'])
                 if self.cbar:
                     fig.subplots_adjust(bottom=0.1, right=0.8, top=0.9)
                     cb_ax = fig.add_axes([0.85, 0.1, 0.025, 0.8])
@@ -1574,11 +2750,20 @@ class PowerPlot(QtWidgets.QWidget):
                             if curcticks[y] > vmin and curcticks[y] < vmax:
                                 cticks.append(curcticks[y])
                         cticks.sort()
-                        cbar.set_ticks(cticks)
+                        try:
+                            cbar.set_ticks(cticks, fontdict=self.fontprops['Ticks'])
+                        except:
+                            clabels = []
+                            for ct in cticks:
+                                clabels.append(f'{ct}')
+                            cbar.set_ticks(cticks, labels=clabels, fontdict=self.fontprops['Ticks'])
                 self.log.setText('Heat map value range: {} to {}'.format(fmt_str, fmt_str).format(miny, maxy))
                 QtCore.QCoreApplication.processEvents()
                 plt.show()
-        else: # diurnal average
+            if do_12:
+                matplotlib.rcParams['figure.figsize'] = do_12_save
+        else: # diurnal average - period chosen
+            # need to check as 1 day is wrong if target set
             if self.interval == 24:
                 ticks = list(range(0, 21, 4))
                 ticks.append(23)
@@ -1630,7 +2815,7 @@ class PowerPlot(QtWidgets.QWidget):
                         suptitle = self.replace_words('m', suptitle, '')
                         suptitle = suptitle.replace('  ', ' ')
                     strt_row = [self.toprow[1]]
-                    todo_rows = [self.rows]
+                    todo_rows = [self.rows - strt_row[0]]
                 else:
                     strt_row = []
                     todo_rows = []
@@ -1682,15 +2867,122 @@ class PowerPlot(QtWidgets.QWidget):
             load = []
             tgt_col = -1
             data = []
-            label = []
-            if self.plottype.currentText() == 'Heat Map':
+            labels = []
+            colors = []
+            if self.plottype.currentText() == 'Pie Chart':
+                fig = plt.figure(figname, constrained_layout=self.constrained_layout)
+                plt.title(titl, fontdict=self.fontprops['Title'])
+                if suptitle != '':
+                    fig.suptitle(suptitle, fontproperties=self.fontprops['Header'])
+                pi2 = plt.subplot(111)
+                if self.legend_side == 'Right':
+                    plt.subplots_adjust(left=0.1, bottom=0.1, right=0.75)
+                elif self.legend_side == 'Left':
+                    plt.subplots_adjust(left=0.25, bottom=0.1, right=0.9)
+                    loc = 'lower left'
+                for c in range(self.order.count()):
+                    col = self.order.item(c).text()
+                    for c2 in range(2, ws.ncols):
+                        try:
+                            column = ws.cell_value(self.toprow[0], c2).replace('\n',' ')
+                        except:
+                            column = str(ws.cell_value(self.toprow[0], c2))
+                        if self.zone_row > 0 and ws.cell_value(self.zone_row, c2) != '' and ws.cell_value(self.zone_row, c2) is not None:
+                            column = ws.cell_value(self.zone_row, c2).replace('\n',' ') + '.' + column
+                        if column == col:
+                            data.append(0.)
+                            labels.append(column)
+                            colors.append(self.set_colour(labels[-1]))
+                            tot_rows = 0
+                            for s in range(len(strt_row)):
+                                for row in range(strt_row[s] + 1, strt_row[s] + todo_rows[s] + 1):
+                                    try:
+                                        data[-1] = data[-1] + ws.cell_value(row, c2)
+                                    except:
+                                        break # part period
+                            break
+                tot = sum(data)
+                # https://stackoverflow.com/questions/3942878/how-to-decide-font-color-in-white-or-black-depending-on-background-color
+                whites = []
+                threshold = sqrt(1.05 * 0.05) - 0.05
+                if self.percent_on_pie:
+                    for c in range(len(colors)):
+                        intensity = 0.
+                        for i in range(1, 5, 2):
+                            colr = int(colors[c][i : i + 2], 16) / 255.0
+                            if colr <= 0.04045:
+                                colr = colr / 12.92
+                            else:
+                                colr = pow((colr + 0.055) / 1.055, 2.4)
+                            if i == 1: #red
+                                intensity = colr * 0.216
+                            elif i == 3:
+                                intensity = colr * 0.7152
+                            else:
+                                intensity = colr * 0.0722
+                        if intensity < threshold:
+                            whites.append(c)
+                if self.legend_on_pie: # legend on chart
+                    if self.percent_on_pie:
+                        patches, texts, autotexts = pi2.pie(data, labels=labels, autopct='%1.1f%%', colors=colors, startangle=90, pctdistance=.70)
+                        for text in autotexts:
+                            text.set_family(self.legend_font.get_family()[0])
+                            text.set_style(self.legend_font.get_style())
+                            text.set_variant(self.legend_font.get_variant())
+                            text.set_stretch(self.legend_font.get_stretch())
+                            text.set_weight(self.legend_font.get_weight())
+                            text.set_size(self.legend_font.get_size())
+                    else:
+                        patches, texts = pi2.pie(data, labels=labels, colors=colors, startangle=90, pctdistance=.70)
+                    for text in texts:
+                        text.set_family(self.legend_font.get_family()[0])
+                        text.set_style(self.legend_font.get_style())
+                        text.set_variant(self.legend_font.get_variant())
+                        text.set_stretch(self.legend_font.get_stretch())
+                        text.set_weight(self.legend_font.get_weight())
+                        text.set_size(self.legend_font.get_size())
+                else:
+                    loc = 'lower right'
+                    if self.percent_on_pie:
+                        patches, texts, autotexts = pi2.pie(data, labels=None, autopct='%1.1f%%', colors=colors, startangle=90, pctdistance=.70)
+                        for text in autotexts:
+                            text.set_family(self.legend_font.get_family()[0])
+                            text.set_style(self.legend_font.get_style())
+                            text.set_variant(self.legend_font.get_variant())
+                            text.set_stretch(self.legend_font.get_stretch())
+                            text.set_weight(self.legend_font.get_weight())
+                            text.set_size(self.legend_font.get_size())
+                        for text in texts:
+                            text.set_family(self.legend_font.get_family()[0])
+                            text.set_style(self.legend_font.get_style())
+                            text.set_variant(self.legend_font.get_variant())
+                            text.set_stretch(self.legend_font.get_stretch())
+                            text.set_weight(self.legend_font.get_weight())
+                            text.set_size(self.legend_font.get_size())
+                    else:
+                        for i in range(len(data)):
+                            labels[i] = f'{labels[i]} ({data[i]/tot*100:0.1f}%)'
+                        patches, texts = pi2.pie(data, colors=colors, startangle=90)
+                    if self.legend_side == 'Right':
+                        plt.subplots_adjust(left=0.1, bottom=0.1, right=0.75)
+                    elif self.legend_side == 'Left':
+                        plt.subplots_adjust(left=0.25, bottom=0.1, right=0.9)
+                        loc = 'lower left'
+                    fig.legend(patches, labels, loc=loc, ncol=self.legend_ncol, prop=self.legend_font).set_draggable(True)
+                for c in whites:
+                    autotexts[c].set_color('white')
+                p = plt.gcf()
+                p.gca().add_artist(plt.Circle((0, 0), 0.40, color='white'))
+                plt.show()
+                return
+            elif self.plottype.currentText() == 'Heat Map':
                 fig = plt.figure(figname)
                 if suptitle != '':
-                    fig.suptitle(suptitle, fontsize=16)
+                    fig.suptitle(suptitle, fontproperties=self.fontprops['Header'])
                 if gridtype != '':
                     plt.grid(axis=gridtype)
                 hm2 = plt.subplot(111)
-                plt.title(titl)
+                plt.title(titl, fontdict=self.fontprops['Title'])
                 hmdata = []
                 days = int(sum(todo_rows) / self.interval)
                 for hr in range(self.interval):
@@ -1767,8 +3059,6 @@ class PowerPlot(QtWidgets.QWidget):
                         vmax = None
                         vmin = None
                 im2 = hm2.imshow(hmdata, cmap=self.cmap, interpolation='nearest', aspect='auto', vmax=vmax, vmin=vmin)
-                lbl_font = FontProperties()
-                lbl_font.set_size('small')
                 yticks = [-0.5]
                 if self.interval == 24:
                     for y in range(0, 24, 4):
@@ -1778,7 +3068,7 @@ class PowerPlot(QtWidgets.QWidget):
                         yticks.append(y + 6.5)
                 hm2.invert_yaxis()
                 hm2.set_yticks(yticks)
-                hm2.set_yticklabels(hr_labels, va='bottom')
+                hm2.set_yticklabels(hr_labels, va='bottom', fontdict=self.fontprops['Ticks'])
                 if len(hmdata[0]) > 31:
                     day = -0.5
                     xticks = []
@@ -1788,7 +3078,7 @@ class PowerPlot(QtWidgets.QWidget):
                         xticklbls.append(mth_labels[m])
                         day = day + the_days[m]
                     hm2.set_xticks(xticks)
-                    hm2.set_xticklabels(xticklbls, ha='left')
+                    hm2.set_xticklabels(xticklbls, ha='left', fontdict=self.fontprops['Ticks'])
                 else:
                     curxticks = hm2.get_xticks()
                     xticks = []
@@ -1798,9 +3088,9 @@ class PowerPlot(QtWidgets.QWidget):
                             xticklabels.append(str(int(curxticks[x] + 1)))
                             xticks.append(curxticks[x])
                     hm2.set_xticks(xticks)
-                    hm2.set_xticklabels(xticklabels)
-                hm2.set_xlabel('Day')
-                hm2.set_ylabel('Hour')
+                    hm2.set_xticklabels(xticklabels, fontdict=self.fontprops['Ticks'])
+                hm2.set_xlabel('Day', fontdict=self.fontprops['Label'])
+                hm2.set_ylabel('Hour', fontdict=self.fontprops['Label'])
                 if self.cbar:
                     fig.subplots_adjust(bottom=0.1, right=0.8, top=0.9)
                     cb_ax = fig.add_axes([0.85, 0.1, 0.025, 0.8])
@@ -1822,13 +3112,22 @@ class PowerPlot(QtWidgets.QWidget):
                                     continue
                             cticks.append(curcticks[y])
                         cticks.sort()
-                        cbar.set_ticks(cticks)
+                        try:
+                            cbar.set_ticks(cticks, fontdict=self.fontprops['Ticks'])
+                        except:
+                            clabels = []
+                            for ct in cticks:
+                                clabels.append(f'{ct}')
+                            cbar.set_ticks(cticks, labels=clabels, fontdict=self.fontprops['Ticks'])
                 self.log.setText('Heat map value range: {} to {}'.format(fmt_str, fmt_str).format(miny, maxy))
                 QtCore.QCoreApplication.processEvents()
                 plt.show()
                 return
             overlay_cols = []
             overlay = []
+            for o in range(self.no_of_overlays):
+                overlay_cols.append([])
+                overlay.append([])
             miny = 0
             maxy = 0
             hs = []
@@ -1844,9 +3143,11 @@ class PowerPlot(QtWidgets.QWidget):
                     column = ws.cell_value(self.zone_row, c2).replace('\n',' ') + '.' + column
                 if column == self.target:
                     tgt_col = c2
-                if self.overlay != '<none>':
-                    if column == self.target or column[:len(self.overlay)] == self.overlay:
-                        overlay_cols.append(c2)
+                for o in range(self.no_of_overlays):
+                    if self.overlay[o] != '<none>':
+                        if column[:len(self.overlay[o])] == self.overlay[o] or \
+                          ((self.overlay[o] == 'Charge' or self.overlay[o] == 'Underlying Load') and column == self.target):
+                            overlay_cols[o].append(c2)
             if len(breakdowns) > 0:
                 for c in range(self.order.count() -1, -1, -1):
                     col = self.order.item(c).text()
@@ -1903,7 +3204,7 @@ class PowerPlot(QtWidgets.QWidget):
                             if column == col:
                                 data.append([])
                                 data[-1] = [0] * len(hs)
-                                label.append(column + ' ' + breakdown)
+                                label.append(self.short_legend + column + ' ' + breakdown)
                                 tot_rows = 0
                                 for s in range(len(strt_row)):
                                     h = 0
@@ -1953,12 +3254,16 @@ class PowerPlot(QtWidgets.QWidget):
                                 miny = min(miny, data[-1][h])
                             break
             if tgt_col >= 0:
+                s = 0
                 load = [0] * len(hs)
                 tot_rows = 0
                 for s in range(len(strt_row)):
                     h = 0
                     for row in range(strt_row[s] + 1, strt_row[s] + todo_rows[s] + 1):
-                        load[h] = load[h] + ws.cell_value(row, tgt_col)
+                        try:
+                            load[h] = load[h] + ws.cell_value(row, tgt_col)
+                        except:
+                            print('(3255)', h, row, tgt_col, ws.cell_value(row, tgt_col), strt_row, todo_rows)
                         h += 1
                         if h >= self.interval:
                            h = 0
@@ -1966,57 +3271,85 @@ class PowerPlot(QtWidgets.QWidget):
                 for h in range(self.interval):
                     load[h] = load[h] / (tot_rows / self.interval)
                     maxy = max(maxy, load[h])
-            if len(overlay_cols) > 0:
-                if self.overlay == 'Underlying Load':
-                    overlay_cols = [overlay_cols[-1]]
-                overlay = [0] * len(hs)
-                tot_rows = 0
-                for s in range(len(strt_row)):
-                    h = 0
-                    for row in range(strt_row[s] + 1, strt_row[s] + todo_rows[s] + 1):
-                        for col in overlay_cols:
-                            overlay[h] += ws.cell_value(row, col)
-                        h += 1
-                        if h >= self.interval:
-                           h = 0
-                    tot_rows += todo_rows[s]
-                for h in range(self.interval):
-                    overlay[h] = overlay[h] / (tot_rows / self.interval)
-                    maxy = max(maxy, overlay[h])
-            if self.plottype.currentText() == 'Line Chart':
+                    miny = min(miny, load[h])
+            for o in range(self.no_of_overlays):
+                if len(overlay_cols[o]) > 0:
+                    if self.overlay[o] == 'Underlying Load':
+                        overlay_cols[o] = [overlay_cols[o][-1]]
+                    for h in range(len(hs)):
+                        overlay[o].append(0)
+                    tot_rows = 0
+                    for s in range(len(strt_row)):
+                        h = 0
+                        for row in range(strt_row[s] + 1, strt_row[s] + todo_rows[s] + 1):
+                            for col in overlay_cols[o]:
+                                try:
+                                    overlay[o][h] = overlay[o][h] + ws.cell_value(row, col)
+                                except:
+                               #     if row >= ws.nrows:
+                                #        break
+                                    self.log.setText(f'Data error with {self.overlay[o]} ({ssCol(col, base=0)}{row + 1}). Period may be incomplete (8)')
+                                    return
+                            h += 1
+                            if h >= self.interval:
+                               h = 0
+                        tot_rows += todo_rows[s]
+                    for h in range(self.interval):
+                        overlay[o][h] = overlay[o][h] / (tot_rows / self.interval)
+                        # 'overlay_type'
+                        if self.overlay_type[o] == 'Average':
+                            overlay[o][h] = overlay[o][h] / self.interval
+                        maxy = max(maxy, overlay[o][h])
+                        miny = min(miny, overlay[o][h])
+            loc = 'lower right'
+            if self.plottype.currentText() == 'Line Chart' or self.plottype.currentText() == 'Step Line Chart':
                 fig = plt.figure(figname + '_' + self.period.currentText().lower(),
                                  constrained_layout=self.constrained_layout)
                 if suptitle != '':
-                    fig.suptitle(suptitle, fontsize=16)
+                    fig.suptitle(suptitle, fontproperties=self.fontprops['Header'])
                 if gridtype != '':
                     plt.grid(axis=gridtype)
                 lc2 = plt.subplot(111)
-                plt.title(titl)
-                for c in range(len(data)):
-                    lc2.plot(x, data[c], linewidth=1.5, label=label[c], color=self.set_colour(label[c]))
-                if len(load) > 0:
-                    lc2.plot(x, load, linewidth=2.5, label=self.target, color=self.set_colour(self.target))
-                if len(overlay) > 0:
-                    lc2.plot(x, overlay, linewidth=1.5, label=self.overlay, color='black', linestyle='dotted')
-                if self.maxSpin.value() > 0:
-                    maxy = self.maxSpin.value()
+                if self.legend_side == 'Right':
+                    plt.subplots_adjust(left=0.1, bottom=0.1, right=0.75)
+                elif self.legend_side == 'Left':
+                    plt.subplots_adjust(left=0.25, bottom=0.1, right=0.9)
+                    loc = 'lower left'
+                plt.title(titl, fontdict=self.fontprops['Title'])
+                if self.plottype.currentText() == 'Line Chart':
+                    for c in range(len(data)):
+                        lc2.plot(x, data[c], linewidth=1.5, label=label[c], color=self.set_colour(label[c]))
+                    if len(load) > 0:
+                        lc2.plot(x, load, linewidth=self.tgtSpin.value(), label=self.short_legend + self.target,
+                                 color=self.set_colour(self.target), linestyle=self.tgtLine.currentText())
+                    for o in range(self.no_of_overlays):
+                        if len(overlay[o]) > 0:
+                            lc2.plot(x, overlay[o], linewidth=self.ovrSpin[o].value(), label=self.short_legend + self.overlay[o],
+                                     color=self.overlay_colour[o], linestyle=self.ovrLine[o].currentText())
                 else:
-                    try:
-                        rndup = pow(10, round(log10(maxy * 1.5) - 1)) / 2
-                        maxy = ceil(maxy / rndup) * rndup
-                    except:
-                        pass
-           #     miny = 0
-                lbl_font = FontProperties()
-                lbl_font.set_size('small')
+                    for c in range(len(data)):
+                        lc2.step(x, data[c], linewidth=self.linSpin.value(), label=label[c], color=self.set_colour(label[c]),
+                                 linestyle=self.linLine.currentText())
+                    if len(load) > 0:
+                        lc2.step(x, load, linewidth=self.tgtSpin.value(), label=self.short_legend + self.target,
+                                 color=self.set_colour(self.target), linestyle=self.tgtLine.currentText())
+                    for o in range(self.no_of_overlays):
+                        if len(overlay[o]) > 0:
+                            lc2.step(x, overlay[o], linewidth=self.ovrSpin[o].value(), label=self.short_legend + self.overlay[o],
+                                     color=self.overlay_colour[o], linestyle=self.ovrLine[o].currentText())
+                yminmax = set_ylimits(miny, maxy)
                 lc2.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 1),
-                              prop=lbl_font)
-                plt.ylim([miny, maxy])
+                              prop=self.legend_font)
+                plt.ylim(yminmax)
                 plt.xlim([0, self.interval - 1])
                 lc2.set_xticks(ticks)
-                lc2.set_xticklabels(hr_labels)
-                lc2.set_xlabel('Hour of the Day')
-                lc2.set_ylabel('Power (MW)')
+                lc2.set_xticklabels(hr_labels, fontdict=self.fontprops['Ticks'])
+                lc2.set_xlabel('Hour of the Day', fontdict=self.fontprops['Label'])
+                lc2.set_ylabel('Power (MW/MWh)', fontdict=self.fontprops['Label'])
+                lc2.tick_params(colors=self.fontprops['Ticks']['color'], which='both')
+                if self.y2_label != '':
+                    secax = lc2.secondary_yaxis(location='right', functions=(self.transform_y2, self.inverse_y2))
+                    secax.set_ylabel(self.y2_label)
                 zp = ZoomPanX()
                 f = zp.zoom_pan(lc2, base_scale=1.2) # enable scrollable zoom
                 plt.show()
@@ -2029,11 +3362,16 @@ class PowerPlot(QtWidgets.QWidget):
                 fig = plt.figure(figname + '_' + self.period.currentText().lower(),
                                  constrained_layout=self.constrained_layout)
                 if suptitle != '':
-                    fig.suptitle(suptitle, fontsize=16)
+                    fig.suptitle(suptitle, fontproperties=self.fontprops['Header'])
                 if gridtype != '':
                     plt.grid(axis=gridtype)
                 cu2 = plt.subplot(111)
-                plt.title(titl)
+                if self.legend_side == 'Right':
+                    plt.subplots_adjust(left=0.1, bottom=0.1, right=0.75)
+                elif self.legend_side == 'Left':
+                    plt.subplots_adjust(left=0.25, bottom=0.1, right=0.9)
+                    loc = 'lower left'
+                plt.title(titl, fontdict=self.fontprops['Title'])
                 if self.percentage.isChecked():
                     totals = [0.] * len(x)
                     bottoms = [0.] * len(x)
@@ -2043,36 +3381,42 @@ class PowerPlot(QtWidgets.QWidget):
                             totals[h] = totals[h] + data[c][h]
                     for h in range(len(data[0])):
                         values[h] = data[0][h] / totals[h] * 100.
-                    cu2.fill_between(x, 0, values, label=label[0], color=self.set_colour(label[0]), hatch=self.set_hatch(label[0]), step=step)
+                    cu2.fill_between(x, 0, values, label=label[0], color=self.set_colour(label[0]), hatch=self.set_hatch(label[0]),
+                                     alpha=self.alpha_fill, step=step)
                     for c in range(1, len(data)):
                         for h in range(len(data[c])):
                             bottoms[h] = values[h]
                             values[h] = values[h] + data[c][h] / totals[h] * 100.
-                        cu2.fill_between(x, bottoms, values, label=label[c], color=self.set_colour(label[c]), hatch=self.set_hatch(label[c]), step=step)
+                        cu2.fill_between(x, bottoms, values, label=label[c], color=self.set_colour(label[c]), hatch=self.set_hatch(label[c]),
+                                         alpha=self.alpha_fill, step=step)
                     maxy = 100
-                    cu2.set_ylabel('Power (%)')
+                    cu2.set_ylabel('Power (%)', fontdict=self.fontprops['Label'])
                 else:
                     if self.target == '<none>':
-                        cu2.fill_between(x, 0, data[0], label=label[0], color=self.set_colour(label[0]), hatch=self.set_hatch(label[0]), step=step)
+                        cu2.fill_between(x, 0, data[0], label=label[0], color=self.set_colour(label[0]), hatch=self.set_hatch(label[0]),
+                                         alpha=self.alpha_fill, step=step)
                         for c in range(1, len(data)):
                             for h in range(len(data[c])):
                                 data[c][h] = data[c][h] + data[c - 1][h]
                                 maxy = max(maxy, data[c][h])
-                            cu2.fill_between(x, data[c - 1], data[c], label=label[c], color=self.set_colour(label[c]), hatch=self.set_hatch(label[c]), step=step)
+                            cu2.fill_between(x, data[c - 1], data[c], label=label[c], color=self.set_colour(label[c]), hatch=self.set_hatch(label[c]),
+                                             alpha=self.alpha_fill, step=step)
                     else:
                 #        pattern = ['-', '+', 'x', '\\', '*', 'o', 'O', '.']
                 #        pat = 0
                         full = []
                         for h in range(len(load)):
                            full.append(min(load[h], data[0][h]))
-                        cu2.fill_between(x, 0, full, label=label[0], color=self.set_colour(label[0]), hatch=self.set_hatch(label[0]), step=step)
+                        cu2.fill_between(x, 0, full, label=label[0], color=self.set_colour(label[0]), hatch=self.set_hatch(label[0]),
+                                         alpha=self.alpha_fill, step=step)
                         for h in range(len(full)):
                             if data[0][h] > full[h]:
                                 if self.spill_label.text() != '':
                                     cu2.fill_between(x, full, data[0], alpha=self.alpha, color=self.set_colour(label[0]), hatch=self.set_hatch(label[0]),
                                         label=label[0] + ' ' + self.spill_label.text(), step=step)
                                 else:
-                                    cu2.fill_between(x, full, data[c], alpha=self.alpha, color=self.set_colour(label[c]), hatch=self.set_hatch(label[c]), step=step)
+                                    cu2.fill_between(x, full, data[c], alpha=self.alpha, color=self.set_colour(label[c]), hatch=self.set_hatch(label[c]),
+                                                     step=step)
                                 break
                         for c in range(1, len(data)):
                             full = []
@@ -2080,7 +3424,8 @@ class PowerPlot(QtWidgets.QWidget):
                                 data[c][h] = data[c][h] + data[c - 1][h]
                                 maxy = max(maxy, data[c][h])
                                 full.append(max(min(load[h], data[c][h]), data[c - 1][h]))
-                            cu2.fill_between(x, data[c - 1], full, label=label[c], color=self.set_colour(label[c]), hatch=self.set_hatch(label[c]), step=step)
+                            cu2.fill_between(x, data[c - 1], full, label=label[c], color=self.set_colour(label[c]), hatch=self.set_hatch(label[c]),
+                                             alpha=self.alpha_fill, step=step)
                  #           pat += 1
                  #           if pat >= len(pattern):
                  #               pat = 0
@@ -2114,34 +3459,36 @@ class PowerPlot(QtWidgets.QWidget):
                                 do_short = True
                             short.append(max(data[c][h], load[h]))
                         if do_short:
-                            cu2.fill_between(x, data[c], short, label='Shortfall', color=self.set_colour('shortfall'), step=step)
+                            if self.colours['shortfall'][0].lower() != 'w' and self.colours['shortfall'].lower() != '#ffffff':
+                                cu2.fill_between(x, data[c], short, label='Shortfall', color=self.set_colour('shortfall'),
+                                                 alpha=self.alpha_fill, step=step)
                         if self.plottype.currentText() == 'Cumulative':
-                            cu2.plot(x, load, linewidth=2.5, label=self.target, color=self.set_colour(self.target))
+                            cu2.plot(x, load, linewidth=self.tgtSpin.value(), label=self.short_legend + self.target, color=self.set_colour(self.target),
+                                     linestyle=self.tgtLine.currentText())
                         else:
-                            cu2.step(x, load, linewidth=2.5, label=self.target, color=self.set_colour(self.target))
-                    if len(overlay) > 0:
-                        if self.plottype.currentText() == 'Cumulative':
-                            cu2.plot(x, overlay, linewidth=1.5, label=self.overlay, color='black', linestyle='dotted')
-                        else:
-                            cu2.step(x, overlay, linewidth=1.5, label=self.overlay, color='black', linestyle='dotted')
-                    if self.maxSpin.value() > 0:
-                        maxy = self.maxSpin.value()
-                    else:
-                        try:
-                            rndup = pow(10, round(log10(maxy * 1.5) - 1)) / 2
-                            maxy = ceil(maxy / rndup) * rndup
-                        except:
-                            pass
-                    cu2.set_ylabel('Power (MW)')
+                            cu2.step(x, load, linewidth=self.tgtSpin.value(), label=self.short_legend + self.target, color=self.set_colour(self.target),
+                                     linestyle=self.tgtLine.currentText())
+                    for o in range(self.no_of_overlays):
+                        if len(overlay[o]) > 0:
+                            if self.plottype.currentText() == 'Cumulative':
+                                cu2.plot(x, overlay[o], linewidth=self.ovrSpin[o].value(), label=self.short_legend + self.overlay[o],
+                                         color=self.overlay_colour[o], linestyle=self.ovrLine[o].currentText())
+                            else:
+                                cu2.step(x, overlay[o], linewidth=self.ovrSpin[o].value(), label=self.short_legend + self.overlay[o],
+                                         color=self.overlay_colour[o], linestyle=self.ovrLine[o].currentText())
+                    cu2.set_ylabel('Power (MW/MWh)', fontdict=self.fontprops['Label'])
          #       miny = 0
-                lbl_font = FontProperties()
-                lbl_font.set_size('small')
-                cu2.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 2), prop=lbl_font)
-                plt.ylim([miny, maxy])
+                yminmax = set_ylimits(miny, maxy)
+                cu2.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 2), prop=self.legend_font)
+                plt.ylim(yminmax)
                 plt.xlim([0, self.interval - 1])
                 cu2.set_xticks(ticks)
-                cu2.set_xticklabels(hr_labels)
-                cu2.set_xlabel('Hour of the Day')
+                cu2.set_xticklabels(hr_labels, fontdict=self.fontprops['Ticks'])
+                cu2.set_xlabel('Hour of the Day', fontdict=self.fontprops['Label'])
+                cu2.tick_params(colors=self.fontprops['Ticks']['color'], which='both')
+                if self.y2_label != '':
+                    secax = cu2.secondary_yaxis(location='right', functions=(self.transform_y2, self.inverse_y2))
+                    secax.set_ylabel(self.y2_label)
                 zp = ZoomPanX()
                 f = zp.zoom_pan(cu2, base_scale=1.2) # enable scrollable zoom
                 plt.show()
@@ -2150,11 +3497,16 @@ class PowerPlot(QtWidgets.QWidget):
                 fig = plt.figure(figname + '_' + self.period.currentText().lower(),
                                  constrained_layout=self.constrained_layout)
                 if suptitle != '':
-                    fig.suptitle(suptitle, fontsize=16)
+                    fig.suptitle(suptitle, fontproperties=self.fontprops['Header'])
                 if gridtype != '':
                     plt.grid(axis=gridtype)
                 bc2 = plt.subplot(111)
-                plt.title(titl)
+                if self.legend_side == 'Right':
+                    plt.subplots_adjust(left=0.1, bottom=0.1, right=0.75)
+                elif self.legend_side == 'Left':
+                    plt.subplots_adjust(left=0.25, bottom=0.1, right=0.9)
+                    loc = 'lower left'
+                plt.title(titl, fontdict=self.fontprops['Title'])
                 if self.percentage.isChecked():
                     miny = 0
                     totals = [0.] * len(x)
@@ -2165,52 +3517,61 @@ class PowerPlot(QtWidgets.QWidget):
                             totals[h] = totals[h] + data[c][h]
                     for h in range(len(data[0])):
                         values[h] = data[0][h] / totals[h] * 100.
-                    bc2.bar(x, values, label=label[0], color=self.set_colour(label[0]), hatch=self.set_hatch(label[0]))
+                    bc2.bar(x, values, label=label[0], color=self.set_colour(label[0]), alpha=self.alpha_fill,
+                            hatch=self.set_hatch(label[0]))
                     for c in range(1, len(data)):
                         for h in range(len(data[c])):
                             bottoms[h] = bottoms[h] + values[h]
                             values[h] = data[c][h] / totals[h] * 100.
-                        bc2.bar(x, values, bottom=bottoms, label=label[c], color=self.set_colour(label[c]), hatch=self.set_hatch(label[c]))
+                        bc2.bar(x, values, bottom=bottoms, label=label[c], color=self.set_colour(label[c]), alpha=self.alpha_fill,
+                                hatch=self.set_hatch(label[c]))
                     maxy = 100
-                    bc2.set_ylabel('Power (%)')
+                    bc2.set_ylabel('Power (%)', fontdict=self.fontprops['Label'])
                 else:
                     if self.target == '<none>':
-                        bc2.bar(x, data[0], label=label[0], color=self.set_colour(label[0]), hatch=self.set_hatch(label[0]))
+                        bc2.bar(x, data[0], label=label[0], color=self.set_colour(label[0]), alpha=self.alpha_fill,
+                                hatch=self.set_hatch(label[0]))
                         bottoms = [0.] * len(x)
                         for c in range(1, len(data)):
                             for h in range(len(data[c])):
                                 bottoms[h] = bottoms[h] + data[c - 1][h]
                                 maxy = max(maxy, data[c][h] + bottoms[h])
-                            bc2.bar(x, data[c], bottom=bottoms, label=label[c], color=self.set_colour(label[c]), hatch=self.set_hatch(label[c]))
+                            bc2.bar(x, data[c], bottom=bottoms, label=label[c], color=self.set_colour(label[c]), alpha=self.alpha_fill,
+                                    hatch=self.set_hatch(label[c]))
                     else:
-                        bc2.bar(x, data[0], label=label[0], color=self.set_colour(label[0]), hatch=self.set_hatch(label[0]))
+                        bc2.bar(x, data[0], label=label[0], color=self.set_colour(label[0]), alpha=self.alpha_fill,
+                                hatch=self.set_hatch(label[0]))
                         bottoms = [0.] * len(x)
                         for c in range(1, len(data)):
                             for h in range(len(data[c])):
                                 bottoms[h] = bottoms[h] + data[c - 1][h]
                                 maxy = max(maxy, data[c][h] + bottoms[h])
-                            bc2.bar(x, data[c], bottom=bottoms, label=label[c], color=self.set_colour(label[c]), hatch=self.set_hatch(label[c]))
-                        bc2.plot(x, load, linewidth=2.5, label=self.target, color=self.set_colour(self.target))
-                    if len(overlay) > 0:
-                        bc2.plot(x, overlay, linewidth=1.5, label=self.overlay, color='black', linestyle='dotted')
-                    if self.maxSpin.value() > 0:
-                        maxy = self.maxSpin.value()
-                    else:
-                        try:
-                            rndup = pow(10, round(log10(maxy * 1.5) - 1)) / 2
-                            maxy = ceil(maxy / rndup) * rndup
-                        except:
-                            pass
-                    bc2.set_ylabel('Power (MW)')
+                            bc2.bar(x, data[c], bottom=bottoms, label=label[c], color=self.set_colour(label[c]), alpha=self.alpha_fill,
+                                    hatch=self.set_hatch(label[c]))
+                        bc2.plot(x, load, linewidth=self.tgtSpin.value(), label=self.short_legend + self.target, color=self.set_colour(self.target),
+                                 linestyle=self.tgtLine.currentText())
+                    for o in range(self.no_of_overlays):
+                        if len(overlay[o]) > 0:
+                            bc2.plot(x, overlay[o], linewidth=self.ovrSpin[o].value(), label=self.short_legend + self.overlay[o],
+                                     color=self.overlay_colour[o], linestyle=self.ovrLine[o].currentText())
+                    bc2.set_ylabel('Power (MW/MWh)', fontdict=self.fontprops['Label'])
         #        miny = 0
-                lbl_font = FontProperties()
-                lbl_font.set_size('small')
-                bc2.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 2), prop=lbl_font)
-                plt.ylim([miny, maxy])
+                yminmax = set_ylimits(miny, maxy)
+                if self.legend_side == 'Right':
+                    plt.subplots_adjust(left=0.1, bottom=0.1, right=0.75)
+                elif self.legend_side == 'Left':
+                    plt.subplots_adjust(left=0.25, bottom=0.1, right=0.9)
+                    loc = 'lower left'
+                bc2.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 2), prop=self.legend_font)
+                plt.ylim(yminmax)
                 plt.xlim([0, self.interval - 1])
                 bc2.set_xticks(ticks)
-                bc2.set_xticklabels(hr_labels)
-                bc2.set_xlabel('Hour of the Day')
+                bc2.set_xticklabels(hr_labels, fontdict=self.fontprops['Ticks'])
+                bc2.set_xlabel('Hour of the Day', fontdict=self.fontprops['Label'])
+                bc2.tick_params(colors=self.fontprops['Ticks']['color'], which='both')
+                if self.y2_label != '':
+                    secax = bc2.secondary_yaxis(location='right', functions=(self.transform_y2, self.inverse_y2))
+                    secax.set_ylabel(self.y2_label)
                 zp = ZoomPanX()
                 f = zp.zoom_pan(bc2, base_scale=1.2) # enable scrollable zoom
                 plt.show()

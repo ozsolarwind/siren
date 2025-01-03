@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2023 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2024 Sustainable Energy Now Inc., Angus King
 #
 #  displaytable.py - This file is part of SIREN.
 #
@@ -19,6 +19,7 @@
 #  <http://www.gnu.org/licenses/>.
 #
 
+import openpyxl as oxl
 import os
 import xlwt
 from PyQt5 import QtCore, QtWidgets
@@ -26,7 +27,7 @@ from PyQt5 import QtGui, QtWidgets
 
 import displayobject
 from sirenicons import Icons
-from senutils import techClean
+from senutils import ssCol, techClean
 
 
 class FakeObject:
@@ -51,7 +52,7 @@ class FakeObject:
 class Table(QtWidgets.QDialog):
     def __init__(self, objects, parent=None, fields=None, fossil=True, sumby=None, sumfields=None, units='', title=None,
                  save_folder='', edit=False, sortby=None, decpts=None, totfields=None, abbr=True, txt_align=None,
-                 reverse=False, txt_ok=None):
+                 reverse=False, txt_ok=None, span=None, year=''):
         super(Table, self).__init__(parent)
         self.oclass = None
         if len(objects) == 0:
@@ -107,16 +108,32 @@ class Table(QtWidgets.QDialog):
         self.totfields = totfields
         self.units = units
         self.title = title
-        self.edit_table = edit
+        self.edit_table = False
+        self.edit_delete = False
+        if edit:
+            self.edit_table = edit
+            try:
+                if edit.lower() == 'delete':
+                    self.edit_delete = True
+            except:
+                pass
         self.decpts = decpts
         self.txt_align = txt_align
         self.txt_ok = txt_ok
         self.recur = False
         self.replaced = None
         self.savedfile = None
+        self.span = span
+        if year != '':
+            self.year = year + '_'
+        else:
+            self.year = year
         self.abbr = abbr
         if self.edit_table:
-            self.title_word = ['Edit', 'Export']
+            if self.edit_delete:
+                self.title_word = ['List', 'Export']
+            else:
+                self.title_word = ['Edit', 'Export']
         else:
             self.title_word = ['Display', 'Save']
         self.save_folder = save_folder
@@ -142,7 +159,7 @@ class Table(QtWidgets.QDialog):
             self.setWindowTitle('SIREN - ' + self.title_word[0] + ' ' + self.title)
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         msg = '(Right click column header to sort)'
-        if self.edit_table and self.fields[0] == 'name':
+        if self.edit_table and (self.fields[0] == 'name' or self.edit_delete):
             msg = msg[:-1] + '; right click row number to delete)'
         try:
             if getattr(objects[0], '__module__') == 'Station':
@@ -155,11 +172,12 @@ class Table(QtWidgets.QDialog):
         buttonLayout.addWidget(self.quitButton)
         self.quitButton.clicked.connect(self.quit)
         if self.edit_table:
-            if isinstance(objects, dict):
-                if fields[0] == 'property' or fields[0] == 'name':
-                    self.addButton = QtWidgets.QPushButton(self.tr('Add'))
-                    buttonLayout.addWidget(self.addButton)
-                    self.addButton.clicked.connect(self.addtotbl)
+            if not self.edit_delete:
+                if isinstance(objects, dict):
+                    if fields[0] == 'property' or fields[0] == 'name':
+                        self.addButton = QtWidgets.QPushButton(self.tr('Add'))
+                        buttonLayout.addWidget(self.addButton)
+                        self.addButton.clicked.connect(self.addtotbl)
             self.replaceButton = QtWidgets.QPushButton(self.tr('Save'))
             buttonLayout.addWidget(self.replaceButton)
             self.replaceButton.clicked.connect(self.replacetbl)
@@ -194,7 +212,7 @@ class Table(QtWidgets.QDialog):
       #   self.table.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
         if self.edit_table:
             self.table.setEditTriggers(QtWidgets.QAbstractItemView.CurrentChanged)
-            if self.fields[0] == 'name':
+            if self.fields[0] == 'name' or self.edit_delete:
                 self.rows = self.table.verticalHeader()
                 self.rows.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
                 self.rows.customContextMenuRequested.connect(self.row_click)
@@ -216,7 +234,6 @@ class Table(QtWidgets.QDialog):
             self.order(self.fields.index(sortby))
             if reverse:
                 self.order(self.fields.index(sortby))
-
         if self.sumfields is not None:
             for i in range(len(self.sumfields) -1, -1, -1): # make sure sumfield has a field
                 try:
@@ -273,7 +290,8 @@ class Table(QtWidgets.QDialog):
                     self.table.setItem(rw, clv[len(self.sumfields) + f],
                         QtWidgets.QTableWidgetItem(fmat_str[len(self.sumfields) + f].format(self.totfields[f][1])))
                     self.table.item(rw, clv[len(self.sumfields) + f]).setTextAlignment(130)  # x'82'
-        self.table.resizeColumnsToContents()
+        if self.span is None:
+            self.table.resizeColumnsToContents()
         width = 0
         for cl in range(self.table.columnCount()):
             width += self.table.columnWidth(cl)
@@ -287,7 +305,7 @@ class Table(QtWidgets.QDialog):
         self.resize(size)
         self.updated = QtCore.pyqtSignal(QtWidgets.QLabel)   # ??
         QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.quit)
-        if self.edit_table:
+        if self.edit_table and not self.edit_delete:
             self.table.cellChanged.connect(self.item_changed)
         else:
             self.table.cellClicked.connect(self.item_selected)
@@ -350,10 +368,12 @@ class Table(QtWidgets.QDialog):
                         else:
                             self.lens[prop] = [len(str(attr)), 0]
                     elif isinstance(attr, float):
-                        if self.labels[prop] == 'str' or  self.labels[prop] == 'int':
+                        if self.labels[prop] == 'str' or self.labels[prop] == 'int':
                             self.labels[prop] = 'float'
                         a = str(attr)
                         bits = a.split('.')
+                        if len(bits) == 1: # maybe other float format
+                            bits = a.split('e')
                         if self.decpts is None:
                             if prop in self.lens:
                                 for i in range(2):
@@ -531,9 +551,15 @@ class Table(QtWidgets.QDialog):
                 self.table.horizontalHeaderItem(col).setIcon(QtGui.QIcon('arrowu.png'))
                 self.sort_asc = True
         self.entry = [self.entry[i] for i in torder]
+        in_span = False
         for rw in range(len(self.entry)):
+            if self.span is not None and not in_span:
+                self.table.resizeColumnsToContents()
             for key, value in sorted(list(self.entry[rw].items()), key=lambda i: self.fields.index(i[0])):
                 cl = self.fields.index(key)
+                if cl == 0:
+                    if self.span is not None and value == self.span:
+                        in_span = True
                 if key == 'technology':
                     icon = self.icons.getIcon(value)
                     icon_item = QtWidgets.QTableWidgetItem(value)
@@ -558,7 +584,14 @@ class Table(QtWidgets.QDialog):
                                 if self.txt_align == 'R':
                                     self.table.item(rw, cl).setTextAlignment(130)  # x'82'
                         else:
-                            self.table.setItem(rw, cl, QtWidgets.QTableWidgetItem(value))
+                            if cl == 1 and in_span:
+                                self.table.setSpan(rw, cl, 1, len(self.fields) - 1)
+                                self.table.setItem(rw, cl, QtWidgets.QTableWidgetItem(value))
+                                continue
+                            try:
+                                self.table.setItem(rw, cl, QtWidgets.QTableWidgetItem(value))
+                            except: # allow for other things e.g. Widgets
+                                self.table.setCellWidget(rw, cl, value)
                             if self.labels[key] != 'str' or \
                                (self.txt_align is not None and self.txt_align == 'R'):
                                 self.table.item(rw, cl).setTextAlignment(130)   # x'82'
@@ -585,11 +618,20 @@ class Table(QtWidgets.QDialog):
         reply = msgbox.exec_()
         if reply == QtWidgets.QMessageBox.Yes:
             for i in range(len(self.entry)):
-                if self.entry[i]['name'] == self.table.item(row, 0).text():
+                if self.edit_delete:
+                    if self.entry[i][self.fields[0]] == self.table.item(row, 0).text():
+                        del self.entry[i]
+                        break
+                elif self.entry[i]['name'] == self.table.item(row, 0).text():
                     del self.entry[i]
                     break
             for i in range(len(self.objects)):
-                if self.objects[i].name == self.table.item(row, 0).text():
+                if self.edit_delete:
+                    value = getattr(self.objects[i], self.fields[0])
+                    if value == self.table.item(row, 0).text():
+                        del self.objects[i]
+                        break
+                elif self.objects[i].name == self.table.item(row, 0).text():
                     del self.objects[i]
                     break
             self.table.removeRow(row)
@@ -709,7 +751,7 @@ class Table(QtWidgets.QDialog):
             iam = getattr(self.objects[0], '__module__')
         else:
             iam = self.title
-        data_file = '%s_Table_%s.xls' % (iam,
+        data_file = '%s_Table_%s%s.xlsx' % (iam, self.year,
                     QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'yyyy-MM-dd_hhmm'))
         data_file = QtWidgets.QFileDialog.getSaveFileName(None, 'Save ' + iam + ' Table',
                     self.save_folder + data_file, 'Excel Files (*.xls*);;CSV Files (*.csv)')[0]
@@ -718,7 +760,7 @@ class Table(QtWidgets.QDialog):
         if data_file[-4:] == '.csv' or data_file[-4:] == '.xls' or data_file[-5:] == '.xlsx':
             pass
         else:
-            data_file += '.xls'
+            data_file += '.xlsx'
         if os.path.exists(data_file):
             if os.path.exists(data_file + '~'):
                 os.remove(data_file + '~')
@@ -767,20 +809,24 @@ class Table(QtWidgets.QDialog):
                             line += txt
                 tf.write(line + '\n')
             tf.close()
-        else:
+        elif data_file[-4:] == '.xls':
             wb = xlwt.Workbook()
             for ch in ['\\' , '/' , '*' , '?' , ':' , '[' , ']']:
                 if ch in iam:
                     iam = iam.replace(ch, '_')
+            if len(iam) > 31:
+                iam = iam[:31]
             ws = wb.add_sheet(iam)
             hdr_types = []
             dec_fmts = []
             xl_lens = []
             hdr_rows = 0
+            hdr_style = xlwt.XFStyle()
+            hdr_style.alignment.wrap = 1
             for cl in range(self.table.columnCount()):
                 hdr = self.table.horizontalHeaderItem(cl).text()
                 if hdr[0] != '%':
-                    ws.write(0, cl, hdr)
+                    ws.write(0, cl, hdr, hdr_style)
                 txt = self.hdrs[hdr]
                 try:
                     hdr_types.append(self.labels[txt.lower()])
@@ -807,12 +853,15 @@ class Table(QtWidgets.QDialog):
                 xl_lens.append(hl)
             if hdr_rows > 1:
                 ws.row(0).height = 250 * hdr_rows
+            in_span = False
             for rw in range(self.table.rowCount()):
                 for cl in range(self.table.columnCount()):
                     if self.table.item(rw, cl) is not None:
                         valu = self.table.item(rw, cl).text().strip()
                         if len(valu) < 1:
                             continue
+                        if self.span is not None and valu == self.span:
+                            in_span = True
                         style = dec_fmts[cl]
                         if valu[-1] == '%':
                             is_pct = True
@@ -861,7 +910,8 @@ class Table(QtWidgets.QDialog):
                                     valu = round(float(val1) / 100., dec_pts + 2)
                                 except:
                                     pass
-                        xl_lens[cl] = max(xl_lens[cl], len(str(valu)))
+                        if not in_span:
+                            xl_lens[cl] = max(xl_lens[cl], len(str(valu)))
                         ws.write(rw + 1, cl, valu, style)
             for cl in range(self.table.columnCount()):
                 if xl_lens[cl] * 275 > ws.col(cl).width:
@@ -870,7 +920,124 @@ class Table(QtWidgets.QDialog):
             ws.set_horz_split_pos(1)   # in general, freeze after last heading row
             ws.set_remove_splits(True)   # if user does unfreeze, don't leave a split there
             wb.save(data_file)
-            self.savedfile = data_file
+        else: # .xlsx
+            wb = oxl.Workbook()
+            ws = wb.active
+            for ch in ['\\' , '/' , '*' , '?' , ':' , '[' , ']']:
+                if ch in iam:
+                    iam = iam.replace(ch, '_')
+            if len(iam) > 31:
+                iam = iam[:31]
+            ws.title = iam
+            normal = oxl.styles.Font(name='Arial', size='10')
+        #    bold = oxl.styles.Font(name='Arial', bold=True)
+            hdr_types = []
+            dec_fmts = []
+            xl_lens = []
+            hdr_rows = 0
+        #    hdr_style = xlwt.XFStyle()
+        #    hdr_style.alignment.wrap = 1
+            for cl in range(self.table.columnCount()):
+                hdr = self.table.horizontalHeaderItem(cl).text()
+                if hdr[0] != '%':
+                    ws.cell(row=1, column=cl + 1).value = hdr
+                    ws.cell(row=1, column=cl + 1).font = normal
+                    ws.cell(row=1, column=cl + 1).alignment = oxl.styles.Alignment(wrap_text=True,
+                            vertical='bottom', horizontal='center')
+                txt = self.hdrs[hdr]
+                try:
+                    hdr_types.append(self.labels[txt.lower()])
+                    txt = txt.lower()
+                except:
+                    try:
+                        hdr_types.append(self.labels[txt])
+                    except:
+                        hdr_types.append('str')
+                style = ''
+                try:
+                    if self.lens[txt][1] > 0:
+                        style = '#,##0.' + '0' * self.lens[txt][1]
+                    elif self.labels[txt] == 'int' or self.labels[txt] == 'float':
+                        style = '#,##0'
+                except:
+                    pass
+                dec_fmts.append(style)
+                bits = hdr.split('\n')
+                hdr_rows = max(hdr_rows, len(bits))
+                hl = 0
+                for bit in bits:
+                    hl = max(hl, len(bit) + 1)
+                xl_lens.append(hl)
+            if hdr_rows > 1:
+                ws.row_dimensions[1].height = 12 * hdr_rows
+            in_span = False
+            for rw in range(self.table.rowCount()):
+                for cl in range(self.table.columnCount()):
+                    if self.table.item(rw, cl) is not None:
+                        valu = self.table.item(rw, cl).text().strip()
+                        if len(valu) < 1:
+                            continue
+                        if self.span is not None and valu == self.span:
+                            in_span = True
+                        style = dec_fmts[cl]
+                        if valu[-1] == '%':
+                            is_pct = True
+                            i = valu.rfind('.')
+                            if i >= 0:
+                                dec_pts = (len(valu) - i - 2)
+                                style = '#,##0.' + '0' * dec_pts + '%'
+                            else:
+                                dec_pts = 0
+                                style = '#,##0%'
+                        else:
+                            is_pct = False
+                        if hdr_types[cl] == 'int':
+                            try:
+                                val1 = valu
+                                if is_pct:
+                                    val1 = val1.strip('%')
+                                val1 = val1.replace(',', '')
+                                if is_pct:
+                                    valu = round(int(val1) / 100., dec_pts + 2)
+                                else:
+                                    valu = int(val1)
+                            except:
+                                pass
+                        elif hdr_types[cl] == 'float':
+                            try:
+                                val1 = valu
+                                if is_pct:
+                                    val1 = val1.strip('%')
+                                val1 = val1.replace(',', '')
+                                if is_pct:
+                                    valu = round(float(val1) / 100., dec_pts + 2)
+                                else:
+                                    valu = float(val1)
+                            except:
+                                pass
+                        else:
+                            if is_pct:
+                                try:
+                                    val1 = valu.strip('%')
+                                    val1 = val1.replace(',', '')
+                                    valu = round(float(val1) / 100., dec_pts + 2)
+                                except:
+                                    pass
+                        if not in_span:
+                            if is_pct:
+                                plus = 3
+                            else:
+                                plus = 0
+                            xl_lens[cl] = max(xl_lens[cl], len(str(valu)) + plus)
+                        ws.cell(row=rw + 2, column=cl + 1).value = valu
+                        ws.cell(row=rw + 2, column=cl + 1).font = normal
+                        ws.cell(row=rw + 2, column=cl + 1).number_format = style
+            for cl in range(self.table.columnCount()):
+                ws.column_dimensions[ssCol(cl + 1)].width = xl_lens[cl]
+            ws.freeze_panes = 'A2'
+            wb.save(data_file)
+            wb.close()
+        self.savedfile = data_file
         if not self.edit_table:
             self.close()
 
@@ -973,14 +1140,22 @@ class Table(QtWidgets.QDialog):
                         valu = self.table.item(rw, cl).text()
                 else:
                     valu = ''
+                    try:
+                        if isinstance(self.table.cellWidget(rw, cl), QtWidgets.QComboBox):
+                            valu = self.table.cellWidget(rw, cl).currentText()
+                    except:
+                        pass
                 if valu != '':
                     values.append(self.fields[cl] + '=' + valu)
             self.replaced[key] = values
         self.close()
 
     def getValues(self):
-        if self.edit_table:
-            return self.replaced
+        try:
+            if self.edit_table:
+                return self.replaced
+        except:
+            pass
         return None
 
     def getItem(self, col):

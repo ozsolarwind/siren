@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2022 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2024 Sustainable Energy Now Inc., Angus King
 #
 #  powermodel.py - This file is part of SIREN.
 #
@@ -21,6 +21,7 @@
 
 from copy import copy
 from math import asin, ceil, cos, fabs, floor, log10, pow, radians, sin, sqrt
+from PyQt5 import QtCore, QtGui, QtWidgets
 import matplotlib
 if matplotlib.__version__ > '3.5.1':
     matplotlib.use('Qt5Agg')
@@ -37,9 +38,8 @@ import time
 import xlwt
 
 import configparser  # decode .ini file
-from PyQt5 import Qt, QtCore, QtGui, QtWidgets
 
-from senutils import getParents, getUser, techClean
+from senutils import getParents, getUser, ssCol, techClean
 import displayobject
 import displaytable
 from editini import SaveIni
@@ -192,10 +192,10 @@ class PowerModel():
             else:
                 miny = 0
             if self.plots['save_plot']:
-                titl = 'By_' + period
+                titl = f'By {period}'
                 decpts = [3] * len(sp_vals)
                 decpts[0] = decpts[1] = 0
-                dialog = displaytable.Table(list(map(list, list(zip(*sp_data)))), title=titl, fields=sp_vals,
+                dialog = displaytable.Table(list(map(list, list(zip(*sp_data)))), title=titl, year=self.base_year, fields=sp_vals,
                                             save_folder=self.scenarios, decpts=decpts)
                 dialog.exec_()
                 del dialog, sp_data, sp_vals
@@ -233,8 +233,12 @@ class PowerModel():
                         mng.window.showMaximized()
                 else:
                     mng.resize(*mng.window.maxsize())
+            zp = ZoomPanX()
+            f = zp.zoom_pan(bbdx, base_scale=1.2) # enable scrollable zoom
             if self.plots['block']:
                 plt.show(block=True)
+                if matplotlib.__version__ > '3.5.1':
+                    plt.waitforbuttonpress()
             else:
                 plt.draw()
 
@@ -404,8 +408,12 @@ class PowerModel():
                         mng.window.showMaximized()
                 else:
                     mng.resize(*mng.window.maxsize())
+            zp = ZoomPanX()
+            f = zp.zoom_pan(px, base_scale=1.2) # enable scrollable zoom
             if self.plots['block']:
                 plt.show(block=True)
+                if matplotlib.__version__ > '3.5.1':
+                    plt.waitforbuttonpress()
             else:
                 plt.draw()
 
@@ -778,6 +786,7 @@ class PowerModel():
                                     titl += stn.scenario + '; '
                             try:
                                 titl = titl[:-2]
+                                titl = titl.replace('.xlsx', '')
                                 titl = titl.replace('.xls', '')
                                 ws.cell(row=row, column=col).value = titl
                             except:
@@ -1399,10 +1408,10 @@ class PowerModel():
             else:
                 miny = 0
             if self.plots['save_plot']:
-                titl = 'Hour'
+                titl = f'Hour'
                 decpts = [3] * len(sp_vals)
                 decpts[0] = decpts[1] = 0
-                dialog = displaytable.Table(list(map(list, list(zip(*sp_data)))), title=titl, fields=sp_vals,
+                dialog = displaytable.Table(list(map(list, list(zip(*sp_data)))), title=titl, year=self.base_year, fields=sp_vals,
                                             save_folder=self.scenarios, decpts=decpts)
                 dialog.exec_()
                 del dialog, sp_data, sp_vals
@@ -1437,6 +1446,8 @@ class PowerModel():
             f = zp.zoom_pan(hx, base_scale=1.2) # enable scrollable zoom
             if self.plots['block']:
                 plt.show(block=True)
+                if matplotlib.__version__ > '3.5.1':
+                    plt.waitforbuttonpress()
             else:
                 plt.draw()
             del zp
@@ -1548,7 +1559,7 @@ class PowerModel():
                 sp_tots.append(0.)
                 sp_pts.append(4)
                 titl = 'Augmented'
-                dialog = displaytable.Table(list(map(list, list(zip(*sp_data)))), title=titl, fields=sp_vals,
+                dialog = displaytable.Table(list(map(list, list(zip(*sp_data)))), title=titl, year=self.base_year, fields=sp_vals,
                                             save_folder=self.scenarios, decpts=sp_pts)
                 dialog.exec_()
                 del dialog
@@ -1574,8 +1585,8 @@ class PowerModel():
                     for i in range(len(sp_data[e])):
                         sp_data[e][i] = sp_data[l][i] - sp_data[r][i]
                         sp_tots[e] += sp_data[e][i]
-                titl = 'augmented2'
-                dialog = displaytable.Table(list(map(list, list(zip(*sp_data)))), title=titl, fields=sp_vals,
+                titl = 'Augmented2'
+                dialog = displaytable.Table(list(map(list, list(zip(*sp_data)))), title=titl, year=self.base_year, fields=sp_vals,
                                             save_folder=self.scenarios, decpts=sp_pts)
                 dialog.exec_()
                 fields = ['row', 'component', 'MWh', 'Load %']
@@ -1584,8 +1595,8 @@ class PowerModel():
                 for i in range(2, len(sp_vals)):
                     values.append([i - 1, sp_vals[i].title(), sp_tots[i], 0.])
                     values[-1][-1] = (sp_tots[i] * 100.) / sp_tots[l]
-                titl = 'augmented3'
-                dialog = displaytable.Table(values, fields=fields, title=titl, save_folder=self.scenarios, decpts=sp_pts)
+                titl = 'Augmented3'
+                dialog = displaytable.Table(values, fields=fields, title=titl, year=self.base_year, save_folder=self.scenarios, decpts=sp_pts)
                 dialog.exec_()
                 del dialog, sp_vals, sp_data, sp_tots
             plt.ylim([miny, maxy])
@@ -1608,8 +1619,12 @@ class PowerModel():
                         mng.window.showMaximized()
                 else:
                     mng.resize(*mng.window.maxsize())
+            zp = ZoomPanX()
+            f = zp.zoom_pan(hx, base_scale=1.2) # enable scrollable zoom
             if self.plots['block']:
                 plt.show(block=True)
+                if matplotlib.__version__ > '3.5.1':
+                    plt.waitforbuttonpress()
             else:
                 plt.draw()
             del zp
@@ -1701,8 +1716,12 @@ class PowerModel():
                         mng.window.showMaximized()
                 else:
                     mng.resize(*mng.window.maxsize())
+            zp = ZoomPanX()
+            f = zp.zoom_pan(dx, base_scale=1.2) # enable scrollable zoom
             if self.plots['block']:
                 plt.show(block=True)
+                if matplotlib.__version__ > '3.5.1':
+                    plt.waitforbuttonpress()
             else:
                 plt.draw()
             if self.do_load:
@@ -1783,8 +1802,12 @@ class PowerModel():
                             mng.window.showMaximized()
                     else:
                         mng.resize(*mng.window.maxsize())
+            zp = ZoomPanX()
+            f = zp.zoom_pan(lx, base_scale=1.2) # enable scrollable zoom
             if self.plots['block']:
                 plt.show(block=True)
+                if matplotlib.__version__ > '3.5.1':
+                    plt.waitforbuttonpress()
             else:
                 plt.draw()
         if not self.plots['block']:
@@ -1827,7 +1850,8 @@ class PowerModel():
                                       [d_short[0][i], d_short[1][i], d_short[2][i]], values=vals))
                 vals.insert(0, 'date')
                 vals.insert(0, 'day')
-                dialog = displaytable.Table(shortstuff, title='Daily Shortfall',
+                titl = 'Daily Shortfall'
+                dialog = displaytable.Table(shortstuff, title=titl, year=self.base_year,
                          save_folder=self.scenarios, fields=vals)
                 dialog.exec_()
                 del dialog
@@ -1869,7 +1893,11 @@ class PowerModel():
                             mng.window.showMaximized()
                     else:
                         mng.resize(*mng.window.maxsize())
+                zp = ZoomPanX()
+                f = zp.zoom_pan(sdfx, base_scale=1.2) # enable scrollable zoom
                 plt.show(block=True)
+                if matplotlib.__version__ > '3.5.1':
+                    plt.waitforbuttonpress()
                 h_storage = [-(shortfall[0][-1] / len(shortfall[0]))]  # average shortfall
                 for s in range(1, self.iterations + 1):
                     for i in range(len(self.x)):
@@ -1941,7 +1969,11 @@ class PowerModel():
                             mng.window.showMaximized()
                     else:
                         mng.resize(*mng.window.maxsize())
+                zp = ZoomPanX()
+                f = zp.zoom_pan(sfx, base_scale=1.2) # enable scrollable zoom
                 plt.show(block=True)
+                if matplotlib.__version__ > '3.5.1':
+                    plt.waitforbuttonpress()
                 for i in range(0, len(load)):
                     shortfall[0][i] = rgen[i] - load[i]
                 for s in range(1, self.iterations + 1):
@@ -1981,7 +2013,11 @@ class PowerModel():
                             mng.window.showMaximized()
                     else:
                         mng.resize(*mng.window.maxsize())
+                zp = ZoomPanX()
+                f = zp.zoom_pan(sfx, base_scale=1.2) # enable scrollable zoom
                 plt.show(block=True)
+                if matplotlib.__version__ > '3.5.1':
+                    plt.waitforbuttonpress()
             else:
                 for i in range(0, len(load)):
                     shortfall[0][i] = rgen[i] - load[i]
@@ -2003,7 +2039,8 @@ class PowerModel():
             vals.insert(0, 'period')
             vals.insert(0, 'hour')
             if self.plots['shortfall_detail'] and self.plots['save_plot']:
-                dialog = displaytable.Table(shortstuff, title='Hourly Shortfall',
+                titl = 'Hourly Shortfall'
+                dialog = displaytable.Table(shortstuff, title=titl, year=self.base_year,
                                             save_folder=self.scenarios, fields=vals)
                 dialog.exec_()
                 del dialog
@@ -2107,7 +2144,7 @@ class PowerModel():
                 titl = 'Total'
                 decpts = [3] * len(sp_vals)
                 decpts[0] = 0
-                dialog = displaytable.Table(list(map(list, list(zip(*sp_data)))), title=titl, fields=sp_vals,
+                dialog = displaytable.Table(list(map(list, list(zip(*sp_data)))), title=titl, year=self.base_year, fields=sp_vals,
                                             save_folder=self.scenarios, decpts=decpts)
                 dialog.exec_()
                 del dialog, sp_data, sp_vals
@@ -2139,8 +2176,12 @@ class PowerModel():
                         mng.window.showMaximized()
                 else:
                     mng.resize(*mng.window.maxsize())
+            zp = ZoomPanX()
+            f = zp.zoom_pan(tx, base_scale=1.2) # enable scrollable zoom
             if self.plots['block']:
                 plt.show(block=True)
+                if matplotlib.__version__ > '3.5.1':
+                    plt.waitforbuttonpress()
             else:
                 plt.draw()
         if self.plots['month']:
@@ -2163,7 +2204,7 @@ class PowerModel():
           or data_file[-5:] == '.xlsx':
             pass
         else:
-            data_file += '.xls'
+            data_file += '.xlsx'
         data_file = QtWidgets.QFileDialog.getSaveFileName(None, 'Save power data file',
                     self.scenarios + data_file, 'Excel Files (*.xls*);;CSV Files (*.csv)')[0]
         if data_file == '':
@@ -2176,7 +2217,7 @@ class PowerModel():
           or data_file[-5:] == '.xlsx':
             pass
         else:
-            data_file += '.xls'
+            data_file += '.xlsx'
         if os.path.exists(data_file):
             if os.path.exists(data_file + '~'):
                 os.remove(data_file + '~')
@@ -2206,7 +2247,7 @@ class PowerModel():
                 tf.write(lines[i] + '\n')
             tf.close()
             del lines
-        else:
+        elif data_file[-4:] == '.xls':
             wb = xlwt.Workbook()
             ws = wb.add_sheet('Detail')
             ws.write(0, 0, 'Hour')
@@ -2231,6 +2272,37 @@ class PowerModel():
             ws.set_horz_split_pos(1)  # in general, freeze after last heading row
             ws.set_remove_splits(True)  # if user does unfreeze, dont leave a split there
             wb.save(data_file)
+            del wb
+        else: # .xlsx
+            wb = oxl.Workbook()
+            ws = wb.active
+            ws.title = 'Detail'
+            normal = oxl.styles.Font(name='Arial', size='10')
+            ws.cell(row=1, column=1).value = 'Hour'
+            ws.cell(row=1, column=1).font = normal
+            ws.cell(row=1, column=2).value = 'Period'
+            ws.cell(row=1, column=2).font = normal
+            for i in range(len(self.x)):
+                ws.cell(row=i + 2, column=1).value = i + 1
+                ws.cell(row=i + 2, column=1).font = normal
+                ws.cell(row=i + 2, column=2).value = the_date(the_year, i)
+                ws.cell(row=i + 2, column=2).font = normal
+            ws.column_dimensions['B'].width = 16
+            c = 3
+            for key in keys:
+                if key[:4] == 'Load' and self.load_multiplier != 0:
+                    ws.cell(row=1, column=c).value = 'Load ' + self.load_year
+                else:
+                    ws.cell(row=1, column=c).value = key
+                ws.cell(row=1, column=c).font = normal
+                ws.column_dimensions[ssCol(c)].width = len(key)
+                for r in range(len(techs[key])):
+                    ws.cell(row=r + 2, column=c).value = round(techs[key][r], 3)
+                    ws.cell(row=r + 2, column=c).font = normal
+                c += 1
+            ws.freeze_panes = 'C2'
+            wb.save(data_file)
+            wb.close()
             del wb
 
 #       __init__ for PowerModel
@@ -2271,7 +2343,7 @@ class PowerModel():
             scenario_prefix = ''
         try:
             self.scenarios = config.get('Files', 'scenarios')
-            if scenario_prefix != '' :
+            if scenario_prefix != '':
                 self.scenarios += '/' + scenario_prefix
             for key, value in parents:
                 self.scenarios = self.scenarios.replace(key, value)
@@ -2531,7 +2603,7 @@ class PowerModel():
             self.stn_zone = self.model.getStnZones()
         if self.plots['save_data']:
             if self.data_file == '':
-                data_file = 'Power_Table_%s.xls' % \
+                data_file = 'Power_Table_%s.xlsx' % \
                             QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),
                             'yyyy-MM-dd_hhmm')
             else:
@@ -2555,7 +2627,8 @@ class PowerModel():
             if self.plots['save_zone']:
                 fields.insert(1, 'zone')
                 decpts.insert(1, 0)
-            dialog = displaytable.Table(self.power_summary, sumfields=sumfields,
+            titl = 'Summary'
+            dialog = displaytable.Table(self.power_summary, sumfields=sumfields, title=titl, year=self.base_year,
                      units='capacity=MW generation=MWh transmitted=MWh', sumby='technology',
                      decpts=decpts, fields=fields, save_folder=self.scenarios)
             dialog.exec_()
@@ -2591,10 +2664,10 @@ class PowerModel():
             while True:
                 if self.plots['visualise'] and self.something is not None:
                     vis2 = Visualise(self.stn_outs, self.stn_pows, self.something, year=self.base_year)
-                    vis2.setWindowModality(Qt.Qt.WindowModal)
+                    vis2.setWindowModality(QtCore.Qt.WindowModal)
                     vis2.setWindowFlags(vis2.windowFlags() |
-                                 Qt.Qt.WindowSystemMenuHint |
-                                 Qt.Qt.WindowMinMaxButtonsHint)
+                                 QtCore.Qt.WindowSystemMenuHint |
+                                 QtCore.Qt.WindowMinMaxButtonsHint)
                     vis2.exec_()
                 wrkly = {}
                 summs = {}
@@ -2756,7 +2829,8 @@ class PowerModel():
                                                   values=['load', 'generation', 'storage_used',
                                                           'storage_loss', 'storage_balance',
                                                           'shortfall', 'excess']))
-                            dialog = displaytable.Table(shortstuff, title='Storage',
+                            titl = 'Storage'
+                            dialog = displaytable.Table(shortstuff, title=titl, year=self.base_year,
                                                         save_folder=self.scenarios,
                                                         fields=['hour', 'period', 'load', 'generation',
                                                                 'storage_used', 'storage_loss',
@@ -2789,7 +2863,8 @@ class PowerModel():
                                                    shortfall, excess],
                                                   values=['load', 'generation',
                                                           'shortfall', 'excess']))
-                            dialog = displaytable.Table(shortstuff, title='Hourly Shortfall',
+                            titl = 'Hourly Shortfall'
+                            dialog = displaytable.Table(shortstuff, title=titl, year=self.base_year,
                                                         save_folder=self.scenarios,
                                                         fields=['hour', 'period', 'load', 'generation',
                                                                 'shortfall', 'excess'])
@@ -2873,7 +2948,8 @@ class PowerModel():
                             value[0] = round(value[0], 2)
                         except:
                             pass
-                    dialog = displaytable.Table(summs, title='Generation Summary',
+                    titl = 'Generation Summary'
+                    dialog = displaytable.Table(summs, title=titl, year=self.base_year,
                                                 save_folder=self.scenarios,
                                                 fields=['component', 'capacity', 'multiplier', 'generation', 'row'],
                                                 units='generation=MWh', sortby='row')
@@ -2888,11 +2964,11 @@ class PowerModel():
                     for l in range(len(dos)):
                         if self.data_file == '':
                             if year is None:
-                                data_file = 'Power_Detail_%s%s.xls' % ( dos[l] ,
+                                data_file = 'Power_Detail_%s%s.xlsx' % ( dos[l] ,
                                 QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),
                                 'yyyy-MM-dd_hhmm'))
                             else:
-                                data_file = 'Power_Detail_%s%s_%s.xls' % ( dos[l] , str(year),
+                                data_file = 'Power_Detail_%s%s_%s.xlsx' % ( dos[l] , str(year),
                                 QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),
                                 'yyyy-MM-dd_hhmm'))
                         else:
@@ -2983,9 +3059,10 @@ class PowerModel():
                 tot_fields = [['cf', tot_generation / tot_capacity / 8760],
                               ['lcoe_real', tot_lcoe_real[0]],
                               ['lcoe_nominal', tot_lcoe_nom[0]]]
+                titl = 'Financials'
                 dialog = displaytable.Table(self.financials.stations, fields=fin_fields,
                          sumfields=fin_sumfields, units=fin_units, sumby='technology',
-                         save_folder=self.scenarios, title='Financials', totfields=tot_fields)
+                         save_folder=self.scenarios, title=titl, year=self.base_year, totfields=tot_fields)
                 dialog.exec_()
                 del dialog
         self.something.power_signal = None

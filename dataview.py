@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2022 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2022-2024 Sustainable Energy Now Inc., Angus King
 #
 #  dataview.py - This file is part of SIREN.
 #
@@ -23,7 +23,6 @@ import os
 import sys
 import time
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.Qt import QColor
 #
 import configparser   # decode .ini file
 import displayobject
@@ -533,7 +532,7 @@ class DataView(QtWidgets.QDialog):
 
     def openFile(self, ifile):
         if self.book is not None:
-            self.book.release_resources()
+            self.book.close()
             self.book = None
         self.book = WorkBook()
         try:
@@ -575,7 +574,7 @@ class DataView(QtWidgets.QDialog):
             curfile = self.file.text()
         else:
             curfile = self.scenarios + self.file.text()
-        newfile = QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', curfile, 'Excel Files (*.xls*);;CSV Files (*.csv)')[0]
+        newfile = QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', curfile, 'Excel Files (*.xls*);;CSV Files (*.csv);;Calc Files (*.ods)')[0]
         if newfile == '':
             return
         if newfile != '':
@@ -675,7 +674,7 @@ class DataView(QtWidgets.QDialog):
 
     def quitClicked(self):
         if self.book is not None:
-            self.book.release_resources()
+            self.book.close()
         if self.updated:
             self.saveConfig()
         self.close()
@@ -776,6 +775,8 @@ class DataView(QtWidgets.QDialog):
         def in_map(a_min, a_max, b_min, b_max):
             return (a_min <= b_max) and (b_min <= a_max)
 
+        lat_dim = self.scene.coord_grid[0]
+        lon_dim = self.scene.coord_grid[1]
         self.clear_DataView()
         self.dataview_vars = {}
         self.dataview_items = []
@@ -818,9 +819,9 @@ class DataView(QtWidgets.QDialog):
                     else:
                         a_lat = 0
                         a_lon = 0
-                    if in_map(a_lat - 0.25, a_lat + 0.25, self.scene.map_lower_right[0],
+                    if in_map(a_lat - lat_dim / 2., a_lat + lat_dim / 2., self.scene.map_lower_right[0],
                               self.scene.map_upper_left[0]) \
-                      and in_map(a_lon - 0.3333, a_lon + 0.3333,
+                      and in_map(a_lon - lon_dim / 2., a_lon + lon_dim / 2.,
                                  self.scene.map_upper_left[1], self.scene.map_lower_right[1]):
                         self.datacells.append([stn.lat, stn.lon])
                         for i in tmp_tech:
@@ -840,9 +841,9 @@ class DataView(QtWidgets.QDialog):
                 except:
                     continue
                 a_lon = float(self.dataview_worksheet.cell_value(curr_row, self.dataview_vars['Longitude']))
-                if in_map(a_lat - 0.25, a_lat + 0.25, self.scene.map_lower_right[0],
+                if in_map(a_lat - lat_dim / 2., a_lat + lat_dim / 2., self.scene.map_lower_right[0],
                           self.scene.map_upper_left[0]) \
-                  and in_map(a_lon - 0.3333, a_lon + 0.3333,
+                  and in_map(a_lon - lon_dim / 2., a_lon + lon_dim / 2.,
                           self.scene.map_upper_left[1], self.scene.map_lower_right[1]):
                     try:
                         self.datacells.append([float(self.dataview_worksheet.cell_value(curr_row, self.dataview_vars['Latitude'])),
@@ -897,15 +898,17 @@ class DataView(QtWidgets.QDialog):
             self.dataview_items.append(txt)
             self.scene.addItem(self.dataview_items[-1])
 
+        lat_dim = self.scene.coord_grid[0]
+        lon_dim = self.scene.coord_grid[1]
         self.clear_DataView()
         opacity = self.opacitySpin.value()
         plot_scale = self.scaleSpin.value()
-        lon_cell = .3125
+        lon_cell = lon_dim / 2.
         cells = []
         if self.xsheet.currentText() == 'Exclude':
             for cell in self.datacells:
-                lat = round(round(cell[0] / 0.5, 0) * 0.5, 4)
-                lon = round(round(cell[1] / 0.625, 0) * 0.625, 4)
+                lat = round(round(cell[0] / lat_dim, 0) * lat_dim, 4)
+                lon = round(round(cell[1] / lon_dim, 0) * lon_dim, 4)
                 ignore = False
                 for exclude in self.exclude:
                     if exclude[0] == lat and exclude[1] == lon:
@@ -920,8 +923,8 @@ class DataView(QtWidgets.QDialog):
         if self.gridcentre.isChecked():
             lat_lons = {}
             for cel in range(len(cells) -1, -1, -1):
-                lat = round(round(cells[cel][0] / 0.5, 0) * 0.5, 4)
-                lon = round(round(cells[cel][1] / 0.625, 0) * 0.625, 4)
+                lat = round(round(cells[cel][0] / lat_dim, 0) * lat_dim, 4)
+                lon = round(round(cells[cel][1] / lon_dim, 0) * lon_dim, 4)
                 lat_lon = str(lat) + '_' + str(lon)
                 if lat_lon in lat_lons.keys():
                     tc = lat_lons[lat_lon]
@@ -1003,9 +1006,9 @@ class DataView(QtWidgets.QDialog):
                     continue
             lat = cell[0]
             lon = cell[1]
-            p = self.scene.mapFromLonLat(QtCore.QPointF(lon - lon_cell, lat + .25))
-            pe = self.scene.mapFromLonLat(QtCore.QPointF(lon + lon_cell, lat + .25))
-            ps = self.scene.mapFromLonLat(QtCore.QPointF(lon - lon_cell, lat - .25))
+            p = self.scene.mapFromLonLat(QtCore.QPointF(lon - lon_cell, lat + lat_dim / 2.))
+            pe = self.scene.mapFromLonLat(QtCore.QPointF(lon + lon_cell, lat + lat_dim / 2.))
+            ps = self.scene.mapFromLonLat(QtCore.QPointF(lon - lon_cell, lat - lat_dim / 2.))
             if plot_scale != 1.:
                 x_di = (pe.x() - p.x()) * (1 - plot_scale) / 2.
                 y_di = (ps.y() - p.y()) * (1 - plot_scale) / 2.

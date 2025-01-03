@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2020-2023 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2020-2024 Sustainable Energy Now Inc., Angus King
 #
 #  getmodels.py - This file is part of SIREN.
 #
@@ -80,26 +80,37 @@ def getModelFile(*args):
             if not os.path.exists(siren_dir + 'getfiles.ini') \
               and os.path.exists(mydir + fldr_div + 'getfiles.ini'): # no getfiles.ini
                 copy(mydir + fldr_div +  'getfiles.ini', siren_dir + 'getfiles.ini')
-            if os.path.exists(updir + 'siren_sample') \
-              and os.path.exists(mydir + fldr_div + 'SIREN.ini') \
+            if os.path.exists(mydir + fldr_div + 'SIREN.ini') \
               and not os.path.exists(siren_dir + 'SIREN.ini'): # has the sample
-                msgbox = QtWidgets.QMessageBox()
-                msgbox.setWindowTitle('SIREN - Copy File')
-                msgbox.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
-                msgbox.setText('SIREN sample_files folder found')
-                msgbox.setInformativeText('Do you want to copy the sample SIREN Model (Y)?')
-                msgbox.setDetailedText('It seems you have the siren sample files. ' + \
-                    "If you reply 'Y'es the sample preferences file, SIREN.ini, will " + \
-                    'be copied to '+ siren_dir + '.')
-                msgbox.setIcon(QtWidgets.QMessageBox.Question)
-                msgbox.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
-                reply = msgbox.exec_()
-                if reply == QtWidgets.QMessageBox.Yes:
-                    if os.path.exists(siren_dir + 'SIREN.ini'):
-                        if os.path.exists(siren_dir + 'SIREN.ini~'):
-                            os.remove(siren_dir + 'SIREN.ini~')
-                        os.rename(siren_dir + 'SIREN.ini', siren_dir + 'SIREN.ini~')
-                    copy(mydir + fldr_div +  'SIREN.ini', siren_dir + 'SIREN.ini')
+                have_sample = False
+                if os.path.exists(updir + 'siren_sample'):
+                    have_sample = True
+                    msi = ''
+                elif sys.platform == 'win32' or sys.platform == 'cygwin': # maybe in ProgramData
+                    up1more = updir[:updir[:-1].rfind(fldr_div) + 1]
+                    up2more = up1more[:up1more[:-1].rfind(fldr_div) + 1]
+                    if os.path.exists(f'{up2more}\\ProgramData\\SIREN\\siren_sample') or \
+                      os.path.exists('C:\\ProgramData\\SIREN\\siren_sample'):
+                        have_sample = True
+                        msi = 'msi'
+                if have_sample:
+                    msgbox = QtWidgets.QMessageBox()
+                    msgbox.setWindowTitle('SIREN - Copy File')
+                    msgbox.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
+                    msgbox.setText('SIREN sample_files folder found')
+                    msgbox.setInformativeText('Do you want to copy the sample SIREN Model (Y)?')
+                    msgbox.setDetailedText('It seems you have the siren sample files. ' + \
+                        "If you reply 'Y'es the sample preferences file, SIREN.ini, will " + \
+                        'be copied to '+ siren_dir + '.')
+                    msgbox.setIcon(QtWidgets.QMessageBox.Question)
+                    msgbox.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+                    reply = msgbox.exec_()
+                    if reply == QtWidgets.QMessageBox.Yes:
+                        if os.path.exists(siren_dir + 'SIREN.ini'):
+                            if os.path.exists(siren_dir + 'SIREN.ini~'):
+                                os.remove(siren_dir + 'SIREN.ini~')
+                            os.rename(siren_dir + 'SIREN.ini', siren_dir + 'SIREN.ini~')
+                        copy(f'{mydir}{fldr_div}SIREN{msi}.ini', siren_dir + 'SIREN.ini')
         return siren_dir + ini_file
 
     models_dirs = []
@@ -138,7 +149,7 @@ def getModelFile(*args):
             msgbox.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
             msgbox.setText('SIREN Models folder missing')
             msgbox.setInformativeText('Do you want to reset the Models location (Y)?')
-            msgbox.setDetailedText("Can't find " + model_dir + '. ' + \
+            msgbox.setDetailedText("Can't find locations in\n'" + models_location + "'.\n" + \
                "If you reply 'Y'es you can choose a new location for the Models.")
             msgbox.setIcon(QtWidgets.QMessageBox.Question)
             msgbox.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)

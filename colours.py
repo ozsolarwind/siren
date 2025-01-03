@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2022 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2023 Sustainable Energy Now Inc., Angus King
 #
 #  colours.py - This file is part of SIREN.
 #
@@ -24,6 +24,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import configparser  # decode .ini file
 from editini import SaveIni
 from getmodels import getModelFile
+import random
 from senutils import techClean
 
 class Colours(QtWidgets.QDialog):
@@ -39,6 +40,7 @@ class Colours(QtWidgets.QDialog):
             self.config_file = getModelFile('SIREN.ini')
         self.section = section
         self.underscore = underscore
+        self.cancelled = False
         config.read(self.config_file)
         groups = ['Fossil Technologies', 'Grid', 'Map', 'Plot', 'Resource', 'Technologies', 'The Rest']
         map_colours = ['background', 'border', 'fossil', 'fossil_name', 'station', 'station_name',
@@ -90,11 +92,16 @@ class Colours(QtWidgets.QDialog):
             except:
                 pass
         if palette is not None and len(palette) > 0: # set palette of colours
-            col = ['', '']
-            col[0] = QtWidgets.QColorDialog.getColor(QtCore.Qt.white, None, 'Select colour for item 1')
             if len(palette) > 1:
-                col[1] = QtWidgets.QColorDialog.getColor(QtCore.Qt.white, None,
-                         'Select colour for item ' + str(len(palette)))
+                col = ['', '']
+                col[0] = QtWidgets.QColorDialog.getColor(QtCore.Qt.white, None, 'Select colour for item 1')
+                if not col[0].isValid():
+                    self.cancelled = True
+                    self.close()
+                col[1] = QtWidgets.QColorDialog.getColor(QtCore.Qt.white, None, 'Select colour for item ' + str(len(palette)))
+                if not col[1].isValid():
+                    self.cancelled = True
+                    self.close()
                 inc = []
                 for c in range(3):
                     inc.append((col[1].getRgb()[c] - col[0].getRgb()[c]) / (len(palette) - 1))
@@ -104,14 +111,36 @@ class Colours(QtWidgets.QDialog):
                         colr.append(int(col[0].getRgb()[c] + inc[c] * i))
                     QtGui.QColor.setRgb(col[1], colr[0], colr[1], colr[2])
                     if self.underscore:
-                        self.colours[palette[i].lower()] = ['', col[1].name()]
-                    else:
                         self.colours[palette[i].lower().replace(' ', '_')] = ['', col[1].name()]
+                    else:
+                        self.colours[palette[i].lower()] = ['', col[1].name()]
             else:
                 if self.underscore:
-                    self.colours[palette[0].lower()] = ['', col[0].name()]
+                    key = palette[0].lower().replace(' ', '_')
                 else:
-                    self.colours[palette[0].lower().replace(' ', '_')] = ['', col[0].name()]
+                    key = palette[0].lower()
+                if key not in self.colours:
+                    self.colours[key] = ['', '']
+                col = QtWidgets.QColorDialog.getColor(QtGui.QColor(self.colours[key][1]), None, 'Select colour for ' + key.title())
+                if col.isValid():
+                    self.colours[key] = ['', col.name()]
+                else:
+                    self.cancelled = True
+                    if not add_colour:
+                        self.close()
+        if add_colour:
+            if self.underscore:
+                key = add_colour.lower()
+            else:
+                key = add_colour.lower().replace(' ', '_')
+            if key not in self.colours:
+                self.colours[key] = ['', '']
+            col = QtWidgets.QColorDialog.getColor(QtGui.QColor(self.colours[key][1]), None, 'Select colour for ' + key.title())
+            if col.isValid():
+                self.colours[key] = ['', col.name()]
+            else:
+                self.cancelled = True
+                self.close()
         group_colours = False
         try:
             gc = config.get('View', 'group_colours')
@@ -165,14 +194,6 @@ class Colours(QtWidgets.QDialog):
             for key, value in iter(sorted(self.colours.items())):
                 self.add_item(key, value, i)
                 i += 1
-        if add_colour:
-            if self.underscore:
-                key = add_colour.lower()
-            else:
-                key = add_colour.lower().replace(' ', '_')
-            self.colours[key] = ['', '']
-            self.add_item(key, ['', ''], -1)
-            self.showDialog(colour=key)
         buttonLayout = QtWidgets.QHBoxLayout()
         quit = QtWidgets.QPushButton('Quit', self)
         quit.setMaximumWidth(70)
@@ -190,7 +211,7 @@ class Colours(QtWidgets.QDialog):
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(buttons)
         layout.addLayout(self.grid)
-        layout.addWidget(buttons)
+   #     layout.addWidget(buttons)
         self.setLayout(layout)
         self.grid.setColumnMinimumWidth(0, self.width[0])
         self.grid.setColumnMinimumWidth(1, self.width[0])
@@ -289,7 +310,7 @@ class Colours(QtWidgets.QDialog):
             key = colour
             ndx = 1
         if self.colours[key][ndx] != '' and self.colours[key][ndx] != 'delete':
-            col = QtWidgets.QColorDialog.getColor(self.colours[key][ndx], None, 'Select colour for ' + key.title())
+            col = QtWidgets.QColorDialog.getColor(QtGui.QColor(self.colours[key][ndx]), None, 'Select colour for ' + key.title())
         else:
             col = QtWidgets.QColorDialog.getColor(QtGui.QColor('white'), None, 'Select colour for ' + key.title())
         if col.isValid():
@@ -316,9 +337,9 @@ class Colours(QtWidgets.QDialog):
         text, ok = QtWidgets.QInputDialog.getText(self, 'Add Colour Item', 'Enter name for colour item:')
         if ok:
             if self.underscore:
-                key = text.lower()
-            else:
                 key = text.lower().replace(' ', '_')
+            else:
+                key = text.lower()
             self.colours[key] = ['', '']
             self.add_item(key, ['', ''], -1)
 
@@ -341,3 +362,103 @@ class Colours(QtWidgets.QDialog):
 
     def getValues(self):
         return self.anobject
+
+# create a colour blindness palette
+def PlotPalette(keys, palette=15, black=False, lower=True):
+    # https://mk.bcgsc.ca/colorblind/palettes.mhtml#15-color-palette-for-colorbliness
+    colour_dict = {}
+    if palette == 15 or palette == '15':
+        colours = [[0,0,0],
+                   [0,73,73],
+                   [0,146,146],
+                   [255,109,182],
+                   [255,182,219],
+                   [73,0,146],
+                   [0,109,219],
+                   [182,109,255],
+                   [109,182,255],
+                   [182,219,255],
+                   [146,0,0],
+                   [146,73,0],
+                   [219,109,0],
+                   [36,255,36],
+                   [255,255,109]
+                  ]
+        # colour order to "separate" similar colours
+        order = [3, 1, 14, 2, 10, 13, 4, 7, 5, 11, 9, 8, 6, 12]
+        if black:
+            order.insert(0, 0)
+    elif palette == 24 or palette == '24':
+        colours = [[0,61,48],
+                   [0,87,69],
+                   [0,115,92],
+                   [0,145,117],
+                   [0,175,142],
+                   [0,203,167],
+                   [0,235,193],
+                   [134,255,222],
+                   [0,48,111],
+                   [0,72,158],
+                   [0,95,204],
+                   [0,121,250],
+                   [0,159,250],
+                   [0,194,249],
+                   [0,229,248],
+                   [124,255,250],
+                   [255,213,253],
+                   [0,64,2],
+                   [95,9,20],
+                   [0,90,1],
+                   [134,8,28],
+                   [0,119,2],
+                   [178,7,37],
+                   [0,149,3],
+                   [222,13,46],
+                   [0,180,8],
+                   [255,66,53],
+                   [0,211,2],
+                   [255,135,53],
+                   [0,244,7],
+                   [255,185,53],
+                   [255,226,57]]
+        order = []
+        for o in range(len(colours)):
+            order.append(o)
+    elif palette[0].lower() == 'r': #random
+        for key in keys:
+            r = lambda: random.randint(0,255)
+            new_colr = '#%02X%02X%02X' % (r(),r(),r())
+            colour_dict[key] = new_colr
+        return colour_dict
+    else: # later version of 15 palette
+        colours = [[104,2,63],
+                   [0,129,105],
+                   [239,0,150],
+                   [0,220,181],
+                   [255,207,226],
+                   [0,60,134],
+                   [148,0,230],
+                   [0,159,250],
+                   [255,113,253],
+                   [124,255,250],
+                   [106,2,19],
+                   [0,134,7],
+                   [246,2,57],
+                   [0,227,7],
+                   [255,220,61]
+              ]
+        # colour order to "separate" similar colours
+        order = [0, 5, 9, 13, 14, 1, 2, 6, 3, 12, 11, 7, 4, 8, 10]
+    o = -1
+    for key in keys:
+        o += 1
+        if o >= len(order):
+            o = 0
+        colr = '#'
+        for j in range(3):
+            colr += str(hex(colours[order[o]][j]))[2:].upper().zfill(2)
+        if lower:
+            colour_dict[key.lower()] = colr
+        else:
+            colour_dict[key] = colr
+    return colour_dict

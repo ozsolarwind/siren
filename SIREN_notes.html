@@ -33,7 +33,7 @@ pre {
 <li>If required, the sample SIREN simulation of the SWIS - <em>siren_sample.exe</em>
 </ul>
 <h3>Packaging for Windows</h3>
-<p>I use PyInstaller (currently Version 5.6.2) to package SIREN for Windows. I use the multi-package facility to create executables for <code>siren.py, sirenm.py</code> and the tools (<code>flexiplot.py, getera5.py, getmap.py, getmerra2.py, indexweather.py, makegrid.py, makeweatherfiles.py, pmtmldetail.py, powermatch.py, powerplot.py, sirenupd.py</code> and <code>updateswis.py</code>). <code>siren_application.spec</code> is the spec file (<code>pyinstaller.exe siren_application.spec</code> with options <code>--log-level ERROR</code> and/or <code>--noconfirm</code> ... <code>pyinstaller.exe --noconfirm --log-level ERROR siren_application.spec</code>). This enables all programs to be included in a single library for distribution. PyInstaller places them in individual directories - I use <code>package_siren.py</code> to copy all the executables into the <em>siren</em> directory and remove some unwanted files that are included as part of the packaging process.</p>
+<p>I use PyInstaller (currently Version 5.6.2) to package SIREN for Windows. I use the multi-package facility to create executables for <code>siren.py, powermap.py</code> and the tools (<code>flexiplot.py, getera5.py, getmap.py, getmerra2.py, indexweather.py, makegrid.py, makeweatherfiles.py, pmtmldetail.py, powermatch.py, powerplot.py, sirenupd.py</code> and <code>updateswis.py</code>). <code>siren_application.spec</code> is the spec file (<code>pyinstaller.exe siren_application.spec</code> with options <code>--log-level ERROR</code> and/or <code>--noconfirm</code> ... <code>pyinstaller.exe --noconfirm --log-level ERROR siren_application.spec</code>). This enables all programs to be included in a single library for distribution. PyInstaller places them in individual directories - I use <code>package_siren.py</code> to copy all the executables into the <em>siren</em> directory and remove some unwanted files that are included as part of the packaging process.</p>
 <p>All these files have a version file where the version is <code>&lt;major&gt;,&lt;minor&gt;.&lt;yyyy&gt;.&lt;mmdd&gt;</code>. <code>&lt;major&gt;</code> and <code>&lt;minor&gt;</code> refer to the SIREN release. The date part is the date the program was last changed. The version numbering simulates Microsoft version numbers. <code>template_version</code> provides a template for the version files to enable new SIREN releases to be packaged. The current <code>major</code> version is <strong><code>4</code></strong> (<code>1</code> was the initial version, <code>2</code> for the change from Python2 to Python3, and for the change from PyQt4 to PyQt5, and <code>4</code> for a change to a new packaging environment, Windows 10 rather than Windows 7, and a change to 64-bit Python).</p>
 <p>To enable the modules to be built correctly most require <code>hiddenimports</code>, as identified in <code>siren_application.spec</code>, as often PyInstaller will fail to identify all imports from libraries used by the SIREN program.</p>
 <h4>Makeweatherfiles</h4>
@@ -95,8 +95,9 @@ pre {
 <tr><td>python3-mpltoolkits.basemap</td><td>&nbsp;</td><td>Note: Must have <code>basemap/data/epsg</code> or <code>basemap_data/epsg</code> file (location may have changed with recent versions).</td></tr>
 <tr><td>netCDF4</td></tr>
 <tr><td>numpy</td></tr>
-<tr><td>python3-openpyxl</td></tr>
 <tr><td>os</td><td style="text-align:center">y</td></tr>
+<tr><td>plotly</td></tr>
+<tr><td>python3-openpyxl</td></tr>
 <tr><td>pwd</td><td style="text-align:center">y</td><td>Linux ?</td></td></tr>
 <tr><td><s>pyexcel</s></td><td>&nbsp;</td><td><s>Support for spreadsheet. No longer used</s></td></td></tr>
 <tr><td><s>pyexcel-io</s></td><td>&nbsp;</td><td><s>CSV files</s></td></td></tr>
@@ -156,15 +157,17 @@ pre {
 <tr><td>plotweather.py (*)</td><td>Plot (chart) weather data</td></tr>
 <tr><td>pmtmldetail.py</td><td>Produce a more detailed Powermatch Detail worksheet which contains hourly details on how RE is used to meet load</td></tr>
 <tr><td>powerclasses.py</td><td>Classes used by PowerModel (powermodel.py)</td></tr>
+<tr><td>powermap.py (*)</td><td>Main power modelling program. Formerly named <em>sirenm.py</em></td></tr>
 <tr><td>powermatch.py</td><td>Match generation to load. Produce costed scenarios</td></tr>
 <tr><td>powermodel.py (*)</td><td>Process SAM models for stations to produce spreadsheets and charts</td></tr>
 <tr><td>powerplot.py</td><td>A standalone program that will produce either hourly or diurnal charts from a spreadsheet that conforms to certain constraints</td></tr>
 <tr><td>sammodels.py</td><td>Routines for SAM/NREL models for DHI, DNI and Zenith angle</td></tr>
 <tr><td>samrun.py</td><td>Run a SAM model</td></tr>
+<tr><td>senplot3d.py</td><td>Support for 3D charts using plotly</td></tr>
 <tr><td>senutils.py (*)</td><td>Some common functions. Adjust file names from [Parents] properties in config (.ini) file; Obtain current userid details; &ldquo;Clean&rdquo; tech names; ClickableQLabel</td></tr>
-<tr><td>siren.py (*)</td><td>Display a menu of SIREN Models (invokes sirenm.py for the chosen Model)</td></tr>
+<tr><td>siren.py (*)</td><td>Display a menu of SIREN Models (invokes powermap.py for the chosen Model)</td></tr>
 <tr><td>sirenicons.py</td><td>Get a technology icon</td></tr>
-<tr><td>sirenm.py (*)</td><td>Main SIREN program</td></tr>
+<tr><td>sirensetup.py</td><td>Set up to use siren_smaple when SIREN is installed in read-only storage</td></tr>
 <tr><td>sirenupd.py</td><td>Update to newer SIREN programs without having to download the full toolkit</td></tr>
 <tr><td>ssc.py (*)</td><td>Access SAM models</td></tr>
 <tr><td>station.py</td><td>Station class. Populate stations from files and scenarios</td></tr>
@@ -195,5 +198,5 @@ pre {
 </ul>
 <h3>opt_debug</h3>
 <p><code>opt_debug.py</code> can be used to debug the <code>powermatch</code> optimisation routine. It doesn't need to be packaged with SIREN.</p>
-<p>Angus King<br />August 2023</p>
+<p>Angus King<br />June 2024</p>
 </body>

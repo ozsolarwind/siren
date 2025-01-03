@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2023 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2024 Sustainable Energy Now Inc., Angus King
 #
 #  newstation.py - This file is part of SIREN.
 #
@@ -156,11 +156,19 @@ class AnObject(QtWidgets.QDialog):
         if os.path.exists(self.sam_file):
             sam = open(self.sam_file)
             sam_turbines = csv.DictReader(sam)
+            if 'KW Rating' in sam_turbines.fieldnames:
+                kwr = 'KW Rating'
+            else:
+                kwr = 'kW Rating'
             for turb in sam_turbines:
                 if turb['Name'] == 'Units' or turb['Name'] == '[0]':
                     pass
                 else:
-                    self.turbines.append([turb['Name'].strip(), '', turb['Rotor Diameter'], float(turb['KW Rating'])])
+                    try:
+                        self.turbines.append([turb['Name'].strip(), '', turb['Rotor Diameter'], float(turb[kwr])])
+                    except:
+                        print(turb['Name'])
+                        self.turbines.append([turb['Name'].strip(), '', turb['Rotor Diameter'], turb[kwr]])
                     if turb['IEC Wind Speed Class'] in ['', ' ', '0', 'Unknown', 'unknown', 'not listed']:
                        pass
                     else:

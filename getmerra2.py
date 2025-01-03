@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2017-2023 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2017-2024 Sustainable Energy Now Inc., Angus King
 #
 #  getmerra2.py - This file is part of SIREN.
 #
@@ -681,7 +681,7 @@ class getMERRA2(QtWidgets.QDialog):
                 self.westSpin.setValue(self.eastSpin.value())
                 self.eastSpin.setValue(x)
             self.lonwSpin.setValue(self.eastSpin.value() - self.westSpin.value())
-            self.lonwSpin.setValue(self.eastSpin.value() - (self.eastSpin.value() - self.westSpin.value()) / 2.)
+            self.lonSpin.setValue(self.eastSpin.value() - (self.eastSpin.value() - self.westSpin.value()) / 2.)
             self.ignore = False
         elif self.sender().objectName() == 'lat':
             self.ignore = True

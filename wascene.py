@@ -587,10 +587,10 @@ class WAScene(QtWidgets.QGraphicsScene):
         self._lineGroup = QtWidgets.QGraphicsItemGroup() # stations lines group
         try:
             self._setupGrid()
-        except:
+        except Exception as e:
             msgbox = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Critical,
                                            'Error setting up grid.',
-                                           'May need to check map coordinates\n(upper_left' + self.map \
+                                            e.msg + '\n\nMay need to check map coordinates\n(upper_left' + self.map \
                                             + ' and lower_right' + self.map + ' in [Map]) or' \
                                             + '\nthe status of grid-related (KML) files.' \
                                             + '\nExecution aborted.',
@@ -796,6 +796,10 @@ class WAScene(QtWidgets.QGraphicsScene):
             while curr_row < num_rows:
                 curr_row += 1
                 try:
+                    try:
+                        area = worksheet.cell_value(curr_row, var['Area'])
+                    except:
+                        area = 0
                     new_st = Station(str(worksheet.cell_value(curr_row, var['Station Name'])),
                                      str(worksheet.cell_value(curr_row, var['Technology'])),
                                      worksheet.cell_value(curr_row, var['Latitude']),
@@ -804,7 +808,7 @@ class WAScene(QtWidgets.QGraphicsScene):
                                      str(worksheet.cell_value(curr_row, var['Turbine'])),
                                      worksheet.cell_value(curr_row, var['Rotor Diam']),
                                      worksheet.cell_value(curr_row, var['No. turbines']),
-                                     worksheet.cell_value(curr_row, var['Area']),
+                                     area,
                                      scen_filter)
                     name_ok = False
                     new_name = new_st.name
@@ -862,9 +866,10 @@ class WAScene(QtWidgets.QGraphicsScene):
                     except:
                         pass
                     self._stations.stations.append(new_st)
-                    self.addStation(self._stations.stations[-1])
+                    if not self.addStation(self._stations.stations[-1]):
+                        del self._stations.stations[-1]
                 except Exception as error:
-                    print(error)
+                    print('wascene error:', error)
                     pass
             self._scenarios.append([scen_filter, False, description])
 
@@ -929,7 +934,10 @@ class WAScene(QtWidgets.QGraphicsScene):
 
     def addStation(self, st):
         self._stationGroups[st.name] = []
-        p = self.mapFromLonLat(QtCore.QPointF(st.lon, st.lat))
+        try:
+            p = self.mapFromLonLat(QtCore.QPointF(st.lon, st.lat))
+        except:
+            return False
         try:
             if len(self.linesz.lines) > 0:
                 st.zone = self.linesz.getZone(st.lat, st.lon)
@@ -1038,7 +1046,7 @@ class WAScene(QtWidgets.QGraphicsScene):
             self._fnameGroup.addToGroup(txt)
         else:
             self._nameGroup.addToGroup(txt)
-        return
+        return True
 
     def addGeneration(self, st):
         if (st.technology[:6] != 'Fossil' or self.show_fossil) and st.generation > 0:

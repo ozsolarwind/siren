@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2023 Angus King
+#  Copyright (C) 2023-2024 Angus King
 #
 #  pmtmldetail.py - This file is part of SIREN.
 #
@@ -25,7 +25,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import displayobject
 from credits import fileVersion
 import openpyxl as oxl
-from senutils import ClickableQLabel, getParents, getUser, ListWidget, WorkBook
+from senutils import ClickableQLabel, getParents, getUser, ListWidget, ssCol, WorkBook
 from editini import EdtDialog, SaveIni
 from getmodels import getModelFile, commonprefix
 import configparser  # decode .ini file
@@ -33,16 +33,6 @@ import configparser  # decode .ini file
 # same order as self.file_labels
 R = 0 # Results - xlsx
 D = 1 # More detail
-col_letters = ' ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-def ss_col(col, base=1):
-    if base == 1:
-        col -= 1
-    c1 = 0
-    c2, c3 = divmod(col, 26)
-    c3 += 1
-    if c2 > 26:
-        c1, c2 = divmod(c2, 26)
-    return (col_letters[c1] + col_letters[c2] + col_letters[c3]).strip()
 
 
 class TMLDetail(QtWidgets.QWidget):
@@ -162,7 +152,7 @@ class TMLDetail(QtWidgets.QWidget):
                             ndx = j
                     self.sheet.setCurrentIndex(ndx)
                     ws = ts.sheet_by_index(ndx)
-                    ts.release_resources()
+                    ts.close()
                     del ts
                 except:
                     self.sheet.addItem(self.isheet)
@@ -219,7 +209,10 @@ class TMLDetail(QtWidgets.QWidget):
             curfile = self.scenarios[:-1]
         else:
             curfile = self.get_filename(self.files[i].text())
-        if i == D:
+        if i == R:
+            newfile = QtWidgets.QFileDialog.getOpenFileName(self, 'Open ' + self.file_labels[R] + ' file',
+                      curfile)[0]
+        else: # i == D:
             if self.files[i].text() == '':
                 curfile = self.get_filename(self.files[R].text())
                 curfile = curfile.replace('Results', 'TML_Detail')
@@ -236,15 +229,6 @@ class TMLDetail(QtWidgets.QWidget):
                 curfile = self.get_filename(self.files[D].text())
             newfile = QtWidgets.QFileDialog.getSaveFileName(None, 'Save ' + self.file_labels[D] + ' file',
                       curfile, 'Excel Files (*.xlsx)')[0]
-        else: # i == R
-            newfile = QtWidgets.QFileDialog.getOpenFileName(self, 'Open ' + self.file_labels[R] + ' file',
-                      curfile)[0]
-            if self.files[D].text() != '':
-                rsltfile = newfile.replace('Results', 'TML_Detail')
-                rsltfile = rsltfile.replace('results', 'tml_detail')
-                curfile == self.get_filename(self.files[D].text())
-                if rsltfile != curfile:
-                    self.files[D].setText('')
         if newfile != '':
             if newfile[: len(self.scenarios)] == self.scenarios:
                 self.files[i].setText(newfile[len(self.scenarios):])
@@ -256,13 +240,17 @@ class TMLDetail(QtWidgets.QWidget):
                         pfx = ('..' + '/') * (len(bits) - 1)
                         newfile = pfx + newfile[that_len + 1:]
                 self.files[i].setText(newfile)
+            if i == R: # if results need to change details
+                rsltfile = self.files[i].text().replace('Results', 'TML_Detail')
+                rsltfile = rsltfile.replace('results', 'tml_detail')
+                self.files[D].setText(rsltfile)
             self.updated = True
 
     def sheetChanged(self):
         ts = WorkBook()
         ts.open_workbook(newfile)
         ws = ts.sheet_by_name(self.sheet.currentText())
-        ts.release_resources()
+        ts.close()
         del ts
 
     def helpClicked(self):
@@ -292,9 +280,12 @@ class TMLDetail(QtWidgets.QWidget):
             config_file = sys.argv[1]
         else:
             config_file = getModelFile('SIREN.ini')
+        before = os.stat(config_file).st_mtime
         dialr = EdtDialog(config_file, section='[Powermatch]')
         dialr.exec_()
-     #   self.get_config()   # refresh config values
+        after = os.stat(config_file).st_mtime
+        if after == before:
+            return
         config = configparser.RawConfigParser()
         config.read(config_file)
         self.log.setText(config_file + ' edited. Reload may be required.')
@@ -408,6 +399,7 @@ class TMLDetail(QtWidgets.QWidget):
         ws.row_dimensions[top_row].height = 30
         col = ws.max_column + 1
         col_s = col
+        # add columns for totals of other techs, e.g. Rooftop PV, Gas, ...
         splits = ['TML', 'Charge', 'Surplus']
         for s in range(3):
             if s == 1 and len(techs[1][0]) == 0:
@@ -428,25 +420,25 @@ class TMLDetail(QtWidgets.QWidget):
                         vertical='bottom', horizontal='center')
                 for row in range(top_row + 1, ws.max_row + 1):
                     if s == 0: # TML
-                        ws.cell(row=row, column=col).value = '=IF($' + ss_col(short_col) + str(row) + '>0,$C' + \
-                                str(row) + '/($C' + str(row) + '+$' + ss_col(short_col) + str(row) + ')*' + \
-                                ss_col(techs[0][1][t]) + str(row) + ',' + ss_col(techs[0][1][t]) + str(row) + ')'
+                        ws.cell(row=row, column=col).value = '=IF($' + ssCol(short_col) + str(row) + '>0,$C' + \
+                                str(row) + '/($C' + str(row) + '+$' + ssCol(short_col) + str(row) + ')*' + \
+                                ssCol(techs[0][1][t]) + str(row) + ',' + ssCol(techs[0][1][t]) + str(row) + ')'
                         ws.cell(row=row, column=col).font = normal
                         ws.cell(row=row, column=col).number_format = '#,##0.00'
                     elif s == 1: # Charge
                         chgs = '('
                         for c in techs[1][1]:
-                            chgs += '$' + ss_col(c) + str(row) + '+'
+                            chgs += '$' + ssCol(c) + str(row) + '+'
                         chgs = chgs[:-1] + ')'
-                        ws.cell(row=row, column=col).value = '=IF(' + chgs + '>0,' + ss_col(techs[0][1][t]) + \
-                                str(row) + '/SUM($' + ss_col(techs[0][1][0]) + str(row) + ':$' + \
-                                ss_col(techs[0][1][-1]) + str(row) + ')*' + chgs + ',0)'
+                        ws.cell(row=row, column=col).value = '=IF(' + chgs + '>0,' + ssCol(techs[0][1][t]) + \
+                                str(row) + '/SUM($' + ssCol(techs[0][1][0]) + str(row) + ':$' + \
+                                ssCol(techs[0][1][-1]) + str(row) + ')*' + chgs + ',0)'
                         ws.cell(row=row, column=col).font = normal
                         ws.cell(row=row, column=col).number_format = '#,##0.00'
                     elif s == 2: # Surplus
-                        sur = '=' + ss_col(techs[0][1][t]) + str(row) + '-' + ss_col(col_s + t) + str(row)
+                        sur = '=' + ssCol(techs[0][1][t]) + str(row) + '-' + ssCol(col_s + t) + str(row)
                         if len(techs[1][0]) > 0:
-                            sur += '-' + ss_col(col_s + len(techs[0][0]) + t + len(grp_techs)) + str(row)
+                            sur += '-' + ssCol(col_s + len(techs[0][0]) + t + len(grp_techs)) + str(row)
                         ws.cell(row=row, column=col).value = sur
                         ws.cell(row=row, column=col).font = normal
                         ws.cell(row=row, column=col).number_format = '#,##0.00'
@@ -465,7 +457,7 @@ class TMLDetail(QtWidgets.QWidget):
                     for row in range(top_row + 1, ws.max_row + 1):
                         chgs = '='
                         for c in value:
-                            chgs += ss_col(ref_col + c) + str(row) + '+'
+                            chgs += ssCol(ref_col + c) + str(row) + '+'
                         chgs = chgs[:-1]
                         ws.cell(row=row, column=col).value = chgs
                         ws.cell(row=row, column=col).font = normal
@@ -473,28 +465,28 @@ class TMLDetail(QtWidgets.QWidget):
                     col += 1
         if subt_row >= 0:
             for col in range(3, ws.max_column + 1):
-                ws.cell(row=subt_row, column=col).value = '=SUM(' + ss_col(col) + str(top_row + 1) + ':' + \
-                        ss_col(col) + str(ws.max_row) + ')'
+                ws.cell(row=subt_row, column=col).value = '=SUM(' + ssCol(col) + str(top_row + 1) + ':' + \
+                        ssCol(col) + str(ws.max_row) + ')'
                 ws.cell(row=subt_row, column=col).font = normal
                 ws.cell(row=subt_row, column=col).number_format = '#,##0'
         if shfl_row >= 0:
             for col in range(3, ws.max_column + 1):
                 if ws.cell(row=shfl_row, column=col).value is None or ws.cell(row=shfl_row, column=col).value == '':
                     continue
-                ws.cell(row=shfl_row, column=col).value = '=COUNTIF(' + ss_col(col) + str(top_row + 1) + ':' + \
-                        ss_col(col) + str(ws.max_row) + ',"<0")'
+                ws.cell(row=shfl_row, column=col).value = '=COUNTIF(' + ssCol(col) + str(top_row + 1) + ':' + \
+                        ssCol(col) + str(ws.max_row) + ',"<0")'
                 ws.cell(row=shfl_row, column=col).font = normal
                 ws.cell(row=shfl_row, column=col).number_format = '#,##0'
         if max_row >= 0:
             for col in range(3, ws.max_column + 1):
-                ws.cell(row=max_row, column=col).value = '=MAX(' + ss_col(col) + str(top_row + 1) + ':' + \
-                        ss_col(col) + str(ws.max_row) + ')'
+                ws.cell(row=max_row, column=col).value = '=MAX(' + ssCol(col) + str(top_row + 1) + ':' + \
+                        ssCol(col) + str(ws.max_row) + ')'
                 ws.cell(row=max_row, column=col).font = normal
                 ws.cell(row=max_row, column=col).number_format = '#,##0.00'
         if use_row >= 0:
             for col in range(3, ws.max_column + 1):
-                ws.cell(row=use_row, column=col).value = '=COUNTIF(' + ss_col(col) + str(top_row + 1) + ':' + \
-                        ss_col(col) + str(ws.max_row) + ',">0")'
+                ws.cell(row=use_row, column=col).value = '=COUNTIF(' + ssCol(col) + str(top_row + 1) + ':' + \
+                        ssCol(col) + str(ws.max_row) + ',">0")'
                 ws.cell(row=use_row, column=col).font = normal
                 ws.cell(row=use_row, column=col).number_format = '#,##0'
         ws.freeze_panes = 'C' + str(top_row + 1)

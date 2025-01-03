@@ -125,7 +125,7 @@ class Grid:
                         else:
                             stack[i] = self.line_costs[stack[i]]
                     except:
-                        pass
+                        stack[i] = '0' # default to no cost
                     i += 2
             numbr[p] = float(stack[0])
             for i in range(1, len(stack), 2):

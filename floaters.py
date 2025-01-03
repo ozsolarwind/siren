@@ -61,18 +61,24 @@ class FloatLegend(QtWidgets.QDialog):
         for st in self.stations:
             if st.technology[:6] == 'Fossil' and not self.flags[3]:
                 continue
-            if st.technology not in tech_sizes:
-                tech_sizes[st.technology] = 0.
-            if st.technology == 'Wind':
-                tech_sizes[st.technology] += self.techdata[st.technology][0] * float(st.no_turbines) * pow((st.rotor * .001), 2)
-            else:
-                tech_sizes[st.technology] += self.techdata[st.technology][0] * float(st.capacity)
-            txt_lens[0] = max(txt_lens[0], len(st.technology))
+            try:
+                if st.technology not in tech_sizes:
+                    tech_sizes[st.technology] = 0
+                if st.technology == 'Wind':
+                    tech_sizes[st.technology] += self.techdata[st.technology][0] * float(st.no_turbines) * pow((st.rotor * .001), 2)
+                else:
+                    tech_sizes[st.technology] += self.techdata[st.technology][0] * float(st.capacity)
+                txt_lens[0] = max(txt_lens[0], len(st.technology))
+            except:
+                pass
         total_area = 0.
         row = 0
         for key, value in iter(sorted(tech_sizes.items())):
             labl = QtWidgets.QLabel('__')
-            colr = QtGui.QColor(self.techdata[key][1])
+            try:
+                colr = QtGui.QColor(self.techdata[key][1])
+            except:
+                colr = QtGui.QColor('gray')
             labl.setStyleSheet('QLabel {background-color: %s; color: %s;}' % (colr.name(), colr.name()))
             self.grid.addWidget(labl, row, 0)
             self.grid.addWidget(QtWidgets.QLabel(key), row, 1)

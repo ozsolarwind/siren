@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2023 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2023-2024 Sustainable Energy Now Inc., Angus King
 #
 #  getera5.py - This file is part of SIREN.
 #
@@ -20,13 +20,14 @@
 #
 
 import cdsapi
-import datetime
+from datetime import datetime
 import os
 import subprocess
 import sys
 from netCDF4 import Dataset
 import configparser   # decode .ini file
 from PyQt5 import QtCore, QtGui, QtWidgets
+import pkg_resources
 
 from credits import fileVersion
 import displayobject
@@ -104,6 +105,9 @@ def checkFiles(tgt_dir, ini_file=None):
                     chk_src_files[ndx].append(fil)
         del fils
 
+    if not os.path.exists(tgt_dir):
+        msg_text = 'Target Folder not found'
+        return [msg_text]
     msg_text = ''
     config = configparser.RawConfigParser()
     config.read(ini_file)
@@ -137,12 +141,15 @@ def checkFiles(tgt_dir, ini_file=None):
             if len(period) == 4:
                 if fst_period == '':
                     fst_period = period + '01'
+                    lst_period = fst_period
                 elif int(period) != int(lst_period[:4]) + 1:
                     gap_periods.append(str(int(lst_period[:4]) + 1))
                 lst_period = period + '12'
             elif len(period) == 6:
+                if fst_period == '':
+                    fst_period = period
                 chk_period = the_period(period)
-                if chk_period != lst_period:
+                if lst_period != '' and chk_period != lst_period:
                     gap_periods.append(the_period(lst_period, '+'))
                 lst_period = period
             else:
@@ -159,8 +166,14 @@ def checkFiles(tgt_dir, ini_file=None):
     latn = log.latitudes[0]
     lonw = log.longitudes[0]
     lone = log.longitudes[-1]
-    grd1 = abs(log.latitudes[0] - log.latitudes[1])
-    grd2 = abs(log.longitudes[0] - log.longitudes[1])
+    try:
+        grd1 = abs(log.latitudes[0] - log.latitudes[1])
+    except:
+        grd1 = 0.25
+    try:
+        grd2 = abs(log.longitudes[0] - log.longitudes[1])
+    except:
+        grd2 = 0.25
     msg_text = 'Boundaries and period set for ERA5 data'
     if fst_period != '':
         reqd = ''
@@ -183,7 +196,10 @@ def checkFiles(tgt_dir, ini_file=None):
         else:
             msg_text += ' to ' + lst_period + ' exist'
             if len(gap_periods) > 0:
-                msg_text += ' with ' + str(len(gap_periods)) + ' gaps'
+                msg_text += ' with ' + str(len(gap_periods)) + ' gaps ('
+#                for gap in gap_periods:
+ #                   msg_text += gap + ', '
+                msg_text = msg_text[:-2] + ')'
                 print(gap_periods)
         msg_text += reqd + ')'
     return [msg_text, latn, lats, lonw, lone, grd1, grd2, the_period(lst_period, '+')]
@@ -199,41 +215,90 @@ def retrieve_era5(ini_file, lat1, lat2, lon1, lon2, grd1, grd2, year, tgt_dir, l
         parms = parmstr.split(',')
         spawn(parms, tgt_dir + '/' + tgt_log)
         return 'Request for ' + tgt_file + ' launched.'
-    era5_dict = {'product_type': 'reanalysis',
-                 'format': 'netcdf'}
-    variables = []
-    var_list = config.get('getera5', 'variables').split(',')
-    for var in var_list:
-        variables.append(config.get('getera5', 'var_' + var.strip()))
-    era5_dict['variable'] = variables
-    if len(year) > 6:
-        era5_dict['year'] = year[:4]
-        era5_dict['month'] = year[4 : -2]
-        era5_dict['day'] = year[-2:]
-    else:
-        days = []
-        for d in range(1, 32):
-            days.append('{:0>2d}'.format(d))
-        era5_dict['day'] = days
-        if len(year) > 4:
+    tgt_txt = tgt_file[:tgt_file.rfind('.')] + '_' + datetime.strftime(datetime.now(), '%Y-%m-%d_%H%M') + '.txt'
+    api_version = pkg_resources.get_distribution('cdsapi').version
+    bits = api_version.split('.')
+    if bits[0] > '0' or bits[1] >= '7':
+        era5_dict = {'product_type': ['reanalysis'],
+                     'format': 'netcdf',
+                     'data_format': 'netcdf'}
+        variables = []
+        var_list = config.get('getera5', 'variables').split(',')
+        for var in var_list:
+            variables.append(config.get('getera5', 'var_' + var.strip()))
+        era5_dict['variable'] = variables
+        if len(year) > 6:
             era5_dict['year'] = year[:4]
-            era5_dict['month'] = year[-2:]
+            era5_dict['month'] = year[4 : -2]
+            era5_dict['day'] = year[-2:]
         else:
-            era5_dict['year'] = year
-            mths = []
-            for m in range(1, 13):
-                mths.append('{:0>2d}'.format(m))
-            era5_dict['month'] = mths
-    times = []
-    for h in range(24):
-        times.append('{:0>2d}:00'.format(h))
-    era5_dict['time'] = times
-    era5_dict['area'] = [lat1, lon1, lat2, lon2]
-    era5_dict['grid'] = [grd1, grd2]
-    c = cdsapi.Client(verify=True)
-    c.retrieve('reanalysis-era5-single-levels',
-               era5_dict,
-               tgt_dir + '/' + tgt_file)
+            days = []
+            for d in range(1, 32):
+                days.append('{:0>2d}'.format(d))
+            era5_dict['day'] = days
+            if len(year) > 4:
+                era5_dict['year'] = [year[:4]]
+                era5_dict['month'] = [year[-2:]]
+            else:
+                era5_dict['year'] = [year]
+                mths = []
+                for m in range(1, 13):
+                    mths.append('{:0>2d}'.format(m))
+                era5_dict['month'] = [mths]
+        times = []
+        for h in range(24):
+            times.append('{:0>2d}'.format(h))
+        era5_dict['time'] = times
+        era5_dict['area'] = [lat1, lon1, lat2, lon2]
+        era5_dict['grid'] = [grd1, grd2]
+        rqst = open(tgt_dir + '/' + tgt_txt, 'w')
+        for key, value in era5_dict.items():
+            rqst.write(f'{key}: {value}\n')
+        rqst.close()
+        c = cdsapi.Client()
+        c.retrieve('reanalysis-era5-single-levels',
+                   era5_dict,
+                   tgt_dir + '/' + tgt_file)
+    else: # old api
+        era5_dict = {'product_type': 'reanalysis',
+                     'format': 'netcdf'}
+        variables = []
+        var_list = config.get('getera5', 'variables').split(',')
+        for var in var_list:
+            variables.append(config.get('getera5', 'var_' + var.strip()))
+        era5_dict['variable'] = variables
+        if len(year) > 6:
+            era5_dict['year'] = year[:4]
+            era5_dict['month'] = year[4 : -2]
+            era5_dict['day'] = year[-2:]
+        else:
+            days = []
+            for d in range(1, 32):
+                days.append('{:0>2d}'.format(d))
+            era5_dict['day'] = days
+            if len(year) > 4:
+                era5_dict['year'] = year[:4]
+                era5_dict['month'] = year[-2:]
+            else:
+                era5_dict['year'] = year
+                mths = []
+                for m in range(1, 13):
+                    mths.append('{:0>2d}'.format(m))
+                era5_dict['month'] = mths
+        times = []
+        for h in range(24):
+            times.append('{:0>2d}:00'.format(h))
+        era5_dict['time'] = times
+        era5_dict['area'] = [lat1, lon1, lat2, lon2]
+        era5_dict['grid'] = [grd1, grd2]
+        rqst = open(tgt_dir + '/' + tgt_txt, 'w')
+        for key, value in era5_dict.items():
+            rqst.write(f'{key}: {value}\n')
+        rqst.close()
+        c = cdsapi.Client(verify=True)
+        c.retrieve('reanalysis-era5-single-levels',
+                   era5_dict,
+                   tgt_dir + '/' + tgt_file)
 
 
 class fileInfo:
@@ -351,7 +416,7 @@ class getERA5(QtWidgets.QDialog):
         ok = False
         if sys.platform == 'win32' or sys.platform == 'cygwin':
             try:
-                cdsapirc = '~\\.cdsapirc'.replace('~', os.environ['HOME'])
+                cdsapirc = '~\\.cdsapirc'.replace('~', os.environ['USERPROFILE'])
             except:
                 cdsapirc = ''
         else:
@@ -652,7 +717,7 @@ class getERA5(QtWidgets.QDialog):
                 self.westSpin.setValue(self.eastSpin.value())
                 self.eastSpin.setValue(x)
             self.lonwSpin.setValue(self.eastSpin.value() - self.westSpin.value())
-            self.lonwSpin.setValue(self.eastSpin.value() - (self.eastSpin.value() - self.westSpin.value()) / 2.)
+            self.lonSpin.setValue(self.eastSpin.value() - (self.eastSpin.value() - self.westSpin.value()) / 2.)
             self.ignore = False
         elif self.sender().objectName() == 'lat':
             self.ignore = True
@@ -789,10 +854,10 @@ class getERA5(QtWidgets.QDialog):
         r = 1
         if sys.platform == 'win32' or sys.platform == 'cygwin':
             try:
-                self.home_dir = os.environ['HOME']
+                self.home_dir = os.environ['USERPROFILE']
             except:
                 self.home_dir = os.getcwd()
-                grid.addWidget(QtWidgets.QLabel('HOME directory:'), 1, 0)
+                grid.addWidget(QtWidgets.QLabel('USERPROFILE directory:'), 1, 0)
                 self.home = ClickableQLabel()
                 self.home.setText(self.home_dir)
                 self.home.setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
@@ -824,7 +889,7 @@ class getERA5(QtWidgets.QDialog):
         config.read(ini_file)
         api_url = config.get('getera5', 'api_url')
         if sys.platform == 'win32' or sys.platform == 'cygwin':
-            env_var = 'HOME'
+            env_var = 'USERPROFILE'
             os.system('SETX {0} "{1}"'.format(env_var, self.home_dir))
             cdsapirc = self.home_dir + '\\.cdsapirc'
         else:

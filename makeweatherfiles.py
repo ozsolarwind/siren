@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2023 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2024 Sustainable Energy Now Inc., Angus King
 #
 #  makeweatherfiles.py - This file is part of SIREN.
 #
@@ -35,7 +35,7 @@ from editini import SaveIni
 from getmodels import getModelFile
 from senutils import ClickableQLabel, getUser, extrapolateWind
 from sammodels import getDNI, getDHI
-
+import numpy
 
 class ShowHelp(QtWidgets.QDialog):
 
@@ -397,7 +397,7 @@ class makeWeather():
         except:
             self.decodeError(inp_file)
             return
-
+        base_time = datetime(1900, 1, 1, 0, 0)
      #   Variable Description                            Units
      #   -------- -------------------------------------- --------
      #   sp       Surface pressure                       Pa
@@ -410,11 +410,35 @@ class makeWeather():
      #   v100     100m u-component of wind               m/s
      #   alnip    near_ir_albedo_for_direct_radiation
      #   aluvp    uv_visible_albedo_for_direct_radiation
+        localswg = self.swg
+        if not self.make_wind:
+            variables = list(cdf_file.variables.keys())
+            if self.vars[localswg] not in variables:
+                if localswg == 'swgdn':
+                    localswg = 'swgnt'
+                else:
+                   localswg = 'swgdn'
+                if self.vars[localswg] not in variables:
+                    self.log += f'Terminating as no solar variable found in - {inp_file}\n'
+                    cdf_file.close()
+                    self.return_code = 12
+                    return
         expver = False
-        if 'expver' in cdf_file.variables.keys():
+        keys = list(cdf_file.dimensions.keys())
+        if 'expver' in keys:
             self.logMsg('ERA5 and ERA5T data in {}'.format(inp_file[inp_file.rfind('/') + 1:]))
             expver = True
-        self.tims = cdf_file.variables['time'][:]
+        if 'time' in keys:
+            self.vars['time'] = 'time'
+        elif 'valid_time' in keys:
+            self.vars['time'] = 'valid_time'
+        self.tims = cdf_file.variables[self.vars['time']][:]
+        bits = cdf_file.variables[self.vars['time']].units.split(' ')
+        if bits[0] == 'seconds':
+            tim2 = datetime.strptime(bits[2], '%Y-%m-%d')
+            addsecs = (tim2 - base_time).days * 1440 * 60
+            for t in range(len(self.tims)):
+                self.tims[t] = (int(self.tims[t]) + addsecs) / 3600
         t1 = -1
         t2 = len(self.tims)
         for hr in range(len(self.tims)):
@@ -459,10 +483,13 @@ class makeWeather():
             for t in range(len(tmp_var)):
                 for la in range(len(tmp_var[t])):
                     for lo in range(len(tmp_var[t][la])):
-                        if isinstance(tmi[t][0][la][lo], float):
-                            tmp_var[t][la][lo] = float(tmi[t][0][la][lo])
-                        else:
-                            tmp_var[t][la][lo] = float(tmi[t][1][la][lo])
+                        try:
+                            if isinstance(tmi[t][0][la][lo], float):
+                                tmp_var[t][la][lo] = float(tmi[t][0][la][lo])
+                            else:
+                                tmp_var[t][la][lo] = float(tmi[t][1][la][lo])
+                        except:
+                            continue
             self.t_2m += self.getTemp(tmp_var)
             if self.show_progress:
                 self.caller.daybar.setValue(1)
@@ -525,8 +552,6 @@ class makeWeather():
                 self.caller.daybar.setValue(4)
                 QtCore.QCoreApplication.processEvents()
             try:
-                if self.vars[self.swg] not in cdf_file.variables.keys():
-                    self.swg = 'swgnt'
                 tmp_var = []
                 for t in range(len(self.tims)):
                     tmp_var.append([])
@@ -534,7 +559,7 @@ class makeWeather():
                         tmp_var[-1].append([])
                         for lo in range(len(self.lons)):
                             tmp_var[-1][-1].append([])
-                tmi = cdf_file.variables[self.vars[self.swg]][t1 : t2]
+                tmi = cdf_file.variables[self.vars[localswg]][t1 : t2]
                 for t in range(len(tmp_var)):
                     for la in range(len(tmp_var[t])):
                         for lo in range(len(tmp_var[t][la])):
@@ -587,7 +612,7 @@ class makeWeather():
                 if self.show_progress:
                     self.caller.daybar.setValue(7)
                     QtCore.QCoreApplication.processEvents()
-        else:
+        else: # not expver
             self.t_2m += self.getTemp(cdf_file.variables[self.vars['t2m']][t1 : t2])
             if self.show_progress:
                 self.caller.daybar.setValue(1)
@@ -605,9 +630,7 @@ class makeWeather():
                 self.caller.daybar.setValue(4)
                 QtCore.QCoreApplication.processEvents()
             try:
-                if self.vars[self.swg] not in cdf_file.variables.keys():
-                    self.swg = 'swgnt'
-                self.ghi += self.getGHI(cdf_file.variables[self.vars[self.swg]][t1 : t2], watts=False)
+                self.ghi += self.getGHI(cdf_file.variables[self.vars[localswg]][t1 : t2], watts=False)
                 if self.show_progress:
                     self.caller.daybar.setValue(5)
                     QtCore.QCoreApplication.processEvents()
@@ -780,6 +803,10 @@ class makeWeather():
         self.log += ' Dimensions:\n    '
         vals = ''
         keys = list(cdf_file.dimensions.keys())
+        if 'time' in keys:
+            self.vars['time'] = 'time'
+        elif 'valid_time' in keys:
+            self.vars['time'] = 'valid_time'
         values = list(cdf_file.dimensions.values())
         if type(cdf_file.dimensions) is dict:
             for i in range(len(keys)):
@@ -795,9 +822,14 @@ class makeWeather():
         times = [cdf_file.variables[self.vars['time']][0], cdf_file.variables[self.vars['time']][-1]]
         if times[0] > 0:
             self.log += ' Times:\n    '
-            strt_time = datetime(1900, 1, 1, 0, 0)
-            frst_hour = strt_time + timedelta(hours=int(times[0]))
-            last_hour = strt_time + timedelta(hours=int(times[-1]))
+            bits = cdf_file.variables[self.vars['time']].units.split(' ')
+            strt_time = datetime.strptime(bits[2], '%Y-%m-%d')
+            if bits[0] == 'seconds':
+                frst_hour = strt_time + timedelta(seconds=int(times[0]))
+                last_hour = strt_time + timedelta(seconds=int(times[-1]))
+            else:
+                frst_hour = strt_time + timedelta(hours=int(times[0]))
+                last_hour = strt_time + timedelta(hours=int(times[-1]))
             self.log += frst_hour.strftime('%Y-%m-%d %H:%M') + ' to ' + last_hour.strftime('%Y-%m-%d %H:%M') + '\n'
         self.log += ' Variables:\n    '
         vals = ''
@@ -878,9 +910,9 @@ class makeWeather():
                     yrs == 2
                     year -= 1
                     self.logMsg('Wrapping to prior year - %.4d-%.2d-%.2d' % (year, mt + 1, 1))
-                    last_hour = datetime(year + 1, 1, 1)
-                    last_hour = last_hour - date_1900
-                    last_hour = int(last_hour.days) * 24 - self.src_zone + 1
+               #     last_hour = datetime(year + 1, 1, 1)
+                #    last_hour = last_hour - date_1900
+                 #   last_hour = int(last_hour.days) * 24 - self.src_zone + 1
                     inp_strt = '{:04d}{:02d}'.format(year, mt + 1)
                     inp_file = self.findFile(inp_strt, quiet=True)
                     if inp_file is None:
@@ -911,11 +943,13 @@ class makeWeather():
                 fst_hour = datetime(year, mt + 1, 1)
                 fst_hour = fst_hour - date_1900
                 fst_hour = int(fst_hour.days) * 24
-                if fst_hour < frst_hour:
-                    fst_hour = frst_hour
+              #  if fst_hour < frst_hour:
+              #      fst_hour = frst_hour
                 lst_hour = fst_hour + dys[mt] * 24
-                if lst_hour > last_hour:
-                    lst_hour = last_hour
+             #   if lst_hour > last_hour:
+              #      lst_hour = last_hour
+                if mt == 11 and self.src_zone > 0: # end of year
+                    lst_hour = lst_hour - self.src_zone + 1
                 self.get_era5_data(inp_file, fst_hour, lst_hour)
                 if self.return_code != 0:
                     return

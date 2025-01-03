@@ -1,8 +1,9 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2023 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2024 Sustainable Energy Now Inc., Angus King
 #
-#  siren.py - This file is part of SIREN.
+#  powermap.py - This file is part of SIREN
+#  (formerly named sirenm.py).
 #
 #  SIREN is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Affero General Public License as
@@ -21,10 +22,11 @@
 
 import csv
 import math
+import openpyxl as oxl
 import os
 import sys
 import time
-# import types
+from PyQt5 import QtCore, QtGui, QtWidgets
 import matplotlib
 if matplotlib.__version__ > '3.5.1':
     matplotlib.use('Qt5Agg')
@@ -35,7 +37,6 @@ import xlwt
 from functools import partial
 
 import configparser  # decode .ini file
-from PyQt5 import QtCore, QtGui, QtWidgets
 import ssc
 import subprocess
 
@@ -45,7 +46,7 @@ import displayobject
 import newstation
 from plotweather import PlotWeather
 from powermodel import PowerModel
-from senutils import getParents, getUser, techClean
+from senutils import getParents, getUser, ssCol, techClean
 from station import Station, Stations
 from wascene import WAScene
 from editini import EdtDialog, EditFileSections, EditTech, EditSect, SaveIni
@@ -62,7 +63,6 @@ from sirenicons import Icons
 def p2str(p):
     return '(%.4f,%.4f)' % (p.y(), p.x())
 
-
 def find_shortest(coords1, coords2):
 #               dist,  lat, lon, itm, prev_item
     shortest = [99999, -1., -1., -1, -1]
@@ -75,6 +75,7 @@ def find_shortest(coords1, coords2):
             shortest.append(i)
             shortest.append(ls)
     return shortest
+
 
 class Location(QtWidgets.QDialog):
     def __init__(self, upper_left, lower_right, parent=None):
@@ -109,7 +110,7 @@ class Location(QtWidgets.QDialog):
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         grid.addWidget(buttons, 5, 0, 1, 2)
-        self.setWindowTitle('SIREN - Go to Location')
+        self.setWindowTitle('SIREN - Powermap - Go to Location')
 
     def location(self):
         return self.lat.value(), self.lon.value()
@@ -136,7 +137,7 @@ class Description(QtWidgets.QDialog):
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
-        self.setWindowTitle('SIREN - Save Scenario')
+        self.setWindowTitle('SIREN - Powermap - Save Scenario')
 
     def description(self):
         return self.text.toPlainText()
@@ -849,7 +850,7 @@ class MainWindow(QtWidgets.QMainWindow):
         except:
             self.scenario = ''
         str1 = self.scenarios_filter[:-1]   # a bit of mucking about to remove duplicate leading/trailing chars
-        str2 = QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'yyyy-MM-dd_hhmm') + '.xls'
+        str2 = QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'yyyy-MM-dd_hhmm') + '.xlsx'
         ndx = 0
         for i in range(len(str1)):
             if str1[-i:] == str2[:i]:
@@ -1263,10 +1264,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.progressbar = None
         self.power_signal = None
         self.dataview = None
-        utilities = ['getmap', 'getmerra2', 'indexweather', 'makegrid', 'makeweatherfiles',
+        utilities = ['getera5', 'getmap', 'getmerra2', 'indexweather', 'makegrid', 'makeweatherfiles',
                      'powermatch', 'powerplot', 'updateswis', 'aggregate']
-        utilini = [True, False, True, True, False, True, True, True, True]
-        utilicon = ['map.png', 'download.png', 'list.png', 'grid.png', 'weather.png',
+        utilini = [False, True, False, True, True, False, True, True, True, True]
+        utilicon = ['download.png', 'map.png', 'download.png', 'list.png', 'grid.png', 'weather.png',
                     'power.png', 'line.png', 'list.png', 'gear_run.png']
         spawns = []
         icons = []
@@ -1388,8 +1389,12 @@ class MainWindow(QtWidgets.QMainWindow):
             pass
 
     def editIniFile(self):
+        before = os.stat(self.config_file).st_mtime
         dialr = EdtDialog(self.config_file)
         dialr.exec_()
+        after = os.stat(self.config_file).st_mtime
+        if after == before:
+            return
         self.get_config()   # refresh config values
         comment = self.config_file + ' edited. Reload may be required.'
         self.view.statusmsg.emit(comment)
@@ -1948,8 +1953,8 @@ class MainWindow(QtWidgets.QMainWindow):
             elif full_view: # full map in view?
                 bottom.setX(0)
                 bottom.setY(0)
-                top.setX(self.view.scene().lower_right[0])
-                top.setY(self.view.scene().lower_right[1])
+                top.setX(int(self.view.scene().lower_right[0]))
+                top.setY(int(self.view.scene().lower_right[1]))
             else: # part of map in view
                 if bottom.x() < 0:
                     bottom.setX(0)
@@ -2077,6 +2082,8 @@ class MainWindow(QtWidgets.QMainWindow):
             self.reshow_FloatLegend()
 
         pos = self.view.scene().last_locn
+        if pos is None:
+            return
         where = self.view.mapToLonLat(self.view.scene().last_locn)
         menu = QtWidgets.QMenu()
         station = None
@@ -2599,14 +2606,14 @@ class MainWindow(QtWidgets.QMainWindow):
         styles = []
         coords = []
         ndx = []
+        # get coords for all first to check load centres there
         for li in range(len(self.view.scene().lines.lines)):
             coords.append(self.view.scene().lines.lines[li].coordinates[:])
             ndx.append(-1)
-        for li in range(len(self.view.scene().lines.lines)):
-            if self.view.scene().lines.lines[li].line_table is None:
+            if self.view.scene().lines.lines[li].style is None:
                 style = 'grid_boundary'
             else:
-                style = self.view.scene().lines.lines[li].line_table
+                style = self.view.scene().lines.lines[li].style.strip('#')
             if style in styles:
                 pass
             else:
@@ -2617,25 +2624,6 @@ class MainWindow(QtWidgets.QMainWindow):
                          '</styleUrl>\n\t\t\t<LineString>\n\t\t\t<tessellate>1</tessellate>\n\t\t\t<coordinates>')
             gline.append('\t\t\t\t')
             ndx[li] = len(gline) - 1
-            if self.view.scene().lines.lines[li].connector >= 0:
-                cli = self.view.scene().lines.lines[li].connector
-                found = False
-                for coord in coords[li]:
-                    for coord2 in coords[cli]:
-                        if coord == coord2:
-                            found = True
-                            break
-                    if found:
-                        break
-                else:
-                    shortest = find_shortest(coords[li][-1], coords[cli])
-                    if shortest[-1] >= 0:
-                        if shortest[-1] < shortest[-2]:
-                            coords[cli][shortest[-1] + 1:shortest[-1] + 1] = [coords[li][-1]]
-                        else:
-                            coords[cli][shortest[-2] + 1:shortest[-2] + 1] = [coords[li][-1]]
-                    else:
-                        coords[cli][shortest[-2] + 1:shortest[-2] + 1] = [coords[li][-1]]
             gline.append('\t\t\t</coordinates>\n\t\t</LineString>\n\t</Placemark>')
         if self.view.scene().load_centre is not None: # check Load centres are there
             for lc in range(len(self.view.scene().load_centre)):
@@ -2668,26 +2656,19 @@ class MainWindow(QtWidgets.QMainWindow):
                     gline.append('\t<Placemark>\n\t\t<name>' + \
                          self.view.scene().load_centre[lc][0].replace('&', '&amp;') + \
                          'Load Centre</name>\n\t\t<styleUrl>#' + style + \
-                         '</styleUrl>\n\t\t\t<LineString>\n\t\t\t<tessellate>1</tessellate>\n\t\t\t<coordinates>')
+                         '</styleUrl>\n\t\t\t<LineString>\n\t\t\t<tessellate>1</tessellate>\n\t\t\t\t<coordinates>')
                     gline.append('\t\t\t\t')
                     gline[-1] += '%s,%s,0 %s,%s,0' % (str(coord[1]), str(coord[0]), str(grid_point[2]), str(grid_point[1]))
                     gline.append('\t\t\t</coordinates>\n\t\t</LineString>\n\t</Placemark>')
-        # now place coordinates, including updated ones
+        # now place coordinates
         for li in range(len(coords)):
             for coord in coords[li]:
                 gline[ndx[li]] += '%s,%s,0 ' % (str(coord[1]), str(coord[0]))
         gline.append('</Folder>\n</Document>\n</kml>')
         sline = []
         for style in styles:
-            try:
-                colr = self.view.scene().colors[style]
-            except:
-                try:
-                    colr = self.view.scene().colors['grid_' + style]
-                except:
-                    colr = self.view.scene().colors['grid_boundary']
-            sline.append('<Style id="' + style + '">\n\t<LineStyle>\n\t\t<color>ff' + colr[-2:] + colr[-4:-2] + \
-                         colr[1:3] + '</color>\n\t\t<width>4</width>\n\t</LineStyle>\n</Style>')
+            sline.append('<Style id="' + style + '">\n\t<LineStyle>\n\t\t<color>ff' + style[-2:] + style[-4:-2] + \
+                         style[:2] + '</color>\n\t\t<width>2</width>\n\t</LineStyle>\n</Style>')
         if os.path.exists(kfile):
             if os.path.exists(kfile + '~'):
                 os.remove(kfile + '~')
@@ -2716,32 +2697,69 @@ class MainWindow(QtWidgets.QMainWindow):
                  '<kml xmlns="http://www.opengis.net/kml/2.2">',
                  '<Document>']
         if hover:
-            pline.append('<Style id="style0n"><LabelStyle><scale>0.0</scale></LabelStyle>' + \
-                         '<IconStyle><scale>0.5</scale></IconStyle></Style>\n' + \
-                         '<Style id="style0h"><LabelStyle><scale>1.0</scale></LabelStyle>' + \
-                         '<IconStyle><scale>1.1</scale></IconStyle></Style>\n' + \
-                         '<StyleMap id="0"><Pair><key>normal</key><styleUrl>#style0n</styleUrl>' + \
-                         '</Pair><Pair><key>highlight</key><styleUrl>#style0h</styleUrl>' + \
-                         '</Pair></StyleMap>')
+            pline.append('\t<Style id="style0n">\n\t\t<LabelStyle>\n\t\t\t<scale>0.0</scale>\n\t\t</LabelStyle>' + \
+                         '\n\t\t<IconStyle>\n\t\t\t<scale>0.5</scale>\n\t\t</IconStyle>\n\t</Style>\n' + \
+                         '\t<Style id="style0h">\n\t\t<LabelStyle>\n\t\t\t<scale>1.0</scale>\n\t\t</LabelStyle>' + \
+                         '\n\t\t<IconStyle>\n\t\t\t<scale>1.1</scale>\n\t\t</IconStyle>\n\t</Style>' + \
+                         '\n\t<StyleMap id="0">\n\t\t<Pair>\n\t\t\t<key>normal</key>\n\t\t\t<styleUrl>#style0n</styleUrl>' + \
+                         '\n\t\t</Pair>\n\t\t<Pair>\n\t\t\t<key>highlight</key>\n\t\t\t<styleUrl>#style0h</styleUrl>' + \
+                         '\n\t\t</Pair>\n\t</StyleMap>')
         pline.append('<name>' + kfile[kfile.rfind('/') + 1:] + '</name>')
         pline.append('<description><![CDATA[This KML file shows the stations for ' + \
                      self.view.scene().model_name + ' at ' + \
                      QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),
                      'yyyy-MM-dd hh:mm') + ']]></description>')
         pline.append('<Folder>')
-        pline.append('<name>Stations</name>')
+        pline.append('\t<name>Stations</name>')
         stns = []
+        styles = []
         for stn in self.view.scene()._stations.stations:
-            stns.append([stn.name, stn.technology, stn.capacity, stn.lat, stn.lon])
+            stns.append([stn.name, stn.technology, stn.capacity, stn.lat, stn.lon, stn.area])
+        poly_opacity = hex(int(256 * self.view.scene().station_opacity))[2:]
+        poly_opacity = 'FF'
         for stn in sorted(stns, key=lambda x: x[0]):
             pline.append('\t<Placemark>')
             if hover:
                 pline.append('\t\t<styleUrl>#0</styleUrl>')
             pline.append('\t\t<name>' + stn[0].replace('&', '&amp;') + \
                          '</name>\n\t\t<description><![CDATA[' + stn[1] + ' (' + \
-                         str(stn[2]) + ' MW)]]></description>\n\t\t<Point>\n\t\t' + \
+                         str(stn[2]) + ' MW)]]></description>\n\t\t<Point>\n\t\t\t' + \
                          '<coordinates>' + str(stn[4]) + ',' + str(stn[3]) + \
-                         ',0.000000</coordinates>\n\t\t</Point>\n\t</Placemark>')
+                         ',0.000000</coordinates>\n\t\t</Point>')
+            if stn[5] > 0: # if more detail give land area
+                if self.view.scene().station_square:
+                    size = math.sqrt(stn[5]) / 2
+                    s1 = self.view.destinationxy(stn[4], stn[3], 0., size)
+                    tl = self.view.destinationxy(s1.x(), s1.y(), 270., size)
+                    tr = self.view.destinationxy(tl.x(), tl.y(), 90., size * 2)
+                    br = self.view.destinationxy(tr.x(), tr.y(), 180., size * 2)
+                    bl = self.view.destinationxy(br.x(), br.y(), 270., size * 2)
+                    colr = self.view.scene().colors[stn[1]]
+                    colr = poly_opacity + colr[-2:] + colr[-4:-2] + colr[1:3]
+                    pline.append(f'\t\t<Style>\n\t\t\t<LineStyle>\n\t\t\t\t<color>ff{colr[2:]}</color>\n\t\t\t</LineStyle>' + \
+                                 f'\n\t\t\t<PolyStyle>\n\t\t\t\t<color>{colr}</color>\n\t\t\t\t<fill>1</fill>\n\t\t\t</PolyStyle>\n\t\t</Style>')
+                    pline.append('\t\t<Polygon>\n\t\t\t<outerBoundaryIs>\n\t\t\t\t<LinearRing>\n\t\t\t\t\t<coordinates>' + \
+                                 f'{tl.x()},{tl.y()},0 {tr.x()},{tr.y()},0 {br.x()},{br.y()},0 ' + \
+                                 f'{bl.x()},{bl.y()},0 {tl.x()},{tl.y()},0' + \
+                                 '</coordinates>\n\t\t\t\t</LinearRing>\n\t\t\t</outerBoundaryIs>\n\t\t</Polygon>')
+                else:
+                    c_radius = math.sqrt(stn[5]) / math.sqrt(math.pi)
+                    lat = [stn[3]]
+                    lng = [stn[4]]
+                    for a in range(32):
+                        lat.append(lat[0] + c_radius * math.cos(a / 31. * math.pi * 2) / 110.56)
+                        s = c_radius * math.sin(a / 31. * math.pi * 2)
+                        lng.append(lng[0] + (s / math.cos(lat[-1] / 57.3) / 110.56))
+                    colr = self.view.scene().colors[stn[1]]
+                    colr = poly_opacity + colr[-2:] + colr[-4:-2] + colr[1:3]
+                    pline.append(f'\t\t<Style>\n\t\t\t<LineStyle>\n\t\t\t\t<color>ff{colr[2:]}</color>\n\t\t\t</LineStyle>' + \
+                                 f'\n\t\t\t<PolyStyle>\n\t\t\t\t<color>{colr}</color>\n\t\t\t\t<fill>1</fill>\n\t\t\t</PolyStyle>\n\t\t</Style>')
+                    pline.append('\t\t<Polygon>\n\t\t\t<outerBoundaryIs>\n\t\t\t\t<LinearRing>')
+                    circle = '\t\t\t\t\t<coordinates>'
+                    for a in range(len(lat)):
+                        circle += f'{lng[a]},{lat[a]},0 '
+                    pline.append(f'{circle}</coordinates>\n\t\t\t\t</LinearRing>\n\t\t\t</outerBoundaryIs>\n\t\t</Polygon>')
+            pline.append('\t</Placemark>')
         pline.append('</Folder>\n</Document>\n</kml>')
         if os.path.exists(kfile):
             if os.path.exists(kfile + '~'):
@@ -3052,7 +3070,10 @@ class MainWindow(QtWidgets.QMainWindow):
             flags = [self.view.scene().show_capacity, self.view.scene().show_generation,
                      self.view.scene().station_square, self.view.scene().show_fossil]
             for key in list(self.view.scene().areas.keys()):
-                tech_data[key] = [self.view.scene().areas[key], self.view.scene().colors[key], flags]
+                try:
+                    tech_data[key] = [self.view.scene().areas[key], self.view.scene().colors[key], flags]
+                except:
+                    tech_data[key] = [self.view.scene().areas[key], QtGui.QColor('gray'), flags]
             self.floatlegend = FloatLegend(tech_data, self.view.scene()._stations.stations, flags)
             self.floatlegend.setWindowModality(QtCore.Qt.WindowModal)
             self.floatlegend.setWindowFlags(self.floatlegend.windowFlags() |
@@ -3184,7 +3205,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if scenario[-4:] == '.csv' or scenario[-4:] == '.xls' or scenario[-5:] == '.xlsx':
             pass
         else:
-            the_scenario += '.xls'
+            the_scenario += '.xlsx'
         if not os.path.exists(self.scenarios): # create scenarios folder if missing
             os.mkdir(self.scenarios)
         elif os.path.exists(self.scenarios + the_scenario):
@@ -3241,7 +3262,7 @@ class MainWindow(QtWidgets.QMainWindow):
                         upd_writer.writerow(new_line)
                         ctr += 1
             upd_file.close()
-        else:
+        elif the_scenario[-4:] == '.xls':
             wb = xlwt.Workbook()
             fnt = xlwt.Font()
             fnt.bold = True
@@ -3284,6 +3305,60 @@ class MainWindow(QtWidgets.QMainWindow):
             ws.set_horz_split_pos(1 - d)  # in general, freeze after last heading row
             ws.set_remove_splits(True)  # if user does unfreeze, don't leave a split there
             wb.save(self.scenarios + the_scenario)
+        else: # .xlsx
+            wb = oxl.Workbook()
+            ws = wb.active
+            iam = the_scenario[:the_scenario.find('.')]
+            for ch in ['\\' , '/' , '*' , '?' , ':' , '[' , ']']:
+                if ch in iam:
+                    iam = iam.replace(ch, '_')
+            if len(iam) > 31:
+                iam = iam[:31]
+            ws.title = iam
+            lens = []
+            for i in range(len(field_names)):
+                lens.append(len(field_names[i]))
+            normal = oxl.styles.Font(name='Arial', size='10')
+            d = 0
+            if description != '':
+                ws.cell(row=ctr + 1, column=1).value = 'Description:'
+                ws.cell(row=ctr + 1, column=1).font = normal
+                i = 0
+                r = 0
+                while i >= 0:
+                    r += 1
+                    i = description.find('\n', i + 1)
+                ws.cell(row=ctr + 1, column=2).value = description
+                ws.cell(row=ctr + 1, column=2).font = normal
+                ws.merge_cells('B1:I1')
+                if r > 1:
+                    ws.cell(row=ctr + 1, column=1).alignment = oxl.styles.Alignment(vertical='center')
+                    ws.cell(row=ctr + 1, column=2).alignment = oxl.styles.Alignment(wrap_text=True,
+                      vertical='bottom')
+                    ws.row_dimensions[1].height = 12 * r
+                d = -1
+                ctr += 1
+            for i in range(len(field_names)):
+                ws.cell(row=ctr + 1, column=i + 1).value = field_names[i]
+                ws.cell(row=ctr + 1, column=i + 1).font = normal
+            for stn in self.view.scene()._stations.stations:
+                if stn.scenario != 'Existing':
+                    if stn.scenario == scenario or stn.scenario == the_scenario:
+                        ctr += 1
+                        for f in range(len(fields)):
+                            try:
+                                attr = getattr(stn, fields[f])
+                                ws.cell(row=ctr + 1, column=f + 1).value = attr
+                                ws.cell(row=ctr + 1, column=f + 1).font = normal
+                                lens[f] = max(lens[f], len(str(attr)))
+                            except:
+                                ws.cell(row=ctr + 1, column=f + 1).value = field_empty[f]
+                                ws.cell(row=ctr + 1, column=f + 1).font = normal
+            for cl in range(len(lens)):
+                ws.column_dimensions[ssCol(cl + 1)].width = lens[cl]
+            ws.freeze_panes = 'A' + str(2 - d)
+            wb.save(self.scenarios + the_scenario)
+            wb.close()
         if self.floatstatus and self.log_status:
             self.floatstatus.log('Saved %s station(s) to %s' % (str(ctr + d), the_scenario))
 
@@ -3299,8 +3374,7 @@ def main():
         return
     QtWidgets.QShortcut(QtGui.QKeySequence('q'), mw, mw.close)
     QtWidgets.QShortcut(QtGui.QKeySequence('x'), mw, mw.exit)
-    ver = fileVersion()
-    mw.setWindowTitle('SIREN (' + ver + ') - ' + scene.model_name + ' (' + scene.config_file + ')')
+    mw.setWindowTitle('SIREN - powermap (' + fileVersion() + ') - Powermap - ' + scene.model_name + ' (' + scene.config_file + ')')
     mw.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
     scene_ratio = float(mw.view.scene().width()) / mw.view.scene().height()
     screen = QtWidgets.QDesktopWidget().availableGeometry()

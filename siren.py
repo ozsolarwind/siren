@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2016-2023 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2016-2024 Sustainable Energy Now Inc., Angus King
 #
 #  siren.py - This file is part of SIREN.
 #
@@ -81,10 +81,14 @@ class TabDialog(QtWidgets.QDialog):
         self.models_dirs = []
         if len(sys.argv) > 1:
             if sys.argv[1][-4:] == '.ini':
-                self.invoke('sirenm', sys.argv[1])
+                self.invoke('powermap', sys.argv[1])
                 sys.exit()
             elif os.path.isdir(sys.argv[1]):
                 models_dir = sys.argv[1]
+            else:
+                ini_dir = sys.argv[1].replace('$USER$', getUser())
+                if os.path.isdir(ini_dir):
+                    models_dir = ini_dir
             if sys.platform == 'win32' or sys.platform == 'cygwin':
                 if models_dir[-1] != '\\' and models_dir[-1] != '/':
                     models_dir += '\\'
@@ -100,7 +104,7 @@ class TabDialog(QtWidgets.QDialog):
             self.help = 'help.html'
             self.about = 'about.html'
             self.config = configparser.RawConfigParser()
-            ignore = ['flexiplot.ini', 'powerplot.ini', 'siren_default.ini']
+            ignore = ['siren_default.ini']
             errors = ''
             for fil in sorted(fils):
                 if fil[-4:] == '.ini':
@@ -201,10 +205,10 @@ class TabDialog(QtWidgets.QDialog):
                 spawnitem[-1].triggered.connect(partial(self.spawn, spawns[i]))
                 spawnMenu.addAction(spawnitem[-1])
             layout.setMenuBar(menubar)
-        self.model_tool = ['flexiplot', 'getmap', 'indexweather', 'makegrid', 'powermatch',
-                           'powerplot', 'sirenm', 'updateswis']
-        self.model_icon = ['line.png', 'map.png', 'list.png', 'grid.png', 'power.png',
-                           'line.png', 'sen_icon32.png', 'list.png']
+        self.model_tool = ['flexiplot', 'getmap', 'indexweather', 'makegrid', 'powermap',
+                           'powermatch', 'powerplot', 'updateswis']
+        self.model_icon = ['line.png', 'map.png', 'list.png', 'grid.png', 'sen_icon32.png',
+                           'power.png', 'line.png', 'list.png']
         help = QtWidgets.QAction(QtGui.QIcon('help.png'), 'Help', self)
         help.setShortcut('F1')
         help.setStatusTip('Help')
@@ -225,14 +229,14 @@ class TabDialog(QtWidgets.QDialog):
             if event.type() == QtCore.QEvent.MouseButtonRelease and \
               event.button() == QtCore.Qt.LeftButton:
                 ent = self.table.item(self.table.currentRow(), 0).text()
-                if ent == 'getfiles.ini':
+                if ent in ['getfiles.ini', 'flexiplot.ini', 'powerplot.ini']:
                     return QtCore.QObject.event(source, event)
                 self.table.viewport().removeEventFilter(self)
                 if len(self.models_dirs) > 1:
                     ent_dir = self.table.item(self.table.currentRow(), 3).text()
                 else:
                     ent_dir = self.models_dirs[0]
-                self.invoke('sirenm', ent_dir + ent)
+                self.invoke('powermap', ent_dir + ent)
                 self.quit()
             if (event.type() == QtCore.QEvent.MouseButtonPress or event.type() == QtCore.QEvent.MouseButtonRelease) and \
               event.button() == QtCore.Qt.RightButton:
@@ -245,7 +249,15 @@ class TabDialog(QtWidgets.QDialog):
                     selectionModel.Rows)
                 menu = QtWidgets.QMenu()
                 actions =  []
-                if ent == 'getfiles.ini':
+                if ent in ['getfiles.ini', 'flexiplot.ini', 'powerplot.ini']:
+                    tool = ent[:ent.find('.')]
+                    try:
+                        i = self.model_tool.index(tool)
+                        actions.append(menu.addAction(QtGui.QIcon(self.model_icon[i]),
+                                                     'Execute ' + self.model_tool[i]))
+                        actions[-1].setIconVisibleInMenu(True)
+                    except:
+                        pass
                     actions.append(menu.addAction(QtGui.QIcon('edit.png'), 'Edit Preferences'))
                     actions[-1].setIconVisibleInMenu(True)
                 else:
@@ -372,7 +384,7 @@ class TabDialog(QtWidgets.QDialog):
         do_new = makeNew(self.models_dirs)
         do_new.exec_()
         if do_new.ini_file != '':
-            self.invoke('sirenm', do_new.ini_file)
+            self.invoke('powermap', do_new.ini_file)
             self.quit()
 
     def editIniFile(self, ini=None, line=None):
@@ -645,10 +657,9 @@ class makeNew(QtWidgets.QDialog):
         self.show()
 
     def filenameChanged(self):
-        if self.fields[0][4].text().lower() == 'siren_default.ini' or \
-          self.fields[0][4].text().lower() == 'siren_default' or \
-          self.fields[0][4].text().lower() == 'getfiles' or \
-          self.fields[0][4].text().lower() == 'getfiles.ini':
+        if self.fields[0][4].text().lower() in ['getfiles', 'getfiles.ini',
+                                                'siren_default', 'siren_default.ini']:
+            # and maybe flexiplot and powerplot
             self.msg.setText('Proposed file name not allowed.')
         else:
             self.msg.setText('')

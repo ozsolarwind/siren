@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2020-2023 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2020-2024 Sustainable Energy Now Inc., Angus King
 #
 #  flexiplot.py - This file is possibly part of SIREN.
 #
@@ -24,7 +24,7 @@ import os
 from PyQt5 import QtCore, QtGui, QtWidgets
 import subprocess
 import sys
-from math import log10, ceil
+from math import log10, ceil, sqrt
 import matplotlib
 if matplotlib.__version__ > '3.5.1':
     matplotlib.use('Qt5Agg')
@@ -35,72 +35,19 @@ import matplotlib.pyplot as plt
 import random
 import displayobject
 import displaytable
-from colours import Colours
+from colours import Colours, PlotPalette
 from credits import fileVersion
 from editini import EditSect, SaveIni
 from getmodels import getModelFile
-from senutils import ClickableQLabel, getParents, getUser, ListWidget, strSplit, techClean, WorkBook
+from powerplot import MyQDialog, ChangeFontProp
+try:
+    from senplot3d import TablePlot3D
+except:
+    TablePlot3D = None
+from senutils import ClickableQLabel, getParents, getUser, ListWidget, ssCol, strSplit, techClean, WorkBook
 from zoompan import ZoomPanX
 
 col_letters = ' ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-def ss_col(col, base=0):
-    if base == 1:
-        col -= 1
-    c1 = 0
-    c2, c3 = divmod(col, 26)
-    c3 += 1
-    if c2 > 26:
-        c1, c2 = divmod(c2, 26)
-    return (col_letters[c1] + col_letters[c2] + col_letters[c3]).strip()
-
-def get_range(text, alphabet=None, base=0):
-    if len(text) < 1:
-        return None
-    if text[0].isdigit():
-        roco = [int(x) - 1 for x in text.split(',') if x.strip().isdigit()]
-        for i in roco:
-            if len(roco) < 4:
-                return None
-        return roco
-    if alphabet is None:
-        alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-    if alphabet[0] == ' ':
-        alphabet = alphabet[1:]
-    alphabet = alphabet.upper()
-    bits = ['', '', '', '']
-    b = 0
-    in_char = True
-    for char in text:
-        if char.isdigit():
-            if in_char:
-                in_char = False
-                b += 1
-        else:
-            if alphabet.find(char.upper()) < 0:
-                continue
-            if not in_char:
-                in_char = True
-                b += 1
-        if b >= len(bits):
-            break
-        bits[b] += char.upper()
-    try:
-        bits[1] = int(bits[1]) - (1 - base)
-        bits[3] = int(bits[3]) - (1 - base)
-    except:
-        pass
-    for b in (0, 2):
-        row = 0
-        ndx = 1
-        for c in range(len(bits[b]) -1, -1, -1):
-            ndx1 = alphabet.index(bits[b][c]) + 1
-            row = row + ndx1 * ndx
-            ndx = ndx * len(alphabet)
-        bits[b] = row - (1 - base)
-    for c in bits:
-        if c == '':
-            return None
-    return [bits[1], bits[0], bits[3], bits[2]]
 
 def font_props(fontin, fontdict=True):
     font_dict = {'family': None, 'style': None, 'variant': None, 'weight': None,
@@ -137,6 +84,39 @@ class CustomCombo(QtWidgets.QComboBox):
             QtWidgets.QComboBox.keyPressEvent(self, event)
 
 class FlexiPlot(QtWidgets.QWidget):
+
+    def set_fontdict(self, item=None, who=None):
+        if item is None:
+            bits = 'sans-serif:style=normal:variant=normal:weight=normal:stretch=normal:size=10.0'.split(':')
+        else:
+            bits = item.split(':')
+        fontdict = {}
+        for bit in bits:
+            bits2 = bit.split('=')
+            if len(bits2) == 1:
+                bit2 = bits2[0].replace("'", '')
+                bit2 = bit2.replace("\\", '')
+                fontdict['family'] = bit2
+            else:
+                try:
+                    fontdict[bits2[0]] = float(bits2[1])
+                except:
+                    fontdict[bits2[0]] = bits2[1]
+        return fontdict
+
+    def get_name_row_col(self, series):
+        i = series.rfind(' (')
+        label = series[:i]
+        rc = series[i + 2:-1]
+        for r in range(len(rc) -1, -1, -1):
+            if not rc[r].isdigit():
+                break
+        row = int(rc[r + 1:]) - 1
+        col = 0
+        for c in range(r + 1):
+            col = col * 26 + col_letters.index(rc[c])
+        col -= 1
+        return label, row, col
 
     def __init__(self, help='help.html'):
         super(FlexiPlot, self).__init__()
@@ -197,7 +177,6 @@ class FlexiPlot(QtWidgets.QWidget):
             pass
         ifile = ''
         isheet = ''
-        columns = []
         self.setup = [False, False]
         self.details = True
         self.book = None
@@ -206,13 +185,21 @@ class FlexiPlot(QtWidgets.QWidget):
         iper = '<none>'
         imax = 0
         self.alpha = 0.25
-        self.title_font = 'size=x-large' #'size=15'
-        self.label_font = '' #'size=x-large'
-        self.legend_font = '' #'size=x-large'
-        self.ticks_font = '' #'size=large'
+        self.legend_on_pie = True
+        self.percent_on_pie = True
+        self.legend_side = 'None'
+        self.legend_ncol = 1
+        self.legend_font = FontProperties()
+        self.legend_font.set_size('medium')
+        self.fontprops = {}
+        self.fontprops['Label']= self.set_fontdict()
+        self.fontprops['Label']['size'] = 10.
+        self.fontprops['Ticks']= self.set_fontdict()
+        self.fontprops['Ticks']['size'] = 10.
+        self.fontprops['Title']= self.set_fontdict()
+        self.fontprops['Title']['size'] = 14.
         self.constrained_layout = False
-        self.series = []
-        self.xvalues = []
+        self.yseries = []
         self.palette = True
         self.history = None
         self.max_files = 10
@@ -246,40 +233,72 @@ class FlexiPlot(QtWidgets.QWidget):
         openfile = QtWidgets.QPushButton('Open File')
         self.grid.addWidget(openfile, rw, 3)
         openfile.clicked.connect(self.openfileClicked)
+        listfiles = QtWidgets.QPushButton('List Files')
+        self.grid.addWidget(listfiles, rw, 4)
+        listfiles.clicked.connect(self.listfilesClicked)
         rw += 1
         self.grid.addWidget(QtWidgets.QLabel('Title:'), rw, 0)
         self.title = QtWidgets.QLineEdit('')
         self.grid.addWidget(self.title, rw, 1, 1, 2)
+        ttlfClicked = QtWidgets.QPushButton('Title Font', self)
+        self.grid.addWidget(ttlfClicked, rw, 3)
+        ttlfClicked.clicked.connect(self.doFont)
         rw += 1
-        self.grid.addWidget(QtWidgets.QLabel('Series:'), rw, 0)
-        self.seriesi = CustomCombo()
-        for series in self.series:
-            self.seriesi.addItem(series)
-        self.seriesi.setEditable(True)
-        self.grid.addWidget(self.seriesi, rw, 1, 1, 2)
-        self.grid.addWidget(QtWidgets.QLabel('(Cells for Series Categories; A1:B2 or r1,c1,r2,c2 format)'), rw, 3, 1, 2)
-        showseries = QtWidgets.QPushButton('Show Series')
-        self.grid.addWidget(showseries, rw, 5)
+        self.grid.addWidget(QtWidgets.QLabel('Abscissa (X):'), rw, 0)
+        self.data_order = QtWidgets.QComboBox()
+        self.data_order.addItem('Data in Rows (indicate Label column)')
+        self.data_order.addItem('Data in Columns (indicate Label row)')
+        self.grid.addWidget(self.data_order, rw, 1)
+        self.data_order.currentIndexChanged.connect(self.dorderChanged)
+        self.data_in_rows = True
+        self.xoffset = QtWidgets.QComboBox()
+        self.grid.addWidget(self.xoffset, rw, 2)
+        for col in range(5):
+            self.xoffset.addItem(ssCol(col, base=0))
+        self.xoffset.setCurrentIndex(0)
+        self.xoffset.currentIndexChanged.connect(self.xoffsetChanged)
+        self.grid.addWidget(QtWidgets.QLabel('(one set of variables for the common axis)'), rw, 3)
+        rw += 1
+        self.grid.addWidget(QtWidgets.QLabel('Abscissa Series:'), rw, 0)
+        self.xseries = QtWidgets.QComboBox()
+        self.grid.addWidget(self.xseries, rw, 1, 1, 2)
+        self.xextra = QtWidgets.QLineEdit('')
+        self.grid.addWidget(self.xextra, rw, 4)
+        showseries = QtWidgets.QPushButton('Show X Series')
+        self.grid.addWidget(showseries, rw, 3)
         showseries.clicked.connect(self.showClicked)
         rw += 1
-        self.grid.addWidget(QtWidgets.QLabel('Series Label:'), rw, 0)
-        self.ylabel = QtWidgets.QLineEdit('')
-        self.grid.addWidget(self.ylabel, rw, 1, 1, 2)
-        rw += 1
-        self.grid.addWidget(QtWidgets.QLabel('X Values:'), rw, 0)
-        self.xvaluesi = CustomCombo()
-        for xvalues in self.xvalues:
-            self.xvaluesi.addItem(xvalues)
-        self.xvaluesi.setEditable(True)
-        self.grid.addWidget(self.xvaluesi, rw, 1, 1, 2)
-        self.grid.addWidget(QtWidgets.QLabel('(Cells for X values; A1:B2 or r1,c1,r2,c2 format)'), rw, 3, 1, 2)
-        showxvalues = QtWidgets.QPushButton('Show X values')
-        self.grid.addWidget(showxvalues, rw, 5)
-        showxvalues.clicked.connect(self.showClicked)
-        rw += 1
-        self.grid.addWidget(QtWidgets.QLabel('X Label:'), rw, 0)
+        self.grid.addWidget(QtWidgets.QLabel('Abscissa Label:'), rw, 0)
         self.xlabel = QtWidgets.QLineEdit('')
         self.grid.addWidget(self.xlabel, rw, 1, 1, 2)
+        lblfClicked = QtWidgets.QPushButton('Label Font', self)
+        self.grid.addWidget(lblfClicked, rw, 3)
+        lblfClicked.clicked.connect(self.doFont)
+        ticfClicked = QtWidgets.QPushButton('Ticks Font', self)
+        self.grid.addWidget(ticfClicked, rw, 4)
+        ticfClicked.clicked.connect(self.doFont)
+        rw += 1
+        self.grid.addWidget(QtWidgets.QLabel('Ordinate (Y):'), rw, 0)
+        self.grid.addWidget(QtWidgets.QLabel('(multiple sets of variables, one for each surface)'), rw, 1)
+        rw += 1
+        self.grid.addWidget(QtWidgets.QLabel('Ordinate Series:\n(move to right\nto exclude)'), rw, 0)
+        self.order = ListWidget(self)
+        self.grid.addWidget(self.order, rw, 1, 1, 2)
+        self.ignore = ListWidget(self)
+        self.grid.addWidget(self.ignore, rw, 3, 1, 2)
+        self.grid.addWidget(QtWidgets.QLabel(' '), rw, 5)
+        rw += 1
+        self.grid.addWidget(QtWidgets.QLabel('Ordinate Label:'), rw, 0)
+        self.ylabel = QtWidgets.QLineEdit('')
+        self.grid.addWidget(self.ylabel, rw, 1, 1, 2)
+        showseries = QtWidgets.QPushButton('Show Y Series')
+        self.grid.addWidget(showseries, rw, 3)
+        showseries.clicked.connect(self.showClicked)
+        rw += 1
+        self.grid.addWidget(QtWidgets.QLabel('Applicate (Z) Label:'), rw, 0)
+        self.zlabel = QtWidgets.QLineEdit('')
+        self.grid.addWidget(self.zlabel, rw, 1, 1, 2)
+        self.grid.addWidget(QtWidgets.QLabel('(for 3D the table of X / Y values)'), rw, 3)
         rw += 1
         self.grid.addWidget(QtWidgets.QLabel('Maximum:'), rw, 0)
         self.maxSpin = QtWidgets.QSpinBox()
@@ -289,7 +308,9 @@ class FlexiPlot(QtWidgets.QWidget):
         self.grid.addWidget(QtWidgets.QLabel('(Handy if you want to produce a series of charts)'), rw, 3, 1, 3)
         rw += 1
         self.grid.addWidget(QtWidgets.QLabel('Type of Chart:'), rw, 0)
-        plots = ['Bar Chart', 'Cumulative', 'Line Chart', 'Step Chart']
+        plots = ['Bar Chart', 'Cumulative', 'Line Chart', 'Pie Chart', 'Step Chart']
+        if TablePlot3D is not None:
+            plots.append('3D Surface Chart')
         self.plottype = QtWidgets.QComboBox()
         for plot in plots:
              self.plottype.addItem(plot)
@@ -309,32 +330,25 @@ class FlexiPlot(QtWidgets.QWidget):
              self.gridtype.addItem(grid)
         self.grid.addWidget(self.gridtype, rw, 1) #, 1, 2)
         self.grid.addWidget(QtWidgets.QLabel('(Choose gridlines)'), rw, 3, 1, 3)
-        rw += 1
-        self.grid.addWidget(QtWidgets.QLabel('Column Order:\n(move to right\nto exclude)'), rw, 0)
-        self.order = ListWidget(self)
-        self.grid.addWidget(self.order, rw, 1, 1, 2)
-        self.ignore = ListWidget(self)
-        self.grid.addWidget(self.ignore, rw, 3, 1, 2)
-        self.grid.addWidget(QtWidgets.QLabel(' '), rw, 5)
         if ifile != '':
             self.get_file_config(self.history[0])
         self.files.currentIndexChanged.connect(self.filesChanged)
         self.file.clicked.connect(self.fileChanged)
-     #   self.seriesi.textChanged.connect(self.seriesChanged)
-        self.seriesi.activated[str].connect(self.seriesChanged)
-        self.seriesi.currentIndexChanged.connect(self.seriesChanged)
-        self.xvaluesi.activated[str].connect(self.xvaluesChanged)
-        self.xvaluesi.currentIndexChanged.connect(self.xvaluesChanged)
+        self.xseries.activated[str].connect(self.xseriesChanged)
+        self.xseries.currentIndexChanged.connect(self.xseriesChanged)
+        self.xextra.textChanged.connect(self.xseriesChanged)
   #      self.xvalues.textChanged.connect(self.somethingChanged)
-        self.files.currentIndexChanged.connect(self.seriesChanged)
+        self.files.currentIndexChanged.connect(self.xseriesChanged)
         self.sheet.currentIndexChanged.connect(self.sheetChanged)
         self.quiet = False
         self.title.textChanged.connect(self.somethingChanged)
+        self.xlabel.textChanged.connect(self.somethingChanged)
+        self.ylabel.textChanged.connect(self.somethingChanged)
+        self.zlabel.textChanged.connect(self.somethingChanged)
         self.maxSpin.valueChanged.connect(self.somethingChanged)
         self.plottype.currentIndexChanged.connect(self.somethingChanged)
         self.gridtype.currentIndexChanged.connect(self.somethingChanged)
         self.percentage.stateChanged.connect(self.somethingChanged)
-        self.order.itemSelectionChanged.connect(self.somethingChanged)
         rw += 1
         msg_palette = QtGui.QPalette()
         msg_palette.setColor(QtGui.QPalette.Foreground, QtCore.Qt.red)
@@ -352,11 +366,14 @@ class FlexiPlot(QtWidgets.QWidget):
         cb = QtWidgets.QPushButton('Colours', self)
         self.grid.addWidget(cb, rw, 2)
         cb.clicked.connect(self.editColours)
+        legendClicked = QtWidgets.QPushButton('Legend Properties', self)
+        self.grid.addWidget(legendClicked, rw, 3)
+        legendClicked.clicked.connect(self.doFont)
         ep = QtWidgets.QPushButton('Preferences', self)
-        self.grid.addWidget(ep, rw, 3)
+        self.grid.addWidget(ep, rw, 4)
         ep.clicked.connect(self.editIniFile)
         help = QtWidgets.QPushButton('Help', self)
-        self.grid.addWidget(help, rw, 4)
+        self.grid.addWidget(help, rw, 5)
         help.clicked.connect(self.helpClicked)
         QtWidgets.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
         frame = QtWidgets.QFrame()
@@ -394,7 +411,8 @@ class FlexiPlot(QtWidgets.QWidget):
         self.constrained_layout = False
         self.palette = True
         self.sparse_ticks = []
-        self.random_colours = True
+        self.plot_palette = 'random'
+        self.minimum_3d = 10
         config = configparser.RawConfigParser()
         config.read(self.config_file)
         try: # get defaults and list of files if any
@@ -415,15 +433,44 @@ class FlexiPlot(QtWidgets.QWidget):
                 elif key[:4] == 'file':
                     ifiles[key[4:]] = value.replace('$USER$', getUser())
                 elif key == 'label_font':
-                    self.label_font = value
+                    try:
+                        self.fontprops['Label'] = self.set_fontdict(value)
+                    except:
+                        pass
                 elif key == 'legend_font':
-                    self.legend_font = value
+                    try:
+                        self.legend_font.set_fontconfig_pattern(value)
+                    except:
+                        pass
+                elif key == 'legend_on_pie':
+                    if value.lower() in ['pct', 'percentage', '%', '%age']:
+                        self.legend_on_pie = False
+                    elif value.lower() in ['false', 'no', 'off']:
+                        self.legend_on_pie = False
+                        self.percent_on_pie = False
+                elif key == 'legend_ncol':
+                    try:
+                        self.legend_ncol = int(value)
+                    except:
+                        pass
+                elif key == 'legend_side':
+                    try:
+                        self.legend_side = value
+                    except:
+                        pass
+                elif key == 'minimum_3d':
+                    try:
+                        self.minimum_3d = int(value)
+                    except:
+                        pass
                 elif key == 'palette':
                     if value.lower() in ['false', 'no', 'off']:
                         self.palette = False
-                elif key == 'random_colours' or key == 'random_colors':
+                elif key == 'plot_palette':
                     if value.lower() in ['false', 'no', 'off']:
-                        self.random_colours = False
+                        self.plot_palette = ''
+                    else:
+                        self.plot_palette = value
                 elif key == 'sparse_ticks':
                     try:
                         self.sparse_ticks = [int(value)]
@@ -435,10 +482,16 @@ class FlexiPlot(QtWidgets.QWidget):
                                 self.sparse_ticks = value.split(':')
                             else:
                                 self.sparse_ticks = value.split(',')
-                elif key == 'ticks_font':
-                    self.ticks_font = value
                 elif key == 'title_font':
-                    self.title_font = value
+                    try:
+                        self.fontprops['Title'] = self.set_fontdict(value)
+                    except:
+                        pass
+                elif key == 'ticks_font':
+                    try:
+                        self.fontprops['Ticks'] = self.set_fontdict(value)
+                    except:
+                        pass
         except:
             pass
         return ifiles
@@ -448,15 +501,16 @@ class FlexiPlot(QtWidgets.QWidget):
         ignore = True
         config = configparser.RawConfigParser()
         config.read(self.config_file)
-        columns = []
+        yseries = []
         isheet = ''
+        ixseries = ''
         try: # get list of files if any
             ifile = config.get('Flexiplot', 'file' + choice).replace('$USER$', getUser())
         except:
             pass
         if not os.path.exists(ifile) and not os.path.exists(self.scenarios + ifile):
             if self.book is not None:
-                self.book.release_resources()
+                self.book.close()
                 self.book = None
             self.log.setText("Can't find file - " + ifile)
             msgbox = QtWidgets.QMessageBox()
@@ -469,31 +523,26 @@ class FlexiPlot(QtWidgets.QWidget):
             msgbox.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
             reply = msgbox.exec_()
             if reply == QtWidgets.QMessageBox.Yes:
-                line = ''
-                for i in range(len(self.history) -1, -1, -1):
-                    if self.history[i] == choice:
-                        del self.history[i]
-                    else:
-                        line += self.history[i] + ','
-                line = line[:-1]
-                lines = ['file_history=' + line]
-                for prop in ['columns', 'file', 'grid', 'percentage', 'plot', 'series', 'maximum', 'sheet',
-                             'title' , 'xlabel', 'xvalues', 'ylabel']:
-                    lines.append(prop + choice + '=')
-                updates = {'Flexiplot': lines}
-                SaveIni(updates, ini_file=self.config_file)
+                self.file_cleanup(choice)
                 self.files.removeItem(self.files.currentIndex())
-                self.log.setText('File removed from file history')
             return
         try: # get list of files if any
             self.maxSpin.setValue(0)
             self.gridtype.setCurrentIndex(0)
             self.percentage.setCheckState(QtCore.Qt.Unchecked)
+            self.title.setText('')
+            self.xextra.setText('')
+            self.xlabel.setText('')
+            self.ylabel.setText('')
+            self.zlabel.setText('')
+            self.title.setText('')
+            self.data_order.setCurrentIndex(0)
+            self.xseries.clear()
+            self.order.clear()
+            self.ignore.clear()
             items = config.items('Flexiplot')
             for key, value in items:
-                if key == 'columns' + choice:
-                    columns = strSplit(value)
-                elif key == 'file' + choice:
+                if key == 'file' + choice:
                     ifile = value.replace('$USER$', getUser())
                 elif key == 'grid' + choice:
                     self.gridtype.setCurrentIndex(self.gridtype.findText(value))
@@ -504,11 +553,6 @@ class FlexiPlot(QtWidgets.QWidget):
                         self.percentage.setCheckState(QtCore.Qt.Unchecked)
                 elif key == 'plot' + choice:
                     self.plottype.setCurrentIndex(self.plottype.findText(value))
-                elif key == 'series' + choice:
-                    self.seriesi.clear()
-                    self.series = strSplit(value)
-                    for series in self.series:
-                        self.seriesi.addItem(series)
                 elif key == 'maximum' + choice:
                     try:
                         self.maxSpin.setValue(int(value))
@@ -518,30 +562,45 @@ class FlexiPlot(QtWidgets.QWidget):
                     isheet = value
                 elif key == 'title' + choice:
                     self.title.setText(value)
+                elif key == 'xextra' + choice:
+                    self.xextra.setText(value)
                 elif key == 'xlabel' + choice:
                     self.xlabel.setText(value)
-                elif key == 'xvalues' + choice:
-                    self.xvaluesi.clear()
-                    self.xvalues = strSplit(value)
-                    for xvalues in self.xvalues:
-                        self.xvaluesi.addItem(xvalues)
+                elif key == 'xoffset' + choice:
+                    self.xoffset.setCurrentIndex(self.xoffset.findText(value))
+                    if value.isdigit():
+                        self.data_order.setCurrentIndex(1)
+                    else:
+                        self.data_order.setCurrentIndex(0)
+                elif key == 'xseries' + choice:
+                    ixseries = value
                 elif key == 'ylabel' + choice:
                     self.ylabel.setText(value)
+                elif key == 'yseries' + choice:
+                    yseries = strSplit(value)
+                elif key == 'zlabel' + choice:
+                    self.zlabel.setText(value)
         except:
              pass
-        self.columns = []
+        nocolour = []
         if ifile != '':
             if self.book is not None:
-                self.book.release_resources()
+                self.book.close()
                 self.book = None
             self.file.setText(ifile)
             if os.path.exists(ifile):
                 self.setSheet(ifile, isheet)
             else:
                 self.setSheet(self.scenarios + ifile, isheet)
-            self.setColumns(isheet, columns=columns)
-            for column in self.columns:
-                self.check_colour(column, config, add=False)
+            self.setSeries(isheet, xseries=ixseries, yseries=yseries)
+            for series in yseries:
+                if not self.check_colour(series, config, add=False):
+                    nocolour.append(series.lower())
+            if ixseries != '':
+                self.xseries.setCurrentIndex(self.xseries.findText(ixseries))
+        if len(nocolour) > 0:
+            more_colour = PlotPalette(nocolour, palette=self.plot_palette)
+            self.colours = {**self.colours, **more_colour}
         ignore = False
 
     def popfileslist(self, ifile, ifiles=None):
@@ -558,7 +617,9 @@ class FlexiPlot(QtWidgets.QWidget):
             for i in range(len(self.history) - 1, -1, -1):
                 try:
                     if ifile == ifiles[self.history[i]]:
-                        self.history.insert(0, self.history.pop(i)) # make this entry first
+                        ihist = self.history[i]
+                        del self.history[i]
+                        self.history.insert(0, ihist) # make this entry first
                         break
                 except KeyError:
                     del self.history[i]
@@ -570,6 +631,14 @@ class FlexiPlot(QtWidgets.QWidget):
                     self.history.insert(0, self.history.pop(-1)) # make last entry first
                 else:
                     hist = sorted(self.history)
+                    if hist[0] == '':
+                        hist = [int(x) for x in hist[1:]]
+                        hist.sort()
+                        hist.insert(0, '')
+                    else:
+                        hist = [int(x) for x in hist[1:]]
+                        hist.sort()
+                    hist = [str(x) for x in hist]
                     if hist[0] != '':
                         ent = ''
                     else:
@@ -599,7 +668,7 @@ class FlexiPlot(QtWidgets.QWidget):
         newfile = QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', curfile)[0]
         if newfile != '':
             if self.book is not None:
-                self.book.release_resources()
+                self.book.close()
                 self.book = None
             isheet = self.sheet.currentText()
             self.setSheet(newfile, isheet)
@@ -623,6 +692,51 @@ class FlexiPlot(QtWidgets.QWidget):
         self.popfileslist(self.files.currentText())
         self.log.setText('File "loaded"')
         self.setup[0] = False
+
+    def doFont(self):
+        if self.sender().text()[:6] == 'Legend':
+            if self.legend_on_pie and self.percent_on_pie:
+                lop = 'True'
+            elif not self.legend_on_pie and self.percent_on_pie:
+                lop = 'Pct'
+            else:
+                lop = 'False'
+            legend_properties = {'legend_ncol': str(self.legend_ncol),
+                                 'legend_on_pie': lop,
+                                 'legend_side': self.legend_side}
+            legend = ChangeFontProp('Legend', self.legend_font, legend_properties)
+            legend.exec_()
+            values, font_values = legend.getValues()
+            if values is None:
+                return
+            for key, value in values.items():
+                if key == 'legend_ncol':
+                    self.legend_ncol = int(value)
+                elif key == 'legend_on_pie':
+                    if value.lower() in ['true', 'yes', 'on']:
+                        self.legend_on_pie = True
+                        self.percent_on_pie = True
+                    if value.lower() in ['pct', 'percentage', '%', '%age']:
+                        self.legend_on_pie = False
+                        self.percent_on_pie = True
+                    elif value.lower() in ['false', 'no', 'off']:
+                        self.legend_on_pie = False
+                        self.percent_on_pie = False
+                else:
+                    setattr(self, key, value)
+            self.legend_font = legend.getFont()
+            self.log.setText('Legend properties updated')
+            self.updated = True
+        else:
+            what = self.sender().text().split(' ')[0]
+            font = ChangeFontProp(what, self.fontprops[what])
+            font.exec()
+            if font.getFont() is None:
+                return
+            self.fontprops[what] = self.set_fontdict(font.getFontDict())
+            self.log.setText(what + ' font properties updated')
+            self.updated = True
+        return
 
     def somethingChanged(self):
         if not self.setup[0]:
@@ -661,19 +775,40 @@ class FlexiPlot(QtWidgets.QWidget):
         if isheet not in self.book.sheet_names():
             self.log.setText("Can't find sheet - " + isheet)
             return
-        self.setColumns(isheet)
+        self.setSeries(isheet)
         self.updated = True
 
     def seriesChanged(self):
         if self.setup[0]:
             return
         self.log.setText('')
-        series = self.seriesi.currentText()
-        self.series = [series]
-        for i in range(self.seriesi.count()):
-            if self.seriesi.itemText(i) != series:
-                self.series.append(self.seriesi.itemText(i))
-        self.setColumns(self.sheet.currentText())
+        self.setSeries(self.sheet.currentText())
+        self.updated = True
+
+    def dorderChanged(self):
+        self.xoffset.clear()
+        if self.data_order.currentIndex() == 0:
+            for col in range(5):
+                self.xoffset.addItem(ssCol(col, base=0))
+            self.data_in_rows = True
+        else:
+            for row in range(5):
+                self.xoffset.addItem(f'{row + 1}')
+            self.data_in_rows = False
+        self.xoffset.setCurrentIndex(0)
+
+    def xoffsetChanged(self):
+        if self.setup[0]:
+            return
+        self.log.setText('')
+        self.setSeries(self.sheet.currentText())
+        self.updated = True
+
+    def xseriesChanged(self):
+        if self.setup[0]:
+            return
+        self.log.setText('')
+        self.setSeries(self.sheet.currentText())
         self.updated = True
 
     def xvaluesChanged(self):
@@ -685,56 +820,160 @@ class FlexiPlot(QtWidgets.QWidget):
                 self.xvalues.append(self.xvaluesi.itemText(i))
         self.updated = True
 
-    def setColumns(self, isheet, columns=[]):
+    def setSeries(self, isheet, xseries='', yseries=[]):
         try:
             ws = self.book.sheet_by_name(isheet)
         except:
             self.log.setText("Can't find sheet - " + isheet)
             return
-        self.columns = []
-        oldcolumns = []
-        for col in range(self.order.count()):
-            oldcolumns.append(self.order.item(col).text())
+        self.setup[0] = True
+        if xseries == '':
+            xseries = self.xseries.currentText()
+        self.xseries.clear()
+        xaxes = []
+        if self.xoffset.currentText().isdigit():
+            row = int(self.xoffset.currentText()) - 1
+            self.data_in_rows = False
+            # find unique columns
+            for col in range(ws.ncols):
+                xaxes.append(str(ws.cell_value(row, col)).replace('\\n', ' '))
+            if TablePlot3D is not None:
+                rows = []
+                keys = []
+                for x in range(len(xaxes)):
+                    try:
+                        i = keys.index(xaxes[x])
+                        rows[i].append(x)
+                    except:
+                        keys.append(xaxes[x])
+                        rows.append([x])
+                dels = []
+                for row in rows:
+                    if len(row) > 1:
+                        dels.extend(row)
+                dels = sorted(dels, reverse=True)
+                if len(dels) > self.minimum_3d:
+                    for d in dels:
+                        del xaxes[d]
+                    self.log.setText(f'Possibly table data ({len(dels)} table data rows)')
+            if len(yseries) == 0:
+                for col in range(self.order.count()):
+                    yseries.append(self.order.item(col).text())
+        else:
+            col = col_letters.find(self.xoffset.currentText()) - 1
+            self.data_in_rows = True
+            # find unique rows
+            for row in range(ws.nrows):
+                xaxes.append(str(ws.cell_value(row, col)).replace('\\n', ' '))
+            if TablePlot3D is not None:
+                rows = []
+                keys = []
+                for x in range(len(xaxes)):
+                    try:
+                        i = keys.index(xaxes[x])
+                        rows[i].append(x)
+                    except:
+                        keys.append(xaxes[x])
+                        rows.append([x])
+                dels = []
+                for row in rows:
+                    if len(row) > 1:
+                        dels.extend(row)
+                dels = sorted(dels, reverse=True)
+                if len(dels) > self.minimum_3d:
+                    for d in dels:
+                        del xaxes[d]
+                    self.log.setText(f'Possibly table data ({len(dels)} table data rows)')
+            if len(yseries) == 0:
+                for col in range(self.order.count()):
+                    yseries.append(self.order.item(col).text())
         self.order.clear()
         self.ignore.clear()
-        try:
-            roco = get_range(self.series[0])
-        except:
-            return
-        if roco is None:
-            return
-        for row in range(roco[0], roco[2] + 1):
-            for col in range(roco[1], roco[3] + 1):
-                try:
-                    column = str(ws.cell_value(row, col)).replace('\n', ' ')
-                except:
-                    continue
-                self.columns.append(column) # need order of columns
-                if column in oldcolumns and column not in columns:
-                    columns.append(column)
-                if column in columns:
-                    pass
+        c = 0
+        for d in rows:
+            if len(d) == 1:
+                if self.data_in_rows:
+                    xaxes[c] = f'{xaxes[c]} ({self.xoffset.currentText()}{d[0] + 1})'
                 else:
-                    self.ignore.addItem(column)
-                    try:
-                        self.ignore.item(self.ignore.count() - 1) \
-                            .setBackground(QtGui.QColor(self.colours[column.lower()]))
-                    except:
-                        pass
-        for column in columns:
-            if column in self.columns:
-                self.order.addItem(column)
+                    xaxes[c] = f'{xaxes[c]} ({ssCol(d[0],base=0)}{self.xoffset.currentText()})'
+                c += 1
+        if self.xextra.text() != '':
+            self.xseries.addItem(f' ({self.xextra.text()})')
+        for item in xaxes:
+            self.xseries.addItem(item)
+            try:
+                itm = item[:item.rfind(' (')]
+                item_colour = QtGui.QColor(self.colours[itm.lower()])
+            except:
+                item_colour = None
+            if item in yseries:
+                self.order.addItem(item)
                 try:
-                    self.order.item(self.order.count() - 1) \
-                        .setBackground(QtGui.QColor(self.colours[column.lower()]))
+                    self.order.item(self.order.count() - 1).setBackground(item_colour)
                 except:
                     pass
+            else:
+                self.ignore.addItem(item)
+                try:
+                    self.ignore.item(self.ignore.count() - 1).setBackground(item_colour)
+                except:
+                    pass
+        try:
+            self.xseries.setCurrentIndex(self.xseries.findText(xseries))
+        except:
+            pass
+        self.setup[0] = False
         self.updated = True
+        return
 
     def helpClicked(self):
         dialog = displayobject.AnObject(QtWidgets.QDialog(), self.help,
                  title='Help for flexiplot (' + fileVersion() + ')', section='flexiplot')
         dialog.exec_()
+
+    def listfilesClicked(self):
+        ifiles = {}
+        for i in range(self.files.count()):
+             if self.history[i] == '':
+                 ifiles[' '] = self.files.itemText(i)
+             else:
+                 ifiles[self.history[i]] = self.files.itemText(i)
+        fields = ['Choice', 'File name']
+        dialog = displaytable.Table(ifiles, title='Files', fields=fields, sortby='', edit='delete')
+        dialog.exec_()
+        if dialog.getValues() is not None:
+            ofiles = dialog.getValues()
+            dels = []
+            for key in ifiles.keys():
+                if key not in ofiles.keys():
+                    dels.append(key)
+            for choice in dels:
+                self.file_cleanup(choice)
+                for i in range(self.files.count()):
+                     if self.files.itemText(i) == ifiles[choice]:
+                         self.files.removeItem(i)
+        del dialog
+        self.filesChanged()
+
+    def file_cleanup(self, choice):
+        if choice == ' ':
+            choice = ''
+        line = ''
+        for i in range(len(self.history) -1, -1, -1):
+            if self.history[i] == choice:
+                del self.history[i]
+            else:
+                line += self.history[i] + ','
+        line = line[:-1]
+        lines = ['file_history=' + line]
+        for prop in ['file', 'grid', 'maximum', 'percentage', 'plot', 'sheet', 'title',
+                     'xextra', 'xlabel', 'xoffset', 'xseries', 'ylabel', 'yseries', 'zlabel']:
+            lines.append(prop + choice + '=')
+        for prop in ['columns', 'series', 'xvalues']: # old properties
+            lines.append(prop + choice + '=')
+        updates = {'Flexiplot': lines}
+        SaveIni(updates, ini_file=self.config_file)
+        self.log.setText('File removed from file history')
 
     def openfileClicked(self):
         if sys.platform == 'win32' or sys.platform == 'cygwin':
@@ -754,38 +993,62 @@ class FlexiPlot(QtWidgets.QWidget):
             return
         ws = self.book.sheet_by_name(isheet)
         x = []
-        labels = {}
-        if self.sender().text()[-6:] == 'Series':
-            rocox = get_range(self.seriesi.currentText())
+        series = self.xseries.currentText()
+        label, row, col = self.get_name_row_col(series)
+        values = []
+        if self.xoffset.currentText().isdigit():
+            fields = ['Row', '??']
+            if label == '':
+                values.append([row + 1, '??'])
+                row += 1
+            for row in range(row, ws.nrows):
+                if ws.cell_value(row, col) is None:
+                    break
+                values.append([row + 1, str(ws.cell_value(row, col))])
+            max_row = row + 1
+            if self.sender().text()[-8:] == 'Y Series':
+                for o in range(self.order.count()):
+                    label, row1, col = self.get_name_row_col(self.order.item(o).text())
+                    fields.append(label)
+                    c = 0
+                    for row in range(row1, max_row):
+                        if ws.cell_value(row, col) is None:
+                            values[c].append('')
+                        else:
+                            values[c].append(str(ws.cell_value(row, col)))
+                        c += 1
+                        if c >= len(values):
+                            break
         else:
-            rocox = get_range(self.xvaluesi.currentText())
-        data_in_cols = True
-        if rocox[1] == rocox[3]:
-            pass
-        elif rocox[0] == rocox[2]:
-            data_in_cols = False
-        if data_in_cols:
-            ttr = 'Col ' + ss_col(rocox[1])
-            fields = ['Row']
-            if rocox[2] >= ws.nrows:
-                rocox[2] = ws.nrows - 1
-            for row in range(rocox[0], rocox[2] + 1):
-                labels[row + 1] = str(ws.cell_value(row, rocox[1]))
-        else:
-            ttr = 'Row ' + str(rocox[0] + 1)
-            fields = ['Col']
-            if rocox[3] >= ws.ncols:
-                rocox[3] = ws.ncols - 1
-            for col in range(rocox[1], rocox[3] + 1):
-                labels[ss_col(col)] = str(ws.cell_value(rocox[0], col))
-        fields.append(ttr)
-        dialog = displaytable.Table(labels, title='Series labels', fields=fields)
+            fields = ['Col', '??']
+            if label == '':
+                values.append([ssCol(col, base=0), '??'])
+                col += 1
+            for col in range(col, ws.ncols):
+                if ws.cell_value(row, col) is None:
+                    break
+                values.append([ssCol(col, base=0), str(ws.cell_value(row, col))])
+            max_col = col + 1
+            if self.sender().text()[-8:] == 'Y Series':
+                for o in range(self.order.count()):
+                    label, row, col = self.get_name_row_col(self.order.item(o).text())
+                    fields.append(label)
+                    c = 0
+                    for col in range(col, max_col):
+                        if ws.cell_value(row, col) is None:
+                            values[c].append('')
+                        else:
+                            values[c].append(str(ws.cell_value(row, col)))
+                        c += 1
+                        if c >= len(values):
+                            break
+        dialog = displaytable.Table(values, title='Series values', fields=fields)
         dialog.exec_()
         del dialog
 
     def doneClicked(self):
         if self.book is not None:
-            self.book.release_resources()
+            self.book.close()
         if not self.updated and not self.colours_updated:
             self.close()
         self.saveConfig()
@@ -809,6 +1072,9 @@ class FlexiPlot(QtWidgets.QWidget):
 
     def saveConfig(self):
         updates = {}
+        if self.order.updated:
+            self.updated = True
+            self.order.updated = False
         if self.updated:
             config = configparser.RawConfigParser()
             config.read(self.config_file)
@@ -822,27 +1088,29 @@ class FlexiPlot(QtWidgets.QWidget):
             except:
                 pass
             lines = []
+            lines.append('legend_font=' + self.legend_font.get_fontconfig_pattern())
+            lines.append('legend_on_pie=')
+            if not self.legend_on_pie and self.percent_on_pie:
+                lines[-1] += 'Pct'
+            elif not self.legend_on_pie and not self.percent_on_pie:
+                lines[-1] += 'False'
+            lines.append('legend_ncol=')
+            if self.legend_ncol != 1:
+                lines[-1] += str(self.legend_ncol)
+            lines.append('legend_side=')
+            if self.legend_side != 'None':
+                lines[-1] += self.legend_side
+            for key, value in self.fontprops.items():
+                lines.append(key.lower() + '_font=')
+                for key2, value2 in value.items():
+                    lines[-1] += f'{key2}={value2}:'
+                lines[-1] = lines[-1][:-1]
             if len(self.history) > 0:
                 line = ''
                 for itm in self.history:
                     line += itm + ','
                 line = line[:-1]
                 lines.append('file_history=' + line)
-            cols = 'columns' + choice + '='
-            for col in range(self.order.count()):
-                try:
-                    if self.order.item(col).text().index(',') >= 0:
-                        try:
-                            if self.order.item(col).text().index("'") >= 0:
-                                qte = '"'
-                        except:
-                            qte = "'"
-                except:
-                    qte = ''
-                cols += qte + self.order.item(col).text() + qte + ','
-            if cols[-1] != '=':
-                cols = cols[:-1]
-            lines.append(cols)
             lines.append('file' + choice + '=' + save_file)
             lines.append('grid' + choice + '=' + self.gridtype.currentText())
             lines.append('maximum' + choice + '=')
@@ -853,23 +1121,30 @@ class FlexiPlot(QtWidgets.QWidget):
                 lines[-1] = lines[-1] + 'True'
             lines.append('plot' + choice + '=' + self.plottype.currentText())
             lines.append('sheet' + choice + '=' + self.sheet.currentText())
-            line = 'series' + choice + '='
-            for series in self.series:
-                if series.find(',') >= 0:
-                    line += "'" + series + "',"
-                else:
-                    line += series + ','
-            lines.append(line[:-1])
             lines.append('title' + choice + '=' + self.title.text())
+            lines.append('xextra' + choice + '=' + self.xextra.text())
             lines.append('xlabel' + choice + '=' + self.xlabel.text())
-            line = 'xvalues' + choice + '='
-            for xvalues in self.xvalues:
-                if xvalues.find(',') >= 0:
-                    line += "'" + xvalues + "',"
-                else:
-                    line += xvalues + ','
-            lines.append(line[:-1])
+            lines.append('xoffset' + choice + '=' + self.xoffset.currentText())
+            lines.append('xseries' + choice + '=' + self.xseries.currentText())
             lines.append('ylabel' + choice + '=' + self.ylabel.text())
+            line = 'yseries' + choice + '='
+            for y in range(self.order.count()):
+                try:
+                    if self.order.item(y).text().index(',') >= 0:
+                        try:
+                            if self.order.item(y).text().index("'") >= 0:
+                                qte = '"'
+                        except:
+                            qte = "'"
+                except:
+                    qte = ''
+                line += qte + self.order.item(y).text() + qte + ','
+            if line[-1] != '=':
+                line = line[:-1]
+            lines.append(line)
+            lines.append('zlabel' + choice + '=' + self.zlabel.text())
+            for prop in ['columns', 'series', 'xvalues']: # old properties
+                lines.append(prop + choice + '=')
             updates['Flexiplot'] = lines
             if self.restorewindows and not config.has_section('Windows'): # new file set windows section
                 updates['Windows'] = ['restorewindows=True']
@@ -893,7 +1168,8 @@ class FlexiPlot(QtWidgets.QWidget):
                 palette.append(item.text())
         dialr = Colours(section='Plot Colors', ini_file=self.config_file, add_colour=color,
                         palette=palette, underscore=True)
-        dialr.exec_()
+        if not dialr.cancelled:
+            dialr.exec_()
         self.colours = {}
         config = configparser.RawConfigParser()
         config.read(self.config_file)
@@ -921,7 +1197,7 @@ class FlexiPlot(QtWidgets.QWidget):
         colr = colour.lower()
         if colr in self.colours.keys():
             return True
-        elif self.random_colours:
+        elif self.plot_palette[0].lower() == 'r':
             # new approach to generate random colour if not in [Plot Colors]
             r = lambda: random.randint(0,255)
             new_colr = '#%02X%02X%02X' % (r(),r(),r())
@@ -964,66 +1240,55 @@ class FlexiPlot(QtWidgets.QWidget):
         if self.book is None:
             self.log.setText('Error accessing Workbook.')
             return
-        if self.order.count() == 0:
+        if self.xseries.currentText() == '' or self.order.count() == 0:
             self.log.setText('Nothing to plot.')
             return
         isheet = self.sheet.currentText()
         if isheet == '':
             self.log.setText('Sheet not set.')
             return
-        if len(sys.argv) > 1:
-            config_file = sys.argv[1]
-            config = configparser.RawConfigParser()
-            config.read(self.config_file)
-        else:
-            config = None
-        for c in range(self.order.count()):
-            if not self.check_colour(self.order.item(c).text(), config):
-                return
+        config = configparser.RawConfigParser()
+        config.read(self.config_file)
+  #      for c in range(self.order.count()):
+   #         if not self.check_colour(self.order.item(c).text(), config):
+    #            return
+        if self.plottype.currentText() == '3D Surface Chart':
+            html_3d = False
+            contours_3d = False
+            background_3d = True
+            colorbars_3d = []
+            try:
+                chk = config.get('Flexiplot', 'html_3d')
+                if chk.lower() in ['true', 'on', 'yes']:
+                    html_3d = True
+            except:
+                pass
+            try:
+                chk = config.get('Flexiplot', 'colorbars_3d')
+                bits = chk.split('(')
+                for bit in bits:
+                    if len(bit) > 0:
+                        bit = bit.rstrip('),')
+                        bits2 = bit.split(',')
+                        colorbars_3d.append([])
+                        for bit2 in bits2:
+                            colorbars_3d[-1].append(bit2)
+            except:
+                pass
+            try:
+                chk = config.get('Flexiplot', 'contours_3d')
+                if chk.lower() in ['true', 'on', 'yes']:
+                    contours_3d = True
+            except:
+                pass
+            try:
+                chk = config.get('Flexiplot', 'background_3d')
+                if chk.lower() in ['false', 'off', 'no']:
+                    background_3d = False
+            except:
+                pass
         del config
         self.log.setText('')
-        i = self.file.text().rfind('/')
-        if i > 0:
-            matplotlib.rcParams['savefig.directory'] = self.file.text()[:i + 1]
-        else:
-            matplotlib.rcParams['savefig.directory'] = self.scenarios
-        ws = self.book.sheet_by_name(isheet)
-        x = []
-        xlabels = []
-        rocox = get_range(self.xvalues[0])
-      #  print(rocox)
-        data_in_cols = True
-        if rocox[1] == rocox[3]:
-            pass
-        elif rocox[0] == rocox[2]:
-            data_in_cols = False
-   #     else:
-    #        print('Assume in columns')
-        ctr = 0
-        if data_in_cols:
-            if rocox[2] >= ws.nrows:
-                rocox[2] = ws.nrows - 1
-            for row in range(rocox[0], rocox[2] + 1):
-                x.append(ctr)
-                ctr += 1
-                try:
-                    xlabels.append(str(int(ws.cell_value(row, rocox[1]))))
-                except:
-                    xlabels.append(ws.cell_value(row, rocox[1]))
-        else:
-            if rocox[3] >= ws.ncols:
-                rocox[3] = ws.ncols - 1
-            for col in range(rocox[1], rocox[3] + 1):
-                x.append(ctr)
-                ctr += 1
-                try:
-                    xlabels.append(str(int(ws.cell_value(rocox[0], col))))
-                except:
-                    xlabels.append(ws.cell_value(rocox[0], col))
-        data = []
-        label = []
-        miny = 0
-        maxy = 0
         titl = self.title.text() #.replace('$YEAR$', str(year))
         titl = titl.replace('$MTH$', '')
         titl = titl.replace('$MONTH$', '')
@@ -1031,33 +1296,84 @@ class FlexiPlot(QtWidgets.QWidget):
         titl = titl.replace('Diurnal ', '')
         titl = titl.replace('Diurnal', '')
         titl = titl.replace('$SHEET$', isheet)
-        roco = get_range(self.series[0])
-        for c in range(self.order.count() -1, -1, -1):
-            try:
-                column = self.order.item(c).text()
-                ndx = self.columns.index(column)
-                if data_in_cols:
-                    col = roco[1] + ndx
-                else:
-                    row = roco[0] + ndx
-            except:
-                continue
-            data.append([])
-            label.append(column)
-            if data_in_cols:
-                for row in range(rocox[0], rocox[2] + 1):
-                    if ws.cell_value(row, col) is None or ws.cell_value(row, col) == '':
-                        data[-1].append(0.)
-                    else:
-                        data[-1].append(ws.cell_value(row, col))
-                    try:
-                        miny = min(miny, data[-1][-1])
-                        maxy = max(maxy, data[-1][-1])
-                    except:
-                        self.log.setText('Data in cell ' + ss_col(col) + str(row + 1) + ' seems wrong - ' + data[-1][-1])
-                        return
+        ws = self.book.sheet_by_name(isheet)
+        if self.plottype.currentText() == '3D Surface Chart':
+            if html_3d:
+                saveit = self.file.text()[:self.file.text().rfind('.')] + '.html'
             else:
-                for col in range(rocox[1], rocox[3] + 1):
+                saveit = None
+            yseries = []
+            colours = {}
+            nocolour = []
+            for c in range(self.order.count()):
+                yseries.append(self.order.item(c).text()[:self.order.item(c).text().rfind(' (')])
+                try:
+                    colours[yseries[-1].lower()] = self.colours[yseries[-1].lower()]
+                except:
+                    nocolour.append(yseries[-1].lower())
+            if len(nocolour) > 0:
+                for bar in colorbars_3d:
+                    colours[nocolour[0].lower()] = bar
+                    del nocolour[0]
+                    if len(nocolour) == 0:
+                        break
+                if len(nocolour) > 0:
+                    more_colour = PlotPalette(nocolour, palette=self.plot_palette)
+                    colours = {**colours, **more_colour}
+            # colours, title, ws, x_offset, x_name, y_label, y_names, z_label, html=None, background=False, contours=False
+            x_name = self.xseries.currentText()[:self.xseries.currentText().rfind(' (')]
+            if x_name == '':
+                label, row, col = self.get_name_row_col(self.xseries.currentText())
+                x_name = row
+            TablePlot3D(colours, titl, ws, self.xoffset.currentText(), x_name, self.ylabel.text(), yseries, self.zlabel.text(),
+                        html=saveit, background=background_3d, contours=contours_3d)
+            self.log.setText("3D Chart complete (You'll need to close the browser window yourself).")
+            return
+        i = self.file.text().rfind('/')
+        if i > 0:
+            matplotlib.rcParams['savefig.directory'] = self.file.text()[:i + 1]
+        else:
+            matplotlib.rcParams['savefig.directory'] = self.scenarios
+        x = []
+        xlabels = []
+        series = self.xseries.currentText()
+        label, row, col = self.get_name_row_col(series)
+        values = []
+        if self.xoffset.currentText().isdigit():
+            for row in range(row + 1, ws.nrows):
+                if ws.cell_value(row, col) is None:
+                    break
+                xlabels.append(ws.cell_value(row, col))
+            max_row = row + 1
+            for i in range(len(xlabels)):
+                x.append(i)
+        else:
+            for col in range(col + 1, ws.ncols):
+                if ws.cell_value(row, col) is None:
+                    break
+                xlabels.append(ws.cell_value(row, col))
+            max_col = col + 1
+            for i in range(len(xlabels)):
+                x.append(i)
+        data = []
+        labels = []
+        try:
+            self.tick_color = self.fontprops['Ticks']['color']
+        except:
+            self.tick_color = '#000000'
+        miny = 0
+        maxy = 0
+        nocolour = []
+        if self.xoffset.currentText().isdigit():
+            for o in range(self.order.count()):
+                label, row, col = self.get_name_row_col(self.order.item(o).text())
+                labels.append(label)
+                if label.lower() in self.colours.keys():
+                    pass
+                else:
+                    nocolour.append(label.lower())
+                data.append([])
+                for row in range(row + 1, max_row):
                     if ws.cell_value(row, col) is None or ws.cell_value(row, col) == '':
                         data[-1].append(0.)
                     else:
@@ -1066,8 +1382,31 @@ class FlexiPlot(QtWidgets.QWidget):
                         miny = min(miny, data[-1][-1])
                         maxy = max(maxy, data[-1][-1])
                     except:
-                        self.log.setText('Data in cell ' + ss_col(col) + str(row + 1) + ' seems wrong - ' + data[-1][-1])
+                        self.log.setText('Data in cell ' + ssCol(col, base=0) + str(row + 1) + ' seems wrong - ' + data[-1][-1])
                         return
+        else:
+            for o in range(self.order.count()):
+                label, row, col = self.get_name_row_col(self.order.item(o).text())
+                labels.append(label)
+                if label.lower() in self.colours.keys():
+                    pass
+                else:
+                    nocolour.append(label.lower())
+                data.append([])
+                for col in range(col + 1, max_col):
+                    if ws.cell_value(row, col) is None or ws.cell_value(row, col) == '':
+                        data[-1].append(0.)
+                    else:
+                        data[-1].append(ws.cell_value(row, col))
+                    try:
+                        miny = min(miny, data[-1][-1])
+                        maxy = max(maxy, data[-1][-1])
+                    except:
+                        self.log.setText('Data in cell ' + ssCol(col, base=0) + str(row + 1) + ' seems wrong - ' + data[-1][-1])
+                        return
+        if len(nocolour) > 0:
+            more_colour = PlotPalette(nocolour, palette=self.plot_palette)
+            self.colours = {**self.colours, **more_colour}
         if self.gridtype.currentText() == 'Both':
             gridtype = 'both'
         elif self.gridtype.currentText() == 'Horizontal':
@@ -1080,9 +1419,104 @@ class FlexiPlot(QtWidgets.QWidget):
         fig = plt.figure(figname, constrained_layout=self.constrained_layout)
         if gridtype != '':
             plt.grid(axis=gridtype)
+        loc = 'lower right'
         graph = plt.subplot(111)
-        plt.title(titl, fontdict=font_props(self.title_font))
-        if self.plottype.currentText() in ['Cumulative', 'Step Chart']:
+        if self.legend_side == 'Right':
+            plt.subplots_adjust(left=0.1, bottom=0.1, right=0.75)
+        elif self.legend_side == 'Left':
+            plt.subplots_adjust(left=0.25, bottom=0.1, right=0.9)
+            loc = 'lower left'
+        plt.title(titl, fontdict=self.fontprops['Title'])
+        if self.plottype.currentText() == 'Pie Chart':
+            fig = plt.figure(figname, constrained_layout=self.constrained_layout)
+            plt.title(titl, fontdict=self.fontprops['Title'])
+            if gridtype != '':
+                plt.grid(axis=gridtype)
+            datasum = []
+            colors = []
+            for dat in data:
+                datasum.append(sum(dat))
+                colors.append(self.colours[labels[len(datasum) - 1].lower()])
+            tot = sum(datasum)
+            # https://stackoverflow.com/questions/3942878/how-to-decide-font-color-in-white-or-black-depending-on-background-color
+            whites = []
+            threshold = sqrt(1.05 * 0.05) - 0.05
+            if self.percent_on_pie:
+                for c in range(len(colors)):
+                    other = 0
+                    intensity = 0.
+                    for i in range(1, 5, 2):
+                        colnum = int(colors[c][i : i + 2], 16)
+                        colr = colnum / 255.0
+                        if colr <= 0.04045:
+                            colr = colr / 12.92
+                        else:
+                            colr = pow((colr + 0.055) / 1.055, 2.4)
+                        if i == 1: # red
+                            intensity += colr * 0.216
+                            other += colnum * 0.299
+                        elif i == 3: # green
+                            intensity += colr * 0.7152
+                            other += colnum * 0.587
+                        else: # blue
+                            intensity += colr * 0.0722
+                            other += colnum * 0.114
+                    if intensity < threshold:
+                        whites.append(c)
+            if self.legend_on_pie: # legend on chart
+                if self.percent_on_pie:
+                    patches, texts, autotexts = graph.pie(datasum, labels=labels, autopct='%1.1f%%', colors=colors, startangle=90, pctdistance=.70)
+                    for text in autotexts:
+                        text.set_family(self.legend_font.get_family()[0])
+                        text.set_style(self.legend_font.get_style())
+                        text.set_variant(self.legend_font.get_variant())
+                        text.set_stretch(self.legend_font.get_stretch())
+                        text.set_weight(self.legend_font.get_weight())
+                        text.set_size(self.legend_font.get_size())
+                else:
+                    patches, texts = graph.pie(datasum, labels=labels, colors=colors, startangle=90, pctdistance=.70)
+                for text in texts:
+                    text.set_family(self.legend_font.get_family()[0])
+                    text.set_style(self.legend_font.get_style())
+                    text.set_variant(self.legend_font.get_variant())
+                    text.set_stretch(self.legend_font.get_stretch())
+                    text.set_weight(self.legend_font.get_weight())
+                    text.set_size(self.legend_font.get_size())
+            else:
+                loc = 'lower right'
+                if self.percent_on_pie:
+                    patches, texts, autotexts = graph.pie(datasum, labels=None, autopct='%1.1f%%', colors=colors, startangle=90, pctdistance=.70)
+                    for text in autotexts:
+                        text.set_family(self.legend_font.get_family()[0])
+                        text.set_style(self.legend_font.get_style())
+                        text.set_variant(self.legend_font.get_variant())
+                        text.set_stretch(self.legend_font.get_stretch())
+                        text.set_weight(self.legend_font.get_weight())
+                        text.set_size(self.legend_font.get_size())
+                    for text in texts:
+                        text.set_family(self.legend_font.get_family()[0])
+                        text.set_style(self.legend_font.get_style())
+                        text.set_variant(self.legend_font.get_variant())
+                        text.set_stretch(self.legend_font.get_stretch())
+                        text.set_weight(self.legend_font.get_weight())
+                        text.set_size(self.legend_font.get_size())
+                else:
+                    for i in range(len(datasum)):
+                        label[i] = f'{labels[i]} ({datasum[i]/tot*100:0.1f}%)'
+                    patches, texts = graph.pie(datasum, colors=colors, startangle=90)
+                if self.legend_side == 'Right':
+                    plt.subplots_adjust(left=0.1, bottom=0.1, right=0.75)
+                elif self.legend_side == 'Left':
+                    plt.subplots_adjust(left=0.25, bottom=0.1, right=0.9)
+                    loc = 'lower left'
+                fig.legend(patches, labels, loc=loc, ncol=self.legend_ncol, prop=self.legend_font).set_draggable(True)
+            for c in whites:
+                autotexts[c].set_color('white')
+            p = plt.gcf()
+            p.gca().add_artist(plt.Circle((0, 0), 0.40, color='white'))
+            plt.show()
+            return
+        elif self.plottype.currentText() in ['Cumulative', 'Step Chart']:
             if self.plottype.currentText() == 'Cumulative':
                 step = None
             else:
@@ -1097,20 +1531,20 @@ class FlexiPlot(QtWidgets.QWidget):
                         totals[h] = totals[h] + data[c][h]
                 for h in range(len(data[0])):
                     values[h] = data[0][h] / totals[h] * 100.
-                graph.fill_between(x, 0, values, label=label[0], color=self.colours[label[0].lower()], step=step)
+                graph.fill_between(x, 0, values, label=labels[0], color=self.colours[labels[0].lower()], step=step)
                 for c in range(1, len(data)):
                     for h in range(len(data[c])):
                         bottoms[h] = values[h]
                         values[h] = values[h] + data[c][h] / totals[h] * 100.
-                    graph.fill_between(x, bottoms, values, label=label[c], color=self.colours[label[c].lower()], step=step)
+                    graph.fill_between(x, bottoms, values, label=labels[c], color=self.colours[labels[c].lower()], step=step)
                 maxy = 100
             else:
-                graph.fill_between(x, miny, data[0], label=label[0], color=self.colours[label[0].lower()], step=step)
+                graph.fill_between(x, miny, data[0], label=labels[0], color=self.colours[labels[0].lower()], step=step)
                 for c in range(1, len(data)):
                     for h in range(len(data[c])):
                         data[c][h] = data[c][h] + data[c - 1][h]
                         maxy = max(maxy, data[c][h])
-                    graph.fill_between(x, data[c - 1], data[c], label=label[c], color=self.colours[label[c].lower()], step=step)
+                    graph.fill_between(x, data[c - 1], data[c], label=labels[c], color=self.colours[labels[c].lower()], step=step)
                 top = data[0][:]
                 for d in range(1, len(data)):
                     for h in range(len(top)):
@@ -1138,21 +1572,21 @@ class FlexiPlot(QtWidgets.QWidget):
                         totals[h] = totals[h] + data[c][h]
                 for h in range(len(data[0])):
                     values[h] = data[0][h] / totals[h] * 100.
-                graph.bar(x, values, label=label[0], color=self.colours[label[0].lower()])
+                graph.bar(x, values, label=labels[0], color=self.colours[labels[0].lower()])
                 for c in range(1, len(data)):
                     for h in range(len(data[c])):
                         bottoms[h] = bottoms[h] + values[h]
                         values[h] = data[c][h] / totals[h] * 100.
-                    graph.bar(x, values, bottom=bottoms, label=label[c], color=self.colours[label[c].lower()])
+                    graph.bar(x, values, bottom=bottoms, label=labels[c], color=self.colours[labels[c].lower()])
                 maxy = 100
             else:
-                graph.bar(x, data[0], label=label[0], color=self.colours[label[0].lower()])
+                graph.bar(x, data[0], label=labels[0], color=self.colours[labels[0].lower()])
                 bottoms = [0.] * len(x)
                 for c in range(1, len(data)):
                     for h in range(len(data[c])):
                         bottoms[h] = bottoms[h] + data[c - 1][h]
                         maxy = max(maxy, data[c][h] + bottoms[h])
-                    graph.bar(x, data[c], bottom=bottoms, label=label[c], color=self.colours[label[c].lower()])
+                    graph.bar(x, data[c], bottom=bottoms, label=labels[c], color=self.colours[labels[c].lower()])
                 if self.maxSpin.value() > 0:
                     maxy = self.maxSpin.value()
                 else:
@@ -1165,7 +1599,7 @@ class FlexiPlot(QtWidgets.QWidget):
             for c in range(len(data)):
                 mx = max(data[c])
                 maxy = max(maxy, mx)
-                graph.plot(x, data[c], linewidth=2.0, label=label[c], color=self.colours[label[c].lower()])
+                graph.plot(x, data[c], linewidth=2.0, label=labels[c], color=self.colours[labels[c].lower()])
             if self.maxSpin.value() > 0:
                 maxy = self.maxSpin.value()
             else:
@@ -1174,8 +1608,7 @@ class FlexiPlot(QtWidgets.QWidget):
                     maxy = ceil(maxy / rndup) * rndup
                 except:
                     pass
-        leg_font = font_props(self.legend_font, fontdict=False)
-        graph.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 2), prop=leg_font)
+        graph.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 2), prop=self.legend_font)
         plt.ylim([miny, maxy])
         plt.xlim([0, len(x) - 1])
         if self.sparse_ticks or len(self.sparse_ticks) > 0:
@@ -1205,14 +1638,20 @@ class FlexiPlot(QtWidgets.QWidget):
             xticks.append(len(xlabels) - 1)
             tick_labels.append(xlabels[-1])
             plt.xticks(xticks)
-            graph.set_xticklabels(tick_labels, rotation='vertical', fontdict=font_props(self.ticks_font))
+            graph.set_xticklabels(tick_labels, rotation='vertical', fontdict=self.fontprops['Ticks'])
+            graph.tick_params(colors=self.tick_color, which='both')
         else:
             plt.xticks(x, xlabels)
-            graph.set_xticklabels(xlabels, rotation='vertical', fontdict=font_props(self.ticks_font))
-        graph.set_xlabel(self.xlabel.text(), fontdict=font_props(self.label_font))
-        graph.set_ylabel(self.ylabel.text(), fontdict=font_props(self.label_font))
-        yticks = graph.get_yticklabels()
-        graph.set_yticklabels(yticks, fontdict=font_props(self.ticks_font))
+            graph.set_xticklabels(xlabels, rotation='vertical', fontdict=self.fontprops['Ticks'])
+        xlabel = self.xlabel.text()
+        if xlabel == '':
+            xlabel = self.xseries.currentText()
+            xlabel = xlabel[:xlabel.rfind(' (')]
+        graph.set_xlabel(xlabel, fontdict=self.fontprops['Label'])
+        graph.set_ylabel(self.ylabel.text(), fontdict=self.fontprops['Label'])
+     #   yticks = graph.get_yticklabels()
+     #   graph.set_yticklabels(yticks, fontdict=self.fontprops['Ticks'])
+        graph.tick_params(colors=self.tick_color, which='both')
         if self.percentage.isChecked():
             formatter = plt.FuncFormatter(lambda y, pos: '{:.0f}%'.format(y))
         else:

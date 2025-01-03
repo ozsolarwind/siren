@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2016-2023 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2016-2024 Sustainable Energy Now Inc., Angus King
 #
 #  indexweather.py - This file is part of SIREN.
 #
@@ -19,6 +19,7 @@
 #  <http://www.gnu.org/licenses/>.
 #
 
+import openpyxl as oxl
 import os
 import sys
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -28,7 +29,7 @@ import xlwt
 import displayobject
 from credits import fileVersion
 from getmodels import getModelFile
-from senutils import ClickableQLabel, getParents, getUser
+from senutils import ClickableQLabel, getParents, getUser, ssCol
 
 
 class makeIndex():
@@ -80,7 +81,29 @@ class makeIndex():
                 else:
                     continue
                 files.append([src_lat, src_lon, fil])
-        if tgt_fil[-4:] == '.xls' or tgt_fil[-5:] == '.xlsx':
+        if tgt_fil[-5:] == '.xlsx':
+            wb = oxl.Workbook()
+            normal = oxl.styles.Font(name='Arial', size='10')
+            bold = oxl.styles.Font(name='Arial', bold=True, size='10')
+            ws = wb.active
+            ws.title = 'Index'
+            ws.cell(row=1, column=1).value = 'Latitude'
+            ws.cell(row=1, column=1).font = normal
+            ws.cell(row=1, column=2).value = 'Longitude'
+            ws.cell(row=1, column=2).font = normal
+            ws.cell(row=1, column=3).value = 'Filename'
+            ws.cell(row=1, column=3).font = normal
+            lens = [8, 9, 8]
+            for i in range(len(files)):
+                for c in range(3):
+                    ws.cell(row=i + 2, column=c + 1).value = files[i][c]
+                    ws.cell(row=i + 2, column=c + 1).font = normal
+                    lens[c] = max(len(str(files[i][c])), lens[c])
+            for c in range(len(lens)):
+                ws.column_dimensions[ssCol(c + 1)].width = lens[c]
+            ws.freeze_panes = 'A2'
+            wb.save(tgt_fil)
+        elif tgt_fil[-4:]:
             wb = xlwt.Workbook()
             fnt = xlwt.Font()
             fnt.bold = True
@@ -153,7 +176,7 @@ class getParms(QtWidgets.QWidget):
         except:
             self.solarindex = ''
         if self.solarindex == '':
-            self.solarindex = self.solarfiles + '/solar_index.xls'
+            self.solarindex = self.solarfiles + '/solar_index.xlsx'
         try:
             self.windfiles = config.get('Files', 'wind_files')
             for key, value in self.parents:
@@ -171,7 +194,7 @@ class getParms(QtWidgets.QWidget):
         except:
             self.windindex = ''
         if self.windindex == '':
-            self.windindex = self.windfiles + '/wind_index.xls'
+            self.windindex = self.windfiles + '/wind_index.xlsx'
         self.grid = QtWidgets.QGridLayout()
         self.grid.addWidget(QtWidgets.QLabel('Solar Folder:'), 1, 0)
         self.ssource = ClickableQLabel()
@@ -259,14 +282,14 @@ class getParms(QtWidgets.QWidget):
     def stgtChanged(self):
         curtgt = self.starget.text()
         newtgt = QtWidgets.QFileDialog.getSaveFileName(self, 'Choose Solar Index',
-                 curtgt, 'XLS Files (*.xls)')[0]
+                 curtgt, 'Excel Files (*.xls*)')[0]
         if newtgt != '':
             self.starget.setText(newtgt)
 
     def wtgtChanged(self):
         curtgt = self.starget.text()
         newtgt = QtWidgets.QFileDialog.getSaveFileName(self, 'Choose Wind Index',
-                 curtgt, 'XLS Files (*.xls)')[0]
+                 curtgt, 'Excel Files (*.xls*)')[0]
         if newtgt != '':
             self.wtarget.setText(newtgt)
 
