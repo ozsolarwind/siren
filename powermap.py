@@ -850,7 +850,7 @@ class MainWindow(QtWidgets.QMainWindow):
         except:
             self.scenario = ''
         str1 = self.scenarios_filter[:-1]   # a bit of mucking about to remove duplicate leading/trailing chars
-        str2 = QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'yyyy-MM-dd_hhmm') + '.xlsx'
+        str2 = datetime.now().strftime('_%Y-%M-%d_%H%M') + '.xlsx'
         ndx = 0
         for i in range(len(str1)):
             if str1[-i:] == str2[:i]:
