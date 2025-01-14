@@ -123,7 +123,8 @@ class Grid:
                         if substation:
                             stack[i] = self.substation_costs[stack[i]]
                         else:
-                            stack[i] = self.line_costs[stack[i]]
+                            if not stack[i].isdigit():
+                                stack[i] = self.line_costs[stack[i]]
                     except:
                         stack[i] = '0' # default to no cost
                     i += 2
