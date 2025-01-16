@@ -4,18 +4,71 @@ Core logic for the powermatch application, refactored to separate processing log
 from input/output and user interaction.
 """
 from abc import ABC, abstractmethod
+from copy import copy
 from dataclasses import dataclass
 from datetime import datetime
+from editini import SaveIni
 import glob
+from math import log10
 import numpy as np
 import openpyxl as oxl
+from openpyxl.chart import (
+    LineChart,
+    Reference,
+    Series
+)
 import os
 from powermatch_lit import *
-import random
 from senutils import getParents, getUser, ssCol, techClean, WorkBook
 import sys
 from typing import List, Any, Optional
 import time
+def get_value(ws, row, col):
+    def get_range(text, alphabet=None, base=1):
+        if len(text) < 1:
+            return None
+        if alphabet is None:
+            alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+        if alphabet[0] == ' ':
+            alphabet = alphabet[1:]
+        alphabet = alphabet.upper()
+        bits = ['', '']
+        b = 0
+        in_char = True
+        for char in text:
+            if char.isdigit():
+                if in_char:
+                    in_char = False
+                    b += 1
+            else:
+                if alphabet.find(char.upper()) < 0:
+                    continue
+                if not in_char:
+                    in_char = True
+                    b += 1
+            if b >= len(bits):
+                break
+            bits[b] += char.upper()
+        try:
+            bits[1] = int(bits[1]) - (1 - base)
+        except:
+            pass
+        row = 0
+        ndx = 1
+        for c in range(len(bits[0]) -1, -1, -1):
+            ndx1 = alphabet.index(bits[0][c]) + 1
+            row = row + ndx1 * ndx
+            ndx = ndx * len(alphabet)
+        bits[0] = row - (1 - base)
+        for c in bits:
+            if c == '':
+                return None
+    try:
+        while ws.cell(row=row, column=col).value[0] == '=':
+            row, col = get_range(ws.cell(row=row, column=col).value)
+    except:
+        return ''
+    return ws.cell(row=row, column=col).value
 
 class setTransitionBase():
     def niceSize(): # works for Adjustments window (probably because less that 640*480)
@@ -31,7 +84,7 @@ class setTransitionBase():
         pass
 
     def getValues(self):
-        pass
+        return self._results
 
 class Constraint:
     def __init__(self, name, category, capacity_min, capacity_max, discharge_loss, 
@@ -189,6 +242,162 @@ class ProgressHandler(ABC):
         """Called when processing is complete"""
         pass
 
+class AdjustmentsBase():
+    def setAdjValueUnits(self, key, typ, capacity):
+        if key != 'Load':
+            mw = capacity
+            if typ == 'S':
+                unit = 'MWh'
+            else:
+                unit = 'MW'
+            dp = self._decpts
+            div = 0
+        else:
+            dimen = log10(capacity)
+            unit = 'MWh'
+            if dimen > 11:
+                unit = 'PWh'
+                div = 9
+            elif dimen > 8:
+                unit = 'TWh'
+                div = 6
+            elif dimen > 5:
+                unit = 'GWh'
+                div = 3
+            else:
+                div = 0
+            mw = capacity / pow(10, div)
+            dp = None
+        mwtxt = unit
+        mwcty = round(mw, dp)
+        return mw, mwtxt, mwcty, div
+
+    def __init__(self, parent, data, adjustin, adjust_cap, prefix, show_multipliers=False, save_folder=None,
+                 batch_file=None):
+        self.ignoreEnter = False
+        self._adjust_typ = {} # facility type = G, S or L
+        self._adjust_cty = {} # (actual) adjust capacity
+        self.show_multipliers = show_multipliers
+        if self.show_multipliers:
+            self._adjust_mul = {} # (actual) adjust multiplier
+            self._adjust_rnd = {} # multiplier widget (rounded to 4 digits)
+        self._adjust_txt = {} # string with capacity units
+        self._save_folder = save_folder
+        self._batch_file = None
+        if batch_file is not None:
+            if os.path.isfile(batch_file):
+                self._batch_file = batch_file
+        self._ignore = False
+        self._results = None
+        self._data = {}
+
+        self._decpts = 1
+        for key, typ, capacity in data:
+            if key == 'Load' or capacity is None:
+                continue
+            dimen = log10(capacity)
+            if dimen < 2.:
+                if dimen < 1.:
+                    self._decpts = 2
+                elif self._decpts != 2:
+                    self._decpts = 1
+        self.pfx_fld = ''
+
+    def getValues(self):
+        return self._results
+
+    def adjustMult(self):
+        key = self.sender().objectName()
+        if not self._ignore:
+            self._adjust_mul[key] = self._adjust_rnd[key].value()
+            self._adjust_cty[key].setValue(self._data[key][0] * self._adjust_rnd[key].value())
+        mw, mwtxt, mwstr, div = self.setAdjValueUnits(key, self._adjust_typ[key], self._data[key][0])
+        self._adjust_txt[key].setText(mwtxt)
+     #   if not self._ignore:
+      #      self._adjust_val[key].setText(mwstr)
+        self._ignore = False
+
+    def adjustCap(self):
+        if self._ignore:
+            return
+        key = self.sender().objectName()
+        if key != 'Load':
+            adj = self._adjust_cty[key].value() / self._data[key][0]
+         #   self._adjust_rnd[key].setValue(adj)
+        else:
+            dimen = log10(self._data[key][0])
+            if dimen > 11:
+                mul = 9
+            elif dimen > 8:
+                mul = 6
+            elif dimen > 5:
+                mul = 3
+            else:
+                mul = 0
+            adj = (self._adjust_cty[key].value() * pow(10, mul)) / self._data[key][0]
+        self._adjust_mul[key] = adj
+      #  self._adjust_cty[key] = self._data[key] * adj
+        self._ignore = True
+        self._adjust_rnd[key].setValue(round(adj, 4))
+        self._ignore = False
+
+    def resetClicked(self, to):
+        if to is None:
+            to = 0.
+        else:
+            to = 1.
+        if self.show_multipliers:
+            for key in self._adjust_rnd.keys():
+                self._adjust_rnd[key].setValue(to)
+        else:
+            if to == 0:
+                for key in self._adjust_cty.keys():
+                    self._adjust_cty[key].setValue(0.)
+            else:
+                for key in self._adjust_cty.keys():
+                    self._adjust_cty[key].setValue(self._data[key][0])
+        self.pfx_fld.setText('')
+
+    def resetloadClicked(self, to):
+        if isinstance(to, bool):
+            to = 1.
+        if self.show_multipliers:
+            self._adjust_rnd['Load'].setValue(to)
+        else:
+            self._adjust_cty['Load'].setValue(self._data['Load'][0])
+
+    def getIt(self, config, prefix=''):
+        try:
+            adjustto = config.get('Powermatch', 'adjusted_capacities')
+        except:
+            return
+        self.resetClicked(to=None)
+        bits = adjustto.split(',')
+        for bit in bits:
+            bi = bit.split('=')
+            key = bi[0]
+            try:
+                mw, mwtxt, mwcty, div = self.setAdjValueUnits(key, self._adjust_typ[key],
+                                        float(bi[1]))
+                self._adjust_cty[key].setValue(mwcty)
+                if self.show_multipliers:
+                    self._adjust_mul[key] = float(bi[1]) / (self._data[key][0] * pow(10, self._data[key][1]))
+                    self._adjust_rnd[key].setValue(round(self._adjust_mul[key], 4))
+            except:
+                pass
+        self._ignore = False
+        self.pfx_fld.setText(prefix)
+        
+    def showClicked(self):
+        self.ignoreEnter = False
+        self._results = {}
+        for key in list(self._adjust_cty.keys()):
+            self._results[key] = self._adjust_cty[key].value() * pow(10, self._data[key][1])
+        self.close()
+
+    def getPrefix(self):
+        return self.pfx_fld.text()
+    
 class PowerMatchBase:
     
     def __init__(self, config=None):
@@ -507,7 +716,7 @@ class PowerMatchBase:
             load_years.append(fil[i:len(fil) - j])
         return sorted(load_years, reverse=True)
 
-    def getConstraints(self):
+    def getConstraints(self, ws):
         """
         Template method to load constraint data. Calls the `fetchConstraint_data` method, 
         which can be overridden by subclasses to fetch data from different sources.
@@ -559,7 +768,7 @@ class PowerMatchBase:
         """
         raise NotImplementedError("Subclasses must override fetchConstraint_data.")
 
-    def getOptimisation(self):
+    def getOptimisation(self, ws):
         """
         Template method to load generator data. Calls the `fetchOptimisation_data` method, 
         which can be overridden by subclasses to fetch data from different sources.
@@ -589,7 +798,7 @@ class PowerMatchBase:
         """
         raise NotImplementedError("Subclasses must override fetchOptimisation_data.")
     
-    def getGenerators(self):
+    def getGenerators(self, ws):
         """
         Template method to load generator data. Calls the `fetchGenerator_data` method, 
         which can be overridden by subclasses to fetch data from different sources.
@@ -907,7 +1116,11 @@ class PowerMatchBase:
                     self.batch_models[-1][c2]['name'] = f'Model {c2 + 1}'
         return True
  
-    def pmClicked(self, sender_text,  progress_handler: Optional[ProgressHandler] = None):
+    def pmClicked(
+        self, sender_text,  progress_handler: Optional[ProgressHandler] = None, 
+        adjuster = None, 
+        set_transition = None,
+        optimiser = None):
         def get_load_data(load_file):
             try:
                 tf = open(load_file, 'r')
@@ -974,9 +1187,39 @@ class PowerMatchBase:
                 progress_handler.show()
         err_msg = ''
         if self.constraints is None:
-            self.getConstraints()
+            try:
+                ts = WorkBook()
+                ts.open_workbook(self.get_filename(self.files[C].text()))
+                ws = ts.sheet_by_name(self.sheets[C].currentText())
+                self.getConstraints(ws)
+                ts.close()
+                del ts
+            except FileNotFoundError:
+                err_msg = 'Constraints file not found - ' + self.files[C].text()
+                self.getConstraints(None)
+            except Exception as e:
+                err_msg = 'Error accessing Constraints file ' + str(e)
+                self.getConstraints(None)
         if self.generators is None:
-            self.getGenerators()
+            try:
+                ts = WorkBook()
+                ts.open_workbook(self.get_filename(self.files[G].text()))
+                ws = ts.sheet_by_name(self.sheets[G].currentText())
+                self.getGenerators(ws)
+                ts.close()
+                del ts
+            except FileNotFoundError:
+                if err_msg != '':
+                    err_msg += ' nor Generators - ' + self.files[G].text()
+                else:
+                    err_msg = 'Generators file not found - ' + self.files[G].text()
+                self.getGenerators(None)
+            except Exception as e:
+                if err_msg != '':
+                    err_msg += ' and Generators'
+                else:
+                    err_msg = 'Error accessing Generators'  + str(e)
+                self.getGenerators(None)
         if option == B or option == T: # has to be xlsx workbook
             try:
                 ts = WorkBook()
@@ -1241,9 +1484,14 @@ class PowerMatchBase:
             pmss_details[gen] = PM_Facility(gen, gen, self.generators[gen].capacity, typ, -1, 1)
         if option == B or option == T:
             if option == T:
-                files = setTransition(self, self.file_labels[G], self.get_filename(self.files[G].text()),
-                                      self.sheets[G].currentText(), self.loadCombo.currentText())
-                files.exec_()
+                # files = setTransition(self, self.file_labels[G], self.get_filename(self.files[G].text()),
+                #                       self.sheets[G].currentText(), self.loadCombo.currentText())
+                # files.exec_()
+                files = set_transition(
+                    self.file_labels[G], 
+                    self.get_filename(self.files[G].text()), 
+                    self.sheets[G].currentText(), self.loadCombo
+                    )
                 if files.getValues() is None:
                     self.setStatus('Execution aborted.')
                     if progress_handler:
@@ -1259,9 +1507,10 @@ class PowerMatchBase:
                 generated = sum(pmss_data[load_col])
                 datain = [['Load', 'L', generated]]
                 adjustto = {'Load': generated}
-                adjust = Adjustments(self, datain, adjustto, self.adjust_cap, None,
-                                     show_multipliers=self.show_multipliers)
-                adjust.exec_()
+                adjust = adjuster(pmss_data, load_col)
+                # adjust = Adjustments(self, datain, adjustto, self.adjust_cap, None,
+                #                      show_multipliers=self.show_multipliers)
+                # adjust.exec_()
                 if adjust.getValues() is None:
                     self.setStatus('Execution aborted.')
                     if progress_handler:
@@ -2278,6 +2527,9 @@ class PowerMatchBase:
                 sp_d[st_cfa] = ' (' + format_period(max_short[0])[5:] + ')'
                 sp_data.append(sp_d)
             if option == O or option == O1:
+                if not re_pct:
+                    print('No RE %age for: ',sp_d)
+                    re_pct = 0
                 return load_pct, surp_pct, re_pct
 
         def do_detail(fac, col, ss_row):
@@ -4273,918 +4525,10 @@ class PowerMatchBase:
     def setStatus(self, text):
         pass
 
-    def optClicked(self, in_year, sender_text, in_option, in_pmss_details, in_pmss_data, in_re_order,
-                   in_dispatch_order, pm_data_file, data_file, opt_progress_handler: Optional[ProgressHandler] = None, ):
-
-        def create_starting_population(individuals, chromosome_length):
-            # Set up an initial array of all zeros
-            population = np.zeros((individuals, chromosome_length))
-            # Loop through each row (individual)
-            for i in range(individuals):
-                # Choose a random number of ones to create but at least one 1
-                ones = random.randint(1, chromosome_length)
-                # Change the required number of zeros to ones
-                population[i, 0:ones] = 1
-                # Sfuffle row
-                np.random.shuffle(population[i])
-            return population
-
-        def select_individual_by_tournament(population, *argv):
-            # Get population size
-            population_size = len(population)
-
-            # Pick individuals for tournament
-            fighter = [0, 0]
-            fighter_fitness = [0, 0]
-            fighter[0] = random.randint(0, population_size - 1)
-            fighter[1] = random.randint(0, population_size - 1)
-
-            # Get fitness score for each
-            if len(argv) == 1:
-                fighter_fitness[0] = argv[0][fighter[0]]
-                fighter_fitness[1] = argv[0][fighter[1]]
-            else:
-                for arg in argv:
-                    min1 = min(arg)
-                    max1 = max(arg)
-                    for f in range(len(fighter)):
-                        try:
-                            fighter_fitness[f] += (arg[f] - min1) / (max1 - min1)
-                        except:
-                            pass
-            # Identify individual with lowest score
-            # Fighter 1 will win if score are equal
-            if fighter_fitness[0] <= fighter_fitness[1]:
-                winner = fighter[0]
-            else:
-                winner = fighter[1]
-
-            # Return the chromsome of the winner
-            return population[winner, :]
-
-        def breed_by_crossover(parent_1, parent_2, points=2):
-            # Get length of chromosome
-            chromosome_length = len(parent_1)
-
-            # Pick crossover point, avoiding ends of chromsome
-            if points == 1:
-                crossover_point = random.randint(1,chromosome_length-1)
-            # Create children. np.hstack joins two arrays
-                child_1 = np.hstack((parent_1[0:crossover_point],
-                                     parent_2[crossover_point:]))
-                child_2 = np.hstack((parent_2[0:crossover_point],
-                                     parent_1[crossover_point:]))
-            else: # only do 2 at this    stage
-                crossover_point_1 = random.randint(1, chromosome_length - 2)
-                crossover_point_2 = random.randint(crossover_point_1 + 1, chromosome_length - 1)
-                child_1 = np.hstack((parent_1[0:crossover_point_1],
-                                     parent_2[crossover_point_1:crossover_point_2],
-                                     parent_1[crossover_point_2:]))
-                child_2 = np.hstack((parent_2[0:crossover_point_1],
-                                     parent_1[crossover_point_1:crossover_point_2],
-                                     parent_2[crossover_point_2:]))
-            # Return children
-            return child_1, child_2
-
-        def randomly_mutate_population(population, mutation_probability):
-            # Apply random mutation
-            random_mutation_array = np.random.random(size=(population.shape))
-            random_mutation_boolean = random_mutation_array <= mutation_probability
-        #    random_mutation_boolean[0][:] = False # keep the best multi and lcoe
-       #     random_mutation_boolean[1][:] = False
-            population[random_mutation_boolean] = np.logical_not(population[random_mutation_boolean])
-            # Return mutation population
-            return population
-
-        def calculate_fitness(population):
-            lcoe_fitness_scores = [] # scores = LCOE values
-            multi_fitness_scores = [] # scores = multi-variable weight
-            multi_values = [] # values for each of the six variables
-            if len(population) == 1:
-                option = O1
-            else:
-                option = O
-            if self.debug:
-                self.popn += 1
-                self.chrom = 0
-            for chromosome in population:
-                # now get random amount of generation per technology (both RE and non-RE)
-                for fac, value in opt_order.items():
-                    capacity = value[2]
-                    for c in range(value[0], value[1]):
-                        if chromosome[c]:
-                            capacity = capacity + capacities[c]
-                    try:
-                        pmss_details[fac].multiplier = capacity / pmss_details[fac].capacity
-                    except:
-                        print('PME2:', gen, capacity, pmss_details[fac].capacity)
-                multi_value, op_data, extra = self.doDispatch(year, sender_text, option, pmss_details, pmss_data, re_order,
-                                              dispatch_order, pm_data_file, data_file, progress_handler=opt_progress_handler)
-                if multi_value['load_pct'] < self.targets['load_pct'][3]:
-                    if multi_value['load_pct'] == 0:
-                        print('PME3:', multi_value['lcoe'], self.targets['load_pct'][3], multi_value['load_pct'])
-                        lcoe_fitness_scores.append(1)
-                    else:
-                        try:
-                            lcoe_fitness_scores.append(pow(multi_value['lcoe'],
-                                self.targets['load_pct'][3] / multi_value['load_pct']))
-                        except OverflowError as err:
-                            self.setStatus(f"Overflow error: {err}; POW({multi_value['lcoe']:,}, " \
-                                         + f"{self.targets['load_pct'][3] / multi_value['load_pct']:,}) " \
-                                         + f"({self.targets['load_pct'][3]:,} / {multi_value['load_pct']:,} )")
-                        except:
-                            pass
-                else:
-                    lcoe_fitness_scores.append(multi_value['lcoe'])
-                multi_values.append(multi_value)
-                multi_fitness_scores.append(calc_weight(multi_value))
-                if self.debug:
-                    self.chrom += 1
-                    line = str(self.popn) + ',' + str(self.chrom) + ','
-                    for fac, value in opt_order.items():
-                        try:
-                            line += str(pmss_details[fac].capacity * pmss_details[fac].multiplier) + ','
-                        except:
-                            line += ','
-                    for key in self.targets.keys():
-                        try:
-                            line += '{:.3f},'.format(multi_value[key])
-                        except:
-                            line += multi_value[key] + ','
-                    line += '{:.5f},'.format(multi_fitness_scores[-1])
-                    self.db_file.write(line + '\n')
-            # alternative approach to calculating fitness
-            multi_fitness_scores1 = []
-            maxs = {}
-            mins = {}
-            tgts = {}
-            for key in multi_value.keys():
-                if key[-4:] == '_pct':
-                    tgts[key] = abs(self.targets[key][2] - self.targets[key][3])
-                else:
-                    maxs[key] = 0
-                    mins[key] = -1
-                    for popn in multi_values:
-                        try:
-                            tgt = abs(self.targets[key][2] - popn[key])
-                        except:
-                            continue
-                        if tgt > maxs[key]:
-                            maxs[key] = tgt
-                        if mins[key] < 0 or tgt < mins[key]:
-                            mins[key] = tgt
-            for popn in multi_values:
-                weight = 0
-                for key, value in multi_value.items():
-                    if self.targets[key][1] <= 0:
-                        continue
-                    try:
-                        tgt = abs(self.targets[key][2] - popn[key])
-                    except:
-                        continue
-                    if key[-4:] == '_pct':
-                        if tgts[key] != 0:
-                            if tgt > tgts[key]:
-                                weight += 1 * self.targets[key][1]
-                            else:
-                                try:
-                                    weight += 1 - ((tgt / tgts[key]) * self.targets[key][1])
-                                except:
-                                    pass
-                    else:
-                        try:
-                            weight += 1 - (((maxs[key] - tgt) / (maxs[key] - mins[key])) \
-                                      * self.targets[key][1])
-                        except:
-                            pass
-                multi_fitness_scores1.append(weight)
-            if len(population) == 1: # return the table for best chromosome
-                return op_data, multi_values
-            else:
-                return lcoe_fitness_scores, multi_fitness_scores, multi_values
-
-        def optQuitClicked(event):
-            self.optExit = True
-            optDialog.close()
-
-        def chooseClicked(event):
-            self.opt_choice = sender_text
-            chooseDialog.close()
-
-        def calc_weight(multi_value, calc=0):
-            weight = [0., 0.]
-            if calc == 0:
-                for key, value in self.targets.items():
-                    if multi_value[key] == '':
-                        continue
-                    if value[1] <= 0:
-                        continue
-                    if value[2] == value[3]: # wants specific target
-                        if multi_value[key] == value[2]:
-                            w = 0
-                        else:
-                            w = 1
-                    elif value[2] > value[3]: # wants higher target
-                        if multi_value[key] > value[2]: # high no weight
-                            w = 0.
-                        elif multi_value[key] < value[3]: # low maximum weight
-                            w = 2.
-                        else:
-                            w = 1 - (multi_value[key] - value[3]) / (value[2] - value[3])
-                    else: # lower target
-                        if multi_value[key] == -1 or multi_value[key] > value[3]: # high maximum weight
-                            w = 2.
-                        elif multi_value[key] < value[2]: # low no weight
-                            w = 0.
-                        else:
-                            w = multi_value[key] / (value[3] - value[2])
-                    weight[0] += w * value[1]
-            elif calc == 1:
-                for key, value in self.targets.items():
-                    if multi_value[key] == '':
-                        continue
-                    if value[1] <= 0:
-                        continue
-                    if multi_value[key] < 0:
-                        w = 1
-                    elif value[2] == value[3]: # wants specific target
-                        if multi_value[key] == value[2]:
-                            w = 0
-                        else:
-                            w = 1
-                    else: # target range
-                        w = min(abs(value[2] - multi_value[key]) / abs(value[2] - value[3]), 1)
-                    weight[1] += w * value[1]
-            return weight[calc]
-
-        def show_multitable(best_score_progress, multi_best, multi_order, title):
-            def pwr_chr(amt):
-                pwr_chrs = ' KMBTPEZY'
-                pchr = ''
-                divisor = 1.
-                for pwr in range(len(pwr_chrs) - 1, -1, -1):
-                    if amt > pow(10, pwr * 3):
-                        pchr = pwr_chrs[pwr]
-                        divisor = 1. * pow(10, pwr * 3)
-                        break
-                return amt / divisor, pchr
-
-            def opt_fmat(amt, fmat):
-                tail = ' '
-                p = fmat.find('pwr_chr')
-                if p > 0:
-                    amt, tail = pwr_chr(amt)
-                    fmat = fmat.replace('pwr_chr', '')
-              #  d = fmat.find('d')
-             #   if d > 0:
-              #      amt = amt * 100.
-                fmat = fmat.replace('.1f', '.2f')
-                i = fmat.find('%')
-                fmt = fmat[:i] + '{:> 8,' + fmat[i:].replace('%', '').replace('d', '.2%') + '}' + tail
-                return fmt.format(amt)
-
-            best_table = []
-            best_fmate = []
-            for b in range(len(multi_best)):
-                bl = list(multi_best[b].values())
-                bl.insert(0, best_score_progress[b])
-                bl.insert(0, b + 1)
-                best_table.append(bl)
-                best_fmate.append([b + 1])
-                best_fmate[-1].insert(1, best_score_progress[b])
-                for f in range(2, len(best_table[-1])):
-                    if target_keys[f - 2] in ['load_pct', 'surplus_pct', 're_pct']:
-                        best_fmate[-1].append(opt_fmat(bl[f], '%d%%'))
-                    else:
-                        best_fmate[-1].append(opt_fmat(bl[f], target_fmats[f - 2]))
-            fields = target_names[:]
-            fields.insert(0, 'weight')
-            fields.insert(0, 'iteration')
-            dialog = self.displaytable.Table(best_fmate, fields=fields, txt_align='R', decpts=[0, 4],
-                     title=title, sortby='weight')
-            dialog.exec_()
-            b = int(dialog.getItem(0)) - 1
-            del dialog
-            pick = [b]
-            for fld in multi_order[:3]:
-                i = target_keys.index(fld)
-                pick.append(best_table[b][i + 2])
-            return [pick]
-
-#       optClicked mainline starts here
-        year = in_year
-        option = in_option
-        pmss_details = dict(in_pmss_details)
-        pmss_data = in_pmss_data[:]
-        re_order = in_re_order[:]
-        dispatch_order = in_dispatch_order[:]
-        if self.optimise_debug:
-            self.debug = True
-        else:
-            self.debug = False
-        missing = []
-        for fac in re_order:
-            if fac == 'Load':
-                continue
-            if fac not in self.optimisation.keys():
-                missing.append(fac)
-        for gen in dispatch_order:
-            if gen not in self.optimisation.keys():
-                missing.append(gen)
-        if len(missing) > 0:
-            bad = False
-            if self.optimise_default is not None:
-                defaults = self.optimise_default.split(',')
-                if len(defaults) < 1 or len(defaults) > 3:
-                    bad = True
-                else:
-                    try:
-                        for miss in missing:
-                            if len(defaults) == 2:
-                                minn = 0
-                            else:
-                                if defaults[0][-1] == 'd':
-                                    minn = pmss_details[miss].capacity * float(defaults[0][:-1])
-                                elif defaults[0][-1] == 'c':
-                                    minn = pmss_details[miss].capacity * pmss_details[miss].multiplier * float(defaults[0][:-1])
-                                else:
-                                    minn = float(defaults[0])
-                            if defaults[-2][-1] == 'd':
-                                maxx = pmss_details[miss].capacity * float(defaults[-2][:-1])
-                            elif defaults[-2][-1] == 'c':
-                                maxx = pmss_details[miss].capacity * pmss_details[miss].multiplier * float(defaults[-2][:-1])
-                            else:
-                                maxx = float(defaults[-2])
-                            if len(defaults) == 3:
-                                if defaults[-1][-1].lower() == 'd':
-                                    step = capacity * float(defaults[-1][:-1])
-                                elif defaults[-1][-1].lower() == 'c':
-                                    step = capacity * multiplier * float(defaults[-1][:-1])
-                                else:
-                                    step = float(defaults[-1])
-                            else:
-                                step = (maxx - minn) / float(defaults[-1])
-                            self.optimisation[miss] =  Optimisation(miss, 'None', None)
-                            self.optimisation[miss].approach = 'Range'
-                            self.optimisation[miss].capacity_min = minn
-                            self.optimisation[miss].capacity_max = maxx
-                            self.optimisation[miss].capacity_step = step
-                    except:
-                        bad = True
-                check = ''
-                for miss in missing:
-                    check += miss + ', '
-                check = check[:-2]
-                if bad:
-                    self.setStatus('Key Error: Missing Optimisation entries for: ' + check)
-                    return
-                self.setStatus('Missing Optimisation entries added for: ' + check)
-        self.optExit = False
-        self.setStatus('Optimise processing started')
-        err_msg = ''
-        
-        # Placeholder for the opt processing code
-        _optDialog(self)
-    
-        # check we have optimisation entries for generators and storage
-        # update any changes to targets
-        self.optimise_choice = optCombo.currentText()
-        for key in self.targets.keys():
-            weight = grid.itemAt(self.targets[key][4] + 1).widget()
-            self.targets[key][1] = weight.value()
-            minim = grid.itemAt(self.targets[key][4] + 2).widget()
-            try:
-                self.targets[key][2] = minim.value()
-            except:
-                self.targets[key][2] = float(minim.text())
-            maxim = grid.itemAt(self.targets[key][4] + 3).widget()
-            try:
-                self.targets[key][3] = maxim.value()
-            except:
-                self.targets[key][3] = float(maxim.text())
-        # might want to save load value if changed
-        pmss_details['Load'].multiplier = self.optLoad.value()
-        updates = {}
-        lines = []
-        lines.append('optimise_choice=' + self.optimise_choice)
-        lines.append('optimise_generations=' + str(self.optimise_generations))
-        lines.append('optimise_mutation=' + str(self.optimise_mutation))
-        lines.append('optimise_population=' + str(self.optimise_population))
-        lines.append('optimise_stop=' + str(self.optimise_stop))
-        if self.optimise_choice == 'LCOE':
-            do_lcoe = True
-            do_multi = False
-        elif self.optimise_choice == 'Multi':
-            do_lcoe = False
-            do_multi = True
-        else:
-            do_lcoe = True
-            do_multi = True
-        multi_order = []
-        for key, value in self.targets.items():
-            line = 'optimise_{}={:.2f},{:.2f},{:.2f}'.format(key, value[1], value[2], value[3])
-            lines.append(line)
-            multi_order.append('{:.2f}{}'.format(value[1], key))
-        updates['Powermatch'] = lines
-        SaveIni(updates)
-        multi_order.sort(reverse=True)
-    #    multi_order = multi_order[:3] # get top three weighted variables - but I want them all
-        multi_order = [o[4:] for o in multi_order]
-        self.adjust_gen = True
-        orig_load = []
-        load_col = -1
-        orig_tech = {}
-        orig_capacity = {}
-        opt_order = {} # rely on it being processed in added order
-        # each entry = [first entry in chrom, last entry, minimum capacity]
-        # first get original renewables generation from data sheet
-        for fac in re_order:
-            if fac == 'Load':
-                continue
-            opt_order[fac] = [0, 0, 0]
-        # now add scheduled generation
-        for gen in dispatch_order:
-            opt_order[gen] = [0, 0, 0]
-        capacities = []
-        for gen in opt_order.keys():
-            opt_order[gen][0] = len(capacities) # first entry
-            try:
-                if self.optimisation[gen].approach == 'Discrete':
-                    capacities.extend(self.optimisation[gen].capacities)
-                    opt_order[gen][1] = len(capacities) # last entry
-                elif self.optimisation[gen].approach == 'Range':
-                    if self.optimisation[gen].capacity_max == self.optimisation[gen].capacity_min:
-                        capacities.extend([0])
-                        opt_order[gen][1] = len(capacities)
-                        opt_order[gen][2] = self.optimisation[gen].capacity_min
-                        continue
-                    ctr = int((self.optimisation[gen].capacity_max - self.optimisation[gen].capacity_min) / \
-                              self.optimisation[gen].capacity_step)
-                    if ctr < 1:
-                        self.setStatus("Error with Optimisation table entry for '" + gen + "'")
-                        return
-                    capacities.extend([self.optimisation[gen].capacity_step] * ctr)
-                    tot = self.optimisation[gen].capacity_step * ctr + self.optimisation[gen].capacity_min
-                    if tot < self.optimisation[gen].capacity_max:
-                        capacities.append(self.optimisation[gen].capacity_max - tot)
-                    opt_order[gen][1] = len(capacities)
-                    opt_order[gen][2] = self.optimisation[gen].capacity_min
-                else:
-                    opt_order[gen][1] = len(capacities)
-            except KeyError as err:
-                self.setStatus('Key Error: No Optimisation entry for ' + str(err))
-                opt_order[gen] = [len(capacities), len(capacities) + 5, 0]
-                capacities.extend([pmss_details[gen].capacity / 5.] * 5)
-            except ZeroDivisionError as err:
-                self.setStatus('Zero capacity: ' + gen + ' ignored')
-            except:
-                err = str(sys.exc_info()[0]) + ',' + str(sys.exc_info()[1]) + ',' + gen + ',' \
-                      + str(opt_order[gen])
-                self.setStatus('Error: ' + str(err))
-                return
-        # chromosome = [1] * int(len(capacities) / 2) + [0] * (len(capacities) - int(len(capacities) / 2))
-        # we have the original data - from here down we can do our multiple optimisations
-        # Set general parameters
-        self.setStatus('Optimisation choice is ' + self.optimise_choice)
-        chromosome_length = len(capacities)
-        self.setStatus(f'Chromosome length: {chromosome_length}; {pow(2, chromosome_length):,} permutations')
-        self.optimise_population = optPopn.value()
-        population_size = self.optimise_population
-        self.optimise_generations = optGenn.value()
-        maximum_generation = self.optimise_generations
-        self.optimise_mutation = optMutn.value()
-        self.optimise_stop = optStop.value()
-        lcoe_scores = []
-        multi_scores = []
-        multi_values = []
-     #   if do_lcoe:
-      #      lcoe_target = 0. # aim for this LCOE
-        if do_multi:
-            multi_best = [] # list of six variables for best weight
-            multi_best_popn = [] # list of chromosomes for best weight
-
-        if opt_progress_handler:
-            progress = ProgressInfo(
-                maximum=optGenn.value(),
-                msg='Process iterations',
-                title='SIREN - Powermatch Progress',
-            )
-            opt_progress_handler.update(progress)
-            opt_progress_handler.show()
-        start_time = time.time()
-        # Create starting population
-        if opt_progress_handler:
-            progress = ProgressInfo(
-                current=1,
-                msg='Processing iteration 1',
-            )
-            opt_progress_handler.update(progress)
-            opt_progress_handler.show()
-        population = create_starting_population(population_size, chromosome_length)
-        # calculate best score(s) in starting population
-        # if do_lcoe best_score = lowest non-zero lcoe
-        # if do_multi best_multi = lowest weight and if not do_lcoe best_score also = best_weight
-        if self.debug:
-            filename = self.scenarios + 'opt_debug_' + \
-                datetime.now().strftime('_%Y-%M-%d_%H%M') + '.csv'
-            self.db_file = open(filename, 'w')
-            line0 = 'Popn,Chrom,'
-            line1 = 'Weights,,'
-            line2 = 'Targets,,'
-            line3 = 'Range,' + str(population_size) + ','
-            for gen, value in opt_order.items():
-                 line0 += gen + ','
-                 line1 += ','
-                 line2 += ','
-                 line3 += ','
-            for key in self.targets.keys():
-                 line0 += key + ','
-                 line1 += str(self.targets[key][1]) + ','
-                 line2 += str(self.targets[key][2]) + ','
-                 if key[-4:] == '_pct':
-                     line3 += str(abs(self.targets[key][2] - self.targets[key][3])) + ','
-                 else:
-                     line3 += ','
-            line0 += 'Score'
-            self.db_file.write(line0 + '\n' + line1 + '\n' + line2 + '\n' + line3 + '\n')
-            self.popn = 0
-            self.chrom = 0
-        lcoe_scores, multi_scores, multi_values = calculate_fitness(population)
-        if do_lcoe:
-            try:
-                best_score = np.min(lcoe_scores)
-            except:
-                print('PME4:', lcoe_scores)
-            best_ndx = lcoe_scores.index(best_score)
-            lowest_chrom = population[best_ndx]
-            self.setStatus('Starting LCOE: $%.2f' % best_score)
-        if do_multi:
-            if self.more_details: # display starting population ?
-                pick = _plot_multi(multi_scores, multi_values, multi_order, 'starting population')
-            # want maximum from first round to set base upper limit
-            for key in self.targets.keys():
-                if self.targets[key][2] < 0: # want a maximum from first round
-                    setit = 0
-                    for multi in multi_values:
-                        setit = max(multi[key], setit)
-                    self.targets[key][2] = setit
-                if self.targets[key][3] < 0: # want a maximum from first round
-                    setit = 0
-                    for multi in multi_values:
-                        setit = max(multi[key], setit)
-                    self.targets[key][3] = setit
-            # now we can find the best weighted result - lowest is best
-            best_multi = np.min(multi_scores)
-            best_mndx = multi_scores.index(best_multi)
-            multi_lowest_chrom = population[best_mndx]
-            multi_best_popn.append(multi_lowest_chrom)
-            multi_best.append(multi_values[best_mndx])
-            self.setStatus('Starting Weight: %.4f' % best_multi)
-            multi_best_weight = best_multi
-            best_multi_progress = [best_multi]
-            if not do_lcoe:
-                best_score = best_multi
-            last_multi_score = best_multi
-            lowest_multi_score = best_multi
-            mud = '='
-        # Add starting best score to progress tracker
-        best_score_progress = [best_score]
-        best_ctr = 1
-        last_score = best_score
-        lowest_score = best_score
-        lud = '='
-        # Now we'll go through the generations of genetic algorithm
-        for generation in range(1, maximum_generation):
-            lcoe_status = ''
-            multi_status = ''
-            if do_lcoe:
-                lcoe_status = ' %s $%.2f ;' % (lud, best_score)
-            if do_multi:
-                multi_status = ' %s %.4f ;' % (mud, best_multi)
-            tim = (time.time() - start_time)
-            if tim < 60:
-                tim = ' (%s%s %.1f secs)' % (lcoe_status, multi_status, tim)
-            else:
-                tim = ' (%s%s %.2f mins)' % (lcoe_status, multi_status, tim / 60.)
-            if opt_progress_handler:
-                progress = ProgressInfo(
-                    current=generation + 1,
-                    msg='Processing iteration ' + str(generation + 1) + tim,
-                )
-                opt_progress_handler.update(progress)
-            if not self.opt_progressbar.be_open:
-                break
-        # Create an empty list for new population
-            new_population = []
-        # Using elitism approach include best individual
-            if do_lcoe:
-                new_population.append(lowest_chrom)
-            if do_multi:
-                new_population.append(multi_lowest_chrom)
-            # Create new population generating two children at a time
-            if do_lcoe:
-                if do_multi:
-                    for i in range(int(population_size/2)):
-                        parent_1 = select_individual_by_tournament(population, lcoe_scores,
-                                                                   multi_scores)
-                        parent_2 = select_individual_by_tournament(population, lcoe_scores,
-                                                                   multi_scores)
-                        child_1, child_2 = breed_by_crossover(parent_1, parent_2)
-                        new_population.append(child_1)
-                        new_population.append(child_2)
-                else:
-                    for i in range(int(population_size/2)):
-                        parent_1 = select_individual_by_tournament(population, lcoe_scores)
-                        parent_2 = select_individual_by_tournament(population, lcoe_scores)
-                        child_1, child_2 = breed_by_crossover(parent_1, parent_2)
-                        new_population.append(child_1)
-                        new_population.append(child_2)
-            else:
-                for i in range(int(population_size/2)):
-                    parent_1 = select_individual_by_tournament(population, multi_scores)
-                    parent_2 = select_individual_by_tournament(population, multi_scores)
-                    child_1, child_2 = breed_by_crossover(parent_1, parent_2)
-                    new_population.append(child_1)
-                    new_population.append(child_2)
-            # get back to original size (after elitism adds)
-            if do_lcoe:
-                new_population.pop()
-            if do_multi:
-                new_population.pop()
-            # Replace the old population with the new one
-            population = np.array(new_population)
-            if self.optimise_mutation > 0:
-                population = randomly_mutate_population(population, self.optimise_mutation)
-            # Score best solution, and add to tracker
-            lcoe_scores, multi_scores, multi_values = calculate_fitness(population)
-            if do_lcoe:
-                best_lcoe = np.min(lcoe_scores)
-                best_ndx = lcoe_scores.index(best_lcoe)
-                best_score = best_lcoe
-            # now we can find the best weighted result - lowest is best
-            if do_multi:
-                best_multi = np.min(multi_scores)
-                best_mndx = multi_scores.index(best_multi)
-                multi_lowest_chrom = population[best_mndx]
-                multi_best_popn.append(multi_lowest_chrom)
-                multi_best.append(multi_values[best_mndx])
-           #     if multi_best_weight > best_multi:
-                multi_best_weight = best_multi
-                if not do_lcoe:
-                    best_score = best_multi
-                best_multi_progress.append(best_multi)
-            best_score_progress.append(best_score)
-            if best_score < lowest_score:
-                lowest_score = best_score
-                if do_lcoe:
-                    lowest_chrom = population[best_ndx]
-                else: #(do_multi only)
-                    multi_lowest_chrom = population[best_mndx]
-            if self.optimise_stop > 0:
-                if best_score == last_score:
-                    best_ctr += 1
-                    if best_ctr >= self.optimise_stop:
-                        break
-                else:
-                    last_score = best_score
-                    best_ctr = 1
-            last_score = best_score
-            if do_lcoe:
-                if best_score == best_score_progress[-2]:
-                    lud = '='
-                elif best_score < best_score_progress[-2]:
-                    lud = '<html>&darr;</html>'
-                else:
-                    lud = '<html>&uarr;</html>'
-            if do_multi:
-                if best_multi == last_multi_score:
-                    mud = '='
-                elif best_multi < last_multi_score:
-                    mud = '<html>&darr;</html>'
-                else:
-                    mud = '<html>&uarr;</html>'
-                last_multi_score = best_multi
-        if self.debug:
-            try:
-                self.db_file.close()
-                optimiseDebug(self.db_file.name)
-                os.remove(self.db_file.name)
-            except:
-                pass
-            self.debug = False
-        if opt_progress_handler:
-            opt_progress_handler.hide()
-            opt_progress_handler.close()
-        tim = (time.time() - start_time)
-        if tim < 60:
-            tim = '%.1f secs)' % tim
-        else:
-            tim = '%.2f mins)' % (tim / 60.)
-        msg = 'Optimise completed (%0d iterations; %s' % (generation + 1, tim)
-        if best_score > lowest_score:
-            msg += ' Try more iterations.'
-        # we'll keep two or three to save re-calculating_fitness
-        op_data = [[], [], [], [], []]
-        score_data = [None, None, None, None, None]
-        if do_lcoe:
-            op_data[0], score_data[0] = calculate_fitness([lowest_chrom])
-        if do_multi:
-            op_data[1], score_data[1] = calculate_fitness([multi_lowest_chrom])
-        self.setStatus(msg)
-        if opt_progress_handler:
-            progress = ProgressInfo(
-                current=0,
-            )
-            opt_progress_handler.hide()
-        # GA has completed required generation
-        if do_lcoe:
-            self.setStatus('Final LCOE: $%.2f' % best_score)
-            fig = 'optimise_lcoe'
-            titl = 'Optimise LCOE using Genetic Algorithm'
-            ylbl = 'Best LCOE ($/MWh)'
-        else:
-            fig = 'optimise_multi'
-            titl = 'Optimise Multi using Genetic Algorithm'
-            ylbl = 'Best Weight'
-        if do_multi:
-            self.setStatus('Final Weight: %.4f' % multi_best_weight)
-        # Plot progress
-        x = list(range(1, len(best_score_progress)+ 1))
-        matplotlib.rcParams['savefig.directory'] = self.scenarios
-        plt.figure(fig + datetime.now().strftime('_%Y-%M-%d_%H%M'))
-        lx = plt.subplot(111)
-        plt.title(titl)
-        lx.plot(x, best_score_progress)
-        lx.set_xlabel('Optimise Cycle (' + str(len(best_score_progress)) + ' iterations)')
-        lx.set_ylabel(ylbl)
-        zp = ZoomPanX()
-        f = zp.zoom_pan(lx, base_scale=1.2, annotate=True)
-        plt.show()
-        pick = None
-        pickf = None
-        if do_multi:
-            if self.optimise_multiplot:
-                pick = _plot_multi(best_multi_progress, multi_best, multi_order, 'best of each iteration')
-                if self.more_details:
-                    pickf = _plot_multi(multi_scores, multi_values, multi_order, 'final iteration')
-            if self.optimise_multitable:
-                pick2 = show_multitable(best_multi_progress, multi_best, multi_order, 'best of each iteration')
-                try:
-                    pick = pick + pick2
-                except:
-                    pick = pick2
-                if self.more_details:
-                    pick2 = show_multitable(multi_scores, multi_values, multi_order, 'final iteration')
-                    try:
-                        pickf = pickf + pick2
-                    except:
-                        pickf = pick2
-        op_pts = [0] * len(headers)
-        for p in [st_lcg, st_lco, st_lcc, st_max, st_bal, st_rlc, st_are]:
-            op_pts[p] = 2
-        op_pts[st_cap] = 3
-        if self.more_details:
-            if do_lcoe:
-                list(map(list, list(zip(*op_data[0]))))
-                dialog = self.displaytable.Table(op_data[0], title=sender_text, fields=headers,
-                         save_folder=self.scenarios, sortby='', decpts=op_pts)
-                dialog.exec_()
-                del dialog
-            if do_multi:
-                list(map(list, list(zip(*op_data[1]))))
-                dialog = self.displaytable.Table(op_data[1], title='Multi_' + sender_text, fields=headers,
-                         save_folder=self.scenarios, sortby='', decpts=op_pts)
-                dialog.exec_()
-                del dialog
-        # now I'll display the resulting capacities for LCOE, lowest weight, picked
-        # now get random amount of generation per technology (both RE and non-RE)
-        its = {}
-        for fac, value in opt_order.items():
-            its[fac] = []
-        chrom_hdrs = []
-        chroms = []
-        ndxes = []
-        if do_lcoe:
-            chrom_hdrs = ['Lowest LCOE']
-            chroms = [lowest_chrom]
-            ndxes = [0]
-        if do_multi:
-            chrom_hdrs.append('Lowest Weight')
-            chroms.append(multi_lowest_chrom)
-            ndxes.append(1)
-        if pickf is not None:
-            for p in range(len(pickf)):
-                if pick is None:
-                    pick = [pickf[f]]
-                else:
-                    pick.append(pickf[p][:])
-                pick[-1][0] = len(multi_best_popn)
-                multi_best_popn.append(population[pickf[p][0]])
-        if pick is not None:
-            # at present I'll calculate the best weight for the chosen picks. Could actually present all for user choice
-            if len(pick) <= 3:
-                multi_lowest_chrom = multi_best_popn[pick[0][0]]
-                op_data[2], score_data[2] = calculate_fitness([multi_lowest_chrom])
-                if self.more_details:
-                    list(map(list, list(zip(*op_data[2]))))
-                    dialog = self.displaytable.Table(op_data[2], title='Pick_' + sender_text, fields=headers,
-                             save_folder=self.scenarios, sortby='', decpts=op_pts)
-                    dialog.exec_()
-                    del dialog
-                chrom_hdrs.append('Your pick')
-                chroms.append(multi_lowest_chrom)
-                ndxes.append(2)
-                if len(pick) >= 2:
-                    multi_lowest_chrom = multi_best_popn[pick[1][0]]
-                    op_data[3], score_data[3] = calculate_fitness([multi_lowest_chrom])
-                    if self.more_details:
-                        list(map(list, list(zip(*op_data[3]))))
-                        dialog = self.displaytable.Table(op_data[3], title='Pick_' + sender_text, fields=headers,
-                                 save_folder=self.scenarios, sortby='', decpts=op_pts)
-                        dialog.exec_()
-                        del dialog
-                    chrom_hdrs.append('Your 2nd pick')
-                    chroms.append(multi_lowest_chrom)
-                    ndxes.append(3)
-                if len(pick) == 3:
-                    multi_lowest_chrom = multi_best_popn[pick[2][0]]
-                    op_data[4], score_data[4] = calculate_fitness([multi_lowest_chrom])
-                    if self.more_details:
-                        list(map(list, list(zip(*op_data[4]))))
-                        dialog = self.displaytable.Table(op_data[4], title='Pick_' + sender_text, fields=headers,
-                                 save_folder=self.scenarios, sortby='', decpts=op_pts)
-                        dialog.exec_()
-                        del dialog
-                    chrom_hdrs.append('Your 3rd pick')
-                    chroms.append(multi_lowest_chrom)
-                    ndxes.append(4)
-            else:
-                picks = []
-                for pck in pick:
-                    picks.append(multi_best_popn[pck[0]])
-                a, b, c = calculate_fitness(picks)
-                best_multi = np.min(b)
-                best_mndx = b.index(best_multi)
-                multi_lowest_chrom = picks[best_mndx]
-                op_data[2], score_data[2] = calculate_fitness([multi_lowest_chrom])
-                if self.more_details:
-                    list(map(list, list(zip(*op_data[2]))))
-                    dialog = self.displaytable.Table(op_data[2], title='Pick_' + sender_text, fields=headers,
-                             save_folder=self.scenarios, sortby='', decpts=op_pts)
-                    dialog.exec_()
-                    del dialog
-                chrom_hdrs.append('Your pick')
-                chroms.append(multi_lowest_chrom)
-                ndxes.append(2)
-        for chromosome in chroms:
-            for fac, value in opt_order.items():
-                capacity = opt_order[fac][2]
-                for c in range(value[0], value[1]):
-                    if chromosome[c]:
-                        capacity = capacity + capacities[c]
-                its[fac].append(capacity / pmss_details[fac].capacity)
-                
-        self._optDialog3(self)
-        max_amt = [0., 0.]
-        if do_lcoe:
-            max_amt[0] = score_data[0][0]['cost']
-            max_amt[1] = score_data[0][0]['co2']
-        if do_multi:
-            for multi in multi_best:
-                max_amt[0] = max(max_amt[0], multi['cost'])
-                max_amt[1] = max(max_amt[1], multi['co2'])
-        pwr_chr = ['', '']
-        divisor = [1., 1.]
-        pwr_chrs = ' KMBTPEZY'
-        for m in range(2):
-            for pwr in range(len(pwr_chrs) - 1, -1, -1):
-                if max_amt[m] > pow(10, pwr * 3):
-                    pwr_chr[m] = pwr_chrs[pwr]
-                    divisor[m] = 1. * pow(10, pwr * 3)
-                    break
-        self.targets['cost'][5] = self.targets['cost'][5].replace('pwr_chr', pwr_chr[0])
-        self.targets['co2'][5] = self.targets['co2'][5].replace('pwr_chr', pwr_chr[1])
-        self._optChooseDialog()
-        
-        if self.adjust_gen:
-            self.adjustto = {}
-            for fac, value in sorted(pmss_details.items()):
-                self.adjustto[fac] = value.capacity * value.multiplier
-        return
-
     def _makeAdjustments(self):
         pass
 
     def _plot_multi(multi_scores, multi_best, multi_order, title):
-        pass
-    
-    def _optDialog(self):
-        pass
-    
-    def _optChooseDialog(self):
-        pass
-    
-    def _optDialog3(self):
         pass
     
     def _display_table(self, objects, fields=None, title=None, save_folder='', sortby=None, decpts=None):
