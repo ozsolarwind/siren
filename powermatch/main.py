@@ -1019,6 +1019,111 @@ class PowerMatch(QtWidgets.QWidget, PowerMatchBase):
                     weight[1] += w * value[1]
             return weight[calc]
 
+        def plot_multi(multi_scores, multi_best, multi_order, title):
+            data = [[], [], []]
+            max_amt = [0., 0.]
+            for multi in multi_best:
+                max_amt[0] = max(max_amt[0], multi['cost'])
+                max_amt[1] = max(max_amt[1], multi['co2'])
+            pwr_chr = ['', '']
+            divisor = [1., 1.]
+            pwr_chrs = ' KMBTPEZY'
+            for m in range(2):
+                for pwr in range(len(pwr_chrs) - 1, -1, -1):
+                    if max_amt[m] > pow(10, pwr * 3):
+                        pwr_chr[m] = pwr_chrs[pwr]
+                        divisor[m] = 1. * pow(10, pwr * 3)
+                        break
+            self.targets['cost'][5] = self.targets['cost'][5].replace('pwr_chr', pwr_chr[0])
+            self.targets['co2'][5] = self.targets['co2'][5].replace('pwr_chr', pwr_chr[1])
+            for multi in multi_best:
+                for axis in range(3): # only three axes in plot
+                    if multi_order[axis] == 'cost':
+                        data[axis].append(multi[multi_order[axis]] / divisor[0]) # cost
+                    elif multi_order[axis] == 'co2':
+                        data[axis].append(multi[multi_order[axis]] / divisor[1]) # co2
+                    elif multi_order[axis][-4:] == '_pct': # percentage
+                        data[axis].append(multi[multi_order[axis]] * 100.)
+                    else:
+                        data[axis].append(multi[multi_order[axis]])
+            # create colour map
+            colours = multi_scores[:]
+            cmax = max(colours)
+            cmin = min(colours)
+            if cmin == cmax:
+                return
+            for c in range(len(colours)):
+                colours[c] = (colours[c] - cmin) / (cmax - cmin)
+            scolours = sorted(colours)
+            cvals  = [-1., 0, 1]
+            colors = ['green' ,'orange', 'red']
+            norm = plt.Normalize(min(cvals), max(cvals))
+            tuples = list(zip(map(norm,cvals), colors))
+            cmap = matplotlib.colors.LinearSegmentedColormap.from_list('', tuples)
+            fig = plt.figure(title + QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), '_yyyy-MM-dd_hhmm'))
+            mx = plt.axes(projection='3d')
+            plt.title('\n' + title.title() + '\n')
+            try:
+                for i in range(len(data[0])):
+                    mx.scatter3D(data[2][i], data[1][i], data[0][i], picker=True, color=cmap(colours[i]), cmap=cmap)
+                    if title[:5] == 'start':
+                        mx.text(data[2][i], data[1][i], data[0][i], '%s' % str(i+1))
+                    else:
+                        j = scolours.index(colours[i])
+                        if j < 10:
+                            mx.text(data[2][i], data[1][i], data[0][i], '%s' % str(j+1))
+            except:
+                return
+            if self.optimise_multisurf:
+                cvals_r  = [-1., 0, 1]
+                colors_r = ['red' ,'orange', 'green']
+                norm_r = plt.Normalize(min(cvals_r), max(cvals_r))
+                tuples_r = list(zip(map(norm_r, cvals_r), colors_r))
+                cmap_r = matplotlib.colors.LinearSegmentedColormap.from_list('', tuples_r)
+                # https://www.fabrizioguerrieri.com/blog/surface-graphs-with-irregular-dataset/
+                triang = mtri.Triangulation(data[2], data[1])
+                mx.plot_trisurf(triang, data[0], cmap=cmap_r)
+            mx.xaxis.set_major_formatter(FormatStrFormatter(self.targets[multi_order[2]][5]))
+            mx.yaxis.set_major_formatter(FormatStrFormatter(self.targets[multi_order[1]][5]))
+            mx.zaxis.set_major_formatter(FormatStrFormatter(self.targets[multi_order[0]][5]))
+            mx.set_xlabel(self.targets[multi_order[2]][6])
+            mx.set_ylabel(self.targets[multi_order[1]][6])
+            mx.set_zlabel(self.targets[multi_order[0]][6])
+            zp = ZoomPanX()
+            f = zp.zoom_pan(mx, base_scale=1.2, annotate=True)
+            plt.show()
+            if zp.datapoint is not None: # user picked a point
+                if zp.datapoint[0][0] < 0: # handle problem in matplotlib sometime after version 3.0.3
+                    best = [0, 999]
+                    for p in range(len(multi_best)):
+                        diff = 0
+                        for v in range(3):
+                            key = multi_order[v]
+                            valu = multi_best[p][key]
+                            if key[-4:] == '_pct':
+                                valu = valu * 100.
+                            diff += abs((valu - zp.datapoint[0][v + 1]) / valu)
+                        if diff < best[1]:
+                            best = [p, diff]
+                    zp.datapoint = [[best[0]]]
+                    for v in range(3):
+                        key = multi_order[v]
+                        zp.datapoint[0].append(multi_best[p][key])
+                if self.more_details:
+                    for p in zp.datapoint:
+                        msg = 'iteration ' + str(p[0]) + ': '
+                        mult = []
+                        for i in range(3):
+                            if self.targets[multi_order[i]][6].find('%') > -1:
+                                mult.append(100.)
+                            else:
+                                mult.append(1.)
+                            msg += self.targets[multi_order[i]][6].replace('%', '%%') + ': ' + \
+                                   self.targets[multi_order[i]][5] + '; '
+                        msg = msg % (p[1] * mult[0], p[2] * mult[1], p[3] * mult[2])
+                        self.setStatus(msg)
+            return zp.datapoint
+
         def show_multitable(best_score_progress, multi_best, multi_order, title):
             def pwr_chr(amt):
                 pwr_chrs = ' KMBTPEZY'
@@ -1399,7 +1504,8 @@ class PowerMatch(QtWidgets.QWidget, PowerMatchBase):
         # if do_multi best_multi = lowest weight and if not do_lcoe best_score also = best_weight
         if self.debug:
             filename = self.scenarios + 'opt_debug_' + \
-                datetime.now().strftime('_%Y-%M-%d_%H%M') + '.csv'
+                       QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),
+                       'yyyy-MM-dd_hhmm') + '.csv'
             self.db_file = open(filename, 'w')
             line0 = 'Popn,Chrom,'
             line1 = 'Weights,,'
@@ -1433,7 +1539,7 @@ class PowerMatch(QtWidgets.QWidget, PowerMatchBase):
             self.setStatus('Starting LCOE: $%.2f' % best_score)
         if do_multi:
             if self.more_details: # display starting population ?
-                pick = self._plot_multi(multi_scores, multi_values, multi_order, 'starting population')
+                pick = plot_multi(multi_scores, multi_values, multi_order, 'starting population')
             # want maximum from first round to set base upper limit
             for key in self.targets.keys():
                 if self.targets[key][2] < 0: # want a maximum from first round
@@ -1618,7 +1724,8 @@ class PowerMatch(QtWidgets.QWidget, PowerMatchBase):
         # Plot progress
         x = list(range(1, len(best_score_progress)+ 1))
         matplotlib.rcParams['savefig.directory'] = self.scenarios
-        plt.figure(fig + datetime.now().strftime('_%Y-%M-%d_%H%M'))
+        plt.figure(fig + QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),
+                   '_yyyy-MM-dd_hhmm'))
         lx = plt.subplot(111)
         plt.title(titl)
         lx.plot(x, best_score_progress)
@@ -1631,9 +1738,9 @@ class PowerMatch(QtWidgets.QWidget, PowerMatchBase):
         pickf = None
         if do_multi:
             if self.optimise_multiplot:
-                pick = self._plot_multi(best_multi_progress, multi_best, multi_order, 'best of each iteration')
+                pick = plot_multi(best_multi_progress, multi_best, multi_order, 'best of each iteration')
                 if self.more_details:
-                    pickf = self._plot_multi(multi_scores, multi_values, multi_order, 'final iteration')
+                    pickf = plot_multi(multi_scores, multi_values, multi_order, 'final iteration')
             if self.optimise_multitable:
                 pick2 = show_multitable(best_multi_progress, multi_best, multi_order, 'best of each iteration')
                 try:
@@ -2061,7 +2168,6 @@ class PowerMatch(QtWidgets.QWidget, PowerMatchBase):
                 wb.save(self.get_filename(self.files[B].text()))
                 self.setStatus(msg)
         
-        if self.adjust_gen:
             self.adjustto = {}
             for fac, value in sorted(pmss_details.items()):
                 self.adjustto[fac] = value.capacity * value.multiplier
@@ -2928,111 +3034,6 @@ class PowerMatch(QtWidgets.QWidget, PowerMatchBase):
             self.results_pfx_fld.setText(self.results_prefix)
         self.updated = True
         do_adjust = True
-
-    def _plot_multi(multi_scores, multi_best, multi_order, title):
-        data = [[], [], []]
-        max_amt = [0., 0.]
-        for multi in multi_best:
-            max_amt[0] = max(max_amt[0], multi['cost'])
-            max_amt[1] = max(max_amt[1], multi['co2'])
-        pwr_chr = ['', '']
-        divisor = [1., 1.]
-        pwr_chrs = ' KMBTPEZY'
-        for m in range(2):
-            for pwr in range(len(pwr_chrs) - 1, -1, -1):
-                if max_amt[m] > pow(10, pwr * 3):
-                    pwr_chr[m] = pwr_chrs[pwr]
-                    divisor[m] = 1. * pow(10, pwr * 3)
-                    break
-        self.targets['cost'][5] = self.targets['cost'][5].replace('pwr_chr', pwr_chr[0])
-        self.targets['co2'][5] = self.targets['co2'][5].replace('pwr_chr', pwr_chr[1])
-        for multi in multi_best:
-            for axis in range(3): # only three axes in plot
-                if multi_order[axis] == 'cost':
-                    data[axis].append(multi[multi_order[axis]] / divisor[0]) # cost
-                elif multi_order[axis] == 'co2':
-                    data[axis].append(multi[multi_order[axis]] / divisor[1]) # co2
-                elif multi_order[axis][-4:] == '_pct': # percentage
-                    data[axis].append(multi[multi_order[axis]] * 100.)
-                else:
-                    data[axis].append(multi[multi_order[axis]])
-        # create colour map
-        colours = multi_scores[:]
-        cmax = max(colours)
-        cmin = min(colours)
-        if cmin == cmax:
-            return
-        for c in range(len(colours)):
-            colours[c] = (colours[c] - cmin) / (cmax - cmin)
-        scolours = sorted(colours)
-        cvals  = [-1., 0, 1]
-        colors = ['green' ,'orange', 'red']
-        norm = plt.Normalize(min(cvals), max(cvals))
-        tuples = list(zip(map(norm,cvals), colors))
-        cmap = matplotlib.colors.LinearSegmentedColormap.from_list('', tuples)
-        fig = plt.figure(title + QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), '_yyyy-MM-dd_hhmm'))
-        mx = plt.axes(projection='3d')
-        plt.title('\n' + title.title() + '\n')
-        try:
-            for i in range(len(data[0])):
-                mx.scatter3D(data[2][i], data[1][i], data[0][i], picker=True, color=cmap(colours[i]), cmap=cmap)
-                if title[:5] == 'start':
-                    mx.text(data[2][i], data[1][i], data[0][i], '%s' % str(i+1))
-                else:
-                    j = scolours.index(colours[i])
-                    if j < 10:
-                        mx.text(data[2][i], data[1][i], data[0][i], '%s' % str(j+1))
-        except:
-            return
-        if self.optimise_multisurf:
-            cvals_r  = [-1., 0, 1]
-            colors_r = ['red' ,'orange', 'green']
-            norm_r = plt.Normalize(min(cvals_r), max(cvals_r))
-            tuples_r = list(zip(map(norm_r, cvals_r), colors_r))
-            cmap_r = matplotlib.colors.LinearSegmentedColormap.from_list('', tuples_r)
-            # https://www.fabrizioguerrieri.com/blog/surface-graphs-with-irregular-dataset/
-            triang = mtri.Triangulation(data[2], data[1])
-            mx.plot_trisurf(triang, data[0], cmap=cmap_r)
-        mx.xaxis.set_major_formatter(FormatStrFormatter(self.targets[multi_order[2]][5]))
-        mx.yaxis.set_major_formatter(FormatStrFormatter(self.targets[multi_order[1]][5]))
-        mx.zaxis.set_major_formatter(FormatStrFormatter(self.targets[multi_order[0]][5]))
-        mx.set_xlabel(self.targets[multi_order[2]][6])
-        mx.set_ylabel(self.targets[multi_order[1]][6])
-        mx.set_zlabel(self.targets[multi_order[0]][6])
-        zp = ZoomPanX()
-        f = zp.zoom_pan(mx, base_scale=1.2, annotate=True)
-        plt.show()
-        if zp.datapoint is not None: # user picked a point
-            if zp.datapoint[0][0] < 0: # handle problem in matplotlib sometime after version 3.0.3
-                best = [0, 999]
-                for p in range(len(multi_best)):
-                    diff = 0
-                    for v in range(3):
-                        key = multi_order[v]
-                        valu = multi_best[p][key]
-                        if key[-4:] == '_pct':
-                            valu = valu * 100.
-                        diff += abs((valu - zp.datapoint[0][v + 1]) / valu)
-                    if diff < best[1]:
-                        best = [p, diff]
-                zp.datapoint = [[best[0]]]
-                for v in range(3):
-                    key = multi_order[v]
-                    zp.datapoint[0].append(multi_best[p][key])
-            if self.more_details:
-                for p in zp.datapoint:
-                    msg = 'iteration ' + str(p[0]) + ': '
-                    mult = []
-                    for i in range(3):
-                        if self.targets[multi_order[i]][6].find('%') > -1:
-                            mult.append(100.)
-                        else:
-                            mult.append(1.)
-                        msg += self.targets[multi_order[i]][6].replace('%', '%%') + ': ' + \
-                                self.targets[multi_order[i]][5] + '; '
-                    msg = msg % (p[1] * mult[0], p[2] * mult[1], p[3] * mult[2])
-                    self.setStatus(msg)
-        return zp.datapoint
 
     def _optQuitClicked(self):
         self.optExit = True

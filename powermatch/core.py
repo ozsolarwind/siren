@@ -2527,7 +2527,9 @@ class PowerMatchBase:
                 sp_d[st_cfa] = ' (' + format_period(max_short[0])[5:] + ')'
                 sp_data.append(sp_d)
             if option == O or option == O1:
-                if not re_pct:
+                try:
+                    re_pct
+                except NameError:
                     print('No RE %age for: ',sp_d)
                     re_pct = 0
                 return load_pct, surp_pct, re_pct
