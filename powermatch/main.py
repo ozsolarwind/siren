@@ -474,7 +474,7 @@ class PowerMatch(QtWidgets.QWidget, PowerMatchBase):
     log = QtCore.pyqtSignal()
     progress = QtCore.pyqtSignal()
 
-    def __init__(self, TableClass=Table, *args, **kwargs):
+    def __init__(self, TableClass=Table, help='help.html', *args, **kwargs):
         QtWidgets.QWidget.__init__(self)
         PowerMatchBase.__init__(self)
         self.displaytable = TableClass  # Store the TableClass as an instance variable
