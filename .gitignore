@@ -1,0 +1,7 @@
+# ignore everything in the "siren_files" directory:
+.vscode/*
+siren_files/*
+__*
+displaytable_old.py
+powermatch/logic/*
+powermatch/ui/*
