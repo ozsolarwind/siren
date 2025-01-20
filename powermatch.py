@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2018-2024 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2018-2025 Sustainable Energy Now Inc., Angus King
 #
 #  powermatch.py - This file is part of SIREN.
 #
@@ -1528,8 +1528,11 @@ class powerMatch(QtWidgets.QWidget):
     def fileChanged(self):
         self.setStatus('')
         for i in range(len(self.file_labels)):
-            if self.files[i].hasFocus():
-                break
+            try:
+                if self.files[i].hasFocus():
+                    break
+            except:
+                pass
         if self.files[i].text() == '':
             curfile = self.scenarios[:-1]
         else:
@@ -1735,9 +1738,15 @@ class powerMatch(QtWidgets.QWidget):
                 line += self.order.item(itm).text() + ','
             lines.append('dispatch_order=' + line[:-1])
             for i in range(len(self.file_labels)):
-                lines.append(self.file_labels[i].lower() + '_file=' + self.files[i].text().replace(getUser(), '$USER$'))
+                try:
+                    lines.append(self.file_labels[i].lower() + '_file=' + self.files[i].text().replace(getUser(), '$USER$'))
+                except:
+                    pass
             for i in range(D):
-                lines.append(self.file_labels[i].lower() + '_sheet=' + self.sheets[i].currentText())
+                try:
+                    lines.append(self.file_labels[i].lower() + '_sheet=' + self.sheets[i].currentText())
+                except:
+                    pass
             line = 'load='
             if self.load_dir.text() != self._load_folder:
                 if self.load_files.rfind('/') > 0:
@@ -2275,6 +2284,7 @@ class powerMatch(QtWidgets.QWidget):
         if len(self.batch_tech) == 0:
             self.setStatus('No input technologies found in ' + self.file_labels[option] + ' worksheet (try opening and re-saving the workbook).')
             return False
+        load_row = -1
         carbon_row = -1
         discount_row = -1
         for row in range(istop, ws.nrows):
@@ -2286,6 +2296,8 @@ class powerMatch(QtWidgets.QWidget):
                     carbon_row = row
                 if ws.cell_value(row, 0).lower() == 'discount rate' or ws.cell_value(row, 0).lower() == 'wacc':
                     discount_row = row
+                if ws.cell_value(row, 0).lower() == 'load':
+                    load_row = row
                 self.batch_report.append([techClean(ws.cell_value(row, 0), full=True), row + 1])
         range_rows = {}
         for col in range(1, ws.ncols):
@@ -2331,6 +2343,11 @@ class powerMatch(QtWidgets.QWidget):
                     self.batch_models[0][col]['Discount Rate'] = ws.cell_value(discount_row, col)
                 elif isinstance(ws.cell_value(discount_row, col), int):
                     self.batch_models[0][col]['Discount Rate'] = float(ws.cell_value(discount_row, col))
+            if load_row >= 0:
+                if isinstance(ws.cell_value(load_row, col), float):
+                    self.batch_models[0][col]['Load'] = ws.cell_value(load_row, col)
+                elif isinstance(ws.cell_value(load_row, col), int):
+                    self.batch_models[0][col]['Load'] = float(ws.cell_value(load_row, col))
         if len(self.batch_models[0]) == 0:
             self.setStatus('No models found in ' + self.file_labels[option] + ' worksheet (try opening and re-saving the workbook).')
             return False
@@ -2965,6 +2982,8 @@ class powerMatch(QtWidgets.QWidget):
                     return
                 adjustto = adjust.getValues()
                 pmss_details['Load'].multiplier = adjustto['Load'] / pmss_details['Load'].capacity
+            save_load_multiplier = pmss_details['Load'].multiplier # in case load row passed into batch
+            load_varies = False
        #     start_time = time.time() # just for fun
             batch_details = {'Capacity (MW/MWh)': [st_cap, '#,##0.00'],
                              'To Meet Load (MWh)': [st_tml, '#,##0'],
@@ -3313,21 +3332,28 @@ class powerMatch(QtWidgets.QWidget):
                             # get generators and load for new year
                             trn_year = capacities['year']
                             year = str(trn_year)
-                            ws = gen_book.sheet_by_name(gen_sheet.replace('$YEAR$', year))
+                            try:
+                                ws = gen_book.sheet_by_name(gen_sheet.replace('$YEAR$', year))
+                            except:
+                                gen_book.close()
+                                self.setStatus(f"No Generators sheet for year '{year}'.")
+                                return
                             self.getGenerators(ws)
-                            # get load for new year
-                    # to cater for different load profiles (years) and generator costs (years) this loop would need to change, that is
-                    # need to be able to change pmss_details and pmss_data[0] and self.generators
                             if year not in load_columns.keys():
-                                load_columns[year] = len(pmss_data)
-                                pmss_data.append([])
                                 load_file = self.load_files.replace('$YEAR$', year)
                                 if self.load_dir.text() != self._load_folder:
                                     load_file = self.get_filename(load_file)
-                                pmss_data[-1] = get_load_data(load_file)
-                                if pmss_data[-1] is None:
+                                if os.path.exists(load_file):
+                                    load_columns[year] = len(pmss_data)
+                                    pmss_data.append([])
+                                    pmss_data[-1] = get_load_data(load_file)
+                                elif 'Load' not in capacities.keys() or capacities['Load'] == 0:
                                     self.setStatus(f"Missing load file - '{load_file}'")
                                     return
+                                else:
+                                    year = list(load_columns.keys())[-1]
+                                    self.setStatus(f"Missing load file for '{trn_year}' - using '{year}'")
+                                    pmss_details['Load'].col = load_columns[year]
                     for fac in pmss_details.keys():
                         if fac == 'Load' and (option == B or option == T):
                             pmss_details['Load'].capacity = sum(pmss_data[load_columns[year]])
@@ -3342,7 +3368,7 @@ class powerMatch(QtWidgets.QWidget):
                     column += 1
                     dispatch_order = []
                     for key, capacity in capacities.items(): # cater for zones
-                        if key in ['Carbon Price', 'Discount Rate', 'Total']:
+                        if key in ['Carbon Price', 'Discount Rate', 'Load', 'Total']:
                             continue
                         if key == 'name' and model_row_no > 0:
                             if model_key != '':
@@ -3356,6 +3382,8 @@ class powerMatch(QtWidgets.QWidget):
                                     vertical='bottom', horizontal='center')
                             continue
                         if key == 'year':
+                            if option == T:
+                                continue
                             if capacity in load_columns.keys():
                                 pmss_details['Load'].col = load_columns[capacity]
                             else:
@@ -3420,6 +3448,11 @@ class powerMatch(QtWidgets.QWidget):
                     if 'Discount Rate' in capacities.keys():
                         save_discount_rate = self.discount_rate
                         self.discount_rate = capacities['Discount Rate']
+                    if 'Load' in capacities.keys() and capacities['Load'] > 0 and capacities['Load'] != pmss_details['Load'].capacity:
+                        load_varies = True
+                        pmss_details['Load'].multiplier = capacities['Load'] / pmss_details['Load'].capacity
+                    else:
+                        pmss_details['Load'].multiplier = save_load_multiplier
                     sp_data = self.doDispatch(year, option, pmss_details, pmss_data, re_order, dispatch_order,
                               pm_data_file, rslts_file, title=capacities['name'])
                     if 'Carbon Price' in capacities.keys():
@@ -3596,7 +3629,7 @@ class powerMatch(QtWidgets.QWidget):
                 if total_load_row > 0:
                     if self.batch_prefix:
                         batch_pfx = get_batch_prefix('Load Analysis')
-                    if option == T:
+                    if option == T or load_varies:
                         bs.cell(row=total_load_row, column=1).value = batch_pfx + 'Total Load'
                     else:
                         load_mult = ''
@@ -3829,6 +3862,8 @@ class powerMatch(QtWidgets.QWidget):
                 hhmm = tim / 60.
                 tim = f'{int(hhmm)}:{int((hhmm-int(hhmm))*60.):0>2} mins'
             self.setStatus(f'{self.sender().text()} completed ({len(self.batch_models)} sheets, {total_models:,} models; {tim}). You may need to open and save the workbook to reprocess it.')
+            self.progressbar.setHidden(True)
+            self.progressbar.setValue(0)
             return
         if do_adjust:
             if self.adjustto is not None:
@@ -4181,6 +4216,7 @@ class powerMatch(QtWidgets.QWidget):
             ss.cell(row=ss_row, column=st_max+1).value = '=IF(Detail!' + ssCol(col) + str(sum_row) \
                                                    + '>0,Detail!' + ssCol(col) + str(max_row) + ',"")'
             ss.cell(row=ss_row, column=st_max+1).number_format = '#,##0.00'
+            # emissions
             if self.generators[gen].emissions > 0:
                 if self.remove_cost:
                     ss.cell(row=ss_row, column=st_emi+1).value = '=IF(Detail!' + ssCol(col) + str(sum_row) \
@@ -4201,6 +4237,7 @@ class powerMatch(QtWidgets.QWidget):
                                                          ssCol(st_emi+1) + str(ss_row) + '>0),' + \
                                                          ssCol(st_emc+1) + str(ss_row) + '*lifetime,"")'
             ss.cell(row=ss_row, column=st_lec+1).number_format = '$#,##0'
+            # area
             if self.generators[gen].area > 0:
                 ss.cell(row=ss_row, column=st_are+1).value = '=Detail!' + ssCol(col) + str(cap_row) +\
                                                              '*' + str(self.generators[gen].area)
@@ -4212,6 +4249,7 @@ class powerMatch(QtWidgets.QWidget):
             ss.cell(row=ss_row, column=1).value = title + 'Total'
             for col in range(1, len(headers) + 1):
                 ss.cell(row=3, column=col).font = bold
+                ss.cell(row=3, column=col).alignment = oxl.styles.Alignment(wrap_text=True, vertical='bottom', horizontal='center')
                 ss.cell(row=ss_row, column=col).font = bold
             for col in [st_cap, st_tml, st_sub, st_cst, st_emi, st_emc, st_cac, st_lic, st_lie, st_lec, st_are]:
                 if back_row != '':
@@ -4420,7 +4458,7 @@ class powerMatch(QtWidgets.QWidget):
                         ':Detail!' + last_col + str(hrows + 8759) + ',0),0)&")"'
             return ss_row, ss_re_row
 
-    # The "guts" of Powermatch processing. Have a single calculation algorithm
+    # doDispatch: The "guts" of Powermatch processing. Have a single calculation algorithm
     # for Summary, Powermatch (detail), and Optimise. The detail makes it messy
     # Note: For Batch pmss_data is reused so don't update it in doDispatch
         the_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
@@ -4712,6 +4750,7 @@ class powerMatch(QtWidgets.QWidget):
             except:
                 load_col = 0
             if (option == B or option == T) and len(underlying_facs) > 0:
+                # at the moment for batch or transition we won't report operational and underlying separately
                 load_facs = underlying_facs[:]
                 load_facs.insert(0, 'Load')
                 for h in range(len(pmss_data[load_col])):
@@ -5677,6 +5716,11 @@ class powerMatch(QtWidgets.QWidget):
                                                          ssCol(st_emi+1) + str(ss_row) + '>0),' + \
                                                          ssCol(st_emc+1) + str(ss_row) + '*lifetime,"")'
             ss.cell(row=ss_row, column=st_lec+1).number_format = '$#,##0'
+            # area
+            if self.generators[gen].area > 0:
+                ss.cell(row=ss_row, column=st_are+1).value = '=Detail!' + ssCol(col) + str(cap_row) +\
+                                                             '*' + str(self.generators[gen].area)
+                ss.cell(row=ss_row, column=st_are+1).number_format = '#,##0.00'
         if is_storage:
             ns.cell(row=emi_row, column=col - 2).value = '=MIN(' + ssCol(col - 2) + str(hrows) + \
                     ':' + ssCol(col - 2) + str(hrows + 8759) + ')'
@@ -6119,7 +6163,7 @@ class powerMatch(QtWidgets.QWidget):
                     try:
                         pmss_details[fac].multiplier = capacity / pmss_details[fac].capacity
                     except:
-                        print('PME2:', gen, capacity, pmss_details[fac].capacity)
+                        print('PME2:', fac, capacity, pmss_details[fac].capacity)
                 multi_value, op_data, extra = self.doDispatch(year, option, pmss_details, pmss_data, re_order,
                                               dispatch_order, pm_data_file, rslts_file)
                 if multi_value['load_pct'] < self.targets['load_pct'][3]:

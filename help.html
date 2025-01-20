@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
-#  Copyright (C) 2015-2024 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2025 Sustainable Energy Now Inc., Angus King
 #
 #  help.html - This file is part of SIREN.
 #
@@ -3882,9 +3882,7 @@ The order in which the dispatchable technologies will be processed by Powermatch
 <tr><td class="none"><dfn>Lifetime Cost</dfn></td><td class="none">The lifetime cost for the facility. This is the total (annual) cost multiplied by the longest lifetime for all chosen Generators</td></tr>
 <tr><td class="none"><dfn>Lifetime Emissions</dfn></td><td class="none">The lifetime emissions for the facility; tCO<sub>2</sub>&#x2011;e</td></tr>
 <tr><td class="none"><dfn>Lifetime Emissions Cost</dfn></td><td class="none">The lifetime cost of emissions for the facility</td></tr>
-<!--
 <tr><td class="none"><dfn>Area<dfn></td><td class="none">The estimated land area for the facility in km<sup>2</sup>. Note: for Wind &ldquo;only about 3% of this area will be used for the development of actual turbines and supporting infrastructure.&rdquo; (<a href="https://ldcinfrastructure.com.au/wind-energy-lease-explained/" target="_blank">https://ldcinfrastructure.com.au/wind-energy-lease-explained</a>)</td></tr>
--->
 <tr><td class="none"><dfn>Reference LCOE</dfn></td><td class="none">The reference LCOE for a facility where costs are calculated using a Reference LCOE and CF</td></tr>
 <tr><td class="none"><dfn>Reference CF</dfn></td><td class="none">The reference CF</td></tr>
 </table>
@@ -3914,19 +3912,17 @@ The order in which the dispatchable technologies will be processed by Powermatch
 <li>Assuming a storage facility is listed in column I, it's balance will be in column J.<br />Calculate the percentage of time it is at full capacity - <code>=COUNTIF(J2:J8771,"="&I1)/8760</code><br />and at less than or equal to 10% capacity - <code>=COUNTIF(J2:J8771,"<="&I1*0.1)/8760</code></li>
 </p>
 </ul>
-<li><strong>Batch</strong>. Invoke Powermatch for a number of &ldquo;models&rdquo; with different capacities for each technology. This option produces a worksheet containing selected details from the Summary Output with one column per model. An input spreadsheet contains a column with the capacities for each model. A list of the desired details from the Summary Table can be specified below the list of technologies (capacities). The details can include any of the following Report Groups. Most groups will have rows pertaining to each group for each facility plus additional rows specific to each group. If the option is chosen Facility names will be prefixed with a unique identifier for each report group; the prefix for each group is shown in curly brackets
+<li><strong>Batch</strong>. Invoke Powermatch for a number of &ldquo;models&rdquo; with different capacities for each technology. This option produces a worksheet containing selected details from the Summary Output with one column per model. An input spreadsheet contains a column with the capacities for each model. A list of the desired details from the Summary Table can be specified below the list of technologies (capacities). The details can include any of the following Report Groups. Most groups will have rows pertaining to each group for each facility plus additional rows specific to that group. If the option is chosen Facility names will be prefixed with a unique identifier for each report group; the prefix for each group is shown in curly brackets
 <table border="0" class="none" style="margin-left:35px">
-<tr><td class="none"><dfn>Capacity (MW) {CY_}<dfn></td><td class="none">The input capacity for each facility. The dispatch order for the facilties is defined by the row order</td></tr>
-<!--
+<tr><td class="none"><dfn>Capacity (MW) {CY_}<dfn></td><td class="none">The input capacity for each facility. The dispatch order for the facilties is defined by the row order. <strong>Note:</strong> This is required and must be the first group</td></tr>
 <tr><td class="none"><dfn>Area {AA_}<dfn></td><td class="none">The estimated land area for the facility in km<sup>2</sup></td></tr>
--->
 <tr><td class="none"><dfn>Capacity Factor {CF_}<dfn></td><td class="none">The calculated capacity factor for each facility</td></tr>
 <tr><td class="none"><dfn>Capital Cost {CC_}</dfn></td><td class="none">The capital cost for the facility</td></tr>
 <tr><td class="none"><dfn>Carbon {CN_}<dfn></td><td class="none">Details on Carbon impacts. This will include lifetime carbon costs if the <em>Lifetime Cost</em> Report Group is specified</td></tr>
-<tr><td class="none"><dfn>Carbon Price<dfn></td><td class="none">This is not strictly an output but allows a different carbon price to be set for each input Model</td></tr>
+<tr><td class="none"><dfn>Carbon Price<sup>**</sup><dfn></td><td class="none">This is not strictly an output but allows a different carbon price to be set for each input Model</td></tr>
 <tr><td class="none"><div class="experiment"<dfn>Correlation To Load</dfn></div></td><td class="none"><div class="experiment">If <em>show_correlation</em> is set there will be a number of additional lines giving a linear correlation between Load and three components used to meet Load - RE contribution, RE plus Storage (includes any minimum generation constraints), and the Total</td></div></tr>
 <tr><td class="none"><dfn>Cost ($/Yr) {CT_}<dfn></td><td class="none">The calculated cost for each facility</td></tr>
-<tr><td class="none"><dfn>Discount Rate</dfn><br />(or <dfn>WACC</dfn>)</td><td class="none">This is not strictly an output but allows a different discount rate to be set for each input Model</td></tr>
+<tr><td class="none"><dfn>Discount Rate</dfn><br />(or <dfn>WACC</dfn>)<sup>**</sup></td><td class="none">This is not strictly an output but allows a different discount rate to be set for each input Model</td></tr>
 <tr><td class="none"><dfn>Emissions (tCO2e) {ES_}<dfn></td><td class="none">The estimated emissions for each facility</td></tr>
 <tr><td class="none"><dfn>Emissions Cost {EC_}<dfn></td><td class="none">The estimated cost emissions for each facility</td></tr>
 <tr><td class="none"><dfn>Generation (MWh) {GN_}<dfn></td><td class="none">Generation for each generator</td></tr>
@@ -3936,6 +3932,7 @@ The order in which the dispatchable technologies will be processed by Powermatch
 <tr><td class="none"><dfn>Lifetime Cost {LC_}</dfn></td><td class="none">The lifetime cost for each facility</td></tr>
 <tr><td class="none"><dfn>Lifetime Emissions {LES_}</dfn></td><td class="none">The lifetime emissions for each facility</td></tr>
 <tr><td class="none"><dfn>Lifetime Emissions Cost {LEC_}</dfn></td><td class="none">The lifetime cost of emissions for each facility</td></tr>
+<tr><td class="none"><dfn>Load<sup>**</sup><dfn></td><td class="none">This is not strictly an output but allows a different load to be set for each input Model</td></tr>
 <tr><td class="none"><dfn>Load Analysis {LA_}<dfn></td><td class="none">Details on how much of the load was met, shortfalls, storage losses, and surpluses</td></tr>
 <tr><td class="none"><dfn>Max MWh {MM_}<dfn></td><td class="none">he maximum generation or contribution to meeting load for the facility</td></tr>
 <tr><td class="none"><dfn>RE {RE_}<dfn></td><td class="none">The percentage of RE and storage used to meet the load</td></tr>
@@ -3944,6 +3941,7 @@ The order in which the dispatchable technologies will be processed by Powermatch
 <tr><td class="none"><dfn>Data Sources<dfn></td><td class="none">Display the data sources used for the batch run (provides: Scenarios folder, Powermatch data file, Constraints worksheet and Facility worksheet)</td></tr>
 <tr><td class="none"><dfn>Optimisation Parameters<dfn></td><td class="none">If the model was added via Optimisation this will list the optimisation parameters used. This should be the last entry (even below any Chart options)</td></tr>
 </table>
+<sup>**</sup> These three &ldquo;groups&rdquo; are inputs that allow values to be set for individual models. If not specified the &ldquo;default&rdquo; value will be used
 </p>
 <dfn>Capacity (MW)</dfn> is required and must be the first entry. The other Report Groups can be <strong>in any order</strong>. <dfn>Carbon Price</dfn> allows you to input a different Carbon Price for each Model. <dfn>Discount Rate</dfn> allows you to input a different discount rate for each Model. If Carbon Price and/or Discount Rate are to be included they must appear immediately below the Total row for the Capacity inputs.
 <br />By default the resulting output will be appended as a new worksheet to the input file. You can create a new spreadsheet by setting the <em>batch_new_file</em> property to True
