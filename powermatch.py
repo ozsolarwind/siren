@@ -965,6 +965,11 @@ class powerMatch(QtWidgets.QWidget):
         except:
             pass
         try:
+            self.model_name = config.get('Base', 'name')
+        except:
+            self.model_name = ''
+        self.config_file = config_file[config_file.rfind('/') + 1:]
+        try:
             base_year = config.get('Base', 'year')
         except:
             base_year = '2012'
@@ -1496,7 +1501,7 @@ class powerMatch(QtWidgets.QWidget):
     #    self.tabs.addTab(tab3,'Generators')
     #    self.tabs.addTab(tab4,'Summary')
     #    self.tabs.addTab(tab5,'Details')
-        self.setWindowTitle('SIREN - powermatch (' + fileVersion() + ') - Powermatch')
+        self.setWindowTitle('SIREN - powermatch (' + fileVersion() + ') - Powermatch - ' + self.model_name + ' (' + self.config_file + ')')
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         if self.restorewindows:
             try:
