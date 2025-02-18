@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-#  Copyright (C) 2019-2024 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2019-2025 Sustainable Energy Now Inc., Angus King
 #
 #  powerplot.py - This file is possibly part of SIREN.
 #
@@ -36,7 +36,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import displayobject
 import displaytable
-from colours import Colours
+from colours import Colours, PlotPalette
 from credits import fileVersion
 from displaytable import Table
 from editini import EdtDialog, SaveIni
@@ -445,6 +445,13 @@ class PowerPlot(QtWidgets.QWidget):
                 self.colours[itm] = colour
         except:
             pass
+        self.restorewindows = False
+        try:
+            rw = config.get('Windows', 'restorewindows')
+            if rw.lower() in ['true', 'yes', 'on']:
+                self.restorewindows = True
+        except:
+            pass
         ifile = ''
         isheet = ''
         columns = []
@@ -478,6 +485,7 @@ class PowerPlot(QtWidgets.QWidget):
         self.overlay_colour = ['black']
         self.overlay_type = ['Average']
         self.palette = True
+        self.plot_palette = 'random'
         self.legend_on_pie = True
         self.percent_on_pie = True
         self.legend_side = 'None'
@@ -601,6 +609,11 @@ class PowerPlot(QtWidgets.QWidget):
                 elif key == 'palette':
                     if value.lower() in ['false', 'no', 'off']:
                         self.palette = False
+                elif key == 'plot_palette':
+                    if value.lower() in ['false', 'no', 'off']:
+                        self.plot_palette = ''
+                    else:
+                        self.plot_palette = value
                 elif key == 'plot_12':
                     if value.lower() in ['true', 'yes', 'on']:
                         self.plot_12 = True
@@ -940,8 +953,17 @@ class PowerPlot(QtWidgets.QWidget):
         self.layout.addWidget(self.scroll)
         self.setWindowTitle('SIREN - powerplot (' + fileVersion() + ') - PowerPlot')
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
-        self.center()
-        self.resize(int(self.sizeHint().width() * 1.4), int(self.sizeHint().height() * 1.4))
+        if self.restorewindows:
+            try:
+                rw = config.get('Windows', 'powerplot_size').split(',')
+                self.resize(int(rw[0]), int(rw[1]))
+                mp = config.get('Windows', 'powerplot_pos').split(',')
+                self.move(int(mp[0]), int(mp[1]))
+            except:
+                pass
+        else:
+            self.center()
+            self.resize(int(self.sizeHint().width() * 1.4), int(self.sizeHint().height() * 1.4))
         self.show()
 
     def center(self):
@@ -1563,6 +1585,14 @@ class PowerPlot(QtWidgets.QWidget):
         if not self.updated and not self.colours_updated:
             self.close()
         self.saveConfig()
+        if self.restorewindows:
+            updates = {}
+            lines = []
+            add = int((self.frameSize().width() - self.size().width()) / 2)   # need to account for border
+            lines.append('powerplot_pos=%s,%s' % (str(self.pos().x() + add), str(self.pos().y() + add)))
+            lines.append('powerplot_size=%s,%s' % (str(self.width()), str(self.height())))
+            updates = {'Windows': lines}
+            SaveIni(updates, ini_file=self.config_file)
         self.close()
 
     def saveConfig(self):
@@ -1759,6 +1789,13 @@ class PowerPlot(QtWidgets.QWidget):
         colr2 = colr.replace('_', ' ')
         if colr2 in self.colours.keys():
             return True
+        elif self.plot_palette[0].lower() == 'r':
+            # new approach to generate random colour if not in [Plot Colors]
+            r = lambda: random.randint(0,255)
+            new_colr = '#%02X%02X%02X' % (r(),r(),r())
+            self.colours[colr] = new_colr
+            return True
+        # previous approach may ask for new colours to be stored in .ini file
         if config is not None:
             try:
                 amap = config.get('Map', 'map_choice')
@@ -2040,6 +2077,13 @@ class PowerPlot(QtWidgets.QWidget):
   #          if ws.nrows - self.toprow[1] - 1 > 8760:
    #             the_days[1] = 29
         hr_labels = ['0:00', '4:00', '8:00', '12:00', '16:00', '20:00', '23:00']
+        nocolour = []
+        for o in range(self.order.count()):
+            if self.order.item(o).text().lower() not in self.colours.keys():
+                nocolour.append(self.order.item(o).text().lower())
+        if len(nocolour) > 0 and self.plot_palette != '':
+            more_colour = PlotPalette(nocolour, palette=self.plot_palette)
+            self.colours = {**self.colours, **more_colour}
         if self.plottype.currentText() == '3D Surface Chart':
             order = []
             for o in range(self.order.count()):
@@ -2414,6 +2458,8 @@ class PowerPlot(QtWidgets.QWidget):
                             xticks.append(xticks[-1] + the_days[m])
                             xticklabels.append(mth_labels[m + 1])
                     lc1.set_xticks(xticks)
+                    if len(xticks) == len(xticklabels) + 1:
+                        xticklabels.append('?')
                     lc1.set_xticklabels(xticklabels, rotation='vertical', fontdict=self.fontprops['Ticks'])
                     lc1.set_xlabel('Period', fontdict=self.fontprops['Label'])
                     lc1.tick_params(colors=self.fontprops['Ticks']['color'], which='both')
@@ -2672,7 +2718,7 @@ class PowerPlot(QtWidgets.QWidget):
                 hmdata = []
                 for hr in range(self.interval):
                     hmdata.append([])
-                    for dy in range(365):
+                    for dy in range(365 + int(self.leapyear)):
                         hmdata[-1].append(0)
                 for col in range(len(data)):
                     x = 0
@@ -2699,8 +2745,10 @@ class PowerPlot(QtWidgets.QWidget):
                 maxy = 0
                 for y in range(len(hmdata)):
                     for x in range(len(hmdata[0])):
+                    #    hmdata[y][x] = round(hmdata[y][x], 3)
                         miny = min(miny, hmdata[y][x])
                         maxy = max(maxy, hmdata[y][x])
+                # print(hmdata)
                 if tgt_col >= 0:
                     fmt_str = '{:.3f}'
                     vmax = 1
@@ -3263,7 +3311,7 @@ class PowerPlot(QtWidgets.QWidget):
                         try:
                             load[h] = load[h] + ws.cell_value(row, tgt_col)
                         except:
-                            print('(3255)', h, row, tgt_col, ws.cell_value(row, tgt_col), strt_row, todo_rows)
+                            print('(3286)', h, row, tgt_col, ws.cell_value(row, tgt_col), strt_row, todo_rows)
                         h += 1
                         if h >= self.interval:
                            h = 0

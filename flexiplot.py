@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2020-2024 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2020-2025 Sustainable Energy Now Inc., Angus King
 #
 #  flexiplot.py - This file is possibly part of SIREN.
 #
@@ -199,6 +199,7 @@ class FlexiPlot(QtWidgets.QWidget):
         self.fontprops['Title']= self.set_fontdict()
         self.fontprops['Title']['size'] = 14.
         self.constrained_layout = False
+        self.max_xoffset = 5
         self.yseries = []
         self.palette = True
         self.history = None
@@ -253,7 +254,7 @@ class FlexiPlot(QtWidgets.QWidget):
         self.data_in_rows = True
         self.xoffset = QtWidgets.QComboBox()
         self.grid.addWidget(self.xoffset, rw, 2)
-        for col in range(5):
+        for col in range(self.max_xoffset):
             self.xoffset.addItem(ssCol(col, base=0))
         self.xoffset.setCurrentIndex(0)
         self.xoffset.currentIndexChanged.connect(self.xoffsetChanged)
@@ -456,6 +457,11 @@ class FlexiPlot(QtWidgets.QWidget):
                 elif key == 'legend_side':
                     try:
                         self.legend_side = value
+                    except:
+                        pass
+                elif key == 'max_xoffset':
+                    try:
+                        self.max_xoffset = int(value)
                     except:
                         pass
                 elif key == 'minimum_3d':
@@ -788,11 +794,11 @@ class FlexiPlot(QtWidgets.QWidget):
     def dorderChanged(self):
         self.xoffset.clear()
         if self.data_order.currentIndex() == 0:
-            for col in range(5):
+            for col in range(self.max_xoffset):
                 self.xoffset.addItem(ssCol(col, base=0))
             self.data_in_rows = True
         else:
-            for row in range(5):
+            for row in range(self.max_xoffset):
                 self.xoffset.addItem(f'{row + 1}')
             self.data_in_rows = False
         self.xoffset.setCurrentIndex(0)
@@ -994,6 +1000,9 @@ class FlexiPlot(QtWidgets.QWidget):
         ws = self.book.sheet_by_name(isheet)
         x = []
         series = self.xseries.currentText()
+        if series == '':
+            self.log.setText('No Abscissa (X) Series chosen.')
+            return
         label, row, col = self.get_name_row_col(series)
         values = []
         if self.xoffset.currentText().isdigit():
