@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2024 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2025 Sustainable Energy Now Inc., Angus King
 #
 #  makegrid.py - This file is part of SIREN.
 #
@@ -26,6 +26,8 @@ import time
 from PyQt5 import QtCore, QtGui, QtWidgets
 import configparser   # decode .ini file
 import xlwt
+import tempfile
+import zipfile
 
 import displayobject
 from credits import fileVersion
@@ -104,6 +106,7 @@ class makeFile():
         self.src_dir = src_dir
         self.wind_dir = wnd_dir
         self.rain_dir = rain
+        self.temp_dir = None
         if rain != '':
             self.do_rain = True
         else:
@@ -151,7 +154,7 @@ class makeFile():
             the_hour.append(the_hour[-1] + the_days[i] * 24)
         fils = os.listdir(self.src_dir)
         for fil in fils:
-            if fil[-4:] == '.csv' or fil[-4:] == '.smw':
+            if fil[-4:] == '.csv' or fil[-4:] == '.smw' or fil[-4:] == '.smz':
                 if fil[-4:] == '.csv':
                     tf = open(self.src_dir + '/' + fil, 'r')
                     line = tf.readline()
@@ -160,9 +163,21 @@ class makeFile():
                         tf.close()
                         continue
                     tf.seek(0)
-                tf = open(self.src_dir + '/' + fil, 'r')
-                lines = tf.readlines()
-                tf.close()
+                elif fil[-4:] == '.smz':
+                    if self.temp_dir is None:
+                        self.temp_dir = tempfile.gettempdir() + '/'
+                    zf = zipfile.ZipFile(self.src_dir + '/' + fil, 'r')
+                    for zi in zf.infolist():
+                        zf.extract(zi, self.temp_dir)
+                        tf = open(f'{self.temp_dir}{zi.filename}', 'r')
+                        lines = tf.readlines()
+                        tf.close()
+                        os.remove(f'{self.temp_dir}{zi.filename}')
+                        break
+                else:
+                    tf = open(self.src_dir + '/' + fil, 'r')
+                    lines = tf.readlines()
+                    tf.close()
                 valu = []
                 cell = []
                 for j in range(len(the_cols)):
@@ -189,7 +204,7 @@ class makeFile():
                 if fst_row < 0: # probably not for us
                     continue
                 calc_mth = False
-                if fil[-4:] == '.smw':
+                if fil[-4:] == '.smw' or fil[-4:] == '.smz':
                     calc_mth = True
                     col = [9, 8, 7, 0, 4, -1, -1]
                     wnd_col = 4
@@ -290,7 +305,7 @@ class makeFile():
         if self.daily:
             daily_wind_values = {}
         for fil in fils:
-            if fil[-4:] != '.srw':
+            if fil[-4:] != '.srw' and fil[-4:] != '.srz':
                 continue
             valu = []
             for i in range(12):
@@ -305,9 +320,21 @@ class makeFile():
                     vald.append([])
                     for j in range(365):
                         vald[-1].append(0.)
-            tf = open(self.wind_dir + '/' + fil, 'r')
-            lines = tf.readlines()
-            tf.close()
+            if fil[-4:] == '.srz':
+                if self.temp_dir is None:
+                    self.temp_dir = tempfile.gettempdir() + '/'
+                zf = zipfile.ZipFile(self.wind_dir + '/' + fil, 'r')
+                for zi in zf.infolist():
+                    zf.extract(zi, self.temp_dir)
+                    tf = open(f'{self.temp_dir}{zi.filename}', 'r')
+                    lines = tf.readlines()
+                    tf.close()
+                    os.remove(f'{self.temp_dir}{zi.filename}')
+                    break
+            else:
+                tf = open(self.wind_dir + '/' + fil, 'r')
+                lines = tf.readlines()
+                tf.close()
             fst_row = len(lines) - 8760
             bits = lines[0].split(',')
             src_lat = float(bits[5])

@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2016-2024 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2016-2025 Sustainable Energy Now Inc., Angus King
 #
 #  indexweather.py - This file is part of SIREN.
 #
@@ -25,7 +25,8 @@ import sys
 from PyQt5 import QtCore, QtGui, QtWidgets
 import configparser   # decode .ini file
 import xlwt
-
+import tempfile
+import zipfile
 import displayobject
 from credits import fileVersion
 from getmodels import getModelFile
@@ -47,19 +48,32 @@ class makeIndex():
         else:
             config_file = getModelFile('SIREN.ini')
         self.log = ''
+        self.temp_dir = None
         files = []
         fils = os.listdir(src_dir)
         for fil in fils:
-            if (what[0].lower() == 's' and (fil[-4:] == '.csv' or fil[-4:] == '.smw')) \
-              or (what[0].lower() == 'w' and fil[-4:] == '.srw'):
-                tf = open(src_dir + '/' + fil, 'r')
-                lines = tf.readlines()
-                tf.close()
-                if fil[-4:] == '.smw':
+            if (what[0].lower() == 's' and (fil[-4:] == '.csv' or fil[-4:] == '.smw' or fil[-4:] == '.smz')) \
+              or (what[0].lower() == 'w' and (fil[-4:] == '.srw' or fil[-4:] == '.srz') ):
+                if fil[-4:] == '.smz' or fil[-4:] == '.srz':
+                    if self.temp_dir is None:
+                        self.temp_dir = tempfile.gettempdir() + '/'
+                    zf = zipfile.ZipFile(src_dir + '/' + fil, 'r')
+                    for zi in zf.infolist():
+                        zf.extract(zi, self.temp_dir)
+                        tf = open(f'{self.temp_dir}{zi.filename}', 'r')
+                        lines = tf.readlines()
+                        tf.close()
+                        os.remove(f'{self.temp_dir}{zi.filename}')
+                        break
+                else:
+                    tf = open(src_dir + '/' + fil, 'r')
+                    lines = tf.readlines()
+                    tf.close()
+                if fil[-4:] == '.smw' or fil[-4:] == '.smz':
                     bits = lines[0].split(',')
                     src_lat = float(bits[4])
                     src_lon = float(bits[5])
-                elif fil[-4:] == '.srw':
+                elif fil[-4:] == '.srw' or fil[-4:] == '.srz':
                     bits = lines[0].split(',')
                     src_lat = float(bits[5])
                     src_lon = float(bits[6])

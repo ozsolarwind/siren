@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2023 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2025 Sustainable Energy Now Inc., Angus King
 #
 #  plotweather.py - This file is part of SIREN.
 #
@@ -28,7 +28,8 @@ from matplotlib.font_manager import FontProperties
 import matplotlib.lines as mlines
 import os
 import sys
-
+import tempfile
+import zipfile
 import configparser  # decode .ini file
 from PyQt5 import QtCore, QtGui, QtWidgets
 
@@ -145,7 +146,7 @@ class PlotWeather():
         close_lat = 0
         close_lon = 0
         if wind:
-            filetype = ['.srw']
+            filetype = ['.srw', '.srz']
             technology = 'wind_index'
             index_file = self.wind_index
             folder = self.wind_files
@@ -155,7 +156,7 @@ class PlotWeather():
             index_file = ''
             folder = self.rain_files
         else:
-            filetype = ['.csv', '.smw']
+            filetype = ['.csv', '.smw', '.smz']
             technology = 'solar_index'
             index_file = self.solar_index
             folder = self.solar_files
@@ -857,6 +858,7 @@ class PlotWeather():
                 rain = True
         except:
             pass
+        self.temp_dir = None
         self.windy = adjust_wind
        # find closest solar file
         self.solar_file, dist, lat, lon = self.find_closest(latitude, longitude)
@@ -917,9 +919,20 @@ class PlotWeather():
         rain_col = -1
         if self.plots['dhi'] or self.plots['dni'] or self.plots['ghi'] or self.plots['temp'] or self.plots['rain']:
             if os.path.exists(self.solar_files + '/' + self.solar_file):
-                tf = open(self.solar_files + '/' + self.solar_file, 'r')
-                lines = tf.readlines()
-                tf.close()
+                if self.solar_file[-4:] == '.smz':
+                    if self.temp_dir is None:
+                        self.temp_dir = tempfile.gettempdir() + '/'
+                        zf = zipfile.ZipFile(self.solar_files + '/' + self.solar_file, 'r')
+                        for zi in zf.infolist():
+                            zf.extract(zi, self.temp_dir)
+                            tf = open(f'{self.temp_dir}{zi.filename}', 'r')
+                            lines = tf.readlines()
+                            tf.close()
+                            os.remove(f'{self.temp_dir}{zi.filename}')
+                else:
+                    tf = open(self.solar_files + '/' + self.solar_file, 'r')
+                    lines = tf.readlines()
+                    tf.close()
                 fst_row = len(lines) - 8760
                 if self.plots['dhi']:
                     self.ly['dhi'] = []
@@ -934,7 +947,7 @@ class PlotWeather():
                     wind_col = -1
                 if self.plots['rain']:
                     self.ly['rain'] = []
-                if self.solar_file[-4:] == '.smw':
+                if self.solar_file[-4:] == '.smw' or self.solar_file[-4:] == '.smz':
                     dhi_col = 9
                     dni_col = 8
                     ghi_col = 7
@@ -1006,16 +1019,27 @@ class PlotWeather():
         if self.plots['wind']:
             if self.wind_file != '':
                 if os.path.exists(self.wind_files + '/' + self.wind_file):
-                    tf = open(self.wind_files + '/' + self.wind_file, 'r')
-                    lines = tf.readlines()
-                    tf.close()
+                    if self.wind_file[-4:] == '.srz':
+                        if self.temp_dir is None:
+                            self.temp_dir = tempfile.gettempdir() + '/'
+                        zf = zipfile.ZipFile(self.wind_files + '/' + self.wind_file, 'r')
+                        for zi in zf.infolist():
+                            zf.extract(zi, self.temp_dir)
+                            tf = open(f'{self.temp_dir}{zi.filename}', 'r')
+                            lines = tf.readlines()
+                            tf.close()
+                            os.remove(f'{self.temp_dir}{zi.filename}')
+                    else:
+                        tf = open(self.wind_files + '/' + self.wind_file, 'r')
+                        lines = tf.readlines()
+                        tf.close()
                     fst_row = len(lines) - 8760
                     self.ly['wind'] = []  # we'll override any wind from the solar file
                     if self.windy is None:
                         pass
                     else:
                         self.ly['wind2'] = []
-                    if self.wind_file[-4:] == '.srw':
+                    if self.wind_file[-4:] == '.srw' or self.wind_file[-4:] == '.srz':
                         units = lines[3].strip().split(',')
                         heights = lines[4].strip().split(',')
                         cols = []
@@ -1039,7 +1063,7 @@ class PlotWeather():
                             else:
                                 col = cols[0][1]
                         else:
-                            col = col[0][1]
+                            col = cols[0][1]
                         for i in range(fst_row, len(lines)):
                             bits = lines[i].split(',')
                             self.ly['wind'].append(float(bits[col]))

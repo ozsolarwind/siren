@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2023 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2025 Sustainable Energy Now Inc., Angus King
 #
 #  superpower.py - This file is part of SIREN.
 #
@@ -25,7 +25,7 @@ import os
 import sys
 import ssc
 import time
-
+import zipfile
 import configparser  # decode .ini file
 from PyQt5 import QtCore, QtGui, QtWidgets
 
@@ -67,12 +67,12 @@ class SuperPower():
         dist = 99999
         closest = ''
         if wind:
-            filetype = ['.srw']
+            filetype = ['.srw', '.srz']
             technology = 'wind_index'
             index_file = self.wind_index
             folder = self.wind_files
         else:
-            filetype = ['.csv', '.smw']
+            filetype = ['.csv', '.smw', '.smz']
             technology = 'solar_index'
             index_file = self.solar_index
             folder = self.solar_files
@@ -226,6 +226,7 @@ class SuperPower():
         self.selected = selected
         self.status = status
         self.progress = progress
+        self.temp_dir = None
         config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
             config_file = sys.argv[1]
@@ -732,7 +733,6 @@ class SuperPower():
                     msg = module.log(idx)
                 del module
                 return None
-
         if self.plots['actual'] and self.actual_power != '':
             if self.default_files['actual'] is None:
                 if os.path.exists(self.scenarios + self.actual_power):
@@ -778,6 +778,7 @@ class SuperPower():
         self.data = ssc.Data()
         farmpwr = [] # just in case
         if 'Wind' in station.technology:
+            temp_wind = None
             if 'Off' in station.technology: # offshore?
                 wtyp = 1
             else:
@@ -786,7 +787,17 @@ class SuperPower():
             turbine = Turbine(station.turbine)
             if not hasattr(turbine, 'capacity'):
                 return None
-            wind_file = self.wind_files + '/' + closest
+            if closest[-4:] == '.srz':
+                if self.temp_dir is None:
+                    self.temp_dir = tempfile.gettempdir() + '/'
+                zf = zipfile.ZipFile(self.wind_files + '/' + closest, 'r')
+                for zi in zf.infolist():
+                    zf.extract(zi, self.temp_dir)
+                    wind_file = f'{self.temp_dir}{zi.filename}'
+                    temp_wind = wind_file
+                    break
+            else:
+                wind_file = self.wind_files + '/' + closest
             hub_hght = 0
             if self.wind_hub_formula[wtyp] is not None: # if a hub height is specified
                 formula = self.wind_hub_formula[wtyp].replace('rotor', str(turbine.rotor))
@@ -797,16 +808,17 @@ class SuperPower():
             temp_file = None
             if hub_hght > 0: # if a hub height is specified
                 try:
-                    wind_data = extrapolateWind(self.wind_files + '/' + closest, hub_hght, law=self.wind_law[wtyp],
+                    wind_data = extrapolateWind(wind_file, hub_hght, law=self.wind_law[wtyp],
                                 spread=self.wind_hub_spread[wtyp])
                     if wind_data is not None:
-                        temp_dir = tempfile.gettempdir()
+                        if self.temp_dir is None:
+                            self.temp_dir = tempfile.gettempdir() + '/'
                         temp_file = 'windfile.srw'
-                        wf = open(temp_dir + '/' + temp_file, 'w')
+                        wf = open(self.temp_dir + temp_file, 'w')
                         for line in wind_data:
                             wf.write(line)
                         wf.close()
-                        wind_file = temp_dir + '/' + temp_file
+                        wind_file = self.temp_dir + temp_file
                 except:
                     pass
             self.data.set_string(b'wind_resource_filename', wind_file.encode('utf-8'))
@@ -853,14 +865,31 @@ class SuperPower():
             farmpwr = do_module('windpower', station, 'gen')
             if temp_file is not None: # if a hub height is specified
                 try:
-                    os.remove(temp_dir + '/' + temp_file)
+                    os.remove(self.temp_dir + temp_file)
+                except:
+                    pass
+            if temp_wind is not None: # from a zipped file
+                try:
+                    os.remove(self.temp_dir + temp_wind)
                 except:
                     pass
             return farmpwr
         elif station.technology == 'CST':
+            temp_solar = None
             closest = self.find_closest(station.lat, station.lon)
+            if closest[-4:] == '.smz':
+                if self.temp_dir is None:
+                    self.temp_dir = tempfile.gettempdir() + '/'
+                zf = zipfile.ZipFile(self.solar_files + '/' + closest, 'r')
+                for zi in zf.infolist():
+                    zf.extract(zi, self.temp_dir)
+                    solar_file = f'{self.temp_dir}{zi.filename}'
+                    temp_solar = solar_file
+                    break
+            else:
+                solar_file = self.solar_files + '/' + closest
             base_capacity = 104.
-            self.data.set_string(b'file_name', (self.solar_files + '/' + closest).encode('utf-8'))
+            self.data.set_string(b'file_name', solar_file.encode('utf-8'))
             self.data.set_number(b'system_capacity', int(base_capacity * 1000))
             self.data.set_number(b'w_des', base_capacity / self.cst_gross_net)
             self.data.set_number(b'latitude', station.lat)
@@ -898,11 +927,28 @@ class SuperPower():
                 if station.capacity != base_capacity:
                     for i in range(len(farmpwr)):
                         farmpwr[i] = farmpwr[i] * station.capacity / float(base_capacity)
+            if temp_solar is not None: # from a zipped file
+                try:
+                    os.remove(self.temp_dir + temp_solar)
+                except:
+                    pass
             return farmpwr
         elif station.technology == 'Solar Thermal':
+            temp_solar = None
             closest = self.find_closest(station.lat, station.lon)
+            if closest[-4:] == '.smz':
+                if self.temp_dir is None:
+                    self.temp_dir = tempfile.gettempdir() + '/'
+                zf = zipfile.ZipFile(self.solar_files + '/' + closest, 'r')
+                for zi in zf.infolist():
+                    zf.extract(zi, self.temp_dir)
+                    solar_file = f'{self.temp_dir}{zi.filename}'
+                    temp_solar = solar_file
+                    break
+            else:
+                solar_file = self.solar_files + '/' + closest
             base_capacity = 104
-            self.data.set_string(b'solar_resource_file', (self.solar_files + '/' + closest).encode('utf-8'))
+            self.data.set_string(b'solar_resource_file', solar_file.encode('utf-8'))
             self.data.set_number(b'system_capacity', base_capacity * 1000)
             self.data.set_number(b'P_ref', base_capacity / self.st_gross_net)
             if station.storage_hours is None:
@@ -950,10 +996,27 @@ class SuperPower():
                 if station.capacity != base_capacity:
                     for i in range(len(farmpwr)):
                         farmpwr[i] = farmpwr[i] * station.capacity / float(base_capacity)
+            if temp_solar is not None: # from a zipped file
+                try:
+                    os.remove(self.temp_dir + temp_solar)
+                except:
+                    pass
             return farmpwr
         elif 'PV' in station.technology:
+            temp_solar = None
             closest = self.find_closest(station.lat, station.lon)
-            self.data.set_string(b'solar_resource_file', (self.solar_files + '/' + closest).encode('utf-8'))
+            if closest[-4:] == '.smz':
+                if self.temp_dir is None:
+                    self.temp_dir = tempfile.gettempdir() + '/'
+                zf = zipfile.ZipFile(self.solar_files + '/' + closest, 'r')
+                for zi in zf.infolist():
+                    zf.extract(zi, self.temp_dir)
+                    solar_file = f'{self.temp_dir}{zi.filename}'
+                    temp_solar = solar_file
+                    break
+            else:
+                solar_file = self.solar_files + '/' + closest
+            self.data.set_string(b'solar_resource_file', solar_file.encode('utf-8'))
             dc_ac_ratio = self.pv_dc_ac_ratio[0]
             if station.technology[:5] == 'Fixed':
                 dc_ac_ratio = self.pv_dc_ac_ratio[0]
@@ -999,10 +1062,27 @@ class SuperPower():
             self.data.set_number(b'losses', self.pv_losses)
             self.do_defaults(station)
             farmpwr = do_module('pvwattsv5', station, 'gen')
+            if temp_solar is not None: # from a zipped file
+                try:
+                    os.remove(self.temp_dir + temp_solar)
+                except:
+                    pass
             return farmpwr
         elif station.technology == 'Biomass':
+            temp_solar = None
             closest = self.find_closest(station.lat, station.lon)
-            self.data.set_string(b'file_name', (self.solar_files + '/' + closest).encode('utf-8'))
+            if closest[-4:] == '.smz':
+                if self.temp_dir is None:
+                    self.temp_dir = tempfile.gettempdir() + '/'
+                zf = zipfile.ZipFile(self.solar_files + '/' + closest, 'r')
+                for zi in zf.infolist():
+                    zf.extract(zi, self.temp_dir)
+                    solar_file = f'{self.temp_dir}{zi.filename}'
+                    temp_solar = solar_file
+                    break
+            else:
+                solar_file = self.solar_files + '/' + closest
+            self.data.set_string(b'file_name', solar_file.encode('utf-8'))
             self.data.set_number(b'system_capacity', station.capacity * 1000)
             self.data.set_number(b'biopwr.plant.nameplate', station.capacity * 1000)
             feedstock = station.capacity * 1000 * self.biomass_multiplier
@@ -1012,16 +1092,38 @@ class SuperPower():
             self.data.set_number(b'biopwr.feedstock.total_c', feedstock * carbon_pct / 100.)
             self.do_defaults(station)
             farmpwr = do_module('biomass', station, 'gen')
+            if temp_solar is not None: # from a zipped file
+                try:
+                    os.remove(self.temp_dir + temp_solar)
+                except:
+                    pass
             return farmpwr
         elif station.technology == 'Geothermal':
+            temp_solar = None
             closest = self.find_closest(station.lat, station.lon)
-            self.data.set_string(b'file_name', (self.solar_files + '/' + closest).encode('utf-8'))
+            if closest[-4:] == '.smz':
+                if self.temp_dir is None:
+                    self.temp_dir = tempfile.gettempdir() + '/'
+                zf = zipfile.ZipFile(self.solar_files + '/' + closest, 'r')
+                for zi in zf.infolist():
+                    zf.extract(zi, self.temp_dir)
+                    solar_file = f'{self.temp_dir}{zi.filename}'
+                    temp_solar = solar_file
+                    break
+            else:
+                solar_file = self.solar_files + '/' + closest
+            self.data.set_string(b'file_name', solar_file.encode('utf-8'))
             self.data.set_number(b'nameplate', station.capacity * 1000)
             self.data.set_number(b'resource_potential', station.capacity * 10.)
             self.data.set_number(b'resource_type', self.geo_res)
             self.data.set_string(b'hybrid_dispatch_schedule', ('1' * 24 * 12).encode('utf-8'))
             self.do_defaults(station)
             pwr = do_module('geothermal', station, 'monthly_energy')
+            if temp_solar is not None: # from a zipped file
+                try:
+                    os.remove(self.temp_dir + temp_solar)
+                except:
+                    pass
             if pwr is not None:
                 farmpwr = []
                 for i in range(12):
@@ -1073,9 +1175,21 @@ class SuperPower():
                 for key, value in props:
                     propty[key] = value
                 closest = self.find_closest(station.lat, station.lon)
-                tf = open(self.solar_files + '/' + closest, 'r')
-                lines = tf.readlines()
-                tf.close()
+                if closest[-4:] == '.smz':
+                    if self.temp_dir is None:
+                        self.temp_dir = tempfile.gettempdir() + '/'
+                    zf = zipfile.ZipFile(self.solar_files + '/' + closest, 'r')
+                    for zi in zf.infolist():
+                        zf.extract(zi, self.temp_dir)
+                        tf = open(f'{self.temp_dir}{zi.filename}', 'r')
+                        lines = tf.readlines()
+                        tf.close()
+                        os.remove(f'{self.temp_dir}{zi.filename}')
+                        break
+                else:
+                    tf = open(self.solar_files + '/' + closest, 'r')
+                    lines = tf.readlines()
+                    tf.close()
                 fst_row = len(lines) - 8760
                 if closest[-4:] == '.smw':
                     dhi_col = 9
@@ -1109,10 +1223,21 @@ class SuperPower():
                 propty['formula'] = formula
                 if formula.find('wind50') >= 0:
                     closest = self.find_closest(station.lat, station.lon, wind=True)
-                    tf = open(self.wind_files + '/' + closest, 'r')
-                    wlines = tf.readlines()
-                    tf.close()
-                    if closest[-4:] == '.srw':
+                    if closest[-4:] == '.srz':
+                        if self.temp_dir is None:
+                            self.temp_dir = tempfile.gettempdir() + '/'
+                        zf = zipfile.ZipFile(self.wind_files + '/' + closest, 'r')
+                        for zi in zf.infolist():
+                            zf.extract(zi, self.temp_dir)
+                            lines = tf.readlines()
+                            tf.close()
+                            os.remove(f'{self.temp_dir}{zi.filename}')
+                            break
+                    else:
+                        tf = open(self.wind_files + '/' + closest, 'r')
+                        wlines = tf.readlines()
+                        tf.close()
+                    if closest[-4:] == '.srw' or closest[-4:] == '.srz':
                         units = wlines[3].strip().split(',')
                         heights = wlines[4].strip().split(',')
                         for j in range(len(units)):
