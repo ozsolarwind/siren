@@ -972,10 +972,13 @@ class SuperPower():
                 self.data.set_number(b'array_type', 4)
             self.data.set_number(b'system_capacity', station.capacity * 1000 * dc_ac_ratio)
             self.data.set_number(b'dc_ac_ratio', dc_ac_ratio)
-            try:
-                self.data.set_number(b'tilt', fabs(station.tilt))
-            except:
-                self.data.set_number(b'tilt', fabs(station.lat))
+            if station.technology == 'Fixed PV':
+                try:
+                    self.data.set_number(b'tilt', fabs(station.tilt))
+                except:
+                    self.data.set_number(b'tilt', fabs(station.lat))
+            else:
+                self.data.set_number(b'tilt', 0)
             if float(station.lat) < 0:
                 azi = 0
             else:

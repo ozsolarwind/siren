@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2024 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2025 Sustainable Energy Now Inc., Angus King
 #
 #  newstation.py - This file is part of SIREN.
 #
@@ -331,7 +331,7 @@ class AnObject(QtWidgets.QDialog):
                 self.show_hide['no_turbines'] = len(self.edit)
                 self.edit.append(QtWidgets.QSpinBox())  # QtWidgets.QLineEdit(str(self.no_turbines)))
                 self.edit[-1].setRange(0, 299)
-                if self.no_turbines == '':
+                if self.no_turbines is None or self.no_turbines == '':
                     self.edit[-1].setValue(0)
                 else:
                     self.edit[-1].setValue(int(self.no_turbines))
@@ -383,7 +383,7 @@ class AnObject(QtWidgets.QDialog):
             elif self.field[i] == 'tilt':
                 self.tilt = attr
                 self.show_hide['tilt'] = len(self.edit)
-                if attr is not None:
+                if attr is not None and self.anobject.technology == 'Fixed PV':
                     self.edit.append(QtWidgets.QLineEdit(str(self.tilt)))
                 else:
                     self.edit.append(QtWidgets.QLineEdit(''))
