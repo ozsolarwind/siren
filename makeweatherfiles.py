@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2024 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2025 Sustainable Energy Now Inc., Angus King
 #
 #  makeweatherfiles.py - This file is part of SIREN.
 #
@@ -23,12 +23,14 @@ import gzip
 from math import *
 import os
 import sys
+import tempfile
 import time
 from netCDF4 import Dataset
 import configparser   # decode .ini file
 from PyQt5 import QtCore, QtGui, QtWidgets
 if sys.platform == 'win32' or sys.platform == 'cygwin':
     from win32api import GetFileVersionInfo, LOWORD, HIWORD
+import zipfile
 
 from credits import fileVersion
 from editini import SaveIni
@@ -392,8 +394,25 @@ class makeWeather():
         unzip_file = self.unZip(inp_file)
         if self.return_code != 0:
             return
+        cdf_file = [None, None]
         try:
-            cdf_file = Dataset(unzip_file, 'r')
+            cdf_file[0] = Dataset(unzip_file, 'r')
+            sf = 0
+            wf = 0
+        except OSError as err:
+            if err.errno != -51 or not zipfile.is_zipfile(inp_file):
+                self.decodeError(inp_file)
+                return
+            tempdir = tempfile.gettempdir() + '/'
+            zf = zipfile.ZipFile(inp_file, 'r')
+            for zi in zf.infolist():
+                zf.extract(zi, tempdir)
+                if zi.filename[-9:] == '-accum.nc':
+                    cdf_file[0] = Dataset(f'{tempdir}{zi.filename}')
+                    sf = 0
+                else:
+                    cdf_file[1] = Dataset(f'{tempdir}{zi.filename}')
+                    wf = 1
         except:
             self.decodeError(inp_file)
             return
@@ -412,7 +431,7 @@ class makeWeather():
      #   aluvp    uv_visible_albedo_for_direct_radiation
         localswg = self.swg
         if not self.make_wind:
-            variables = list(cdf_file.variables.keys())
+            variables = list(cdf_file[sf].variables.keys())
             if self.vars[localswg] not in variables:
                 if localswg == 'swgdn':
                     localswg = 'swgnt'
@@ -420,11 +439,13 @@ class makeWeather():
                    localswg = 'swgdn'
                 if self.vars[localswg] not in variables:
                     self.log += f'Terminating as no solar variable found in - {inp_file}\n'
-                    cdf_file.close()
+                    cdf_file[sf].close()
+                    if wf > 0:
+                        cdf_file[wf].close()
                     self.return_code = 12
                     return
         expver = False
-        keys = list(cdf_file.dimensions.keys())
+        keys = list(cdf_file[wf].dimensions.keys())
         if 'expver' in keys:
             self.logMsg('ERA5 and ERA5T data in {}'.format(inp_file[inp_file.rfind('/') + 1:]))
             expver = True
@@ -432,8 +453,8 @@ class makeWeather():
             self.vars['time'] = 'time'
         elif 'valid_time' in keys:
             self.vars['time'] = 'valid_time'
-        self.tims = cdf_file.variables[self.vars['time']][:]
-        bits = cdf_file.variables[self.vars['time']].units.split(' ')
+        self.tims = cdf_file[wf].variables[self.vars['time']][:]
+        bits = cdf_file[wf].variables[self.vars['time']].units.split(' ')
         if bits[0] == 'seconds':
             tim2 = datetime.strptime(bits[2], '%Y-%m-%d')
             addsecs = (tim2 - base_time).days * 1440 * 60
@@ -448,11 +469,11 @@ class makeWeather():
                 t2 = hr
                 break
         self.lat_lon_ndx += [len(self.lati)] * (t2 - t1 + 1)
-        lats = cdf_file.variables[self.vars['latitude']][:]
+        lats = cdf_file[wf].variables[self.vars['latitude']][:]
         self.lati.append([])
         for lat in lats:
             self.lati[-1].append(lat)
-        lons = cdf_file.variables[self.vars['longitude']][:]
+        lons = cdf_file[wf].variables[self.vars['longitude']][:]
         self.longi.append([])
         for lon in lons:
             self.longi[-1].append(lon)
@@ -479,7 +500,7 @@ class makeWeather():
                     tmp_var[-1].append([])
                     for lo in range(len(self.lons)):
                         tmp_var[-1][-1].append([])
-            tmi = cdf_file.variables[self.vars['t2m']][t1 : t2]
+            tmi = cdf_file[wf].variables[self.vars['t2m']][t1 : t2]
             for t in range(len(tmp_var)):
                 for la in range(len(tmp_var[t])):
                     for lo in range(len(tmp_var[t][la])):
@@ -501,7 +522,7 @@ class makeWeather():
                     tmp_var[-1].append([])
                     for lo in range(len(self.lons)):
                         tmp_var[-1][-1].append([])
-            tmi = cdf_file.variables[self.vars['v10']][t1 : t2]
+            tmi = cdf_file[wf].variables[self.vars['v10']][t1 : t2]
             for t in range(len(tmp_var)):
                 for la in range(len(tmp_var[t])):
                     for lo in range(len(tmp_var[t][la])):
@@ -516,7 +537,7 @@ class makeWeather():
                     tmp_var2[-1].append([])
                     for lo in range(len(self.lons)):
                         tmp_var2[-1][-1].append([])
-            tmi = cdf_file.variables[self.vars['u10']][t1 : t2]
+            tmi = cdf_file[wf].variables[self.vars['u10']][t1 : t2]
             for t in range(len(tmp_var2)):
                 for la in range(len(tmp_var2[t])):
                     for lo in range(len(tmp_var2[t][la])):
@@ -539,7 +560,7 @@ class makeWeather():
                     tmp_var[-1].append([])
                     for lo in range(len(self.lons)):
                         tmp_var[-1][-1].append([])
-            tmi = cdf_file.variables[self.vars['sp']][t1 : t2]
+            tmi = cdf_file[wf].variables[self.vars['sp']][t1 : t2]
             for t in range(len(tmp_var)):
                 for la in range(len(tmp_var[t])):
                     for lo in range(len(tmp_var[t][la])):
@@ -559,7 +580,7 @@ class makeWeather():
                         tmp_var[-1].append([])
                         for lo in range(len(self.lons)):
                             tmp_var[-1][-1].append([])
-                tmi = cdf_file.variables[self.vars[localswg]][t1 : t2]
+                tmi = cdf_file[sf].variables[self.vars[localswg]][t1 : t2]
                 for t in range(len(tmp_var)):
                     for la in range(len(tmp_var[t])):
                         for lo in range(len(tmp_var[t][la])):
@@ -581,7 +602,7 @@ class makeWeather():
                         tmp_var[-1].append([])
                         for lo in range(len(self.lons)):
                             tmp_var[-1][-1].append([])
-                tmi = cdf_file.variables[self.vars['v100']][t1 : t2]
+                tmi = cdf_file[wf].variables[self.vars['v100']][t1 : t2]
                 for t in range(len(tmp_var)):
                     for la in range(len(tmp_var[t])):
                         for lo in range(len(tmp_var[t][la])):
@@ -596,7 +617,7 @@ class makeWeather():
                         tmp_var2[-1].append([])
                         for lo in range(len(self.lons)):
                             tmp_var2[-1][-1].append([])
-                tmi = cdf_file.variables[self.vars['u100']][t1 : t2]
+                tmi = cdf_file[wf].variables[self.vars['u100']][t1 : t2]
                 for t in range(len(tmp_var2)):
                     for la in range(len(tmp_var2[t])):
                         for lo in range(len(tmp_var2[t][la])):
@@ -613,35 +634,35 @@ class makeWeather():
                     self.caller.daybar.setValue(7)
                     QtCore.QCoreApplication.processEvents()
         else: # not expver
-            self.t_2m += self.getTemp(cdf_file.variables[self.vars['t2m']][t1 : t2])
+            self.t_2m += self.getTemp(cdf_file[wf].variables[self.vars['t2m']][t1 : t2])
             if self.show_progress:
                 self.caller.daybar.setValue(1)
                 QtCore.QCoreApplication.processEvents()
-            self.s10m += self.getSpeed(cdf_file.variables[self.vars['v10']][t1 : t2] , cdf_file.variables[self.vars['u10']][t1 : t2])
+            self.s10m += self.getSpeed(cdf_file[wf].variables[self.vars['v10']][t1 : t2] , cdf_file[wf].variables[self.vars['u10']][t1 : t2])
             if self.show_progress:
                 self.caller.daybar.setValue(2)
                 QtCore.QCoreApplication.processEvents()
-            self.d10m += self.getDirn(cdf_file.variables[self.vars['v10']][t1 : t2], cdf_file.variables[self.vars['u10']][t1 : t2])
+            self.d10m += self.getDirn(cdf_file[wf].variables[self.vars['v10']][t1 : t2], cdf_file[wf].variables[self.vars['u10']][t1 : t2])
             if self.show_progress:
                 self.caller.daybar.setValue(3)
                 QtCore.QCoreApplication.processEvents()
-            self.p_s += self.getPress(cdf_file.variables[self.vars['sp']][t1 : t2])
+            self.p_s += self.getPress(cdf_file[wf].variables[self.vars['sp']][t1 : t2])
             if self.show_progress:
                 self.caller.daybar.setValue(4)
                 QtCore.QCoreApplication.processEvents()
             try:
-                self.ghi += self.getGHI(cdf_file.variables[self.vars[localswg]][t1 : t2], watts=False)
+                self.ghi += self.getGHI(cdf_file[sf].variables[self.vars[localswg]][t1 : t2], watts=False)
                 if self.show_progress:
                     self.caller.daybar.setValue(5)
                     QtCore.QCoreApplication.processEvents()
             except:
                 pass
             if self.make_wind:
-                self.s100m += self.getSpeed(cdf_file.variables[self.vars['v100']][t1 : t2], cdf_file.variables[self.vars['u100']][t1 : t2])
+                self.s100m += self.getSpeed(cdf_file[wf].variables[self.vars['v100']][t1 : t2], cdf_file[wf].variables[self.vars['u100']][t1 : t2])
                 if self.show_progress:
                     self.caller.daybar.setValue(6)
                     QtCore.QCoreApplication.processEvents()
-                self.d100m += self.getDirn(cdf_file.variables[self.vars['v100']][t1 : t2], cdf_file.variables[self.vars['u100']][t1 : t2])
+                self.d100m += self.getDirn(cdf_file[wf].variables[self.vars['v100']][t1 : t2], cdf_file[wf].variables[self.vars['u100']][t1 : t2])
                 if self.show_progress:
                     self.caller.daybar.setValue(7)
                     QtCore.QCoreApplication.processEvents()
@@ -653,7 +674,9 @@ class makeWeather():
            #             self.alb += self.getAlbedo(cdf_file.variables[self.vars['alb']][t1 : t2])
             #    elif self.vars['alb2'] in cdf_file.variables.keys():
              #       self.alb += self.getAlbedo(cdf_file.variables[self.vars['alb2']][t1 : t2])
-        cdf_file.close()
+        cdf_file[sf].close()
+        if wf > 0:
+            cdf_file[wf].close()
 
     def get_rad_data(self, inp_file):
         unzip_file = self.unZip(inp_file)
@@ -788,7 +811,24 @@ class makeWeather():
         unzip_file = self.unZip(inp_file)
         if self.return_code != 0:
             return
-        cdf_file = Dataset(unzip_file, 'r')
+        try:
+            cdf_file = Dataset(unzip_file, 'r')
+        except OSError as err:
+            if err.errno != -51 or not zipfile.is_zipfile(inp_file):
+                self.log += '\nError: {err}'
+                return
+            self.log += '\nFile:\n    '
+            self.log += inp_file[inp_file.rfind('/') + 1:] + '\n'
+            self.log += ' Format:\n    Zipped file\n'
+            tempdir = tempfile.gettempdir() + '/'
+            zf = zipfile.ZipFile(inp_file, 'r')
+            for zi in zf.infolist():
+                zf.extract(zi, tempdir)
+                self.getInfo(f'{tempdir}{zi.filename}')
+            return
+        except Exception as err:
+            self.log += '\nError: {err}'
+            return
         i = unzip_file.rfind('/')
         self.log += '\nFile:\n    '
         self.log += unzip_file[i + 1:] + '\n'
@@ -1476,7 +1516,21 @@ class makeWeather():
             unzip_file = self.unZip(self.findFile(inp_strt, True))
             if self.return_code != 0:
                 return
-            cdf_file = Dataset(unzip_file, 'r')
+            try:
+                cdf_file = Dataset(unzip_file, 'r')
+            except OSError as err:
+                if err.errno != -51 or not zipfile.is_zipfile(inp_file):
+                    self.log += '\nError: {err}'
+                    return
+                tempdir = tempfile.gettempdir() + '/'
+                zf = zipfile.ZipFile(inp_file, 'r')
+                for zi in zf.infolist():
+                    zf.extract(zi, tempdir)
+                    cdf_file = Dataset(f'{tempdir}{zi.filename}', 'r')
+                    break
+            except Exception as err:
+                self.log += '\nError: {err}'
+                return
             longitude = cdf_file.variables[self.vars['longitude']][:]
             self.src_zone = int(round(longitude[0] / 15))
             if str(self.src_zone).lower() == 'best':

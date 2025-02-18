@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2023-2024 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2023-2025 Sustainable Energy Now Inc., Angus King
 #
 #  getera5.py - This file is part of SIREN.
 #
@@ -27,7 +27,9 @@ import sys
 from netCDF4 import Dataset
 import configparser   # decode .ini file
 from PyQt5 import QtCore, QtGui, QtWidgets
-import pkg_resources
+from importlib.metadata import version
+import tempfile
+import zipfile
 
 from credits import fileVersion
 import displayobject
@@ -216,12 +218,12 @@ def retrieve_era5(ini_file, lat1, lat2, lon1, lon2, grd1, grd2, year, tgt_dir, l
         spawn(parms, tgt_dir + '/' + tgt_log)
         return 'Request for ' + tgt_file + ' launched.'
     tgt_txt = tgt_file[:tgt_file.rfind('.')] + '_' + datetime.strftime(datetime.now(), '%Y-%m-%d_%H%M') + '.txt'
-    api_version = pkg_resources.get_distribution('cdsapi').version
+    api_version = version('cdsapi')
     bits = api_version.split('.')
     if bits[0] > '0' or bits[1] >= '7':
         era5_dict = {'product_type': ['reanalysis'],
-                     'format': 'netcdf',
-                     'data_format': 'netcdf'}
+                     'data_format': 'netcdf',
+                     'download_format': 'ZIP'}
         variables = []
         var_list = config.get('getera5', 'variables').split(',')
         for var in var_list:
@@ -247,7 +249,7 @@ def retrieve_era5(ini_file, lat1, lat2, lon1, lon2, grd1, grd2, year, tgt_dir, l
                 era5_dict['month'] = [mths]
         times = []
         for h in range(24):
-            times.append('{:0>2d}'.format(h))
+            times.append('{:0>2d}:00'.format(h))
         era5_dict['time'] = times
         era5_dict['area'] = [lat1, lon1, lat2, lon2]
         era5_dict['grid'] = [grd1, grd2]
@@ -302,24 +304,11 @@ def retrieve_era5(ini_file, lat1, lat2, lon1, lon2, grd1, grd2, year, tgt_dir, l
 
 
 class fileInfo:
-    def __init__(self, inp_file):
-        self.ok = False
-        self.log = ''
-        if not os.path.exists(inp_file):
-            self.log = 'File not found: ' + inp_file
-            return
-        try:
-            cdf_file = Dataset(inp_file, 'r')
-        except:
-            self.log = 'Error reading: ' + inp_file
-            return
-        i = inp_file.rfind('/')
-        self.file = inp_file[i + 1:]
+    def get_info(self, cdf_file):
         try:
             self.format = cdf_file.Format
         except:
             self.format = '?'
-        self.dimensions = ''
         keys = list(cdf_file.dimensions.keys())
         values = list(cdf_file.dimensions.values())
         if type(cdf_file.dimensions) is dict:
@@ -329,7 +318,6 @@ class fileInfo:
             for i in range(len(keys)):
                 bits = str(values[i]).strip().split()
                 self.dimensions += keys[i] + ': ' + bits[-1] + ', '
-        self.variables = ''
         for key in iter(sorted(cdf_file.variables.keys())):
             self.variables += key + ', '
         self.latitudes = []
@@ -348,6 +336,36 @@ class fileInfo:
         longi = longitude[:]
         for val in longi:
             self.longitudes.append(val)
+
+    def __init__(self, inp_file):
+        self.ok = False
+        self.log = ''
+        self.dimensions = ''
+        self.variables = ''
+        i = inp_file.rfind('/')
+        self.file = inp_file[i + 1:]
+        if not os.path.exists(inp_file):
+            self.log = 'File not found: ' + inp_file
+            return
+        try:
+            cdf_file = Dataset(inp_file, 'r')
+        except OSError as err:
+            if err.errno != -51 or not zipfile.is_zipfile(inp_file):
+                self.log = 'Error reading: ' + inp_file
+                return
+            tempdir = tempfile.gettempdir() + '/'
+            zf = zipfile.ZipFile(inp_file, 'r')
+            for zi in zf.infolist():
+                zf.extract(zi, tempdir)
+                cdf_file = Dataset(f'{tempdir}{zi.filename}', 'r')
+                self.get_info(cdf_file)
+                cdf_file.close()
+            self.ok = True
+            return
+        except Exception as err:
+            self.log = 'Error reading: ' + inp_file
+            return
+        self.get_info(cdf_file)
         cdf_file.close()
         self.ok = True
 
