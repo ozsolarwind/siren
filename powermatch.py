@@ -4141,6 +4141,7 @@ class powerMatch(QtWidgets.QWidget):
                     tndx_rows = max(9, len(self.batch_tech) + 4)
                     cats = None
                     chart_group = ''
+                    chart_smooth = True
                     for row in range(self.batch_report[-1][1], batch_input_sheet.max_row + 1):
                         if batch_input_sheet.cell(row=row, column=1).value is None:
                             continue
@@ -4201,6 +4202,9 @@ class powerMatch(QtWidgets.QWidget):
                                         break
                         elif not in_chart:
                             continue
+                        elif batch_input_sheet.cell(row=row, column=1).value.lower()[:4] == 'line':
+                            if batch_input_sheet.cell(row=row, column=2).value.lower() == 'straight':
+                                chart_smooth = False
                         elif batch_input_sheet.cell(row=row, column=1).value.lower() == 'title':
                             charts[-1].title = batch_input_sheet.cell(row=row, column=2).value
                         elif batch_input_sheet.cell(row=row, column=1).value.lower() == 'x-title':
@@ -4246,6 +4250,7 @@ class powerMatch(QtWidgets.QWidget):
                                         values = Reference(bs, min_col=min_col, min_row=gndx + tndx, max_col=max_col, max_row=gndx + tndx)
                                         series = Series(values)
                                         series.title = oxl.chart.series.SeriesLabel(oxl.chart.data_source.StrRef("'" + bs.title + "'!A" + str(gndx + tndx)))
+                                        series.smooth = chart_smooth
                                         charts[-1].append(series)
                                     elif batch_input_sheet.cell(row=row, column=1).value.lower() == 'data2':
                                         if charts2[-1] is None:
@@ -4253,6 +4258,7 @@ class powerMatch(QtWidgets.QWidget):
                                         values = Reference(bs, min_col=min_col, min_row=gndx + tndx, max_col=max_col, max_row=gndx + tndx)
                                         series = Series(values)
                                         series.title = oxl.chart.series.SeriesLabel(oxl.chart.data_source.StrRef("'" + bs.title + "'!A" + str(gndx + tndx)))
+                                        series.smooth = chart_smooth
                                         charts2[-1].append(series)
                                     else:
                                         cats = Reference(bs, min_col=min_col, min_row=gndx + tndx, max_col=max_col, max_row=gndx + tndx)

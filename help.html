@@ -1318,6 +1318,10 @@ Options for <a href="#flexiplot">Flexiplot</a>. Properties for individual files 
 <td class="none">Opacity of chart fill for values above target. Range is 1.0 (opaque) to 0.0 (translucent). Default value is 0.25</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>aspectmode_3d</dfn></td>
+<td class="none">This property sets the aspectmode for 3D Surface Charts. Values can be <em>auto</em>, <em>cube</em>, <em>data</em> or <em>manual</em>. The default is <em>auto</em></td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>background_3d</dfn></td>
 <td class="none">If set to True a pale grey background colour is display for axes in 3D Surface Charts. Default is False</td>
 </tr>
@@ -1367,7 +1371,7 @@ Options for <a href="#flexiplot">Flexiplot</a>. Properties for individual files 
 </tr>
 <tr class="none">
 <td class="none"><dfn>legend_on_pie</dfn></td>
-<td class="none">If set to <em>True</em> labels for a Pie Chart will be placed on the chart, if <em>False</em> the legend will be presented as a table. If set to <em>Pct</em> (Percent) the legend will be persented as a table and pie percentages will be placed on the chart. The default is True</td>
+<td class="none">If set to <em>True</em> labels for a Pie Chart will be placed on the chart, if <em>False</em> the legend will be presented as a table. If set to <em>Pct</em> (Percent) the legend will be presented as a table and pie percentages will be placed on the chart. The default is True</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>legend_side</dfn></td>
@@ -2092,7 +2096,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <div class="experiment">
 <table border="0", class="none" style="width:100%">
 <tr class="none">
-    <td class="none" style="width:8%"><dfn>html_3d</dfn></td>
+<td class="none" style="width:8%"><dfn>aspectmode_3d</dfn></td>
+<td class="none">This property sets the aspectmode for 3D Surface Charts. Values can be <em>auto</em>, <em>cube</em>, <em>data</em> or <em>manual</em>. The default is <em>auto</em></td>
+<tr class="none">
+<td class="none" style="width:8%"><dfn>html_3d</dfn></td>
 <td class="none">If set to True a HTML version of a 3D Surface Charts will be created. The file will be saved in the sane folder and name as the file being displayed with a file type of <em>html</em>. The default is False</td>
 </table>
 </div>
@@ -2111,7 +2118,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>legend_on_pie</dfn></td>
-<td class="none">If set to <em>True</em> labels for a Pie Chart will be placed on the chart, if <em>False</em> the legend will be presented as a table. If set to <em>Pct</em> (Percent) the legend will be persented as a table and pie percentages will be placed on the chart. The default is True</td>
+<td class="none">If set to <em>True</em> labels for a Pie Chart will be placed on the chart, if <em>False</em> the legend will be presented as a table. If set to <em>Pct</em> (Percent) the legend will be presented as a table and pie percentages will be placed on the chart. The default is True</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>legend_side</dfn></td>
@@ -4008,7 +4015,7 @@ Where:
 <tr><td class="none"><code>step</code></td><td class="none">Capacity increment</td></tr>
 <tr><td class="none"><code>order</code></td><td class="none">Make this technology the first set of ranges; this is only needed if this is not the first technology with a range</td></tr>
 </table>
-<p>If more than one technology is specified with a range the Batch report will have multiple output worksheets, one for each value in the first range. The sheets are named in number sequence starting from <strong>01</strong>. Subsequent technologies will be repeated for each &ldquo;higher&rdquo; level technology. The second technology will be presented as a Merged Group. Individual Model names will be derived from the third, or second, technology range.</p>
+<p>If more than one technology is specified with a range the Batch report will have multiple output worksheets, one for each value in the first range. The sheets are named in number sequence starting from <strong>01</strong>. Subsequent technologies will be repeated for each &ldquo;lower&rdquo; order technology. The second technology will be presented as a Merged Group. Individual Model names will be derived from the third, or second, technology range. (Note: there is a limit of 16,384 - 2^14 - columns per worksheet so the combinations of lower level technologies must be less than that)</p>
 <p>The following example shows a batch input table (column) with three capacity ranges. Onshore Wind is the first technology and results in 7 worksheets of output, one for each technology step for Wind. Each worksheet contains 36 model outputs, for a total of 252 models. The worksheets have 6 Merged Groups, one for each step for Single Axis PV with each Merged Group having 6 values for Battery (4hr) and individual Model names are derived from Battery capacity. In a real-world example this approach has been used to create 26 sheets with a total of over 17,500 models in a single execution of Powermatch.</p>
 <table class="none">
 <table>
@@ -4113,6 +4120,12 @@ Where:
 <tr><td>Model Label</td><td>Model 1</td><td>Model 2</td><td>Model 3</td><td>Model 4</td></tr>
 </table>
 </td>
+</tr>
+<tr class="none">
+<td>Line</td>
+<td>Smooth or Straight</td>
+<td>&nbsp;</td>
+<td>By default the charts produced have smooth lines. If you prefer straight line charts you can use this parameter to indicate your preference</td>
 </tr>
 <tr class="none">
 <td>Title</td>
@@ -4580,6 +4593,7 @@ A <em>3D Surface Chart</em> will present the data as a 3D Surface Chart</td></tr
 <td>&nbsp;</td>
 <td>&nbsp;</td>
 </tr>
+<tr>
 <td>Avg. Price</td>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
@@ -4600,6 +4614,7 @@ A <em>3D Surface Chart</em> will present the data as a 3D Surface Chart</td></tr
 <td>61.42</td>
 <td>133.53</td>
 </tr>
+<tr>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
@@ -4630,6 +4645,7 @@ A <em>3D Surface Chart</em> will present the data as a 3D Surface Chart</td></tr
 </table>
 </ul>
 </div>
+<h3></h3>
 <h2 id="feedback">Feedback</h2>
 <p>This model is very much a work in progress. To improve it's usefulness to a wider community we encourage any feedback on how it might be improved. Feedback to <a href="mailto:siren@sen.asn.au?Subject=SIREN%20Feedback">siren@sen.asn.au</a>.
 <h2 id="files">SIREN File Formats</h2>
@@ -5020,8 +5036,8 @@ ECMWF ERA5 data allows weather files to be created on a grid of 0.25 degree of l
 <p>NASA MERRA-2 data is a suitable source to generate data files containing all weather variables required for input to SAM. It allows weather files to be created on a grid of 0.625 degree of longitude by 0.5 degree of latitude. This is approximately an area of 55 km x 55 km for the SWIS latitudes.</p>
 <p>Two MERRA-2 data files are appropriate for our needs:</p>
 <ul>
-<li><em>tavg1_2d_slv_Nx</em> for wind</li>
 <li><em>tavg1_2d_rad_Nx</em> for solar</li>
+<li><em>tavg1_2d_slv_Nx</em> for wind</li>
 </ul>
 <h4 id="merra2">Obtaining MERRA-2 Data</h4>
 <p>MERRA-2 Data is publicly available and the following steps can be used to obtain the required data.</p>
