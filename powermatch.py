@@ -43,6 +43,7 @@ from matplotlib.ticker import LinearLocator, FormatStrFormatter
 import numpy as np
 import openpyxl as oxl
 from openpyxl.chart import (
+    BarChart,
     LineChart,
     Reference,
     Series
@@ -50,6 +51,7 @@ from openpyxl.chart import (
 import random
 import shutil
 import subprocess
+from colours import PlotPalette
 from senutils import ClickableQLabel, getParents, getUser, ListWidget, ssCol, techClean, WorkBook
 from editini import EdtDialog, SaveIni
 from floaters import ProgressBar, FloatStatus
@@ -85,7 +87,7 @@ headers = ['Facility', 'Capacity\n(Gen, MW;\nStor, MWh)', 'To meet\nLoad (MWh)',
            'Subtotal\n(MWh)', 'CF', 'Cost ($/yr)', 'LCOG\nCost\n($/MWh)', 'LCOE\nCost\n($/MWh)',
            'Emissions\n(tCO2e)', 'Emissions\nCost', 'LCOE With\nCO2 Cost\n($/MWh)', 'Max.\nMWH',
            'Max.\nBalance', 'Capital\nCost', 'Lifetime\nCost', 'Lifetime\nEmissions',
-           'Lifetime\nEmissions\nCost', 'Area (km^2)', 'Reference\nLCOE', 'Reference\nCF']
+           'Lifetime\nEmissions\nCost', 'Area (km^2)', 'Job\nYears', 'Reference\nLCOE', 'Reference\nCF']
 # set up columns for summary table. Hopefully to make it easier to add / alter columns
 st_fac = 0 # Facility
 st_cap = 1 # Capacity\n(Gen, MW;\nStor, MWh)
@@ -104,18 +106,20 @@ st_cac = 13 # Capital\nCost'
 st_lic = 14 # Lifetime\nCost'
 st_lie = 15 # Lifetime\nEmissions
 st_lec = 16 # Lifetime\nEmissions\nCost
-st_are = 17 # Area (km^2)
-st_rlc = 18 # Reference\nLCOE
-st_rcf = 19 # Reference\nCF
+st_are = 17 # Areas (km^2)
+st_job = 18 # Job (years)
+st_rlc = 19 # Reference\nLCOE
+st_rcf = 20 # Reference\nCF
 
 # same order as self.file_labels
 C = 0 # Constraints - xls or xlsx
 G = 1 # Generators - xls or xlsx
 O = 2 # Optimisation - xls or xlsx
-D = 3 # Data - xlsx
-R = 4 # Results - xlsx
-B = 5 # Batch input - xlsx
-T = 6 # Transition input - xlsx
+J = 3 # Jobs - xls or xlsx
+D = 4 # Data - xlsx
+R = 5 # Results - xlsx
+B = 6 # Batch input - xlsx
+T = 7 # Transition input - xlsx
 S = 'S' # Summary
 O1 = 'O1'
 def get_value(ws, row, col):
@@ -164,6 +168,213 @@ def get_value(ws, row, col):
     except:
         return ''
     return ws.cell(row=row, column=col).value
+
+def add_to_batch(wb, batch_file, adj_list):
+    def copy_format(cell, new_cell):
+        new_cell.font = copy(cell.font)
+        new_cell.border = copy(cell.border)
+        new_cell.fill = copy(cell.fill)
+        new_cell.number_format = copy(cell.number_format)
+        new_cell.protection = copy(cell.protection)
+        new_cell.alignment = copy(cell.alignment)
+
+    check_list = list(adj_list.keys())
+    # remove not of interest
+    strt = len(check_list) - 1
+    try:
+        strt = check_list.index('Optimisation Parameters') - 1
+    except:
+        pass
+    ignore = True
+    for i in range(strt, -1, -1):
+        if check_list[i] == 'Discount Rate':
+            continue
+        elif check_list[i] == 'Load':
+            if adj_list['Load'] > 10000:
+                adj_list['Load'] = round(adj_list['Load'], -4)
+            continue
+    #    elif check_list[i][:10] == 'Total Load':
+     #       adj_list['Load'] = adj_list[check_list[i]]
+      #      del adj_list[check_list[i]]
+       #     check_list[i] = 'Load'
+        #    continue
+        elif check_list[i] == 'Carbon Price':
+            continue
+        elif check_list[i] == 'Carbon Price ($/tCO2e)':
+            adj_list['Carbon Price'] = adj_list[check_list[i]]
+            del adj_list['Carbon Price ($/tCO2e)']
+            check_list[i] = 'Carbon Price'
+            continue
+        elif check_list[i] == 'Underlying Total':
+            del check_list[i]
+            ignore = False
+            continue
+        elif check_list[i] == 'Additional Underlying Load':
+            del check_list[i]
+            ignore = True
+            continue
+        elif check_list[i] == 'Total':
+            ignore = False
+            continue
+        if ignore:
+            del check_list[i]
+    batch_input_sheet = wb.worksheets[0]
+    batch_input_sheet.protection.sheet = False
+    normal = oxl.styles.Font(name='Arial')
+    bold = oxl.styles.Font(name='Arial', bold=True)
+    col = batch_input_sheet.max_column + 1
+    fst_row = -1
+    the_rows = [-1, -1, -1, -1, -1, -1]
+    tot_row = 0
+    disc_row = 1
+    cp_row = 2
+    load_row = 3
+    opt_row = 4
+    max_row = 5
+    save_opt_rows = False
+    if col == 4: # possibly only chart stuff in columns 2 and 3
+        get_out = False
+        for col in range(3, 1, -1):
+            for row in range(1, batch_input_sheet.max_row + 1):
+                if batch_input_sheet.cell(row=row, column=col).value is not None:
+                    col += 1
+                    get_out = True
+                    break
+                if batch_input_sheet.cell(row=row, column=1).value == 'Total':
+                    break
+            if get_out:
+                break
+    for row in range(1, batch_input_sheet.max_row + 1):
+        if batch_input_sheet.cell(row=row, column=1).value is None:
+            continue
+        if batch_input_sheet.cell(row=row, column=1).value in ['Model', 'Model Label', 'Technology', 'Year']:
+            new_cell = batch_input_sheet.cell(row=row, column=col)
+            new_cell.value = QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'MM-dd hh:mm')
+            add_msg = f"Added to batch as '{new_cell.value}' (column {ssCol(col)})"
+            continue
+        if batch_input_sheet.cell(row=row, column=1).value == 'Capacity (MW)':
+            fst_row = row + 1
+            cell = batch_input_sheet.cell(row=row, column=2)
+            new_cell = batch_input_sheet.cell(row=row, column=col)
+            new_cell.value = 'MW'
+            if cell.has_style:
+                copy_format(cell, new_cell)
+            continue
+        if batch_input_sheet.cell(row=row, column=1).value == 'Optimisation Parameters':
+            try:
+                i = check_list.index('Optimisation Parameters')
+                if i >= 0:
+                    the_rows[opt_row] = row
+                    save_opt_rows = True
+                    opt_list = check_list[i:]
+            except:
+                pass
+            break
+        for key, value in adj_list.items():
+            if key == batch_input_sheet.cell(row=row, column=1).value:
+                cell = batch_input_sheet.cell(row=row, column=2)
+                new_cell = batch_input_sheet.cell(row=row, column=col)
+                new_cell.value = value
+                if cell.has_style:
+                    copy_format(cell, new_cell)
+                    if col == 2:
+                        new_cell.font = normal
+                        new_cell.number_format = '#0.00'
+                    else:
+                        new_cell.number_format = copy(cell.number_format)
+                elif col == 2:
+                    new_cell.font = normal
+                    new_cell.number_format = '#0.00'
+                try:
+                    i = check_list.index(key)
+                    del check_list[i]
+                except:
+                    pass
+        if batch_input_sheet.cell(row=row, column=1).value == 'Total':
+            the_rows[tot_row] = row
+        elif batch_input_sheet.cell(row=row, column=1).value == 'Discount Rate':
+            the_rows[disc_row] = row
+        elif batch_input_sheet.cell(row=row, column=1).value == 'Carbon Price':
+            the_rows[cp_row] = row
+        elif batch_input_sheet.cell(row=row, column=1).value == 'Load':
+            the_rows[load_row] = row
+    for r in range(len(the_rows)):
+        if r == max_row:
+            continue
+        the_rows[max_row] = max(the_rows[max_row], the_rows[r])
+    the_rows[max_row] += 1
+    if the_rows[load_row] < 0:
+        try:
+            i = check_list.index('Load')
+            del check_list[i]
+        except:
+            pass
+    try:
+        i = check_list.index('Optimisation Parameters')
+        if i >= 0:
+            del check_list[i:]
+    except:
+        pass
+    if len(check_list) > 0:
+        if col > 2:
+            cell = batch_input_sheet.cell(row=fst_row, column=2)
+        else:
+            cell = batch_input_sheet.cell(row=fst_row, column=col)
+   #     cell = batch_input_sheet.cell(row=fst_row, column=col)
+        for key in check_list:
+            if adj_list[key] == 0:
+                continue
+            if key in ['Discount Rate', 'Carbon Price', 'Load']:
+                new_row = the_rows[max_row]
+                r1 = 1
+            else:
+                new_row = the_rows[tot_row] - 1 # to keep SUM formula intact
+                r1 = 0
+            batch_input_sheet.insert_rows(new_row)
+            new_cell = batch_input_sheet.cell(row=new_row, column=1)
+            new_cell.value = key
+            new_cell = batch_input_sheet.cell(row=new_row, column=col)
+            new_cell.value = adj_list[key]
+            if cell.has_style:
+                copy_format(cell, new_cell)
+            for r in range(r1, len(the_rows)):
+                if the_rows[r] >= 0:
+                    the_rows[r] += 1
+    if fst_row > 0 and the_rows[tot_row] > 0:
+        new_cell = batch_input_sheet.cell(row=the_rows[tot_row], column=col)
+        new_cell.value = '=SUM(' + ssCol(col) + str(fst_row) + ':' + ssCol(col) + str(the_rows[tot_row] - 1) + ')'
+        if col > 2:
+            cell = batch_input_sheet.cell(row=the_rows[tot_row], column=2)
+        else:
+            cell = batch_input_sheet.cell(row=the_rows[tot_row], column=col)
+        if cell.has_style:
+            copy_format(cell, new_cell)
+    if save_opt_rows: # want optimisation?
+        for row in range(the_rows[opt_row], batch_input_sheet.max_row + 1):
+            for key in opt_list:
+                if key == batch_input_sheet.cell(row=row, column=1).value:
+                    cell = batch_input_sheet.cell(row=fst_row, column=col - 1)
+                    new_cell = batch_input_sheet.cell(row=row, column=col)
+                    new_cell.value = adj_list[key]
+                    if cell.has_style:
+                        copy_format(cell, new_cell)
+                    try:
+                        i = opt_list.index(key)
+                        del opt_list[i]
+                    except:
+                        pass
+        if len(opt_list) > 0:
+            for key in opt_list:
+                row += 1
+                new_cell = batch_input_sheet.cell(row=row, column=1)
+                new_cell.value = key
+                new_cell = batch_input_sheet.cell(row=row, column=col)
+                try:
+                    new_cell.value = adj_list[key]
+                except:
+                    pass
+    wb.save(batch_file)
+    return add_msg
 
 
 class MyQDialog(QtWidgets.QDialog):
@@ -344,6 +555,18 @@ class Optimisation:
             self.capacity_step = 0.
             self.capacities = None
         self.capacity = 0.
+
+
+class JobFactors():
+    def __init__(self, **kwargs):
+        kwargs = {**kwargs}
+      #  return
+        self.name = ''
+        for attr in ['years', 'local_pct', 'manufacture', 'install', 'operate', 'dismantle']:
+            setattr(self, attr, 0.)
+        for key, value in kwargs.items():
+            if value != '' and value is not None:
+                setattr(self, key, value)
 
 
 class Adjustments(MyQDialog):
@@ -729,112 +952,13 @@ class Adjustments(MyQDialog):
         return self.pfx_fld.text()
 
     def addtoBatch(self):
-        check_list = list(self._adjust_cty.keys())[1:]
+        adj_list = {}
+        for key in self._adjust_cty.keys():
+            adj_list[key] = self._adjust_cty[key].value()
         wb = oxl.load_workbook(self._batch_file)
-        batch_input_sheet = wb.worksheets[0]
-        batch_input_sheet.protection.sheet = False
-        normal = oxl.styles.Font(name='Arial')
-        bold = oxl.styles.Font(name='Arial', bold=True)
-        col = batch_input_sheet.max_column + 1
-        tot_row = -1
-        fst_row = -1
-        if col == 4: # possibly only chart stuff in columns 2 and 3
-            get_out = False
-            for col in range(3, 1, -1):
-                for row in range(1, batch_input_sheet.max_row + 1):
-                    if batch_input_sheet.cell(row=row, column=col).value is not None:
-                        col += 1
-                        get_out = True
-                        break
-                    if batch_input_sheet.cell(row=row, column=1).value == 'Total':
-                        break
-                if get_out:
-                    break
-        for row in range(1, batch_input_sheet.max_row + 1):
-            if batch_input_sheet.cell(row=row, column=1).value is None:
-                continue
-            if batch_input_sheet.cell(row=row, column=1).value in ['Model', 'Model Label', 'Technology', 'Year']:
-                new_cell = batch_input_sheet.cell(row=row, column=col)
-                new_cell.value = QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'MM-dd hh:mm')
-                add_msg = new_cell.value
-            if batch_input_sheet.cell(row=row, column=1).value == 'Capacity (MW)':
-                fst_row = row + 1
-                cell = batch_input_sheet.cell(row=row, column=col - 1)
-                new_cell = batch_input_sheet.cell(row=row, column=col)
-                new_cell.value = 'MW'
-                if cell.has_style:
-                    new_cell.font = copy(cell.font)
-                    new_cell.border = copy(cell.border)
-                    new_cell.fill = copy(cell.fill)
-                    new_cell.number_format = copy(cell.number_format)
-                    new_cell.protection = copy(cell.protection)
-                    new_cell.alignment = copy(cell.alignment)
-                continue
-            for key in self._adjust_cty.keys():
-                if key == batch_input_sheet.cell(row=row, column=1).value:
-                    cell = batch_input_sheet.cell(row=fst_row, column=col - 1)
-                    new_cell = batch_input_sheet.cell(row=row, column=col)
-                    new_cell.value = self._adjust_cty[key].value()
-                    if cell.has_style:
-                        new_cell.font = copy(cell.font)
-                        new_cell.border = copy(cell.border)
-                        new_cell.fill = copy(cell.fill)
-                        new_cell.protection = copy(cell.protection)
-                        new_cell.alignment = copy(cell.alignment)
-                        if col == 2:
-                            new_cell.font = normal
-                            new_cell.number_format = '#0.00'
-                        else:
-                            new_cell.number_format = copy(cell.number_format)
-                    elif col == 2:
-                        new_cell.font = normal
-                        new_cell.number_format = '#0.00'
-                    try:
-                        i = check_list.index(key)
-                        del check_list[i]
-                    except:
-                        pass
-            if batch_input_sheet.cell(row=row, column=1).value == 'Total':
-                tot_row = row
-           #     if len(check_list) > 0:
-           #         tot_row = row
-        if len(check_list) > 0:
-            check_list.reverse()
-            cell = batch_input_sheet.cell(row=fst_row, column=col)
-            for key in check_list:
-                if self._adjust_cty[key].value() == 0:
-                    continue
-                batch_input_sheet.insert_rows(tot_row)
-                new_cell = batch_input_sheet.cell(row=tot_row, column=1)
-                new_cell.value = key
-                new_cell = batch_input_sheet.cell(row=tot_row, column=col)
-                new_cell.value = self._adjust_cty[key].value()
-                if cell.has_style:
-                    new_cell.font = copy(cell.font)
-                    new_cell.border = copy(cell.border)
-                    new_cell.fill = copy(cell.fill)
-                    new_cell.number_format = copy(cell.number_format)
-                    new_cell.protection = copy(cell.protection)
-                    new_cell.alignment = copy(cell.alignment)
-                tot_row += 1
-        if fst_row > 0 and tot_row > 0:
-            new_cell = batch_input_sheet.cell(row=tot_row, column=col)
-            new_cell.value = '=SUM(' + ssCol(col) + str(fst_row) + ':' + ssCol(col) + str(tot_row - 1) + ')'
-            if col > 2:
-                cell = batch_input_sheet.cell(row=tot_row, column=2)
-            else:
-                cell = batch_input_sheet.cell(row=tot_row, column=col)
-            if cell.has_style:
-                new_cell.font = copy(cell.font)
-                new_cell.border = copy(cell.border)
-                new_cell.fill = copy(cell.fill)
-                new_cell.number_format = copy(cell.number_format)
-                new_cell.protection = copy(cell.protection)
-                new_cell.alignment = copy(cell.alignment)
-        wb.save(self._batch_file)
-        QtWidgets.QMessageBox.about(self, 'SIREN - Add to Batch', "Added to batch as '" + add_msg + "' (column " + ssCol(col) + ')')
+        add_msg = add_to_batch(wb, self._batch_file, adj_list)
+        QtWidgets.QMessageBox.about(self, 'SIREN - Add to Batch', add_msg)
         self._reset_last = False
-
 
 class setTransition(MyQDialog):
     def niceSize(window, ctr): # works for Adjustments window (probably because less that 640*480)
@@ -915,6 +1039,7 @@ class setTransition(MyQDialog):
     def getValues(self):
         return self._results
 
+
 class powerMatch(QtWidgets.QWidget):
     log = QtCore.pyqtSignal()
     progress = QtCore.pyqtSignal()
@@ -923,7 +1048,7 @@ class powerMatch(QtWidgets.QWidget):
         if filename.find('/') == 0: # full directory in non-Windows
             return filename
         elif (sys.platform == 'win32' or sys.platform == 'cygwin') \
-          and filename[1:2] == ':/': # full directory for Windows
+          and filename[1:3] == ':/': # full directory for Windows
             return filename
         elif filename[:3] == '../': # directory upwards of scenarios
             ups = filename.split('../')
@@ -1028,7 +1153,7 @@ class powerMatch(QtWidgets.QWidget):
                 self.log_status = False
         except:
             pass
-        self.file_labels = ['Constraints', 'Generators', 'Optimisation', 'Data', 'Results', 'Batch']
+        self.file_labels = ['Constraints', 'Generators', 'Optimisation', 'Jobs', 'Data', 'Results', 'Batch', 'Transition']
         ifiles = [''] * len(self.file_labels)
         self.isheets = self.file_labels[:]
         del self.isheets[-2:]
@@ -1046,6 +1171,8 @@ class powerMatch(QtWidgets.QWidget):
         self.carbon_price = 0.
         self.carbon_price_max = 200.
         self.discount_rate = 0.
+        self.do_jobs = False
+        self.job_charts = False
         self.load_folder = ''
         self.load_year = 'n/a'
         self.optimise_choice = 'LCOE'
@@ -1055,10 +1182,11 @@ class powerMatch(QtWidgets.QWidget):
         self.optimise_stop = 0
         self.optimise_debug = False
         self.optimise_default = None
-        self.optimise_multiplot = True
+        self.optimise_multiplot = False
         self.optimise_multisurf = False
         self.optimise_multitable = False
         self.optimise_to_batch = True
+        self.optimise_total_re = True
         self.remove_cost = True
         self.results_prefix = ''
         self.dispatchable = ['Biomass', 'Geothermal', 'Pumped Hydro', 'Solar Thermal', 'CST'] # RE dispatchable
@@ -1150,6 +1278,12 @@ class powerMatch(QtWidgets.QWidget):
                         pass
                 elif key == 'dispatch_order':
                     iorder = value.split(',')
+                elif key == 'job_charts':
+                    if value.lower() in ['true', 'yes', 'on']:
+                        self.job_charts = True
+                elif key == 'jobs':
+                    if value.lower() in ['true', 'yes', 'on']:
+                        self.do_jobs = True
                 elif key == 'load':
                     try:
                         self.load_files = value
@@ -1185,9 +1319,10 @@ class powerMatch(QtWidgets.QWidget):
                     except:
                         pass
                 elif key == 'optimise_multiplot':
-                    if value.lower() in ['false', 'off', 'no']:
-                        self.optimise_multiplot = False
+                    if value.lower() in ['true', 'yes', 'on']:
+                        self.optimise_multiplot = True
                     elif value.lower() in ['surf', 'tri-surf', 'trisurf']:
+                        self.optimise_multiplot = True
                         self.optimise_multisurf = True
                 elif key == 'optimise_multitable':
                     if value.lower() in ['true', 'on', 'yes']:
@@ -1210,6 +1345,9 @@ class powerMatch(QtWidgets.QWidget):
                 elif key == 'optimise_to_batch':
                     if value.lower() in ['false', 'off', 'no']:
                         self.optimise_to_batch = False
+                elif key == 'optimise_total_re':
+                    if value.lower() in ['false', 'off', 'no']:
+                        self.optimise_total_re = False
                 elif key[:9] == 'optimise_':
                     try:
                         bits = value.split(',')
@@ -1267,6 +1405,8 @@ class powerMatch(QtWidgets.QWidget):
         edit = [None] * D
         r = 0
         for i in range(len(self.file_labels)):
+            if i == J and not self.do_jobs:
+                continue
             if i == R:
                 self.grid.addWidget(QtWidgets.QLabel('Results Prefix:'), r, 0)
                 self.results_pfx_fld = QtWidgets.QLineEdit()
@@ -1307,6 +1447,8 @@ class powerMatch(QtWidgets.QWidget):
                         self.getGenerators(ws)
                     elif i == O:
                         self.getOptimisation(ws)
+                    elif i == J:
+                        self.getJobFactors(ws)
                     ts.close()
                     del ts
                 except:
@@ -1433,12 +1575,19 @@ class powerMatch(QtWidgets.QWidget):
         self.grid.addWidget(opt, r, 5)
         opt.clicked.connect(self.pmClicked)
         help = QtWidgets.QPushButton('Help', self)
+        help.clicked.connect(self.helpClicked)
+        if self.do_jobs:
+            jobs = QtWidgets.QPushButton('Jobs', self)
      #   help.setMaximumWidth(wdth)
       #  quit.setMaximumWidth(wdth)
-        self.grid.addWidget(help, r, 6)
-        help.clicked.connect(self.helpClicked)
-        QtWidgets.QShortcut(QtGui.QKeySequence('F1'), self, self.helpClicked)
-     #   self.grid.setColumnStretch(0, 2)
+            self.grid.addWidget(jobs, r, 6)
+            jobs.clicked.connect(self.jobsClicked)
+            self.grid.addWidget(help, r + 1, 6)
+        else:
+     #   help.setMaximumWidth(wdth)
+      #  quit.setMaximumWidth(wdth)
+            self.grid.addWidget(help, r, 6)
+            del headers[st_job]
         r += 1
         editini = QtWidgets.QPushButton('Preferences', self)
      #   editini.setMaximumWidth(wdth)
@@ -1575,6 +1724,8 @@ class powerMatch(QtWidgets.QWidget):
                     self.generators = None
                 elif i == O:
                     self.optimisation = None
+                elif i == J:
+                    self.jobfactors = None
                 ts = WorkBook()
                 ts.open_workbook(newfile)
                 ndx = 0
@@ -1777,6 +1928,11 @@ class powerMatch(QtWidgets.QWidget):
             lines.append('results_prefix=' + self.results_prefix)
             updates['Powermatch'] = lines
             SaveIni(updates)
+        try:
+            plt.close('all')
+        except:
+            pass
+
         self.close()
 
     def closeEvent(self, event):
@@ -1917,6 +2073,16 @@ class powerMatch(QtWidgets.QWidget):
                 for key in new_keys:
                     self.optimisation[key] = Optimisation(key, 'None', None)
                 target = self.optimisation
+            elif it == J:
+                old_keys = list(self.jobfactors.keys())
+                for key in old_keys:
+                    if key in new_keys:
+                        del new_keys[new_keys.index(key)]
+                    else:
+                        del self.jobfactors[key]
+                for key in new_keys:
+                    self.jobfactors[key] = JobFactors(key, 'None', None)
+                target = self.jobfactors
             # now update the data
             for key in list(target.keys()):
                 for prop in dir(target[key]):
@@ -2021,6 +2187,18 @@ class powerMatch(QtWidgets.QWidget):
                         self.optimisation[key].capacity_min = 0
                         self.optimisation[key].capacity_max = round(cap_max, 3)
                         self.optimisation[key].capacity_step = None
+                msg = ' table updated'
+        elif it == J: # self.jobfactors
+            if self.jobfactors is None:
+                try:
+                    self.getJobFactors(ws)
+                except:
+                    return
+            dialog = displaytable.Table(self.jobfactors, title=self.sender().text(),
+                     save_folder=self.scenarios, edit=True)
+            dialog.exec_()
+            if dialog.getValues() is not None:
+                update_dictionary(it, dialog.getValues())
                 msg = ' table updated'
         if ts is not None:
             ts.close()
@@ -2217,6 +2395,48 @@ class powerMatch(QtWidgets.QWidget):
                 self.optimisation[tech].capacity = self.generators[tech].capacity
             except:
                 pass
+        return
+
+    def getJobFactors(self, ws):
+        if ws is None:
+            self.jobfactors = {}
+            args = {'name': '<name>', 'year': '<years>', 'local_pct': '<lLocal_pct>', 'manufacture': '<manufacture>',
+                    'install': '<install>', 'operate': '<operate>', 'dismantle': '<dismantle'}
+
+            self.jobfactors['<name>'] = JobFactors(**args)
+            return
+        if ws.cell_value(0, 0) != 'Name':
+            self.setStatus('Not a ' + self.file_labels[J] + ' worksheet.')
+            return
+        args = ['name', 'years', 'local_pct', 'manufacture', 'install', 'operate', 'dismantle']
+        possibles = {'name': 0}
+        for col in range(ws.ncols):
+            try:
+                arg = ws.cell_value(0, col).lower()
+            except:
+                continue
+            if arg in args:
+                possibles[arg] = col
+            elif ws.cell_value(0, col) == 'Years':
+                possibles['years'] = col
+            elif ws.cell_value(0, col) == 'Local Pct' or ws.cell_value(0, col) == 'Local %age':
+                possibles['local_pct'] = col
+            elif ws.cell_value(0, col)[:10] == 'Manufactur':
+                possibles['manufacture'] = col
+            elif ws.cell_value(0, col)[:7] == 'Install' or ws.cell_value(0, col) == 'C & I':
+                possibles['install'] = col
+            elif ws.cell_value(0, col)[:6] == 'Operat' or ws.cell_value(0, col) == 'O & M':
+                possibles['operate'] = col
+            elif ws.cell_value(0, col) == 'Dismantle' or ws.cell_value(0, col)[:12] == 'Decommission':
+                possibles['dismantle'] = col
+        self.jobfactors = {}
+        for row in range(1, ws.nrows):
+            if ws.cell_value(row, 0) is None:
+                continue
+            in_args = {}
+            for key, value in possibles.items():
+                in_args[key] = ws.cell_value(row, value)
+            self.jobfactors[str(ws.cell_value(row, 0))] = JobFactors(**in_args)
         return
 
     def getBatch(self, ws, option):
@@ -2529,6 +2749,203 @@ class powerMatch(QtWidgets.QWidget):
                ws.delete_cols(col, 1)
         wb.save(batch_report_file)
 
+    def jobsClicked(self):
+      #  if self.sender().text() == 'Jobs': # jobs spreadsheet?
+        option = J
+        wb = WorkBook()
+        try:
+            wb.open_workbook(self.get_filename(self.files[T].text()))
+        except FileNotFoundError:
+            self.setStatus(f'{self.file_labels[T]} file not found - {self.files[T].text()}')
+            return
+        except Exception as e:
+            self.setStatus(f'Error accessing {self.file_labels[T]} file {str(e)}')
+            return
+        years = {}
+        rpt_sht = ''
+        for sht in wb.sheet_names():
+            if sht[:8] == 'Results_' and sht > rpt_sht:
+                rpt_sht = sht
+        if rpt_sht == '':
+            wb.close()
+            self.setStatus(f'No Report sheet in {self.files[T].text()}')
+            return
+        ws = wb.sheet_by_name(rpt_sht)
+        for row in range(5):
+            if ws.cell_value(row, 0) in ['Model', 'Model Label', 'Technology', 'Year']:
+                model_row = row
+                break
+        else:
+            wb.close()
+            self.setStatus(f'No Model (Year) row found in {self.files[T].text()}')
+            return
+        techs = {}
+        for row in range(model_row + 1, ws.nrows):
+            if ws.cell_value(row, 0) is None or ws.cell_value(row, 0) == '' or ws.cell_value(row, 0) == '' :
+                break
+            if ws.cell_value(row, 0).lower().find('capacity') >= 0:
+                continue
+            fac = ws.cell_value(row, 0)
+            if fac[:3] == 'CY_':
+                fac = fac[3:]
+            i = fac.find('.')
+            if i >= 0:
+                fac = fac[i + 1:]
+            if fac in techs.keys():
+                techs[fac][1].append(row)
+            else:
+                techs[fac] = [0, [row], 0]
+        jobs = {}
+        years = [ws.cell_value(model_row, 1)]
+        # set up for existing
+        for key in techs.keys():
+            jobs[key] = []
+            capacity = 0
+            for row in techs[key][1]:
+                try:
+                    capacity += ws.cell_value(row, 1)
+                except:
+                    pass
+            techs[key][0] = capacity
+            jobs[key].append([0, 0, capacity * self.jobfactors[key].operate, 0])
+        # now for transition
+        for col in range(2, ws.ncols):
+            if ws.cell_value(model_row, col) is None:
+                break
+            years.append(ws.cell_value(model_row, col))
+            for key in techs.keys():
+                capacity = 0
+                for row in techs[key][1]:
+                    try:
+                        capacity += ws.cell_value(row, col)
+                    except:
+                        pass
+                jobs[key].append([0, 0, 0, 0])
+                delta = capacity - techs[key][0]
+                if delta > 0:
+                    jobs[key][-2][0] = delta * self.jobfactors[key].manufacture * self.jobfactors[key].local_pct
+                    jobs[key][-1][1] = delta * self.jobfactors[key].install
+                    jobs[key][-1][2] = delta * self.jobfactors[key].operate
+                elif delta < 0:
+                    jobs[key][-1][3] = -delta * self.jobfactors[key].dismantle
+                    jobs[key][-1][2] = delta * self.jobfactors[key].operate
+                techs[key][0] = capacity
+                techs[key][2] = delta
+        wb.close()
+        # now open for edit to write new sheet
+        cats = ['Manufacturing', 'Construction & Installation', 'Operations & Maintenance', 'Decommissioning']
+        wb = oxl.load_workbook(self.get_filename(self.files[T].text()))
+        rpt_sht = rpt_sht.replace('Results_', 'Jobs_')
+        if rpt_sht in wb.sheetnames:
+            del wb[rpt_sht]
+        bs = wb.create_sheet(rpt_sht)
+        normal = oxl.styles.Font(name='Arial')
+        bold = oxl.styles.Font(name='Arial', bold=True)
+        bs.cell(row=1, column=1).value = 'Jobs Report'
+        bs.cell(row=1, column=1).font = bold
+        bs.cell(row=2, column=1).value = 'Technology'
+        bs.cell(row=2, column=1).font = bold
+        bs.cell(row=2, column=2).value = 'Category'
+        bs.cell(row=2, column=2).font = bold
+        for y in range(len(years)):
+            bs.cell(row=2, column=y + 3).value = years[y]
+            bs.cell(row=2, column=y + 3).font = normal
+            bs.cell(row=2, column=y + 3).alignment = oxl.styles.Alignment(wrap_text=True, vertical='bottom', horizontal='center')
+        row = 2
+        for key, value in jobs.items():
+            for c in range(4):
+                row += 1
+                bs.cell(row=row, column=1).value = key
+                bs.cell(row=row, column=1).font = normal
+                bs.cell(row=row, column=2).value = cats[c]
+                bs.cell(row=row, column=2).font = normal
+                for y in range(len(years)):
+                    bs.cell(row=row, column=y + 3).value = value[y][c]
+                    bs.cell(row=row, column=y + 3).number_format = '#,##0'
+                    bs.cell(row=row, column=y + 3).font = normal
+        lst_row = row
+        row += 1
+        bs.cell(row=row, column=1).value = 'Total Jobs'
+        bs.cell(row=row, column=1).font = bold
+        for y in range(len(years)):
+            bs.cell(row=row, column=y + 3).value = f'=SUM({ssCol(y + 3)}$3:{ssCol(y + 3)}${lst_row})'
+            bs.cell(row=row, column=y + 3).number_format = '#,##0'
+            bs.cell(row=row, column=y + 3).font = normal
+        row += 1
+        cat_row = [row + 1, 0]
+        for c in range(len(cats)):
+            row += 1
+            bs.cell(row=row, column=2).value = cats[c]
+            bs.cell(row=row, column=2).font = normal
+            for y in range(len(years)):
+                bs.cell(row=row, column=y + 3).value = f'=SUMIF($B$3:$B${lst_row},$B{row},{ssCol(y + 3)}$3:{ssCol(y + 3)}${lst_row})'
+                bs.cell(row=row, column=y + 3).number_format = '#,##0'
+                bs.cell(row=row, column=y + 3).font = normal
+        cat_row[1] = row
+        row += 1
+        tec_row = [row + 1, 0]
+        for key in techs.keys():
+            row += 1
+            bs.cell(row=row, column=1).value = key
+            bs.cell(row=row, column=1).font = normal
+            if self.job_charts:
+                bs.cell(row=row, column=2).value = key
+                bs.cell(row=row, column=2).font = normal
+          #      bs.cell(row=row, column=2).number_format = ';;;' # hide
+            for y in range(len(years)):
+                bs.cell(row=row, column=y + 3).value = f'=SUMIF($A$3:$A${lst_row},$A{row},{ssCol(y + 3)}$3:{ssCol(y + 3)}${lst_row})'
+                bs.cell(row=row, column=y + 3).number_format = '#,##0'
+                bs.cell(row=row, column=y + 3).font = normal
+        tec_row[1] = row
+        length = 0
+        for key in techs.keys():
+            length = max(length, len(key))
+            bs.column_dimensions['A'].width = max(length, 10) * 1.2
+        length = 0
+        for cat in cats:
+            length = max(length, len(cat))
+            bs.column_dimensions['B'].width = max(length, 10) #* 1.2
+        bs.freeze_panes = 'C3'
+        bs.activeCell = 'C3'
+        if self.job_charts:
+            cht_sht = rpt_sht.replace('Jobs_', 'Job_Charts_')
+            if cht_sht in wb.sheetnames:
+                del wb[cht_sht]
+            cs = wb.create_sheet(cht_sht)
+            min_col = 3
+            max_col = len(years) + 2
+            chart = BarChart(grouping='stacked', gapWidth=50)
+            values = Reference(bs, min_col=2, min_row=cat_row[0], max_col=max_col, max_row=cat_row[1])
+            chart.add_data(values, from_rows=True, titles_from_data=True)
+            xcats = Reference(bs, min_row=2, min_col=3, max_col=max_col)
+            chart.set_categories(xcats)
+            chart.title = 'Jobs by Category'
+            chart.x_axis.title = 'Year'
+            chart.y_axis.title = 'No. of Jobs'
+            chart.height = 15
+            chart.width = 30
+            cs.add_chart(chart, 'A1')
+            chart2 = BarChart(grouping='stacked', gapWidth=50)
+            values = Reference(bs, min_col=2, min_row=tec_row[0], max_col=max_col, max_row=tec_row[1])
+            chart2.add_data(values, from_rows=True, titles_from_data=True)
+            xcats = Reference(bs, min_row=2, min_col=3, max_col=max_col)
+            chart2.set_categories(xcats)
+            chart2.title = 'Jobs by Technology'
+            chart2.x_axis.title = 'Year'
+            chart2.y_axis.title = 'No. of Jobs'
+            chart2.height = 15
+            chart2.width = 30
+            cs.add_chart(chart2, 'A30')
+            cht_sht = f'and {cht_sht} sheets'
+        else:
+            cht_sht = 'sheet'
+        for sheet in wb:
+            wb[sheet.title].views.sheetView[0].tabSelected = False
+        wb.active = bs
+        wb.save(self.get_filename(self.files[T].text()))
+        self.setStatus(f'{rpt_sht} {cht_sht} added to {self.files[T].text()}')
+        return
+
     def pmClicked(self):
         def get_load_data(load_file):
             try:
@@ -2571,7 +2988,6 @@ class powerMatch(QtWidgets.QWidget):
                 for bit in bits:
                     abr += bit[0]
             return abr.upper() + '_'
-
         col_letters = ' ABCDEFGHIJKLMNOPQRSTUVWXYZ'
         self.setStatus(self.sender().text() + ' processing started')
         if self.sender().text() == 'Detail': # detailed spreadsheet?
@@ -2668,6 +3084,11 @@ class powerMatch(QtWidgets.QWidget):
                 err_msgs.append('Error accessing Optimisation')
             if self.optimisation is None:
                 self.getOptimisation(None)
+        if self.do_jobs:
+            if self.files[J].text() != '' and os.path.exists(self.get_filename(self.files[J].text())):
+                pass
+            else:
+                err_msgs.append(f'{self.file_labels[J]} file not found - {self.files[J].text()}')
         if len(err_msgs) > 1:
             self.log_status = True
             self.show_FloatStatus() # status window
@@ -3006,6 +3427,8 @@ class powerMatch(QtWidgets.QWidget):
                              'Lifetime Emissions': [st_lie, '#,##0'],
                              'Lifetime Emissions Cost': [st_lec, '#,##0'],
                              'Area': [st_are, '#,###0.00']}
+            if self.do_jobs:
+                batch_details['Jobs'] = [st_job, '#,##0']
             batch_extra = {'RE': ['#,##0.00', ['RE %age', st_cap], ['Storage %age', st_cap], ['RE %age of Total Load', st_cap]],
                            'Load Analysis': ['#,##0', ['Load met', st_tml], ['Load met %age', st_cap], ['Shortfall', st_tml], ['Total Load', st_tml],
                            ['Largest Shortfall', st_cap], ['Storage losses', st_sub], ['Surplus', st_sub], ['Surplus %age', st_cap]],
@@ -3229,7 +3652,10 @@ class powerMatch(QtWidgets.QWidget):
                         batch_pfx = get_batch_prefix(self.batch_report[g][0])
                     else:
                         batch_pfx = ''
-                    bs.cell(row=gndx, column=1).value = self.batch_report[g][0]
+                    if option == T and self.batch_report[g][0] == 'Jobs':
+                        bs.cell(row=gndx, column=1).value = 'Jobs (figures indicative only)'
+                    else:
+                        bs.cell(row=gndx, column=1).value = self.batch_report[g][0]
                     bs.cell(row=gndx, column=1).font = bold
                     if self.batch_report[g][0] in batch_extra.keys():
                         key = self.batch_report[g][0]
@@ -3308,6 +3734,7 @@ class powerMatch(QtWidgets.QWidget):
                             bs.cell(row=re_tml_row + 1, column=1).value = batch_pfx + 'Storage Contribution To Load'
                             bs.cell(row=re_tml_row + 1, column=1).font = normal
                             gndx += 2
+
                 merge_col = 1
                 last_name = ''
                 # find first varying capacity to create model name
@@ -3378,7 +3805,7 @@ class powerMatch(QtWidgets.QWidget):
                         if key == 'name' and model_row_no > 0:
                             if model_key != '':
                                 bs.cell(row=model_row_no, column=column).value = f'{model_nme}{capacities[model_key]}'
-                            elif option == T:
+                            elif capacity != '': # option == T:
                                 bs.cell(row=model_row_no, column=column).value = f'{capacity}'
                             else:
                                 bs.cell(row=model_row_no, column=column).value = f'Model {model + 1}'
@@ -3395,6 +3822,7 @@ class powerMatch(QtWidgets.QWidget):
                                 load_columns[capacity] = len(pmss_data)
                                 pmss_data.append([])
                                 load_file = self.load_files.replace('$YEAR$', capacity)
+                                # load here if no load file
                                 if self.load_dir.text() != self._load_folder:
                                     load_file = self.get_filename(load_file)
                                 pmss_data[-1] = get_load_data(load_file)
@@ -3720,15 +4148,22 @@ class powerMatch(QtWidgets.QWidget):
                             if in_chart:
                                 charts[-1].width = 20
                                 charts[-1].height = 12
+                                nocolor = []
+                                for s in range(len(charts[-1].series)):
+                                    nocolor.append(s)
+                                if charts2[-1] is not None:
+                                    for s in range(len(charts2[-1].series)):
+                                        nocolor.append(s + len(charts[-1].series))
+                                colors = PlotPalette(nocolor, lower=False, palette=48)
                                 for s in range(len(charts[-1].series)):
                                     ser = charts[-1].series[s]
                                     ser.marker.symbol = 'circle' #'dot', 'plus', 'triangle', 'x', 'picture', 'star', 'diamond', 'square', 'circle', 'dash', 'auto'
-                              #      ser.graphicalProperties.line.solidFill = "00AAAA"
+                                    ser.graphicalProperties.line.solidFill = colors[s].strip('#')
                                 if charts2[-1] is not None:
                                     for s in range(len(charts2[-1].series)):
                                         ser = charts2[-1].series[s]
                                         ser.marker.symbol = 'triangle'
-                               #         ser.graphicalProperties.line.solidFill = "00AAAA"
+                                        ser.graphicalProperties.line.solidFill = colors[s + len(charts[-1].series)].strip('#')
                                     charts2[-1].y_axis.crosses = 'max'
                                     charts[-1] += charts2[-1]
                                 if cats is not None:
@@ -3825,13 +4260,22 @@ class powerMatch(QtWidgets.QWidget):
                     if in_chart:
                         charts[-1].width = 20
                         charts[-1].height = 12
+                        nocolor = []
+                        for s in range(len(charts[-1].series)):
+                            nocolor.append(s)
+                        if charts2[-1] is not None:
+                            for s in range(len(charts2[-1].series)):
+                                nocolor.append(s + len(charts[-1].series))
+                        colors = PlotPalette(nocolor, lower=False, palette=48)
                         for s in range(len(charts[-1].series)):
                             ser = charts[-1].series[s]
                             ser.marker.symbol = 'circle' #'dot', 'plus', 'triangle', 'x', 'picture', 'star', 'diamond', 'square', 'circle', 'dash', 'auto'
+                            ser.graphicalProperties.line.solidFill = colors[s].strip('#')
                         if charts2[-1] is not None:
                             for s in range(len(charts2[-1].series)):
                                 ser = charts2[-1].series[s]
                                 ser.marker.symbol = 'triangle'
+                                ser.graphicalProperties.line.solidFill = colors[s + len(charts[-1].series)].strip('#')
                             charts2[-1].y_axis.crosses = 'max'
                             charts[-1] += charts2[-1]
                         if cats is not None:
@@ -3877,6 +4321,7 @@ class powerMatch(QtWidgets.QWidget):
                         pmss_details[fac].multiplier = value / pmss_details[fac].capacity
                     except:
                         pass
+
         self.doDispatch(year, option, pmss_details, pmss_data, re_order, dispatch_order,
                         pm_data_file, rslts_file)
 
@@ -3921,6 +4366,8 @@ class powerMatch(QtWidgets.QWidget):
             sp_d[st_lie] = lifetime_co2_sum
             sp_d[st_lec] = lifetime_co2_cost
             sp_d[st_are] = total_area
+            if self.do_jobs:
+                sp_d[st_job] = total_jobs
             sp_data.append(sp_d)
             if (self.carbon_price > 0 or option == B or option == T):
                 sp_d = [' '] * len(headers)
@@ -3990,6 +4437,8 @@ class powerMatch(QtWidgets.QWidget):
                     sp_data.append(sp_d)
                 sp_d = [' '] * len(headers)
                 sp_d[st_fac] = 'RE %age of Total ' + title + 'Load'
+                if self.optimise_total_re:
+                    re_pct = (sp_load - sf_sums[0] - ff_sum) / sp_load
                 sp_d[st_cap] = '{:.1f}%'.format((sp_load - sf_sums[0] - ff_sum) * 100. / sp_load)
                 sp_data.append(sp_d)
                 sp_data.append(' ')
@@ -4086,8 +4535,8 @@ class powerMatch(QtWidgets.QWidget):
             elif self.generators[gen].lcoe > 0:
                 if ss_row >= 0:
                     ns.cell(row=cost_row, column=col).value = '=IF(' + ssCol(col) + str(cf_row) + \
-                            '>0,' + ssCol(col) + str(sum_row) + '*Summary!' + ssCol(st_rlc + 1) + str(ss_row) + \
-                        '*Summary!' + ssCol(st_rcf + 1) + str(ss_row) + '/' + ssCol(col) + str(cf_row) + ',0)'
+                            '>0,' + ssCol(col) + str(sum_row) + '*Summary!' + ssCol(st_rlc + 1 - jm) + str(ss_row) + \
+                        '*Summary!' + ssCol(st_rcf + 1 - jm) + str(ss_row) + '/' + ssCol(col) + str(cf_row) + ',0)'
                     ns.cell(row=cost_row, column=col).number_format = '$#,##0'
                 ns.cell(row=lcog_row, column=col).value = '=IF(AND(' + ssCol(col) + str(cf_row) + '>0,' \
                         + ssCol(col) + str(cap_row) + '>0),' + ssCol(col) + str(cost_row) + '/8760/' \
@@ -4096,8 +4545,8 @@ class powerMatch(QtWidgets.QWidget):
             elif self.generators[gen].lcoe_cf == 0: # no cost facility
                 if ss_row >= 0:
                     ns.cell(row=cost_row, column=col).value = '=IF(' + ssCol(col) + str(cf_row) + \
-                            '>0,' + ssCol(col) + str(sum_row) + '*Summary!' + ssCol(st_rlc + 1) + str(ss_row) + \
-                        '*Summary!' + ssCol(st_rcf + 1) + str(ss_row) + '/' + ssCol(col) + str(cf_row) + ',0)'
+                            '>0,' + ssCol(col) + str(sum_row) + '*Summary!' + ssCol(st_rlc + 1 - jm) + str(ss_row) + \
+                        '*Summary!' + ssCol(st_rcf + 1 - jm) + str(ss_row) + '/' + ssCol(col) + str(cf_row) + ',0)'
                     ns.cell(row=cost_row, column=col).number_format = '$#,##0'
                 ns.cell(row=lcog_row, column=col).value = '=IF(AND(' + ssCol(col) + str(cf_row) + '>0,' \
                         + ssCol(col) + str(cap_row) + '>0),' + ssCol(col) + str(cost_row) + '/8760/' \
@@ -4135,6 +4584,11 @@ class powerMatch(QtWidgets.QWidget):
                 gen = fac
             else:
                 gen = pmss_details[fac].generator
+            if self.do_jobs:
+                try:
+                    genj = gen[gen.find('.') + 1:]
+                except:
+                    genj = gen
             # capacity
             ss.cell(row=ss_row, column=st_cap+1).value = '=Detail!' + ssCol(col) + str(cap_row)
             ss.cell(row=ss_row, column=st_cap+1).number_format = '#,##0.00'
@@ -4191,11 +4645,11 @@ class powerMatch(QtWidgets.QWidget):
                 ss.cell(row=ss_row, column=st_lcg+1).value = '=Detail!' + ssCol(col) + str(lcog_row)
                 ss.cell(row=ss_row, column=st_lcg+1).number_format = '$#,##0.00'
                 # ref lcoe
-                ss.cell(row=ss_row, column=st_rlc+1).value = self.generators[gen].lcoe
-                ss.cell(row=ss_row, column=st_rlc+1).number_format = '$#,##0.00'
+                ss.cell(row=ss_row, column=st_rlc+1 - jm).value = self.generators[gen].lcoe
+                ss.cell(row=ss_row, column=st_rlc+1 - jm).number_format = '$#,##0.00'
                 # ref cf
-                ss.cell(row=ss_row, column=st_rcf+1).value = self.generators[gen].lcoe_cf
-                ss.cell(row=ss_row, column=st_rcf+1).number_format = '#,##0.0%'
+                ss.cell(row=ss_row, column=st_rcf+1 - jm).value = self.generators[gen].lcoe_cf
+                ss.cell(row=ss_row, column=st_rcf+1 - jm).number_format = '#,##0.0%'
             elif self.generators[gen].lcoe_cf == 0: # no cost facility
                 # cost / yr
                 if self.remove_cost:
@@ -4208,11 +4662,11 @@ class powerMatch(QtWidgets.QWidget):
                 ss.cell(row=ss_row, column=st_lcg+1).value = '=Detail!' + ssCol(col) + str(lcog_row)
                 ss.cell(row=ss_row, column=st_lcg+1).number_format = '$#,##0.00'
                 # ref lcoe
-                ss.cell(row=ss_row, column=st_rlc+1).value = self.generators[gen].lcoe
-                ss.cell(row=ss_row, column=st_rlc+1).number_format = '$#,##0.00'
+                ss.cell(row=ss_row, column=st_rlc+1 - jm).value = self.generators[gen].lcoe
+                ss.cell(row=ss_row, column=st_rlc+1 - jm).number_format = '$#,##0.00'
                 # ref cf
-                ss.cell(row=ss_row, column=st_rcf+1).value = self.generators[gen].lcoe_cf
-                ss.cell(row=ss_row, column=st_rcf+1).number_format = '#,##0.0%'
+                ss.cell(row=ss_row, column=st_rcf+1 - jm).value = self.generators[gen].lcoe_cf
+                ss.cell(row=ss_row, column=st_rcf+1 - jm).number_format = '#,##0.0%'
             # lifetime cost
             ss.cell(row=ss_row, column=st_lic+1).value = '=IF(Detail!' + ssCol(col) + str(cost_row) \
                                                     + '>0,Detail!' + ssCol(col) + str(cost_row) + '*lifetime,"")'
@@ -4247,6 +4701,13 @@ class powerMatch(QtWidgets.QWidget):
                 ss.cell(row=ss_row, column=st_are+1).value = '=Detail!' + ssCol(col) + str(cap_row) +\
                                                              '*' + str(self.generators[gen].area)
                 ss.cell(row=ss_row, column=st_are+1).number_format = '#,##0.00'
+            # jobs
+            if self.do_jobs:
+                ss.cell(row=ss_row, column=st_job+1).value = f'=IF({ssCol(st_cac+1)}{ss_row}>0,{ssCol(st_cap+1)}{ss_row}*(' + \
+                                                             f'{self.jobfactors[genj].manufacture}*{self.jobfactors[genj].local_pct}+' + \
+                                                             f'{self.jobfactors[genj].install}),0)+' + \
+                                                             f'{self.jobfactors[genj].operate}*{ssCol(st_cap+1)}{ss_row}'
+                ss.cell(row=ss_row, column=st_job+1).number_format = '#,##0'
             return dd_tml_sum, dd_re_sum
 
         def detail_summary_total(ss_row, title='', base_row='', back_row=''):
@@ -4256,7 +4717,9 @@ class powerMatch(QtWidgets.QWidget):
                 ss.cell(row=3, column=col).font = bold
                 ss.cell(row=3, column=col).alignment = oxl.styles.Alignment(wrap_text=True, vertical='bottom', horizontal='center')
                 ss.cell(row=ss_row, column=col).font = bold
-            for col in [st_cap, st_tml, st_sub, st_cst, st_emi, st_emc, st_cac, st_lic, st_lie, st_lec, st_are]:
+            for col in [st_cap, st_tml, st_sub, st_cst, st_emi, st_emc, st_cac, st_lic, st_lie, st_lec, st_are, st_job]:
+                if col == st_job and not self.do_jobs:
+                    continue
                 if back_row != '':
                     strt = ssCol(col, base=0) + back_row + '+'
                 else:
@@ -4265,7 +4728,7 @@ class powerMatch(QtWidgets.QWidget):
                         base_row + ':' + ssCol(col, base=0) + str(ss_row - 1) + ')'
                 if col in [st_cap, st_are]:
                     ss.cell(row=ss_row, column=col+1).number_format = '#,##0.00'
-                elif col in [st_tml, st_sub, st_emi, st_lie]:
+                elif col in [st_tml, st_sub, st_emi, st_lie, st_job]:
                     ss.cell(row=ss_row, column=col+1).number_format = '#,##0'
                 else:
                     ss.cell(row=ss_row, column=col+1).number_format = '$#,##0'
@@ -4466,6 +4929,11 @@ class powerMatch(QtWidgets.QWidget):
     # doDispatch: The "guts" of Powermatch processing. Have a single calculation algorithm
     # for Summary, Powermatch (detail), and Optimise. The detail makes it messy
     # Note: For Batch pmss_data is reused so don't update it in doDispatch
+
+        if self.do_jobs:
+            jm = 0
+        else:
+            jm = 1
         the_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
         if self.surplus_sign < 0:
             sf_test = ['>', '<']
@@ -4605,8 +5073,10 @@ class powerMatch(QtWidgets.QWidget):
             ss.cell(row=3, column=st_lie+1).value = headers[st_lie] # lifetime emissions
             ss.cell(row=3, column=st_lec+1).value = headers[st_lec] # lifetime emissions cost
             ss.cell(row=3, column=st_are+1).value = headers[st_are] # area
-            ss.cell(row=3, column=st_rlc+1).value = headers[st_rlc] # reference lcoe
-            ss.cell(row=3, column=st_rcf+1).value = headers[st_rcf] # reference cf
+            if self.do_jobs:
+                ss.cell(row=3, column=st_job+1).value = headers[st_job] # job years
+            ss.cell(row=3, column=st_rlc+1 - jm).value = headers[st_rlc - jm] # reference lcoe
+            ss.cell(row=3, column=st_rcf+1 - jm).value = headers[st_rcf - jm] # reference cf
             ss_row = 3
             ss_re_fst_row = 4
             fall_row = 9
@@ -5162,6 +5632,8 @@ class powerMatch(QtWidgets.QWidget):
             lifetime_co2_sum = 0.
             lifetime_co2_cost = 0.
             total_area = 0.
+            total_jobs = 0.
+            #this logic for gen2 is pretty crappy need to revisit
             for sp in range(len(sp_data)):
                 gen = sp_data[sp][st_fac]
                 if gen in storage_names:
@@ -5204,6 +5676,11 @@ class powerMatch(QtWidgets.QWidget):
                     pass
                 if gen not in self.generators.keys():
                     continue
+                if self.do_jobs:
+                    try:
+                        genj = gen[gen.find('.') + 1:]
+                    except:
+                        genj = gen
                 ndx = 3
                 if gen in storage_names:
                     ndx = 2
@@ -5253,8 +5730,8 @@ class powerMatch(QtWidgets.QWidget):
                         sp_data[sp][st_lco] = sp_data[sp][st_lcg]
                     sp_data[sp][st_cfa] = '{:.1f}%'.format(sp_data[sp][st_cfa] * 100.)
                     cost_sum += sp_data[sp][st_cst]
-                    sp_data[sp][st_rlc] = self.generators[gen].lcoe
-                    sp_data[sp][st_rcf] = '{:.1f}%'.format(lcoe_cf * 100.)
+                    sp_data[sp][st_rlc - jm] = self.generators[gen].lcoe
+                    sp_data[sp][st_rcf - jm] = '{:.1f}%'.format(lcoe_cf * 100.)
                 elif self.generators[gen].lcoe_cf == 0: # no cost facility
                     if option != T and self.remove_cost and sp_data[sp][ndx] == 0:
                         sp_data[sp][st_cst] = 0
@@ -5282,6 +5759,19 @@ class powerMatch(QtWidgets.QWidget):
                 if self.generators[gen].area > 0:
                     sp_data[sp][st_are] = sp_data[sp][st_cap] * self.generators[gen].area
                     total_area += sp_data[sp][st_are]
+                if self.do_jobs:
+                    jobs = 0.
+                    try:
+                        if sp_data[sp][st_cac] > 0:
+                            jobs = (self.jobfactors[genj].manufacture * self.jobfactors[genj].local_pct + self.jobfactors[genj].install) * sp_data[sp][st_cap]
+                    except:
+                        pass
+                    try:
+                        jobs += self.jobfactors[genj].operate * sp_data[sp][st_cap] #* max_lifetime
+                    except:
+                        pass
+                    sp_data[sp][st_job] = jobs
+                    total_jobs += jobs
             sf_sums = [0., 0., 0.]
             for sf in range(len(shortfall)):
                 if shortfall[sf] > 0:
@@ -5359,13 +5849,13 @@ class powerMatch(QtWidgets.QWidget):
                             sp_d[st_lcg] = sp_d[st_cst] / sp_d[st_tml]
                             sp_d[st_lco] = sp_d[st_lcg]
                         sp_d[st_cfa] = '{:.1f}%'.format(sp_d[st_cfa] * 100.)
-                        sp_d[st_rlc] = self.generators[gen].lcoe
-                        sp_d[st_rcf] = '{:.1f}%'.format(lcoe_cf * 100.)
+                        sp_d[st_rlc - jm] = self.generators[gen].lcoe
+                        sp_d[st_rcf - jm] = '{:.1f}%'.format(lcoe_cf * 100.)
                     elif self.generators[gen].lcoe_cf == 0: # no cost facility
                         sp_d[st_cst] = 0
                         sp_d[st_lcg] = 0
                         sp_d[st_lco] = 0
-                        sp_d[st_rlc] = self.generators[gen].lcoe
+                        sp_d[st_rlc - jm] = self.generators[gen].lcoe
                     sp_d[st_lic] = sp_d[st_cst] * max_lifetime
                     lifetime_sum += sp_d[st_lic]
                     if self.generators[gen].emissions > 0:
@@ -5385,6 +5875,16 @@ class powerMatch(QtWidgets.QWidget):
                         sp_d[st_lcc] = sp_d[st_lco]
                     if self.generators[gen].area > 0:
                         sp_d[st_are] = sp_d[st_cap] * self.generators[gen].area
+                    if self.do_jobs:
+                        try:
+                            jobs = 0
+                            if sp_data[sp][st_cac] > 0:
+                                jobs = (self.jobfactors[genj].manufacture * self.jobfactors[genj].local_pct + self.jobfactors[genj].install) * sp_data[sp][st_cap]
+                            jobs += self.jobfactors[genj].operate * sp_data[sp][st_cap]
+                            sp_d[st_job] = jobs
+                            total_jobs += jobs
+                        except:
+                            pass
                     sp_data.append(sp_d)
                 if gen_sum > 0:
                     gs = cost_sum / gen_sum
@@ -5408,7 +5908,10 @@ class powerMatch(QtWidgets.QWidget):
                         if amt > load_max:
                             load_max = amt
                             load_hr = h
-                summary_totals('Underlying ')
+                if option == O or option == O1:
+                    load_pct, surp_pct, re_pct = summary_totals('Underlying ')
+                else:
+                    summary_totals('Underlying ')
             if corr_data is not None:
                 sp_data.append(' ')
                 sp_data = sp_data + corr_data
@@ -5430,7 +5933,7 @@ class powerMatch(QtWidgets.QWidget):
             if option == B or option == T:
                 if self.optimise_debug:
                     sp_pts = [0] * len(headers)
-                    for p in [st_cap, st_lcg, st_lco, st_lcc, st_max, st_bal, st_rlc, st_are]:
+                    for p in [st_cap, st_lcg, st_lco, st_lcc, st_max, st_bal, st_rlc - jm, st_are]:
                         sp_pts[p] = 2
                     if corr_data is not None:
                         sp_pts[st_cap] = 3 # compromise between capacity (2) and correlation (4)
@@ -5447,7 +5950,6 @@ class powerMatch(QtWidgets.QWidget):
                 else:
                     lcoe = gs
                 if gen_sum == 0:
-                    re_pct = 0
                     load_pct = 0
                     re_pct = 0
                 multi_value = {'lcoe': lcoe, #lcoe. lower better
@@ -5482,7 +5984,7 @@ class powerMatch(QtWidgets.QWidget):
                 sp_data.append(['Generators worksheet', str(self.files[G].text()) \
                                 + '.' + str(self.sheets[G].currentText())])
             sp_pts = [0] * len(headers)
-            for p in [st_cap, st_lcg, st_lco, st_lcc, st_max, st_bal, st_rlc, st_are]:
+            for p in [st_cap, st_lcg, st_lco, st_lcc, st_max, st_bal, st_rlc - jm, st_are]:
                 sp_pts[p] = 2
             if corr_data is not None:
                 sp_pts[st_cap] = 3 # compromise between capacity (2) and correlation (4)
@@ -5598,8 +6100,8 @@ class powerMatch(QtWidgets.QWidget):
                 ss.cell(row=ss_row, column=st_cac+1).number_format = '$#,##0'
             elif self.generators[gen].lcoe > 0:
                 ns.cell(row=cost_row, column=col + nc).value = '=IF(' + ssCol(col + nc) + str(cf_row) + \
-                        '>0,' + ssCol(col + nc) + str(sum_row) + '*Summary!' + ssCol(st_rlc + 1) + str(ss_row) + \
-                        '*Summary!' + ssCol(st_rcf + 1) + str(ss_row) + '/' + ssCol(col + nc) + str(cf_row) + ',0)'
+                        '>0,' + ssCol(col + nc) + str(sum_row) + '*Summary!' + ssCol(st_rlc + 1 - jm) + str(ss_row) + \
+                        '*Summary!' + ssCol(st_rcf + 1 - jm) + str(ss_row) + '/' + ssCol(col + nc) + str(cf_row) + ',0)'
                 ns.cell(row=cost_row, column=col + nc).number_format = '$#,##0'
                 # cost / yr
                 if self.remove_cost:
@@ -5619,18 +6121,18 @@ class powerMatch(QtWidgets.QWidget):
                 ss.cell(row=ss_row, column=st_lco+1).value = '=Detail!' + ssCol(col + nc) + str(lcog_row)
                 ss.cell(row=ss_row, column=st_lco+1).number_format = '$#,##0.00'
                 # ref lcoe
-                ss.cell(row=ss_row, column=st_rlc+1).value = self.generators[gen].lcoe
-                ss.cell(row=ss_row, column=st_rlc+1).number_format = '$#,##0.00'
+                ss.cell(row=ss_row, column=st_rlc+1 - jm).value = self.generators[gen].lcoe
+                ss.cell(row=ss_row, column=st_rlc+1 - jm).number_format = '$#,##0.00'
                 # ref cf
                 if self.generators[gen].lcoe_cf == 0:
-                    ss.cell(row=ss_row, column=st_rcf+1).value = '=' + ssCol(st_cfa+1) + str(ss_row)
+                    ss.cell(row=ss_row, column=st_rcf+1 - jm).value = '=' + ssCol(st_cfa+1) + str(ss_row)
                 else:
-                    ss.cell(row=ss_row, column=st_rcf+1).value = self.generators[gen].lcoe_cf
-                ss.cell(row=ss_row, column=st_rcf+1).number_format = '#,##0.0%'
+                    ss.cell(row=ss_row, column=st_rcf+1 - jm).value = self.generators[gen].lcoe_cf
+                ss.cell(row=ss_row, column=st_rcf+1 - jm).number_format = '#,##0.0%'
             elif self.generators[gen].lcoe_cf == 0: # no cost facility
                 ns.cell(row=cost_row, column=col + nc).value = '=IF(' + ssCol(col + nc) + str(cf_row) + \
-                        '>0,' + ssCol(col + nc) + str(sum_row) + '*Summary!' + ssCol(st_rlc + 1) + str(ss_row) + \
-                        '*Summary!' + ssCol(st_rcf + 1) + str(ss_row) + '/' + ssCol(col + nc) + str(cf_row) + ',0)'
+                        '>0,' + ssCol(col + nc) + str(sum_row) + '*Summary!' + ssCol(st_rlc + 1 - jm) + str(ss_row) + \
+                        '*Summary!' + ssCol(st_rcf + 1 - jm) + str(ss_row) + '/' + ssCol(col + nc) + str(cf_row) + ',0)'
                 ns.cell(row=cost_row, column=col + nc).number_format = '$#,##0'
                 # cost / yr
                 if self.remove_cost:
@@ -5650,14 +6152,14 @@ class powerMatch(QtWidgets.QWidget):
                 ss.cell(row=ss_row, column=st_lco+1).value = '=Detail!' + ssCol(col + nc) + str(lcog_row)
                 ss.cell(row=ss_row, column=st_lco+1).number_format = '$#,##0.00'
                 # ref lcoe
-                ss.cell(row=ss_row, column=st_rlc+1).value = self.generators[gen].lcoe
-                ss.cell(row=ss_row, column=st_rlc+1).number_format = '$#,##0.00'
+                ss.cell(row=ss_row, column=st_rlc+1 - jm).value = self.generators[gen].lcoe
+                ss.cell(row=ss_row, column=st_rlc+1 - jm).number_format = '$#,##0.00'
                 # ref cf
                 if self.generators[gen].lcoe_cf == 0:
-                    ss.cell(row=ss_row, column=st_rcf+1).value = '=' + ssCol(st_cfa+1) + str(ss_row)
+                    ss.cell(row=ss_row, column=st_rcf+1 - jm).value = '=' + ssCol(st_cfa+1) + str(ss_row)
                 else:
-                    ss.cell(row=ss_row, column=st_rcf+1).value = self.generators[gen].lcoe_cf
-                ss.cell(row=ss_row, column=st_rcf+1).number_format = '#,##0.0%'
+                    ss.cell(row=ss_row, column=st_rcf+1 - jm).value = self.generators[gen].lcoe_cf
+                ss.cell(row=ss_row, column=st_rcf+1 - jm).number_format = '#,##0.0%'
             if self.generators[gen].emissions > 0:
                 ns.cell(row=emi_row, column=col + nc).value = '=' + ssCol(col + nc) + str(sum_row) \
                         + '*' + str(self.generators[gen].emissions)
@@ -5726,6 +6228,20 @@ class powerMatch(QtWidgets.QWidget):
                 ss.cell(row=ss_row, column=st_are+1).value = '=Detail!' + ssCol(col) + str(cap_row) +\
                                                              '*' + str(self.generators[gen].area)
                 ss.cell(row=ss_row, column=st_are+1).number_format = '#,##0.00'
+            # jobs
+            if self.do_jobs:
+                try:
+                    genj = gen[gen.find('.') + 1:]
+                except:
+                    genj = gen
+                try:
+                    ss.cell(row=ss_row, column=st_job+1).value = f'=IF({ssCol(st_cac+1)}{ss_row}>0,{ssCol(st_cap+1)}{ss_row}*(' + \
+                                                                 f'{self.jobfactors[genj].manufacture}*{self.jobfactors[genj].local_pct}+' + \
+                                                                 f'{self.jobfactors[genj].install}),0)+' + \
+                                                                 f'{self.jobfactors[genj].operate}*{ssCol(st_cap+1)}{ss_row}'
+                    ss.cell(row=ss_row, column=st_job+1).number_format = '#,##0'
+                except:
+                    pass
         if is_storage:
             ns.cell(row=emi_row, column=col - 2).value = '=MIN(' + ssCol(col - 2) + str(hrows) + \
                     ':' + ssCol(col - 2) + str(hrows + 8759) + ')'
@@ -6161,12 +6677,15 @@ class powerMatch(QtWidgets.QWidget):
             for chromosome in population:
                 # now get random amount of generation per technology (both RE and non-RE)
                 for fac, value in opt_order.items():
-                    capacity = value[2]
-                    for c in range(value[0], value[1]):
-                        if chromosome[c]:
-                            capacity = capacity + capacities[c]
                     try:
-                        pmss_details[fac].multiplier = capacity / pmss_details[fac].capacity
+                        capacity = value[2]
+                        for c in range(value[0], value[1]):
+                            if chromosome[c]:
+                                capacity = capacity + capacities[c]
+                        try:
+                            pmss_details[fac].multiplier = capacity / pmss_details[fac].capacity
+                        except:
+                            print('PME2b:', fac, capacity, pmss_details[fac].capacity)
                     except:
                         print('PME2:', fac, capacity, pmss_details[fac].capacity)
                 multi_value, op_data, extra = self.doDispatch(year, option, pmss_details, pmss_data, re_order,
@@ -6342,11 +6861,14 @@ class powerMatch(QtWidgets.QWidget):
             if cmin == cmax:
                 return
             for c in range(len(colours)):
-                colours[c] = (colours[c] - cmin) / (cmax - cmin)
+                try:
+                    colours[c] = (colours[c] - cmin) / (cmax - cmin)
+                except:
+                    pass
             scolours = sorted(colours)
             cvals  = [-1., 0, 1]
             colors = ['green' ,'orange', 'red']
-            norm = plt.Normalize(min(cvals), max(cvals))
+            norm = plt.Normalize(vmin=min(cvals), vmax=max(cvals))
             tuples = list(zip(map(norm,cvals), colors))
             cmap = matplotlib.colors.LinearSegmentedColormap.from_list('', tuples)
             fig = plt.figure(title + QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), '_yyyy-MM-dd_hhmm'))
@@ -6380,7 +6902,7 @@ class powerMatch(QtWidgets.QWidget):
             mx.set_zlabel(self.targets[multi_order[0]][6])
             zp = ZoomPanX()
             f = zp.zoom_pan(mx, base_scale=1.2, annotate=True)
-            plt.show()
+            plt.show(block=True)
             if zp.datapoint is not None: # user picked a point
                 if zp.datapoint[0][0] < 0: # handle problem in matplotlib sometime after version 3.0.3
                     best = [0, 999]
@@ -6731,6 +7253,9 @@ class powerMatch(QtWidgets.QWidget):
                     opt_order[gen][1] = len(capacities) # last entry
                 elif self.optimisation[gen].approach == 'Range':
                     if self.optimisation[gen].capacity_max == self.optimisation[gen].capacity_min:
+                        if self.optimisation[gen].capacity_max is None or self.optimisation[gen].capacity_max == 0:
+                            opt_order[gen][1] = opt_order[gen][0]
+                            continue
                         capacities.extend([0])
                         opt_order[gen][1] = len(capacities)
                         opt_order[gen][2] = self.optimisation[gen].capacity_min
@@ -6860,6 +7385,23 @@ class powerMatch(QtWidgets.QWidget):
         lowest_score = best_score
         lud = '='
         # Now we'll go through the generations of genetic algorithm
+        if do_lcoe:
+            self.setStatus('Final LCOE: $%.2f' % best_score)
+            fig = 'optimise_lcoe'
+            titl = 'Optimise LCOE using Genetic Algorithm'
+            ylbl = 'Best LCOE ($/MWh)'
+        else:
+            fig = 'optimise_multi'
+            titl = 'Optimise Multi using Genetic Algorithm'
+            ylbl = 'Best Weight'
+        matplotlib.rcParams['savefig.directory'] = self.scenarios
+        plt.ion()
+        fig2 = plt.figure(fig + QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),
+                   '_yyyy-MM-dd_hhmm'))
+        lx = plt.subplot(111)
+        x = list(range(1, len(best_score_progress) + 1))
+        iteration = len(x)
+        plt.title(titl)
         for generation in range(1, maximum_generation):
             lcoe_status = ''
             multi_status = ''
@@ -6967,6 +7509,14 @@ class powerMatch(QtWidgets.QWidget):
                 else:
                     mud = '<html>&uarr;</html>'
                 last_multi_score = best_multi
+            # Plot progress
+            iteration += 1
+            x.append(iteration)
+            lx.plot(x, best_score_progress)
+            xlabel = f'Optimise Cycle ({iteration} iterations)'
+            lx.set_xlabel(xlabel)
+            lx.set_ylabel(ylbl)
+            plt.draw()
         if self.debug:
             try:
                 self.db_file.close()
@@ -6997,30 +7547,8 @@ class powerMatch(QtWidgets.QWidget):
         self.progressbar.setHidden(True)
         self.progressbar.setValue(0)
         # GA has completed required generation
-        if do_lcoe:
-            self.setStatus('Final LCOE: $%.2f' % best_score)
-            fig = 'optimise_lcoe'
-            titl = 'Optimise LCOE using Genetic Algorithm'
-            ylbl = 'Best LCOE ($/MWh)'
-        else:
-            fig = 'optimise_multi'
-            titl = 'Optimise Multi using Genetic Algorithm'
-            ylbl = 'Best Weight'
         if do_multi:
             self.setStatus('Final Weight: %.4f' % multi_best_weight)
-        # Plot progress
-        x = list(range(1, len(best_score_progress)+ 1))
-        matplotlib.rcParams['savefig.directory'] = self.scenarios
-        plt.figure(fig + QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(),
-                   '_yyyy-MM-dd_hhmm'))
-        lx = plt.subplot(111)
-        plt.title(titl)
-        lx.plot(x, best_score_progress)
-        lx.set_xlabel('Optimise Cycle (' + str(len(best_score_progress)) + ' iterations)')
-        lx.set_ylabel(ylbl)
-        zp = ZoomPanX()
-        f = zp.zoom_pan(lx, base_scale=1.2, annotate=True)
-        plt.show()
         pick = None
         pickf = None
         if do_multi:
@@ -7040,8 +7568,12 @@ class powerMatch(QtWidgets.QWidget):
                         pickf = pickf + pick2
                     except:
                         pickf = pick2
+        if self.do_jobs:
+            jm = 0
+        else:
+            jm = 1
         op_pts = [0] * len(headers)
-        for p in [st_lcg, st_lco, st_lcc, st_max, st_bal, st_rlc, st_are]:
+        for p in [st_lcg, st_lco, st_lcc, st_max, st_bal, st_rlc - jm, st_are]:
             op_pts[p] = 2
         op_pts[st_cap] = 3
         if self.more_details:
@@ -7236,15 +7768,23 @@ class powerMatch(QtWidgets.QWidget):
             frame.setLineWidth(1)
             frame.setLayout(gri)
             hbox.addWidget(frame)
-   #     grid.addWidget(show, rw, 1)
-    #    show.clicked.connect(optDialog.close)
-        chooseDialog.setLayout(hbox)
+        scroll = QtWidgets.QScrollArea()
+     #   scroll.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
+     #   scroll.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        scroll.setWidgetResizable(True)
+        widget = QtWidgets.QWidget()
+        widget.setLayout(hbox)
+        scroll.setWidget(widget)
+        vbox = QtWidgets.QVBoxLayout()
+        vbox.addWidget(scroll)
+        chooseDialog.setLayout(vbox)
         chooseDialog.setWindowTitle('Choose Optimal Generator Mix')
         chooseDialog.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
      #  this is a big of a kluge but I couldn't get it to behave
         self.opt_choice = ''
         chooseDialog.exec_()
         del chooseDialog
+        plt.close('all')
         try:
             h = chrom_hdrs.index(self.opt_choice)
         except:
@@ -7297,14 +7837,6 @@ class powerMatch(QtWidgets.QWidget):
             msgbox.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
             reply = msgbox.exec_()
             if reply == QtWidgets.QMessageBox.Yes:
-                check_list = []
-                tot_row = 0
-                save_opt_rows = False
-                for o_r in range(len(op_data[h])):
-                    if op_data[h][o_r][0] == 'Total':
-                        break
-                    if op_data[h][o_r][0] != 'RE Contribution To Load':
-                        check_list.append(o_r)
                 if self.files[B].text() != '':
                     newfile = self.get_filename(self.files[B].text())
                 else:
@@ -7334,117 +7866,21 @@ class powerMatch(QtWidgets.QWidget):
                 if wb.worksheets[0].max_column > 1024:
                     self.clean_batch_sheet(B)
                     ds = oxl.load_workbook(self.get_filename(self.files[B].text()))
-                batch_input_sheet = wb.worksheets[0]
-                batch_input_sheet.protection.sheet = False
-                normal = oxl.styles.Font(name='Arial')
-                bold = oxl.styles.Font(name='Arial', bold=True)
-                col = batch_input_sheet.max_column + 1
-                fst_row = -1
-                if col == 4: # possibly only chart stuff in columns 2 and 3
-                    get_out = False
-                    for col in range(3, 1, -1):
-                        for row in range(1, batch_input_sheet.max_row + 1):
-                            if batch_input_sheet.cell(row=row, column=col).value is not None:
-                                col += 1
-                                get_out = True
-                                break
-                            if batch_input_sheet.cell(row=row, column=1).value == 'Total':
-                                break
-                        if get_out:
-                            break
-                for row in range(1, batch_input_sheet.max_row + 1):
-                    if batch_input_sheet.cell(row=row, column=1).value is None:
-                        continue
-                    if batch_input_sheet.cell(row=row, column=1).value in ['Model', 'Model Label', 'Technology', 'Year']:
-                        new_cell = batch_input_sheet.cell(row=row, column=col)
-                        new_cell.value = QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'MM-dd hh:mm')
-                        msg += " Added to batch as '" + new_cell.value + "' (column " + ssCol(col) + ')'
-                        continue
-                    if batch_input_sheet.cell(row=row, column=1).value == 'Capacity (MW)':
-                        fst_row = row + 1
-                        cell = batch_input_sheet.cell(row=row, column=col - 1)
-                        new_cell = batch_input_sheet.cell(row=row, column=col)
-                        new_cell.value = 'MW'
-                        if cell.has_style:
-                            new_cell.font = copy(cell.font)
-                            new_cell.border = copy(cell.border)
-                            new_cell.fill = copy(cell.fill)
-                            new_cell.number_format = copy(cell.number_format)
-                            new_cell.protection = copy(cell.protection)
-                            new_cell.alignment = copy(cell.alignment)
-                        continue
-                    if batch_input_sheet.cell(row=row, column=1).value == 'Optimisation Parameters':
-                        save_opt_rows = True
-                        break
-                    for o_r in range(len(op_data[h])):
-                        if op_data[h][o_r][0] == batch_input_sheet.cell(row=row, column=1).value:
-                            if op_data[h][o_r][0] == 'Total' and col > 2:
-                                cell = batch_input_sheet.cell(row=row, column=2)
-                            else:
-                                cell = batch_input_sheet.cell(row=row, column=col - 1)
-                            new_cell = batch_input_sheet.cell(row=row, column=col)
+                adj_list = {}
+                for o_r in range(len(op_data[h])):
+                    if isinstance(op_data[h][o_r], list):
+                        if op_data[h][o_r][0][:10] == 'Total Load':
+                            adj_list['Load'] = op_data[h][o_r][2]
+                        else:
                             try:
-                                new_cell.value = float(op_data[h][o_r][1])
+                                adj_list[op_data[h][o_r][0]] = op_data[h][o_r][1]
                             except:
-                                try:
-                                    new_cell.value = op_data[h][o_r][1]
-                                except:
-                                    pass
-                            if cell.has_style:
-                                new_cell.font = copy(cell.font)
-                                new_cell.border = copy(cell.border)
-                                new_cell.fill = copy(cell.fill)
-                                new_cell.protection = copy(cell.protection)
-                                new_cell.alignment = copy(cell.alignment)
-                                if col == 2:
-                                    new_cell.font = normal
-                                    new_cell.number_format = '#0.00'
-                                else:
-                                    new_cell.number_format = copy(cell.number_format)
-                            elif col == 2:
-                                new_cell.font = normal
-                                new_cell.number_format = '#0.00'
-                            try:
-                                i = check_list.index(o_r)
-                                del check_list[i]
-                            except:
-                                pass
-                    if batch_input_sheet.cell(row=row, column=1).value == 'Total':
-                        tot_row = row
-                if save_opt_rows: # want optimisation?
-                    for o_r in range(op_op_prm, len(op_data[h])):
-                        row += 1
-                        new_cell = batch_input_sheet.cell(row=row, column=1)
-                        new_cell.value = op_data[h][o_r][0]
-                        new_cell = batch_input_sheet.cell(row=row, column=col)
-                        try:
-                            new_cell.value = float(op_data[h][o_r][1])
-                        except:
-                            new_cell.value = op_data[h][o_r][1]
-                if len(check_list) > 0:
-                    check_list.reverse()
-                    if col > 2:
-                        cell = batch_input_sheet.cell(row=fst_row, column=2)
-                    else:
-                        cell = batch_input_sheet.cell(row=fst_row, column=col)
-                    for o_r in check_list:
-                        batch_input_sheet.insert_rows(tot_row)
-                        new_cell = batch_input_sheet.cell(row=tot_row, column=1)
-                        new_cell.value = op_data[h][o_r][0]
-                        new_cell = batch_input_sheet.cell(row=tot_row, column=col)
-                        try:
-                            new_cell.value = float(op_data[h][o_r][1])
-                        except:
-                            new_cell.value = op_data[h][o_r][1]
-                        if cell.has_style:
-                            new_cell.font = copy(cell.font)
-                            new_cell.border = copy(cell.border)
-                            new_cell.fill = copy(cell.fill)
-                            new_cell.number_format = copy(cell.number_format)
-                            new_cell.protection = copy(cell.protection)
-                            new_cell.alignment = copy(cell.alignment)
-                wb.save(self.get_filename(self.files[B].text()))
-                self.setStatus(msg)
+                                adj_list[op_data[h][o_r][0]] = ''
+                    elif op_data[h][o_r] != '':
+                        adj_list[op_data[h][o_r]] = ''
+                add_msg = add_to_batch(wb, self.get_filename(self.files[B].text()), adj_list)
+                ##QtWidgets.QMessageBox.about(self, 'SIREN - Add to Batch', add_msg)
+                self.setStatus(add_msg)
         if self.adjust.isChecked():
             self.adjustto = {}
             for fac, value in sorted(pmss_details.items()):
