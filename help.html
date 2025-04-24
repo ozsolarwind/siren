@@ -2408,6 +2408,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">In producing the Summary table this option indicates to remove the costs for generators that were not used in the calculation; leading to a lower overall LCOE. The default is True</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>reserve_committed</dfn></td>
+<td class="none">When calculating RE generation to meet load this option will reduce the RE committment by any minimum capacity (Capacity Min) Constraint for generators. The default is True</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>results_file</dfn></td>
 <td class="none">Filename for Powermatch output (report) spreadsheet</td>
 </tr>
@@ -3802,7 +3806,7 @@ The order in which the dispatchable technologies will be processed by Powermatch
 <tr><td class="none"><dfn>Variable OM (or VOM) (c)</dfn></td><td class="none">Variable Operations and Maintenance costs per MW/h</td></tr>
 </table>
 <p>Powermatch will calculate costs in either of two ways, either by using a Reference LCOE and CF (<em>(l)</em> fields) or by using input costs (<em>(c)</em> fields) . If Capex is present it will use input costs otherwise it will use Reference LCOE. The option is chosen for each facility<em>(*)</em> fields are required for either method.</p>
-<h4>Constraints</h4>
+<h4 id="pmcons">Constraints</h4>
 <p>Utilisation of each dispatchable generator and storage facility can be constrained by Powermatch in a number of ways. All figures, other than times (<em>... Start</em> and <em>... Time</em>), are expressed as a percentage. In the tables the values will be displayed as a decimal fraction (0.00 to 1.00). All figures are hourly except for Parasitic Loss which is daily. The approach Powermatch uses is rather simplistic in that any losses need to cater for any loss of efficiency in storing energy or retrieving energy. The constraints are:
 <table border="0" class="none" style="margin-left:35px">
 <tr><td class="none" style="width: 8%;"><dfn>Name</dfn></td><td class="none">Name of the Constraint</td></tr>
@@ -3972,6 +3976,8 @@ The order in which the dispatchable technologies will be processed by Powermatch
 <li>If you have the <em>remove_cost</em> property set to the default value of True you may get change in batch output figures, such as LCOE, that are due to removing these costs rather than a more optimal set of input capacities</li>
 </ul>
 </p>
+</p>See <a href="#pmab">below</a> for more details on Batch and Batch Charts.
+</p>
 </li>
 <div class="experiment">
 <li><strong>Transition</strong>. This option can assist with modelling a transition from a &ldquo;current&rdquo; state to a future state with annual changes to technologies. The option uses a Batch file as input. For convenience there is an additional menu field for a Transition file, however, the file is idential to a Batch file. You create a model for each year with the planned additional capacities for that year. Powermatch will use the load profile for that year. To determine the capital cost for Generators it will calculate the average cost based upon the capacities for each year. To work corectly the models (may) need to be in ascending order by year. It relies on the load profile and Generators table names (sheet names) to include the year. The year can be passed either in the <dfn>Model Label</dfn> or an addiitonal <drn>year</dfn> row. When using this option the <em>remove_cost</em> cost option is ignored (set to False) to ensure capital costs are captured for a new technology even if it is not used. The report for each year is the cumulative cost up to that point and not the incremental cost
@@ -3992,7 +3998,7 @@ The order in which the dispatchable technologies will be processed by Powermatch
 <tr><td class="none"><dfn>Optimisation Parameters<dfn></td><td class="none">If desired this should be the last entry (even below any Charts)</td></tr>
 </table>
 </ul>
-</p>See below for more details on optimisation.
+</p>See <a href="#pmao">below</a> for more details on optimisation.
 </p></li>
 <li><strong>Preferences</strong>. Edit the Preferences file
 </p></li>
@@ -4002,6 +4008,20 @@ The order in which the dispatchable technologies will be processed by Powermatch
 <li><strong>TML Detail</strong>. The detailed <strong>Detail</strong> spreadsheet produced by Powermatch contains generation figures for each RE technology but not how that generation has contributed &ldquo;to meet load&rdquo; and charge storage. This button will invoke a program, <a href="#pmtmldetail"><code>pmtmldetail</code></a>, that will create an additional workbook that has a worksheet that provides this additional detail. The file can be used as input to <a href="#powerplot"><code>powerplot</code></a>
 </li>
 </div>
+</ul>
+<h4>Powermatch Dispatch. How load is met</h4>
+<p>Powermatch has a relatively simple process to meet load (demand). It models generation hourly and applies technologies, &ldquo;one at a time&rdquo;, in a defined order, the Dispatch Order, to meet load. The aim is to meet any shortfall in generation to meet the load and if possible use any surplus to recharge storage. Firstly, it dispatches RE technology, then storage and fossil-fuelled or other &ldquo;dispatchable&rdquo; generation. The (preferred) order is:
+<ol>
+<li>Renewable energy. Powermatch uses the input from Powermap and treats all RE technologies as a group. It allocates generation to meet load (TML) across these technologies in the ratio of the generation produced by each of the RE technologies for each hour</li>
+<li>Storage. With a mix of wind and PV, there is likely to be a shortfall at night, and a surplus during the day. Powermatch directs this surplus into storage. Typically, this is some sort of battery storage, but any type of storage can be modelled. The storage is available to meet load when there are shortfalls in direct RE generation. It is possible to place Storage after other generation in the defined Dispatch Order but not recommended</li>
+<li>Other generation. Finally, if there are still shortfalls at different periods of the day, fossil-fuelled or other dispatchable generation is used in the defined Dispatch Order to meet the load</li>
+</ol>
+<p>Some other notes:</p>
+<ul>
+<li>SIREN is specifically designed to use RE generation first</li>
+<li>After RE the Dispatch Order is as specified in the Powermatch menu</li>
+<li>The dispatch of any generation is in part determined by <a href="#pmcons">Constraints</a> defined for that technology. These constraints may alter the way prior technologies are treated. For example, if a generator has a <em>Capacity Min</em> (lower operating limit) constraint this may reduce the amount of RE generation used TML. For this constraint the actual behaviour is dependent on the <em>reserve_committed</em> property - if set to True (the default) the amount of RE generation will be reduced by the <em>Capacity Min</em>, if set to False the <em>Capacity Min</em> will be honoured for the generator but the RE generation amount may not be reduced.</li>
+<li>If you choose <strong>Detail</strong> fom the Powermatch menu a detailed spreadsheet is produced which provides a worksheet on how demand was met for each hour of the year. The cells of each row show how load was met for that hour progressing from Load on the left through each technology showing it's contribution to meeting load and the shortfall remaining</li>
 </ul>
 <h3 id="pmab">Powermatch Batch</h3>
 <p>To expand upon that described above there is also an ability to specify a range of values for technologies rather than having to repeat many input columns. This enables a large number of batch inputs to be specified in a compact manner. The input format for each technology to have multiple values is:
@@ -4517,7 +4537,6 @@ The Show Y Series button will display the values for the chosen data in a simple
 <tr><td class="lr"><dfn>Applicate (Z) Label</dfn></td>
 <td class="none">This allows you to enter a text value for the Applicate (Z) label<br />
 The Show Y Series button will display the values for the chosen data in a simple table. If the data is for a 3D chart these will likely be blank</td></tr>
-
 <tr><td class="lr"><dfn>Maximum</dfn></td>
 <td class="none">You can specify a maximum value for the Power (y) axis. This allows you to produce a series of charts with the same scale (<em>maximum</em>)</td></tr>
 <tr><td class="lr"><dfn>Type of Chart</dfn></td>
@@ -6553,6 +6572,8 @@ MERRA-2 Variables
 <td class="none">SAM Simulation Core</td></tr>
 <tr><td class="none"><dfn>SWIS</dfn></td>
 <td class="none">South West Interconnected System. The electricity network for the south west of WA</td></tr>
+<tr><td class="none"><dfn>TML</dfn></td>
+<td class="none">To Meet Load. Generation/Storage used to meet load. The generation for a generator or contribution to meeting load for storage; MWh/td></tr>
 <tr><td class="none"><dfn>TMY</dfn></td>
 <td class="none">Typical Meteorological Year. Selected weather data for a specific location, generated from a data bank much longer than a year in duration. Gives annual averages that are consistent with the long-term averages for the location in question</td></tr>
 <tr><td class="none"><dfn>URL</dfn></td>

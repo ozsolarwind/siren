@@ -1188,6 +1188,7 @@ class powerMatch(QtWidgets.QWidget):
         self.optimise_to_batch = True
         self.optimise_total_re = True
         self.remove_cost = True
+        self.reserve_committed = True
         self.results_prefix = ''
         self.dispatchable = ['Biomass', 'Geothermal', 'Pumped Hydro', 'Solar Thermal', 'CST'] # RE dispatchable
         self.save_tables = False
@@ -1363,6 +1364,9 @@ class powerMatch(QtWidgets.QWidget):
                         self.remove_cost = False
                 elif key == 'results_prefix':
                     self.results_prefix = value
+                elif key == 'reserve_committed':
+                    if value.lower() in ['false', 'off', 'no']:
+                        self.reserve_committed = False
                 elif key == 'save_tables':
                     if value.lower() in ['true', 'on', 'yes']:
                         self.save_tables = True
@@ -4939,7 +4943,6 @@ class powerMatch(QtWidgets.QWidget):
             sf_sign = ['-', '+']
         sp_cols = []
         sp_cap = []
-        shortfall = [0.] * 8760
         re_tml_sum = 0. # keep tabs on how much RE is used
         start_time = time.time()
         do_zone = False # could pass as a parameter
@@ -4975,21 +4978,48 @@ class powerMatch(QtWidgets.QWidget):
                 underlying_facs.append(fac)
                 continue
         load_col = pmss_details['Load'].col
+        # find any minimum generation for generators
+        committed_gen = {}
+        committed_gen_tot = 0
+        for gen in dispatch_order:
+            if pmss_details[gen].fac_type == 'G': # generators
+                try:
+                    const = self.generators[gen].constraint
+                except:
+                    try:
+                        g2 = gen[gen.find('.') + 1:]
+                        const = self.generators[g2].constraint
+                    except:
+                        continue
+                if self.constraints[const].capacity_min != 0:
+                    try:
+                        committed_gen[gen] = pmss_details[gen].capacity * pmss_details[gen].multiplier * \
+                            self.constraints[const].capacity_min
+                    except:
+                        committed_gen[gen] = pmss_details[gen].capacity * \
+                            self.constraints[const].capacity_min
+                    if self.reserve_committed:
+                        committed_gen_tot += committed_gen[gen]
+        shortfall = [0] * 8760
+        row_tml = [0.] * 8760
         for h in range(len(pmss_data[load_col])):
             load_h = pmss_data[load_col][h] * pmss_details['Load'].multiplier
             shortfall[h] = load_h
+            re_shortfall = load_h - committed_gen_tot
             for fac in fac_tml.keys():
                 if fac in underlying_facs:
                     continue
+                re_shortfall -= pmss_data[pmss_details[fac].col][h] * pmss_details[fac].multiplier
                 shortfall[h] -= pmss_data[pmss_details[fac].col][h] * pmss_details[fac].multiplier
-            if shortfall[h] >= 0:
+            if re_shortfall >= 0:
                 alloc = 1.
             else:
-                alloc = load_h / (load_h - shortfall[h])
+                alloc = (load_h - committed_gen_tot) / (load_h - re_shortfall - committed_gen_tot)
             for fac in fac_tml.keys():
                 if fac in underlying_facs:
                     fac_tml[fac] += pmss_data[pmss_details[fac].col][h] * pmss_details[fac].multiplier
                 else:
+                    row_tml[h] += pmss_data[pmss_details[fac].col][h] * pmss_details[fac].multiplier * alloc
                     fac_tml[fac] += pmss_data[pmss_details[fac].col][h] * pmss_details[fac].multiplier * alloc
             line = ''
         fac_tml_sum = 0
@@ -5161,22 +5191,7 @@ class powerMatch(QtWidgets.QWidget):
             ns.cell(row=what_row, column=col).alignment = oxl.styles.Alignment(wrap_text=True,
                     vertical='bottom', horizontal='center')
             for row in range(hrows, 8760 + hrows):
-                if shortfall[row - hrows] < 0:
-                    if pmss_details['Load'].multiplier == 1:
-                        rec = pmss_data[load_col][row - hrows]
-                    else:
-                        rec = pmss_data[load_col][row - hrows] * pmss_details['Load'].multiplier
-                else:
-                    if pmss_details['Load'].multiplier == 1:
-                        rec = pmss_data[load_col][row - hrows] - shortfall[row - hrows]
-                    else:
-                        rec = pmss_data[load_col][row - hrows] * pmss_details['Load'].multiplier - \
-                              shortfall[row - hrows]
-                ns.cell(row=row, column=col).value = rec
-               # the following formula will do the same computation
-               # ns.cell(row=row, column=col).value = '=IF(' + ssCol(shrt_col) + str(row) + '>0,' + \
-               #                            ssCol(3) + str(row) + ',' + ssCol(3) + str(row) + \
-               #                            '+' + ssCol(shrt_col) + str(row) + ')'
+                ns.cell(row=row, column=col).value = row_tml[row - hrows]
                 ns.cell(row=row, column=col).number_format = '#,##0.00'
           #  shrt_col += 1
            # col = shrt_col + 1
@@ -5256,39 +5271,12 @@ class powerMatch(QtWidgets.QWidget):
                 sp_d[st_sub] = sum(pmss_data[pmss_details[fac].col]) * pmss_details[fac].multiplier
                 sp_d[st_max] = max(pmss_data[pmss_details[fac].col]) * pmss_details[fac].multiplier
                 sp_data.append(sp_d)
-       #     for h in range(len(shortfall)):
-        #        if shortfall[h] < 0:
-         #           tml += pmss_data[load_col][h] * pmss_details['Load'].multiplier
-          #      else:
-           #         tml += pmss_data[load_col][h] * pmss_details['Load'].multiplier - shortfall[h]
         if option not in [O, O1, B, T]:
             self.progressbar.setValue(6)
             QtWidgets.QApplication.processEvents()
         storage_names = []
-        # find any minimum generation for generators
-        short_taken = {}
-        short_taken_tot = 0
-        for gen in dispatch_order:
-            if pmss_details[gen].fac_type == 'G': # generators
-                try:
-                    const = self.generators[gen].constraint
-                except:
-                    try:
-                        g2 = gen[gen.find('.') + 1:]
-                        const = self.generators[g2].constraint
-                    except:
-                        continue
-                if self.constraints[const].capacity_min != 0:
-                    try:
-                        short_taken[gen] = pmss_details[gen].capacity * pmss_details[gen].multiplier * \
-                            self.constraints[const].capacity_min
-                    except:
-                        short_taken[gen] = pmss_details[gen].capacity * \
-                            self.constraints[const].capacity_min
-                    short_taken_tot += short_taken[gen]
-                    for row in range(8760):
-                        shortfall[row] = shortfall[row] - short_taken[gen]
         tot_sto_loss = 0.
+        committed_gen_bal = committed_gen_tot
         for gen in dispatch_order:
          #   min_after = [0, 0, -1, 0, 0, 0] # initial, low balance, period, final, low after, period
          #  Min_after is there to see if storage is as full at the end as at the beginning
@@ -5379,12 +5367,12 @@ class powerMatch(QtWidgets.QWidget):
                                corr_src[row] += can_use
                         else:
                             can_use = 0
-                    else: # shortfall
+                    elif shortfall[row] > committed_gen_bal: # shortfall
                         # This is code to support delaying battery usage until a certain time
                         # to implement fully need an additional facility variable to indicate start time
                         # Ref 2024 WEM ESOO 2.5 (ESROI)
                         if row % 24 >= self.constraints[self.generators[gen].constraint].discharge_start:
-                            if min_run_time > 0 and shortfall[row] > 0:
+                            if min_run_time > 0 and shortfall[row] > committed_gen_bal:
                                 if not in_run[0]:
                                     if row + min_run_time <= 8759:
                                         for i in range(row + 1, row + min_run_time + 1):
@@ -5393,7 +5381,7 @@ class powerMatch(QtWidgets.QWidget):
                                         else:
                                             in_run[0] = True
                             if in_run[0]:
-                                can_use = shortfall[row] * (1 / (1 - discharge[1]))
+                                can_use = (shortfall[row] - committed_gen_bal) * (1 / (1 - discharge[1]))
                                 can_use = min(can_use, discharge[0])
                                 if can_use > storage_carry - storage[2]:
                                     can_use = storage_carry - storage[2]
@@ -5416,6 +5404,8 @@ class powerMatch(QtWidgets.QWidget):
                                 can_use = 0.
                         else:
                             can_use = 0.
+                    else:
+                        can_use = 0.
                     if can_use < 0:
                         if use_max[1] is None or can_use < use_max[1]:
                             use_max[1] = can_use
@@ -5433,7 +5423,7 @@ class powerMatch(QtWidgets.QWidget):
                             ns.cell(row=row + hrows, column=col + 2).value = 0
                         ns.cell(row=row + hrows, column=col + 1).value = storage_losses
                         ns.cell(row=row + hrows, column=col + 3).value = storage_carry
-                        ns.cell(row=row + hrows, column=col + 4).value = (shortfall[row] + short_taken_tot) * -self.surplus_sign
+                        ns.cell(row=row + hrows, column=col + 4).value = shortfall[row] * -self.surplus_sign
                         for ac in range(5):
                             ns.cell(row=row + hrows, column=col + ac).number_format = '#,##0.00'
                             ns.cell(row=max_row, column=col + ac).value = '=MAX(' + ssCol(col + ac) + \
@@ -5485,11 +5475,8 @@ class powerMatch(QtWidgets.QWidget):
                         cap_capacity = capacity
                 except:
                     cap_capacity = capacity
-                if gen in short_taken.keys():
-                    for row in range(8760):
-                        shortfall[row] = shortfall[row] + short_taken[gen]
-                    short_taken_tot -= short_taken[gen]
-                    min_gen = short_taken[gen]
+                if gen in committed_gen.keys():
+                    min_gen = committed_gen[gen]
                 else:
                     min_gen = 0
                 if option == D:
@@ -5497,10 +5484,19 @@ class powerMatch(QtWidgets.QWidget):
                     ns.cell(row=cap_row, column=col).number_format = '#,##0.00'
                     for row in range(8760):
                         if shortfall[row] >= 0: # shortfall?
-                            if shortfall[row] >= cap_capacity:
+                            short_4me = shortfall[row]
+                            if self.reserve_committed:
+                                try:
+                                    short_4me = shortfall[row] - committed_gen_bal + committed_gen[gen]
+                                except:
+                                    pass
+                            if short_4me >= cap_capacity:
                                 shortfall[row] = shortfall[row] - cap_capacity
                                 ns.cell(row=row + hrows, column=col).value = cap_capacity
-                            elif shortfall[row] < min_gen:
+                            elif short_4me >= min_gen:
+                                shortfall[row] = shortfall[row] - short_4me
+                                ns.cell(row=row + hrows, column=col).value = short_4me
+                            elif short_4me < min_gen:
                                 ns.cell(row=row + hrows, column=col).value = min_gen
                                 shortfall[row] -= min_gen
                             else:
@@ -5509,7 +5505,7 @@ class powerMatch(QtWidgets.QWidget):
                         else:
                             shortfall[row] -= min_gen
                             ns.cell(row=row + hrows, column=col).value = min_gen
-                        ns.cell(row=row + hrows, column=col + 1).value = (shortfall[row] + short_taken_tot) * -self.surplus_sign
+                        ns.cell(row=row + hrows, column=col + 1).value = shortfall[row] * -self.surplus_sign
                         ns.cell(row=row + hrows, column=col).number_format = '#,##0.00'
                         ns.cell(row=row + hrows, column=col + 1).number_format = '#,##0.00'
                     ns.cell(row=sum_row, column=col).value = '=SUM(' + ssCol(col) + str(hrows) + \
@@ -5533,12 +5529,23 @@ class powerMatch(QtWidgets.QWidget):
                     gen_max = 0
                     for row in range(8760):
                         if shortfall[row] >= 0: # shortfall?
-                            if shortfall[row] >= cap_capacity:
+                            short_4me = shortfall[row]
+                            if self.reserve_committed:
+                                try:
+                                    short_4me = shortfall[row] - committed_gen_bal + committed_gen[gen]
+                                except:
+                                    pass
+                            if short_4me >= cap_capacity:
                                 shortfall[row] = shortfall[row] - cap_capacity
                                 gen_can += cap_capacity
                                 if cap_capacity > gen_max:
                                     gen_max = cap_capacity
-                            elif shortfall[row] < min_gen:
+                            elif short_4me >= min_gen:
+                                gen_can += short_4me
+                                if short_4me > gen_max:
+                                    gen_max = short_4me
+                                shortfall[row] = shortfall[row] - short_4me
+                            elif short_4me < min_gen:
                                 gen_can += min_gen
                                 if min_gen > gen_max:
                                     gen_max = min_gen
@@ -5552,7 +5559,7 @@ class powerMatch(QtWidgets.QWidget):
                             if min_gen > gen_max:
                                 gen_max = min_gen
                             gen_can += min_gen
-                            shortfall[row] -= min_gen # ??
+                            shortfall[row] -= min_gen
                     if capacity == 0:
                         continue
                     sp_d = [' '] * len(headers)
@@ -5562,6 +5569,11 @@ class powerMatch(QtWidgets.QWidget):
                     sp_d[st_sub] = gen_can
                     sp_d[st_max] = gen_max
                     sp_data.append(sp_d)
+            if self.reserve_committed:
+                try:
+                    committed_gen_bal -= committed_gen[gen]
+                except:
+                    pass
 #        if option == D: # Currently calculated elsewhere
 #            if self.surplus_sign > 0:
 #                maxmin = 'MIN'
