@@ -771,7 +771,10 @@ class Adjustments(MyQDialog):
             return
         key = self.sender().objectName()
         if key != 'Load':
-            adj = self._adjust_cty[key].value() / self._data[key][0]
+            try:
+                adj = self._adjust_cty[key].value() / self._data[key][0]
+            except:
+                adj = 1
          #   self._adjust_rnd[key].setValue(adj)
         else:
             dimen = log10(self._data[key][0])
@@ -2596,8 +2599,14 @@ class powerMatch(QtWidgets.QWidget):
                     for stp in range(strt, stop + step, step):
                         values[0].append(stp)
                     cols.insert(0, cols[0] * len(values[0]))
+                if cols[0] > 16384:
+                    self.setStatus(f'Too many columns ({cols[0]:n}) in sheet. Maximum is 16384.')
+                    return False
                 columns = [[]] * len(rows)
                 recurse(0)
+                strt, stop, step, frst = step_split(rows[ranges[0]])
+                shts = int((stop + step + step) / step)
+                self.setStatus(f'{shts:n} (+1) batch sheets, {cols[0]:n} models per sheet ({(cols[0]) * shts:n} models (+1) in total)')
                 my_tech = ws.cell_value(ranges[0], 0)
                 tech_2 = ws.cell_value(ranges[1], 0)
               # produce new batch_models entry for first range tech
@@ -2605,7 +2614,7 @@ class powerMatch(QtWidgets.QWidget):
                 for c in range(1, len(ranges)):
                     techs[ws.cell_value(ranges[c], 0)] = c - 1
                 bits = my_tech.split('.')
-                strt, stop, step, frst = step_split(rows[ranges[0]])
+                strt, stop, step, frst = step_split(rows[ranges[0]]) # in case we forget
                 for sht in range(strt, stop + step, step):
                     self.batch_models.append({})
                     for c2 in range(len(columns[0])):
