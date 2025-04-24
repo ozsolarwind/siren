@@ -3430,7 +3430,7 @@ class powerMatch(QtWidgets.QWidget):
             if self.do_jobs:
                 batch_details['Jobs'] = [st_job, '#,##0']
             batch_extra = {'RE': ['#,##0.00', ['RE %age', st_cap], ['Storage %age', st_cap], ['RE %age of Total Load', st_cap]],
-                           'Load Analysis': ['#,##0', ['Load met', st_tml], ['Load met %age', st_cap], ['Shortfall', st_tml], ['Total Load', st_tml],
+                           'Load Analysis': ['#,##0', ['Total Load', st_tml], ['Shortfall', st_tml], ['Load met', st_tml], ['Load met %age', st_cap],
                            ['Largest Shortfall', st_cap], ['Storage losses', st_sub], ['Surplus', st_sub], ['Surplus %age', st_cap]],
                            'Carbon': ['#,##0.00', ['Carbon Price', st_cap], ['Carbon Cost', st_emc], ['LCOE incl. Carbon Cost', st_lcc],
                            ['Lifetime Emissions Cost', st_lec]],
@@ -4408,17 +4408,6 @@ class powerMatch(QtWidgets.QWidget):
             sp_data.append([' '])
             sp_data.append([title + 'Load Analysis'])
             if sp_load != 0:
-                sp_d = [' '] * len(headers)
-                sp_d[st_fac] = title + 'Load met'
-                load_pct = (sp_load - sf_sums[0]) / sp_load
-                sp_d[st_cap] = '{:.1f}%'.format(load_pct * 100)
-                sp_d[st_tml] = sp_load - sf_sums[0]
-                sp_data.append(sp_d)
-                sp_d = [' '] * len(headers)
-                sp_d[st_fac] = 'Shortfall'
-                sp_d[st_cap] = '{:.1f}%'.format(sf_sums[0] * 100 / sp_load)
-                sp_d[st_tml] = sf_sums[0]
-                sp_data.append(sp_d)
                 if option == B or option == T:
                     sp_d = [' '] * len(headers)
                     sp_d[st_fac] = title + 'Total Load'
@@ -4441,6 +4430,17 @@ class powerMatch(QtWidgets.QWidget):
                         sp_d[st_max] = load_max
                         sp_d[st_bal] = ' (' + format_period(load_hr)[5:] + ')'
                     sp_data.append(sp_d)
+                sp_d = [' '] * len(headers)
+                sp_d[st_fac] = 'Shortfall'
+                sp_d[st_cap] = '{:.1f}%'.format(-sf_sums[0] * 100 / sp_load)
+                sp_d[st_tml] = -sf_sums[0]
+                sp_data.append(sp_d)
+                sp_d = [' '] * len(headers)
+                sp_d[st_fac] = title + 'Load met'
+                load_pct = (sp_load - sf_sums[0]) / sp_load
+                sp_d[st_cap] = '{:.1f}%'.format(load_pct * 100)
+                sp_d[st_tml] = sp_load - sf_sums[0]
+                sp_data.append(sp_d)
                 sp_d = [' '] * len(headers)
                 sp_d[st_fac] = 'RE %age of Total ' + title + 'Load'
                 if self.optimise_total_re:
@@ -4838,36 +4838,6 @@ class powerMatch(QtWidgets.QWidget):
             ss.cell(row=ss_row, column=1).value = title + 'Load Analysis'
             ss.cell(row=ss_row, column=1).font = bold
             ss_row += 1
-            ss.cell(row=ss_row, column=1).value = title + 'Load met'
-      ##      lm_row = ss_row
-      #      if self.surplus_sign < 0:
-      #          addsub = ')+' + base_col
-      #      else:
-      #          addsub = ')-' + base_col
-      #      ss.cell(row=ss_row, column=st_tml+1).value = '=SUMIF(Detail!' + last_col + str(hrows) + ':Detail!' \
-      #          + last_col + str(hrows + 8759) + ',"' + sf_test[0] + '=0",Detail!C' + str(hrows) \
-      #          + ':Detail!C' + str(hrows + 8759) + ')+SUMIF(Detail!' + last_col + str(hrows) + ':Detail!' \
-      #          + last_col + str(hrows + 8759) + ',"' + sf_test[1] + '0",Detail!C' + str(hrows) + ':Detail!C' \
-      #          + str(hrows + 8759) + addsub + str(ss_row + 1)
-            ss.cell(row=ss_row, column=st_tml+1).value = '=Detail!' + base_col + str(sum_row) + '-' + base_col + str(ss_row + 1)
-            ss.cell(row=ss_row, column=st_tml+1).number_format = '#,##0'
-            ss.cell(row=ss_row, column=st_cap+1).value = '=' + ssCol(st_tml+1) + str(ss_row) + '/' + ssCol(st_tml+1) + \
-                                                         str(ss_row + 2)
-            ss.cell(row=ss_row, column=st_cap+1).number_format = '#,##0.0%'
-            ss_row += 1
-            ss.cell(row=ss_row, column=1).value = title + 'Shortfall'
-            sf_text = 'SUMIF(Detail!' + last_col + str(hrows) + ':Detail!' + last_col \
-                      + str(hrows + 8759) + ',"' + sf_test[0] + '0",Detail!' + last_col \
-                      + str(hrows) + ':Detail!' + last_col + str(hrows + 8759) + ')'
-            if self.surplus_sign > 0:
-                ss.cell(row=ss_row, column=st_tml+1).value = '=-' + sf_text
-            else:
-                ss.cell(row=ss_row, column=st_tml+1).value = '=' + sf_text
-            ss.cell(row=ss_row, column=st_tml+1).number_format = '#,##0'
-            ss.cell(row=ss_row, column=st_cap+1).value = '=' + ssCol(st_tml+1) + str(ss_row) + '/' + ssCol(st_tml+1) + \
-                                                         str(ss_row + 1)
-            ss.cell(row=ss_row, column=st_cap+1).number_format = '#,##0.0%'
-            ss_row += 1
             ld_row = ss_row
             load_mult = ''
             try:
@@ -4878,8 +4848,7 @@ class powerMatch(QtWidgets.QWidget):
                 pass
             ss.cell(row=ss_row, column=1).value = 'Total ' + title + 'Load - ' + year + load_mult
             ss.cell(row=ss_row, column=1).font = bold
-            ss.cell(row=ss_row, column=st_tml+1).value = '=SUM(' + ssCol(st_tml+1) + str(ss_row - 2) + ':' + \
-                                                         ssCol(st_tml+1) + str(ss_row - 1) + ')'
+            ss.cell(row=ss_row, column=st_tml+1).value = '=Detail!' + base_col + str(sum_row)
             ss.cell(row=ss_row, column=st_tml+1).number_format = '#,##0'
             ss.cell(row=ss_row, column=st_tml+1).font = bold
             ss.cell(row=ss_row, column=st_max+1).value = '=Detail!' + base_col + str(max_row)
@@ -4889,15 +4858,36 @@ class powerMatch(QtWidgets.QWidget):
                     base_col + str(max_row) + ',Detail!' + base_col + str(hrows) + ':Detail!' + base_col + \
                     str(hrows + 8759) + ',0),0)&")"'
             ss_row += 1
+            ss.cell(row=ss_row, column=1).value = title + 'Shortfall'
+            sf_text = 'SUMIF(Detail!' + last_col + str(hrows) + ':Detail!' + last_col \
+                      + str(hrows + 8759) + ',"' + sf_test[0] + '0",Detail!' + last_col \
+                      + str(hrows) + ':Detail!' + last_col + str(hrows + 8759) + ')'
+            if self.surplus_sign > 0:
+                ss.cell(row=ss_row, column=st_tml+1).value = '=' + sf_text
+            else:
+                ss.cell(row=ss_row, column=st_tml+1).value = '=-' + sf_text
+            ss.cell(row=ss_row, column=st_tml+1).number_format = '#,##0'
+            ss.cell(row=ss_row, column=st_cap+1).value = '=' + ssCol(st_tml+1) + str(ss_row) + '/' + ssCol(st_tml+1) + \
+                                                         str(ss_row + 1)
+            ss.cell(row=ss_row, column=st_cap+1).number_format = '#,##0.0%'
+            ss_row += 1
+            ss.cell(row=ss_row, column=1).value = title + 'Load met'
+            ss.cell(row=ss_row, column=st_tml+1).value = '=SUM(' + ssCol(st_tml+1) + str(ss_row - 2) + ':' + \
+                                                         ssCol(st_tml+1) + str(ss_row - 1) + ')'
+            ss.cell(row=ss_row, column=st_tml+1).number_format = '#,##0'
+            ss.cell(row=ss_row, column=st_cap+1).value = '=' + ssCol(st_tml+1) + str(ss_row) + '/' + ssCol(st_tml+1) + \
+                                                         str(ld_row)
+            ss.cell(row=ss_row, column=st_cap+1).number_format = '#,##0.0%'
+            ss_row += 1
             ss.cell(row=ss_row, column=1).value = 'RE %age of Total ' + title + 'Load'
             ss.cell(row=ss_row, column=1).font = bold
             if ns_sto_sum == '':
-                ss.cell(row=ss_row, column=st_cap+1).value = ssCol(st_tml+1) + str(ss_re_row - 1) + \
-                                                             '/' + ssCol(st_tml+1) + str(ss_row - 1)
+                ss.cell(row=ss_row, column=st_cap+1).value = '=' + ssCol(st_tml+1) + str(ss_re_row) + \
+                                                             '/' + ssCol(st_tml+1) + str(ld_row)
             else:
                 ss.cell(row=ss_row, column=st_cap+1).value = '=(' + ssCol(st_tml+1) + str(ss_re_row) + '+' + \
                                                              ssCol(st_tml+1) + str(ss_sto_row) + ')/' + \
-                                                             ssCol(st_tml+1) + str(ss_row - 1)
+                                                             ssCol(st_tml+1) + str(ld_row)
             ss.cell(row=ss_row, column=st_cap+1).number_format = '#,##0.0%'
             ss.cell(row=ss_row, column=st_cap+1).font = bold
             ss_row += 2
@@ -5219,7 +5209,7 @@ class powerMatch(QtWidgets.QWidget):
                     ns.cell(row=row, column=col).number_format = '#,##0.00'
             next_col = col
             col += 1
-        else: # O, O1, B, T
+        else: # O, O1, B, S, T
             sp_data = []
             sp_load = 0. # load from load curve
             hrows = 10
