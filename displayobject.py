@@ -108,8 +108,13 @@ class AnObject(QtWidgets.QDialog):
                                     hl = line[i][2]
                                     break
                         for i in range(i, len(line)):
-                            if line[i].find('Back to top<') > 0 or line[i + 1][:3] == '<h' + hl:
+                            if line[i].find('Back to top<') > 0:
                                 break
+                            try:
+                                if line[i + 1][:3] == '<h' + hl:
+                                    break
+                            except:
+                                pass
                             j = line[i].find(' (see <a href=')
                             if j > 0:
                                 k = line[i].find('</a>)', j)
