@@ -52,7 +52,7 @@ import random
 import shutil
 import subprocess
 from colours import PlotPalette
-from senutils import ClickableQLabel, getParents, getUser, ListWidget, ssCol, techClean, WorkBook
+from senutils import ClickableQLabel, getParents, getUser, ListWidget, setFontSize, ssCol, techClean, WorkBook
 from editini import EdtDialog, SaveIni
 from floaters import ProgressBar, FloatStatus
 from getmodels import getModelFile, commonprefix
@@ -7906,6 +7906,7 @@ class powerMatch(QtWidgets.QWidget):
 
 if "__main__" == __name__:
     app = QtWidgets.QApplication(sys.argv)
+    setFontSize(app)
     ex = powerMatch()
     app.exec_()
     app.deleteLater()

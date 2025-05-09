@@ -19,6 +19,7 @@
 #  <http://www.gnu.org/licenses/>.
 #
 
+import configparser  # decode .ini file
 import csv
 import math
 import openpyxl as oxl
@@ -39,6 +40,7 @@ try:
     import pyexcel_odsr as odsr
 except:
     odsr = None
+from getmodels import getModelFile
 
 class ClickableQLabel(QtWidgets.QLabel):
     clicked = QtCore.pyqtSignal()
@@ -523,6 +525,25 @@ def extrapolateWind(wind_file, tgt_height, law='logarithmic', replace=False, spr
                 bits[j] = float(bits[j])
             array.append(bits)
         return array
+
+# Change default font size
+def setFontSize(app):
+    config = configparser.RawConfigParser()
+    if len(sys.argv) > 1:
+        config_file = sys.argv[1]
+    else:
+        config_file = getModelFile('SIREN.ini')
+    try:
+        config.read(config_file)
+        try:
+            fontsize = int(config.get('Windows', 'fontsize'))
+            font = app.font()
+            font.setPointSize(fontsize)
+            app.instance().setFont(font)
+        except:
+            pass
+    except:
+        pass
 
 # split a string
 def strSplit(string, char=',', dropquote=True):
