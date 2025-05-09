@@ -2462,7 +2462,7 @@ class PowerPlot(QtWidgets.QWidget):
                         xticklabels.append('?')
                     lc1.set_xticklabels(xticklabels, rotation='vertical', fontdict=self.fontprops['Ticks'])
                     lc1.set_xlabel('Period', fontdict=self.fontprops['Label'])
-                    lc1.tick_params(colors=self.fontprops['Ticks']['color'], which='both')
+                lc1.tick_params(colors=self.fontprops['Ticks']['color'], which='both')
                 lc1.set_ylabel('Power (MW/MWh)', fontdict=self.fontprops['Label']) # MWh?
                 if self.y2_label != '':
                     secax = lc1.secondary_yaxis(location='right', functions=(self.transform_y2, self.inverse_y2))
@@ -2610,7 +2610,7 @@ class PowerPlot(QtWidgets.QWidget):
                     cu1.set_xticks(xticks)
                     cu1.set_xticklabels(day_labels[:len(xticks)], rotation='vertical', fontdict=self.fontprops['Ticks'])
                     cu1.set_xlabel('Period', fontdict=self.fontprops['Label'])
-                    cu1.tick_params(colors=self.fontprops['Ticks']['color'], which='both')
+                cu1.tick_params(colors=self.fontprops['Ticks']['color'], which='both')
                 if self.y2_label != '':
                     secax = cu1.secondary_yaxis(location='right', functions=(self.transform_y2, self.inverse_y2))
                     secax.set_ylabel(self.y2_label)
@@ -2698,7 +2698,7 @@ class PowerPlot(QtWidgets.QWidget):
                     bc1.set_xticks(xticks)
                     bc1.set_xticklabels(day_labels[:len(xticks)], rotation='vertical', fontdict=self.fontprops['Ticks'])
                     bc1.set_xlabel('Period', fontdict=self.fontprops['Label'])
-                    bc1.tick_params(colors=self.fontprops['Ticks']['color'], which='both')
+                bc1.tick_params(colors=self.fontprops['Ticks']['color'], which='both')
                 if self.y2_label != '':
                     secax = bc1.secondary_yaxis(location='right', functions=(self.transform_y2, self.inverse_y2))
                     secax.set_ylabel(self.y2_label)
