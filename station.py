@@ -49,7 +49,7 @@ def within_map(y, x, poly):
 class Station:
     def __init__(self, name, technology, lat, lon, capacity, turbine, rotor, no_turbines, area, scenario,
                  direction=None, grid_line=None, hub_height=None, power_file=None, storage_hours=None, tilt=None, # extra file fields
-                 generation=None, grid_len=None, grid_path_len=None, zone=None):
+                 generation=None, grid_len=None, grid_path_len=None, zone=None, rating=None):
         self.name = name
         self.technology = technology
         self.lat = lat
@@ -80,8 +80,12 @@ class Station:
                 self.tilt = float(tilt)
             except:
                 pass
-
         self.zone = zone
+        if rating is not None:
+            try:
+                self.rating = float(rating)
+            except:
+                pass
 
 
 class Stations:
@@ -314,9 +318,14 @@ class Stations:
                                 elif bit[-1] == 'PLANT' and bit[-2] == 'BIOMASS':
                                     tech = 'Biomass'
                                     area = self.areas[tech] * float(facility['Maximum Capacity (MW)'])
-                                elif facility['Participant Code'] in ['CTE', 'LNDFLLGP', 'PERTHNRGY', 'WGRES']:
+                                elif facility['Participant Code'] in ['BIOGAS01', 'CTE', 'LNDFLLGP', 'PERTHNRGY', 'WGRES']:
                                     tech = 'Biomass'
                                     area = self.areas[tech] * float(facility['Maximum Capacity (MW)'])
+                                elif len(bit) > 1 and bit[-2] == 'WTE':
+                                    tech = 'Biomass'
+                                    area = self.areas[tech] * float(facility['Maximum Capacity (MW)'])
+                                elif bit[-1][:2] == 'HG':
+                                    tech = 'Pumped Hydro'
                                 else:
                                     tech = 'Fossil '
                                     if 'Fossil' in facilities.fieldnames:
