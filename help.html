@@ -4891,10 +4891,10 @@ You can alternate between both approaches to choose the desired area. If you hav
 <p>There is also a list of Australian power stations available (<a href="https://data.gov.au/dataset/power-stations" target="_blank">Power Stations</a>; accessed Oct 2017)</p>
 <h4 id="updateswis">Existing Stations (Facilities)</h4>
 <p>SIREN uses the list of <a href="http://data.wa.aemo.com.au/#facilities" target="_blank">registered facilities</a> available from AEMO (specifically <a href="http://data.wa.aemo.com.au/datafiles/facilities/facilities.csv" target="_blank">facilities.csv</a>) for it's existing stations. If you want an updated version you can use <code>updateswis</code> to obtain the current list (see below).</p>
-<h4>Load Data</h4>
+<h5>Load Data</h5>
 <p>Prior to October 2023 the load data for the SWIS has been obtained from <a href="http://data.wa.aemo.com.au/#load-summary" target="_blank">Load Summary</a> data available from AEMO. SIREN uses hourly load data rather than half hourly. The figures used are derived by summing the &lsquo;Operational Load (MWh)&rsquo; data for the two half hourly intervals. You can use <code>updateswis</code> to obtain the latest load data (see below). The SWIS load data is generally available mid-month for two months prior.</p>
 <p>The AEMO also publish <a href="http://data.wa.aemo.com.au/#facility-scada" target="_blank">facility SCADA data</a>.</p>
-<h4>updateswis</h4>
+<h5>updateswis</h5>
 <p><code>updateswis.py</code> is a Python program that can be used to access the current list of facilities (power stations) for the SWIS and to obtain recent load data.
 The program will download the list of existing stations and optionally update the file SIREN uses for existing stations (<em>grid_stations</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file). To aid readability you can optionally produce an additional file, either CSV or Excel (XLS or XLSX), that will save the list in the same format as a SIREN scenario file.
 Load data can also be downloaded for prior years to a filename defined by the <em>load</em> property of the <a href="#p_files">[Files]</a> Section of the Preferences file.</p>
