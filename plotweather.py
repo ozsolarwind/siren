@@ -214,6 +214,8 @@ class PlotWeather():
             plt.suptitle(self.hdrs[period] + locn, fontsize=16)
             maxy = 0
             maxw = 0
+            miny = 0
+            minw = 0
             if len(data[0]) > 9:
                 p_y = 3
                 p_x = 4
@@ -259,8 +261,12 @@ class PlotWeather():
             for p in range(len(data[0])):
                 for i in range(len(ly)):
                     maxy = max(maxy, max(data[i][p]))
+                    if i == te:
+                        miny = min(miny, min(data[i][p]))
                     if i == wi or i == te or i == ra:
                         maxw = max(maxw, max(data[i][p]))
+                        if i == te:
+                            minw = min(minw, min(data[i][p]))
             for p in range(len(data[0])):
                 px = plt.subplot(p_y, p_x, p + 1)
                 i = -1
@@ -280,9 +286,13 @@ class PlotWeather():
   #              plt.xticks(range(0, 25, 4))
            #     plt.grid(axis='x')
                 px.set_xticklabels(x_labels[1:])
-                px.set_ylim([0, maxy])
+                if miny > 0:
+                    miny = 0
+                px.set_ylim(miny, maxy)
                 if self.two_axes:
-                    px2.set_ylim(0, maxw)
+                    if minw > 0:
+                        minw = 0
+                    px2.set_ylim(minw, maxw)
                     if p in yl2:
                         px2.set_ylabel(self.ylabel2[2])
                 if p >= xl:
@@ -522,10 +532,12 @@ class PlotWeather():
             hx = plt.subplot(111)
             plt.title(self.hdrs['hour'] + ' - ' + locn)
             maxy = 0
+            miny = 0
             if self.two_axes:
                 hx2 = hx.twinx()
             for key, value in iter(sorted(self.ly.items())):
                 lw = 2.0
+                miny = min(miny, min(value))
                 if self.two_axes and key in self.ylabel2[0]:
                     hx2.plot(x, value, linewidth=lw, label=self.labels[key], color=self.colours[key])
                 else:
@@ -539,7 +551,9 @@ class PlotWeather():
                 dialog = displaytable.Table(list(map(list, list(zip(*data)))), title=titl, fields=vals, save_folder=self.scenarios)
                 dialog.exec_()
                 del dialog, data, vals
-            hx.set_ylim([0, maxy])
+            if miny > 0:
+                miny = 0
+            hx.set_ylim(miny, maxy)
             plt.xlim([0, len(x)])
             plt.xticks(list(range(12, len(x), 168)))
             hx.set_xticklabels(day_labels, rotation='vertical')
@@ -548,7 +562,7 @@ class PlotWeather():
             hx.legend(loc='best')
             if self.two_axes:
                 ylim = hx2.get_ylim()
-                hx2.set_ylim(0, ylim[1])
+                hx2.set_ylim(miny, ylim[1])
                 lines = []
                 for key in self.ly:
                     lines.append(mlines.Line2D([], [], color=self.colours[key], label=self.labels[key]))
@@ -584,12 +598,14 @@ class PlotWeather():
             tx = plt.subplot(111)
             plt.title(self.hdrs['total'] + ' - ' + locn)
             maxy = 0
+            miny = 0
             i = -1
             lw = 2.0
             if self.two_axes:
                 tx2 = tx.twinx()
             for key, value in iter(sorted(self.ly.items())):
                 i += 1
+                miny = min(miny, min(l24[i]))
                 if self.two_axes and key in self.ylabel2[0]:
                     tx2.plot(x24, l24[i], linewidth=lw, label=self.labels[key], color=self.colours[key])
                 else:
@@ -607,7 +623,9 @@ class PlotWeather():
                 dialog = displaytable.Table(list(map(list, list(zip(*data)))), title=titl, fields=vals, save_folder=self.scenarios, decpts=decpts)
                 dialog.exec_()
                 del dialog, data, vals
-            tx.set_ylim([0, maxy])
+            if miny > 0:
+                miny = 0
+            tx.set_ylim(miny, maxy)
             plt.xlim([1, 24])
             plt.xticks(list(range(4, 25, 4)))
             tx.set_xticklabels(labels[1:])
@@ -616,7 +634,7 @@ class PlotWeather():
             tx.legend(loc='best')
             if self.two_axes:
                 ylim = tx2.get_ylim()
-                tx2.set_ylim(0, ylim[1])
+                tx2.set_ylim(miny, ylim[1])
                 lines = []
                 for key in self.ly:
                     lines.append(mlines.Line2D([], [], color=self.colours[key], label=self.labels[key]))
@@ -666,12 +684,14 @@ class PlotWeather():
             tx = plt.subplot(111)
             plt.title(self.hdrs['monthly'] + ' - ' + locn)
             maxy = 0
+            miny = 0
             i = -1
             if self.two_axes:
                 tx2 = tx.twinx()
             for key, value in iter(sorted(self.ly.items())):
                 i += 1
                 lw = 2.0
+                miny = min(miny, min(t12[i]) + 1)
                 if self.two_axes and key in self.ylabel2[0]:
                     tx2.step(x24[:14], t12[i], linewidth=lw, label=self.labels[key], color=self.colours[key])
                 else:
@@ -689,7 +709,9 @@ class PlotWeather():
                 dialog = displaytable.Table(list(map(list, list(zip(*data)))), title=titl, fields=vals, save_folder=self.scenarios, decpts=decpts)
                 dialog.exec_()
                 del dialog, data, vals
-            tx.set_ylim([0, maxy])
+            if miny > 0:
+                miny = 0
+            tx.set_ylim(miny, maxy)
             tick_spot = []
             for i in range(12):
                 tick_spot.append(i + 1.5)
@@ -701,7 +723,7 @@ class PlotWeather():
             tx.legend(loc='best')
             if self.two_axes:
                 ylim = tx2.get_ylim()
-                tx2.set_ylim(0, ylim[1])
+                tx2.set_ylim(miny, ylim[1])
                 lines = []
                 for key in self.ly:
                     lines.append(mlines.Line2D([], [], color=self.colours[key], label=self.labels[key]))
@@ -731,6 +753,7 @@ class PlotWeather():
             tx = plt.subplot(111)
             plt.title(self.hdrs['mthavg'] + ' - ' + locn)
             maxy = 0
+            miny = 0
             if self.two_axes:
                 tx2 = tx.twinx()
             m12 = []
@@ -742,6 +765,7 @@ class PlotWeather():
             lw = 2.0
             for key, value in iter(sorted(self.ly.items())):
                 i += 1
+                miny = min(miny, min(m12[i]) + 1)
                 if self.two_axes and key in self.ylabel2[0]:
                     tx2.plot(x24[:12], m12[i], linewidth=lw, label=self.labels[key], color=self.colours[key])
                 else:
@@ -759,7 +783,9 @@ class PlotWeather():
                 dialog = displaytable.Table(list(map(list, list(zip(*data)))), title=titl, fields=vals, save_folder=self.scenarios, decpts=decpts)
                 dialog.exec_()
                 del dialog, data, vals
-            tx.set_ylim([0, maxy])
+            if miny > 0:
+                miny = 0
+            tx.set_ylim(miny, maxy)
             plt.xlim([1, 12])
             plt.xticks(list(range(1, 13, 1)))
             tx.set_xticklabels(mth_labels)
@@ -768,7 +794,7 @@ class PlotWeather():
             tx.legend(loc='best')
             if self.two_axes:
                 ylim = tx2.get_ylim()
-                tx2.set_ylim(0, ylim[1])
+                tx2.set_ylim(miny, ylim[1])
                 lines = []
                 for key in self.ly:
                     lines.append(mlines.Line2D([], [], color=self.colours[key], label=self.labels[key]))
