@@ -46,6 +46,7 @@ try:
 except:
     PowerPlot3D = None
 from senutils import ClickableQLabel, getParents, getUser, ListWidget, ssCol, strSplit, techClean, WorkBook
+import subprocess
 from zoompan import ZoomPanX
 
 mth_labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -696,6 +697,9 @@ class PowerPlot(QtWidgets.QWidget):
         self.grid.addWidget(QtWidgets.QLabel('Sheet:'), rw, 0)
         self.sheet = QtWidgets.QComboBox()
         self.grid.addWidget(self.sheet, rw, 1, 1, 2)
+        openfile = QtWidgets.QPushButton('Open File')
+        self.grid.addWidget(openfile, rw, 3)
+        openfile.clicked.connect(self.openfileClicked)
         listfiles = QtWidgets.QPushButton('List Files')
         self.grid.addWidget(listfiles, rw, 4)
         listfiles.clicked.connect(self.listfilesClicked)
@@ -1526,6 +1530,27 @@ class PowerPlot(QtWidgets.QWidget):
                  title='Help for powerplot (' + fileVersion() + ')', section='powerplot')
         dialog.exec()
 
+    def openfileClicked(self):
+        if os.path.exists(self.file.text()):
+            curfile = self.file.text()
+        else:
+            curfile = self.scenarios + self.file.text()
+            if not os.path.exists(curfile):
+                self.log.setText(f'File not found - {curfile}')
+        if sys.platform == 'win32' or sys.platform == 'cygwin':
+            os.startfile(curfile)
+        elif sys.platform == 'darwin':
+            try:
+                subprocess.call('open', curfile)
+            except:
+                try:
+                    subprocess.call('open', '-a', 'Microsoft Excel', curfile)
+                except:
+                    self.setStatus(f"Can't open {curfile}")
+                    return
+        elif sys.platform == 'linux2' or sys.platform == 'linux':
+            subprocess.call(('xdg-open', curfile))
+        self.setStatus(f'{curfile} opened')
     def listfilesClicked(self):
         ifiles = {}
         for i in range(self.files.count()):
