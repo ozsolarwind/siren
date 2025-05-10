@@ -2178,6 +2178,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">Chosen period for diurnal chart</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>pie_group</dfn></td>
+<td class="none">For pie charts create a &ldquo;highlighted&rdquo; group. This can be either a set of words separated by commas or spaces or True or False to indicate if a group should be highlighted. If True the list of words is <em>bess biomass pv solar wind</em>. If the header columns contain any of the chosen words they will be part of the group. The default is True</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>plot (&ast;)</dfn></td>
 <td class="none">The type of chart. Options are Bar Chart, Cumulative, Heat Map, Line Chart, Pie Chart, Step Line Chart, Step Day Chart or 3D Surface Chart. The default is Cumulative</td>
 </tr>
@@ -4433,19 +4437,30 @@ By default there is one overlay field but you can set a higher number by setting
 <li><em>$YEAR$</em> will be replaced with the year (first Period value)</li>
 <li><em>$MTH$</em> or <em>$MONTH$</em> will be replaced with the chosen Period</li>
 </ul>
-If it's not a diurnal chart (i.e. Period is <em>&lt;None&gt;</em>) any occurence of &rsquo;Diurnal&lsquo; in the header wil be removed (<em>header</em>).
+If it's not a diurnal chart (i.e. Period is <em>&lt;None&gt;</em>) any occurence of &rsquo;Diurnal&lsquo; in the header will be removed (<em>header</em>).
 <p>The button next to the Header field allows you to change the font attributes for the Header (<em>header_font</em>)
 </td></tr>
 <tr><td class="lr"><dfn>Title</dfn>, <strong>Title Font</strong></td>
-<td class="none">Specify a title for the chart. As for the header field the two special strings <em>$YEAR$</em> <em>$MTH$</em> or <em>$MONTH$</em> will be replaced with the chosen Period. If it's not a diurnal chart (i.e. Period is <em>&lt;None&gt;</em>) any occurence of &rsquo;Diurnal&lsquo; in the title wil be removed (<em>title</em>).
+<td class="none">Specify a title for the chart. As for the header field the two special strings <em>$YEAR$</em> <em>$MTH$</em> or <em>$MONTH$</em> will be replaced with the chosen Period. If it's not a diurnal chart (i.e. Period is <em>&lt;None&gt;</em>) any occurence of &rsquo;Diurnal&lsquo; in the title will be removed (<em>title</em>).
 <p>The button next to the Title field allows you to change the font attributes for the Title (<em>title_font</em>)
 </td></tr>
 <tr><td class="lr"><dfn>Maximum</dfn></td>
 <td class="none">You can specify a maximum value for the Power (y) axis. This allows you to produce a series of charts with the same scale (<em>maximum</em>)</td></tr>
 <tr><td class="lr"><dfn>Type of Plot</dfn></td>
-<td class="none">The type of chart to be produced. Options are <em>Bar Chart</em>, <em>Cumulative</em>, <em>Heat Map</em>, <em>Line Chart</em>, <em>Pie Chart</em>, <em>Step Day Chart</em>, <em>Step Line Chart</em> and <em>3D Surface Chart</em>. <em>Bar Chart</em>, <em>Cumulative</em> and <em>Step Chart</em> produce cumulative (stacked) charts and have filled areas by technology (or Columns). A Step Chart is similar to a Bar Chart but does not have spaces between the hourly bars; also it is a lot faster to display than a Bar Chart (a Bar Chart is not recommended for hourly charts). If a Target field (e.g. Load) is chosen the area above the Target value (i.e. excess generation) in the Cumulative and Step chart have a lightly shaded value (the degree of shading is chosen by the <em>alpha</em> property in the [Powerplot] Section of the Preferences file). A Heat Map visualises the total value of chosen columns to indicate the highest through lowest values of the range or, if a target column is chosen, an indication of how the total value meets the target value. Each &ldquo;square&rdquo; or &ldquo;cell&rdquo; of the map represents an hour; the vertical axis is hours in a day and the horizontal axis is days for the chosen period. (<em>plot</em>)
-<div class="experiment">A <em>Step Day Chart</em> presents a step chart with daily figures calculated by summing the 24 hours of each day<br />
-A <em>3D Surface Chart</em> will present the data as a 3D Surface Chart. It will either produce daily charts or monthly charts for months greater than the <em>months_3d</em> property</div>
+<td class="none">The type of chart to be produced. Options are <em>Bar Chart</em>, <em>Cumulative</em>, <em>Heat Map</em>, <em>Line Chart</em>, <em>Pie Chart</em>, <em>Step Day Chart</em>, <em>Step Line Chart</em> and <em>3D Surface Chart</em>.
+<sl>
+<li><em>Bar Chart</em>, <em>Cumulative</em> and <em>Step Chart</em> produce cumulative (stacked) charts and have filled areas by technology (or Columns) (<em>plot</em>).</li>
+<li>A Step Chart is similar to a Bar Chart but does not have spaces between the hourly bars; also it is a lot faster to display than a Bar Chart (a Bar Chart is not recommended for hourly charts).</li>
+<li>If a Target field (e.g. Load) is chosen the area above the Target value (i.e. excess generation) in the Cumulative and Step chart have a lightly shaded value (the degree of shading is chosen by the <em>alpha</em> property in the [Powerplot] Section of the Preferences file).</li>
+<li>A Heat Map visualises the total value of chosen columns to indicate the highest through lowest values of the range or, if a target column is chosen, an indication of how the total value meets the target value. Each &ldquo;square&rdquo; or &ldquo;cell&rdquo; of the map represents an hour; the vertical axis is hours in a day and the horizontal axis is days for the chosen period.</li>
+<li>For a pie chart you can use the <em>pie_group</em> Property to indicate header columns that should be highlighted in a group. This can be used for example to indicate RE technology contribution</li>
+</sl>
+<div class="experiment">
+<sl>
+<li>A <em>Step Day Chart</em> presents a step chart with daily figures calculated by summing the 24 hours of each day</li>
+<li>A <em>3D Surface Chart</em> will present the data as a 3D Surface Chart. It will either produce daily charts or monthly charts for months greater than the <em>months_3d</em> property</li>
+</sl>
+</div>
 </td></tr>
 <tr><td class="lr"><dfn>Percentage</dfn></td>
 <td class="none">Checking this option will produce a percentage (stacked) curve. The chart will have filled areas showing the percentage of generation for each technology. It is recommended to not set a Target field (i.e. set it to <em>&lt;None&gt;</em>) as this will merely remove the Target field (and it's data) from the chart (<em>percentage</em>)</td></tr>
@@ -4505,7 +4520,7 @@ The final variable is
 </table>
 <p><strong>Notes:</strong>
 <ul>
-<li>If <em>constrained_layout</em> is set to True charts wil be produced with minimal whitespace which can be useful for saving charts with no borders. However, if you choose this option when the chart is first displayed it may be presented in a &ldquo;condensed&rdquo; format. If you press one (or two) of the Plot Navigation keys (e.g. <em>l</em> or <em>f</em>; see above) the chart should present normally</li>
+<li>If <em>constrained_layout</em> is set to True charts will be produced with minimal whitespace which can be useful for saving charts with no borders. However, if you choose this option when the chart is first displayed it may be presented in a &ldquo;condensed&rdquo; format. If you press one (or two) of the Plot Navigation keys (e.g. <em>l</em> or <em>f</em>; see above) the chart should present normally</li>
 </ul>
 </p>
 <div class="experiment">
@@ -4520,7 +4535,7 @@ The final variable is
 <tr><td class="lr"><dfn>Sheet</dfn>, <strong>Open File</strong>, <strong>List Files</strong></td>
 <td class="none">(as above). The Open File button allows you to open the file to examine the content to assist in setting the field values</td></tr>
 <tr><td class="lr"><dfn>Title</dfn>, <strong>Title Font</strong></td>
-<td class="none">Specify a title for the chart. As for the header field the two special strings <em>$YEAR$</em> <em>$MTH$</em> or <em>$MONTH$</em> will be replaced with the chosen Period. If it's not a diurnal chart (i.e. Period is <em>&lt;None&gt;</em>) any occurence of &rsquo;Diurnal&lsquo; in the title wil be removed (<em>title</em>).
+<td class="none">Specify a title for the chart. As for the header field the two special strings <em>$YEAR$</em> <em>$MTH$</em> or <em>$MONTH$</em> will be replaced with the chosen Period. If it's not a diurnal chart (i.e. Period is <em>&lt;None&gt;</em>) any occurence of &rsquo;Diurnal&lsquo; in the title will  be removed (<em>title</em>).
 <p>The button next to the Title field allows you to change the font attributes for the Title (<em>title_font</em>)
 </td></tr>
 <tr><td class="lr"><dfn>Abscissa (X)</dfn>, <dfn>Data direction</dfn>, <dfn>Data Row/Column</dfn></td>

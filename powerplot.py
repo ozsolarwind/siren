@@ -489,6 +489,7 @@ class PowerPlot(QtWidgets.QWidget):
         self.plot_palette = 'random'
         self.legend_on_pie = True
         self.percent_on_pie = True
+        self.pie_group = None
         self.legend_side = 'None'
         self.legend_ncol = 1
         self.hatch_word = ['charge']
@@ -610,6 +611,16 @@ class PowerPlot(QtWidgets.QWidget):
                 elif key == 'palette':
                     if value.lower() in ['false', 'no', 'off']:
                         self.palette = False
+                elif key == 'pie_group':
+                    if value.lower() in ['false', 'no', 'off']:
+                        self.pie_group = None
+                    elif value.lower() in ['true', 'yes', 'on']:
+                        self.pie_group = ['bess', 'biomass', 'pv', 'solar', 'wind']
+                    else:
+                        if value.find(',') > -1:
+                            self.pie_group = value.lower.split(',')
+                        else:
+                            self.pie_group = value.lower.split(' ')
                 elif key == 'plot_palette':
                     if value.lower() in ['false', 'no', 'off']:
                         self.plot_palette = ''
@@ -1551,6 +1562,7 @@ class PowerPlot(QtWidgets.QWidget):
         elif sys.platform == 'linux2' or sys.platform == 'linux':
             subprocess.call(('xdg-open', curfile))
         self.setStatus(f'{curfile} opened')
+
     def listfilesClicked(self):
         ifiles = {}
         for i in range(self.files.count()):
@@ -2965,7 +2977,26 @@ class PowerPlot(QtWidgets.QWidget):
                 elif self.legend_side == 'Left':
                     plt.subplots_adjust(left=0.25, bottom=0.1, right=0.9)
                     loc = 'lower left'
-                for c in range(self.order.count()):
+                if self.pie_group is not None:
+                    groups = []
+                    orders = [[], []]
+                    cols = []
+                    for c in range(self.order.count()):
+                        for itm in self.pie_group:
+                            if self.order.item(c).text().lower().find(itm) > -1:
+                                orders[0].append(c)
+                                break
+                        else:
+                            orders[1].append(c)
+                    strt = 0
+                    for c in orders:
+                        cols.extend(c)
+                        groups.append(list(range(strt, strt + len(c))))
+                        strt += len(c)
+                else:
+                    groups = None
+                    cols = list(range(self.order.count()))
+                for c in cols:
                     col = self.order.item(c).text()
                     for c2 in range(2, ws.ncols):
                         try:
@@ -2987,6 +3018,14 @@ class PowerPlot(QtWidgets.QWidget):
                                         break # part period
                             break
                 tot = sum(data)
+                if self.pie_group is not None:
+                    re_pct = 0
+                    for c in groups[0]:
+                        re_pct += data[c]
+                    try:
+                        re_pct = re_pct * 100. / tot
+                    except:
+                        pass
                 # https://stackoverflow.com/questions/3942878/how-to-decide-font-color-in-white-or-black-depending-on-background-color
                 whites = []
                 threshold = sqrt(1.05 * 0.05) - 0.05
@@ -3009,7 +3048,8 @@ class PowerPlot(QtWidgets.QWidget):
                             whites.append(c)
                 if self.legend_on_pie: # legend on chart
                     if self.percent_on_pie:
-                        patches, texts, autotexts = pi2.pie(data, labels=labels, autopct='%1.1f%%', colors=colors, startangle=90, pctdistance=.70)
+                        patches, texts, autotexts = pi2.pie(data, labels=labels, autopct='%1.1f%%', colors=colors, startangle=90,
+                                                            pctdistance=.70)
                         for text in autotexts:
                             text.set_family(self.legend_font.get_family()[0])
                             text.set_style(self.legend_font.get_style())
@@ -3018,7 +3058,8 @@ class PowerPlot(QtWidgets.QWidget):
                             text.set_weight(self.legend_font.get_weight())
                             text.set_size(self.legend_font.get_size())
                     else:
-                        patches, texts = pi2.pie(data, labels=labels, colors=colors, startangle=90, pctdistance=.70)
+                        patches, texts = pi2.pie(data, labels=labels, colors=colors, startangle=90,
+                                                 pctdistance=.70)
                     for text in texts:
                         text.set_family(self.legend_font.get_family()[0])
                         text.set_style(self.legend_font.get_style())
@@ -3029,7 +3070,8 @@ class PowerPlot(QtWidgets.QWidget):
                 else:
                     loc = 'lower right'
                     if self.percent_on_pie:
-                        patches, texts, autotexts = pi2.pie(data, labels=None, autopct='%1.1f%%', colors=colors, startangle=90, pctdistance=.70)
+                        patches, texts, autotexts = pi2.pie(data, labels=None, autopct='%1.1f%%', colors=colors, startangle=90,
+                                                            pctdistance=.70)
                         for text in autotexts:
                             text.set_family(self.legend_font.get_family()[0])
                             text.set_style(self.legend_font.get_style())
@@ -3054,10 +3096,22 @@ class PowerPlot(QtWidgets.QWidget):
                         plt.subplots_adjust(left=0.25, bottom=0.1, right=0.9)
                         loc = 'lower left'
                     fig.legend(patches, labels, loc=loc, ncol=self.legend_ncol, prop=self.legend_font).set_draggable(True)
+                if self.pie_group is not None:
+                # https://stackoverflow.com/questions/20549016/explode-multiple-slices-of-pie-together-in-matplotlib
+                    radfraction = 0.015 # or 0.15
+                    for group in groups:
+                        ang = np.deg2rad((patches[group[-1]].theta2 + patches[group[0]].theta1) / 2)
+                        for j in group:
+                            center = radfraction * patches[j].r * np.array([np.cos(ang), np.sin(ang)])
+                            patches[j].set_center(center)
+                         #   labels[j].set_position(np.array(labels[j].get_position()) + center) Nah
+                         #   texts[j].set_position(np.array(texts[j].get_position()) + center)
                 for c in whites:
                     autotexts[c].set_color('white')
                 p = plt.gcf()
                 p.gca().add_artist(plt.Circle((0, 0), 0.40, color='white'))
+                if self.pie_group:
+                    p.gca().add_artist(plt.text(x=0, y=0, s=f'{re_pct:0.1f}% RE', ha='center', va='center', font=self.legend_font))
                 plt.show()
                 return
             elif self.plottype.currentText() == 'Heat Map':
@@ -3348,7 +3402,7 @@ class PowerPlot(QtWidgets.QWidget):
                         try:
                             load[h] = load[h] + ws.cell_value(row, tgt_col)
                         except:
-                            print('(3286)', h, row, tgt_col, ws.cell_value(row, tgt_col), strt_row, todo_rows)
+                            print('(3405)', h, row, tgt_col, ws.cell_value(row, tgt_col), strt_row, todo_rows)
                         h += 1
                         if h >= self.interval:
                            h = 0
