@@ -5024,6 +5024,8 @@ class powerMatch(QtWidgets.QWidget):
                 alloc = 1.
             else:
                 alloc = (load_h - committed_gen_tot) / (load_h - re_shortfall - committed_gen_tot)
+                if alloc < 0: # don't use negative generation
+                    alloc = 0
             for fac in fac_tml.keys():
                 if fac in underlying_facs:
                     fac_tml[fac] += pmss_data[pmss_details[fac].col][h] * pmss_details[fac].multiplier
