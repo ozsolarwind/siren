@@ -1171,6 +1171,7 @@ class powerMatch(QtWidgets.QWidget):
         self.adjust_gen = False
         self.change_res = True
         self.adjusted_lcoe = True
+        self.corrected_lcoe = True
         self.carbon_price = 0.
         self.carbon_price_max = 200.
         self.discount_rate = 0.
@@ -1272,9 +1273,13 @@ class powerMatch(QtWidgets.QWidget):
                 elif key == 'change_results':
                     if value.lower() in ['false', 'off', 'no']:
                         self.change_res = False
+                elif key == 'corrected_lcoe':
+                    if value.lower() in ['false', 'no', 'off']:
+                        self.corrected_lcoe = False
                 elif key == 'adjusted_lcoe' or key == 'corrected_lcoe':
                     if value.lower() in ['false', 'no', 'off']:
                         self.adjusted_lcoe = False
+                        self.corrected_lcoe = False
                 elif key == 'discount_rate':
                     try:
                         self.discount_rate = float(value)
@@ -4798,19 +4803,29 @@ class powerMatch(QtWidgets.QWidget):
                 base_col = 'C'
                 if ss_sto_row >= 0:
                     for rw in range(ss_re_fst_row, ss_re_lst_row + 1):
-                        ss.cell(row=rw, column=st_lco+1).value = '=IF(AND(' + ssCol(st_lcg+1) + str(rw) + '<>"",' + \
-                                ssCol(st_lcg+1) + str(rw) + '>0),' + \
-                                ssCol(st_cst+1) + str(rw) + '/(' + ssCol(st_tml+1) + str(rw) + '+(' + \
-                                ssCol(st_tml+1) + '$' + str(ss_sto_row) + '*' + ssCol(st_tml+1) + str(rw) + \
-                                ')/' + ssCol(st_tml+1) + '$' + str(ss_re_row) + '),"")'
+                        if self.corrected_lcoe:
+                            ss.cell(row=rw, column=st_lco+1).value = '=IF(AND(' + ssCol(st_lcg+1) + str(rw) + '<>"",' + \
+                                    ssCol(st_lcg+1) + str(rw) + '>0),' + \
+                                    ssCol(st_cst+1) + str(rw) + '/(' + ssCol(st_tml+1) + str(rw) + '+' + \
+                                    ssCol(st_tml+1) + '$' + str(ss_sto_row) + '*' + ssCol(st_tml+1) + str(rw) + \
+                                    '/' + ssCol(st_tml+1) + '$' + str(ss_re_row) + '),"")'
+                        else:
+                            ss.cell(row=rw, column=st_lco+1).value = '=' + \
+                                    ssCol(st_cst+1) + str(rw) + '/' + ssCol(st_tml+1) + str(rw)
                         ss.cell(row=rw, column=st_lco+1).number_format = '$#,##0.00'
                         if self.carbon_price > 0:
-                            ss.cell(row=rw, column=st_lcc+1).value = '=IF(AND(' + ssCol(st_emc+1) + str(rw) + '<>"",' + \
-                                    ssCol(st_emc+1) + str(rw) + '>0),(' + \
-                                    ssCol(st_cst+1) + str(rw) + '+' + ssCol(st_emc+1) + str(rw) + ')/(' + \
-                                    ssCol(st_tml+1) + str(rw) + '+(' + ssCol(st_tml+1) + '$' + str(ss_sto_row) + \
-                                    '*' + ssCol(st_tml+1) + str(rw) + ')/' + ssCol(st_tml+1) + '$' + \
-                                    str(ss_re_row) + '),"")'
+                            if self.corrected_lcoe:
+                                ss.cell(row=rw, column=st_lcc+1).value = '=IF(AND(' + ssCol(st_emc+1) + str(rw) + '<>"",' + \
+                                        ssCol(st_emc+1) + str(rw) + '>0),(' + \
+                                        ssCol(st_cst+1) + str(rw) + '+' + ssCol(st_emc+1) + str(rw) + ')/(' + \
+                                        ssCol(st_tml+1) + str(rw) + '+' + ssCol(st_tml+1) + '$' + str(ss_sto_row) + \
+                                        '*' + ssCol(st_tml+1) + str(rw) + '/' + ssCol(st_tml+1) + '$' + \
+                                        str(ss_re_row) + '),"")'
+                            else:
+                                ss.cell(row=rw, column=st_lcc+1).value = '=IF(AND(' + ssCol(st_emc+1) + str(rw) + '<>"",' + \
+                                        ssCol(st_emc+1) + str(rw) + '>0),(' + \
+                                        ssCol(st_cst+1) + str(rw) + '+' + ssCol(st_emc+1) + str(rw) + ')/' + \
+                                        ssCol(st_tml+1) + str(rw) + ',"")'
                             ss.cell(row=rw, column=st_lcc+1).number_format = '$#,##0.00'
                 else:
                     for rw in range(ss_re_fst_row, ss_re_lst_row):
@@ -5034,8 +5049,11 @@ class powerMatch(QtWidgets.QWidget):
                     fac_tml[fac] += pmss_data[pmss_details[fac].col][h] * pmss_details[fac].multiplier * alloc
             line = ''
         fac_tml_sum = 0
-        for fac in fac_tml.keys():
-            fac_tml_sum += fac_tml[fac]
+        if self.corrected_lcoe:
+            for fac in fac_tml.keys():
+                if fac in underlying_facs:
+                    continue
+                fac_tml_sum += fac_tml[fac]
         if self.show_correlation:
             col = pmss_details['Load'].col
             if pmss_details['Load'].multiplier == 1:
@@ -5730,7 +5748,10 @@ class powerMatch(QtWidgets.QWidget):
                     else:
                         sp_data[sp][st_cst] = sp_data[sp][ndx] * sp_data[sp][st_lcg]
                     if gen in tech_names or gen2 in tech_names:
-                        sp_data[sp][st_lco] = sp_data[sp][st_cst] / (sp_data[sp][st_tml] + (sto_sum * sp_data[sp][st_tml] / fac_tml_sum))
+                        if self.corrected_lcoe and fac_tml_sum > 0:
+                            sp_data[sp][st_lco] = sp_data[sp][st_cst] / (sp_data[sp][st_tml] + (sto_sum * sp_data[sp][st_tml] / fac_tml_sum))
+                        else:
+                            sp_data[sp][st_lco] = sp_data[sp][st_cst] / sp_data[sp][st_tml]
                     else:
                         sp_data[sp][st_lco] = sp_data[sp][st_lcg]
                     cost_sum += sp_data[sp][st_cst]

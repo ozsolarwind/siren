@@ -2270,7 +2270,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>adjusted_lcoe</dfn></td>
-<td class="none">In producing the reports and optimisation use the adjusted (corrected) LCOE or not. The default is True</td>
+<td class="none">In producing the reports and optimisation use the adjusted LCOE or not. The default is True</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>batch_file</dfn></td>
@@ -2291,6 +2291,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <tr class="none">
 <td class="none"><dfn>carbon_price_max</dfn></td>
 <td class="none">Maximum carbon price. Default is 200</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>corrected_lcoe</dfn></td>
+<td class="none">If using adjusted LCOE when producing the reports and optimisation make a further adjustment to recognise the contribution the facility made to meeting load from storage. The default is True</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>change_results</dfn></td>
@@ -3750,7 +3754,7 @@ Be aware that if a facility is not used it will have no costs associated with it
 Powermatch has three interpretations of levelised cost:
 <ol>
 <li>LCOG and LCOS. This is the average cost of all generation (or, in the case of storage, discharge) produced by a facility</li>
-<li>LCOE. The average cost of electricity. This is generally higher as it excludes surplus - spilled or curtailed - generation from renewable technologies not used &ldquo;to meet load&rdquo;. This is the default, and recommended, figure for levelised cost (excluding carbon cost; <em>adjusted_lcoe</em>). You can choose to ignore this in calculating the LCOE. For non-renewable technologies this is the same as LCOG</li>
+<li>LCOE. The average cost of electricity. This is generally higher as it excludes surplus - spilled or curtailed - generation from renewable technologies and storage not used &ldquo;to meet load&rdquo;. This is the default, and recommended, figure for levelised cost (excluding carbon cost; <em>adjusted_lcoe</em>). For non-renewable technologies this is the same as LCOG. You can choose to ignore this in calculating the LCOE by setting <em>adjusted_lcoe</em> to False.<br />In determining the LCOE for renewable energy used to charge storage you can take into account the generation from storage used to meet load which may better reflect the LCOE for each individual Facility. This is determined by the <em>corrected_lcoe</em> property which by default is True. The does not impact the overall LCOE for a scenario (model)</li>
 <li>LCOE with CO2 Cost. The average cost of electricity (LCOE) including carbon cost</li>
 </ol>
 <p><strong>Note:</strong> The SIREN Powermatch component was in part inspired by the Powerbalance worksheets developed by Ben Rose. For those who would prefer his spreadsheet approach an enhanced version, Powerbalance2, is available at <a href="https://cleanenergymodelling.com.au/powerbalance2/" target="_blank">https://cleanenergymodelling.com.au/powerbalance2/</a></p>
