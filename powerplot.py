@@ -1620,6 +1620,13 @@ class PowerPlot(QtWidgets.QWidget):
             SaveIni(updates, ini_file=self.config_file)
         self.close()
 
+    def closeEvent(self, event):
+        try:
+            plt.close('all')
+        except:
+            pass
+        event.accept()
+
     def saveConfig(self):
         updates = {}
         if self.updated:
