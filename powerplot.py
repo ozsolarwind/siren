@@ -2014,16 +2014,21 @@ class PowerPlot(QtWidgets.QWidget):
             d3_background = True
             d3_html = False
             d3_months = 3
+            d3_aspectmode = 'auto'
             try:
-                chk = config.get('Powerplot', 'contours_3d')
-                if chk.lower() in ['true', 'on', 'yes']:
-                    d3_contours = True
+                d3_aspectmode = config.get('Powerplot', 'aspectmode_3d').lower()
             except:
                 pass
             try:
                 chk = config.get('Powerplot', 'background_3d')
                 if chk.lower() in ['false', 'off', 'no']:
                     d3_background = False
+            except:
+                pass
+            try:
+                chk = config.get('Powerplot', 'contours_3d')
+                if chk.lower() in ['true', 'on', 'yes']:
+                    d3_contours = True
             except:
                 pass
             try:
@@ -2137,7 +2142,7 @@ class PowerPlot(QtWidgets.QWidget):
                     colours = {**colours, **more_colour}
             PowerPlot3D(colours, self.cperiod.currentText(), self.interval, order, self.period.currentText(), self.rows, self.seasons,
                         the_days, self.title.text(), self.toprow, ws, year, self.zone_row,
-                        html=saveit, background=d3_background, contours=d3_contours, months=d3_months)
+                        html=saveit, background=d3_background, contours=d3_contours, months=d3_months, aspectmode=d3_aspectmode)
             self.log.setText("3D Chart complete (You'll need to close the browser window yourself).")
             return
         figname = self.plottype.currentText().lower().replace(' ','') + '_' + str(year)
@@ -3366,8 +3371,9 @@ class PowerPlot(QtWidgets.QWidget):
                                 try:
                                     overlay[o][h] = overlay[o][h] + ws.cell_value(row, col)
                                 except:
-                               #     if row >= ws.nrows:
-                                #        break
+                                 #   if row >= ws.nrows:
+                                 #       self.log.setText(f'Period may be incomplete (8)')
+                                 #       break
                                     self.log.setText(f'Data error with {self.overlay[o]} ({ssCol(col, base=0)}{row + 1}). Period may be incomplete (8)')
                                     return
                             h += 1
