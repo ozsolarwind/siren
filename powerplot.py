@@ -2460,7 +2460,7 @@ class PowerPlot(QtWidgets.QWidget):
                 plt.title(titl, fontdict=self.fontprops['Title'])
                 if self.plottype.currentText() == 'Line Chart':
                     for c in range(len(data)):
-                        lc1.plot(x, data[c], linewidth=1.5, label=label[c], color=self.set_colour(label[c]))
+                        lc1.plot(x, data[c], linewidth=self.linSpin.value(), label=label[c], color=self.set_colour(label[c]))
                     if len(load) > 0:
                         lc1.plot(x, load, linewidth=self.tgtSpin.value(), label=self.short_legend + self.target,
                                  color=self.set_colour(self.target), linestyle=self.tgtLine.currentText())
@@ -3404,7 +3404,7 @@ class PowerPlot(QtWidgets.QWidget):
                 plt.title(titl, fontdict=self.fontprops['Title'])
                 if self.plottype.currentText() == 'Line Chart':
                     for c in range(len(data)):
-                        lc2.plot(x, data[c], linewidth=1.5, label=label[c], color=self.set_colour(label[c]))
+                        lc2.plot(x, data[c], linewidth=self.linSpin.value(), label=label[c], color=self.set_colour(label[c]))
                     if len(load) > 0:
                         lc2.plot(x, load, linewidth=self.tgtSpin.value(), label=self.short_legend + self.target,
                                  color=self.set_colour(self.target), linestyle=self.tgtLine.currentText())
