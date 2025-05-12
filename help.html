@@ -1378,6 +1378,10 @@ Options for <a href="#flexiplot">Flexiplot</a>. Properties for individual files 
 <td class="none">Indicate to adjust the chart area to place the legend. Values are <em>None</em> (the default), <em>Left</em> or <em>Right</em></td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>max_xoffset</dfn></td>
+<td class="none">How many rows or columns to include in the Abscissa (X) list. Default is 5</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>maximum (&ast;)</dfn></td>
 <td class="none">Maximum value for Series (y) axis. Default is 0 (meaning dynamic y axis)</td>
 </tr>
@@ -4549,7 +4553,7 @@ The final field allows you to choose another cell in the same row /column</td></
 <tr><td class="lr"><dfn>Ordinate Series (Y)</dfn></td>
 <td class="none">To produce the chart you select those columns to be included. This field consists of two tables (lists) of columns. Those in the left hand list will be included in the chart while those on the right will be excluded. The included columns will be charted in the chosen order. You can drag individual or a number of columns between the two lists to get the desired configuration. If it is defined the chart colour for the column will be displayed as the background color for the column (<em>columns</em>)<br />
 The list contains row / column values with the actual Excel-style cell in brackets after the value<br />
-<code>flexiplot</code> attempts to identify if input data is possibly in table format suitable for a 3D Surface Chart by identifying duplicate data rows. This may result in the list &ldquo;hiding&rdquo; some data. If this is the case adjusting the <em>minimum_3d</em> property</td></tr>
+For a 3D Surface Chart<code>flexiplot</code> attempts to identify if input data is possibly in suitable table format by identifying duplicate data rows. This may result in the list &ldquo;hiding&rdquo; some data. If this is the case adjusting the <em>minimum_3d</em> property</td></tr>
 <tr><td class="lr"><dfn>Ordinate Label</dfn>, <strong>Show Y Series</strong></td>
 <td class="none">This allows you to enter a text value for the Ordinate (Y) label<br />
 The Show Y Series button will display the values for the chosen data in a simple table. If the data is for a 3D chart these will likely be blank</td></tr>
