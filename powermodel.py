@@ -1802,14 +1802,14 @@ class PowerModel():
                             mng.window.showMaximized()
                     else:
                         mng.resize(*mng.window.maxsize())
-            zp = ZoomPanX()
-            f = zp.zoom_pan(lx, base_scale=1.2) # enable scrollable zoom
-            if self.plots['block']:
-                plt.show(block=True)
-                if matplotlib.__version__ > '3.5.1':
-                    plt.waitforbuttonpress()
-            else:
-                plt.draw()
+                zp = ZoomPanX()
+                f = zp.zoom_pan(lx, base_scale=1.2) # enable scrollable zoom
+                if self.plots['block']:
+                    plt.show(block=True)
+                    if matplotlib.__version__ > '3.5.1':
+                        plt.waitforbuttonpress()
+                else:
+                    plt.draw()
         if not self.plots['block']:
             plt.show(block=True)
         if (self.plots['shortfall_detail'] or self.plots['save_match']) and self.do_load:
