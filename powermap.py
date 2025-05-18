@@ -495,7 +495,7 @@ class MapView(QtWidgets.QGraphicsView):
             p = QtCore.QPoint(int(p.x()), int(p.y()))
         elif where is None:
             p = self.mapToScene(pos)
-            p = QtCore.QPointF(p.x(), p.y())
+            p = QtCore.QPoint(int(p.x()), int(p.y()))
         color = QtGui.QColor()
         if self.scene().colors['ruler'].lower() == 'guess':
             sp = self.mapToGlobal(p)
@@ -606,7 +606,7 @@ class MapView(QtWidgets.QGraphicsView):
                     self.legend_items[-1].setZValue(0)
                     self.scene().addItem(self.legend_items[-1])
                     y_d = max(abs(y_d), fh)
-                    p.setY(p.y() + y_d)
+                    p.setY(int(p.y() + y_d))
         txt = 'Station '
         if self.scene().station_square:
             txt += 'Squares'
