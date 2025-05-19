@@ -1847,6 +1847,13 @@ class powerMatch(QtWidgets.QWidget):
     def changes(self):
         self.updated = True
 
+    def optLoadChange(self):
+        if self.optLoadMult.hasFocus():
+            self.optLoad.setValue(self.optLoadMult.value() * self._optLoadv[1])
+        elif self.optLoad.hasFocus():
+            self.optLoadMult.setValue(self.optLoad.value() / self._optLoadv[1])
+        self.updated = True
+
     def bpcchanged(self):
         if self.batch_prefix_check.isChecked():
             self.batch_prefix = True
@@ -7102,15 +7109,24 @@ class powerMatch(QtWidgets.QWidget):
         err_msg = ''
         optDialog = QtWidgets.QDialog()
         grid = QtWidgets.QGridLayout()
-        grid.addWidget(QtWidgets.QLabel('Adjust load'), 0, 0)
-        self.optLoad = QtWidgets.QDoubleSpinBox()
-        self.optLoad.setRange(-1, self.adjust_cap)
-        self.optLoad.setDecimals(4)
-        self.optLoad.setSingleStep(.1)
         rw = 0
-        grid.addWidget(self.optLoad, rw, 1)
-        grid.addWidget(QtWidgets.QLabel('Multiplier for input Load'), rw, 2, 1, 3)
-        self.optLoad.setValue(pmss_details['Load'].multiplier)
+        self._optLoadv = [pmss_details['Load'].multiplier, pmss_details['Load'].capacity]
+        grid.addWidget(QtWidgets.QLabel('Adjust load'), rw, 0)
+        self.optLoadMult = QtWidgets.QDoubleSpinBox()
+        self.optLoadMult.setRange(-1, self.adjust_cap)
+        self.optLoadMult.setDecimals(4)
+        self.optLoadMult.setSingleStep(.1)
+        grid.addWidget(self.optLoadMult, rw, 1)
+        grid.addWidget(QtWidgets.QLabel('Multiplier gives Load (MWh)'), rw, 2, 1, 3)
+        self.optLoadMult.setValue(self._optLoadv[0])
+        self.optLoad = QtWidgets.QDoubleSpinBox()
+        self.optLoad.setRange(1, self._optLoadv[1] * self.adjust_cap)
+        self.optLoad.setDecimals(0)
+        self.optLoad.setSingleStep(1000)
+        self.optLoad.setValue(self._optLoadv[0] * self._optLoadv[1])
+        self.optLoadMult.valueChanged.connect(self.optLoadChange)
+        self.optLoad.valueChanged.connect(self.optLoadChange)
+        grid.addWidget(self.optLoad, rw, 3)
         rw += 1
         grid.addWidget(QtWidgets.QLabel('Population size'), rw, 0)
         optPopn = QtWidgets.QSpinBox()
@@ -7242,7 +7258,7 @@ class powerMatch(QtWidgets.QWidget):
             except:
                 self.targets[key][3] = float(maxim.text())
         # might want to save load value if changed
-        pmss_details['Load'].multiplier = self.optLoad.value()
+        pmss_details['Load'].multiplier = self.optLoadMult.value()
         updates = {}
         lines = []
         lines.append('optimise_choice=' + self.optimise_choice)
