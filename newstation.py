@@ -122,6 +122,15 @@ class AnObject(QtWidgets.QDialog):
             self.wind_hub_formula[1] = config.get('Offshore Wind', 'hub_formula')
         except:
             pass
+        self.wind_max_turbines = [299, 299]
+        try:
+            self.wind_max_turbines[0] = int(config.get('Wind', 'max_turbines'))
+        except:
+            pass
+        try:
+            self.wind_max_turbines[1] = int(config.get('Offshore Wind', 'max_turbines'))
+        except:
+            pass
 
 
     def __init__(self, dialog, anobject, scenarios=None):
@@ -330,7 +339,10 @@ class AnObject(QtWidgets.QDialog):
                 self.no_turbines_was = attr
                 self.show_hide['no_turbines'] = len(self.edit)
                 self.edit.append(QtWidgets.QSpinBox())  # QtWidgets.QLineEdit(str(self.no_turbines)))
-                self.edit[-1].setRange(0, 299)
+                wtyp = 0
+                if self.anobject.technology == 'Offshore Wind':
+                    wtyp = 1
+                self.edit[-1].setRange(0, self.wind_max_turbines[wtyp])
                 if self.no_turbines is None or self.no_turbines == '':
                     self.edit[-1].setValue(0)
                 else:
