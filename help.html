@@ -1918,6 +1918,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>pm_sparse</dfn></td>
+<td class="none">When creating a Powermatch data file if this property is True technology columns with no stations will be removed. The default is False</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>save_match</dfn></td>
 <td class="none">Save inputs for Powermatch (or Powerbalance)</td>
 </tr>
@@ -3558,7 +3562,8 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <li><em>Save (adjusted) Hourly Data Output by Technology</em> option will save generation in MWh for each technology and other options for each hour of the year (8,760 hours). This is the hourly output calculated by the SAM model multiplied by any adjustments. If appropriate Power Model options are chosen data for Generation, Excess, Load and Storage will also be saved. The default filename can be set using the <em>data_file</em> property of the [Files] Section of the Preferences file; otherwise it will in the format of <em>Power_Detail_Technology_yyyy-mm-dd_hhmm...</em></li>
 <li><em>Save Powermatch data</em> option will save save the input data for Powermatch (or Powerbalance). There are two possible output formats:
 <ol>
-<li>Powermatch uses scenario worksheets. If the <em>pm_template</em> property of the <em>[Files]</em> Section is set, Powermap will save the inputs in this format. The file can (only) be saved as an <em>.xlsx</em> format file</li>
+<li>Powermatch uses scenario worksheets. If the <em>pm_template</em> property of the <em>[Files]</em> Section is set, Powermap will save the inputs in this format. The file can (only) be saved as an <em>.xlsx</em> format file.<br />
+The Powermatch template file sets out the column order for technologies. By default the saved Powermatch data file retains columns for all technologies. If the <em>pm_sparse</em> property of the <em>[Power]</em> Section is set columns for technologies with no stations will be removed. If Generation by Zone is chosen the saved Powermatch data file will be saved in sparse format</li>
 <li>The original Powerbalance uses the hourly shortfalls and overall generation figures in its computations. This option saves this data in a spreadsheet to simplify copying it into a Powerbalance workbook. The cells required for Powerbalance are highlighted in colour. The worksheet contains the generation summary data followed by the shortfall data. The file can be saved as <em>.csv</em> for a CSV file or <em>.xls</em> for an Excel file</li>
 </ol>
 <li><em>Show Summary/Other Tables</em> option will cause various tables to be presented:

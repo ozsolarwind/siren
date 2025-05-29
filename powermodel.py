@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2024 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2025 Sustainable Energy Now Inc., Angus King
 #
 #  powermodel.py - This file is part of SIREN.
 #
@@ -983,7 +983,7 @@ class PowerModel():
                                     doit = True
                         except:
                             pass
-                    if doit or not doit:
+                    if doit: # or not doit:
                         for h in range(len(hrly)):
                             ws.cell(row=type_row[-1] + h, column=tech_col[te]).value = hrly[h]
                             cell_format(ws.cell(row=type_row[-1], column=tech_col[te]), \
@@ -1013,8 +1013,11 @@ class PowerModel():
                             except:
                                 continue
                         ly_keys[te].append(key)
+                del_cols = []
                 for te in range(len(tech_col)):
                     if tech_col[te] == 0 or len(ly_keys[te]) == 0:
+                        if tech_names[te] != 'Load':
+                            del_cols.append(tech_col[te])
                         continue
                     hrly = [0.] * 8760
                     doit = False
@@ -1027,11 +1030,15 @@ class PowerModel():
                                     doit = True
                         except:
                             pass
-                    if doit or not doit:
+                    if doit: # or not doit:
                         for h in range(len(hrly)):
                             ws.cell(row=type_row[-1] + h, column=tech_col[te]).value = hrly[h]
                             cell_format(ws.cell(row=type_row[-1], column=tech_col[te]), \
                                         ws.cell(row=type_row[-1] + h, column=tech_col[te]))
+                if self.pm_sparse and len(del_cols) > 0:
+                    del_cols.sort(reverse=True)
+                    for col in del_cols:
+                        ws.delete_cols(col)
             ts.save(data_file)
 
         config = configparser.RawConfigParser()
@@ -1075,6 +1082,7 @@ class PowerModel():
         landscape = False
         papersize = ''
         self.other_width = 2.
+        self.pm_sparse = False
         seasons = []
         periods = []
         try:
@@ -1112,6 +1120,9 @@ class PowerModel():
                     self.other_width = float(values)
                 except:
                     pass
+            elif item == 'pm_sparse':
+                if values.lower() in ['true', 'yes', 'on']:
+                    self.pm_sparse = True
             elif item == 'save_format':
                 plt.rcParams['savefig.format'] = values
             elif item == 'figsize':
