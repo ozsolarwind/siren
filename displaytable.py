@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2024 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2025 Sustainable Energy Now Inc., Angus King
 #
 #  displaytable.py - This file is part of SIREN.
 #
@@ -149,6 +149,10 @@ class Table(QtWidgets.QDialog):
                 for j in range(len(self.fields)):
                     if self.sumfields[i] == self.fields[j]:
                         self.fields.insert(j + 1, '%' + str(i))
+                        try:
+                            self.decpts.insert(j + 1, 0)
+                        except:
+                            pass
                         break
         if self.title is None:
             try:
