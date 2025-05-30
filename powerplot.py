@@ -813,7 +813,7 @@ class PowerPlot(QtWidgets.QWidget):
         self.grid.addWidget(QtWidgets.QLabel('(Handy if you want to produce a series of plots)'), rw, 2, 1, 3)
         rw += 1
         self.grid.addWidget(QtWidgets.QLabel('Type of Plot:'), rw, 0)
-        plots = ['Cumulative', 'Bar Chart', 'Heat Map', 'Line Chart', 'Pie Chart', 'Step Chart', 'Step Day Chart',
+        plots = ['Cumulative', 'Bar Chart', 'Heat Map', 'Line Chart', 'Load Duration', 'Pie Chart', 'Step Chart', 'Step Day Chart',
                  'Step Line Chart']
         if PowerPlot3D is not None:
             plots.append('3D Surface Chart')
@@ -2100,6 +2100,9 @@ class PowerPlot(QtWidgets.QWidget):
                     self.rows = ws.nrows - (row + 1)
                     break
                 row += 1
+            if self.toprow is None:
+                self.log.setText(isheet + ' sheet format incorrect')
+                return
         ignore_end = True
         if ignore_end:
             for row in range(ws.nrows -1, -1, -1):
@@ -2857,6 +2860,55 @@ class PowerPlot(QtWidgets.QWidget):
                 self.log.setText('Heat map value range: {} to {}'.format(fmt_str, fmt_str).format(miny, maxy))
                 QtCore.QCoreApplication.processEvents()
                 plt.show()
+            elif self.plottype.currentText() == 'Load Duration':
+                fig = plt.figure(figname, constrained_layout=self.constrained_layout)
+                if suptitle != '':
+                    fig.suptitle(suptitle, fontproperties=self.fontprops['Header'])
+                plt.title(titl, fontdict=self.fontprops['Title'])
+                if gridtype != '':
+                    plt.grid(axis=gridtype)
+                ld1 = plt.subplot(111)
+                if self.legend_side == 'Right':
+                    plt.subplots_adjust(left=0.1, bottom=0.1, right=0.75)
+                elif self.legend_side == 'Left':
+                    plt.subplots_adjust(left=0.25, bottom=0.1, right=0.9)
+                    loc = 'lower left'
+                miny = 0
+                maxy = 0
+                for c in range(len(data)):
+                    data[c] = sorted(data[c], reverse=True)
+                    maxy = max(maxy, data[c][0])
+                    ld1.plot(x, data[c], label=label[c], color=self.set_colour(label[c]))
+                if tgt_col >= 0:
+                    if len(load) == 0:
+                        for row in range(self.toprow[1] + 1, self.rows + 1):
+                            load.append(ws.cell_value(row, tgt_col))
+                    load = sorted(load, reverse=True)
+                    maxy = max(maxy, load[0])
+                    ld1.plot(x, load, linewidth=self.tgtSpin.value(), label=self.short_legend + self.target,
+                             color=self.set_colour(self.target), linestyle=self.tgtLine.currentText())
+                yminmax = set_ylimits(miny, maxy)
+                ld1.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 2), prop=self.legend_font)
+                plt.ylim(yminmax)
+                plt.xlim([0, len(x)])
+                xticks = []
+                xticklabels = []
+                if len(x) > 1000:
+                    incr = 1000
+                else:
+                    incr = 100
+                for i in range(0, len(x), incr):
+                    xticks.append(i)
+                    xticklabels.append(f'{i}')
+                ld1.set_xticks(xticks)
+                ld1.set_xticklabels(xticklabels, fontdict=self.fontprops['Ticks'])
+                ld1.set_xlabel('Power in descending order', fontdict=self.fontprops['Label'])
+                ld1.set_ylabel('Power (MW/MWh)', fontdict=self.fontprops['Label']) # MWh?
+                ld1.tick_params(colors=self.fontprops['Ticks']['color'], which='both')
+                zp = ZoomPanX()
+                f = zp.zoom_pan(ld1, base_scale=1.2) #, flex_ticks=flex_on)
+                plt.show()
+                del zp
             if do_12:
                 matplotlib.rcParams['figure.figsize'] = do_12_save
         else: # diurnal average - period chosen
@@ -3402,7 +3454,7 @@ class PowerPlot(QtWidgets.QWidget):
                         try:
                             load[h] = load[h] + ws.cell_value(row, tgt_col)
                         except:
-                            print('(3405)', h, row, tgt_col, ws.cell_value(row, tgt_col), strt_row, todo_rows)
+                            print('(3453)', h, row, tgt_col, ws.cell_value(row, tgt_col), strt_row, todo_rows)
                         h += 1
                         if h >= self.interval:
                            h = 0
