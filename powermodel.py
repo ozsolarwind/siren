@@ -682,9 +682,10 @@ class PowerModel():
             ts = oxl.load_workbook(self.pm_template)
             ws = ts.worksheets[0]
             type_tags = ['name', 'zone', 'tech', 'cap', 'cf', 'gen', 'tmit', 'hrly']
-            tech_tags = ['load', 'wind', 'offw', 'roof', 'fixed', 'single', 'dual', 'biomass', 'geotherm', 'other1', 'cst']
+            tech_tags = ['load', 'wind', 'offw', 'roof', 'fixed', 'single', 'dual',
+                         'biomass', 'geotherm', 'other1', 'cst', 'hydro', 'phes']
             tech_names = ['Load', 'Wind', 'Offshore Wind', 'Rooftop PV', 'Fixed PV', 'Single Axis PV', 'Dual Axis PV',
-                          'Biomass', 'Geothermal', 'Other1', 'CST']
+                          'Biomass', 'Geothermal', 'Other1', 'CST', 'Hydro', 'Pumped Hydro']
             tech_names2 = [''] * len(tech_names)
             tech_names2[tech_names.index('Wind')] = 'Onshore Wind'
             tech_names2[tech_names.index('CST')] = 'Solar Thermal'
@@ -916,6 +917,8 @@ class PowerModel():
                             te = tech_names2.index(key)
                         except:
                             continue
+                    if tech_col[te] == 0:
+                        continue
                     ws.cell(row=type_row[type_tags.index('cap')], column=tech_col[te]).value = value[0]
                     ws.cell(row=type_row[type_tags.index('gen')], column=tech_col[te]).value = value[1]
                     if self.plots['grid_losses']:
@@ -1038,7 +1041,8 @@ class PowerModel():
                 if self.pm_sparse and len(del_cols) > 0:
                     del_cols.sort(reverse=True)
                     for col in del_cols:
-                        ws.delete_cols(col)
+                        if col > 0:
+                            ws.delete_cols(col)
             ts.save(data_file)
 
         config = configparser.RawConfigParser()

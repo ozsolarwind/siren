@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2023 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2025 Sustainable Energy Now Inc., Angus King
 #
 #  station.py - This file is part of SIREN.
 #
@@ -49,7 +49,7 @@ def within_map(y, x, poly):
 class Station:
     def __init__(self, name, technology, lat, lon, capacity, turbine, rotor, no_turbines, area, scenario,
                  direction=None, grid_line=None, hub_height=None, power_file=None, storage_hours=None, tilt=None, # extra file fields
-                 generation=None, grid_len=None, grid_path_len=None, zone=None, rating=None):
+                 generation=None, grid_len=None, grid_path_len=None, zone=None, rating=None, storage_capacity=None):
         self.name = name
         self.technology = technology
         self.lat = lat
@@ -75,6 +75,7 @@ class Station:
         self.grid_path_len = grid_path_len
         self.direction = direction
         self.storage_hours = storage_hours
+        self.storage_capacity = storage_capacity
         if tilt is not None:
             try:
                 self.tilt = float(tilt)
@@ -84,6 +85,11 @@ class Station:
         if rating is not None:
             try:
                 self.rating = float(rating)
+            except:
+                pass
+        if storage_capacity is not None:
+            try:
+                self.storage_capacity = float(storage_capacity)
             except:
                 pass
 
@@ -255,12 +261,13 @@ class Stations:
                             if not within_map(float(facility['Latitude']),
                               float(facility['Longitude']), self.map_polygon):
                                 continue
-                            if 'Facility Code' in facilities.fieldnames:   # IMO format
+                            if 'Facility Code' in facilities.fieldnames:   # IMO/AEMO format
                                 bit = facility['Facility Code'].split('_')
                                 rotor = 0.
                                 hub_height = 0.
                                 turbine = ''
                                 no_turbines = 0
+                                storage_capacity = 0
                                 if bit[-1][:2] == 'WW' or bit[-1][:2] == 'WF':
                                     tech = 'Wind'
                                     turbine = facility['Turbine']
@@ -307,8 +314,13 @@ class Stations:
                                         hub_height = float(facility['Hub Height'])
                                     except:
                                         pass
-                                elif bit[-1][:3] == 'ESR':
+                                elif bit[-1][:3] == 'ESR' or bit[-1][:4] == 'BESS':
                                     tech = 'BESS'
+                                    area = self.areas[tech] * float(facility['Maximum Capacity (MW)'])
+                                    try:
+                                        storage_capacity = float(facility['Storage Capacity (MWh)'])
+                                    except:
+                                        pass
                                 elif bit[0] == 'NORTHAM' and bit[-1][:2] == 'PV':
                                     tech = 'Fixed PV'
                                     area = self.areas[tech] * float(facility['Maximum Capacity (MW)'])
@@ -326,6 +338,11 @@ class Stations:
                                     area = self.areas[tech] * float(facility['Maximum Capacity (MW)'])
                                 elif bit[-1][:2] == 'HG':
                                     tech = 'Pumped Hydro'
+                                    area = self.areas[tech] * float(facility['Maximum Capacity (MW)'])
+                                    try:
+                                        storage_capacity = float(facility['Storage Capacity (MWh)'])
+                                    except:
+                                        pass
                                 else:
                                     tech = 'Fossil '
                                     if 'Fossil' in facilities.fieldnames:
@@ -374,6 +391,8 @@ class Stations:
                                                 self.stations[-1].tilt = float(facility['Tilt'])
                                         except:
                                             pass
+                                    if tech in ['BESS', 'Hydro', 'Pumped Hydro']:
+                                        self.stations[-1].storage_capacity = storage_capacity
                                 else:   # additional generator in existing station
                                     if stn.technology != tech:
                                         if stn.technology[:6] == 'Fossil' and tech[:6] == 'Fossil':
@@ -463,6 +482,12 @@ class Stations:
                                     try:
                                         if facility['Storage Hours'] != '':
                                             self.stations[-1].storage_hours = float(facility['Storage Hours'])
+                                    except:
+                                        pass
+                                if self.stations[-1].technology in ['BESS', 'Hydro', 'Pumped Hydro']:
+                                    try:
+                                        if facility['Storage Capacity (MWh)'] != '':
+                                            self.stations[-1].storage_capacity = float(facility['Storage Capacity (MWh)'])
                                     except:
                                         pass
                     facile.close()
@@ -572,6 +597,13 @@ class Stations:
                                 storage_hours = worksheet.cell_value(curr_row, var['Storage Hours'])
                                 if storage_hours != '':
                                     self.stations[-1].storage_hours = storage_hours
+                            except:
+                                pass
+                        if self.stations[-1].technology in ['BESS', 'Hydro', 'Pumped Hydro']:
+                            try:
+                                storage_capacity = worksheet.cell_value(curr_row, var['Storage Capacity (MWh)'])
+                                if storage_capacity != '':
+                                    self.stations[-1].storage_capacity = storage_capacity
                             except:
                                 pass
         if sam is not None:

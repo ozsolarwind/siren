@@ -294,6 +294,14 @@ class SuperPower():
         except:
             pass
         try:
+            self.ph_cf = float(config.get('Pumped Hydro', 'cf'))
+        except:
+            self.ph_cf = 0.75
+        try:
+            self.ph_start = float(config.get('Pumped Hydro', 'start_hour'))
+        except:
+            self.ph_start = 0
+        try:
             self.pv_losses = float(config.get('PV', 'losses'))
         except:
             self.pv_losses = 14
@@ -423,7 +431,7 @@ class SuperPower():
         try:
             self.hydro_cf = float(config.get('Hydro', 'cf'))
         except:
-            self.hydro_cf = 0.33
+            self.hydro_cf = 0.85
         try:
             self.actual_power = config.get('Files', 'actual_power')
             for key, value in parents:
@@ -1136,6 +1144,27 @@ class SuperPower():
             pwr = station.capacity * 1000 * self.hydro_cf
             for hr in range(8760):
                 farmpwr.append(pwr)
+            return farmpwr
+        elif station.technology == 'Pumped Hydro':   # fudge Hydro purely by Capacity Factor
+            stg = station.storage_capacity * 1000
+            cap = station.capacity * 1000
+            pwr = cap * self.ph_cf
+            for dy in range(365):
+                d_stg = 0
+                d_pwr = 0
+                for hr in range(24):
+                   if hr == self.ph_start:
+                       d_pwr = pwr
+                       d_stg = stg
+                   if d_stg > 0:
+                       if d_stg >= cap:
+                           farmpwr.append(d_pwr)
+                           d_stg -= cap
+                       else:
+                           farmpwr.append(d_stg * self.ph_cf)
+                           d_stg = 0
+                   else:
+                       farmpwr.append(0)
             return farmpwr
         elif station.technology == 'Wave':   # fudge Wave using 10m wind speed
             closest = self.find_closest(station.lat, station.lon)

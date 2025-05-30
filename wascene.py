@@ -865,6 +865,12 @@ class WAScene(QtWidgets.QGraphicsScene):
                             setattr(new_st, 'storage_hours', storage_hours)
                     except:
                         pass
+                    try:
+                        storage_capacity = worksheet.cell_value(curr_row, var['Storage Capacity (MWh)'])
+                        if storage_capacity != '':
+                            setattr(new_st, 'storage_capacity', storage_capacity)
+                    except:
+                        pass
                     self._stations.stations.append(new_st)
                     if not self.addStation(self._stations.stations[-1]):
                         del self._stations.stations[-1]

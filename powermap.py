@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2024 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2025 Sustainable Energy Now Inc., Angus King
 #
 #  powermap.py - This file is part of SIREN
 #  (formerly named sirenm.py).
@@ -2094,7 +2094,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 titl = 'Nearest station: %s (%s MW; %s Km away)' % (station.name, '{:0.0f}'.format(station.capacity),
                        '{:0.0f}'.format(st_dist))
             #    act1 = 'Run SAM API (%s)' % model
-                if station.technology == 'Hydro' or station.technology == 'Wave' or station.technology[:5] == 'Other':
+                if station.technology in ['Hydro', 'Other', 'Pumped Hydro', 'Wave']:
                     act2 = 'Run Power Model for %s' % station.name
                 else:
                     act2 = 'Run SAM Power Model for %s' % station.name
@@ -2345,6 +2345,8 @@ class MainWindow(QtWidgets.QMainWindow):
                     new_station.hub_height = station.hub_height
                 except:
                     pass
+            if station.technology in ['BESS', 'Hydro', 'Pumped Hydro']:
+                new_station.storage_capacity = station.storage_capacity
             dialog = newstation.AnObject(QtWidgets.QDialog(), new_station, scenarios=self.view.scene()._scenarios)
             dialog.exec_()
             new_station = dialog.getValues()
@@ -2507,6 +2509,7 @@ class MainWindow(QtWidgets.QMainWindow):
             comment = 'No Stations to display (?)'
             self.view.statusmsg.emit(comment)
             return
+        do_storage = False
         for st in self.view.scene()._stations.stations:
             if st.technology[:6] != 'Fossil':
                 ctr[0] += 1
@@ -2515,6 +2518,8 @@ class MainWindow(QtWidgets.QMainWindow):
                         ctr[1] += 1
                 except:
                     pass
+            if st.technology in ['BESS', 'Hydro', 'Pumped Hydro']:
+                do_storage = True
         if ctr[0] == 0 and not self.view.scene().show_fossil:
             comment = 'No Stations to display'
             self.view.statusmsg.emit(comment)
@@ -2522,15 +2527,23 @@ class MainWindow(QtWidgets.QMainWindow):
         fields = ['name', 'zone', 'technology', 'capacity']
         units = 'capacity=MW'
         sumfields = ['capacity']
+        decpts=[0, 0, 0, 3]
         if ctr[1] > 1:
             fields.append('generation')
             units += ' generation=MWh'
             sumfields.append('generation')
+            decpts.append(0)
+        if do_storage:
+            fields.append('storage_capacity')
+            units += ' storage_capacity=MWh'
+            sumfields.append('storage_capacity')
+            decpts.append(0)
         fields.append('scenario')
+        decpts.append(0)
         dialog = displaytable.Table(self.view.scene()._stations.stations,
                  fossil=self.view.scene().show_fossil, fields=fields,
                  units=units, sumby='technology', sumfields=sumfields,
-                 decpts=[0, 0, 0, 3, 0], save_folder=self.scenarios)
+                 decpts=decpts, save_folder=self.scenarios)
         dialog.exec_()
         comment = 'Stations displayed'
         self.view.statusmsg.emit(comment)
@@ -3219,11 +3232,15 @@ class MainWindow(QtWidgets.QMainWindow):
         fields = ['name', 'technology', 'lat', 'lon', 'capacity', 'turbine', 'rotor', 'no_turbines',
                   'area']
         field_empty = ['', '', 0, 0, 0, '', 0, 0, 0]
-        extra_names = ['Direction', 'Grid Line', 'Hub Height', 'Power File', 'Storage Hours', 'Tilt']
+        extra_names = ['Direction', 'Grid Line', 'Hub Height', 'Power File', 'Storage Hours', 'Tilt',
+                       'Storage Capacity (MWh)']
         extra_fields = []
         for field in extra_names:
+            i = field.find('(')
+            if i > 0:
+                 field = field[:i].strip()
             extra_fields.append(field.lower().replace(' ', '_'))
-        extra_empty = ['', '', 0, '', 0, 0]
+        extra_empty = ['', '', 0, '', 0, 0, '']
         to_add = [] # to add extra fields in a consistent order
         for stn in self.view.scene()._stations.stations:
             if stn.scenario != 'Existing' and stn.scenario == scenario:

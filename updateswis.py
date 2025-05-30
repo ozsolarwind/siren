@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2024 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2025 Sustainable Energy Now Inc., Angus King
 #
 #  updateswis.py - This file is part of SIREN.
 #
@@ -113,6 +113,8 @@ class makeFile():
                                 new_date = new_date.replace(' 0', ' ')
                                 if new_date == facility[field]:
                                     continue
+                            if field == 'Maximum Capacity (MW)' and facility['Fossil'] == 'BESS': # ignore
+                                continue
                             try:
                                 field_was = float(facility[field])
                                 field_new = float(new_facility[old_new[field]])
@@ -154,7 +156,8 @@ class makeFile():
             msgbox.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
             reply = msgbox.exec_()
             if reply == QtWidgets.QMessageBox.Yes:
-                extra_fields = ['Fossil', 'Latitude', 'Longitude', 'Facility Name', 'Turbine', 'No. turbines', 'Tilt']
+                extra_fields = ['Fossil', 'Latitude', 'Longitude', 'Facility Name', 'Turbine', 'No. turbines', 'Tilt',
+                                'Storage Capacity (MWh)']
                 upd_file = open(fac_file + '.csv', 'w')
                 upd_writer = csv.writer(upd_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 upd_writer.writerow(common_fields + extra_fields)
@@ -162,21 +165,27 @@ class makeFile():
                 for new_facility in new_facilities:
                     if new_facility['Facility Code'] == 'Facility Code':   # ignore headers - after seek(0)
                         continue
-                    new_line = []
-                    for field in common_fields:
-                        try:
-                            new_line.append(new_facility[old_new[field]])
-                        except:
-                            new_line.append('')
                     facile.seek(0)
                     for facility in facilities:
                         if new_facility['Facility Code'] == facility['Facility Code']:
-                            for field in extra_fields:
-                                try:
-                                    new_line.append(facility[field])
-                                except:
-                                    new_line.append('')
                             break
+                    else:
+                        facility = None
+                    new_line = []
+                    for field in common_fields:
+                        try:
+                            if facility is not None and field == 'Maximum Capacity (MW)' and facility['Fossil'] == 'BESS':
+                                new_line.append(facility[field])
+                            else:
+                                new_line.append(new_facility[old_new[field]])
+                        except:
+                            new_line.append('')
+                    if facility is not None:
+                        for field in extra_fields:
+                            try:
+                                new_line.append(facility[field])
+                            except:
+                                new_line.append('')
                     else:
                         for field in extra_fields:
                             new_line.append('')
@@ -221,10 +230,10 @@ class makeFile():
             ctr = 0
             d = 0
             fields = ['Station Name', 'Technology', 'Latitude', 'Longitude', 'Maximum Capacity (MW)',
-                      'Turbine', 'Rotor Diam', 'No. turbines', 'Area']
+                      'Turbine', 'Rotor Diam', 'No. turbines', 'Area', 'Storage Capacity (MWh)']
             stations = Stations(stations2=False)
             if self.excel[-4:] == '.csv':
-                upd_file = open(self.excel, 'wb')
+                upd_file = open(self.excel, 'w')
                 upd_file.write('Description:,"SWIS Existing Stations"\n')
                 upd_writer = csv.writer(upd_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 upd_writer.writerow(fields)
@@ -244,6 +253,10 @@ class makeFile():
                         new_line.append('0')
                         new_line.append('0')
                     new_line.append(str(stn.area))
+                    if stn.technology in ['BESS', 'Hydro', 'Pumped Hydro']:
+                        new_line.append(str(stn.storage_capacity))
+                    else:
+                        new_line.append('')
                     upd_writer.writerow(new_line)
                     ctr += 1
                 upd_file.close()
@@ -288,7 +301,10 @@ class makeFile():
                         ws.write(ctr, 7, 0)
                     ws.write(ctr, 8, stn.area)
                     lens[8] = max(lens[8], len(str(stn.area)))
-                for c in range(9):
+                    if stn.technology in ['BESS', 'Hydro', 'Pumped Hydro']:
+                        ws.write(ctr, 9, stn.storage_capacity)
+                        lens[9] = max(lens[9], len(str(stn.storage_capacity)))
+                for c in range(len(lens)):
                     if lens[c] * 275 > ws.col(c).width:
                         ws.col(c).width = lens[c] * 275
                 ws.set_panes_frozen(True)   # frozen headings instead of split panes
@@ -338,7 +354,10 @@ class makeFile():
                         ws.cell(row=ctr + 1, column=8).value = 0
                     ws.cell(row=ctr + 1, column=9).value = stn.area
                     lens[8] = max(lens[8], len(str(stn.area)))
-                    for c in range(9):
+                    if stn.technology in ['BESS', 'Hydro', 'Pumped Hydro']:
+                        ws.cell(row=ctr + 1, column=10).value = stn.storage_capacity
+                        lens[9] = max(lens[9], len(str(stn.storage_capacity)))
+                    for c in range(len(lens)):
                         ws.cell(row=ctr + 1, column=c + 1).font = normal
                 for c in range(len(lens)):
                     ws.column_dimensions[ssCol(c + 1)].width = lens[c]

@@ -455,7 +455,7 @@ You can also use TMY files such as those provided with SAM. If you have a number
 <tr class="none">
 <td class="none"><dfn>Technology</dfn></td>
 <td class="none">One of the defined technologies:- Biomass, CST, Fixed PV, Geothermal, Offshore Wind, Rooftop PV, Single Axis PV, Solar Thermal, Dual Axis PV (Tracking PV), Wind (refer to <a href="#sam">SAM Models used by SIREN</a>), and
-<div class="experiment">BESS (Battery), Hydro, Wave and Other (refer to <a href="#nonsam">Other Models used by SIREN (experimental)</a>)</div>
+<div class="experiment">BESS (Battery), Hydro, Pumped Hydro, Wave and Other (refer to <a href="#nonsam">Other Models used by SIREN (experimental)</a>)</div>
 <strong>Note:</strong> SIREN uses two of the SAM Concentrated Solar Power models. <em>Solar Thermal</em> is the SAM model for Power tower concentrating solar power (molten salt and direct steam) and <em>CST</em> is A simple "generic model" for conventional thermal
 </td>
 </tr>
@@ -635,10 +635,10 @@ The format is similar to a Windows INI file. If you want to create a new Model y
 <a href="#p_flexiplot">Flexiplot</a>,
 <a href="#p_fossil_coal">Fossil Coal</a>, <a href="#p_fossil_cogen">Fossil Cogen</a>, <a href="#p_fossil_gas">Fossil Gas</a>,
 <a href="#p_fossil_mixed">Fossil Mixed</a>, <a href="#p_geothermal">Geothermal</a>, <a href="#p_grid">Grid</a>,
-<a href="#p_hydro">Hydro</a>, <a href="#p_map">Map</a>, <a href="#p_offw">Offshore Wind</a>, <a href="#p_other">Other</a>, <a href="#p_parents">Parents</a>, <a href="#p_pc">Plot Colours</a>,
-<a href="#power">Power</a>, <a href="#p_pm">Powermatch</a>, <a href="#p_pp">Powerplot</a>, <a href="#p_pv">PV</a>, <a href="#p_rooftop_pv">Rooftop PV</a>,
-<a href="#p_sam_modules">SAM Modules</a>, <a href="#p_single_pv">Single Axis PV</a>, <a href="#p_solar_thermal">Solar Thermal</a>, <a href="#p_storage">Storage</a>,
-<a href="#p_view">View</a>, <a href="#p_wave">Wave</a>, <a href="#p_wind">Wind</a>,
+<a href="#p_hydro">Hydro</a>, <a href="#p_map">Map</a>, <a href="#p_offw">Offshore Wind</a>, <a href="#p_other">Other</a>, <a href="#p_parents">Parents</a>,
+<a href="#p_pc">Plot Colours</a>, <a href="#power">Power</a>, <a href="#p_pm">Powermatch</a>, <a href="#p_pp">Powerplot</a>, <a href="#p_phes">Pumped Hydro</a>,
+<a href="#p_pv">PV</a>, <a href="#p_rooftop_pv">Rooftop PV</a>, <a href="#p_sam_modules">SAM Modules</a>, <a href="#p_single_pv">Single Axis PV</a>,
+<a href="#p_solar_thermal">Solar Thermal</a>, <a href="#p_storage">Storage</a>, <a href="#p_view">View</a>, <a href="#p_wave">Wave</a>, <a href="#p_wind">Wind</a>,
 <a href="#p_windows">Windows</a>.</p>
 <table border="0", class="none">
 <tr>
@@ -805,11 +805,9 @@ The format is similar to a Windows INI file. If you want to create a new Model y
 <tr class="none">
 <td class="none"><dfn>geothermal</dfn></td>
 </tr>
-<!--
 <tr class="none">
 <td class="none"><dfn>pumped_hydro</dfn></td>
 </tr>
--->
 <tr class="none">
 <td class="none"><dfn>offshore_wind</dfn></td>
 </tr>
@@ -1609,7 +1607,7 @@ This entails all costs associated with connecting a power station to the network
 </tr>
 <tr class="none">
 <td class="none"><dfn>dispatchable</dfn></td>
-<td class="none">The list of technologies to be treated as &ldquo;dispatchable&rdquo;. These technologies may require a more robust transmission line. The list is:- <em>pumped_hydro, geothermal, biomass, solar_thermal</em></td>
+<td class="none">The list of technologies to be treated as &ldquo;dispatchable&rdquo;. These technologies may require a more robust transmission line. The list is:- <em>biomass, geothermal, hydro, pumped_hydro, solar_thermal</em></td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>d_lines</dfn></td>
@@ -1671,7 +1669,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>cf</dfn></td>
-<td class="none">Capacity Factor. As SAM does not have a model for Hydro the approach SIREN uses is to simulate power generation using a capacity factor to produce a &ldquo;straight line&rdquo; power output</td>
+<td class="none">Capacity Factor. As SAM does not have a model for Hydro the approach SIREN uses is to simulate power generation using a capacity factor to produce a &ldquo;straight line&rdquo; power output. The default capacity factor is 85%</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>icon</dfn></td>
@@ -2480,6 +2478,37 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">A list of generators, separated by commas, to be treated as part of Underlying generators. The default is <em>Rooftop PV</em></td>
 </tr>
 </table>
+</td></tr>
+<tr class="none" id="p_phes"><td><div class="experiment"><dfn><strong>[Pumped Hydro]</strong></dfn><br />(experimental)</div></td>
+<td><div class="experiment">
+Specifics on Pumped Hydroelectric power characteristics (experimental). Properties are:</p>
+<table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>area</dfn></td>
+<td class="none">Estimated area in km<sup>2</sup> per MW</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>capital_cost</dfn></td>
+<td class="none">Capital cost per peak MW. A suffix of K indicates thousands and M millions</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>cf</dfn></td>
+<td class="none">Capacity Factor. As SAM does not have a model for Pumped Hydro the approach SIREN uses is to simulate power generation using a capacity factor to produce a &ldquo;straight line&rdquo; power output for the storage capacity of the station assuming capacity is refreshed daily. The default capacity factor is 75%</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>icon</dfn></td>
+<td class="none">Icon to display for this technology. Default is phes_g.png</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>o_m_cost</dfn></td>
+<td class="none">Operations and Maintenance cost per peak MW. A suffix of K indicates thousands and M millions</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>start_hour</dfn></td>
+<td class="none">The hour, 0 to 23, to start storage discharge. Default is 0</td>
+</tr>
+</table>
+</div>
 </td></tr>
 <tr class="none" id="p_pv"><td><dfn><strong>[PV]</strong></dfn></td>
 <td>Specifics on PV characteristics. Properties are:</p>
@@ -3563,7 +3592,8 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <li><em>Save Powermatch data</em> option will save save the input data for Powermatch (or Powerbalance). There are two possible output formats:
 <ol>
 <li>Powermatch uses scenario worksheets. If the <em>pm_template</em> property of the <em>[Files]</em> Section is set, Powermap will save the inputs in this format. The file can (only) be saved as an <em>.xlsx</em> format file.<br />
-The Powermatch template file sets out the column order for technologies. By default the saved Powermatch data file retains columns for all technologies. If the <em>pm_sparse</em> property of the <em>[Power]</em> Section is set columns for technologies with no stations will be removed. If Generation by Zone is chosen the saved Powermatch data file will be saved in sparse format</li>
+The Powermatch template file sets out the column order for technologies. By default the saved Powermatch data file retains columns for all technologies. If the <em>pm_sparse</em> property of the <em>[Power]</em> Section is set columns for technologies with no stations will be removed. If Generation by Zone is chosen the saved Powermatch data file will be saved in sparse format
+<br /><strong>Note:</strong> If the technology does not appear in the Powermatch template file the generation for the technology will not appear in saved data file</li>
 <li>The original Powerbalance uses the hourly shortfalls and overall generation figures in its computations. This option saves this data in a spreadsheet to simplify copying it into a Powerbalance workbook. The cells required for Powerbalance are highlighted in colour. The worksheet contains the generation summary data followed by the shortfall data. The file can be saved as <em>.csv</em> for a CSV file or <em>.xls</em> for an Excel file</li>
 </ol>
 <li><em>Show Summary/Other Tables</em> option will cause various tables to be presented:
@@ -4766,7 +4796,9 @@ Due to the initial source for each data file the format for each may be differen
 </tr>
 <tr class="none">
 <td class="none"><dfn>pm_template</dfn></td>
-<td class="none">A template file defining the layout for a Powermatch scenario file. This can only be an Excel (XLSX) file. The template file only allows defined technology types for RE inputs. These are:<br />(Load), Onshore Wind, Offshore Wind, Rooftop PV, Fixed PV, Single Axis PV, Dual Axis PV, Biomass, Geothermal, Other 1, and CST.</td>
+<td class="none">A template file defining the layout for a Powermatch scenario file. This can only be an Excel (XLSX) file. The template file only allows defined technology types for RE inputs. These are:<br />
+&nbsp;&nbsp;&nbsp;&nbsp;(Load), Biomass, CST, Dual Axis PV, Fixed PV, Geo-thermal, Hydro, Offshore Wind, Onshore Wind, Other 1, Pumped Hydro, Rooftop PV and Single Axis PV.
+<br />The template has cryptic values to identify the technologies and data type, for example, <em>&lt;wind_hrly&gt;</em> indicates hourly data for Onshore Wind</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>pow_files</dfn></td>
@@ -6102,6 +6134,8 @@ MERRA-2 Variables
 <p>This is currently a &ldquo;placeholder&rdquo; for battery energy storage systems</p>
 <h4>Hydro</h4>
 <p>The Hydro model used in SIREN is a very simplistic model computed by multiplying station capacity by the defined capacity factor for Hydro.</p>
+<h4>Pumped Hydro</h4>
+<p>The Pumped Hydro model used in SIREN is a very simplistic model computed by multiplying station capacity by the defined capacity factor for Pumped Hydro while there is storage capacity available with storage capacity being refreshed each day.</p>
 <h4>Wave</h4>
 <p>The Wave model used in SIREN is (currently) a very simplistic model computed using wind speed (after Bretschneider and Sverdrup and Munk):
 <p><pre>

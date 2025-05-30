@@ -150,7 +150,7 @@ class AnObject(QtWidgets.QDialog):
         self.save = False
         self.field = ['name', 'technology', 'lat', 'lon', 'capacity', 'turbine', 'rotor', 'hub_height',
                       'no_turbines', 'area', 'scenario', 'power_file', 'grid_line', 'storage_hours',
-                      'direction', 'tilt', 'zone']
+                      'direction', 'tilt', 'zone', 'storage_capacity']
         self.label = []
         self.edit = []
         self.field_type = []
@@ -176,7 +176,6 @@ class AnObject(QtWidgets.QDialog):
                     try:
                         self.turbines.append([turb['Name'].strip(), '', turb['Rotor Diameter'], float(turb[kwr])])
                     except:
-                        print(turb['Name'])
                         self.turbines.append([turb['Name'].strip(), '', turb['Rotor Diameter'], turb[kwr]])
                     if turb['IEC Wind Speed Class'] in ['', ' ', '0', 'Unknown', 'unknown', 'not listed']:
                        pass
@@ -249,7 +248,7 @@ class AnObject(QtWidgets.QDialog):
                 self.label[-1].setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
                 self.label[-1].clicked.connect(self.turbineSort)
             else:
-                self.label.append(QtWidgets.QLabel(self.field[i].title() + ':'))
+                self.label.append(QtWidgets.QLabel(self.field[i].replace('_', ' ').title() + ':'))
             if i == 0:
                 metrics.append(self.label[-1].fontMetrics())
                 if metrics[0].boundingRect(self.label[-1].text()).width() > widths[0]:
@@ -260,7 +259,8 @@ class AnObject(QtWidgets.QDialog):
         self.turbine_was = ''
         self.turbine_classd = QtWidgets.QLabel('')
         self.show_hide = {}
-        units = {'area': 'sq. Km', 'capacity': 'MW'}
+        units = {'area': 'sq. Km', 'capacity': 'MW', 'storage_capacity': 'MWh', 'storage_hours': 'hrs'}
+        self.units = {}
         for i in range(len(self.field)):
             try:
                 attr = getattr(self.anobject, self.field[i])
@@ -407,6 +407,13 @@ class AnObject(QtWidgets.QDialog):
                 else:
                     self.edit.append(QtWidgets.QLineEdit(''))
                 self.edit[-1].setEnabled(False)
+            elif self.field[i] == 'storage_capacity':
+                self.storage_capacity = attr
+                self.show_hide['storage_capacity'] = len(self.edit)
+                if attr is not None:
+                    self.edit.append(QtWidgets.QLineEdit(str(self.storage_capacity)))
+                else:
+                    self.edit.append(QtWidgets.QLineEdit(''))
             try:
                 if metrics[1].boundingRect(self.edit[-1].text()).width() > widths[1]:
                     widths[1] = metrics[1].boundingRect(self.edit[-1].text()).width()
@@ -414,7 +421,8 @@ class AnObject(QtWidgets.QDialog):
                 pass
             grid.addWidget(self.edit[-1], i + 1, 1)
             if self.field[i] in list(units.keys()):
-                grid.addWidget(QtWidgets.QLabel(units[self.field[i]]), i + 1, 2)
+                self.units[self.field[i]] = QtWidgets.QLabel(units[self.field[i]])
+                grid.addWidget(self.units[self.field[i]], i + 1, 2)
         self.technologyChanged(self.techcomb.currentIndex)
         grid.setColumnMinimumWidth(0, widths[0] + 10)
         grid.setColumnMinimumWidth(1, widths[1] + 10)
@@ -446,12 +454,14 @@ class AnObject(QtWidgets.QDialog):
         wind_fields = ['hub_height', 'no_turbines', 'rotor', 'turbine']
         cst_fields = ['storage_hours']
         pv_fields = ['direction', 'tilt']
+        esr_fields = ['storage_capacity']
         show_fields = []
         hide_fields = []
         if self.techcomb.currentText().find('Wind') >= 0 \
           or self.techcomb.currentText().find('Offshore') >= 0:
             hide_fields.append(cst_fields)
             hide_fields.append(pv_fields)
+            hide_fields.append(esr_fields)
             show_fields.append(wind_fields)
             self.curve.show()
             self.turbine_classd.show()
@@ -461,14 +471,22 @@ class AnObject(QtWidgets.QDialog):
             if self.techcomb.currentText() in ['CST', 'Solar Thermal']:
                 show_fields.append(cst_fields)
                 hide_fields.append(pv_fields)
+                hide_fields.append(esr_fields)
                 hide_fields.append(wind_fields)
             elif 'PV' in self.techcomb.currentText():
                 hide_fields.append(cst_fields)
                 show_fields.append(pv_fields)
+                hide_fields.append(esr_fields)
+                hide_fields.append(wind_fields)
+            elif self.techcomb.currentText() in ['BESS', 'Hydro', 'Pumped Hydro']:
+                hide_fields.append(cst_fields)
+                hide_fields.append(pv_fields)
+                show_fields.append(esr_fields)
                 hide_fields.append(wind_fields)
             else:
                 hide_fields.append(cst_fields)
                 hide_fields.append(pv_fields)
+                hide_fields.append(esr_fields)
                 hide_fields.append(wind_fields)
         for i in range(len(hide_fields)):
             for j in range(len(hide_fields[i])):
@@ -476,6 +494,10 @@ class AnObject(QtWidgets.QDialog):
                 self.label[k].hide()
                 self.edit[self.show_hide[hide_fields[i][j]]].hide()
                 self.edit[self.show_hide[hide_fields[i][j]]].setEnabled(False)
+                try:
+                    self.units[hide_fields[i][j]].hide()
+                except:
+                    pass
         for i in range(len(show_fields)):
             for j in range(len(show_fields[i])):
                 k = self.field.index(show_fields[i][j])
@@ -483,6 +505,10 @@ class AnObject(QtWidgets.QDialog):
                 self.edit[self.show_hide[show_fields[i][j]]].show()
                 if show_fields[i][j] != 'rotor':
                     self.edit[self.show_hide[show_fields[i][j]]].setEnabled(True)
+                try:
+                    self.units[show_fields[i][j]].show()
+                except:
+                    pass
         self.technology = self.techcomb.currentText()
 
     def scenarioChanged(self, val):
@@ -569,7 +595,12 @@ class AnObject(QtWidgets.QDialog):
                         setattr(self, self.field[i], float(self.edit[i].text()))
                     except:
                         setattr(self, self.field[i], None)
-                elif self.field_type[i] == 'int':
+                elif self.field[i] == 'storage_capacity':
+                    try:
+                        setattr(self, self.field[i], float(self.edit[i].text()))
+                    except:
+                        setattr(self, self.field[i], None)
+                elif self.field[i] == 'int':
                     try:
                         setattr(self, self.field[i], int(self.edit[i].text()))
                     except:
@@ -637,7 +668,9 @@ class AnObject(QtWidgets.QDialog):
             self.area = self.areas[self.technology] * float(self.capacity)
         elif self.technology == 'Wave':
             self.area = self.areas[self.technology] * float(self.capacity)
-        elif self.technology == 'Hydro':
+        elif self.technology in ['Hydro', 'Pumped Hydro']:
+            self.area = self.areas[self.technology] * float(self.capacity)
+        elif self.technology in ['BESS']:
             self.area = self.areas[self.technology] * float(self.capacity)
         elif self.technology[:5] == 'Other':
             self.area = self.areas[self.technology] * float(self.capacity)
@@ -673,6 +706,12 @@ class AnObject(QtWidgets.QDialog):
                     try:
                         if self.storage_hours != self.st_tshours:
                             station.storage_hours = float(self.storage_hours)
+                    except:
+                        pass
+            if self.storage_capacity is not None:
+                if self.technology in ['BESS', 'Hydro', 'Pumped Hydro']:
+                    try:
+                        station.storage_capacity = float(self.storage_capacity)
                     except:
                         pass
             return station

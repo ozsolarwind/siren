@@ -33,9 +33,10 @@ class Icons:
         else:
             config_file = getModelFile('SIREN.ini')
         config.read(config_file)
-        self.icons = {'BESS': 'bess_g.png', 'Biomass': 'biomass_g.png', 'CST': 'solar_g.png', 
+        self.icons = {'BESS': 'bess_g.png', 'Biomass': 'biomass_g.png', 'CST': 'solar_g.png',
                       'Fossil': 'fossil_g.png', 'Geothermal': 'hot_rocks_g.png', 'Hydro': 'hydro_g.png',
-                      'Offshore Wind': 'offwind_g.png', 'Other': 'question.png', 'PV': 'solar_pv_g.png',
+                      'Offshore Wind': 'offwind_g.png', 'Other': 'question.png',
+                      'Pumped Hydro': 'phes_g.png', 'PV': 'solar_pv_g.png',
                       'Solar Thermal': 'solar_g.png', 'Wave': 'wave_g.png', 'Wind': 'wind_g.png'}
         try:
             technologies = config.get('Power', 'technologies').split()
@@ -63,6 +64,8 @@ class Icons:
             tech = 'BESS'
         elif technology == 'Biogas':
             tech = 'Biomass'
+        if technology == 'PHES':
+            tech = 'Pumped Hydro'
         elif 'PV' in technology:
             tech = 'PV'
         elif technology[:6] == 'Fossil':

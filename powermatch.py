@@ -1194,7 +1194,7 @@ class powerMatch(QtWidgets.QWidget):
         self.remove_cost = True
         self.reserve_committed = True
         self.results_prefix = ''
-        self.dispatchable = ['Biomass', 'Geothermal', 'Pumped Hydro', 'Solar Thermal', 'CST'] # RE dispatchable
+        self.dispatchable = ['Biomass', 'Geothermal', 'Hydro', 'Pumped Hydro', 'Solar Thermal', 'CST'] # RE dispatchable
         self.save_tables = False
         self.show_multipliers = False
         self.show_correlation = False
