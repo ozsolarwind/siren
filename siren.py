@@ -185,24 +185,24 @@ class TabDialog(QtWidgets.QDialog):
         layout.addWidget(self.table, 1, 0)
         layout.addWidget(buttons, 2, 0)
         menubar = QtWidgets.QMenuBar()
-        utilities = ['flexiplot', 'getera5', 'getmap', 'getmerra2', 'makeweatherfiles', 'powerplot', 'sirenupd']
-        utilicon = ['line.png', 'download.png', 'map.png', 'download.png', 'weather.png', 'line.png', 'download.png']
+        self.utilities = ['flexiplot', 'getera5', 'getmap', 'getmerra2', 'makeweatherfiles', 'powerplot', 'sirenupd']
+        self.utilicon = ['line.png', 'download.png', 'map.png', 'download.png', 'weather.png', 'line.png', 'download.png']
         spawns = []
         icons = []
         if sys.platform == 'win32' or sys.platform == 'cygwin':
-            for i in range(len(utilities)):
-                if os.path.exists(utilities[i] + '.exe'):
-                    spawns.append(utilities[i] + '.exe')
-                    icons.append(utilicon[i])
+            for i in range(len(self.utilities)):
+                if os.path.exists(self.utilities[i] + '.exe'):
+                    spawns.append(self.utilities[i] + '.exe')
+                    icons.append(self.utilicon[i])
                 else:
-                    if os.path.exists(utilities[i] + '.py'):
-                        spawns.append(utilities[i] + '.py')
-                        icons.append(utilicon[i])
+                    if os.path.exists(self.utilities[i] + '.py'):
+                        spawns.append(self.utilities[i] + '.py')
+                        icons.append(self.utilicon[i])
         else:
-            for i in range(len(utilities)):
-                if os.path.exists(utilities[i] + '.py'):
-                    spawns.append(utilities[i] + '.py')
-                    icons.append(utilicon[i])
+            for i in range(len(self.utilities)):
+                if os.path.exists(self.utilities[i] + '.py'):
+                    spawns.append(self.utilities[i] + '.py')
+                    icons.append(self.utilicon[i])
         if len(spawns) > 0:
             spawnitem = []
             spawnMenu = menubar.addMenu('&Tools')
@@ -259,7 +259,7 @@ class TabDialog(QtWidgets.QDialog):
                     selectionModel.Rows)
                 menu = QtWidgets.QMenu()
                 actions =  []
-                if ent in ['getfiles.ini', 'flexiplot.ini', 'powerplot.ini']:
+                if ent in ['flexiplot.ini', 'powerplot.ini']:
                     tool = ent[:ent.find('.')]
                     try:
                         i = self.model_tool.index(tool)
@@ -268,6 +268,15 @@ class TabDialog(QtWidgets.QDialog):
                         actions[-1].setIconVisibleInMenu(True)
                     except:
                         pass
+                    actions.append(menu.addAction(QtGui.QIcon('edit.png'), 'Edit Preferences'))
+                    actions[-1].setIconVisibleInMenu(True)
+                elif ent == 'getfiles.ini':
+                    for i in range(len(self.utilities)):
+                        if self.utilities[i] in ['flexiplot', 'powerplot']:
+                            continue
+                        actions.append(menu.addAction(QtGui.QIcon(self.utilicon[i]),
+                                                     'Execute ' + self.utilities[i]))
+                        actions[-1].setIconVisibleInMenu(True)
                     actions.append(menu.addAction(QtGui.QIcon('edit.png'), 'Edit Preferences'))
                     actions[-1].setIconVisibleInMenu(True)
                 else:
@@ -632,24 +641,24 @@ class makeNew(QtWidgets.QDialog):
         self.scroll.setWidget(frame)
         self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
-        utilities = ['getera5', 'getmap', 'getmerra2', 'makeweatherfiles', 'sirenupd']
-        utilicon = ['download.png', 'map.png', 'download.png', 'weather.png', 'download.png']
+        self.utilities = ['getera5', 'getmap', 'getmerra2', 'makeweatherfiles', 'sirenupd']
+        self.utilicon = ['download.png', 'map.png', 'download.png', 'weather.png', 'download.png']
         spawns = []
         icons = []
         if sys.platform == 'win32' or sys.platform == 'cygwin':
-            for i in range(len(utilities)):
-                if os.path.exists(utilities[i] + '.exe'):
-                    spawns.append(utilities[i] + '.exe')
-                    icons.append(utilicon[i])
+            for i in range(len(self.utilities)):
+                if os.path.exists(self.utilities[i] + '.exe'):
+                    spawns.append(self.utilities[i] + '.exe')
+                    icons.append(self.utilicon[i])
                 else:
-                    if os.path.exists(utilities[i] + '.py'):
-                        spawns.append(utilities[i] + '.py')
-                        icons.append(utilicon[i])
+                    if os.path.exists(self.utilities[i] + '.py'):
+                        spawns.append(self.utilities[i] + '.py')
+                        icons.append(self.utilicon[i])
         else:
-            for i in range(len(utilities)):
-                if os.path.exists(utilities[i] + '.py'):
-                    spawns.append(utilities[i] + '.py')
-                    icons.append(utilicon[i])
+            for i in range(len(self.utilities)):
+                if os.path.exists(self.utilities[i] + '.py'):
+                    spawns.append(self.utilities[i] + '.py')
+                    icons.append(self.utilicon[i])
         if len(spawns) > 0:
             spawnitem = []
             menubar = QtWidgets.QMenuBar()
