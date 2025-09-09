@@ -226,7 +226,9 @@ class WorkBook(object):
                              self._worksheet[-1].append('')
                 csv_file.close()
                 self.nrows = len(self._worksheet)
-                self.ncols = len(self._worksheet[0])
+                self.ncols = 0
+                for r in range(self.nrows):
+                    self.ncols = max(self.ncols, len(self._worksheet[r]))
             elif self._type == 'ods' and odsr is not None:
                 self._book = odsr.get_data(filename)
                 self._sheet_names = list(self._book.keys())
@@ -300,10 +302,9 @@ class WorkBook(object):
                 self._sheet.name = 'n/a'
                 self._sheet._sheet = self._worksheet
                 self._sheet.nrows = len(self._sheet._sheet)
-                try:
-                    self._sheet.ncols = len(self._sheet._sheet[0])
-                except:
-                    self._sheet.ncols = 0
+                self._sheet.ncols = 0
+                for r in range(self._sheet.nrows):
+                    self._sheet.ncols = max(self._sheet.ncols, len(self._worksheet[r]))
         except:
             raise Exception('Error accessing sheet')
         return self._sheet
@@ -496,7 +497,7 @@ def extrapolateWind(wind_file, tgt_height, law='logarithmic', replace=False, spr
         if z0 < 1e-308:
             z0 = 0.03
         elif z0 < 1e-302:
-            print('(311)', i, wind_file, z0)
+            print('(500)', i, wind_file, z0)
             z0 = 0.03
         if law.lower()[0] == 'l': # law == 'logarithmic'
             speedz = math.log(tgt_height / z0) / math.log(height0 / z0) * speed0
