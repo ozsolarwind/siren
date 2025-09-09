@@ -122,6 +122,15 @@ tr.none {
     padding: 3px;
     vertical-align: top;
 }
+ul.compact {
+    display: block;
+    list-style-type: disc;
+    margin-top: 0;
+    margin-bottom: 1 em;
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 40px;
+}
 ul.none {
     display: block;
     list-style-type: none;
@@ -237,20 +246,29 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 <p><strong>Our Focus</strong>: To raise awareness of how a mix of renewable energy technologies are able to meet WA's energy needs, with a particular focus on the main electricity grid, the SWIS.</p>
 <p><strong>Our Computer Simulation (SIREN)</strong>: To demonstrate how electricity demand on the SWIS may be met by a mix of renewable energy sources. Users are able to explore potential location and scale of renewable energy sources (stations, storage, transmission) to meet electricity demand.</p>
 <h2 id="install">Installation</h2>
-<p>At present there is a packaged version of the simulation for Windows available as a self-extracting zip file from <a href="https://sourceforge.net/projects/sensiren/" target="_blank">https://sourceforge.net/projects/sensiren/</a> (the package has been created with PyInstaller). There are a number of files available:
+<p>There are packaged versions of the simulation for Windows available (predominantly) in Microsoft Software Installer format from <a href="https://sourceforge.net/projects/sensiren/" target="_blank">https://sourceforge.net/projects/sensiren/</a> (the package has been built with PyInstaller and then packaged using Advanced Installer). There are a number of files available:
 <ul>
-<li><code>siren.msi</code> is in Microsoft Software Installer format and contains the full SIREN toolkit. <strong>Note:</strong> If SIREN is installed in a read-only location you may do some initial set up - see <code>sirensetup</code> below</li>
-<li><code>siren_toolkit.exe</code> contains the full SIREN toolkit, It contains the contents of three other files in this list</li>
-<li><code>siren_application.exe</code> contains the packaged Windows version of the SIREN application</li>
-<li><code>siren_sample.exe</code> contains the files and data for the sample SIREN simulation of the SWIS</li>
-<li>(<code>sen_makeweather_getera.exe</code> is a package containing <code>getera5</code>, which enables ERA5 files to be downloaded, <code>getmerra2</code>, which enables MERRA-2 files to be downloaded, and <code>makeweatherfiles</code>, a standalone program to produce SAM weather files. This package allows you to create SAM weather files from either ERA5 or MERRA-2 files without requiring any other parts of SIREN. See <a href="makeweatherfiles.html" target="_blank">makeweatherfiles.html</a>)</li>
+<li><code>siren_application.msi</code> contains the packaged Windows version of the SIREN application</li>
+<li><code>siren_sample.exe</code> contains the files and data for the sample SIREN simulation of the SWIS. This is a self-extracting zip file</li>
+<li><strong><code>siren_toolkit.msi</code></strong> contains the full SIREN toolkit, It contains the contents of the other files two in this list. <strong>Note:</strong> If SIREN is installed in a read-only location you may do some initial set up - see <code>sirensetup</code> below</li>
 </ul>
-<p>Occasionally new versions of some of the SIREN programs will be uploaded to SourceForge. You can check for new versions and download them by selecting the <code>sirenupd</code> option in SIREN. (Major new releases can also be indicated but these will require a complete new SIREN version to be installed.)</p>
+<p>There are two additional packages:
+<ul>
+<li><code>makeweatherfiles.msi</code> is a package containing programs to create SAM format weather files from satellite data. It contains <code>getera5</code>, which enables ERA5 files to be downloaded, <code>getmerra2</code>, which enables MERRA-2 files to be downloaded, and <code>makeweatherfiles</code>, a standalone program to produce SAM weather files. This package allows you to create SAM weather files from either ERA5 or MERRA-2 files without requiring any other parts of SIREN. See <a href="#makeweather">Produce wind and solar weather files</a></li>
+<li><code>siren_murdoch.msi</code> is a package containing additional data including weather files for some small areas in Western Australia. This is not included in the full toolkit</li>
+</ul>
 <p>To install the required package you can just open/launch it and extract it to your desired location. It may be necessary to execute the program as Administrator.</p>
-<p>It is also possible to install and run the Python programs. <a href="https://github.com/ozsolarwind/siren/blob/master/SIREN_notes.html" target="_blank">SIREN_Notes.html</a> provides some guidance on how to do this</a>.</p>
+<p>It is also possible to install and run the Python programs (in Linux, Mac and Windows). <a href="https://rawgit.com/ozsolarwind/siren/master/SIREN_notes.html" target="_blank">SIREN_Notes.html</a> provides some guidance on how to do this</a>.</p>
 <p><strong>Note:</strong> This help file may refer to individual programs either with or without the program suffix, for example <code>powermap</code>, <code>powermap.exe</code> or <code>powermap.py</code>. You may have to use the appropriate suffix for your environment.
-<h3>sirensetup</h3>
-<p>If SIREN is installed in a read-only location as may happen if it is installed using the MSI package you may need to do some additional setup. For SIREN to execute correctly it needs the location for the SIREN Models (Preference files) and the Scenario folder to be writable. <code>sirensetup</code> can be used to copy the sample SIREN Preferences file, SIREN.ini, and sample Scenario files to a location of your choosing. It also creates a small file, <code>run_siren.bat</code> in the same location which can be used to invoke SIREN using your Scenario folder and the SIREN sample files.</p>
+<h3 id="sirensetup">sirensetup</h3>
+<p>If SIREN is installed in a read-only location as may happen if it is installed using the MSI package you may need to do some additional setup. For SIREN to execute correctly it needs the location for the SIREN Models (Preference files) and the Scenario folder to be writable. The location of the SIREN Models is stored in a small text file,  <code>siren_models_location.txt</code>. Under Windows this file is stored in the user Local AppData folder while under other systems it is stored in the user Home folder. If this location is also read-only <code>sirensetup</code> can be used to copy the sample SIREN Preferences file, SIREN.ini, and sample Scenario files to a location of your choosing. It also creates a small file, <code>run_siren.bat</code> in the same location which can be used to invoke SIREN using your Scenario folder and the SIREN sample files.</p>
+<h3 id="sirenupd">sirenupd</h3>
+<p>Occasionally new versions of some of the SIREN programs will be uploaded to SourceForge. You can check for new versions and download them by selecting the <code>sirenupd</code> option in SIREN.</p>
+<ul>
+<li>You can launch the program from SIREN by right-clicking on the <code>getfiles.ini</code> Preferences file</li>
+<li>Under Windows you may need to run <code>sirenupd</code> as Administrator. If you launch it from SIREN you will need to run SIREN as Administrator</li>
+<li>Major new releases can also be indicated but these will require a complete new SIREN version to be installed</li>
+</ul>
 <h3>Possible folder setup for SIREN</h3>
 <p>To enable new versions of SIREN to be installed without affecting your work a folder structure similar to the following is suggested.</p>
 <table border="0", class="none">
@@ -293,8 +311,8 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 <li><em>sam-sdk</em> contains a Windows version of the SAM SDK, <em>sam-sdk-206_2018.11.11_r2</em></li>
 <li><em>source</em> contains the Python source programs for SIREN</li>
 </ul>
-<p>The first time you open SIREN (without passing a target file or folder) it will present a window titled &lsquo;Choose location for SIREN model (preferences) files&rsquo; to allow you to choose the location for your SIREN Models. SIREN stores this location in <code>siren_models_location.txt</code> in a user folder and uses this as the location of the SIREN Models whenever you invoke SIREN without a target file or location. In windows the file is stored in the user's LocalAppData folder, <code>C:\User\&lt;user&gt;\AppData\Local\siren\</code>, and in Linux it is in <code>~/.siren/</code>. The file contains a single line with the location of the folder respective to the <em>siren</em> folder. It is possible to edit the file and manually add additional folders if desired.</p>
-<p>When you open SIREN you will be presented with a list of SIREN Models (Preferences files). Choose the SIREN Model you want by (left-) clicking on your choice to invoke Powermap for that model. It is also possible to launch tools for the model by right-clicking on your choice - the tools are as described in <a href="#tools">Tools</a> - or you can edit the Model file. You can sort the list presented in order of either Preferences File, SIREN Model or Date modified (last time the Preferences file was saved) by right-clicking the appropriate column header. If a Model file has a syntax error this will be identified in the SIREN Model field; editing such a file will, where possible, highlight the line in error. If you want to use a specific Preferences file you can open the simulation passing the alternate filename, or a folder, as a parameter, as in these examples:</p>
+<p>The first time you open SIREN (without passing a target file or folder) it will present a window titled &lsquo;Choose location for SIREN model (preferences) files&rsquo; to allow you to choose the location for your SIREN Models. SIREN stores this location in <code>siren_models_location.txt</code> in a user folder and uses this as the location of the SIREN Models whenever you invoke SIREN without a target file or location. In windows the file is stored in the user's Local AppData folder, <code>C:\User\&lt;user&gt;\AppData\Local\siren\</code>, and in Linux it is in <code>~/.siren/</code> (refer to <a href="#sirensetup">sirensetup</a> if these locations are read-only). The file contains a single line with the location of the folder respective to the <em>siren</em> folder. It is possible to edit the file and manually add additional folders if desired.</p>
+<p>When you open SIREN you will be presented with a list of SIREN Models (Preferences files). Choose the SIREN Model you want by (left-) clicking on your choice to invoke Powermap for that model. It is also possible to launch tools for the model by right-clicking on your choice - the tools are as described in <a href="#tools">Tools</a> - or you can edit the Model file. <code>getfiles.ini</code> Preferences files contain preferences for many of the tools (which can be launched by right-clicking). You can sort the list presented in order of either Preferences File, SIREN Model or Date modified (last time the Preferences file was saved) by right-clicking the appropriate column header. If a Model file has a syntax error this will be identified in the SIREN Model field; editing such a file will, where possible, highlight the line in error. If you want to use a specific Preferences file you can open the simulation passing the alternate filename, or a folder, as a parameter, as in these examples:</p>
 <pre>
       siren.exe
       siren.exe SIREN_NWIS.ini
@@ -1418,6 +1436,10 @@ Options for <a href="#flexiplot">Flexiplot</a>. Properties for individual files 
 <td class="none">A colour palette to be used for data series without a defined colour. Values can be <em>random</em>, <em>15</em> or <em>24</em>. The default is <em>random</em>. <em>15</em> and <em>24</em> are colour palettes for colour blindness while <em>random</em> generates a random colour</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>secondary_yaxis</dfn></td>
+<td class="none">If set to True a secondary ordinate (Y) can be charted. The default is False</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>sheet (&ast;)</dfn></td>
 <td class="none">Worksheet name for chart</td>
 </tr>
@@ -1464,6 +1486,18 @@ Options for <a href="#flexiplot">Flexiplot</a>. Properties for individual files 
 <tr class="none">
 <td class="none"><dfn>yseries (&ast;)</dfn></td>
 <td class="none">The cell values to be included in the chart, the Y series (axis)</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>y2label (&ast;)</dfn></td>
+<td class="none">The label for the secondary Y series (axis)</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>y2overlay (&ast;)</dfn></td>
+<td class="none">Details for the secondary Y series variables. The property is a comma-separated field contaning the field name and line colour, width and style</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>y2percentage (&ast;)</dfn></td>
+<td class="none">If set to True fields the secondary Y series variables will be charted as percentages</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>zlabel (&ast;)</dfn></td>
@@ -2179,11 +2213,15 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>overlay_type (&ast;)</dfn></td>
-<td class="none">Define the values for the overlay line for a Step Day Chart. The default is Average</td>
+<td class="none">Define the values for the overlay line for a Step Day Chart. The default is n/a</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>overlay_width (&ast;)</dfn></td>
 <td class="none">Define the width for the overlay line. The default is 1.5</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>overlay_2y (&ast;)</dfn></td>
+<td class="none">Indicate the overlay line should be plotted on a second Y axis. The default is False</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>palette</dfn></td>
@@ -2268,16 +2306,12 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">Saved details on Title font properties</td>
 </tr>
 <tr class="none">
+<td class="none"><dfn>y2_align</dfn></td>
+<td class="none">For a secondary Y axis this property indicates whether the zero point for the two Y axes align. The default is True</td>
+</tr>
+<tr class="none">
 <td class="none"><dfn>y2_label (&ast;)</dfn></td>
 <td class="none">Label for a secondary Y axis</td>
-</tr>
-<tr class="none">
-<td class="none"><dfn>y2_inverse (&ast;)</dfn></td>
-<td class="none">Inverse formula for a secondary Y axis</td>
-</tr>
-<tr class="none">
-<td class="none"><dfn>y2_transform (&ast;)</dfn></td>
-<td class="none">Transform formula for a secondary Y axis</td>
 </tr>
 </table>
 </td></tr>
@@ -3721,7 +3755,7 @@ The Powermatch template file sets out the column order for technologies. By defa
 <li><strong>Hide</strong>. Hide the resource grid</li>
 <li><strong>Save</strong>. Save modified fields. This updates the Preferences file for future executions of Powermap</li>
 <li><strong>Help</strong>. Display the help for how to create the Resource grids</li>
-<li><strong>&lt;</strong> and <strong>&gt;</strong>. (see above)</li>
+<li><strong>&lt;</strong>. and <strong>&gt;</strong>. (see above)</li>
 <li><strong>Loop</strong>. (see <em>Period Loop (secs)</em> above)</li>
 </ul>
 <p>This feature utilises summary data stored in a file rather than having to process hourly data from the weather files (see <a href="#resource">Visualising Renewable Resource Attributes</a>).</p>
@@ -3902,6 +3936,23 @@ The order in which the dispatchable technologies will be processed by Powermatch
 <table border="0" class="none" style="margin-left:35px">
 <tr><td class="none" style="width: 8%;"><dfn>Warmup Time</dfn></td><td class="none">For Storage some technologies may require a warmup period before they become operational. You can set a time period for this to occur, either in minutes or part of an hour (if an Initial value is set for the Storage it is assumed the warmup period has occurred prior to the first hour of the year). Also known as Ramp time (The amount of time it takes from the moment a generator is turned on to the moment it can start providing energy to the grid at its lower operating limit)</td></tr>
 </table>
+<div class="experiment">
+<h4 id="pmopti">Optimisation</h4>
+<p>The Powermatch optimisation approach uses the Optimisation table to define the range of possible values for each of the renewable technologies and dispatchable and storage facilities. Entries are required for all Renewable technologies and dispatchable and storage facilities. The fields are:
+<table border="0" class="none" style="margin-left:35px" >
+<tr><td class="none"><dfn>Name</dfn></td><td class="none">Name of the Technology (matches either RE or generator)</td></tr>
+<tr><td class="none"><dfn>Approach</dfn></td><td class="none">Approach for how this generator will be treated. There are two options:
+<ul>
+<li>Discrete. A list of discrete Capacities representing individual generation units (facilties) for the technology, e.g. individual generators</li>
+<li>Range. The (total) Capacity for the technology is divided into a number of equal steps. A minimum capacity can also be defined</li>
+<ul></td></tr>
+<tr><td class="none"><dfn>Capacities</dfn></td><td class="none">The capacities for a Discrete generator. This is a series of numbers separated by spaces</td></tr>
+<tr><td class="none"><dfn>Capacity Max</dfn></td><td class="none">The maximum (total) capacity for a Range</td></tr>
+<tr><td class="none"><dfn>Capacity Min</dfn></td><td class="none">The minimum capacity for a Range</td></tr>
+<tr><td class="none"><dfn>Capacity Step</dfn></td><td class="none">The size of each capacity step for a Range</td></tr>
+</table>
+<p>The capacity fields can be a single field, Values, as a string of numbers separated by spaces. For Discrete this will be a string of capacities and for Range it will be three Capacity numbers - Min, Max and Step.</p>
+</div>
 <h3 id="pmae">Powermatch Execution</h3>
 <p>The Powermatch options are as set out here. The options (Properties) are specified in the <a href="#p_pm">[Powermatch]</a> Section of the Preferences file. The associated property is indicated in brackets at the end of the description. All files are located in the SIREN Scenarios folder.</p>
 <table border="0" class="none" cellpadding="2">
@@ -4315,20 +4366,8 @@ If the best and worse values are the same for a variable and that value is not a
 <li>In most cases, optimisation will be attempting to meet the load profile. The suggestion is to give Load % the highest weighting, and to choose a range for Load % between 1 and 0.98. &ldquo;Unusual&rdquo; outcomes can occur if the load percentage achieved is very low</li>
 <li>If you choose the optimisation choice of Both there is interaction between both results</li>
 </ul>
-<p>The Powermatch optimisation approach uses the Optimisation table to define the range of possible values for each of the renewable technologies and dispatchable and storage facilities. Entries are required for all Renewable technologies and dispatchable and storage facilities. The fields are:
-<table border="0" class="none" style="margin-left:35px" >
-<tr><td class="none"><dfn>Name</dfn></td><td class="none">Name of the Technology (matches either RE or generator)</td></tr>
-<tr><td class="none"><dfn>Approach</dfn></td><td class="none">Approach for how this generator will be treated. There are two options:
-<ul>
-<li>Discrete. A list of discrete Capacities representing individual generation units (facilties) for the technology, e.g. individual generators</li>
-<li>Range. The (total) Capacity for the technology is divided into a number of equal steps. A minimum capacity can also be defined</li>
-<ul></td></tr>
-<tr><td class="none"><dfn>Capacities</dfn></td><td class="none">The capacities for a Discrete generator. This is a series of numbers separated by spaces</td></tr>
-<tr><td class="none"><dfn>Capacity Max</dfn></td><td class="none">The maximum (total) capacity for a Range</td></tr>
-<tr><td class="none"><dfn>Capacity Min</dfn></td><td class="none">The minimum capacity for a Range</td></tr>
-<tr><td class="none"><dfn>Capacity Step</dfn></td><td class="none">The size of each capacity step for a Range</td></tr>
-</table>
-<p>The capacity fields can be a single field, <dfn>Values</dfn>, as a string of numbers separated by spaces. For Discrete this will be a string of capacities and for Range it will be three Capacity numbers - Min, Max and Step. If <em>optimise_default</em> is set this can be used to set optimisation table entries for missing facilities. The default entry can have two or three options separated by commas, as follows:
+<p>The Powermatch optimisation approach uses the <a href="#pmopti">Optimisation</a> table to define the range of possible values for each of the renewable technologies and dispatchable and storage facilities. Entries are required for all Renewable technologies and dispatchable and storage facilities.</p>
+<p>If <em>optimise_default</em> is set this can be used to set optimisation table entries for missing facilities. The default entry can have two or three options separated by commas, as follows:
 <ul>
 <li>Two entries: minimum capacity is zero; the first entry is maximum capacity; the second entry is the number of steps</li>
 <li>Three entries: match the same as Range - minimum capacity, maximum capacity, step capacity</li>
@@ -4483,10 +4522,9 @@ The List Files button allows you to list the recent files list and optionally re
 <li><em>&lt;none&gt;</em></li>
 <li><em>Charge</em> The total of energy used to recharge storage to be shown as an overlay on the chart; it provides an indication of how and when excess energy has been used for recharge. If a Target, e.g. Load, is chosen the <u>target values will be added to the figure</u> to indicate the use of excess energy above the target.</li>
 <li><em>Underlying load</em> If available underlying load will be displayed on the chart. Underlying load includes the additional load met by Rooftop PV (DPV) rather than utility generation</li>
-<li><div class="experiment">It is also possible to choose a different overlay variable by &ldquo;dragging&rdquo; an entry from the Column Order tables to the Overlay field and then choosing it from the Overlay pull-down</div></li>
+<li><div class="experiment">It is also possible to choose a different overlay variable by &ldquo;dragging&rdquo; an entry from the Column Order tables to the Overlay field and then choosing it from the Overlay pull-down. You can delete these entries by first choosing the entry and pressing <em>d</em> to delete it</div></li>
 </ul>
-You can also specify an alternate line colour (<em>overlay_colour</em>), width (<em>overlay_width</em>) and line style (<em>overlay_style</em>)<br />
-By default there is one overlay field but you can set a higher number by setting <em>no_of_overlays</em>
+You can also indicate if the overlay field is plotted on a second Y axis (<em>overlay_2y</em>) and specify an alternate line colour (<em>overlay_colour</em>), width (<em>overlay_width</em>) and line style (<em>overlay_style</em>). If there is a second Y axis then by default the zero points for the two Y axes will align; this can be turned off by setting the <em>y2_align</em> Property to False. By default there is one overlay field but you can set a higher number by setting <em>no_of_overlays</em>
 </td></tr>
 <tr><td class="lr"><dfn>Header</dfn>, <strong>Header Font</strong></td>
 <td class="none">Specify a header - super title - for the chart. There are two special strings which will be replaced in the header:
@@ -4556,20 +4594,12 @@ If it's not a diurnal chart (i.e. Period is <em>&lt;None&gt;</em>) any occurence
 <strong>Plot 12</strong>. If <em>plot_12</em> is set an additional button is presented to allow wide and low_height graphs to be produced. This allows monthly charts to be produced to fit on a page (e.g. A4) in portrait format. The individual charts can be produced using plot navigation (<em>m</em>), saved and then inserted into a page
 </li>
 <li>
-<strong>Extras</strong> If <em>extras</em> is set an additional button is presented to allow some experimental variables to be set.<br>
-Three allow a secondary Y axis to be displayed. At present the secondary axis is calculated by transforming values from the first Y axis.
-<ul>
-<li><em>y2_label</em> sets the secondary axis label</li>
-<li><em>y2_transform</em> allows the transform formula to be set as some action against Y, e.g. <code>y*.03</code></li>
-<li><em>y2_inverse</em> allows an inverse formula to be set, e.g <code>y/.03</code>. If not specified <y2_transform> will be used by &ldquo;inverting&rdquo; the operators - * and /</li>
-</ul>
-The final variable is
-<ul><li><em>overlay_type</em> which describes how the overlay value will be calculated for a Step Day Chart. The options are <em>Average</em>, <em>Sum</em>, or an individual hour of the day, e.g. <em>00:00</em>. An example of usage could be where you overlay a battery balance, say at end of each day, where battery balance at a specific hour could be useful</li></ul>
+<strong>Extras</strong>. If <em>extras</em> is set an additional button is presented to allow an experimental variable, <em>overlay_type</em>, to be set for a Step Day Chart. This describes how the overlay value will be calculated. The options are <em>Average</em>, <em>Sum</em>, or an individual hour of the day, e.g. <em>00:00</em>. An example of usage could be where you overlay a battery balance, say at end of each day, where battery balance at a specific hour could be useful. For a normal Overlay field this variable is set to <em>n/a</em>
 </li>
 <li>
-<strong>Co...</strong> Perform either an analysis of contribution or correlation to a target. These options are presented by setting either the <em>show_contribution</em> or <em>show_correlation</em> Property of the <a href="#p_pm">[Powermatch]</a> section of the Preferences file to True. If both properties are set <em>show_contribution</em> takes precedence.<br/>
-<p><strong>Contribution</strong> Calculate the percentage contribution of each chosen column in meeting the target. This will present a table showing the percentage contribution for each month in the chosen period.</p>
-<p><strong>Correlation</strong> Perform linear correlations between the target and the chosen columns. This will present a table showing the correlations in descending order (i.e. best first)</p>
+<strong>Co...</strong>. Perform either an analysis of contribution or correlation to a target. These options are presented by setting either the <em>show_contribution</em> or <em>show_correlation</em> Property of the <a href="#p_pm">[Powermatch]</a> section of the Preferences file to True. If both properties are set <em>show_contribution</em> takes precedence.<br/>
+<p><strong>Contribution</strong>. Calculate the percentage contribution of each chosen column in meeting the target. This will present a table showing the percentage contribution for each month in the chosen period.</p>
+<p><strong>Correlation</strong>. Perform linear correlations between the target and the chosen columns. This will present a table showing the correlations in descending order (i.e. best first)</p>
 <p>Correlation coefficients whose magnitude are between 0.9 and 1.0 indicate variables which can be considered <strong>very highly correlated</strong>. Correlation coefficients whose magnitude are between 0.7 and 0.9 indicate variables which can be considered <strong>highly correlated</strong>. Correlation coefficients whose magnitude are between 0.5 and 0.7 indicate variables which can be considered <strong>moderately correlated</strong>. Correlation coefficients whose magnitude are between 0.3 and 0.5 indicate variables which have a <strong>low correlation</strong>. Correlation coefficients whose magnitude are less than 0.3 have little if any (linear) correlation (from <a href="https://www.andrews.edu/~calkins/math/edrm611/edrm05.htm" target="_blank">https://www.andrews.edu/~calkins/math/edrm611/edrm05.htm</a>).</p>
 </li>
 </ul></div>
@@ -4610,6 +4640,10 @@ For a 3D Surface Chart<code>flexiplot</code> attempts to identify if input data 
 <tr><td class="lr"><dfn>Ordinate Label</dfn>, <strong>Show Y Series</strong></td>
 <td class="none">This allows you to enter a text value for the Ordinate (Y) label<br />
 The Show Y Series button will display the values for the chosen data in a simple table. If the data is for a 3D chart these will likely be blank</td></tr>
+<tr><td class="lr"><dfn>Ordinate (Y) Overlays</dfn>, <strong>Colour</strong>, <dfn>width</dfn>, <dfn>style</dfn></td>
+<td class="none">If <em>secondary_yaxis</em> is True these fields allow you to chart values on a second ordinate (Y) axis. These will be shown as chart lines. You can choose one or more overlay variables by &ldquo;dragging&rdquo; an entry from the Column Order tables to the Overlay pull-down field. For each field you can specify an alternate line colour, width and line style. You can remove fields by navigating to the field in the pull-down list and pressing either the Delete key or the 'd' key</td></tr>
+<tr><td class="lr"><dfn>Overlay Label</dfn>, <strong>Show Overlay Series</strong>, <dfn>Overlay percentage</dfn></td>
+<td class="none">(If <em>secondary_yaxis</em> is True) This allows you to enter a text value for the Overlay label. The Show Overlay Series button will display the values for the chosen overlay data in a simple table. If the overlay percentage option is checked the labels for the second Y axis will be presented as percentages</td></tr>
 <tr><td class="lr"><dfn>Applicate (Z) Label</dfn></td>
 <td class="none">This allows you to enter a text value for the Applicate (Z) label<br />
 The Show Y Series button will display the values for the chosen data in a simple table. If the data is for a 3D chart these will likely be blank</td></tr>
@@ -4626,9 +4660,9 @@ A <em>3D Surface Chart</em> will present the data as a 3D Surface Chart</td></tr
 <tr><td class="bottom"><strong>Done, Chart, Colours, Legend..., Pref...,Help</td>
 <td class="none">At the bottom of the window are a number of buttons:
 <ul>
-<li><strong>Done</strong> Exit the program and save the input values. Input preferences and colours are either saved in a SIREN preferences file or in a specific file, <em>flexiplot.ini</em>, if no Peferences file is passed to the program</li>
-<li><strong>Plot</strong> Produce the chart. If there are missing colours you will be taken to the Colours window to add the colour. You need to set a colour and press the Save &amp; Exit button</li>
-<li><strong>Colours</strong> Press this button to change the chart colours or to add new colours. You can remove a chart colour by right-clicking the colour (it will be cleared and the item deleted when you Save &amp; Exit). Colours are held in the [Plot Colors] Section of the Preferences file.
+<li><strong>Done</strong>. Exit the program and save the input values. Input preferences and colours are either saved in a SIREN preferences file or in a specific file, <em>flexiplot.ini</em>, if no Peferences file is passed to the program</li>
+<li><strong>Plot</strong>. Produce the chart. If there are missing colours you will be taken to the Colours window to add the colour. You need to set a colour and press the Save &amp; Exit button</li>
+<li><strong>Colours</strong>. Press this button to change the chart colours or to add new colours. You can remove a chart colour by right-clicking the colour (it will be cleared and the item deleted when you Save &amp; Exit). Colours are held in the [Plot Colors] Section of the Preferences file.
 <br />If the <em>palette</em> property in the [Plot Colors] Section of the Preferences file is set to True you can create a palette sequence of colours for columns selected in both the included and excluded lists. If you select columns and then press the <strong>Colours</strong> button you will be given the option to set a starting and ending palette colour and the colours for the chosen columns will be updated to a range of colours between the chosen values</li>
 <li><strong>Legend Properties</strong>. Change the font attributes for the Legend (<em>legend_font</em>) plus other attributes (<em>legend_ncol</em>, <em>legend_on_pie</em>, <em>legend_side</em>)</li>
 <li><strong>Preferences</strong>. Edit the Preferences file (this will only edit the chosen file but not any common files)</li>
@@ -4643,6 +4677,7 @@ A <em>3D Surface Chart</em> will present the data as a 3D Surface Chart</td></tr
 <li>Adjust the font properties of the various text items on the chart. The properties are as described in <a href="https://matplotlib.org/3.1.1/api/font_manager_api.html#matplotlib.font_manager.FontProperties" target="_blank">FontProperties</a> but may be restricted by the matplotlib environment. To specify a property use the format as described in the link, e.g. <em>family=sans-serif,size=xxlarge</em>. The only non-default value is the chart title fontsize which is set to 'x-large'</li>
 <li>You can specify how often X Axis ticks appear, either by setting <em>sparse_ticks</em> to a single number ,&lsquo;n&rsquo;, for every &lsquo;n&rsquo;th tick to appear, or by setting a test for a change in the label value by specifying the start and end characters to examine, separated by a comma. For example, <em>1,3</em> could be used where you have labels in the form of <em>Jan, Feb, Mar</em></li>
 </ul>
+<li>Setting second Y axis fields can be a bit quirky. You need to select and then unselect the chosen field to change it's line attributes and/or delete it (e.g. you select the field but then may need to ensure it's not highlighted by clicking again)</li>
 <li>The program is attempting to deal with both 2D and 3D data which due to it's experimental nature may lead to some odd behaviour</li>
 <li>An example of a 3D input data file is below. In this example:
 <ul>
@@ -4912,12 +4947,12 @@ You can alternate between both approaches to choose the desired area. If you hav
 </ul>
 <p>There are six buttons:</p>
 <ul>
-<li><em>Choose area via Map</em> (as above) will open the world map
-<li><em>Quit</em> will exit the program</li>
-<li><em>Query Map</em> will calculate the size of the map and indicate the boundaries for the map on the world view. The size of the boundary area is dependent on the map scale (zoom)</li>
-<li><em>Get Map</em> will produce the map. It downloads map tiles from OpenStreetMap and stitches them into a single image file at the location specified. It will update the Properties field with the valuables to be added into the Preferences file. If you are downloading a map with many tiles this may take some time so please be patient. There is a progress bar that will indicate how far along the process the program is</li>
-<li><em>MapQuest</em> will produce a map from MapQuest. It issues a request to MapQuest for a static map with the coordinates and image properties you specify. The coordinates for the image (map) should contain your specified area but the exact bounding coordinates are likely to be different - this is a work-in-progress</li>
-<li><em>Help</em> Display this help</li>
+<li><strong>Choose area via Map</strong>. (as above) will open the world map
+<li><strong>Quit</strong>. will exit the program</li>
+<li><strong>Query Map</strong>. will calculate the size of the map and indicate the boundaries for the map on the world view. The size of the boundary area is dependent on the map scale (zoom)</li>
+<li><strong>Get Map</strong>. will produce the map. It downloads map tiles from OpenStreetMap and stitches them into a single image file at the location specified. It will update the Properties field with the valuables to be added into the Preferences file. If you are downloading a map with many tiles this may take some time so please be patient. There is a progress bar that will indicate how far along the process the program is</li>
+<li><strong>MapQuest</strong>. will produce a map from MapQuest. It issues a request to MapQuest for a static map with the coordinates and image properties you specify. The coordinates for the image (map) should contain your specified area but the exact bounding coordinates are likely to be different - this is a work-in-progress</li>
+<li><strong>Help</strong>. Display this help</li>
 </ul>
 <p>After producing the map you should copy the contents of the <em>Properties</em> field into the <a href="#p_map">[Map]</a> Section of the Preferences file.</p>
 <p>You can also run the program on the command line. In this case the parameters are passed to the program as follows:</p>
@@ -4997,10 +5032,10 @@ Load data can also be downloaded for prior years to a filename defined by the <e
 </ul>
 <p>There are four buttons:</p>
 <ul>
-<li><em>Quit</em> will exit the program</li>
-<li><em>Update Existing Stations</em> will download the current file on the AEMO site and compare it to the existing list available to SIREN. If there are changes you will be presented with a brief summary of changes and given the option to replace the existing file. The initial window will then be displayed with a brief message</li>
-<li><em>Update Load file</em> will download load files from the AEMO site and create an updated load data file</li>
-<li><em>Help</em> Display this help</li>
+<li><strong>Quit</strong>. will exit the program</li>
+<li><strong>Update Existing Stations</strong>. will download the current file on the AEMO site and compare it to the existing list available to SIREN. If there are changes you will be presented with a brief summary of changes and given the option to replace the existing file. The initial window will then be displayed with a brief message</li>
+<li><strong>Update Load file</strong>. will download load files from the AEMO site and create an updated load data file</li>
+<li><strong>Help</strong>. Display this help</li>
 </ul>
 <p>You can also run the program on the command line. In this case the parameters are passed to the program as follows:</p>
 <pre>
@@ -5089,11 +5124,11 @@ You can alternate between these approaches to choose the desired area. If you ha
 </ul>
 <p>There are five buttons:</p>
 <ul>
-<li><em>Choose area via Map</em> (at top of window; as above) will open the world map
-<li><em>Done</em> will exit the program</li>
-<li><em>Get Data</em> will invoke one of more new tasks to request and download the ERA5 data for the selected area and date range. As part of the execution a log file will be saved to the Target Folder</li>
-<li><em>Check Data</em> will interrogate ERA5 files in the Target Folder to provide the boundaries for the Area of Interest and set the starting month to download the next month in sequence. The interrogation may cater for files in yearly sub-folders</li>
-<li><em>Help</em> Display this help</li>
+<li><strong>Choose area via Map</strong>. (at top of window; as above) will open the world map
+<li><strong>Done</strong>. will exit the program</li>
+<li><strong>Get Data</strong>. will invoke one of more new tasks to request and download the ERA5 data for the selected area and date range. As part of the execution a log file will be saved to the Target Folder</li>
+<li><strong>Check Data</strong>. will interrogate ERA5 files in the Target Folder to provide the boundaries for the Area of Interest and set the starting month to download the next month in sequence. The interrogation may cater for files in yearly sub-folders</li>
+<li><strong>Help</strong>. Display this help</li>
 </ul>
 <p>Downloading the ERA5 data are performed by new tasks allowing you to close the <code>getera5</code> window once you have requested the files. Depending on the area and date range the process of downloading is likely to take significant time. A log file with the same name as the target file and a file type of <em>log</em> (e.g. <em>era5_data_202301.log</em>) will contain the results of the request and indicate it's success or otherwise.</p>
 <p>You can also run the program on the command line. In this case the parameters are passed to the program as follows:</p>
@@ -5284,13 +5319,13 @@ You can alternate between these approaches to choose the desired area. If you ha
 </ul>
 <p>There are seven buttons:</p>
 <ul>
-<li><em>Choose area via Map</em> (at top of window; as above) will open the world map
-<li><em>Done</em> will exit the program</li>
-<li><em>Get Solar</em> will invoke <em>wget</em> as a new task to download the solar files for the selected area and date range. As part of the execution a log file will be saved to the Solar Target Folder</li>
-<li><em>Get Wind</em> will invoke <em>wget</em> as a new task to download the wind files for the selected area and date range. As part of the execution a log file will be saved to the Wind Target Folder</li>
-<li><em>Check Solar</em> will interrogate MERRA-2 solar files in the Solar Target Folder to provide the boundaries for the Area of Interest and set the starting date to download the next day in sequence. The interrogation will cater for files in yearly sub-folders</li>
-<li><em>Check Wind</em> will interrogate MERRA-2 wind files in the Wind Target Folder to provide the boundaries for the Area of Interest and set the starting date to download the next day in sequence. The interrogation will cater for files in yearly sub-folders</li>
-<li><em>Help</em> Display this help</li>
+<li><strong>Choose area via Map</strong>. (at top of window; as above) will open the world map
+<li><strong>Done</strong>. will exit the program</li>
+<li><strong>Get Solar</strong>. will invoke <code>wget</code> as a new task to download the solar files for the selected area and date range. As part of the execution a log file will be saved to the Solar Target Folder</li>
+<li><strong>Get Wind</strong>. will invoke <code>wget</code> as a new task to download the wind files for the selected area and date range. As part of the execution a log file will be saved to the Wind Target Folder</li>
+<li><strong>Check Solar</strong>. will interrogate MERRA-2 solar files in the Solar Target Folder to provide the boundaries for the Area of Interest and set the starting date to download the next day in sequence. The interrogation will cater for files in yearly sub-folders</li>
+<li><strong>Check Wind</strong>. will interrogate MERRA-2 wind files in the Wind Target Folder to provide the boundaries for the Area of Interest and set the starting date to download the next day in sequence. The interrogation will cater for files in yearly sub-folders</li>
+<li><strong>Help</strong>. Display this help</li>
 </ul>
 <p>Downloading the MERRA-2 files are performed by new tasks allowing you to close the <code>getmerra2</code> window once you have requested the files. Depending on the area and date range the process of downloading is likely to take significant time. A log file named <em>wget_type_yyyy-mm-dd_hhmm.log</em> will be produced, where <em>type</em> is either wind or solar and <em>yyyy-mm-dd_hhmm.log</em> is the date and time <code>wget</code> was invoked. A file named <em>wget_type_yyyy-mm-dd_hhmm.txt</em> will contain the list of files to be downloaded and <em>wget_type_yyyy-mm-dd_hhmm.bat</em> will contain the <code>wget</code> command (in case you encounter problems).</p>
 <p>You can also run the program on the command line. In this case the parameters are passed to the program as follows:</p>
@@ -5329,6 +5364,7 @@ NASA MERRA-2 data allows weather files to be created on a grid of 0.625 degree o
 <p><strong>Note:</strong> Initially, the <em>swgnt</em> (surface net downward shortwave flux) MERRA variable was used to generate the solar weather variables. This produced outputs that were slightly lower than observed data. To compensate for this a losses percentage of 5 (percent) was used for the SAM pvwattsv5 model. Subsequent work has identified the <em>swgdn</em> (surface incoming shortwave flux) MERRA-2 variable as a more appropriate resource. Using this variable, a losses percentage of 14 - the SAM default - can be used. Validation using either variable (swgnt and 5%, or swgdn and 14%) produces essentially identical results and correlations.
 <!-- Back to top< -->
 <h4 id="makeweather">Produce wind and solar weather files</h4>
+<p><strong>Note:</strong> A packaged version of programs to download and create SAM weather files for Windows is available in Microsoft Installer Format at <a href="https://sourceforge.net/projects/sensiren/" target="_blank">https://sourceforge.net/projects/sensiren/</a>. The file is <a href="https://sourceforge.net/projects/sensiren/files/makeweatherfiles.msi/download" target="_blank">makeweatherfiles.msi</a> (the package has been created with PyInstaller and built in MSI format). It contains three programs <code>makeweatherfiles</code> to create weather files, <code>getera5</code> which enables ERA5 files to be downloaded, and <code>getmerra2</code> which enables MERRA-2 files to be downloaded. This package allows you to create SAM weather files from either ERA5 or MERRA-2 files without requiring any other parts of SIREN</p>
 <h5>makeweatherfiles</h5>
 <p><code>makeweatherfiles</code> is a program that can be used to produce solar and/or wind weather files for input to SAM. The program generates SMW (preferred for SAM) or CSV format solar resource files and SRW format wind resource files. These file formats have been chosen as they're easier to generate than other formats. Using the program you specify the source folder for either the ERA5 or  MERRA-2 data files, the time zone for the area of interest, a file format and target folder for the weather files. The program will generate files for each of the ERA5 or MERRA-2 grid squares within the chosen data files or optionally for a number of latitude and longitude positions. You can invoke the program either by choosing <code>makeweatherfiles</code> from the SIREN Tools menu or in Windows by running <code>makeweatherfiles.exe</code> in the <em>siren</em> (or <em>makeweatherfiles</em>) folder. Running it with no parameters will present an interactive window to simplify passing parameters to the tool. The window fields are:</p>
 <ul>
@@ -5365,12 +5401,12 @@ NASA MERRA-2 data allows weather files to be created on a grid of 0.625 degree o
 </ul>
 <p>There are six buttons:</p>
 <ul>
-<li><em>Done</em> will exit the program</li>
-<li><em>Produce Solar Files</em> will produce solar weather files</li>
-<li><em>Produce Wind Files</em> will produce wind weather files</li>
-<li><em>Update Wind Files</em> will update existing wind weather files with extrapolated wind speed</li>
-<li><em>Help</em> Display this help</li>
-<li><em>File Info</em> Display details about the weather file dimensions and variables</li>
+<li><strong>Done</strong>. will exit the program</li>
+<li><strong>Produce Solar Files</strong>. will produce solar weather files</li>
+<li><strong>Produce Wind Files</strong>. will produce wind weather files</li>
+<li><strong>Update Wind Files</strong>. will update existing wind weather files with extrapolated wind speed</li>
+<li><strong>Help</strong>. Display this help</li>
+<li><strong>File Info</strong>. Display details about the weather file dimensions and variables</li>
 </ul>
 <p>Creation of weather files may take some time so please be patient. There are two progress bars that will display to indicate how far along the process the program is. The tool will produce an output report which will include the list of weather files produced. The report will include a return code as follows:</p>
 <ul style="list-style-type: none; padding: 1; margin: 1">
@@ -5687,10 +5723,10 @@ MERRA-2 Variables
 </ul>
 <p>There are four buttons:</p>
 <ul>
-<li><em>Quit</em> will exit the program</li>
-<li><em>Produce Solar Index</em> will produce a solar index file</li>
-<li><em>Produce Wind Index</em> will produce a wind index file</li>
-<li><em>Help</em> Display this help</li>
+<li><strong>Quit</strong>. will exit the program</li>
+<li><strong>Produce Solar Index</strong>. will produce a solar index file</li>
+<li><strong>Produce Wind Index</strong>. will produce a wind index file</li>
+<li><strong>Help</strong>. Display this help</li>
 </ul>
 <p>You can also run the program on the command line. In this case the parameters are passed to the program as follows:</p>
 <pre>
@@ -5736,9 +5772,9 @@ MERRA-2 Variables
 </ul>
 <p>There are three buttons:</p>
 <ul>
-<li><em>Quit</em> will exit the program</li>
-<li><em>Produce Resource File</em> will produce the file</li>
-<li><em>Help</em> Display this help</li>
+<li><strong>Quit</strong>. will exit the program</li>
+<li><strong>Produce Resource File</strong>. will produce the file</li>
+<li><strong>Help</strong>. Display this help</li>
 </ul>
 <p>After producing the file you may want to copy contents of the <em>Properties</em> field into the <a href="#p_files">[Files]</a> Section of the Preferences file.</p>
 <p>You can also run the program on the command line. In this case the parameters are passed to the program as follows:</p>
@@ -6447,7 +6483,7 @@ MERRA-2 Variables
 </tr>
 <tr class="none">
 <td class="none"><dfn>url</dfn></td>
-<td class="none">The location of the SIREN files on SourceForge</td>
+<td class="none">The location of the SIREN files on SourceForge. Can be set to <em>None</em> to ignore a remote connection</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>wget_cmd</dfn></td>
