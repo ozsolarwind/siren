@@ -1150,6 +1150,8 @@ class Table(QtWidgets.QDialog):
                     except:
                         pass
                 if valu != '':
+                    values.append(self.fields[cl] + '=' + str(valu))
+                else:
                     values.append(self.fields[cl] + '=' + valu)
             self.replaced[key] = values
         self.close()
