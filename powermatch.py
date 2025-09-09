@@ -2700,6 +2700,16 @@ class powerMatch(QtWidgets.QWidget):
         sheet.cell(row=sheet_row, column=1).value = 'Data sources'
         sheet.cell(row=sheet_row, column=1).font = bold
         sheet_row += 1
+        sheet.cell(row=sheet_row, column=1).value = 'Preferences file'
+        sheet.cell(row=sheet_row, column=1).font = normal
+        sheet.merge_cells('B' + str(sheet_row) + ':M' + str(sheet_row))
+        if len(sys.argv) > 1:
+            config_file = getModelFile(sys.argv[1])
+        else:
+            config_file = getModelFile('SIREN.ini')
+        sheet.cell(row=sheet_row, column=2).value = config_file[-1]
+        sheet.cell(row=sheet_row, column=2).font = normal
+        sheet_row += 1
         sheet.cell(row=sheet_row, column=1).value = 'Scenarios folder'
         sheet.cell(row=sheet_row, column=1).font = normal
         sheet.cell(row=sheet_row, column=2).value = self.scenarios
@@ -3243,6 +3253,8 @@ class powerMatch(QtWidgets.QWidget):
             re_order.append(key)
             for row in range(top_row + 1, ws.max_row + 1):
                 pmss_data[-1].append(ws.cell(row=row, column=col).value)
+       #     if option == O and key not in self.optimisation.keys():
+       #         self.optimisation[key] = Optimisation(key, 'Range', f'{capacity} {capacity} {capacity}')
         pmss_details['Load'].capacity = sum(pmss_data[load_col])
         do_adjust = False
         if option == O:
@@ -6018,6 +6030,11 @@ class powerMatch(QtWidgets.QWidget):
                 sp_data.append(' ')
                 sp_data.append('Data sources')
                 span = 'Data sources'
+                if len(sys.argv) > 1:
+                    config_file = getModelFile(sys.argv[1])
+                else:
+                   config_file = getModelFile('SIREN.ini')
+                sp_data.append(['Preferences file', config_file[-1]])
                 sp_data.append(['Scenarios folder', self.scenarios])
                 if pm_data_file[: len(self.scenarios)] == self.scenarios:
                     pm_data_file = pm_data_file[len(self.scenarios):]
@@ -6732,7 +6749,7 @@ class powerMatch(QtWidgets.QWidget):
                         try:
                             pmss_details[fac].multiplier = capacity / pmss_details[fac].capacity
                         except:
-                            print('PME2b:', fac, capacity, pmss_details[fac].capacity)
+                            print('PME1:', fac, capacity, pmss_details[fac].capacity)
                     except:
                         print('PME2:', fac, capacity, pmss_details[fac].capacity)
                 multi_value, op_data, extra = self.doDispatch(year, option, pmss_details, pmss_data, re_order,
@@ -7331,8 +7348,6 @@ class powerMatch(QtWidgets.QWidget):
                     opt_order[gen][1] = len(capacities)
             except KeyError as err:
                 self.setStatus('Key Error: No Optimisation entry for ' + str(err))
-                opt_order[gen] = [len(capacities), len(capacities) + 5, 0]
-                capacities.extend([pmss_details[gen].capacity / 5.] * 5)
             except ZeroDivisionError as err:
                 self.setStatus('Zero capacity: ' + gen + ' ignored')
             except:
@@ -7471,7 +7486,7 @@ class powerMatch(QtWidgets.QWidget):
             else:
                 tim = ' (%s%s %.2f mins)' % (lcoe_status, multi_status, tim / 60.)
             self.opt_progressbar.barProgress(generation + 1,
-                'Processing iteration ' + str(generation + 1) + tim)
+                f'Processing iteration {generation + 1} of {maximum_generation} {tim}')
             QtWidgets.QApplication.processEvents()
             if not self.opt_progressbar.be_open:
                 break
