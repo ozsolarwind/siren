@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2016-2024 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2016-2025 Sustainable Energy Now Inc., Angus King
 #
 #  siren.py - This file is part of SIREN.
 #
@@ -98,6 +98,16 @@ class TabDialog(QtWidgets.QDialog):
             self.models_dirs = getModelFile()
         if len(self.models_dirs) == 0:
             self.models_dirs = [models_dir]
+        elif len(self.models_dirs) > 1:
+            dups = []
+            for i in range(len(self.models_dirs)):
+                for j in range(i + 1, len(self.models_dirs)):
+                    if os.path.samefile(self.models_dirs[i], self.models_dirs[j]):
+                        if j not in dups:
+                            dups.append(j)
+            dups.sort(reverse=True)
+            for dup in dups:
+                del self.models_dirs[dup]
         self.entries = []
         for models_dir in self.models_dirs:
             fils = os.listdir(models_dir)

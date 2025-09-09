@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2017-2024 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2017-2025 Sustainable Energy Now Inc., Angus King
 #
 #  sirenupd.py - This file is part of SIREN.
 #
@@ -94,7 +94,11 @@ class UpdDialog(QtWidgets.QDialog):
         self.setWindowTitle('SIREN Update (' + credits.fileVersion() + ') - Check for new versions')
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         config = configparser.RawConfigParser()
-        config_file = getModelFile(ini_file)
+        self.config_file = getModelFile(ini_file)
+        if isinstance(self.config_file, list):
+            config_file = self.config_file[-1]
+        else:
+            config_file = self.config_file
         config.read(config_file)
         self.debug = False
         try:

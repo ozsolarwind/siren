@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2017-2024 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2017-2025 Sustainable Energy Now Inc., Angus King
 #
 #  getmerra2.py - This file is part of SIREN.
 #
@@ -141,7 +141,7 @@ def checkFiles(chk_key, tgt_dir, ini_file=None, collection=None):
                 return [log2.log]
             dte_msg = '.\nCurrent day range %s to %s' % (str(first_dte), str(dtes[-1]))
             if len(dtes) != (dte2-dte1).days + 1:
-                print('(128)', len(dtes), (dte2-dte1).days + 1, dte2, dte1)
+                print('(144)', len(dtes), (dte2-dte1).days + 1, dte2, dte1)
                 not_contiguous = True
                 print('getmerra2: File template ' + chk_src_key[i][j])
                 years = {}
@@ -440,7 +440,7 @@ class getMERRA2(QtWidgets.QDialog):
         self.lonwSpin.setRange(0, 360)
         self.lonwSpin.setObjectName('lonw')
         if len(sys.argv) > 1:
-            his_config_file = sys.argv[1]
+            his_config_file = getModelFile(sys.argv[1])
             his_config = configparser.RawConfigParser()
             his_config.read(his_config_file)
             try:
@@ -550,7 +550,7 @@ class getMERRA2(QtWidgets.QDialog):
             self.dirs[i].setStyleSheet("background-color: white; border: 1px inset grey; min-height: 22px; border-radius: 4px;")
             self.dirs[i].clicked.connect(self.dirChanged)
             self.grid.addWidget(self.dirs[i], 9 + i * 2, 1, 1, 8)
-        self.log = QtWidgets.QLabel('')
+        self.log = QtWidgets.QLabel('Preferences file: ' + self.ini_file[-1])
         msg_palette = QtGui.QPalette()
         msg_palette.setColor(QtGui.QPalette.Foreground, QtCore.Qt.red)
         self.log.setPalette(msg_palette)

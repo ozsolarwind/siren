@@ -59,7 +59,7 @@ class makeFile():
     def __init__(self, src_year, src_dir, wnd_dir, tgt_fil, detail='Daily By Month', rain='', nonzero='False', log=None):
         config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
-            config_file = sys.argv[1]
+            config_file = getModelFile(sys.argv[1])
         else:
             config_file = getModelFile('SIREN.ini')
         config.read(config_file)
@@ -1112,7 +1112,7 @@ class getParms(QtWidgets.QWidget):
     def initUI(self):
         config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
-            config_file = sys.argv[1]
+            config_file = getModelFile(sys.argv[1])
         else:
             config_file = getModelFile('SIREN.ini')
         config.read(config_file)

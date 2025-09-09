@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2023 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2025 Sustainable Energy Now Inc., Angus King
 #
 #  wascene.py - This file is part of SIREN.
 #
@@ -42,13 +42,13 @@ class WAScene(QtWidgets.QGraphicsScene):
     def get_config(self):
         config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
-            config_file = sys.argv[1]
-            if config_file.rfind('/') >= 0:
-                self.config_file = config_file[config_file.rfind('/') + 1:]
-            elif config_file.rfind('\\') >= 0:
-                self.config_file = config_file[config_file.rfind('\\') + 1:]
+            config_file = getModelFile(sys.argv[1])
+            if config_file[-1].rfind('/') >= 0:
+                self.config_file = config_file[-1][config_file[-1].rfind('/') + 1:]
+            elif config_file[-1].rfind('\\') >= 0:
+                self.config_file = config_file[-1][config_file[-1].rfind('\\') + 1:]
             else:
-                self.config_file = config_file
+                self.config_file = config_file[-1]
         else:
             config_file = getModelFile('SIREN.ini')
             self.config_file = 'SIREN.ini'

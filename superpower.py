@@ -229,7 +229,7 @@ class SuperPower():
         self.temp_dir = None
         config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
-            config_file = sys.argv[1]
+            config_file = getModelFile(sys.argv[1])
         else:
             config_file = getModelFile('SIREN.ini')
         config.read(config_file)
@@ -1192,7 +1192,7 @@ class SuperPower():
         elif station.technology[:5] == 'Other':
             config = configparser.RawConfigParser()
             if len(sys.argv) > 1:
-                config_file = sys.argv[1]
+                config_file = getModelFile(sys.argv[1])
             else:
                 config_file = getModelFile('SIREN.ini')
             config.read(config_file)

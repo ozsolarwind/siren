@@ -207,13 +207,14 @@ def checkFiles(tgt_dir, ini_file=None):
     return [msg_text, latn, lats, lonw, lone, grd1, grd2, the_period(lst_period, '+')]
 
 def retrieve_era5(ini_file, lat1, lat2, lon1, lon2, grd1, grd2, year, tgt_dir, launch=False):
+    ini_file = getModelFile(ini_file)
     config = configparser.RawConfigParser()
     config.read(ini_file)
     tgt_file = config.get('getera5', 'filename').replace('$year$', year)
     tgt_log = tgt_file[:tgt_file.rfind('.')] + '.log'
     if launch:
-        parmstr = 'getera5,ini={},lat1={:.2f},lat2={:.2f},lon1={:.2f},lon2={:.2f},grd1={:.2f},grd2={:.2f},year={},tgt_dir={}'.format(ini_file,
-                  lat1, lat2, lon1, lon2, grd1, grd2, year, tgt_dir)
+        parmstr = 'getera5,ini={},lat1={:.2f},lat2={:.2f},lon1={:.2f},lon2={:.2f},grd1={:.2f},grd2={:.2f},year={},tgt_dir={}'.format(
+                  ','.join(ini_file), lat1, lat2, lon1, lon2, grd1, grd2, year, tgt_dir)
         parms = parmstr.split(',')
         spawn(parms, tgt_dir + '/' + tgt_log)
         return 'Request for ' + tgt_file + ' launched.'
@@ -491,7 +492,7 @@ class getERA5(QtWidgets.QDialog):
         self.lonwSpin.setRange(0, 360)
         self.lonwSpin.setObjectName('lonw')
         if len(sys.argv) > 1:
-            his_config_file = sys.argv[1]
+            his_config_file = getModelFile(sys.argv[1])
             his_config = configparser.RawConfigParser()
             his_config.read(his_config_file)
             try:
@@ -615,7 +616,7 @@ class getERA5(QtWidgets.QDialog):
         self.tgt_dir.clicked.connect(self.dirChanged)
         self.grid.addWidget(self.tgt_dir, rw, 1, 1, 8)
         rw += 2
-        self.log = QtWidgets.QLabel('')
+        self.log = QtWidgets.QLabel('Preferences file: ' + self.ini_file[-1])
         msg_palette = QtGui.QPalette()
         msg_palette.setColor(QtGui.QPalette.Foreground, QtCore.Qt.red)
         self.log.setPalette(msg_palette)

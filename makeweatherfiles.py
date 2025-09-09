@@ -2323,6 +2323,8 @@ class getParms(QtWidgets.QWidget):
                                        + 'QProgressBar::chunk { background-color: #06A9D6;}')
         self.grid.addWidget(self.progressbar, rw, 1, 1, 4)
         self.progressbar.setHidden(True)
+        self.inilog = QtWidgets.QLabel('Preferences file: ' + self.ini_file[-1])
+        self.grid.addWidget(self.inilog, rw, 1, 1, 4)
         self.progresslabel = QtWidgets.QLabel('')
         self.grid.addWidget(self.progresslabel, rw, 1, 1, 2)
         self.progresslabel.setHidden(True)
@@ -2462,6 +2464,7 @@ class getParms(QtWidgets.QWidget):
         self.close()
 
     def dosolarClicked(self):
+        self.inilog.setHidden(True)
         self.progressbar.setHidden(False)
         self.progresslabel.setHidden(False)
         self.daybar.setHidden(False)
@@ -2503,6 +2506,7 @@ class getParms(QtWidgets.QWidget):
         self.daybar.setHidden(True)
 
     def dowindClicked(self):
+        self.inilog.setHidden(True)
         self.progressbar.setHidden(False)
         self.progresslabel.setHidden(False)
         self.daybar.setHidden(False)
@@ -2708,8 +2712,17 @@ class RptDialog(QtWidgets.QDialog):
 
 
 if "__main__" == __name__:
-    app = QtWidgets.QApplication(sys.argv)
-    if len(sys.argv) > 1:  # arguments
+    batch = False
+    check = False
+    ini_file = 'getfiles.ini'
+    if len(sys.argv) > 2:  # arguments
+        batch = True
+    elif len(sys.argv) == 2:
+        if sys.argv[1][-4:] == '.ini':
+            ini_file = sys.argv[1]
+        else:
+            batch = True
+    if batch:
         src_lat_lon = ''
         src_year = 2014
         swg = 'swgdn'
@@ -2765,7 +2778,8 @@ if "__main__" == __name__:
         dialr = RptDialog(str(src_year), src_zone, src_dir_s, src_dir_w, tgt_dir, fmat, swg, wrap, gaps, src_lat_lon, files.returnCode(), files.getLog())
         dialr.exec_()
     else:
-        ex = getParms()
+        app = QtWidgets.QApplication(sys.argv)
+        ex = getParms(ini_file=ini_file)
         app.exec_()
         app.deleteLater()
         sys.exit()

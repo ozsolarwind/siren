@@ -123,7 +123,7 @@ class FlexiPlot(QtWidgets.QWidget):
         self.help = help
         config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
-            self.config_file = sys.argv[1]
+            self.config_file = getModelFile(sys.argv[1])
         else:
             self.config_file = getModelFile('flexiplot.ini')
         config.read(self.config_file)

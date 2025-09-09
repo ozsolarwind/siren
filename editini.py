@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2023 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2025 Sustainable Energy Now Inc., Angus King
 #
 #  editini.py - This file is part of SIREN.
 #
@@ -35,6 +35,8 @@ from senutils import ClickableQLabel, getParents, getUser, techClean
 class EdtDialog(QtWidgets.QDialog):
     def __init__(self, in_file, parent=None, line=None, section=None, save_as=False):
         self.in_file = in_file
+        if isinstance(self.in_file, list):
+            self.in_file = self.in_file[-1]
         try:
             s = open(self.in_file, 'r').read()
             bits = s.split('\n')
@@ -169,9 +171,9 @@ class EditFileSections(QtWidgets.QDialog):
         field_props = ['check', 'scenario_prefix']
         config = configparser.RawConfigParser()
         if ini_file is not None:
-            self.config_file = ini_file
+            self.config_file = getModelFile(ini_file)
         elif len(sys.argv) > 1:
-            self.config_file = sys.argv[1]
+            self.config_file = getModelFile(sys.argv[1])
         else:
             self.config_file = getModelFile('SIREN.ini')
         config.read(self.config_file)
@@ -286,7 +288,11 @@ class EditFileSections(QtWidgets.QDialog):
         self.scroll.setWidget(frame)
         self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.scroll)
-        self.setWindowTitle('SIREN - Edit File Sections - ' + ini_file[ini_file.rfind('/') + 1:])
+        if isinstance(ini_file, list):
+            titl = ini_file[-1]
+        else:
+            titl = ini_file
+        self.setWindowTitle('SIREN - Edit File Sections - ' + titl[titl.rfind('/') + 1:])
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         self.resize(int(width0 + width1 + width2), int(self.sizeHint().height() * 1.1))
         self.show()
@@ -403,13 +409,19 @@ class EditSect():
         self.section = section
         config = configparser.RawConfigParser()
         if ini_file is not None:
-            config_file = ini_file
+            config_file = getModelFile(ini_file)
         elif len(sys.argv) > 1:
-            config_file = sys.argv[1]
+            config_file = getModelFile(sys.argv[1])
         else:
             config_file = getModelFile('SIREN.ini')
         config.read(config_file)
-        section_items = config.items(self.section)
+        section_items = []
+        try:
+            section_items = config.items(self.section)
+        except:
+            pass
+        if len(section_items) == 0:
+            section_items =[('<property>', '<value>')]
         section_dict = {}
         for key, value in section_items:
             section_dict[key] = value
@@ -421,11 +433,15 @@ class EditSect():
             return
         section_dict = {}
         section_items = []
-        for key in values:
+        for key, value in values.items():
+            if key[0] == '<' and key[-1] == '>':
+                continue
             try:
-                section_items.append(key + '=' + values[key][0][6:])
+                section_items.append(key + '=' + value[0][6:])
             except:
                 section_items.append(key + '=')
+        if len(section_items) == 0:
+            return
         section_dict[self.section] = section_items
         SaveIni(section_dict, ini_file=config_file)
 
@@ -434,9 +450,9 @@ class EditTech():
     def __init__(self, save_folder, ini_file=None):
         config = configparser.RawConfigParser()
         if ini_file is not None:
-            config_file = ini_file
+            config_file = getModelFile(ini_file)
         elif len(sys.argv) > 1:
-            config_file = sys.argv[1]
+            config_file = getModelFile(sys.argv[1])
         else:
             config_file = getModelFile('SIREN.ini')
         config.read(config_file)
@@ -488,11 +504,20 @@ class EditTech():
 class SaveIni():
     def __init__(self, values, ini_file=None):
         if ini_file is not None:
-            config_file = ini_file
+            if isinstance(ini_file, list): # assume we've done the getModelFile bit
+                config_file = ini_file[:]
+            else:
+                config_file = getModelFile(ini_file)
         elif len(sys.argv) > 1:
-            config_file = sys.argv[1]
+            config_file = getModelFile(sys.argv[1])
         else:
             config_file = getModelFile('SIREN.ini')
+        common_file = False
+        if isinstance(config_file, list):
+            common_file = True
+            common_config = configparser.RawConfigParser()
+            common_config.read(config_file[:-1])
+            config_file = config_file[-1]
         try:
             inf = open(config_file, 'r')
             lines = inf.readlines()
@@ -500,39 +525,73 @@ class SaveIni():
         except:
             lines = []
         del_lines = []
-        for section in values:
+        for section, properties in values.items():
             in_section = False
-            properties = values[section]
+            keep_section = False
             props = []
             for i in range(len(properties)):
-                props.append(properties[i].split('=')[0])
+                props.append(properties[i].split('=')[0].strip())
+            ctr = [len(properties), 0]
+            si = 0
             for i in range(len(lines)):
                 if lines[i][:len(section) + 2] == '[' + section + ']':
                     in_section = True
+                    si = i
                 elif in_section:
                     if lines[i][0] == '[':
                         i -= 1
                         break
                     elif lines[i][0] != ';' and lines[i][0] != '#':
-                        bits = lines[i].split('=')
+                        bits = lines[i].rstrip('\n').split('=')
+                        bits[0] = bits[0].rstrip()
+                        bits[1] = bits[1].lstrip()
                         for j in range(len(properties) - 1, -1, -1):
                             if bits[0] == props[j]:
                                 if properties[j] == props[j] + '=' \
                                   or properties[j] == props[j]: # delete empty values
                                     del_lines.append(i)
+                                elif common_file: # maybe delete if value in common files
+                                    keep = True
+                                    try:
+                                        if common_config.get(section, bits[0]) == '='.join(bits[1:]):
+                                            keep = False
+                                    except:
+                                        pass
+                                    if keep:
+                                        lines[i] = properties[j] + '\n'
+                                        keep_section = True
+                                    else:
+                                        del_lines.append(i)
                                 else:
                                     lines[i] = properties[j] + '\n'
+                                    keep_section = True
                                 del properties[j]
                                 del props[j]
+                                ctr[1] += 1
+                    else:
+                         ctr[0] += 1
+                         ctr[1] += 1
+            if i - si > ctr[1] + len(properties):
+                keep_section = True
             if len(properties) > 0:
+                ctr[1] += 1
                 if not in_section:
                     lines.append('[' + section + ']\n')
                     i += 1
+                    si = i
                 for j in range(len(properties)):
                     k = properties[j].find('=')
                     if k > 0 and k != len(properties[j]) - 1:
+                        try:
+                            if common_config.get(section, properties[j][:k]) == properties[j][k+1:]:
+                                continue
+                        except:
+                            pass
                         lines.insert(i + 1, properties[j] + '\n')
                         i += 1
+                        keep_section = True
+            if not keep_section and common_file: # no properties
+                del_lines.append(si)
         if sys.platform == 'win32' or sys.platform == 'cygwin':
             try:
                 sou = open(config_file, 'w')

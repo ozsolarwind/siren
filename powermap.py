@@ -770,7 +770,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def get_config(self):
         config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
-            self.config_file = sys.argv[1]
+            self.config_file = getModelFile(sys.argv[1])
         else:
             self.config_file = getModelFile('SIREN.ini')
         config.read(self.config_file)
@@ -1326,7 +1326,7 @@ class MainWindow(QtWidgets.QMainWindow):
         helpMenu.addAction(about)
         config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
-            config_file = sys.argv[1]
+            config_file = getModelFile(sys.argv[1])
         else:
             config_file = getModelFile('SIREN.ini')
         config.read(config_file)
@@ -1389,21 +1389,33 @@ class MainWindow(QtWidgets.QMainWindow):
             pass
 
     def editIniFile(self):
-        before = os.stat(self.config_file).st_mtime
+        if isinstance(self.config_file, list):
+            config_file = self.config_file[-1]
+        else:
+            config_file = self.config_file
+        before = os.stat(config_file).st_mtime
         dialr = EdtDialog(self.config_file)
         dialr.exec_()
-        after = os.stat(self.config_file).st_mtime
+        after = os.stat(config_file).st_mtime
         if after == before:
             return
         self.get_config()   # refresh config values
-        comment = self.config_file + ' edited. Reload may be required.'
+        comment = config_file + ' edited. Reload may be required.'
         self.view.statusmsg.emit(comment)
 
     def editFSects(self):
-        dialr = EditFileSections(self.config_file)
+        if isinstance(self.config_file, list):
+            config_file = self.config_file[-1]
+        else:
+            config_file = self.config_file
+        before = os.stat(config_file).st_mtime
+        dialr = EditFileSections(config_file)
         dialr.exec_()
+        after = os.stat(config_file).st_mtime
+        if after == before:
+            return
         self.get_config()   # refresh config values
-        comment = self.config_file + ' edited. Reload may be required.'
+        comment = config_file + ' edited. Reload may be required.'
         self.view.statusmsg.emit(comment)
 
     def changeColours(self, new_color, elements):
@@ -1414,8 +1426,16 @@ class MainWindow(QtWidgets.QMainWindow):
                 el.setBrush(QtGui.QColor(new_color))
 
     def editColours(self):
+        if isinstance(self.config_file, list):
+            config_file = self.config_file[-1]
+        else:
+            config_file = self.config_file
+        before = os.stat(config_file).st_mtime
         dialr = Colours()
         dialr.exec_()
+        after = os.stat(config_file).st_mtime
+        if after == before:
+            return
        # refresh some config values
         config = configparser.RawConfigParser()
         config.read(self.config_file)
@@ -1457,11 +1477,24 @@ class MainWindow(QtWidgets.QMainWindow):
         self.view.statusmsg.emit(comment)
 
     def editTechs(self):
+        if isinstance(self.config_file, list):
+            config_file = self.config_file[-1]
+        else:
+            config_file = self.config_file
+        before = os.stat(config_file).st_mtime
         EditTech(self.scenarios)
+        after = os.stat(config_file).st_mtime
+        if after == before:
+            return
         comment = 'Technologies edited. Reload may be required.'
         self.view.statusmsg.emit(comment)
 
     def editSects(self):
+        if isinstance(self.config_file, list):
+            config_file = self.config_file[-1]
+        else:
+            config_file = self.config_file
+        before = os.stat(config_file).st_mtime
         config = configparser.RawConfigParser()
         config.read(self.config_file)
         sections = sorted(config.sections())

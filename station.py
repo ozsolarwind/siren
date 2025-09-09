@@ -100,11 +100,11 @@ class Stations:
         if __name__ == '__main__':
             for i in range(1, len(sys.argv)):
                 if sys.argv[i][-4:] == '.ini':
-                    config_file = sys.argv[i]
+                    config_file = sys.argv[i].split(',')
                     break
         else:
             if len(sys.argv) > 1:
-                config_file = sys.argv[1]
+                config_file = getModelFile(sys.argv[1])
             else:
                 config_file = getModelFile('SIREN.ini')
         config.read(config_file)

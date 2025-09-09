@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2023 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2025 Sustainable Energy Now Inc., Angus King
 #
 #  powerclasses.py - This file is part of SIREN.
 #
@@ -520,7 +520,7 @@ class whatFinancials(QtWidgets.QDialog):
         if parms is None:
             config = configparser.RawConfigParser()
             if len(sys.argv) > 1:
-                config_file = sys.argv[1]
+                config_file = getModelFile(sys.argv[1])
             else:
                 config_file = getModelFile('SIREN.ini')
             config.read(config_file)
@@ -699,7 +699,7 @@ class Adjustments(QtWidgets.QDialog):
         super(Adjustments, self).__init__()
         config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
-            config_file = sys.argv[1]
+            config_file = getModelFile(sys.argv[1])
         else:
             config_file = getModelFile('SIREN.ini')
         config.read(config_file)
@@ -1199,7 +1199,7 @@ class FinancialModel():
         self.parms = parms
         config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
-            config_file = sys.argv[1]
+            config_file = getModelFile(sys.argv[1])
         else:
             config_file = getModelFile('SIREN.ini')
         config.read(config_file)

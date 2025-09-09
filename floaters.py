@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2016-2023 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2016-2025 Sustainable Energy Now Inc., Angus King
 #
 #  floaters.py - This file is part of SIREN.
 #
@@ -43,7 +43,7 @@ class FloatLegend(QtWidgets.QDialog):
     def initUI(self):
         config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
-            config_file = sys.argv[1]
+            config_file = getModelFile(sys.argv[1])
         else:
             config_file = getModelFile('SIREN.ini')
         config.read(config_file)
@@ -206,7 +206,7 @@ class FloatMenu(QtWidgets.QDialog):
         self.menubar = menubar
         config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
-            config_file = sys.argv[1]
+            config_file = getModelFile(sys.argv[1])
         else:
             config_file = getModelFile('SIREN.ini')
         config.read(config_file)
@@ -449,10 +449,11 @@ class FloatStatus(QtWidgets.QDialog):
             self.full_log = True
         config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
-            self.config_file = sys.argv[1]
+            config_file = getModelFile(sys.argv[1])
         else:
-            self.config_file = getModelFile('SIREN.ini')
-        config.read(self.config_file)
+            config_file = getModelFile('SIREN.ini')
+        self.config_file = config_file[-1]
+        config.read(config_file)
         self.restorewindows = False
         self.logged = False
         try:

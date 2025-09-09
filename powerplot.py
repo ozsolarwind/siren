@@ -404,7 +404,7 @@ class PowerPlot(QtWidgets.QWidget):
         self.help = help
         config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
-            self.config_file = sys.argv[1]
+            self.config_file = getModelFile(sys.argv[1])
         else:
             self.config_file = getModelFile('powerplot.ini')
         config.read(self.config_file)
@@ -691,7 +691,10 @@ class PowerPlot(QtWidgets.QWidget):
         self.updated = False
         self.colours_updated = False
         self.log = QtWidgets.QLabel('')
-        self.log.setText('Preferences file: ' + self.config_file)
+        if isinstance(self.config_file, list):
+            self.log.setText('Preferences file: ' + ', '.join(self.config_file))
+        else:
+            self.log.setText('Preferences file: ' + self.config_file)
         rw = 0
         self.grid.addWidget(QtWidgets.QLabel('Recent Files:'), rw, 0)
         self.files = QtWidgets.QComboBox()
@@ -1872,10 +1875,14 @@ class PowerPlot(QtWidgets.QWidget):
         return True
 
     def editIniFile(self):
-        before = os.stat(self.config_file).st_mtime
+        if isinstance(self.config_file, list):
+            config_file = self.config_file[-1]
+        else:
+            config_file = self.config_file
+        before = os.stat(config_file).st_mtime
         dialr = EdtDialog(self.config_file, section='[Powerplot]')
         dialr.exec_()
-        after = os.stat(self.config_file).st_mtime
+        after = os.stat(config_file).st_mtime
         if after == before:
             return
         config = configparser.RawConfigParser()
@@ -1975,7 +1982,7 @@ class PowerPlot(QtWidgets.QWidget):
                         pass
         except:
             pass
-        self.log.setText(self.config_file + ' edited. Reload may be required.')
+        self.log.setText(config_file + ' edited. Reload may be required.')
 
     def ppClicked(self):
         def set_ylimits(ymin, ymax):

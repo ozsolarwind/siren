@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2023 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2025 Sustainable Energy Now Inc., Angus King
 #
 #  getmap.py - This file is part of SIREN.
 #
@@ -185,8 +185,8 @@ class retrieveMap():
         st, wt, nt, et = self.tileEdges(top_left[0], top_left[1], zoom)
         sb, wb, nb, eb = self.tileEdges(bottom_right[0], bottom_right[1], zoom)
         if self.batch and self.debug:
-            print('(189)', '%d: %d,%d --> %1.3f :: %1.3f, %1.3f :: %1.3f' % (zoom, top_left[0], top_left[1], st, nt, wt, et))
-            print('(190)', '%d: %d,%d --> %1.3f :: %1.3f, %1.3f :: %1.3f' % (zoom, bottom_right[0], bottom_right[1], sb, nb, wb, eb))
+            print('(188)', '%d: %d,%d --> %1.3f :: %1.3f, %1.3f :: %1.3f' % (zoom, top_left[0], top_left[1], st, nt, wt, et))
+            print('(189)', '%d: %d,%d --> %1.3f :: %1.3f, %1.3f :: %1.3f' % (zoom, bottom_right[0], bottom_right[1], sb, nb, wb, eb))
         w = bottom_right[0] - top_left[0] + 1
         h = bottom_right[1] - top_left[1] + 1
         if self.batch:
@@ -295,7 +295,7 @@ class getMap(QtWidgets.QWidget):
         self.eastSpin.setSingleStep(.5)
         self.eastSpin.setRange(-180, 180)
         if len(sys.argv) > 1:
-            his_config_file = sys.argv[1]
+            his_config_file = getModelFile(sys.argv[1])
             his_config = configparser.RawConfigParser()
             his_config.read(his_config_file)
             try:

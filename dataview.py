@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2022-2024 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2022-2025 Sustainable Energy Now Inc., Angus King
 #
 #  dataview.py - This file is part of SIREN.
 #
@@ -70,7 +70,7 @@ class DataView(QtWidgets.QDialog):
         ifile = ''
         config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
-            self.config_file = sys.argv[1]
+            self.config_file = getModelFile(sys.argv[1])
         else:
             self.config_file = getModelFile('SIREN.ini')
         config.read(self.config_file)

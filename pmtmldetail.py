@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2023-2024 Angus King
+#  Copyright (C) 2023-2025 Angus King
 #
 #  pmtmldetail.py - This file is part of SIREN.
 #
@@ -59,7 +59,7 @@ class TMLDetail(QtWidgets.QWidget):
         self.help = help
         config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
-            config_file = sys.argv[1]
+            config_file = getModelFile(sys.argv[1])
         else:
             config_file = getModelFile('SIREN.ini')
         config.read(config_file)
@@ -277,13 +277,13 @@ class TMLDetail(QtWidgets.QWidget):
 
     def editIniFile(self):
         if len(sys.argv) > 1:
-            config_file = sys.argv[1]
+            config_file = getModelFile(sys.argv[1])
         else:
             config_file = getModelFile('SIREN.ini')
-        before = os.stat(config_file).st_mtime
+        before = os.stat(config_file[-1]).st_mtime
         dialr = EdtDialog(config_file, section='[Powermatch]')
         dialr.exec_()
-        after = os.stat(config_file).st_mtime
+        after = os.stat(config_file[-1]).st_mtime
         if after == before:
             return
         config = configparser.RawConfigParser()

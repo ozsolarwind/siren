@@ -1083,7 +1083,7 @@ class powerMatch(QtWidgets.QWidget):
         self.help = help
         config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
-            config_file = sys.argv[1]
+            config_file = getModelFile(sys.argv[1])
         else:
             config_file = getModelFile('SIREN.ini')
         config.read(config_file)
@@ -1096,7 +1096,7 @@ class powerMatch(QtWidgets.QWidget):
             self.model_name = config.get('Base', 'name')
         except:
             self.model_name = ''
-        self.config_file = config_file[config_file.rfind('/') + 1:]
+        self.config_file = config_file[-1][config_file[-1].rfind('/') + 1:]
         try:
             base_year = config.get('Base', 'year')
         except:
@@ -1969,7 +1969,7 @@ class powerMatch(QtWidgets.QWidget):
 
     def tmlClicked(self):
         if len(sys.argv) > 1:
-            config_file = sys.argv[1]
+            config_file = getModelFile(sys.argv[1])
         else:
             config_file = getModelFile('SIREN.ini')
         if sys.platform == 'win32' or sys.platform == 'cygwin':
@@ -1983,13 +1983,13 @@ class powerMatch(QtWidgets.QWidget):
 
     def editIniFile(self):
         if len(sys.argv) > 1:
-            config_file = sys.argv[1]
+            config_file = getModelFile(sys.argv[1])
         else:
             config_file = getModelFile('SIREN.ini')
-        before = os.stat(config_file).st_mtime
+        before = os.stat(config_file[-1]).st_mtime
         dialr = EdtDialog(config_file, section='[Powermatch]')
         dialr.exec_()
-        after = os.stat(config_file).st_mtime
+        after = os.stat(config_file[-1]).st_mtime
         if after == before:
             return
      #   self.get_config()   # refresh config values
@@ -2055,7 +2055,7 @@ class powerMatch(QtWidgets.QWidget):
         else:
             self.batch_prefix = False
         QtWidgets.QApplication.processEvents()
-        self.setStatus(config_file + ' edited. Reload may be required.')
+        self.setStatus(config_file[-1] + ' edited. Reload may be required.')
 
     def editClicked(self):
         def update_dictionary(it, source):

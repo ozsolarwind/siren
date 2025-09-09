@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2016-2022 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2016-2025 Sustainable Energy Now Inc., Angus King
 #
 #  visualise.py - This file is part of SIREN.
 #
@@ -67,7 +67,7 @@ class Visualise(QtWidgets.QDialog):
             self.mth_index.append(self.mth_index[-1] + self.the_days[i] * 24)
         config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
-            config_file = sys.argv[1]
+            config_file = getModelFile(sys.argv[1])
         else:
             config_file = getModelFile('SIREN.ini')
         config.read(config_file)

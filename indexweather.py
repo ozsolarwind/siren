@@ -44,7 +44,7 @@ class makeIndex():
     def __init__(self, what, src_dir, tgt_fil):
         config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
-            config_file = sys.argv[1]
+            self.config_file = getModelFile(sys.argv[1])
         else:
             config_file = getModelFile('SIREN.ini')
         self.log = ''
@@ -160,7 +160,7 @@ class getParms(QtWidgets.QWidget):
     def initUI(self):
         config = configparser.RawConfigParser()
         if len(sys.argv) > 1:
-            config_file = sys.argv[1]
+            config_file = getModelFile(sys.argv[1])
         else:
             config_file = getModelFile('SIREN.ini')
         config.read(config_file)

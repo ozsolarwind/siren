@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2023 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2025 Sustainable Energy Now Inc., Angus King
 #
 #  colours.py - This file is part of SIREN.
 #
@@ -33,9 +33,9 @@ class Colours(QtWidgets.QDialog):
         super(Colours, self).__init__()
         config = configparser.RawConfigParser()
         if ini_file is not None:
-            self.config_file = ini_file
+            self.config_file = getModelFile(ini_file)
         elif len(sys.argv) > 1:
-            self.config_file = sys.argv[1]
+            self.config_file = getModelFile(sys.argv[1])
         else:
             self.config_file = getModelFile('SIREN.ini')
         self.section = section

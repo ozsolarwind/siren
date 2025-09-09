@@ -530,7 +530,7 @@ def extrapolateWind(wind_file, tgt_height, law='logarithmic', replace=False, spr
 def setFontSize(app):
     config = configparser.RawConfigParser()
     if len(sys.argv) > 1:
-        config_file = sys.argv[1]
+        config_file = getModelFile(sys.argv[1])
     else:
         config_file = getModelFile('SIREN.ini')
     try:

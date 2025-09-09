@@ -370,7 +370,7 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 </tr>
 <tr class="none">
 <td class="none"><img src="edit.png" alt="Edit Preferences">&nbsp;&nbsp;Edit Preferences</td>
-<td class="none">Edit the Preferences file. This option invokes a simple text editor to allow the whole file to be edited</td>
+<td class="none">Edit the Preferences file. This option invokes a simple text editor to allow the whole file to be edited (this will only edit the chosen file not any common files)</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="arrow.png" alt="Edit File Preferences">&nbsp;&nbsp;Edit File Preferences</td>
@@ -619,7 +619,7 @@ You can also use TMY files such as those provided with SAM. If you have a number
 </table>
 <p>Above 500MW it's a case of alternately adding 330_s and 330_d costs.</p>
 <h2 id="prefs">Preferences</h2>
-<p>Many options can be specified by a Preferences file. When you open SIREN you will be presented with a list of available Preferences files (SIREN Models) to choose from. These files reside in the same folder as SIREN itself (they may be placed in a different folder by passing that folder as a parameter when SIREN is invoked).
+<p>Many options can be specified by a Preferences file. When you open SIREN you will be presented with a list of available Preferences files (SIREN Models) to choose from. These files reside in folders specified in the SIREN models file (see <a href="#execute">Execution of SIREN</a> above; they may be placed in a different folder by passing that folder as a parameter when SIREN is invoked).
 The format is similar to a Windows INI file. If you want to create a new Model you can press the <em>New Model</em> button on the start up menu. You will be presented with a small list of Properties to update to create a new Preferences file.
 <p>The Preferences file has the following Sections and properties. The file is a simple text file which must be saved in the <em>siren</em> folder and have a file type of <em>.ini</em> (INI File). The sample <em>siren_default.ini</em> or <em>siren_windows_default.ini</em> file will provide a useful guide as to the content.</p>
 <p>There are three special strings which will be replaced in the Files properties variables:</p>
@@ -628,7 +628,13 @@ The format is similar to a Windows INI file. If you want to create a new Model y
 <li><em>$YEAR$</em>&nbsp;will be replaced with the base year value</li>
 <li><em>$dirn</em>&nbsp;will be replaced with the corresponding variable from the <em>[Parents]</em> Section</li>
 </ul>
-<p><strong>Note:</strong> Technologies appear in two forms in the Preferences file. They appear in the Preferences Sections as words starting with an uppercase letter and separated by spaces (e.g <em>Fixed PV</em> with the Section name <em>[Fixed PV]</em>). In the Section Properties the technology names are changed to all lower case and spaces are replaced by underscores. Thus, <em>Fixed PV</em> will appear as <em>fixed_pv</em>. The lower case versions occur in the <em>[Colors]</em> Section and <em>[Grid] dispatchable</em>, <em>[Power] fossil_technologies</em>, and <em>[Power] technologies</em> variables.</p>
+<p><strong>Notes:</strong>
+<ul>
+<li>Technologies appear in two forms in the Preferences file. They appear in the Preferences Sections as words starting with an uppercase letter and separated by spaces (e.g <em>Fixed PV</em> with the Section name <em>[Fixed PV]</em>). In the Section Properties the technology names are changed to all lower case and spaces are replaced by underscores. Thus, <em>Fixed PV</em> will appear as <em>fixed_pv</em>. The lower case versions occur in the <em>[Colors]</em> Section and <em>[Grid] dispatchable</em>, <em>[Power] fossil_technologies</em>, and <em>[Power] technologies</em> variables</li>
+<li>If you have properties common to multiple preferences files you can place these in a separate file or files by setting the <em>common</em> property in the <em>[Base]</em> Section of the chosen Preferences files. When you invoke SIREN it will load Preferences in order, common files first, with values overwritten with each successive file
+<br />
+Properties in the common file can be updated via the <em>Edit Preferences</em> option of the main SIREN menu (or by invoking Powermap for that file)</em>
+</ul>
 <p>(Skip to <a href="#usage">Using the Simulation</a>)</p>
 <p>Shortcut to Sections:- <a href="#p_backtrack_pv">Backtrack PV</a>, <a href="#p_base">Base</a>, <a href="#p_bess">BESS (Battery)</a>, <a href="#p_biomass">Biomass</a>, <a href="#p_colors">Colors</a>, <a href="#p_cst">CST</a>,
 <a href="#p_dataview">Dataview</a>, <a href="#p_dual_axis_pv">Dual Axis PV</a>, <a href="#p_files">Files</a>, <a href="#financial">Financial</a>, <a href="#p_fixed_pv">Fixed PV</a>,
@@ -673,6 +679,10 @@ The format is similar to a Windows INI file. If you want to create a new Model y
 <tr class="none" id="p_base"><td><dfn><strong>[Base]</strong></dfn></td>
 <td>Base properties are:</p>
 <table border="0", class="none">
+<tr class="none">
+<td class="none"><dfn>common</dfn></td>
+<td class="none">Access properties from other Preferences file(s). Multiple files can be specified by separating file names with a comma. These files will be placed earlier in the files list. Property values are overwritten with each successive file</td>
+</tr>
 <tr class="none">
 <td class="none"><dfn>existing</dfn></td>
 <td class="none">Include/exclude existing power stations on startup</td>
@@ -3244,7 +3254,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><img src="edit.png" alt="Edit Preferences">&nbsp;&nbsp;Edit Preferences File(Ctrl+E)</td>
-<td class="none">Edit the Preferences file, either <em>SIREN.ini</em> or that file passed as a parameter when you invoked the simulation. This option invokes a simple text editor to allow the whole file to be edited</td>
+<td class="none">Edit the Preferences file, either <em>SIREN.ini</em> or that file passed as a parameter when you invoked the simulation. This option invokes a simple text editor to allow the whole file to be edited (this will only edit the chosen file not any common files)</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="rainbow-icon.png" alt="Edit Colours">&nbsp;&nbsp;Edit Colours (Ctrl+U)</td>
@@ -4055,7 +4065,7 @@ The order in which the dispatchable technologies will be processed by Powermatch
 </ul>
 </p>See <a href="#pmao">below</a> for more details on optimisation.
 </p></li>
-<li><strong>Preferences</strong>. Edit the Preferences file
+<li><strong>Preferences</strong>. Edit the Preferences file (this will only edit the chosen file but not any common files)
 </p></li>
 <li><strong>Help</strong>. Display the Powermatch help
 </p></li>
@@ -4386,9 +4396,9 @@ If the best and worse values are the same for a variable and that value is not a
 <tr><td class="bottom"><strong>Done, TML Detail,<br />Preferences, Help</strong></td>
 <td class="none">At the bottom of the window are a number of buttons:
 <ul>
-<li><strong>Done</strong> Exit the program and save the input values. Preferences are saved in the [Powermatch] section of the Preferences</li>
-<li><strong>TML Detail</strong> Produce the detailed worksheet</li>
-<li><strong>Preferences</strong>. Edit the Preferences file</li>
+<li><strong>Done</strong>. Exit the program and save the input values. Preferences are saved in the [Powermatch] section of the Preferences</li>
+<li><strong>TML Detail</strong>. Produce the detailed worksheet</li>
+<li><strong>Preferences</strong>. Edit the Preferences file (this will only edit the chosen file but not any common files)</li>
 <li><strong>Help</strong>. Display the pmtmldetail help</li>
 </ul>
 </td></tr>
@@ -4532,18 +4542,18 @@ If it's not a diurnal chart (i.e. Period is <em>&lt;None&gt;</em>) any occurence
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Plot 12, Extras, Co...</strong></td>
 <td class="none">At the bottom of the window are a number of buttons:
 <ul>
-<li><strong>Done</strong> Exit the program and save the input values. Input preferences and colours are either saved in a SIREN preferences file or in a specific file, <em>powerplot.ini</em>, if no Peferences file is passed to the program</li>
-<li><strong>Plot</strong> Produce the chart. If there are missing colours you will be taken to the Colours window to add the colour. You need to set a colour and press the Save &amp; Exit button</li>
-<li><strong>Colours</strong> Press this button to change the chart colours or to add new colours. You can remove a chart colour by right-clicking the colour (it will be cleared and the item deleted when you Save &amp; Exit). Colours are held in the [Plot Colors] Section of the Preferences file.
+<li><strong>Done</strong>. Exit the program and save the input values. Input preferences and colours are either saved in a SIREN preferences file or in a specific file, <em>powerplot.ini</em>, if no Peferences file is passed to the program</li>
+<li><strong>Plot</strong>. Produce the chart. If there are missing colours you will be taken to the Colours window to add the colour. You need to set a colour and press the Save &amp; Exit button</li>
+<li><strong>Colours</strong>. Press this button to change the chart colours or to add new colours. You can remove a chart colour by right-clicking the colour (it will be cleared and the item deleted when you Save &amp; Exit). Colours are held in the [Plot Colors] Section of the Preferences file.
 <br />If the <em>palette</em> property in the [Plot Colors] Section of the Preferences file is set to True you can create a palette sequence of colours for columns selected in both the included and excluded lists. If you select columns and then press the <strong>Colours</strong> button you will be given the option to set a starting and ending palette colour and the colours for the chosen columns will be updated to a range of colours between the chosen values</li>
-<li><strong>Legend Properties</strong> Change the font attributes for the Legend (<em>legend_font</em>) plus other attributes (<em>legend_ncol</em>, <em>legend_on_pie</em>, <em>legend_side</em>)</li>
-<li><strong>Preferences</strong> Edit the Preferences file</li>
-<li><strong>Help</strong> Display the help for Powerplot</li>
+<li><strong>Legend Properties</strong>. Change the font attributes for the Legend (<em>legend_font</em>) plus other attributes (<em>legend_ncol</em>, <em>legend_on_pie</em>, <em>legend_side</em>)</li>
+<li><strong>Preferences</strong>. Edit the Preferences file (this will only edit the chosen file but not any common files)</li>
+<li><strong>Help</strong>. Display the help for Powerplot</li>
 </ul>
 <div class="experiment">
 <ul>
 <li>
-<strong>Plot 12</strong> If <em>plot_12</em> is set an additional button is presented to allow wide and low_height graphs to be produced. This allows monthly charts to be produced to fit on a page (e.g. A4) in portrait format. The individual charts can be produced using plot navigation (<em>m</em>), saved and then inserted into a page
+<strong>Plot 12</strong>. If <em>plot_12</em> is set an additional button is presented to allow wide and low_height graphs to be produced. This allows monthly charts to be produced to fit on a page (e.g. A4) in portrait format. The individual charts can be produced using plot navigation (<em>m</em>), saved and then inserted into a page
 </li>
 <li>
 <strong>Extras</strong> If <em>extras</em> is set an additional button is presented to allow some experimental variables to be set.<br>
@@ -4620,9 +4630,9 @@ A <em>3D Surface Chart</em> will present the data as a 3D Surface Chart</td></tr
 <li><strong>Plot</strong> Produce the chart. If there are missing colours you will be taken to the Colours window to add the colour. You need to set a colour and press the Save &amp; Exit button</li>
 <li><strong>Colours</strong> Press this button to change the chart colours or to add new colours. You can remove a chart colour by right-clicking the colour (it will be cleared and the item deleted when you Save &amp; Exit). Colours are held in the [Plot Colors] Section of the Preferences file.
 <br />If the <em>palette</em> property in the [Plot Colors] Section of the Preferences file is set to True you can create a palette sequence of colours for columns selected in both the included and excluded lists. If you select columns and then press the <strong>Colours</strong> button you will be given the option to set a starting and ending palette colour and the colours for the chosen columns will be updated to a range of colours between the chosen values</li>
-<li><strong>Legend Properties</strong> Change the font attributes for the Legend (<em>legend_font</em>) plus other attributes (<em>legend_ncol</em>, <em>legend_on_pie</em>, <em>legend_side</em>)</li>
-<li><strong>Preferences</strong> Edit the Preferences file</li>
-<li><strong>Help</strong> Display the help for Powerplot</li>
+<li><strong>Legend Properties</strong>. Change the font attributes for the Legend (<em>legend_font</em>) plus other attributes (<em>legend_ncol</em>, <em>legend_on_pie</em>, <em>legend_side</em>)</li>
+<li><strong>Preferences</strong>. Edit the Preferences file (this will only edit the chosen file but not any common files)</li>
+<li><strong>Help</strong>. Display the help for Powerplot</li>
 </ul>
 </td></tr>
 </table>
@@ -6203,7 +6213,7 @@ MERRA-2 Variables
 <table border="0", class="none">
 <tr class="none">
 <td class="none"><img src="edit.png" alt="Edit Preferences">&nbsp;&nbsp;Edit Preferences File(Ctrl+E)</td>
-<td class="none">Edit the <code>getfiles</code> Preferences file. This option invokes a simple text editor to allow the whole file to be edited</td>
+<td class="none">Edit the <code>getfiles</code> Preferences file. This option invokes a simple text editor to allow the whole file to be edited (this will only edit the chosen file not any common files)</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="rainbow-icon.png" alt="Edit Colours">&nbsp;&nbsp;Edit Colours (Ctrl+U)</td>
