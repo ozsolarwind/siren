@@ -35,6 +35,7 @@ import time
 import zipfile
 
 import credits
+from editini import EdtDialog, SaveIni
 from getmodels import getModelFile
 from senutils import getUser
 
@@ -88,6 +89,23 @@ class UpdDialog(QtWidgets.QDialog):
             if new_bit[-1].zfill(4) > old_bit[-1].zfill(4):
                 return True
         return False
+
+    def editIniFile(self):
+        if isinstance(self.config_file, list):
+            config_file = self.config_file[-1]
+        else:
+            config_file = self.config_file
+        before = os.stat(config_file).st_mtime
+        dialr = EdtDialog(self.config_file, section='[sirenupd]')
+        dialr.exec_()
+        after = os.stat(config_file).st_mtime
+        if after == before:
+            return
+        msgbox = QtWidgets.QMessageBox()
+        msgbox.setWindowTitle('sirenupd - Check for new versions')
+        msgbox.setText("Preferences file updated. You'll need to reinvoke sirenupd for updates to take effect.")
+        msgbox.setIcon(QtWidgets.QMessageBox.Warning)
+        reply = msgbox.exec_()
 
     def __init__(self, ini_file='getfiles.ini', parent=None):
         QtWidgets.QDialog.__init__(self, parent)
@@ -209,6 +227,9 @@ class UpdDialog(QtWidgets.QDialog):
         quit.clicked.connect(self.quit)
         QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.quit)
         newgrid.addWidget(quit, row, 0)
+        editini = QtWidgets.QPushButton('Preferences')
+        editini.clicked.connect(self.editIniFile)
+        newgrid.addWidget(editini, row, 2)
         self.setLayout(newgrid)
         self.resize(500, int(self.sizeHint().height()))
 
