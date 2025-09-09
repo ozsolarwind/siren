@@ -1510,8 +1510,13 @@ class MainWindow(QtWidgets.QMainWindow):
             if section in ['Wind', 'Offshore Wind']:
                 txt_ok = ['hub_formula', 'law', 'extrapolate']
             else:
-                txt_ok = None
+                txt_ok = []
+            txt_ok.append('formula')
+            txt_ok.append('area')
             EditSect(section, self.scenarios, txt_ok=txt_ok)
+            after = os.stat(config_file).st_mtime
+            if after == before:
+                return
             comment = section + ' Section edited. Reload may be required.'
             self.view.statusmsg.emit(comment)
 
