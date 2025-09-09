@@ -68,15 +68,13 @@ def dict_to_str(dict_in):
         if i > 0:
             bits[b] = bits[b][:i + 2] + bits[b][i + 3:]
     str_dict = ''
- #   print(bits)
     for bit in bits:
-   #     print(len(bit), bit)
         for c in range(len(bit) -1, -1, -1):
             if bit[c] == ' ':
                 if bit[c - 1] == ',':
                     bit = bit[:c] + '\n' + bit[c + 1:]
                 break
-            bit = bit.replace('], [', '],\n    [')
+        bit = bit.replace('], [', '],\n    [')
         str_dict += bit + ': '
     return str_dict[:-2]
 
@@ -355,7 +353,7 @@ class TablePlot3D():
         x_ticktext = []
         y_rows = []
         if x_offset.isdigit():
-            print('not yet')
+            return None # not yet
             x_col = 0
         else:
             x_col = alphabet.index(x_offset)
