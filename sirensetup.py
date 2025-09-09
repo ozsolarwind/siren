@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2024 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2024-2025 Sustainable Energy Now Inc., Angus King
 #
 #  sirensetup.py - This file is part of SIREN.
 #
@@ -22,6 +22,7 @@
 import os
 from PyQt5 import QtCore, QtGui, QtWidgets
 from shutil import copy2
+import stat
 import subprocess
 import sys
 from credits import fileVersion
@@ -195,9 +196,12 @@ class SetUp(QtWidgets.QWidget):
         else:
             bat_file += f'cd "{updir}"\n'
             bat_file += f'python siren.py "{self.dirs[1].text()}"\n'
-        bf = open(f'{self.dirs[1].text()}{fldr_div}run_siren.bat', 'w')
+        bfname = f'{self.dirs[1].text()}{fldr_div}run_siren.bat'
+        bf = open(bfname, 'w')
         bf.write(bat_file)
         bf.close()
+        st = os.stat(bfname) # make it executable
+        os.chmod(bfname, st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
         # copy files from my_scenarios
         scenario_count = 0
         the_files = os.listdir(f'{self.dirs[0].text()}{fldr_div}my_scenarios')
