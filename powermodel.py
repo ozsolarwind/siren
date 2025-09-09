@@ -2634,7 +2634,7 @@ class PowerModel():
         if self.plots['summary']:
             fields = ['name', 'technology', 'capacity', 'cf', 'generation']
             sumfields = ['capacity', 'generation']
-            decpts = [0, 0, 1, 1, 2, 0, 1]
+            decpts = [0, 0, 1, 2, 2, 0, 1]
             if getattr(self.power_summary[0], 'transmitted') != None:
                 fields.append('transmitted')
                 sumfields.append('transmitted')
