@@ -338,7 +338,10 @@ class Stations:
                                     area = self.areas[tech] * float(facility['Maximum Capacity (MW)'])
                                 elif bit[-1][:2] == 'HG':
                                     tech = 'Pumped Hydro'
-                                    area = self.areas[tech] * float(facility['Maximum Capacity (MW)'])
+                                    try:
+                                        area = self.areas[tech] * float(facility['Maximum Capacity (MW)'])
+                                    except:
+                                        area = 0
                                     try:
                                         storage_capacity = float(facility['Storage Capacity (MWh)'])
                                     except:
