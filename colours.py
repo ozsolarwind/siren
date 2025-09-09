@@ -18,6 +18,8 @@
 #  Public License along with SIREN.  If not, see
 #  <http://www.gnu.org/licenses/>.
 #
+
+import copy
 import os
 import sys
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -149,6 +151,7 @@ class Colours(QtWidgets.QDialog):
         except:
             pass
         self.old_ruler = ''
+        self._orig_colours = copy.deepcopy(self.colours)
         for key, value in self.colours.items():
             if key in fossil_technologies:
                 colour_groups['Fossil Technologies'].append(key)
@@ -283,19 +286,26 @@ class Colours(QtWidgets.QDialog):
         if QtCore.Qt.RightButton == event.button():
             for btn in self.btn:
                 if btn.hasFocus():
-                    if btn.text()[-5:] != '_base':
+                    if btn.text()[-5:] == '_base':
+                        key = btn.text()[:-5]
+                    else:
                         key = btn.text()
+                    if btn.text()[-5:] != '_base':
                         if self.colours[key][0] != '':
                             self.colours[key] = ['delete', self.colours[key][1]]
                         btn.setStyleSheet(self.default_style)
                     elif self.section != 'Colors':
-                        if btn.text()[-5:] == '_base':
-                            key = btn.text()[:-5]
+                        if len(self.config_file) > 1:
+                            self.colours[key] = ['', 'delete']
                         else:
-                            key = btn.text()
-                        self.colours[key] = ['', '']
+                            self.colours[key] = ['', '']
                         btn.setStyleSheet(self.default_style)
                         break
+                    else:
+                        if len(self.config_file) > 1:
+                            self.colours[key] = ['', 'delete']
+                        else:
+                            self.colours[key] = ['', '']
 
     def showDialog(self, colour=False):
         sender = self.sender()
@@ -351,8 +361,18 @@ class Colours(QtWidgets.QDialog):
                 if value[i] == 'delete':
                     lines[i].append(key + '=')
                 elif value[i] != '':
+                    try:
+                        if self._orig_colours[key][i] == value[i].name():
+                            continue
+                    except:
+                        pass
                     lines[i].append(key + '=' + value[i].name())
                 elif self.section != 'Colors':
+                    try:
+                        if self._orig_colours[key][i] == value[i].name():
+                            continue
+                    except:
+                        pass
                     lines[i].append(key + '=')
         if len(lines[0]) > 0:
             updates[self.section + self.map] = lines[0]
