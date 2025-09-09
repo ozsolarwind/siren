@@ -24,7 +24,7 @@ import os
 from PyQt5 import QtCore, QtGui, QtWidgets
 import subprocess
 import sys
-from math import log10, ceil, sqrt
+from math import ceil, floor, log10, sqrt
 import matplotlib
 if matplotlib.__version__ > '3.5.1':
     matplotlib.use('Qt5Agg')
@@ -69,19 +69,42 @@ def font_props(fontin, fontdict=True):
                               fname=font_dict['fname'])
 
 
-class CustomCombo(QtWidgets.QComboBox):
-    def __init__(self, parent=None):
-        self.last_key = ''
-        super().__init__(parent)
+class MyCombo(QtWidgets.QComboBox):
+    def decode_data(self, bytearray):
+        data = []
+        ds = QtCore.QDataStream(bytearray)
+        while not ds.atEnd():
+            row = ds.readInt32()
+            column = ds.readInt32()
+            map_items = ds.readInt32()
+            for i in range(map_items):
+                key = ds.readInt32()
+                value = QtCore.QVariant()
+                ds >> value
+                data.append(value.value())
+        return data
+
+    def __init__(self, parent):
+        super(MyCombo, self).__init__()
+        self.setAcceptDrops(True)
+
+    def dragEnterEvent(self, event):
+        ba = event.mimeData().data('application/x-qabstractitemmodeldatalist')
+        data_items = self.decode_data(ba)
+        for item in data_items:
+            if isinstance(item, str):
+                for i in range(self.count()):
+                    if self.itemText(i) == item:
+                        break
+                else:
+                    self.addItem(item)
+        event.acceptProposedAction()
 
     def keyPressEvent(self, event):
-        if event.key() == QtCore.Qt.Key_Delete:
-            if self.last_key == QtCore.Qt.Key_Shift:
-                self.removeItem(self.currentIndex())
-            self.last_key = event.key()
-        else:
-            self.last_key = event.key()
-            QtWidgets.QComboBox.keyPressEvent(self, event)
+        if event.key() == QtCore.Qt.Key_Delete or event.key() == 68:
+            self.removeItem(self.currentIndex())
+        event.accept()
+
 
 class FlexiPlot(QtWidgets.QWidget):
 
@@ -117,6 +140,18 @@ class FlexiPlot(QtWidgets.QWidget):
             col = col * 26 + col_letters.index(rc[c])
         col -= 1
         return label, row, col
+
+    def overlayDialog(self):
+        ovr = self.overlay.currentText()
+        try:
+            col = QtWidgets.QColorDialog.getColor(QtGui.QColor(self.overlays[ovr][0]), None, f'Select colour for {self.overlay.currentText()}')
+            if col.isValid():
+                self.overlays[ovr][0] = col.name()
+                self.ovrButton.setStyleSheet('QPushButton {background-color: %s; color: %s;}' % (col.name(), col.name()))
+            self.updated = True
+        except:
+            pass
+        return
 
     def __init__(self, help='help.html'):
         super(FlexiPlot, self).__init__()
@@ -177,7 +212,7 @@ class FlexiPlot(QtWidgets.QWidget):
             pass
         ifile = ''
         isheet = ''
-        self.setup = [False, False]
+        self.setup = [False, False, False]
         self.details = True
         self.book = None
         self.rows = None
@@ -199,10 +234,12 @@ class FlexiPlot(QtWidgets.QWidget):
         self.fontprops['Title']= self.set_fontdict()
         self.fontprops['Title']['size'] = 14.
         self.constrained_layout = False
+        self.secondary_yaxis = False
         self.max_xoffset = 5
         self.yseries = []
         self.palette = True
         self.history = None
+        self.choice = QtWidgets.QLabel('')
         self.max_files = 10
         self.current_file = ''
         ifiles = self.get_flex_config()
@@ -237,6 +274,7 @@ class FlexiPlot(QtWidgets.QWidget):
         listfiles = QtWidgets.QPushButton('List Files')
         self.grid.addWidget(listfiles, rw, 4)
         listfiles.clicked.connect(self.listfilesClicked)
+        self.grid.addWidget(self.choice, rw, 5)
         rw += 1
         self.grid.addWidget(QtWidgets.QLabel('Title:'), rw, 0)
         self.title = QtWidgets.QLineEdit('')
@@ -265,9 +303,9 @@ class FlexiPlot(QtWidgets.QWidget):
         self.grid.addWidget(self.xseries, rw, 1, 1, 2)
         self.xextra = QtWidgets.QLineEdit('')
         self.grid.addWidget(self.xextra, rw, 4)
-        showseries = QtWidgets.QPushButton('Show X Series')
-        self.grid.addWidget(showseries, rw, 3)
-        showseries.clicked.connect(self.showClicked)
+        showxseries = QtWidgets.QPushButton('Show X Series')
+        self.grid.addWidget(showxseries, rw, 3)
+        showxseries.clicked.connect(self.showClicked)
         rw += 1
         self.grid.addWidget(QtWidgets.QLabel('Abscissa Label:'), rw, 0)
         self.xlabel = QtWidgets.QLineEdit('')
@@ -292,9 +330,45 @@ class FlexiPlot(QtWidgets.QWidget):
         self.grid.addWidget(QtWidgets.QLabel('Ordinate Label:'), rw, 0)
         self.ylabel = QtWidgets.QLineEdit('')
         self.grid.addWidget(self.ylabel, rw, 1, 1, 2)
-        showseries = QtWidgets.QPushButton('Show Y Series')
-        self.grid.addWidget(showseries, rw, 3)
-        showseries.clicked.connect(self.showClicked)
+        showyseries = QtWidgets.QPushButton('Show Y Series')
+        self.grid.addWidget(showyseries, rw, 3)
+        showyseries.clicked.connect(self.showClicked)
+        if self.secondary_yaxis:
+            rw += 1
+            self.grid.addWidget(QtWidgets.QLabel('Ordinate (Y) Overlays:'), rw, 0)
+            self.overlays = {}
+            self.overlay = MyCombo(self)
+            self.overlay.setMouseTracking(False)
+            self.grid.addWidget(self.overlay, rw, 1, 1, 1)
+            self.grid.addWidget(QtWidgets.QLabel('Colour / Width / Style:'), rw, 2)
+            self.ovrButton = QtWidgets.QPushButton(f'Overlay', self)
+            self.ovrButton.setStyleSheet('QPushButton {background-color: %s; color: %s;}' % ('white', 'white'))
+            self.ovrButton.clicked.connect(self.overlayDialog)
+            self.grid.addWidget(self.ovrButton, rw, 3)
+            self.ovrSpin = QtWidgets.QDoubleSpinBox()
+            self.ovrSpin.setDecimals(1)
+            self.ovrSpin.setRange(1., 4.)
+            self.ovrSpin.setSingleStep(.5)
+            self.ovrSpin.setValue(1.5)
+            self.grid.addWidget(self.ovrSpin, rw, 4)
+            self.ovrLine = QtWidgets.QComboBox()
+            self.ovrLine.addItem('solid')
+            self.ovrLine.addItem('dashed')
+            self.ovrLine.addItem('dotted')
+            self.ovrLine.addItem('dashdot')
+            self.ovrLine.setCurrentIndex(2)
+            self.grid.addWidget(self.ovrLine, rw, 5)
+            rw += 1
+            self.grid.addWidget(QtWidgets.QLabel('Overlay Label:'), rw, 0)
+            self.y2label = QtWidgets.QLineEdit('')
+            self.grid.addWidget(self.y2label, rw, 1, 1, 2)
+            showyseries2 = QtWidgets.QPushButton('Show Overlay Series')
+            self.grid.addWidget(showyseries2, rw, 3)
+            showyseries2.clicked.connect(self.showClicked)
+            self.grid.addWidget(QtWidgets.QLabel('Check if Overlay Series are Percentages:'), rw, 4)
+            self.y2percentage = QtWidgets.QCheckBox()
+            self.y2percentage.setCheckState(QtCore.Qt.Unchecked)
+            self.grid.addWidget(self.y2percentage, rw, 5) #, 1, 2)
         rw += 1
         self.grid.addWidget(QtWidgets.QLabel('Applicate (Z) Label:'), rw, 0)
         self.zlabel = QtWidgets.QLineEdit('')
@@ -345,6 +419,9 @@ class FlexiPlot(QtWidgets.QWidget):
         self.title.textChanged.connect(self.somethingChanged)
         self.xlabel.textChanged.connect(self.somethingChanged)
         self.ylabel.textChanged.connect(self.somethingChanged)
+        self.overlay.currentIndexChanged.connect(self.overlayChanged)
+        self.ovrSpin.valueChanged.connect(self.ovrChanged)
+        self.ovrLine.currentIndexChanged.connect(self.ovrChanged)
         self.zlabel.textChanged.connect(self.somethingChanged)
         self.maxSpin.valueChanged.connect(self.somethingChanged)
         self.plottype.currentIndexChanged.connect(self.plotChanged)
@@ -397,7 +474,7 @@ class FlexiPlot(QtWidgets.QWidget):
         else:
             self.center()
             self.resize(int(self.sizeHint().width() * 1.2), int(self.sizeHint().height() * 1.2))
-        self.log.setText('Preferences file: ' + self.config_file)
+        self.log.setText('Preferences file: ' + ', '.join(self.config_file))
         self.show()
 
     def center(self):
@@ -414,6 +491,9 @@ class FlexiPlot(QtWidgets.QWidget):
         self.sparse_ticks = []
         self.plot_palette = 'random'
         self.minimum_3d = 10
+        self.step_fill = 'pre'
+        self.step_where = True
+        self.secondary_yaxis = False
         config = configparser.RawConfigParser()
         config.read(self.config_file)
         try: # get defaults and list of files if any
@@ -477,6 +557,9 @@ class FlexiPlot(QtWidgets.QWidget):
                         self.plot_palette = ''
                     else:
                         self.plot_palette = value
+                elif key == 'secondary_yaxis':
+                    if value.lower() in ['true', 'yes', 'on']:
+                        self.secondary_yaxis = True
                 elif key == 'sparse_ticks':
                     try:
                         self.sparse_ticks = [int(value)]
@@ -488,6 +571,16 @@ class FlexiPlot(QtWidgets.QWidget):
                                 self.sparse_ticks = value.split(':')
                             else:
                                 self.sparse_ticks = value.split(',')
+                elif key == 'step_fill':
+                    if value.lower() in ['mid', 'pre', 'post']:
+                        self.step_fill = value.lower()
+                    else:
+                        self.step_fill = 'pre'
+                elif key == 'step_where':
+                    if value.lower() in ['false', 'no', 'off']:
+                        self.where = False
+                    else:
+                        self.where = True
                 elif key == 'title_font':
                     try:
                         self.fontprops['Title'] = self.set_fontdict(value)
@@ -546,6 +639,9 @@ class FlexiPlot(QtWidgets.QWidget):
             self.xseries.clear()
             self.order.clear()
             self.ignore.clear()
+            if self.secondary_yaxis:
+                self.overlay.clear()
+                self.overlays = {}
             items = config.items('Flexiplot')
             for key, value in items:
                 if key == 'file' + choice:
@@ -586,6 +682,22 @@ class FlexiPlot(QtWidgets.QWidget):
                     yseries = strSplit(value.replace('\\n', '\n'))
                 elif key == 'zlabel' + choice:
                     self.zlabel.setText(value)
+                elif self.secondary_yaxis:
+                    if key == 'y2label' + choice:
+                        self.y2label.setText(value.replace('\\n', '\n'))
+                    elif key[:9] == 'y2overlay':
+                        for i in range(len(key) -1, -1, -1):
+                            if not key[i].isdigit():
+                                break
+                        if key[i+1:] == choice:
+                            bits = value.split(',')
+                            self.overlays[bits[0]] = [bits[1], float(bits[2]), bits[3]]
+                            self.overlay.addItem(bits[0])
+                    elif key == 'y2percentage' + choice:
+                        if value.lower() in ['true', 'yes', 'on']:
+                            self.y2percentage.setCheckState(QtCore.Qt.Checked)
+                        else:
+                            self.y2percentage.setCheckState(QtCore.Qt.Unchecked)
         except:
              pass
         nocolour = []
@@ -604,6 +716,13 @@ class FlexiPlot(QtWidgets.QWidget):
                     nocolour.append(series.lower())
             if ixseries != '':
                 self.xseries.setCurrentIndex(self.xseries.findText(ixseries))
+            if self.secondary_yaxis:
+                for ovr, value in self.overlays.items():
+                    self.ovrButton.setStyleSheet('QPushButton {background-color: %s; color: %s;}' % (self.overlays[ovr][0],
+                                                                                                     self.overlays[ovr][0]))
+                    self.ovrSpin.setValue(self.overlays[ovr][1])
+                    self.ovrLine.setCurrentIndex(self.ovrLine.findText(self.overlays[ovr][2]))
+                    break
         if len(nocolour) > 0:
             more_colour = PlotPalette(nocolour, palette=self.plot_palette)
             self.colours = {**self.colours, **more_colour}
@@ -619,7 +738,7 @@ class FlexiPlot(QtWidgets.QWidget):
         if self.history is None:
             self.history = ['']
             ifiles = {'': ifile}
-        else:
+        elif ifile != ifiles[self.history[0]]:
             for i in range(len(self.history) - 1, -1, -1):
                 try:
                     if ifile == ifiles[self.history[i]]:
@@ -663,6 +782,10 @@ class FlexiPlot(QtWidgets.QWidget):
             except:
                 pass
         self.files.setCurrentIndex(0)
+        try:
+            self.choice.setText(f'({self.history[0]})')
+        except:
+            self.choice.setText('')
         self.setup[1] = False
 
     def fileChanged(self):
@@ -698,6 +821,36 @@ class FlexiPlot(QtWidgets.QWidget):
         self.popfileslist(self.files.currentText())
         self.log.setText('File "loaded"')
         self.setup[0] = False
+
+    def overlayChanged(self): # overlay item changed
+        self.log.setText('')
+        if self.overlay.count() == 0:
+            self.overlays = {}
+            self.ovrButton.setStyleSheet('QPushButton {background-color: white; color: white}')
+            self.ovrSpin.setValue(1.5)
+            self.ovrLine.setCurrentIndex(2)
+            return
+        ovr = self.overlay.currentText()
+        if ovr not in self.overlays.keys():
+            self.overlays[ovr] = ['black', 1.5, 'dotted']
+        self.setup[2] = True
+        self.ovrButton.setStyleSheet('QPushButton {background-color: %s; color: %s;}' % (self.overlays[ovr][0],
+                                                                                         self.overlays[ovr][0]))
+        self.ovrSpin.setValue(self.overlays[ovr][1])
+        self.ovrLine.setCurrentIndex(self.ovrLine.findText(self.overlays[ovr][2]))
+        self.setup[2] = False
+        self.updated = True
+
+    def ovrChanged(self): # overlay attributes changed
+        if self.setup[2]:
+            return
+        ovr = self.overlay.currentText()
+        if ovr == '':
+            return
+        self.log.setText('')
+        self.overlays[ovr][1] = self.ovrSpin.value()
+        self.overlays[ovr][2] = self.ovrLine.currentText()
+        self.updated = True
 
     def doFont(self):
         if self.sender().text()[:6] == 'Legend':
@@ -981,8 +1134,11 @@ class FlexiPlot(QtWidgets.QWidget):
         line = line[:-1]
         lines = ['file_history=' + line]
         for prop in ['file', 'grid', 'maximum', 'percentage', 'plot', 'sheet', 'title',
-                     'xextra', 'xlabel', 'xoffset', 'xseries', 'ylabel', 'yseries', 'zlabel']:
+                     'xextra', 'xlabel', 'xoffset', 'xseries', 'ylabel', 'yseries', 'zlabel',
+                     'y2label', 'y2percentage']:
             lines.append(prop + choice + '=')
+        for i in range(6):
+            lines.append(f'y2overlay_{i}_{choice}=')
         for prop in ['columns', 'series', 'xvalues']: # old properties
             lines.append(prop + choice + '=')
         updates = {'Flexiplot': lines}
@@ -1023,9 +1179,22 @@ class FlexiPlot(QtWidgets.QWidget):
                     break
                 values.append([row + 1, str(ws.cell_value(row, col))])
             max_row = row + 1
-            if self.sender().text()[-8:] == 'Y Series':
+            if self.sender().text()[5:] == 'Y Series':
                 for o in range(self.order.count()):
                     label, row1, col = self.get_name_row_col(self.order.item(o).text())
+                    fields.append(label)
+                    c = 0
+                    for row in range(row1, max_row):
+                        if ws.cell_value(row, col) is None:
+                            values[c].append('')
+                        else:
+                            values[c].append(str(ws.cell_value(row, col)))
+                        c += 1
+                        if c >= len(values):
+                            break
+            elif self.sender().text()[5:] == 'Overlay Series':
+                for key in self.overlays.keys():
+                    label, row1, col = self.get_name_row_col(key)
                     fields.append(label)
                     c = 0
                     for row in range(row1, max_row):
@@ -1046,7 +1215,7 @@ class FlexiPlot(QtWidgets.QWidget):
                     break
                 values.append([ssCol(col, base=0), str(ws.cell_value(row, col))])
             max_col = col + 1
-            if self.sender().text()[-8:] == 'Y Series':
+            if self.sender().text()[5:] == 'Y Series':
                 for o in range(self.order.count()):
                     label, row, col = self.get_name_row_col(self.order.item(o).text())
                     fields.append(label)
@@ -1059,7 +1228,20 @@ class FlexiPlot(QtWidgets.QWidget):
                         c += 1
                         if c >= len(values):
                             break
-        dialog = displaytable.Table(values, title='Series values', fields=fields, sortby='')
+            elif self.sender().text()[5:] == 'Overlay Series':
+                for key in self.overlays.keys():
+                    label, row, col = self.get_name_row_col(key)
+                    fields.append(label)
+                    c = 0
+                    for col in range(col, max_col):
+                        if ws.cell_value(row, col) is None:
+                            values[c].append('')
+                        else:
+                            values[c].append(str(ws.cell_value(row, col)))
+                        c += 1
+                        if c >= len(values):
+                            break
+        dialog = displaytable.Table(values, title=f'{self.sender().text()[5:]} values', fields=fields, sortby='')
         dialog.exec_()
         del dialog
 
@@ -1162,6 +1344,20 @@ class FlexiPlot(QtWidgets.QWidget):
                 line = line[:-1]
             lines.append(line)
             lines.append('zlabel' + choice + '=' + self.zlabel.text())
+            if self.secondary_yaxis:
+                lines.append('y2label' + choice + '=' + self.y2label.text())
+                i = -1
+                for i in range(self.overlay.count()):
+                    if self.overlay.itemText(i) in self.overlays.keys():
+                        lines.append(f'y2overlay_{i}_{choice}={self.overlay.itemText(i)},' + \
+                                     f'{self.overlays[self.overlay.itemText(i)][0]},' + \
+                                     f'{self.overlays[self.overlay.itemText(i)][1]},' + \
+                                     f'{self.overlays[self.overlay.itemText(i)][2]}')
+                for i in range(i + 1, 6):
+                    lines.append(f'y2overlay_{i}_{choice}=')
+                lines.append('y2percentage' + choice + '=')
+                if self.y2percentage.isChecked():
+                    lines[-1] = lines[-1] + 'True'
             for prop in ['columns', 'series', 'xvalues']: # old properties
                 lines.append(prop + choice + '=')
             updates['Flexiplot'] = lines
@@ -1369,7 +1565,6 @@ class FlexiPlot(QtWidgets.QWidget):
                     row -= 1
                     break
                 xlabels.append(ws.cell_value(row, col))
-           # print('(1372)', row, ws.nrows, xlabels[0], xlabels[-1])
             max_row = row + 1
             for i in range(len(xlabels)):
                 x.append(i)
@@ -1379,7 +1574,6 @@ class FlexiPlot(QtWidgets.QWidget):
                     col -= 1
                     break
                 xlabels.append(ws.cell_value(row, col))
-           # print('(1382)', col, ws.ncols, xlabels[0], xlabels[-1])
             max_col = col + 1
             for i in range(len(xlabels)):
                 x.append(i)
@@ -1446,7 +1640,7 @@ class FlexiPlot(QtWidgets.QWidget):
         figname = self.plottype.currentText().lower().replace(' ','')  # + str(year))
         fig = plt.figure(figname, constrained_layout=self.constrained_layout)
         if gridtype != '':
-            plt.grid(axis=gridtype)
+            plt.grid(axis=gridtype, which='major')
         loc = 'lower right'
         graph = plt.subplot(111)
         if self.legend_side == 'Right':
@@ -1551,10 +1745,23 @@ class FlexiPlot(QtWidgets.QWidget):
             plt.show()
             return
         elif self.plottype.currentText() in ['Cumulative', 'Step Chart']:
+            where = None # might be need for Step Chart of step_where is True
+            do_where = False
             if self.plottype.currentText() == 'Cumulative':
                 step = None
             else:
-                step = 'pre'
+                step = self.step_fill
+                if self.step_fill == 'pre':
+                    x.append(len(x))
+                    for c in range(len(data)):
+                        data[c].insert(0, data[c][0])
+                elif self.step_fill == 'post':
+                    x.append(len(x))
+                    xlabels.insert(0, '')
+                    for c in range(len(data)):
+                        data[c].append(data[c][-1])
+                if self.step_where:
+                    do_where = True
             if self.percentage.isChecked():
                 miny = 0
                 totals = [0.] * len(x)
@@ -1571,30 +1778,28 @@ class FlexiPlot(QtWidgets.QWidget):
                         bottoms[h] = values[h]
                         values[h] = values[h] + data[c][h] / totals[h] * 100.
                     graph.fill_between(x, bottoms, values, label=labels[c], color=self.colours[labels[c].lower()], step=step)
-                maxy = 100
             else:
-                graph.fill_between(x, miny, data[0], label=labels[0], color=self.colours[labels[0].lower()], step=step)
+                if do_where:
+                    where = [True] * len(data[0])
+                    for h in range(len(data[0])):
+                        if data[0][h] == 0:
+                            where[h] = False
+                graph.fill_between(x, miny, data[0], label=labels[0], color=self.colours[labels[0].lower()], step=step, where=where)
                 for c in range(1, len(data)):
+                    if do_where:
+                        where = [True] * len(data[c])
                     for h in range(len(data[c])):
                         data[c][h] = data[c][h] + data[c - 1][h]
+                        if do_where and data[c][h] == data[c - 1][h]:
+                            where[h] = False
                         maxy = max(maxy, data[c][h])
-                    graph.fill_between(x, data[c - 1], data[c], label=labels[c], color=self.colours[labels[c].lower()], step=step)
+                    graph.fill_between(x, data[c - 1], data[c], label=labels[c], color=self.colours[labels[c].lower()], step=step, where=where)
                 top = data[0][:]
                 for d in range(1, len(data)):
                     for h in range(len(top)):
                         top[h] = max(top[h], data[d][h])
                 if self.plottype.currentText() == 'Cumulative':
                     graph.plot(x, top, color='white')
-                else:
-                    graph.step(x, top, color='white')
-                if self.maxSpin.value() > 0:
-                    maxy = self.maxSpin.value()
-                else:
-                    try:
-                        rndup = pow(10, round(log10(maxy * 1.5) - 1)) / 2
-                        maxy = ceil(maxy / rndup) * rndup
-                    except:
-                        pass
         elif self.plottype.currentText() == 'Bar Chart':
             if self.percentage.isChecked():
                 miny = 0
@@ -1612,7 +1817,6 @@ class FlexiPlot(QtWidgets.QWidget):
                         bottoms[h] = bottoms[h] + values[h]
                         values[h] = data[c][h] / totals[h] * 100.
                     graph.bar(x, values, bottom=bottoms, label=labels[c], color=self.colours[labels[c].lower()])
-                maxy = 100
             else:
                 graph.bar(x, data[0], label=labels[0], color=self.colours[labels[0].lower()])
                 bottoms = [0.] * len(x)
@@ -1634,12 +1838,24 @@ class FlexiPlot(QtWidgets.QWidget):
                 mx = max(data[c])
                 maxy = max(maxy, mx)
                 graph.plot(x, data[c], linewidth=2.0, label=labels[c], color=self.colours[labels[c].lower()])
-            if self.maxSpin.value() > 0:
-                maxy = self.maxSpin.value()
+        if self.maxSpin.value() > 0:
+            maxy = self.maxSpin.value()
+        else:
+            if self.percentage.isChecked():
+                maxy = 100
             else:
                 try:
                     rndup = pow(10, round(log10(maxy * 1.5) - 1)) / 2
                     maxy = ceil(maxy / rndup) * rndup
+                except:
+                    pass
+        if miny < 0:
+            if self.percentage.isChecked():
+                miny = 0
+            else:
+                try:
+                    rndup = pow(10, round(log10(abs(miny) * 1.5) - 1)) / 2
+                    miny = -ceil(abs(miny) / rndup) * rndup
                 except:
                     pass
         graph.legend(bbox_to_anchor=[0.5, -0.1], loc='center', ncol=(len(data) + 2), prop=self.legend_font)
@@ -1651,7 +1867,7 @@ class FlexiPlot(QtWidgets.QWidget):
             xticks = [0]
             if self.sparse_ticks and isinstance(self.sparse_ticks, bool):
                 for l in range(1, len(xlabels)):
-                    if xlabels[l] != tick_labels[-1]:
+                    if xlabels[l] != '' and xlabels[l] != tick_labels[-1]:
                         xticks.append(l)
                         tick_labels.append(xlabels[l])
             elif len(self.sparse_ticks) == 1:
@@ -1692,6 +1908,64 @@ class FlexiPlot(QtWidgets.QWidget):
         else:
             formatter = plt.FuncFormatter(lambda y, pos: '{:,.0f}'.format(y))
         graph.yaxis.set_major_formatter(formatter)
+        if self.secondary_yaxis and len(self.overlays) > 0:
+            try:
+                if max_col < 0:
+                    return
+            except:
+                self.log.setText('Overlay fields in error')
+                return
+            data2 = []
+            data2_range = [0, 0]
+            for key in self.overlays.keys():
+                label, row, col = self.get_name_row_col(key)
+                data2.append([])
+                for col in range(col + 1, max_col):
+                    if ws.cell_value(row, col) is None or ws.cell_value(row, col) == '':
+                        data2[-1].append(0.)
+                    else:
+                        data2[-1].append(ws.cell_value(row, col))
+                        data2_range[0] = min(data2[-1][-1], data2_range[0])
+                        data2_range[1] = max(data2[-1][-1], data2_range[1])
+            if self.y2percentage.isChecked():
+                data2_range[0] = floor(data2_range[0] * 4) / 4
+                data2_range[1] = ceil(data2_range[1] * 4) / 4
+            else:
+                pass
+            yticks = graph.get_yticks().tolist()
+            mult = (yticks[-1] - yticks[0]) / (data2_range[1] - data2_range[0])
+            c = 0
+            for key, value in self.overlays.items():
+                label = key[:key.rfind(' (')]
+                if self.plottype.currentText() == 'Step Chart':
+                    if self.step_fill == 'pre':
+                        data2[c].insert(0, data2[c][0])
+                    elif self.step_fill == 'post':
+                        data2[c].append(data2[c][-1])
+                    for h in range(len(data2[c])):
+                        data2[c][h] = data2[c][h] * mult + yticks[0]
+                    graph.step(x, data2[c], linewidth=value[1], label=label, color=value[0], linestyle=value[2])
+                else:
+                    for h in range(len(data2[c])):
+                        data2[c][h] = data2[c][h] * mult + yticks[0]
+                    graph.plot(x, data2[c], linewidth=value[1], label=label, color=value[0], linestyle=value[2])
+                c += 1
+            step = (data2_range[1] - data2_range[0]) / (len(yticks) - 1)
+            yticks2 = []
+            yticks2_labels = []
+            if self.y2percentage.isChecked():
+                for i in range(len(yticks)):
+                    yticks2.append(round(step * i, 2))
+                    yticks2_labels.append(f'{(data2_range[0] + step * i) * 100:.0f}%')
+            else:
+                for i in range(len(yticks)):
+                    yticks2.append(round(step * i, 2))
+                    yticks2_labels.append(f'{(data2_range[0] + step * i):.1f}')
+            graph2 = graph.secondary_yaxis('right', functions=(lambda y: (y - yticks[0]) / mult, lambda y: y * mult + yticks[0]))
+        #    graph2 = graph.secondary_yaxis('right', functions=(lambda y: y * mult + yticks[0], lambda y: (y - yticks[0]) / mult))
+            graph2.set_ylabel(self.y2label.text(), fontdict=self.fontprops['Label'])
+            graph2.set_yticks(yticks2)
+            graph2.set_yticklabels(yticks2_labels, fontdict=self.fontprops['Ticks'])
         zp = ZoomPanX(yformat=formatter)
         f = zp.zoom_pan(graph, base_scale=1.2, dropone=True) # enable scrollable zoom
         plt.show()
