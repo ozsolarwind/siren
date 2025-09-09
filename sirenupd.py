@@ -138,6 +138,8 @@ class UpdDialog(QtWidgets.QDialog):
         self.host = 'https://sourceforge.net/projects/sensiren/files/'
         try:
             self.host = config.get('sirenupd', 'url')
+            if self.host.lower() in ['false', 'no', 'none', 'off']:
+                self.host = ''
         except:
             pass
         self.new_versions = []
@@ -149,42 +151,43 @@ class UpdDialog(QtWidgets.QDialog):
             versions_file = self.local + versions_file
             if os.path.exists(versions_file):
                 self.get_new_versions(versions_file, local=' (local)')
-        # now remote versions
-        src_file = 'siren_versions.csv'
-        if self.temp_dir is None:
-            self.temp_dir = tempfile.gettempdir() + '/'
-        versions_file = self.temp_dir + src_file
-        command = '%s %s %s%s' % (self.wget_cmd, versions_file, self.host, src_file)
-        command = command.split()
-        if self.debug:
-            response = '200 OK'
-        else:
-            try:
-                pid = subprocess.Popen(command, stderr=subprocess.PIPE)
-            except:
-                if sys.platform == 'win32' or sys.platform == 'cygwin':
-                    try:
-                        command[0] = command[0] + '.exe'
-                        pid = subprocess.Popen(command, stderr=subprocess.PIPE)
-                    except:
+        if self.host != '': # now remote versions
+            src_file = 'siren_versions.csv'
+            if self.temp_dir is None:
+                self.temp_dir = tempfile.gettempdir() + '/'
+            versions_file = self.temp_dir + src_file
+            command = '%s %s %s%s' % (self.wget_cmd, versions_file, self.host, src_file)
+            command = command.split()
+            if self.debug:
+                response = '200 OK'
+            else:
+                try:
+                    pid = subprocess.Popen(command, stderr=subprocess.PIPE)
+                except:
+                    if sys.platform == 'win32' or sys.platform == 'cygwin':
+                        try:
+                            command[0] = command[0] + '.exe'
+                            pid = subprocess.Popen(command, stderr=subprocess.PIPE)
+                        except:
+                            newgrid.addWidget(QtWidgets.QLabel(f'Error invoking {command[0]}\n\n' + \
+                                              response), row, 0, 1, 4)
+                            return
+                    else:
                         newgrid.addWidget(QtWidgets.QLabel(f'Error invoking {command[0]}\n\n' + \
                                           response), row, 0, 1, 4)
                         return
-                else:
-                    newgrid.addWidget(QtWidgets.QLabel(f'Error invoking {command[0]}\n\n' + \
-                                      response), row, 0, 1, 4)
-                    return
-            response = get_response(pid.communicate()[1])
-        row = 0
-        if response != '200 OK':
-            newgrid.addWidget(QtWidgets.QLabel('Error encountered accessing siren_versions.csv\n\n' + \
-                                           response), row, 0, 1, 4)
-            row += 1
-        elif os.path.exists(versions_file):
-            self.get_new_versions(versions_file)
-        else:
-            newgrid.addWidget(QtWidgets.QLabel('No versions file available.'), row, 0, 1, 4)
-            row += 1
+                response = get_response(pid.communicate()[1])
+            row = 0
+            if response != '200 OK':
+                newgrid.addWidget(QtWidgets.QLabel('Error encountered accessing siren_versions.csv\n\n' + \
+                                               response), row, 0, 1, 4)
+                row += 1
+            elif os.path.exists(versions_file):
+                self.get_new_versions(versions_file)
+            else:
+                newgrid.addWidget(QtWidgets.QLabel('No versions file available.'), row, 0, 1, 4)
+                row += 1
+        # now choose updates
         if len(self.new_versions) > 0:
             self.new_versions.sort()
             if self.debug:
