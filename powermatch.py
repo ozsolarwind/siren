@@ -4256,6 +4256,10 @@ class powerMatch(QtWidgets.QWidget):
                             charts2[-1].y_axis.title = batch_input_sheet.cell(row=row, column=2).value
                         elif batch_input_sheet.cell(row=row, column=1).value.lower() in ['categories', 'y-labels', 'data', 'data2']:
                             dgrp = get_value(batch_input_sheet, row, 2)
+                            if self.batch_prefix:
+                                batch_pfx = get_batch_prefix(dgrp)
+                            else:
+                                batch_pfx = ''
                             if batch_input_sheet.cell(row=row, column=1).value.lower() == 'categories' \
                               and dgrp.lower() in ['model', 'model label', 'technology', 'year']: # models as categories
                                 rw = self.batch_report[0][1] - 1
@@ -4282,7 +4286,7 @@ class powerMatch(QtWidgets.QWidget):
                             for tndx in range(tndx_rows):
                                 if bs.cell(row=gndx + tndx, column=1).value is None:
                                     break
-                                if bs.cell(row=gndx + tndx, column=1).value.lower() == ditm.lower():
+                                if bs.cell(row=gndx + tndx, column=1).value.lower() == f'{batch_pfx.lower()}{ditm.lower()}':
                                     if batch_input_sheet.cell(row=row, column=1).value.lower() == 'data':
                                         values = Reference(bs, min_col=min_col, min_row=gndx + tndx, max_col=max_col, max_row=gndx + tndx)
                                         series = Series(values)
