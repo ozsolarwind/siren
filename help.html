@@ -1381,7 +1381,7 @@ Options for <a href="#flexiplot">Flexiplot</a>. Properties for individual files 
 </tr>
 <tr class="none">
 <td class="none"><dfn>html_3d</dfn></td>
-<td class="none">If set to True a HTML version of a 3D Surface Charts will be created. The file will be saved in the sane folder and name as the file being displayed with a file type of <em>html</em>. The default is False</td>
+<td class="none">If set to True a HTML version of a 3D Surface Charts will be created. The file will be saved in the same folder and name as the file being displayed with a file type of <em>html</em>. The default is False</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>label_font</dfn></td>
@@ -2154,7 +2154,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <td class="none">This property sets the aspectmode for 3D Surface Charts. Values can be <em>auto</em>, <em>cube</em>, <em>data</em> or <em>manual</em>. The default is <em>auto</em></td>
 <tr class="none">
 <td class="none" style="width:8%"><dfn>html_3d</dfn></td>
-<td class="none">If set to True a HTML version of a 3D Surface Charts will be created. The file will be saved in the sane folder and name as the file being displayed with a file type of <em>html</em>. The default is False</td>
+<td class="none">If set to True a HTML version of a 3D Surface Charts will be created. The file will be saved in the same folder and name as the file being displayed with a file type of <em>html</em>. The default is False</td>
 </table>
 </div>
 <table border="0", class="none" style="width:100%">
@@ -2341,6 +2341,10 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 <tr class="none">
 <td class="none"><dfn>batch_prefix</dfn></td>
 <td class="none">If set to True Facility names in a Batch report will be prefixed with a unique identifier for each report group. Default is False</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>batch_3d</dfn></td>
+<td class="none">If set to True a &ldquo;three dimensional &rdquo; summary of results from batch ranges will be produced. Default is False</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>carbon_price</dfn></td>
@@ -4151,7 +4155,8 @@ Where:
 <tr><td class="none"><code>step</code></td><td class="none">Capacity increment</td></tr>
 <tr><td class="none"><code>order</code></td><td class="none">Make this technology the first set of ranges; this is only needed if this is not the first technology with a range</td></tr>
 </table>
-<p>If more than one technology is specified with a range the Batch report will have multiple output worksheets, one for each value in the first range. The sheets are named in number sequence starting from <strong>01</strong>. Subsequent technologies will be repeated for each &ldquo;lower&rdquo; order technology. The second technology will be presented as a Merged Group. Individual Model names will be derived from the third, or second, technology range. (Note: there is a limit of 16,384 - 2^14 - columns per worksheet so the combinations of lower level technologies must be less than that)</p>
+<p>If more than one technology is specified with a range the Batch report will have multiple output worksheets, one for each value in the first range. The sheets are named in number sequence starting from <strong>01</strong>. Subsequent technologies will be repeated for each &ldquo;lower&rdquo; order technology. The second technology will be presented as a Merged Group. Individual Model names will be derived from the third, or second, technology range. (Note: there is a limit of 16,384 - 2<sup>14</sup> - columns per worksheet so the combinations of lower level technologies must be less than that)</p>
+<p>If the <em>batch_3d</em> Property is set a &ldquo;three dimensional&rdquo; worksheet, <strong>3D Summary</strong>, will be created to provide a summary of results for a chosen variable/row using a coloured table highlighting the best results for the chosen variable/row. The table has a row for each output worksheet and a column for each second technology. Lower values will trend towards green and higher values towards red. Thus, for a varible where a lower value is better, e.g. LCOE, greener values are better, whereas for those where a higher value is better, e.g. RE %age, redder values are better. Just below the table is a hyperlink to the best cell value. The best cell within the table will be highlighted in yellow; values within the percentage range set by the 'Within range' value will be bold. This table is derived from some clever Excel work from Len Bunn.</p>
 <p>The following example shows a batch input table (column) with three capacity ranges. Onshore Wind is the first technology and results in 7 worksheets of output, one for each technology step for Wind. Each worksheet contains 36 model outputs, for a total of 252 models. The worksheets have 6 Merged Groups, one for each step for Single Axis PV with each Merged Group having 6 values for Battery (4hr) and individual Model names are derived from Battery capacity. In a real-world example this approach has been used to create 26 sheets with a total of over 17,500 models in a single execution of Powermatch.</p>
 <table class="none">
 <table>

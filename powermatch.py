@@ -48,6 +48,8 @@ from openpyxl.chart import (
     Reference,
     Series
 )
+from openpyxl.formatting.rule import ColorScaleRule
+from openpyxl.worksheet.datavalidation import DataValidation
 import random
 import shutil
 import subprocess
@@ -1162,6 +1164,7 @@ class powerMatch(QtWidgets.QWidget):
         del self.isheets[-2:]
         self.batch_new_file = False
         self.batch_prefix = False
+        self.batch_3d = False
         self.more_details = False
         self.constraints = None
         self.generators = None
@@ -1243,6 +1246,9 @@ class powerMatch(QtWidgets.QWidget):
                 elif key == 'batch_prefix':
                     if value.lower() in ['true', 'on', 'yes']:
                         self.batch_prefix = True
+                elif key == 'batch_3d':
+                    if value.lower() in ['true', 'on', 'yes']:
+                        self.batch_3d = True
                 elif key[:4] == 'tml_':
                     continue
                 elif key[-5:] == '_file':
@@ -2054,6 +2060,14 @@ class powerMatch(QtWidgets.QWidget):
             self.batch_prefix = True
         else:
             self.batch_prefix = False
+        try:
+            st = config.get('Powermatch', 'batch_3d')
+        except:
+            st = 'False'
+        if st.lower() in ['true', 'yes', 'on']:
+            self.batch_3d = True
+        else:
+            self.batch_3d = False
         QtWidgets.QApplication.processEvents()
         self.setStatus(config_file[-1] + ' edited. Reload may be required.')
 
@@ -2543,7 +2557,7 @@ class powerMatch(QtWidgets.QWidget):
                 if ws.cell_value(row, 0).lower() == 'load':
                     load_row = row
                 self.batch_report.append([techClean(ws.cell_value(row, 0), full=True), row + 1])
-        range_rows = {}
+        self.range_rows = {}
         for col in range(1, ws.ncols):
             model = ws.cell_value(istrt - 1, col)
             if model is None:
@@ -2551,12 +2565,18 @@ class powerMatch(QtWidgets.QWidget):
             self.batch_models[0][col] = {'name': model}
             if option == T and year_row < 0:
                 self.batch_models[0][col]['year'] = str(model)
+            range_order = []
+            btechs = []
             for row in range(istrt, istop):
                 if row == year_row:
                     if ws.cell_value(row, col) is not None and ws.cell_value(row, col) != '':
                         self.batch_models[0][col]['year'] = str(ws.cell_value(row, col))
                     continue
                 tech = ws.cell_value(row, 0)
+                if tech in btechs:
+                    self.setStatus(f'Duplicate technology, {tech}, found in {self.file_labels[option]} input worksheet (not yet allowed).')
+                    return False
+                btechs.append(tech)
                 try:
                     if ws.cell_value(row, col) > 0:
                         self.batch_models[0][col][tech] = ws.cell_value(row, col)
@@ -2565,18 +2585,29 @@ class powerMatch(QtWidgets.QWidget):
                         pass
                     elif ws.cell_value(row, col).find(',') >= 0 or ws.cell_value(row, col).find(';') >= 0:
                         try:
-                            range_rows[col].append(row)
-                        except:
-                            range_rows[col] = [row]
-                        try:
-                            strt, stop, step, frst = step_split(ws.cell_value(row, col))
-                            self.batch_models[0][col][tech] = strt
-                            if frst >= 0 and len(range_rows[col]) > 1:
-                                del range_rows[col][-1]
-                                range_rows[col].insert(0, row)
+                            range_order.append([-1, row])
                         except:
                             pass
-                    pass
+                        try:
+                            strt, stop, step, frst = step_split(ws.cell_value(row, col))
+                            range_order[-1][0] = frst
+                            self.batch_models[0][col][tech] = strt
+                        except:
+                            pass
+            if len(range_order) > 0:
+                range_order.sort()
+                for ro in range_order:
+                    if ro[0] >= 0:
+                        try:
+                            self.range_rows[col].append(ro[1])
+                        except:
+                            self.range_rows[col] = [ro[1]]
+                for ro in range_order:
+                    if ro[0] < 0:
+                        try:
+                            self.range_rows[col].append(ro[1])
+                        except:
+                            self.range_rows[col] = [ro[1]]
             if carbon_row >= 0:
                 if isinstance(ws.cell_value(carbon_row, col), float):
                     self.batch_models[0][col]['Carbon Price'] = ws.cell_value(carbon_row, col)
@@ -2595,10 +2626,10 @@ class powerMatch(QtWidgets.QWidget):
         if len(self.batch_models[0]) == 0:
             self.setStatus('No models found in ' + self.file_labels[option] + ' worksheet (try opening and re-saving the workbook).')
             return False
-        if len(range_rows) == 0:
+        if len(self.range_rows) == 0:
             return True
         # cater for ranges - so multiple batch_models lists
-        for rcol, ranges in range_rows.items():
+        for rcol, ranges in self.range_rows.items():
             rows = {}
             for rw in ranges:
                 rows[rw] = ws.cell_value(rw, rcol)
@@ -3023,6 +3054,7 @@ class powerMatch(QtWidgets.QWidget):
                 for bit in bits:
                     abr += bit[0]
             return abr.upper() + '_'
+
         col_letters = ' ABCDEFGHIJKLMNOPQRSTUVWXYZ'
         self.setStatus(self.sender().text() + ' processing started')
         if self.sender().text() == 'Detail': # detailed spreadsheet?
@@ -3553,6 +3585,53 @@ class powerMatch(QtWidgets.QWidget):
             model_row = False
             model_row_no = 0
             sht_nam_len = max(len(str(len(self.batch_models))), 2)
+            if len(self.batch_models) > 1: #multiple sheets
+                d3_rng1 = 0 # count of 2nd level groups in sheet
+                d3_rng2 = -1 # number of cells for 2nd range
+                for rcol, d3_ranges in self.range_rows.items():
+                    break
+                if self.batch_3d and len(d3_ranges) > 1:
+                    ndx = -1
+                    if '3D Summary' in wb.sheetnames:
+                        ndx = wb.sheetnames.index('3D Summary')
+                        del wb['3D Summary']
+                    d3s = wb.create_sheet('3D Summary')
+                    if ndx >= 0:
+                        ndx = ndx - wb.sheetnames.index('3D Summary')
+                        if ndx != 0:
+                            wb.move_sheet('3D Summary', offset=ndx)
+                    d3s.cell(row=1, column=1).value = '3D Summary'
+                    d3s.cell(row=1, column=1).font = bold
+                    d3s.cell(row=2, column=1).value = 'Choose row of interest from this pull-down list (selection values in hidden rows above it)'
+                    d3s.merge_cells('A2:G2')
+                    d3_selections = [['LCOE','<', 'LE'], ['LCOE incl. Carbon Cost', '<', 'CN'], ['RE %age of Total Load', '>', 'RE'],
+                                     ['Load met %age', '>', 'LA'], ['Storage %age', '>', 'RE'], ['Surplus %age', '<', 'LA'],
+                                     ['Total LCOG ($/MWh)', '<', 'LG'], ['RE %age', '>', 'RE']]
+                    for rw in range(len(d3_selections)):
+                        if self.batch_prefix:
+                            d3s.cell(row=rw + 3, column=1).value = f'{d3_selections[rw][2]}_{d3_selections[rw][0]}'
+                        else:
+                            d3s.cell(row=rw + 3, column=1).value = d3_selections[rw][0]
+                        d3s.cell(row=rw + 3, column=2).value = d3_selections[rw][1]
+                        d3s.cell(row=rw + 3, column=2).alignment = oxl.styles.Alignment(horizontal='center')
+                        d3s.row_dimensions[rw + 3].hidden = True
+                    d3s.row_dimensions[2].hidden = False # seems to get hidden
+                    formula1 = f"'3D Summary'!$A$3:$A${rw + 3}"
+                    dv3 = DataValidation(type='list', formula1=formula1, allow_blank=True)
+                    d3s.add_data_validation(dv3)
+                    dv3_cells = f'A{rw + 4}:A{rw + 4}'
+                    dv3.add(dv3_cells)
+                    acolor = oxl.styles.colors.Color(rgb='00ebbd34')
+                    cell_fill = oxl.styles.fills.PatternFill(patternType='solid', fgColor=acolor)
+                    d3s.cell(row=rw + 4, column=1).fill = cell_fill
+                    d3s.cell(row=rw + 4, column=1).value = d3s.cell(row=3, column=1).value
+                    d3s.cell(row=rw + 4, column=2).value = f'=VLOOKUP(A{rw + 4},A$3:B${rw + 3},2,0)'
+                #    d3s.cell(row=rw + 3, column=2).fill = cell_fill
+                    d3s.cell(row=rw + 4, column=2).alignment = oxl.styles.Alignment(horizontal='center')
+                    d3s.column_dimensions['A'].width = 24
+                else:
+                    d3_ranges = None
+            chart_groups = []
             for sht in range(len(self.batch_models)):
                 sheet_start = time.time()
                 if sht == 0: # normal case
@@ -3622,6 +3701,8 @@ class powerMatch(QtWidgets.QWidget):
                             for i in range(1, len(self.batch_models[sht])):
                                 if self.batch_models[sht][i][tech_2] != cap_2:
                                     bs.merge_cells(start_row=1, start_column=fst_col, end_row=1, end_column=i + 1)
+                                    if sht == 1:
+                                        d3_rng1 += 1
                                     fst_col = i + 2
                                     cap_2 = self.batch_models[sht][i][tech_2]
                                     bs.cell(row=1, column=fst_col).value = f'{title}_{cap_2}'
@@ -3633,6 +3714,10 @@ class powerMatch(QtWidgets.QWidget):
                                     bs.cell(row=1, column=fst_col).font = normal
                                     bs.cell(row=1, column=fst_col).alignment = oxl.styles.Alignment(wrap_text=True, vertical='bottom', horizontal='center')
                             bs.merge_cells(start_row=1, start_column=fst_col, end_row=1, end_column=i + 2)
+                            if sht == 1:
+                                d3_rng1 += 1
+                            if d3_rng2 < 0:
+                                d3_rng2 = i + 2 - fst_col + 1
                         else:
                             try:
                                 title = self.batch_models[sht][0]['hdr'].split('.')[-1]
@@ -3643,6 +3728,8 @@ class powerMatch(QtWidgets.QWidget):
                             bs.cell(row=1, column=2).font = normal
                             bs.cell(row=1, column=2).alignment = oxl.styles.Alignment(wrap_text=True, vertical='bottom', horizontal='center')
                             bs.merge_cells(start_row=1, start_column=2, end_row=1, end_column=len(self.batch_models[sht]) + 1)
+                            if d3_rng2 < 0:
+                                d3_rng2 = len(self.batch_models[sht])
                 column = 1
                 gndx = self.batch_report[0][1] # Capacity group starting row
                 do_opt_parms = [False, 0, 0, 0]
@@ -4141,6 +4228,137 @@ class powerMatch(QtWidgets.QWidget):
                                 pass
                 for row in sorted(del_rows, reverse=True):
                     bs.delete_rows(row, 1)
+                if d3_ranges is not None and len(self.batch_models) > 1 and sht == 1: #multiple sheets
+                    med_side = oxl.styles.Side(border_style='medium')
+                    thin_side = oxl.styles.Side(border_style='thin')
+                    border = oxl.styles.Border(left=thin_side, right=thin_side, top=thin_side, bottom=thin_side)
+                    med_border = oxl.styles.Border(left=med_side, right=med_side, top=med_side, bottom=med_side)
+                    font1 = oxl.styles.Font(color='FFebbd34', bold=True)
+                    font1 = oxl.styles.Font(color='FFFFFF00', italic=True, bold=True)
+                    dxf1 = oxl.styles.differential.DifferentialStyle(font=font1)
+                    font2 = oxl.styles.Font(italic=True)
+                    dxf2 = oxl.styles.differential.DifferentialStyle(font=font2)
+                    font3 = oxl.styles.Font(bold=True)
+                    dxf3 = oxl.styles.differential.DifferentialStyle(font=font3)
+                    fonthide = oxl.styles.Font(color='FFFFFFFF')
+                   # self.setStatus(f'{bs.title}: {len(self.batch_models[sht]) + 1} columns, {bs.max_row}, {d3_rng1}, {d3_rng2}')
+                    rw = d3s.max_row
+                    sn = f"'{bs.title}'"
+                    d3s.cell(row=rw, column=3).value = 'Row'
+                    d3s.cell(row=rw, column=4).value = f'=MATCH(A{rw},INDIRECT("{sn}!$A$1:$A${bs.max_row}"),0)'
+                    row_str = f'$D${rw}'
+                    lege_str = f'$B${rw}'
+                    rw += 1
+                    d3s.cell(row=rw, column=1).value = '2nd level cells'
+                    d3s.cell(row=rw, column=4).value = d3_rng2
+                    d3_rng_str = f'$D${rw}'
+                    rw += 1
+                    d3s.cell(row=rw, column=1).value = '2nd Level'
+                    d3s.cell(row=rw + 1, column=1).value = '1st column'
+                    d3s.cell(row=rw + 2, column=1).value = 'Last column'
+                    for s in range(d3_rng1):
+                        d3s.cell(row=rw, column=s + 4).value = s + 1
+                        if s == 0:
+                            d3s.cell(row=rw + 1, column=s + 4).value = 2
+                        else:
+                            d3s.cell(row=rw + 1, column=s + 4).value = f'={ssCol(s + 3)}{rw + 2}+1'
+                        d3s.cell(row=rw + 2, column=s + 4).value = f'={ssCol(s + 4)}{rw + 1}+{d3_rng_str}-1'
+                        d3s.cell(row=rw + 3, column=s + 4).value = f'=ADDRESS({row_str},{ssCol(s + 4)}{rw + 1},4,1)'
+                        d3s.cell(row=rw + 4, column=s + 4).value = f'=ADDRESS({row_str},{ssCol(s + 4)}{rw + 2},4,1)'
+                    rw2 = rw + 7
+                    hdr1 = f'INDIRECT("\'{1:0{sht_nam_len}}\'!A{d3_ranges[1]+1}")'
+                    if self.batch_prefix:
+                        hdr1 = f'REPLACE({hdr1},1,3,"")'
+                    d3s.cell(row=rw2 - 1, column=4).value = f'={hdr1}'
+                    d3s.cell(row=rw2 - 1, column=4).alignment = oxl.styles.Alignment(wrap_text=True, vertical='bottom', horizontal='center')
+                    d3s.cell(row=rw2 - 1, column=4).border = med_border
+                    d3s.merge_cells(f'D{rw2 - 1}:{ssCol(d3_rng1 + 3)}{rw2 - 1}')
+                    for cl in range(d3_rng1):
+                        d3s.cell(row=rw2, column=cl + 4).value = f'=INDIRECT("\'{1:0{sht_nam_len}}\'!R{d3_ranges[1]+1}C"&{ssCol(cl + 4)}{rw+1},0)'
+                        d3s.cell(row=rw2, column=cl + 4).number_format = '#0'
+                        d3s.cell(row=rw2, column=cl + 4).border = med_border
+                    d3s.cell(row=rw2, column=1).value = 'Sheet'
+                    hdr2 = f'INDIRECT("\'{1:0{sht_nam_len}}\'!A{d3_ranges[0]+1}")'
+                    if self.batch_prefix:
+                        hdr2 = f'REPLACE({hdr2},1,3,"")'
+                    d3s.cell(row=rw2 + 1, column=2).value = f'={hdr2}'
+                    d3s.cell(row=rw2 + 1, column=2).alignment = oxl.styles.Alignment(wrap_text=True, vertical='center', horizontal='center',
+                                                                                     textRotation=90)
+                    d3s.cell(row=rw2 + 1, column=2).border = med_border
+                    d3s.merge_cells(f'B{rw2 + 1}:B{rw2 + len(self.batch_models) - 1}')
+                    for rs in range(1, len(self.batch_models)):
+                        d3s.cell(row=rw2 + rs, column=1).value = f'{rs:0{sht_nam_len}}'
+                        d3s.cell(row=rw2 + rs, column=3).value = f'=INDIRECT("\'{rs:0{sht_nam_len}}\'!B{d3_ranges[0]+1}")'
+                        d3s.cell(row=rw2 + rs, column=3).number_format = '#0'
+                        d3s.cell(row=rw2 + rs, column=3).border = med_border
+                        for s2 in range(d3_rng1):
+                            f1 = f'=MIN(INDIRECT(CONCATENATE("\'",TEXT($A{rw2 + rs},"###00"),"\'!",' + \
+                                     f'TEXT({ssCol(s2 + 4)}${rw + 3},"###00"),":",TEXT({ssCol(s2 + 4)}${rw + 4},"###00"))))'
+                            cels = f'INDIRECT("\'{rs:0{sht_nam_len}}\'!"&{ssCol(s2 + 4)}${rw + 3}&":"&{ssCol(s2 + 4)}${rw + 4})'
+                            f1 = f'=IF({lege_str}="<",MIN({cels}),MAX({cels})'
+                            d3s.cell(row=rw2 + rs, column=s2 + 4).value = f1
+                            d3s.cell(row=rw2 + rs, column=s2 + 4).number_format = '#0.00'
+                            d3s.cell(row=rw2 + rs, column=s2 + 4).border = border
+                    # now for Len's extras
+                    d3s_strt = f'D{rw2 + 1}'
+                    d3s_endcol = f'{ssCol(d3_rng1 + 3)}'
+                    d3s_end = f'{d3s_endcol}{rw2 + len(self.batch_models) - 1}'
+                    d3s_range = f'{d3s_strt}:{d3s_end}'
+                    d3s.cell(row=rw2 + rs + 1, column=1).value = 'Within range'
+                    d3s.cell(row=rw2 + rs + 1, column=4).value = .05
+                    d3s.cell(row=rw2 + rs + 1, column=4).number_format = '#,##0%'
+                    d3s.cell(row=rw2 + rs + 2, column=1).value = 'Best range'
+                    d3s.cell(row=rw2 + rs + 2, column=2).value = f'=IF(D{rw2 + rs + 3}>0,1,MATCH(1,C{rw2 + rs + 3}:{d3s_endcol}{rw2 + rs + 3},1))'
+                    d3s.cell(row=rw2 + rs + 2, column=2).font = fonthide
+                    d3s.cell(row=rw2 + rs + 2, column=3).value = f'=INDIRECT("R{rw2 + rs + 3}C"&3+B{rw2 + rs + 2},0)'
+                    d3s.cell(row=rw2 + rs + 2, column=3).font = fonthide
+                    d3s.cell(row=rw2 + rs + 2, column=4).value = f'=IF({lege_str}=">",IFERROR(MAX({d3s_range})*(1-D{rw2 + rs + 1}),' + \
+                                                                 f'MAX({d3s_range})),MIN({d3s_range}))'
+                    d3s.cell(row=rw2 + rs + 2, column=4).number_format = '#0.00'
+                    rumin = oxl.formatting.rule.FormulaRule(formula=[f'{lege_str}="<"'], border=med_border)
+                    d3s.conditional_formatting.add(f'D{rw2 + rs + 2}', rumin)
+                    d3s.cell(row=rw2 + rs + 2, column=5).value = 'up to'
+                    d3s.cell(row=rw2 + rs + 2, column=5).alignment = oxl.styles.Alignment(horizontal='center')
+                    d3s.cell(row=rw2 + rs + 2, column=6).value = f'=IF({lege_str}=">",MAX({d3s_range}),' + \
+                                                                 f'IFERROR($D${rw2 + rs + 2}*(1+$D${rw2 + rs + 1}),$D${rw2 + rs + 2}))'
+                    d3s.cell(row=rw2 + rs + 2, column=6).number_format = '#0.00'
+                    rumax = oxl.formatting.rule.FormulaRule(formula=[f'{lege_str}=">"'], border=med_border)
+                    d3s.conditional_formatting.add(f'F{rw2 + rs + 2}', rumax)
+                    rul = f'OR(AND({lege_str}="<",{d3s_strt}=$D${rw2 + rs + 2}),' + \
+                          f'AND({lege_str}=">",{d3s_strt}=$F${rw2 + rs + 2}))'
+                    rule1 = oxl.formatting.rule.FormulaRule(formula=[rul], font=font1)
+                    d3s.conditional_formatting.add(d3s_range, rule1)
+                    rule2 = oxl.formatting.rule.CellIsRule(operator='between',
+                                                           formula=[f'$D${rw2 + rs + 2}',f'$F${rw2 + rs + 2}'],
+                                                           font=font3)
+                    d3s.conditional_formatting.add(d3s_range, rule2)
+                    rule3 = ColorScaleRule(start_type='min', start_color='FF63BE7B',
+                                          mid_type='percentile', mid_value=50, mid_color='FFFFEB84',
+                                          end_type='max', end_color='FFF8696B')
+                    d3s.conditional_formatting.add(d3s_range, rule3)
+                    d3s.cell(row=rw2 + rs + 3, column=1).value = 'Sheet (1st level) with best'
+                    d3s.cell(row=rw2 + rs + 3, column=2).value = f'=OFFSET($A${rw2 + 1},IF(C{rw2 + rs + 2}=0,0,C{rw2 + rs + 2}-1),0,1,1)'
+                    d3s.cell(row=rw2 + rs + 4, column=1).value = '2nd level with best'
+                    d3s.cell(row=rw2 + rs + 4, column=2).value = f'=MATCH(VALUE(B{rw2 + rs + 3}),D{rw2 + rs + 3}:{ssCol(d3_rng1 + 3)}{rw2 + rs + 3},0)'
+                    for s2 in range(d3_rng1):
+                        d3s.cell(row=rw2 + rs + 3, column=s2 + 4).value = f'=IF({lege_str}="<",IFERROR(MATCH($D${rw2 + rs + 2},{ssCol(s2 + 4)}${rw2 + 1}:' + \
+                                                                          f'{ssCol(s2 + 4)}${rw2 + len(self.batch_models) - 1},0),0),' + \
+                                                                          f'IFERROR(MATCH($F${rw2 + rs + 2},{ssCol(s2 + 4)}${rw2 + 1}:' + \
+                                                                          f'{ssCol(s2 + 4)}${rw2 + len(self.batch_models) - 1},0),0)'
+                        d3s.cell(row=rw2 + rs + 3, column=s2 + 4).font = fonthide
+                        d3s.cell(row=rw2 + rs + 4, column=s2 + 4).value = f'=IF({ssCol(s2 + 4)}{rw2 + rs + 3}>0,MATCH(OFFSET({ssCol(s2 + 4)}{rw2 + 1},' + \
+                                                                          f'{ssCol(s2 + 4)}{rw2 + rs + 3}-1,0),' + \
+                                                                          f'INDIRECT("\'"&$B{rw2 + rs + 3}&"\'!"&{ssCol(s2 + 4)}{rw + 3}&":"&' + \
+                                                                          f'{ssCol(s2 + 4)}{rw + 4}),0),"")'
+                    d3s.row_dimensions[rw2 + rs + 4].hidden = True
+                    d3s.cell(row=rw2 + rs + 5, column=1).value = 'Target cell with best'
+                    d3s.cell(row=rw2 + rs + 5, column=2).value = f'=ADDRESS({row_str},OFFSET(D{rw + 1},0,B{rw2 + rs + 4}-1)+OFFSET(D{rw2 + rs + 4},' + \
+                                                                 f'0,B{rw2 + rs + 4}-1)-1,4,1)'
+                    d3s.cell(row=rw2 + rs + 6, column=1).value = 'Link to best'
+                    d3s.cell(row=rw2 + rs + 6, column=2).value = f'=HYPERLINK("#\'"&B{rw2 + rs + 3}&"\'!"&B{rw2 + rs + 5},"\'"&B{rw2 + rs + 3}&"\'!"&B{rw2 + rs + 5})'
+                    fontlink = oxl.styles.Font(color='FFFF0000', underline='single', name='Arial', size=10)
+                    d3s.cell(row=rw2 + rs + 6, column=2).font = fontlink
+                    d3s.freeze_panes = d3s_strt
                 for column_cells in bs.columns:
                     length = 0
                     for cell in column_cells:
@@ -4168,6 +4386,8 @@ class powerMatch(QtWidgets.QWidget):
                 wb.active = bs
                 # check if any charts/graphs
                 if self.batch_report[-1][0] == 'Chart':
+                    if sht > 0 and '' not in chart_groups:
+                        continue
                     bold = oxl.styles.Font(name='Arial', bold=True)
                     min_col = 2
                     max_col = len(self.batch_models[sht]) + 1
@@ -4183,6 +4403,9 @@ class powerMatch(QtWidgets.QWidget):
                         if batch_input_sheet.cell(row=row, column=1).value is None:
                             continue
                         if batch_input_sheet.cell(row=row, column=1).value.lower() in ['chart', 'graph', 'plot']:
+                            if sht > 0 and batch_input_sheet.cell(row=row, column=2).value is not None \
+                              and batch_input_sheet.cell(row=row, column=2).value != '':
+                                continue
                             if in_chart:
                                 charts[-1].width = 20
                                 charts[-1].height = 12
@@ -4220,6 +4443,14 @@ class powerMatch(QtWidgets.QWidget):
                                 else:
                                     txt = 'Charts_' + bs.title
                                 chs = wb.create_sheet(txt)
+                                if sht == 0:
+                                    if '3D Summary' in wb.sheetnames:
+                                        ndx = wb.sheetnames.index('3D Summary')
+                                        if ndx > 0:
+                                            if (wb.sheetnames[ndx - 1][:8] == 'Results_' and wb.sheetnames[ndx + 1][:7] == 'Charts_') \
+                                              or (wb.sheetnames[ndx + 1][:8] == 'Results_' and wb.sheetnames[ndx - 1][:7] == 'Charts_') :
+                                                ndx = len(wb.sheetnames) - ndx
+                                                wb.move_sheet('3D Summary', offset=ndx)
                                 charts = []
                                 charts2 = []
                             charts.append(LineChart())
@@ -4237,6 +4468,8 @@ class powerMatch(QtWidgets.QWidget):
                                         max_col = merged_cells[i][2]
                                         chart_group = merge_group
                                         break
+                            if sht == 0:
+                                chart_groups.append(chart_group)
                         elif not in_chart:
                             continue
                         elif batch_input_sheet.cell(row=row, column=1).value.lower()[:4] == 'line':
@@ -4368,7 +4601,6 @@ class powerMatch(QtWidgets.QWidget):
                         pmss_details[fac].multiplier = value / pmss_details[fac].capacity
                     except:
                         pass
-
         self.doDispatch(year, option, pmss_details, pmss_data, re_order, dispatch_order,
                         pm_data_file, rslts_file)
 
