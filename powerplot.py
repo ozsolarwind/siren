@@ -2345,8 +2345,8 @@ class PowerPlot(QtWidgets.QWidget):
                                 data.append([])
                                 label.append(column)
                                 for row in range(self.toprow[1] + 1, self.rows + 1):
-                                    data[-1].append(ws.cell_value(row, c2))
                                     try:
+                                        data[-1].append(ws.cell_value(row, c2))
                                         maxy = max(maxy, data[-1][-1])
                                         miny = min(miny, data[-1][-1])
                                     except:
@@ -2372,8 +2372,8 @@ class PowerPlot(QtWidgets.QWidget):
                                     data.append([])
                                     label.append(self.short_legend + column + ' ' + breakdown)
                                     for row in range(self.toprow[1] + 1, self.rows + 1):
-                                        data[-1].append(ws.cell_value(row, c2))
                                         try:
+                                            data[-1].append(ws.cell_value(row, c2))
                                             maxy = max(maxy, data[-1][-1])
                                             miny = min(miny, data[-1][-1])
                                         except:
@@ -2393,8 +2393,8 @@ class PowerPlot(QtWidgets.QWidget):
                                 data.append([])
                                 label.append(column)
                                 for row in range(self.toprow[1] + 1, self.rows + 1):
-                                    data[-1].append(ws.cell_value(row, c2))
                                     try:
+                                        data[-1].append(ws.cell_value(row, c2))
                                         maxy = max(maxy, data[-1][-1])
                                         miny = min(miny, data[-1][-1])
                                     except:
@@ -2450,13 +2450,13 @@ class PowerPlot(QtWidgets.QWidget):
                                 for row in range(self.toprow[1] + 1, self.rows + 1, self.interval):
                                     data[-1].append(0)
                                     for r2 in range(row, row + self.interval):
-                                        data[-1][-1] += ws.cell_value(r2, c2)
-                                    try:
-                                        maxy = max(maxy, data[-1][-1])
-                                        miny = min(miny, data[-1][-1])
-                                    except:
-                                        self.log.setText(f'Data error with {column} ({ssCol(c2, base=0)}{row + 1}). Period may be incomplete (4)')
-                                        return
+                                        try:
+                                            data[-1][-1] += ws.cell_value(r2, c2)
+                                            maxy = max(maxy, data[-1][-1])
+                                            miny = min(miny, data[-1][-1])
+                                        except:
+                                            self.log.setText(f'Data error with {column} ({ssCol(c2, base=0)}{row + 1}). Period may be incomplete (4)')
+                                            return
                     for breakdown in breakdowns[1:]:
                         for c in range(self.order.count() -1, -1, -1):
                             col = self.order.item(c).text()
@@ -2479,13 +2479,13 @@ class PowerPlot(QtWidgets.QWidget):
                                     for row in range(self.toprow[1] + 1, self.rows + 1, self.interval):
                                         data[-1].append(0)
                                         for r2 in range(row, row + self.interval):
-                                            data[-1][-1] += ws.cell_value(r2, c2)
-                                        try:
-                                            maxy = max(maxy, data[-1][-1])
-                                            miny = min(miny, data[-1][-1])
-                                        except:
-                                            self.log.setText(f'Data error with {column} ({ssCol(c2, base=0)}{row + 1}). Period may be incomplete (5)')
-                                            return
+                                            try:
+                                                data[-1][-1] += ws.cell_value(r2, c2)
+                                                maxy = max(maxy, data[-1][-1])
+                                                miny = min(miny, data[-1][-1])
+                                            except:
+                                                self.log.setText(f'Data error with {column} ({ssCol(c2, base=0)}{row + 1}). Period may be incomplete (5)')
+                                                return
                 else:
                     for c in range(self.order.count() -1, -1, -1):
                         col = self.order.item(c).text()
@@ -2504,14 +2504,11 @@ class PowerPlot(QtWidgets.QWidget):
                                     for r2 in range(row, row + self.interval):
                                         try:
                                             data[-1][-1] += ws.cell_value(r2, c2)
+                                            maxy = max(maxy, data[-1][-1])
+                                            miny = min(miny, data[-1][-1])
                                         except:
-                                            if r2 >= ws.nrows:
-                                                break
                                             self.log.setText(f'Data error with {column} ({ssCol(c2, base=0)}{r2 + 1}). Period may be incomplete (6)')
-                                            break
                                             return
-                                    maxy = max(maxy, data[-1][-1])
-                                    miny = min(miny, data[-1][-1])
                                 break
                 if tgt_col >= 0:
                     for row in range(self.toprow[1] + 1, self.rows + 1, self.interval):
@@ -3634,9 +3631,6 @@ class PowerPlot(QtWidgets.QWidget):
                                 try:
                                     overlay[o][h] = overlay[o][h] + ws.cell_value(row, col)
                                 except:
-                                 #   if row >= ws.nrows:
-                                 #       self.log.setText(f'Period may be incomplete (8)')
-                                 #       break
                                     self.log.setText(f'Data error with {self.overlay[o]} ({ssCol(col, base=0)}{row + 1}). Period may be incomplete (8)')
                                     return
                             h += 1
