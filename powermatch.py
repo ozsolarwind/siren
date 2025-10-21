@@ -31,7 +31,7 @@ from credits import fileVersion
 import glob
 from math import log10
 import matplotlib
-if matplotlib.__version__ > '3.5.1':
+if matplotlib.__version__ > '3.10.0' or matplotlib.__version__ > '3.5.1':
     matplotlib.use('Qt5Agg')
 else:
     matplotlib.use('TkAgg') # so PyQT5 and Matplotlib windows don't interfere
@@ -1164,7 +1164,8 @@ class powerMatch(QtWidgets.QWidget):
         del self.isheets[-2:]
         self.batch_new_file = False
         self.batch_prefix = False
-        self.batch_3d = False
+        self.batch_3d = 0
+        self.batch_3d_best = '#FFC709,#06A9D6' # best cell colour,comon best cell border
         self.more_details = False
         self.constraints = None
         self.generators = None
@@ -1247,8 +1248,12 @@ class powerMatch(QtWidgets.QWidget):
                     if value.lower() in ['true', 'on', 'yes']:
                         self.batch_prefix = True
                 elif key == 'batch_3d':
-                    if value.lower() in ['true', 'on', 'yes']:
-                        self.batch_3d = True
+                    if value.lower() in ['true', 'on', 'yes', '1']:
+                        self.batch_3d = 1
+                    elif value.isdigit():
+                        self.batch_3d = min(int(value), 8)
+                elif key == 'batch_3d_best':
+                    self.batch_3d_best = value
                 elif key[:4] == 'tml_':
                     continue
                 elif key[-5:] == '_file':
@@ -2064,10 +2069,12 @@ class powerMatch(QtWidgets.QWidget):
             st = config.get('Powermatch', 'batch_3d')
         except:
             st = 'False'
-        if st.lower() in ['true', 'yes', 'on']:
-            self.batch_3d = True
+        if st.lower() in ['true', 'yes', 'on', '1']:
+            self.batch_3d = 1
+        elif st.isdigit():
+            self.batch_3d = min(int(st), 8)
         else:
-            self.batch_3d = False
+            self.batch_3d = 0
         QtWidgets.QApplication.processEvents()
         self.setStatus(config_file[-1] + ' edited. Reload may be required.')
 
@@ -3590,7 +3597,7 @@ class powerMatch(QtWidgets.QWidget):
                 d3_rng2 = -1 # number of cells for 2nd range
                 for rcol, d3_ranges in self.range_rows.items():
                     break
-                if self.batch_3d and len(d3_ranges) > 1:
+                if self.batch_3d > 0 and len(d3_ranges) > 1:
                     ndx = -1
                     if '3D Summary' in wb.sheetnames:
                         ndx = wb.sheetnames.index('3D Summary')
@@ -3603,7 +3610,7 @@ class powerMatch(QtWidgets.QWidget):
                     d3s.cell(row=1, column=1).value = '3D Summary'
                     d3s.cell(row=1, column=1).font = bold
                     d3s.cell(row=2, column=1).value = 'Choose row of interest from this pull-down list (selection values in hidden rows above it)'
-                    d3s.merge_cells('A2:G2')
+                    d3s.merge_cells('A2:H2')
                     d3_selections = [['LCOE','<', 'LE'], ['LCOE incl. Carbon Cost', '<', 'CN'], ['RE %age of Total Load', '>', 'RE'],
                                      ['Load met %age', '>', 'LA'], ['Storage %age', '>', 'RE'], ['Surplus %age', '<', 'LA'],
                                      ['Total LCOG ($/MWh)', '<', 'LG'], ['RE %age', '>', 'RE']]
@@ -3616,18 +3623,8 @@ class powerMatch(QtWidgets.QWidget):
                         d3s.cell(row=rw + 3, column=2).alignment = oxl.styles.Alignment(horizontal='center')
                         d3s.row_dimensions[rw + 3].hidden = True
                     d3s.row_dimensions[2].hidden = False # seems to get hidden
-                    formula1 = f"'3D Summary'!$A$3:$A${rw + 3}"
-                    dv3 = DataValidation(type='list', formula1=formula1, allow_blank=True)
-                    d3s.add_data_validation(dv3)
-                    dv3_cells = f'A{rw + 4}:A{rw + 4}'
-                    dv3.add(dv3_cells)
-                    acolor = oxl.styles.colors.Color(rgb='00ebbd34')
-                    cell_fill = oxl.styles.fills.PatternFill(patternType='solid', fgColor=acolor)
-                    d3s.cell(row=rw + 4, column=1).fill = cell_fill
-                    d3s.cell(row=rw + 4, column=1).value = d3s.cell(row=3, column=1).value
-                    d3s.cell(row=rw + 4, column=2).value = f'=VLOOKUP(A{rw + 4},A$3:B${rw + 3},2,0)'
-                #    d3s.cell(row=rw + 3, column=2).fill = cell_fill
-                    d3s.cell(row=rw + 4, column=2).alignment = oxl.styles.Alignment(horizontal='center')
+                    d3s_formula1 = f"'3D Summary'!$A$3:$A${rw + 3}"
+                    d3s_vlookup = f'A$3:B${rw + 3},2,0'
                     d3s.column_dimensions['A'].width = 24
                 else:
                     d3_ranges = None
@@ -4233,132 +4230,155 @@ class powerMatch(QtWidgets.QWidget):
                     thin_side = oxl.styles.Side(border_style='thin')
                     border = oxl.styles.Border(left=thin_side, right=thin_side, top=thin_side, bottom=thin_side)
                     med_border = oxl.styles.Border(left=med_side, right=med_side, top=med_side, bottom=med_side)
-                    font1 = oxl.styles.Font(color='FFebbd34', bold=True)
-                    font1 = oxl.styles.Font(color='FFFFFF00', italic=True, bold=True)
-                    dxf1 = oxl.styles.differential.DifferentialStyle(font=font1)
-                    font2 = oxl.styles.Font(italic=True)
-                    dxf2 = oxl.styles.differential.DifferentialStyle(font=font2)
-                    font3 = oxl.styles.Font(bold=True)
-                    dxf3 = oxl.styles.differential.DifferentialStyle(font=font3)
+                    best_3d = self.batch_3d_best.split(',')
+                    try:
+                        font1 = oxl.styles.Font(color=f'FF{best_3d[0][-6:]}', italic=True, bold=True)
+                    except:
+                        font1 = oxl.styles.Font(color=f'FFFFC709', italic=True, bold=True)
+                    try:
+                        otr_side = oxl.styles.Side(border_style='medium', color=best_3d[1][-6:])
+                    except:
+                        otr_side = oxl.styles.Side(border_style='medium', color='06A9D6')
+                    otr_border = oxl.styles.Border(left=otr_side, right=otr_side, top=otr_side, bottom=otr_side)
+                    font2 = oxl.styles.Font(bold=True)
                     fonthide = oxl.styles.Font(color='FFFFFFFF')
                    # self.setStatus(f'{bs.title}: {len(self.batch_models[sht]) + 1} columns, {bs.max_row}, {d3_rng1}, {d3_rng2}')
-                    rw = d3s.max_row
-                    sn = f"'{bs.title}'"
-                    d3s.cell(row=rw, column=3).value = 'Row'
-                    d3s.cell(row=rw, column=4).value = f'=MATCH(A{rw},INDIRECT("{sn}!$A$1:$A${bs.max_row}"),0)'
-                    row_str = f'$D${rw}'
-                    lege_str = f'$B${rw}'
-                    rw += 1
-                    d3s.cell(row=rw, column=1).value = '2nd level cells'
-                    d3s.cell(row=rw, column=4).value = d3_rng2
-                    d3_rng_str = f'$D${rw}'
-                    rw += 1
-                    d3s.cell(row=rw, column=1).value = '2nd Level'
-                    d3s.cell(row=rw + 1, column=1).value = '1st column'
-                    d3s.cell(row=rw + 2, column=1).value = 'Last column'
+                    # Hide these common cells in the top set of rows
+                    d3s.cell(row=3, column=3).value = '2nd cnt'
+                    d3s.cell(row=3, column=4).value = d3_rng2
+                    d3_rng_str = f'$D$3'
+                    d3s.cell(row=4, column=3).value = '2nd Lvl'
+                    d3s.cell(row=5, column=3).value = '1st col'
+                    d3s.cell(row=6, column=3).value = 'Lst col'
                     for s in range(d3_rng1):
-                        d3s.cell(row=rw, column=s + 4).value = s + 1
+                        d3s.cell(row=4, column=s + 4).value = s + 1
                         if s == 0:
-                            d3s.cell(row=rw + 1, column=s + 4).value = 2
+                            d3s.cell(row=5, column=s + 4).value = 2
                         else:
-                            d3s.cell(row=rw + 1, column=s + 4).value = f'={ssCol(s + 3)}{rw + 2}+1'
-                        d3s.cell(row=rw + 2, column=s + 4).value = f'={ssCol(s + 4)}{rw + 1}+{d3_rng_str}-1'
-                        d3s.cell(row=rw + 3, column=s + 4).value = f'=ADDRESS({row_str},{ssCol(s + 4)}{rw + 1},4,1)'
-                        d3s.cell(row=rw + 4, column=s + 4).value = f'=ADDRESS({row_str},{ssCol(s + 4)}{rw + 2},4,1)'
-                    rw2 = rw + 7
-                    hdr1 = f'INDIRECT("\'{1:0{sht_nam_len}}\'!A{d3_ranges[1]+1}")'
-                    if self.batch_prefix:
-                        hdr1 = f'REPLACE({hdr1},1,3,"")'
-                    d3s.cell(row=rw2 - 1, column=4).value = f'={hdr1}'
-                    d3s.cell(row=rw2 - 1, column=4).alignment = oxl.styles.Alignment(wrap_text=True, vertical='bottom', horizontal='center')
-                    d3s.cell(row=rw2 - 1, column=4).border = med_border
-                    d3s.merge_cells(f'D{rw2 - 1}:{ssCol(d3_rng1 + 3)}{rw2 - 1}')
-                    for cl in range(d3_rng1):
-                        d3s.cell(row=rw2, column=cl + 4).value = f'=INDIRECT("\'{1:0{sht_nam_len}}\'!R{d3_ranges[1]+1}C"&{ssCol(cl + 4)}{rw+1},0)'
-                        d3s.cell(row=rw2, column=cl + 4).number_format = '#0'
-                        d3s.cell(row=rw2, column=cl + 4).border = med_border
-                    d3s.cell(row=rw2, column=1).value = 'Sheet'
-                    hdr2 = f'INDIRECT("\'{1:0{sht_nam_len}}\'!A{d3_ranges[0]+1}")'
-                    if self.batch_prefix:
-                        hdr2 = f'REPLACE({hdr2},1,3,"")'
-                    d3s.cell(row=rw2 + 1, column=2).value = f'={hdr2}'
-                    d3s.cell(row=rw2 + 1, column=2).alignment = oxl.styles.Alignment(wrap_text=True, vertical='center', horizontal='center',
-                                                                                     textRotation=90)
-                    d3s.cell(row=rw2 + 1, column=2).border = med_border
-                    d3s.merge_cells(f'B{rw2 + 1}:B{rw2 + len(self.batch_models) - 1}')
-                    for rs in range(1, len(self.batch_models)):
-                        d3s.cell(row=rw2 + rs, column=1).value = f'{rs:0{sht_nam_len}}'
-                        d3s.cell(row=rw2 + rs, column=3).value = f'=INDIRECT("\'{rs:0{sht_nam_len}}\'!B{d3_ranges[0]+1}")'
-                        d3s.cell(row=rw2 + rs, column=3).number_format = '#0'
-                        d3s.cell(row=rw2 + rs, column=3).border = med_border
+                            d3s.cell(row=5, column=s + 4).value = f'={ssCol(s + 3)}6+1'
+                        d3s.cell(row=6, column=s + 4).value = f'={ssCol(s + 4)}5+{d3_rng_str}-1'
+                    rw = d3s.max_row + 2
+                    for d3t in range(self.batch_3d):
+                        dv3 = DataValidation(type='list', formula1=d3s_formula1, allow_blank=True)
+                        d3s.add_data_validation(dv3)
+                        dv3_cells = f'A{rw}:A{rw}'
+                        dv3.add(dv3_cells)
+                        acolor = oxl.styles.colors.Color(rgb='00ebbd34')
+                        cell_fill = oxl.styles.fills.PatternFill(patternType='solid', fgColor=acolor)
+                        d3s.cell(row=rw, column=1).fill = cell_fill
+                        d3s.cell(row=rw, column=1).value = d3s.cell(row=3 + d3t, column=1).value
+                        d3s.cell(row=rw, column=2).value = f'=VLOOKUP(A{rw},{d3s_vlookup})'
+                        d3s.cell(row=rw, column=2).alignment = oxl.styles.Alignment(horizontal='center')
+                        sn = f"'{bs.title}'"
+                        d3s.cell(row=rw, column=3).value = 'Row'
+                        d3s.cell(row=rw, column=4).value = f'=MATCH(A{rw},INDIRECT("{sn}!$A$1:$A${bs.max_row}"),0)'
+                        row_str = f'$D${rw}'
+                        lege_str = f'$B${rw}'
+                        rw += 1
+                        for s in range(d3_rng1):
+                            d3s.cell(row=rw, column=s + 4).value = f'=ADDRESS({row_str},{ssCol(s + 4)}5,4,1)'
+                            d3s.cell(row=rw + 1, column=s + 4).value = f'=ADDRESS({row_str},{ssCol(s + 4)}6,4,1)'
+                        rw2 = rw + 4
+                        hdr1 = f'INDIRECT("\'{1:0{sht_nam_len}}\'!A{d3_ranges[1]+1}")'
+                        if self.batch_prefix:
+                            hdr1 = f'REPLACE({hdr1},1,3,"")'
+                        d3s.cell(row=rw2 - 1, column=4).value = f'={hdr1}'
+                        d3s.cell(row=rw2 - 1, column=4).alignment = oxl.styles.Alignment(wrap_text=True, vertical='bottom', horizontal='center')
+                        d3s.cell(row=rw2 - 1, column=4).border = med_border
+                        d3s.merge_cells(f'D{rw2 - 1}:{ssCol(d3_rng1 + 3)}{rw2 - 1}')
+                        for cl in range(d3_rng1):
+                            d3s.cell(row=rw2, column=cl + 4).value = f'=INDIRECT("\'{1:0{sht_nam_len}}\'!R{d3_ranges[1]+1}C"&{ssCol(cl + 4)}$5,0)'
+                            d3s.cell(row=rw2, column=cl + 4).number_format = '#0'
+                            d3s.cell(row=rw2, column=cl + 4).border = med_border
+                        d3s.cell(row=rw2, column=1).value = 'Sheet'
+                        hdr2 = f'INDIRECT("\'{1:0{sht_nam_len}}\'!A{d3_ranges[0]+1}")'
+                        if self.batch_prefix:
+                            hdr2 = f'REPLACE({hdr2},1,3,"")'
+                        d3s.cell(row=rw2 + 1, column=2).value = f'={hdr2}'
+                        d3s.cell(row=rw2 + 1, column=2).alignment = oxl.styles.Alignment(wrap_text=True, vertical='center', horizontal='center',
+                                                                                         textRotation=90)
+                        d3s.cell(row=rw2 + 1, column=2).border = med_border
+                        d3s.merge_cells(f'B{rw2 + 1}:B{rw2 + len(self.batch_models) - 1}')
+                        for rs in range(1, len(self.batch_models)):
+                            d3s.cell(row=rw2 + rs, column=1).value = f'{rs:0{sht_nam_len}}'
+                            d3s.cell(row=rw2 + rs, column=3).value = f'=INDIRECT("\'{rs:0{sht_nam_len}}\'!B{d3_ranges[0]+1}")'
+                            d3s.cell(row=rw2 + rs, column=3).number_format = '#0'
+                            d3s.cell(row=rw2 + rs, column=3).border = med_border
+                            for s2 in range(d3_rng1):
+                                f1 = f'=MIN(INDIRECT(CONCATENATE("\'",TEXT($A{rw2 + rs},"###00"),"\'!",' + \
+                                         f'TEXT({ssCol(s2 + 4)}${rw + 3},"###00"),":",TEXT({ssCol(s2 + 4)}${rw + 4},"###00"))))'
+                                cels = f'INDIRECT("\'{rs:0{sht_nam_len}}\'!"&{ssCol(s2 + 4)}${rw}&":"&{ssCol(s2 + 4)}${rw + 1})'
+                                f1 = f'=IF({lege_str}="<",MIN({cels}),MAX({cels})'
+                                d3s.cell(row=rw2 + rs, column=s2 + 4).value = f1
+                                d3s.cell(row=rw2 + rs, column=s2 + 4).number_format = '#0.00'
+                                d3s.cell(row=rw2 + rs, column=s2 + 4).border = border
+                        # now for Len's extras
+                        d3s_strt = f'D{rw2 + 1}'
+                        d3s_endcol = f'{ssCol(d3_rng1 + 3)}'
+                        d3s_end = f'{d3s_endcol}{rw2 + len(self.batch_models) - 1}'
+                        d3s_range = f'{d3s_strt}:{d3s_end}'
+                        d3s.cell(row=rw2 + rs + 1, column=1).value = 'Within range'
+                        d3s.cell(row=rw2 + rs + 1, column=4).value = .05
+                        d3s.cell(row=rw2 + rs + 1, column=4).number_format = '#,##0%'
+                        d3s.cell(row=rw2 + rs + 2, column=1).value = 'Best range'
+                        d3s.cell(row=rw2 + rs + 2, column=2).value = f'=IF(D{rw2 + rs + 3}>0,1,MATCH(1,C{rw2 + rs + 3}:{d3s_endcol}{rw2 + rs + 3},1))'
+                        d3s.cell(row=rw2 + rs + 2, column=2).font = fonthide
+                        d3s.cell(row=rw2 + rs + 2, column=3).value = f'=INDIRECT("R{rw2 + rs + 3}C"&3+B{rw2 + rs + 2},0)'
+                        d3s.cell(row=rw2 + rs + 2, column=3).font = fonthide
+                        d3s.cell(row=rw2 + rs + 2, column=4).value = f'=IF({lege_str}=">",IFERROR(MAX({d3s_range})*(1-D{rw2 + rs + 1}),' + \
+                                                                     f'MAX({d3s_range})),MIN({d3s_range}))'
+                        d3s.cell(row=rw2 + rs + 2, column=4).number_format = '#0.00'
+                        rumin = oxl.formatting.rule.FormulaRule(formula=[f'{lege_str}="<"'], border=med_border)
+                        d3s.conditional_formatting.add(f'D{rw2 + rs + 2}', rumin)
+                        d3s.cell(row=rw2 + rs + 2, column=5).value = 'up to'
+                        d3s.cell(row=rw2 + rs + 2, column=5).alignment = oxl.styles.Alignment(horizontal='center')
+                        d3s.cell(row=rw2 + rs + 2, column=6).value = f'=IF({lege_str}=">",MAX({d3s_range}),' + \
+                                                                     f'IFERROR($D${rw2 + rs + 2}*(1+$D${rw2 + rs + 1}),$D${rw2 + rs + 2}))'
+                        d3s.cell(row=rw2 + rs + 2, column=6).number_format = '#0.00'
+                        rumax = oxl.formatting.rule.FormulaRule(formula=[f'{lege_str}=">"'], border=med_border)
+                        d3s.conditional_formatting.add(f'F{rw2 + rs + 2}', rumax)
+                        rul = f'OR(AND({lege_str}="<",{d3s_strt}=$D${rw2 + rs + 2}),' + \
+                              f'AND({lege_str}=">",{d3s_strt}=$F${rw2 + rs + 2}))'
+                        rule1 = oxl.formatting.rule.FormulaRule(formula=[rul], font=font1, border=med_border)
+                        d3s.conditional_formatting.add(d3s_range, rule1)
+                        if d3t == 0:
+                            save_rul = rul
+                        else:
+                            rule1a = oxl.formatting.rule.FormulaRule(formula=[save_rul], font=font2, border=otr_border)
+                            d3s.conditional_formatting.add(d3s_range, rule1a)
+                        rule2 = oxl.formatting.rule.CellIsRule(operator='between',
+                                                               formula=[f'$D${rw2 + rs + 2}',f'$F${rw2 + rs + 2}'],
+                                                               font=font2)
+                        d3s.conditional_formatting.add(d3s_range, rule2)
+                        rule3 = ColorScaleRule(start_type='min', start_color='FF63BE7B',
+                                               mid_type='percentile', mid_value=50, mid_color='FFFFEB84',
+                                               end_type='max', end_color='FFF8696B')
+                        d3s.conditional_formatting.add(d3s_range, rule3)
+                        d3s.cell(row=rw2 + rs + 3, column=1).value = 'Sheet (1st level) with best'
+                        d3s.cell(row=rw2 + rs + 3, column=2).value = f'=OFFSET($A${rw2 + 1},IF(C{rw2 + rs + 2}=0,0,C{rw2 + rs + 2}-1),0,1,1)'
+                        d3s.cell(row=rw2 + rs + 4, column=1).value = '2nd level with best'
+                        d3s.cell(row=rw2 + rs + 4, column=2).value = f'=MATCH(VALUE(B{rw2 + rs + 3}),D{rw2 + rs + 3}:{ssCol(d3_rng1 + 3)}{rw2 + rs + 3},0)'
                         for s2 in range(d3_rng1):
-                            f1 = f'=MIN(INDIRECT(CONCATENATE("\'",TEXT($A{rw2 + rs},"###00"),"\'!",' + \
-                                     f'TEXT({ssCol(s2 + 4)}${rw + 3},"###00"),":",TEXT({ssCol(s2 + 4)}${rw + 4},"###00"))))'
-                            cels = f'INDIRECT("\'{rs:0{sht_nam_len}}\'!"&{ssCol(s2 + 4)}${rw + 3}&":"&{ssCol(s2 + 4)}${rw + 4})'
-                            f1 = f'=IF({lege_str}="<",MIN({cels}),MAX({cels})'
-                            d3s.cell(row=rw2 + rs, column=s2 + 4).value = f1
-                            d3s.cell(row=rw2 + rs, column=s2 + 4).number_format = '#0.00'
-                            d3s.cell(row=rw2 + rs, column=s2 + 4).border = border
-                    # now for Len's extras
-                    d3s_strt = f'D{rw2 + 1}'
-                    d3s_endcol = f'{ssCol(d3_rng1 + 3)}'
-                    d3s_end = f'{d3s_endcol}{rw2 + len(self.batch_models) - 1}'
-                    d3s_range = f'{d3s_strt}:{d3s_end}'
-                    d3s.cell(row=rw2 + rs + 1, column=1).value = 'Within range'
-                    d3s.cell(row=rw2 + rs + 1, column=4).value = .05
-                    d3s.cell(row=rw2 + rs + 1, column=4).number_format = '#,##0%'
-                    d3s.cell(row=rw2 + rs + 2, column=1).value = 'Best range'
-                    d3s.cell(row=rw2 + rs + 2, column=2).value = f'=IF(D{rw2 + rs + 3}>0,1,MATCH(1,C{rw2 + rs + 3}:{d3s_endcol}{rw2 + rs + 3},1))'
-                    d3s.cell(row=rw2 + rs + 2, column=2).font = fonthide
-                    d3s.cell(row=rw2 + rs + 2, column=3).value = f'=INDIRECT("R{rw2 + rs + 3}C"&3+B{rw2 + rs + 2},0)'
-                    d3s.cell(row=rw2 + rs + 2, column=3).font = fonthide
-                    d3s.cell(row=rw2 + rs + 2, column=4).value = f'=IF({lege_str}=">",IFERROR(MAX({d3s_range})*(1-D{rw2 + rs + 1}),' + \
-                                                                 f'MAX({d3s_range})),MIN({d3s_range}))'
-                    d3s.cell(row=rw2 + rs + 2, column=4).number_format = '#0.00'
-                    rumin = oxl.formatting.rule.FormulaRule(formula=[f'{lege_str}="<"'], border=med_border)
-                    d3s.conditional_formatting.add(f'D{rw2 + rs + 2}', rumin)
-                    d3s.cell(row=rw2 + rs + 2, column=5).value = 'up to'
-                    d3s.cell(row=rw2 + rs + 2, column=5).alignment = oxl.styles.Alignment(horizontal='center')
-                    d3s.cell(row=rw2 + rs + 2, column=6).value = f'=IF({lege_str}=">",MAX({d3s_range}),' + \
-                                                                 f'IFERROR($D${rw2 + rs + 2}*(1+$D${rw2 + rs + 1}),$D${rw2 + rs + 2}))'
-                    d3s.cell(row=rw2 + rs + 2, column=6).number_format = '#0.00'
-                    rumax = oxl.formatting.rule.FormulaRule(formula=[f'{lege_str}=">"'], border=med_border)
-                    d3s.conditional_formatting.add(f'F{rw2 + rs + 2}', rumax)
-                    rul = f'OR(AND({lege_str}="<",{d3s_strt}=$D${rw2 + rs + 2}),' + \
-                          f'AND({lege_str}=">",{d3s_strt}=$F${rw2 + rs + 2}))'
-                    rule1 = oxl.formatting.rule.FormulaRule(formula=[rul], font=font1)
-                    d3s.conditional_formatting.add(d3s_range, rule1)
-                    rule2 = oxl.formatting.rule.CellIsRule(operator='between',
-                                                           formula=[f'$D${rw2 + rs + 2}',f'$F${rw2 + rs + 2}'],
-                                                           font=font3)
-                    d3s.conditional_formatting.add(d3s_range, rule2)
-                    rule3 = ColorScaleRule(start_type='min', start_color='FF63BE7B',
-                                          mid_type='percentile', mid_value=50, mid_color='FFFFEB84',
-                                          end_type='max', end_color='FFF8696B')
-                    d3s.conditional_formatting.add(d3s_range, rule3)
-                    d3s.cell(row=rw2 + rs + 3, column=1).value = 'Sheet (1st level) with best'
-                    d3s.cell(row=rw2 + rs + 3, column=2).value = f'=OFFSET($A${rw2 + 1},IF(C{rw2 + rs + 2}=0,0,C{rw2 + rs + 2}-1),0,1,1)'
-                    d3s.cell(row=rw2 + rs + 4, column=1).value = '2nd level with best'
-                    d3s.cell(row=rw2 + rs + 4, column=2).value = f'=MATCH(VALUE(B{rw2 + rs + 3}),D{rw2 + rs + 3}:{ssCol(d3_rng1 + 3)}{rw2 + rs + 3},0)'
-                    for s2 in range(d3_rng1):
-                        d3s.cell(row=rw2 + rs + 3, column=s2 + 4).value = f'=IF({lege_str}="<",IFERROR(MATCH($D${rw2 + rs + 2},{ssCol(s2 + 4)}${rw2 + 1}:' + \
-                                                                          f'{ssCol(s2 + 4)}${rw2 + len(self.batch_models) - 1},0),0),' + \
-                                                                          f'IFERROR(MATCH($F${rw2 + rs + 2},{ssCol(s2 + 4)}${rw2 + 1}:' + \
-                                                                          f'{ssCol(s2 + 4)}${rw2 + len(self.batch_models) - 1},0),0)'
-                        d3s.cell(row=rw2 + rs + 3, column=s2 + 4).font = fonthide
-                        d3s.cell(row=rw2 + rs + 4, column=s2 + 4).value = f'=IF({ssCol(s2 + 4)}{rw2 + rs + 3}>0,MATCH(OFFSET({ssCol(s2 + 4)}{rw2 + 1},' + \
-                                                                          f'{ssCol(s2 + 4)}{rw2 + rs + 3}-1,0),' + \
-                                                                          f'INDIRECT("\'"&$B{rw2 + rs + 3}&"\'!"&{ssCol(s2 + 4)}{rw + 3}&":"&' + \
-                                                                          f'{ssCol(s2 + 4)}{rw + 4}),0),"")'
-                    d3s.row_dimensions[rw2 + rs + 4].hidden = True
-                    d3s.cell(row=rw2 + rs + 5, column=1).value = 'Target cell with best'
-                    d3s.cell(row=rw2 + rs + 5, column=2).value = f'=ADDRESS({row_str},OFFSET(D{rw + 1},0,B{rw2 + rs + 4}-1)+OFFSET(D{rw2 + rs + 4},' + \
-                                                                 f'0,B{rw2 + rs + 4}-1)-1,4,1)'
-                    d3s.cell(row=rw2 + rs + 6, column=1).value = 'Link to best'
-                    d3s.cell(row=rw2 + rs + 6, column=2).value = f'=HYPERLINK("#\'"&B{rw2 + rs + 3}&"\'!"&B{rw2 + rs + 5},"\'"&B{rw2 + rs + 3}&"\'!"&B{rw2 + rs + 5})'
-                    fontlink = oxl.styles.Font(color='FFFF0000', underline='single', name='Arial', size=10)
-                    d3s.cell(row=rw2 + rs + 6, column=2).font = fontlink
-                    d3s.freeze_panes = d3s_strt
+                            d3s.cell(row=rw2 + rs + 3, column=s2 + 4).value = f'=IF({lege_str}="<",IFERROR(MATCH($D${rw2 + rs + 2},{ssCol(s2 + 4)}${rw2 + 1}:' + \
+                                                                              f'{ssCol(s2 + 4)}${rw2 + len(self.batch_models) - 1},0),0),' + \
+                                                                              f'IFERROR(MATCH($F${rw2 + rs + 2},{ssCol(s2 + 4)}${rw2 + 1}:' + \
+                                                                              f'{ssCol(s2 + 4)}${rw2 + len(self.batch_models) - 1},0),0)'
+                            d3s.cell(row=rw2 + rs + 3, column=s2 + 4).font = fonthide
+                            d3s.cell(row=rw2 + rs + 4, column=s2 + 4).value = f'=IF({ssCol(s2 + 4)}{rw2 + rs + 3}>0,MATCH(OFFSET({ssCol(s2 + 4)}{rw2 + 1},' + \
+                                                                              f'{ssCol(s2 + 4)}{rw2 + rs + 3}-1,0),' + \
+                                                                              f'INDIRECT("\'"&$B{rw2 + rs + 3}&"\'!"&{ssCol(s2 + 4)}{rw}&":"&' + \
+                                                                              f'{ssCol(s2 + 4)}{rw + 1}),0),"")'
+                        d3s.row_dimensions[rw2 + rs + 4].hidden = True
+                        d3s.cell(row=rw2 + rs + 5, column=1).value = 'Target cell with best'
+                        d3s.cell(row=rw2 + rs + 5, column=2).value = f'=ADDRESS({row_str},OFFSET(D5,0,B{rw2 + rs + 4}-1)+OFFSET(D{rw2 + rs + 4},' + \
+                                                                     f'0,B{rw2 + rs + 4}-1)-1,4,1)'
+                        d3s.cell(row=rw2 + rs + 6, column=1).value = 'Link to best'
+                        d3s.cell(row=rw2 + rs + 6, column=2).value = f'=HYPERLINK("#\'"&B{rw2 + rs + 3}&"\'!"&B{rw2 + rs + 5},"\'"&B{rw2 + rs + 3}&"\'!"&B{rw2 + rs + 5})'
+                        fontlink = oxl.styles.Font(color='FFFF0000', underline='single', name='Arial', size=10)
+                        d3s.cell(row=rw2 + rs + 6, column=2).font = fontlink
+                        rw = rw2 + rs + 8
+                    if self.batch_3d == 1:
+                        d3s.freeze_panes = d3s_strt
                 for column_cells in bs.columns:
                     length = 0
                     for cell in column_cells:
@@ -8196,6 +8216,10 @@ class powerMatch(QtWidgets.QWidget):
 
 if "__main__" == __name__:
     app = QtWidgets.QApplication(sys.argv)
+    try:
+        QtGui.QGuiApplication.setDesktopFileName('siren')
+    except:
+        pass
     setFontSize(app)
     ex = powerMatch()
     app.exec_()
