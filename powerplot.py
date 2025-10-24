@@ -27,7 +27,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import sys
 from math import ceil, log10, sqrt
 import matplotlib
-if matplotlib.__version__ > '3.5.1':
+if matplotlib.__version__ > '3.10.0' or matplotlib.__version__ > '3.5.1':
     matplotlib.use('Qt5Agg')
 else:
     matplotlib.use('TkAgg')
@@ -3608,7 +3608,7 @@ class PowerPlot(QtWidgets.QWidget):
                         try:
                             load[h] = load[h] + ws.cell_value(row, tgt_col)
                         except:
-                            print('(3614)', h, row, tgt_col, ws.cell_value(row, tgt_col), strt_row, todo_rows)
+                            self.log.setText(f'Data error with {self.target} ({ssCol(tgt_col, base=0)}{row + 1}). Period may be incomplete (8)')
                         h += 1
                         if h >= self.interval:
                            h = 0
@@ -3631,7 +3631,7 @@ class PowerPlot(QtWidgets.QWidget):
                                 try:
                                     overlay[o][h] = overlay[o][h] + ws.cell_value(row, col)
                                 except:
-                                    self.log.setText(f'Data error with {self.overlay[o]} ({ssCol(col, base=0)}{row + 1}). Period may be incomplete (8)')
+                                    self.log.setText(f'Data error with {self.overlay[o]} ({ssCol(col, base=0)}{row + 1}). Period may be incomplete (9)')
                                     return
                             h += 1
                             if h >= self.interval:
@@ -4256,6 +4256,10 @@ class PowerPlot(QtWidgets.QWidget):
 
 if "__main__" == __name__:
     app = QtWidgets.QApplication(sys.argv)
+    try:
+        QtGui.QGuiApplication.setDesktopFileName('siren')
+    except:
+        pass
     ex = PowerPlot()
     app.exec()
     app.deleteLater()

@@ -28,7 +28,7 @@ import sys
 import time
 from PyQt5 import QtCore, QtGui, QtWidgets
 import matplotlib
-if matplotlib.__version__ > '3.5.1':
+if matplotlib.__version__ > '3.10.0' or matplotlib.__version__ > '3.5.1':
     matplotlib.use('Qt5Agg')
 else:
     matplotlib.use('TkAgg')
@@ -3422,6 +3422,10 @@ def main():
     app = QtWidgets.QApplication.instance()
     if app is None:
         app = QtWidgets.QApplication(sys.argv)
+    try:
+        QtGui.QGuiApplication.setDesktopFileName('siren')
+    except:
+        pass
     scene = WAScene()
     try:
         mw = MainWindow(scene)

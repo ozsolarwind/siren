@@ -26,7 +26,7 @@ import subprocess
 import sys
 from math import ceil, floor, log10, sqrt
 import matplotlib
-if matplotlib.__version__ > '3.5.1':
+if matplotlib.__version__ > '3.10.0' or matplotlib.__version__ > '3.5.1':
     matplotlib.use('Qt5Agg')
 else:
     matplotlib.use('TkAgg')
@@ -1974,6 +1974,10 @@ class FlexiPlot(QtWidgets.QWidget):
 
 if "__main__" == __name__:
     app = QtWidgets.QApplication(sys.argv)
+    try:
+        QtGui.QGuiApplication.setDesktopFileName('siren')
+    except:
+        pass
     ex = FlexiPlot()
     app.exec_()
     app.deleteLater()

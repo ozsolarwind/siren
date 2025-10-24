@@ -22,7 +22,7 @@
 # and https://stackoverflow.com/questions/10374930/matplotlib-annotating-a-3d-scatter-plot
 from math import ceil, sqrt
 import matplotlib
-if matplotlib.__version__ > '3.5.1':
+if matplotlib.__version__ > '3.10.0' or matplotlib.__version__ > '3.5.1':
     matplotlib.use('Qt5Agg')
 else:
     matplotlib.use('TkAgg')
