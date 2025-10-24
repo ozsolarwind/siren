@@ -403,8 +403,26 @@ class TabDialog(QtWidgets.QDialog):
         do_new = makeNew(self.models_dirs)
         do_new.exec_()
         if do_new.ini_file != '':
-            self.invoke('powermap', do_new.ini_file)
-            self.quit()
+            if do_new.launch:
+                self.invoke('powermap', do_new.ini_file)
+                return
+              #  self.quit()
+            mod_time = time.strftime('%Y-%m-%d %H:%M:%S',
+                       time.localtime(os.path.getmtime(do_new.ini_file)))
+            i = do_new.ini_file.rfind('/')
+            if i >= 0:
+                models_dir = do_new.ini_file[:i + 1]
+                fil = do_new.ini_file[i + 1:]
+            else:
+                model_dir = '/'
+                fil = do_new.ini_file
+            ok, model_name, errors = self.check_file(models_dir, fil)
+            if len(self.models_dirs) > 1:
+                self.entries.append([fil, model_name, mod_time, models_dir, ok])
+            else:
+                self.entries.append([fil, model_name, mod_time, ok])
+            self.sort_desc = not self.sort_desc
+            self.order(self.sort_col)
 
     def editIniFile(self, ini=None, line=None):
         dialr = EdtDialog(ini, line=line)
@@ -476,6 +494,7 @@ class makeNew(QtWidgets.QDialog):
         self.models_dirs = models_dirs
         self.help = help
         self.ini_file = ''
+        self.launch = False
         ini_file = 'siren_default.ini'
         for models_dir in self.models_dirs:
             if os.path.exists(models_dir + ini_file):
@@ -741,6 +760,7 @@ class makeNew(QtWidgets.QDialog):
 
     def saveClicked(self):
         if self.saveIni() >= 0:
+            self.ini_file = self.new_ini
             self.close()
         else:
             QtWidgets.QMessageBox.about(self, 'SIREN - Error', self.msg.text())
@@ -749,6 +769,7 @@ class makeNew(QtWidgets.QDialog):
         if self.saveIni() >= 0:
             dialr = EdtDialog(self.new_ini)
             dialr.exec_()
+            self.ini_file = self.new_ini
             self.close()
         else:
             QtWidgets.QMessageBox.about(self, 'SIREN - Error', self.msg.text())
@@ -756,6 +777,7 @@ class makeNew(QtWidgets.QDialog):
     def saveLaunch(self):
         if self.saveIni() >= 0:
             self.ini_file = self.new_ini
+            self.launch = True
             self.close()
         else:
             QtWidgets.QMessageBox.about(self, 'SIREN - Error', self.msg.text())
@@ -890,6 +912,10 @@ class makeNew(QtWidgets.QDialog):
 
 if '__main__' == __name__:
     app = QtWidgets.QApplication(sys.argv)
+    try:
+        QtGui.QGuiApplication.setDesktopFileName('siren')
+    except:
+        pass
     tabdialog = TabDialog()
     tabdialog.show()
     sys.exit(app.exec_())
