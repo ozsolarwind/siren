@@ -195,7 +195,7 @@ class WorkBook(object):
                 self._book = xlrd.open_workbook(filename, on_demand=on_demand)
                 self._sheet_names = self._book.sheet_names()
             elif self._type == 'xlsx' or self._type == 'xlsm':
-                self._book = oxl.load_workbook(filename, data_only=data_only)
+                self._book = oxl.load_workbook(filename, data_only=data_only, read_only=True)
                 self._sheet_names = self._book.sheetnames
             elif self._type == 'csv':
                 csv_file = open(filename, newline='')
