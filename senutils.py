@@ -176,13 +176,14 @@ class WorkBook(object):
     def __init__(self):
         self._book = None
         self._data_only = None
+        self._read_only = None
         self._sheet = None
         self._sheet_names = []
         self._type = None
         self._nrows = 0
         self._ncols = 0
 
-    def open_workbook(self, filename=None, on_demand=True, data_only=True, filetype=None):
+    def open_workbook(self, filename=None, on_demand=True, data_only=True, filetype=None, read_only=None):
         if not os.path.exists(filename):
             raise Exception(f'File not found - {filename}')
         if filetype is None:
@@ -195,7 +196,7 @@ class WorkBook(object):
                 self._book = xlrd.open_workbook(filename, on_demand=on_demand)
                 self._sheet_names = self._book.sheet_names()
             elif self._type == 'xlsx' or self._type == 'xlsm':
-                self._book = oxl.load_workbook(filename, data_only=data_only, read_only=True)
+                self._book = oxl.load_workbook(filename, data_only=data_only, read_only=read_only)
                 self._sheet_names = self._book.sheetnames
             elif self._type == 'csv':
                 csv_file = open(filename, newline='')
