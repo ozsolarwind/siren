@@ -392,7 +392,7 @@ Sustainable Energy NOW, SEN (<a href="http://sen.asn.au" target="_blank">sen.asn
 </tr>
 <tr class="none">
 <td class="none"><img src="arrow.png" alt="Edit File Preferences">&nbsp;&nbsp;Edit File Preferences</td>
-<td class="none">Edit Parents, Files and SAM Modules Sections of the Preferences file. These sections mainly have file and folder Properties. By clicking on a Property you can navigate to the desired file or folder.</td>
+<td class="none">Edit Parents, Files and SAM Modules Sections of the Preferences file. These sections mainly have file and folder Properties. By clicking on a property you can navigate to the desired file or folder.</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="copy.png" alt="Edit Preferences">&nbsp;&nbsp;Copy Preferences</td>
@@ -649,9 +649,28 @@ The format is similar to a Windows INI file. If you want to create a new Model y
 <p><strong>Notes:</strong>
 <ul>
 <li>Technologies appear in two forms in the Preferences file. They appear in the Preferences Sections as words starting with an uppercase letter and separated by spaces (e.g <em>Fixed PV</em> with the Section name <em>[Fixed PV]</em>). In the Section Properties the technology names are changed to all lower case and spaces are replaced by underscores. Thus, <em>Fixed PV</em> will appear as <em>fixed_pv</em>. The lower case versions occur in the <em>[Colors]</em> Section and <em>[Grid] dispatchable</em>, <em>[Power] fossil_technologies</em>, and <em>[Power] technologies</em> variables</li>
-<li>If you have properties common to multiple preferences files you can place these in a separate file or files by setting the <em>common</em> property in the <em>[Base]</em> Section of the chosen Preferences files. When you invoke SIREN it will load Preferences in order, common files first, with values overwritten with each successive file
+<li>If you have properties common to multiple preferences files you can place these in a separate file or files by setting the <em>common</em> property in the <a href="#p_base">[Base]</a> Section of the chosen Preferences files. When you invoke SIREN it will load Preferences in order, common files first, with values overwritten with each successive file
 <br />
-Properties in the common file can be updated via the <em>Edit Preferences</em> option of the main SIREN menu (or by invoking Powermap for that file)</em>
+Properties in the common file can be updated via the <em>Edit Preferences</em> option of the main SIREN menu (or by invoking Powermap for that file)</em></li>
+<li>If you want to test a SIREN feature/property without impacting your current Preference file you can use the <em>common</em> property in the <a href="#p_base">[Base]</a> Section to just set the desired property. For example, to test the Powermatch Batch 3D Summary feature you could try:
+<ol>
+<li>Click 'New Model' at the bottom of the SIREN Menu</li>
+<li>Scroll to the bottom of it and press 'Save & Edit'</li>
+<li>Clear ALL the contents and replace with these lines:
+<pre style="font-size: medium;">
+;Test Batch 3D
+[Base]
+; specify the name of the common preference file, in this case SIREN.ini
+common=SIREN.ini
+[Powermatch]
+; create 8 3D Summary tables
+batch_3d=8
+; save a new batch file
+batch_new_file=True
+</pre>
+</li>
+<li>Save the changed model</li>
+<li>Choose the model (Note: any changes to Preferences will be saved to this file</li>
 </ul>
 <p>(Skip to <a href="#usage">Using the Simulation</a>)</p>
 <p>Shortcut to Sections:- <a href="#p_backtrack_pv">Backtrack PV</a>, <a href="#p_base">Base</a>, <a href="#p_bess">BESS (Battery)</a>, <a href="#p_biomass">Biomass</a>, <a href="#p_colors">Colors</a>, <a href="#p_cst">CST</a>,
@@ -2348,7 +2367,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>batch_3d_best</dfn></td>
-<td class="none">An optional property to specify (i) the font colour for the best cell(s) in 3D Summary tables and (ii) the border colour for best cells from the first summary table in subsequent tables. Default is <em>#FFC709,#06A9D6</em></td>
+<td class="none">An optional property to specify (i) the font colour for the best cell(s) in 3D Summary tables, (ii) the border colour for best cells from the first summary table in subsequent tables, and (iii) to indicate if the highlighted cells within range will be the same as the first summary table. Default is <em>#FFC709,#06A9D6,True</em></td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>carbon_price</dfn></td>
@@ -2499,7 +2518,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><div class="experiment"><dfn>show_contribution</dfn></div></td>
-<td class="none"><div class="experiment">If set to True, show the percentage contribution of chosen components in meeting the target, e.g. Load. The default is False <Strong>Note:</strong> This Property is used by <code>powerplot</code> and not <code>powermatch</code></div></td>
+<td class="none"><div class="experiment">If set to True, show the percentage contribution of chosen components in meeting the target, e.g. Load. The default is False <Strong>Note:</strong> This property is used by <code>powerplot</code> and not <code>powermatch</code></div></td>
 </tr>
 <tr class="none">
 <td class="none"><div class="experiment"><dfn>show_correlation</dfn></div></td>
@@ -3304,7 +3323,7 @@ The <em>Existing</em> scenario allows you to remove existing stations from your 
 </tr>
 <tr class="none">
 <td class="none"><img src="arrow.png" alt="Edit File Section">&nbsp;&nbsp;Edit File Sections</td>
-<td class="none">Edit Parents, Files and SAM Modules Sections of the Preferences file. These sections mainly have file and folder Properties. By clicking on a Property you can navigate to the desired file or folder.</td>
+<td class="none">Edit Parents, Files and SAM Modules Sections of the Preferences file. These sections mainly have file and folder Properties. By clicking on a property you can navigate to the desired file or folder.</td>
 </tr>
 <tr class="none">
 <td class="none"><img src="arrow.png" alt="Edit Section">&nbsp;&nbsp;Edit Section</td>
@@ -4160,7 +4179,16 @@ Where:
 <tr><td class="none"><code>order</code></td><td class="none">Make this technology the first set of ranges; this is only needed if this is not the first technology with a range</td></tr>
 </table>
 <p>If more than one technology is specified with a range the Batch report will have multiple output worksheets, one for each value in the first range. The sheets are named in number sequence starting from <strong>01</strong>. Subsequent technologies will be repeated for each &ldquo;lower&rdquo; order technology. The second technology will be presented as a Merged Group. Individual Model names will be derived from the third, or second, technology range. (Note: there is a limit of 16,384 - 2<sup>14</sup> - columns per worksheet so the combinations of lower level technologies must be less than that)</p>
-<p>If the <em>batch_3d</em> Property is set a &ldquo;three dimensional&rdquo; worksheet, <strong>3D Summary</strong>, will be created to provide a summary of results for a chosen variable/row using a coloured table highlighting the best results for the chosen variable/row. The table has a row for each output worksheet and a column for each second technology. Lower values will trend towards green and higher values towards red. Thus, for a varible where a lower value is better, e.g. LCOE, greener values are better, whereas for those where a higher value is better, e.g. RE %age, redder values are better. Just below the table is a hyperlink to the best cell value. The best cell within the table will be highlighted in yellow; values within the percentage range set by the 'Within range' value will be bold. This table is derived from some clever Excel work from Len Bunn. <em>batch_3d</em>  can be set to a value between 1 and 8 to allow multiple summary tables to be produced.</p>
+<div class="experiment">
+<em>3D Summary tables</em>
+<p>If the <em>batch_3d</em> property is set a &ldquo;three dimensional&rdquo; worksheet, <strong>3D Summary</strong>, will be created to provide a summary of results for a chosen variable/row using a coloured table highlighting the best results for the chosen variable/row. The table has a row for each output worksheet and a column for each second technology. Lower values will trend towards green and higher values towards red. Thus, for a variable where a lower value is better, e.g. LCOE, greener values are better, whereas for those where a higher value is better, e.g. RE %age, redder values are better. Just below the table is a hyperlink to the (first) best cell value. By default, the best cell within the table will be highlighted in yellow; values within the percentage range set by the 'Within range' value of the first will be bold. This table is derived from some clever Excel work from Len Bunn. <em>batch_3d</em>  can be set to a value between 1 and 8 to allow multiple summary tables to be produced.</p>
+<p>The <em>batch_3d_best</em> property enables some changes to be made to the highlighting in the tables. This property has three values separated by commas (default value is <em>#FFC709,#06A9D6,True</em>) that do the following:
+<ol>
+<li>Sets the colour for the best cell value(s). It is a hex HTML color field (see <a href="https://htmlcolorcodes.com/">HTML Color Codes</a>). The default value is #FFC709 (<span style="color: #FFC709;">#FFC709</span><color>)</li>
+<li>Sets the border colour in subsequent tables for the best cell value(s) from the first table. It is a hex HTML color field. The default value is #06A9D6 (<span style="color: #06A9D6;">#06A9D6</span><color>)</li>
+<li>Indicates whether the highlight for 'Within Range' values are the same as the first table or for this (subsequent) table. The default value is True</li>
+</ol>
+</div>
 <p>The following example shows a batch input table (column) with three capacity ranges. Onshore Wind is the first technology and results in 7 worksheets of output, one for each technology step for Wind. Each worksheet contains 36 model outputs, for a total of 252 models. The worksheets have 6 Merged Groups, one for each step for Single Axis PV with each Merged Group having 6 values for Battery (4hr) and individual Model names are derived from Battery capacity. In a real-world example this approach has been used to create 26 sheets with a total of over 17,500 models in a single execution of Powermatch.</p>
 <table class="none">
 <table>
@@ -4533,7 +4561,7 @@ The List Files button allows you to list the recent files list and optionally re
 <li><em>Underlying load</em> If available underlying load will be displayed on the chart. Underlying load includes the additional load met by Rooftop PV (DPV) rather than utility generation</li>
 <li><div class="experiment">It is also possible to choose a different overlay variable by &ldquo;dragging&rdquo; an entry from the Column Order tables to the Overlay field and then choosing it from the Overlay pull-down. You can delete these entries by first choosing the entry and pressing <em>d</em> to delete it</div></li>
 </ul>
-You can also indicate if the overlay field is plotted on a second Y axis (<em>overlay_2y</em>) and specify an alternate line colour (<em>overlay_colour</em>), width (<em>overlay_width</em>) and line style (<em>overlay_style</em>). If there is a second Y axis then by default the zero points for the two Y axes will align; this can be turned off by setting the <em>y2_align</em> Property to False. By default there is one overlay field but you can set a higher number by setting <em>no_of_overlays</em>
+You can also indicate if the overlay field is plotted on a second Y axis (<em>overlay_2y</em>) and specify an alternate line colour (<em>overlay_colour</em>), width (<em>overlay_width</em>) and line style (<em>overlay_style</em>). If there is a second Y axis then by default the zero points for the two Y axes will align; this can be turned off by setting the <em>y2_align</em> property to False. By default there is one overlay field but you can set a higher number by setting <em>no_of_overlays</em>
 </td></tr>
 <tr><td class="lr"><dfn>Header</dfn>, <strong>Header Font</strong></td>
 <td class="none">Specify a header - super title - for the chart. There are two special strings which will be replaced in the header:
@@ -4557,7 +4585,7 @@ If it's not a diurnal chart (i.e. Period is <em>&lt;None&gt;</em>) any occurence
 <li>A Step Chart is similar to a Bar Chart but does not have spaces between the hourly bars; also it is a lot faster to display than a Bar Chart (a Bar Chart is not recommended for hourly charts).</li>
 <li>If a Target field (e.g. Load) is chosen the area above the Target value (i.e. excess generation) in the Cumulative and Step chart have a lightly shaded value (the degree of shading is chosen by the <em>alpha</em> property in the [Powerplot] Section of the Preferences file).</li>
 <li>A Heat Map visualises the total value of chosen columns to indicate the highest through lowest values of the range or, if a target column is chosen, an indication of how the total value meets the target value. Each &ldquo;square&rdquo; or &ldquo;cell&rdquo; of the map represents an hour; the vertical axis is hours in a day and the horizontal axis is days for the chosen period.</li>
-<li>For a pie chart you can use the <em>pie_group</em> Property to indicate header columns that should be highlighted in a group. This can be used for example to indicate RE technology contribution</li>
+<li>For a pie chart you can use the <em>pie_group</em> property to indicate header columns that should be highlighted in a group. This can be used for example to indicate RE technology contribution</li>
 </sl>
 <div class="experiment">
 <sl>
@@ -4606,7 +4634,7 @@ If it's not a diurnal chart (i.e. Period is <em>&lt;None&gt;</em>) any occurence
 <strong>Extras</strong>. If <em>extras</em> is set an additional button is presented to allow an experimental variable, <em>overlay_type</em>, to be set for a Step Day Chart. This describes how the overlay value will be calculated. The options are <em>Average</em>, <em>Sum</em>, or an individual hour of the day, e.g. <em>00:00</em>. An example of usage could be where you overlay a battery balance, say at end of each day, where battery balance at a specific hour could be useful. For a normal Overlay field this variable is set to <em>n/a</em>
 </li>
 <li>
-<strong>Co...</strong>. Perform either an analysis of contribution or correlation to a target. These options are presented by setting either the <em>show_contribution</em> or <em>show_correlation</em> Property of the <a href="#p_pm">[Powermatch]</a> section of the Preferences file to True. If both properties are set <em>show_contribution</em> takes precedence.<br/>
+<strong>Co...</strong>. Perform either an analysis of contribution or correlation to a target. These options are presented by setting either the <em>show_contribution</em> or <em>show_correlation</em> property of the <a href="#p_pm">[Powermatch]</a> section of the Preferences file to True. If both properties are set <em>show_contribution</em> takes precedence.<br/>
 <p><strong>Contribution</strong>. Calculate the percentage contribution of each chosen column in meeting the target. This will present a table showing the percentage contribution for each month in the chosen period.</p>
 <p><strong>Correlation</strong>. Perform linear correlations between the target and the chosen columns. This will present a table showing the correlations in descending order (i.e. best first)</p>
 <p>Correlation coefficients whose magnitude are between 0.9 and 1.0 indicate variables which can be considered <strong>very highly correlated</strong>. Correlation coefficients whose magnitude are between 0.7 and 0.9 indicate variables which can be considered <strong>highly correlated</strong>. Correlation coefficients whose magnitude are between 0.5 and 0.7 indicate variables which can be considered <strong>moderately correlated</strong>. Correlation coefficients whose magnitude are between 0.3 and 0.5 indicate variables which have a <strong>low correlation</strong>. Correlation coefficients whose magnitude are less than 0.3 have little if any (linear) correlation (from <a href="https://www.andrews.edu/~calkins/math/edrm611/edrm05.htm" target="_blank">https://www.andrews.edu/~calkins/math/edrm611/edrm05.htm</a>).</p>

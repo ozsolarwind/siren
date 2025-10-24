@@ -1165,7 +1165,7 @@ class powerMatch(QtWidgets.QWidget):
         self.batch_new_file = False
         self.batch_prefix = False
         self.batch_3d = 0
-        self.batch_3d_best = '#FFC709,#06A9D6' # best cell colour,comon best cell border
+        self.batch_3d_best = '#FFC709,#06A9D6,same' # best cell colour,common best cell border,common highlight
         self.more_details = False
         self.constraints = None
         self.generators = None
@@ -2075,6 +2075,10 @@ class powerMatch(QtWidgets.QWidget):
             self.batch_3d = min(int(st), 8)
         else:
             self.batch_3d = 0
+        try:
+            self.batch_3d_best = config.get('Powermatch', 'batch_3d_best')
+        except:
+            pass
         QtWidgets.QApplication.processEvents()
         self.setStatus(config_file[-1] + ' edited. Reload may be required.')
 
@@ -3575,6 +3579,7 @@ class powerMatch(QtWidgets.QWidget):
                         if del_sht in wb.sheetnames:
                             del wb[del_sht]
                 bs = wb.create_sheet('Results_' + rpt_time)
+            self.setStatus(f"{self.file_labels[option]} workbook is: {batch_report_file[batch_report_file.rfind('/') + 1:]}")
             start_time = time.time() # just for fun
             normal = oxl.styles.Font(name='Arial')
             bold = oxl.styles.Font(name='Arial', bold=True)
@@ -4231,6 +4236,17 @@ class powerMatch(QtWidgets.QWidget):
                     border = oxl.styles.Border(left=thin_side, right=thin_side, top=thin_side, bottom=thin_side)
                     med_border = oxl.styles.Border(left=med_side, right=med_side, top=med_side, bottom=med_side)
                     best_3d = self.batch_3d_best.split(',')
+                    best_3d = best_3d + [''] * (3 - len(best_3d))
+                    if len(best_3d[0]) == 0:
+                        best_3d[0] = '#FFC709'
+                    if len(best_3d[1]) == 0:
+                        best_3d[1] = '#06A9D6'
+                    if len(best_3d[2]) == 0:
+                        best_3d[2] = 'same'
+                    if best_3d[2].lower() not in ['same', 'true', 'yes', 'on']:
+                        best_3d[2] = False
+                    else:
+                        best_3d[2] = True
                     try:
                         font1 = oxl.styles.Font(color=f'FF{best_3d[0][-6:]}', italic=True, bold=True)
                     except:
@@ -4346,9 +4362,14 @@ class powerMatch(QtWidgets.QWidget):
                         else:
                             rule1a = oxl.formatting.rule.FormulaRule(formula=[save_rul], font=font2, border=otr_border)
                             d3s.conditional_formatting.add(d3s_range, rule1a)
-                        rule2 = oxl.formatting.rule.CellIsRule(operator='between',
-                                                               formula=[f'$D${rw2 + rs + 2}',f'$F${rw2 + rs + 2}'],
-                                                               font=font2)
+                        if d3t == 0 or not best_3d[2]:
+                            rul2 = [f'$D${rw2 + rs + 2}',f'$F${rw2 + rs + 2}']
+                            rule2 = oxl.formatting.rule.CellIsRule(operator='between',
+                                                                   formula=rul2,
+                                                                   font=font2)
+                            save_rul2 = f'IF(AND({d3s_strt}>=$D${rw2 + rs + 2},{d3s_strt}<=$F${rw2 + rs + 2}))'
+                        else:
+                            rule2 = oxl.formatting.rule.FormulaRule(formula=[save_rul2], font=font2)
                         d3s.conditional_formatting.add(d3s_range, rule2)
                         rule3 = ColorScaleRule(start_type='min', start_color='FF63BE7B',
                                                mid_type='percentile', mid_value=50, mid_color='FFFFEB84',
