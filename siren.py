@@ -279,6 +279,19 @@ class TabDialog(QtWidgets.QDialog):
                         actions[-1].setIconVisibleInMenu(True)
                     actions.append(menu.addAction(QtGui.QIcon('edit.png'), 'Edit Preferences'))
                     actions[-1].setIconVisibleInMenu(True)
+                    if len(self.models_dirs) > 1:
+                        ent_dir = self.table.item(self.table.currentRow(), 3).text()
+                    else:
+                        ent_dir = self.models_dirs[0]
+                    try:
+                        config = configparser.RawConfigParser()
+                        config.read(ent_dir + ent)
+                        utilities = config.items('utilities')
+                        for item, program in utilities:
+                            actions.append(menu.addAction(QtGui.QIcon('gear_run.png'), f'Launch {item} - {program}'))
+                            actions[-1].setIconVisibleInMenu(True)
+                    except:
+                        pass
                 else:
                     for i in range(len(self.model_tool)):
                         if self.model_tool[i] == 'updateswis':
@@ -311,6 +324,9 @@ class TabDialog(QtWidgets.QDialog):
                                 dialog.exec_()
                                 return QtCore.QObject.event(source, event)
                         self.invoke(action.text()[8:], ent_dir + ent)
+                    elif action.text()[:7] == 'Launch ':
+                        who = action.text()[action.text().rfind('- ') + 2:]
+                        self.invoke(who, '')
                     elif action.text()[-11:] == 'Preferences':
                         i = self.table.item(self.table.currentRow(), 1).text().find('[line ')
                         if i >= 0:
