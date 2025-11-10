@@ -755,16 +755,28 @@ class Table(QtWidgets.QDialog):
             iam = getattr(self.objects[0], '__module__')
         else:
             iam = self.title
-        data_file = '%s_Table_%s%s.xlsx' % (iam, self.year,
+        data_file = self.save_folder + '%s_Table_%s%s.xlsx' % (iam, self.year,
                     QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'yyyy-MM-dd_hhmm'))
-        data_file = QtWidgets.QFileDialog.getSaveFileName(None, 'Save ' + iam + ' Table',
-                    self.save_folder + data_file, 'Excel Files (*.xls*);;CSV Files (*.csv)')[0]
-        if data_file == '':
-            return
-        if data_file[-4:] == '.csv' or data_file[-4:] == '.xls' or data_file[-5:] == '.xlsx':
-            pass
-        else:
-            data_file += '.xlsx'
+        while True:
+            data_file = QtWidgets.QFileDialog.getSaveFileName(None, 'Save ' + iam + ' Table',
+                        data_file, 'Excel Files (*.xls*);;CSV Files (*.csv)')[0]
+            if data_file == '':
+                return
+            if data_file[-4:] == '.csv' or data_file[-4:] == '.xls' or data_file[-5:] == '.xlsx':
+                pass
+            else:
+                data_file += '.xlsx'
+            if not os.access(data_file[:data_file.rfind('/')], os.W_OK):
+                msgbox = QtWidgets.QMessageBox()
+                msgbox.setWindowTitle(f'SIREN - Save table')
+                msgbox.setIcon(QtWidgets.QMessageBox.Question)
+                msgbox.setText(f"Permission error saving\n{data_file}\nDo you want to specify a new location?")
+                msgbox.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+                reply = msgbox.exec_()
+                if reply == QtWidgets.QMessageBox.No:
+                    return
+            else:
+                break
         if os.path.exists(data_file):
             if os.path.exists(data_file + '~'):
                 os.remove(data_file + '~')
