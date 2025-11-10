@@ -375,7 +375,10 @@ def add_to_batch(wb, batch_file, adj_list):
                     new_cell.value = adj_list[key]
                 except:
                     pass
-    wb.save(batch_file)
+    try:
+        wb.save(batch_file)
+    except Exception as err:
+        add_msg = f'Error adding to Batch file - {str(err)}'
     return add_msg
 
 
@@ -1165,7 +1168,7 @@ class powerMatch(QtWidgets.QWidget):
         self.batch_new_file = False
         self.batch_prefix = False
         self.batch_3d = 0
-        self.batch_3d_best = '#FFC709,#06A9D6,same' # best cell colour,common best cell border,common highlight
+        self.batch_3d_best = '#FFC709,#06A9D6,False,True' # best cell colour,common best cell border,common highlight celld,border around best cells
         self.more_details = False
         self.constraints = None
         self.generators = None
@@ -1196,6 +1199,7 @@ class powerMatch(QtWidgets.QWidget):
         self.optimise_to_batch = True
         self.optimise_total_re = True
         self.remove_cost = True
+        self.report_file = ''
         self.reserve_committed = True
         self.results_prefix = ''
         self.dispatchable = ['Biomass', 'Geothermal', 'Hydro', 'Pumped Hydro', 'Solar Thermal', 'CST'] # RE dispatchable
@@ -1521,6 +1525,9 @@ class powerMatch(QtWidgets.QWidget):
             self.batch_prefix_check.setCheckState(QtCore.Qt.Unchecked)
         self.grid.addWidget(self.batch_prefix_check, r, 5)
         self.batch_prefix_check.stateChanged.connect(self.bpcchanged)
+        button = QtWidgets.QPushButton(f'Open Report file', self)
+        self.grid.addWidget(button, r, 6)
+        button.clicked.connect(self.openClicked)
         r += 1
         self.grid.addWidget(QtWidgets.QLabel('Discount Rate:'), r, 0)
         self.discount = QtWidgets.QDoubleSpinBox()
@@ -1731,7 +1738,7 @@ class powerMatch(QtWidgets.QWidget):
                 curfile = self.get_filename(self.files[R].text())
             newfile = QtWidgets.QFileDialog.getSaveFileName(None, 'Save ' + self.file_labels[i] + ' file',
                       curfile, 'Excel Files (*.xlsx)')[0]
-        elif (i == B or i == T) and not self.batch_new_file:
+        elif i == T or (i == B and not self.batch_new_file):
             options = QtWidgets.QFileDialog.Options()
             # options |= QFileDialog.DontUseNativeDialog
             newfile = QtWidgets.QFileDialog.getSaveFileName(None, 'Open/Create and save ' + self.file_labels[i] + ' file',
@@ -1784,6 +1791,18 @@ class powerMatch(QtWidgets.QWidget):
                 if newfile != self.files[D].text():
                     self.files[R].setText(newfile)
             self.updated = True
+
+    def adjust_filename(self, filename, option):
+        if filename[: len(self.scenarios)] == self.scenarios:
+            self.files[option].setText(filename[len(self.scenarios):])
+        else:
+            if filename.rfind('/') > 0:
+                that_len = len(commonprefix([self.scenarios, filename]))
+                if that_len > 0:
+                    bits = self.scenarios[that_len:].split('/')
+                    pfx = ('..' + '/') * (len(bits) - 1)
+                    filename = pfx + filename[that_len + 1:]
+            self.files[option].setText(filename)
 
     def pfxChanged(self):
         self.results_prefix = self.results_pfx_fld.text()
@@ -1874,18 +1893,22 @@ class powerMatch(QtWidgets.QWidget):
 
     def openClicked(self):
         bit = self.sender().text().split()
-        fnr = self.file_labels.index(bit[1])
-        curfile = self.get_filename(self.files[fnr].text())
-        if not os.path.exists(curfile):
-            if fnr == R and self.results_pfx_fld.text() != '':
-                i = curfile.rfind('/')
-                curfile = curfile[:i + 1] + self.results_pfx_fld.text() + '_' + curfile[i+1:]
-                if not os.path.exists(curfile):
+        if bit[1] == 'Report':
+            curfile = self.report_file
+            fnr = -1
+        else:
+            fnr = self.file_labels.index(bit[1])
+            curfile = self.get_filename(self.files[fnr].text())
+            if not os.path.exists(curfile):
+                if fnr == R and self.results_pfx_fld.text() != '':
+                    i = curfile.rfind('/')
+                    curfile = curfile[:i + 1] + self.results_pfx_fld.text() + '_' + curfile[i+1:]
+                    if not os.path.exists(curfile):
+                        self.setStatus(self.file_labels[fnr] + ' not found.')
+                        return
+                else:
                     self.setStatus(self.file_labels[fnr] + ' not found.')
                     return
-            else:
-                self.setStatus(self.file_labels[fnr] + ' not found.')
-                return
         if sys.platform == 'win32' or sys.platform == 'cygwin':
             os.startfile(curfile)
         elif sys.platform == 'darwin':
@@ -1899,7 +1922,10 @@ class powerMatch(QtWidgets.QWidget):
                     return
         elif sys.platform == 'linux2' or sys.platform == 'linux':
             subprocess.call(('xdg-open', curfile))
-        self.setStatus(self.file_labels[fnr] + ' file "launched".')
+        if fnr < 0:
+            self.setStatus('Report file "launched".')
+        else:
+            self.setStatus(self.file_labels[fnr] + ' file "launched".')
 
     def quitClicked(self):
         if self.updated or self.order.updated or self.ignore.updated:
@@ -2824,7 +2850,10 @@ class powerMatch(QtWidgets.QWidget):
         for col in range(ws.max_column, 1, -1):
             if ws.cell(row=row, column=col).value is None:
                ws.delete_cols(col, 1)
-        wb.save(batch_report_file)
+        try:
+            wb.save(batch_report_file)
+        except Exception as err:
+            self.setStatus(f'Error "cleaning" Batch file - {str(err)}')
 
     def jobsClicked(self):
       #  if self.sender().text() == 'Jobs': # jobs spreadsheet?
@@ -2835,8 +2864,8 @@ class powerMatch(QtWidgets.QWidget):
         except FileNotFoundError:
             self.setStatus(f'{self.file_labels[T]} file not found - {self.files[T].text()}')
             return
-        except Exception as e:
-            self.setStatus(f'Error accessing {self.file_labels[T]} file {str(e)}')
+        except Exception as err:
+            self.setStatus(f'Error accessing {self.file_labels[T]} file - {str(err)}')
             return
         years = {}
         rpt_sht = ''
@@ -2856,6 +2885,7 @@ class powerMatch(QtWidgets.QWidget):
             wb.close()
             self.setStatus(f'No Model (Year) row found in {self.files[T].text()}')
             return
+        self.setStatus(f"{self.file_labels[option]} report workbook is: {self.files[T].text()[self.files[T].text().rfind('/') + 1:]}")
         techs = {}
         for row in range(model_row + 1, ws.nrows):
             if ws.cell_value(row, 0) is None or ws.cell_value(row, 0) == '' or ws.cell_value(row, 0) == '' :
@@ -3019,8 +3049,34 @@ class powerMatch(QtWidgets.QWidget):
         for sheet in wb:
             wb[sheet.title].views.sheetView[0].tabSelected = False
         wb.active = bs
-        wb.save(self.get_filename(self.files[T].text()))
-        self.setStatus(f'{rpt_sht} {cht_sht} added to {self.files[T].text()}')
+        report_file = self.get_filename(self.files[T].text())
+        saved = False
+        while True:
+            try:
+                wb.save(report_file)
+                self.adjust_filename(report_file, T)
+                saved = True
+                break
+            except PermissionError:
+                msgbox = QtWidgets.QMessageBox()
+                msgbox.setWindowTitle(f'SIREN - Save {self.file_labels[T]} file')
+                msgbox.setIcon(QtWidgets.QMessageBox.Question)
+                msgbox.setText(f"Permission error saving\n{report_file}\nDo you want to specify a new location?")
+                msgbox.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+                reply = msgbox.exec_()
+                if reply == QtWidgets.QMessageBox.No:
+                    break
+                newfile = QtWidgets.QFileDialog.getSaveFileName(None, f'Save {self.file_labels[T]} file',
+                          report_file, 'Excel Files (*.xlsx)')[0]
+                if newfile == '':
+                    break
+                report_file = newfile
+            except Exception as err:
+                self.setStatus(f'Error saving {self.file_labels[T]} file - {str(err)}')
+                break
+        if saved:
+            self.report_file = report_file
+            self.setStatus(f'{rpt_sht} {cht_sht} added to {self.file_labels[T]} file')
         return
 
     def pmClicked(self):
@@ -3096,8 +3152,8 @@ class powerMatch(QtWidgets.QWidget):
             except FileNotFoundError:
                 err_msgs.append('Constraints file not found - ' + self.files[C].text())
                 self.getConstraints(None)
-            except:
-                err_msgs.append('Error accessing Constraints')
+            except Exception as err:
+                err_msgs.append(f'Error accessing Constraints - {str(err)}')
                 self.getConstraints(None)
         if self.generators is None:
             try:
@@ -3110,8 +3166,8 @@ class powerMatch(QtWidgets.QWidget):
             except FileNotFoundError:
                 err_msgs.append('Generators file not found - ' + self.files[G].text())
                 self.getGenerators(None)
-            except:
-                err_msgs.append('Error accessing Generators')
+            except Exception as err:
+                err_msgs.append('Error accessing Generators - {str(err)}')
                 self.getGenerators(None)
         pm_data_file = self.get_filename(self.files[D].text())
         if pm_data_file[-5:] != '.xlsx': #xlsx format only
@@ -3144,8 +3200,8 @@ class powerMatch(QtWidgets.QWidget):
                     return
             except FileNotFoundError:
                 err_msgs.append(f'{self.file_labels[option]} file not found - {self.files[option].text()}')
-            except Exception as e:
-                err_msgs.append(f'Error accessing {self.file_labels[option]} file {str(e)}')
+            except Exception as err:
+                err_msgs.append(f'Error accessing {self.file_labels[option]} file - {str(err)}')
         if option == O and self.optimisation is None and len(err_msgs) == 0:
             try:
                 ts = WorkBook()
@@ -3158,8 +3214,8 @@ class powerMatch(QtWidgets.QWidget):
                     err_msgs.append('Not an optimisation worksheet')
             except FileNotFoundError:
                 err_msgs.append('Optimisation file not found - ' + self.files[O].text())
-            except:
-                err_msgs.append('Error accessing Optimisation')
+            except Exception as err:
+                err_msgs.append(f'Error accessing Optimisation - {str(err)}')
             if self.optimisation is None:
                 self.getOptimisation(None)
         if self.do_jobs:
@@ -3184,8 +3240,8 @@ class powerMatch(QtWidgets.QWidget):
         except FileNotFoundError:
             self.setStatus('Data file not found - ' + self.files[D].text())
             return
-        except:
-            self.setStatus('Error accessing Data file - ' + self.files[D].text())
+        except Exception as err:
+            self.setStatus(f'Error accessing Data file - {self.files[D].text()} - {str(err)}')
             return
         ws = ts.worksheets[0]
         top_row = ws.max_row - 8760
@@ -3547,8 +3603,7 @@ class powerMatch(QtWidgets.QWidget):
             self.setStatus(f'{self.file_labels[option]} workbook re-opened for update ({tim})')
             batch_input_sheet = wb.worksheets[0]
             rpt_time = QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'yyyy-MM-dd_hhmm')
-            if self.batch_new_file:
-                wb.close()
+            if option == B and self.batch_new_file:
                 i = self.files[option].text().rfind('.')
                 suffix = '_report_' + rpt_time
                 batch_report_file = self.get_filename(self.files[option].text()[:i] + suffix + self.files[option].text()[i:])
@@ -3560,12 +3615,60 @@ class powerMatch(QtWidgets.QWidget):
                 if batch_report_file[-5:] != '.xlsx':
                     batch_report_file += '.xlsx'
                 if os.path.exists(batch_report_file) and not self.replace_last.isChecked():
+                    wb.close()
                     wb = oxl.load_workbook(batch_report_file)
                     bs = wb.create_sheet('Results_' + rpt_time)
                 else:
+                    wb.close()
+                    wbr = oxl.load_workbook(self.get_filename(self.files[option].text()), data_only=True)
                     wb = oxl.Workbook()
                     bs = wb.active
-                    bs.title = 'Results_' + rpt_time
+                    bsr = wbr.worksheets[0]
+                    bs.title = bsr.title
+                    merged_cells = []
+                    merge_cells = None
+                    for row in bsr.iter_rows():
+                        for cell in row:
+                            new_cell = bs.cell(row=cell.row, column=cell.column, value=cell.value)
+                            if cell.has_style:
+                                new_cell.font = copy(cell.font)
+                                new_cell.border = copy(cell.border)
+                                new_cell.fill = copy(cell.fill)
+                                new_cell.number_format = copy(cell.number_format)
+                                new_cell.protection = copy(cell.protection)
+                                new_cell.alignment = copy(cell.alignment)
+                            if cell.hyperlink:
+                                new_cell.hyperlink = copy(cell.hyperlink)
+                            if cell.comment:
+                                new_cell.comment = copy(cell.comment)
+                    for row in bsr.iter_rows():
+                        if row == 0:
+                            continue
+                        for cell in row:
+                            if cell.column == 0:
+                                continue
+                            if type(cell).__name__ == 'MergedCell':
+                                if merge_cells is None:
+                                    merge_cells = [cell.row, cell.column - 1, cell.column]
+                                else:
+                                    merge_cells[2] = cell.column
+                                    continue
+                            elif merge_cells is not None:
+                                bs.merge_cells(start_row=cell.row, start_column=merge_cells[1], end_row=cell.row, end_column=merge_cells[2])
+                                merged_cells.append(merge_cells)
+                                merge_cells = None
+                        if merge_cells is not None:
+                            bs.merge_cells(start_row=cell.row, start_column=merge_cells[1], end_row=cell.row, end_column=merge_cells[2])
+                            merged_cells.append(merge_cells)
+                            merge_cells = None
+                    for col_dim_key, col_dim in bsr.column_dimensions.items():
+                        if col_dim.width:
+                            bs.column_dimensions[col_dim_key].width = copy(col_dim.width)
+                        if col_dim.hidden:
+                            bs.column_dimensions[col_dim_key].hidden = copy(col_dim.hidden)
+                    bs.freeze_panes = bsr.freeze_panes
+                    wbr.close()
+                    bs = wb.create_sheet(title='Results_' + rpt_time)
             else:
                 batch_report_file = self.get_filename(self.files[option].text())
                 if self.replace_last.isChecked():
@@ -3597,9 +3700,13 @@ class powerMatch(QtWidgets.QWidget):
             model_row = False
             model_row_no = 0
             sht_nam_len = max(len(str(len(self.batch_models))), 2)
+            report_keys = []
+            for g in range(len(self.batch_report)):
+                report_keys.append(self.batch_report[g][0])
             if len(self.batch_models) > 1: #multiple sheets
                 d3_rng1 = 0 # count of 2nd level groups in sheet
                 d3_rng2 = -1 # number of cells for 2nd range
+                d3_ranges = None
                 for rcol, d3_ranges in self.range_rows.items():
                     break
                 if self.batch_3d > 0 and len(d3_ranges) > 1:
@@ -3616,23 +3723,25 @@ class powerMatch(QtWidgets.QWidget):
                     d3s.cell(row=1, column=1).font = bold
                     d3s.cell(row=2, column=1).value = 'Choose row of interest from this pull-down list (selection values in hidden rows above it)'
                     d3s.merge_cells('A2:H2')
-                    d3_selections = [['LCOE','<', 'LE'], ['LCOE incl. Carbon Cost', '<', 'CN'], ['RE %age of Total Load', '>', 'RE'],
-                                     ['Load met %age', '>', 'LA'], ['Storage %age', '>', 'RE'], ['Surplus %age', '<', 'LA'],
-                                     ['Total LCOG ($/MWh)', '<', 'LG'], ['RE %age', '>', 'RE']]
-                    for rw in range(len(d3_selections)):
-                        if self.batch_prefix:
-                            d3s.cell(row=rw + 3, column=1).value = f'{d3_selections[rw][2]}_{d3_selections[rw][0]}'
-                        else:
-                            d3s.cell(row=rw + 3, column=1).value = d3_selections[rw][0]
-                        d3s.cell(row=rw + 3, column=2).value = d3_selections[rw][1]
-                        d3s.cell(row=rw + 3, column=2).alignment = oxl.styles.Alignment(horizontal='center')
-                        d3s.row_dimensions[rw + 3].hidden = True
-                    d3s.row_dimensions[2].hidden = False # seems to get hidden
-                    d3s_formula1 = f"'3D Summary'!$A$3:$A${rw + 3}"
-                    d3s_vlookup = f'A$3:B${rw + 3},2,0'
+                    d3_selections = [['LCOE', '<', 'LCOE ($/MWh)'], ['LCOE incl. Carbon Cost', '<', 'Carbon'], ['RE %age of Total Load', '>', 'RE'],
+                                     ['Load met %age', '>', 'Load Analysis'], ['Storage %age', '>', 'RE'], ['Surplus %age', '<', 'Load Analysis'],
+                                     ['Total LCOG ($/MWh)', '<', 'LCOG ($/MWh)'], ['RE %age', '>', 'RE']]
+                    rw = 2
+                    for s in range(len(d3_selections)):
+                        if d3_selections[s][2] in report_keys:
+                            rw += 1
+                            if self.batch_prefix:
+                                d3s.cell(row=rw, column=1).value = f'{get_batch_prefix(d3_selections[s][2])}{d3_selections[s][0]}'
+                            else:
+                                d3s.cell(row=rw, column=1).value = d3_selections[s][0]
+                            d3s.cell(row=rw, column=2).value = d3_selections[s][1]
+                            d3s.cell(row=rw, column=2).alignment = oxl.styles.Alignment(horizontal='center')
+                            d3s.row_dimensions[rw].hidden = True
+                    batch_3d = min(self.batch_3d, rw - 2)
+             #      d3s.row_dimensions[2].hidden = False # seems to get hidden
+                    d3s_formula1 = f"'3D Summary'!$A$3:$A${rw}"
+                    d3s_alookup = f'=OFFSET($A$3,MATCH(A<row>,$A$3:$A${rw},0)-1,1,1)'
                     d3s.column_dimensions['A'].width = 24
-                else:
-                    d3_ranges = None
             chart_groups = []
             for sht in range(len(self.batch_models)):
                 sheet_start = time.time()
@@ -3748,9 +3857,6 @@ class powerMatch(QtWidgets.QWidget):
                 batch_data_sources_row = 0
                 re_tml_row = 0
                 max_load_row = -1
-                report_keys = []
-                for g in range(len(self.batch_report)):
-                    report_keys.append(self.batch_report[g][0])
                 if 'Lifetime Cost' in report_keys:
                     batch_lifetime = True
                 for g in range(len(self.batch_report)):
@@ -4230,23 +4336,31 @@ class powerMatch(QtWidgets.QWidget):
                                 pass
                 for row in sorted(del_rows, reverse=True):
                     bs.delete_rows(row, 1)
-                if d3_ranges is not None and len(self.batch_models) > 1 and sht == 1: #multiple sheets
+                if self.batch_3d > 0 and len(self.batch_models) > 1 and sht == 1: #multiple sheets
                     med_side = oxl.styles.Side(border_style='medium')
                     thin_side = oxl.styles.Side(border_style='thin')
                     border = oxl.styles.Border(left=thin_side, right=thin_side, top=thin_side, bottom=thin_side)
                     med_border = oxl.styles.Border(left=med_side, right=med_side, top=med_side, bottom=med_side)
                     best_3d = self.batch_3d_best.split(',')
-                    best_3d = best_3d + [''] * (3 - len(best_3d))
-                    if len(best_3d[0]) == 0:
+                    best_3d = best_3d + [''] * (5 - len(best_3d)) # back to 3 when done
+                    if len(best_3d[0]) == 0: # best font colour
                         best_3d[0] = '#FFC709'
-                    if len(best_3d[1]) == 0:
+                    if len(best_3d[1]) == 0: # best border color from first table
                         best_3d[1] = '#06A9D6'
-                    if len(best_3d[2]) == 0:
-                        best_3d[2] = 'same'
-                    if best_3d[2].lower() not in ['same', 'true', 'yes', 'on']:
+                    if best_3d[2].lower() not in ['same', 'true', 'yes', 'on']: # same highlights as first table
                         best_3d[2] = False
                     else:
                         best_3d[2] = True
+                    if len(best_3d[3]) == 0: # show cell borders
+                        best_3d[3] = 'true'
+                    if best_3d[3].lower() not in ['true', 'yes', 'on']: # if true do the cell borders
+                        best_3d[3] = False
+                    else:
+                        best_3d[3] = True
+                    if len(best_3d[4]) == 0: # $ if want absolute for formual references ('' seem better)
+                        best_3d[4] = ''
+                    else:
+                        best_3d[4] = '$'
                     try:
                         font1 = oxl.styles.Font(color=f'FF{best_3d[0][-6:]}', italic=True, bold=True)
                     except:
@@ -4255,7 +4369,12 @@ class powerMatch(QtWidgets.QWidget):
                         otr_side = oxl.styles.Side(border_style='medium', color=best_3d[1][-6:])
                     except:
                         otr_side = oxl.styles.Side(border_style='medium', color='06A9D6')
-                    otr_border = oxl.styles.Border(left=otr_side, right=otr_side, top=otr_side, bottom=otr_side)
+                    if best_3d[3]:
+                        otr_border = oxl.styles.Border(left=otr_side, right=otr_side, top=otr_side, bottom=otr_side)
+                        bst_border = oxl.styles.Border(left=med_side, right=med_side, top=med_side, bottom=med_side)
+                    else:
+                        otr_border = None
+                        bst_border = None
                     font2 = oxl.styles.Font(bold=True)
                     fonthide = oxl.styles.Font(color='FFFFFFFF')
                    # self.setStatus(f'{bs.title}: {len(self.batch_models[sht]) + 1} columns, {bs.max_row}, {d3_rng1}, {d3_rng2}')
@@ -4283,7 +4402,7 @@ class powerMatch(QtWidgets.QWidget):
                         cell_fill = oxl.styles.fills.PatternFill(patternType='solid', fgColor=acolor)
                         d3s.cell(row=rw, column=1).fill = cell_fill
                         d3s.cell(row=rw, column=1).value = d3s.cell(row=3 + d3t, column=1).value
-                        d3s.cell(row=rw, column=2).value = f'=VLOOKUP(A{rw},{d3s_vlookup})'
+                        d3s.cell(row=rw, column=2).value = d3s_alookup.replace('<row>', f'{rw}')
                         d3s.cell(row=rw, column=2).alignment = oxl.styles.Alignment(horizontal='center')
                         sn = f"'{bs.title}'"
                         d3s.cell(row=rw, column=3).value = 'Row'
@@ -4321,29 +4440,27 @@ class powerMatch(QtWidgets.QWidget):
                             d3s.cell(row=rw2 + rs, column=3).number_format = '#0'
                             d3s.cell(row=rw2 + rs, column=3).border = med_border
                             for s2 in range(d3_rng1):
-                                f1 = f'=MIN(INDIRECT(CONCATENATE("\'",TEXT($A{rw2 + rs},"###00"),"\'!",' + \
-                                         f'TEXT({ssCol(s2 + 4)}${rw + 3},"###00"),":",TEXT({ssCol(s2 + 4)}${rw + 4},"###00"))))'
-                                cels = f'INDIRECT("\'{rs:0{sht_nam_len}}\'!"&{ssCol(s2 + 4)}${rw}&":"&{ssCol(s2 + 4)}${rw + 1})'
-                                f1 = f'=IF({lege_str}="<",MIN({cels}),MAX({cels})'
+                                if d3_rng2 == 1:
+                                    f1 = f'=INDIRECT("\'{rs:0{sht_nam_len}}\'!"&{ssCol(s2 + 4)}${rw})'
+                                else:
+                                    cels = f'INDIRECT("\'{rs:0{sht_nam_len}}\'!"&{ssCol(s2 + 4)}${rw}&":"&{ssCol(s2 + 4)}${rw + 1})'
+                                    f1 = f'=IF({lege_str}="<",MIN({cels}),MAX({cels}))'
                                 d3s.cell(row=rw2 + rs, column=s2 + 4).value = f1
                                 d3s.cell(row=rw2 + rs, column=s2 + 4).number_format = '#0.00'
                                 d3s.cell(row=rw2 + rs, column=s2 + 4).border = border
                         # now for Len's extras
-                        d3s_strt = f'D{rw2 + 1}'
-                        d3s_endcol = f'{ssCol(d3_rng1 + 3)}'
-                        d3s_end = f'{d3s_endcol}{rw2 + len(self.batch_models) - 1}'
+                        d3s_strt = f'{best_3d[4]}D{best_3d[4]}{rw2 + 1}'
+                        d3s_endcol = f'{best_3d[4]}{ssCol(d3_rng1 + 3)}'
+                        d3s_end = f'{d3s_endcol}{best_3d[4]}{rw2 + len(self.batch_models) - 1}'
                         d3s_range = f'{d3s_strt}:{d3s_end}'
                         d3s.cell(row=rw2 + rs + 1, column=1).value = 'Within range'
                         d3s.cell(row=rw2 + rs + 1, column=4).value = .05
                         d3s.cell(row=rw2 + rs + 1, column=4).number_format = '#,##0%'
                         d3s.cell(row=rw2 + rs + 2, column=1).value = 'Best range'
-                        d3s.cell(row=rw2 + rs + 2, column=2).value = f'=IF(D{rw2 + rs + 3}>0,1,MATCH(1,C{rw2 + rs + 3}:{d3s_endcol}{rw2 + rs + 3},1))'
-                        d3s.cell(row=rw2 + rs + 2, column=2).font = fonthide
-                        d3s.cell(row=rw2 + rs + 2, column=3).value = f'=INDIRECT("R{rw2 + rs + 3}C"&3+B{rw2 + rs + 2},0)'
-                        d3s.cell(row=rw2 + rs + 2, column=3).font = fonthide
                         d3s.cell(row=rw2 + rs + 2, column=4).value = f'=IF({lege_str}=">",IFERROR(MAX({d3s_range})*(1-D{rw2 + rs + 1}),' + \
                                                                      f'MAX({d3s_range})),MIN({d3s_range}))'
                         d3s.cell(row=rw2 + rs + 2, column=4).number_format = '#0.00'
+                        # rumin - highlight low best range best value
                         rumin = oxl.formatting.rule.FormulaRule(formula=[f'{lege_str}="<"'], border=med_border)
                         d3s.conditional_formatting.add(f'D{rw2 + rs + 2}', rumin)
                         d3s.cell(row=rw2 + rs + 2, column=5).value = 'up to'
@@ -4351,43 +4468,55 @@ class powerMatch(QtWidgets.QWidget):
                         d3s.cell(row=rw2 + rs + 2, column=6).value = f'=IF({lege_str}=">",MAX({d3s_range}),' + \
                                                                      f'IFERROR($D${rw2 + rs + 2}*(1+$D${rw2 + rs + 1}),$D${rw2 + rs + 2}))'
                         d3s.cell(row=rw2 + rs + 2, column=6).number_format = '#0.00'
+                        # rumax - highlight high best range best value
                         rumax = oxl.formatting.rule.FormulaRule(formula=[f'{lege_str}=">"'], border=med_border)
-                        d3s.conditional_formatting.add(f'F{rw2 + rs + 2}', rumax)
+                        d3s.conditional_formatting.add(f'{best_3d[4]}F{best_3d[4]}{rw2 + rs + 2}', rumax)
+                        # rule1 - highlight best value
                         rul = f'OR(AND({lege_str}="<",{d3s_strt}=$D${rw2 + rs + 2}),' + \
                               f'AND({lege_str}=">",{d3s_strt}=$F${rw2 + rs + 2}))'
-                        rule1 = oxl.formatting.rule.FormulaRule(formula=[rul], font=font1, border=med_border)
+                        rule1 = oxl.formatting.rule.FormulaRule(formula=[rul], font=font1, border=bst_border) # maybe border=bst_border is wrong
                         d3s.conditional_formatting.add(d3s_range, rule1)
                         if d3t == 0:
                             save_rul = rul
                         else:
+                            # rule1a - highlight best value from first table
                             rule1a = oxl.formatting.rule.FormulaRule(formula=[save_rul], font=font2, border=otr_border)
                             d3s.conditional_formatting.add(d3s_range, rule1a)
+                        # rule2 - bold for cells within range
                         if d3t == 0 or not best_3d[2]:
                             rul2 = [f'$D${rw2 + rs + 2}',f'$F${rw2 + rs + 2}']
                             rule2 = oxl.formatting.rule.CellIsRule(operator='between',
                                                                    formula=rul2,
                                                                    font=font2)
-                            save_rul2 = f'IF(AND({d3s_strt}>=$D${rw2 + rs + 2},{d3s_strt}<=$F${rw2 + rs + 2}))'
+                            save_rul2 = f'IF(AND({d3s_strt}>=$D${rw2 + rs + 2},{d3s_strt}<=$F${rw2 + rs + 2}),TRUE,FALSE)'
                         else:
                             rule2 = oxl.formatting.rule.FormulaRule(formula=[save_rul2], font=font2)
                         d3s.conditional_formatting.add(d3s_range, rule2)
+                        # rule 3 - colour range for this table
                         rule3 = ColorScaleRule(start_type='min', start_color='FF63BE7B',
                                                mid_type='percentile', mid_value=50, mid_color='FFFFEB84',
                                                end_type='max', end_color='FFF8696B')
                         d3s.conditional_formatting.add(d3s_range, rule3)
                         d3s.cell(row=rw2 + rs + 3, column=1).value = 'Sheet (1st level) with best'
-                        d3s.cell(row=rw2 + rs + 3, column=2).value = f'=OFFSET($A${rw2 + 1},IF(C{rw2 + rs + 2}=0,0,C{rw2 + rs + 2}-1),0,1,1)'
+                        d3s.cell(row=rw2 + rs + 3, column=2).value = f'=OFFSET($A${rw2 + 1},IF(C{rw2 + rs + 3}=0,0,C{rw2 + rs + 3}-1),0,1,1)'
+                        d3s.cell(row=rw2 + rs + 3, column=3).value = f'=SUM(D{rw2 + rs + 3}:{d3s_endcol}{rw2 + rs + 3})'
+                        d3s.cell(row=rw2 + rs + 3, column=3).font = fonthide
                         d3s.cell(row=rw2 + rs + 4, column=1).value = '2nd level with best'
                         d3s.cell(row=rw2 + rs + 4, column=2).value = f'=MATCH(VALUE(B{rw2 + rs + 3}),D{rw2 + rs + 3}:{ssCol(d3_rng1 + 3)}{rw2 + rs + 3},0)'
+                        scheck = ''
+                        send = ''
                         for s2 in range(d3_rng1):
-                            d3s.cell(row=rw2 + rs + 3, column=s2 + 4).value = f'=IF({lege_str}="<",IFERROR(MATCH($D${rw2 + rs + 2},{ssCol(s2 + 4)}${rw2 + 1}:' + \
+                            if s2 > 0:
+                                scheck = f'IF(SUM($D{rw2 + rs + 3}:{ssCol(s2 + 3)}{rw2 + rs + 3})=0,'
+                                send = ',0)'
+                            d3s.cell(row=rw2 + rs + 3, column=s2 + 4).value = f'={scheck}IF({lege_str}="<",IFERROR(MATCH($D${rw2 + rs + 2},{ssCol(s2 + 4)}${rw2 + 1}:' + \
                                                                               f'{ssCol(s2 + 4)}${rw2 + len(self.batch_models) - 1},0),0),' + \
                                                                               f'IFERROR(MATCH($F${rw2 + rs + 2},{ssCol(s2 + 4)}${rw2 + 1}:' + \
-                                                                              f'{ssCol(s2 + 4)}${rw2 + len(self.batch_models) - 1},0),0)'
+                                                                              f'{ssCol(s2 + 4)}${rw2 + len(self.batch_models) - 1},0),0)){send}'
                             d3s.cell(row=rw2 + rs + 3, column=s2 + 4).font = fonthide
-                            d3s.cell(row=rw2 + rs + 4, column=s2 + 4).value = f'=IF({ssCol(s2 + 4)}{rw2 + rs + 3}>0,MATCH(OFFSET({ssCol(s2 + 4)}{rw2 + 1},' + \
-                                                                              f'{ssCol(s2 + 4)}{rw2 + rs + 3}-1,0),' + \
-                                                                              f'INDIRECT("\'"&$B{rw2 + rs + 3}&"\'!"&{ssCol(s2 + 4)}{rw}&":"&' + \
+                            d3s.cell(row=rw2 + rs + 4, column=s2 + 4).value = f'=IF({ssCol(s2 + 4)}{rw2 + rs + 3}>0,MATCH(OFFSET({ssCol(s2 + 4)}{rw2},' + \
+                                                                              f'{ssCol(s2 + 4)}{rw2 + rs + 3},0),' + \
+                                                                              f'INDIRECT("\'"&$B${rw2 + rs + 3}&"\'!"&{ssCol(s2 + 4)}{rw}&":"&' + \
                                                                               f'{ssCol(s2 + 4)}{rw + 1}),0),"")'
                         d3s.row_dimensions[rw2 + rs + 4].hidden = True
                         d3s.cell(row=rw2 + rs + 5, column=1).value = 'Target cell with best'
@@ -4624,14 +4753,43 @@ class powerMatch(QtWidgets.QWidget):
            #     self.setStatus('Saving %s report' % (self.sender().text()))
             self.progressbar.setValue(20)
             QtWidgets.QApplication.processEvents()
-            wb.save(batch_report_file)
+            saved = False
+            while True:
+                try:
+                    wb.save(batch_report_file)
+                    if option == T or (option == B and not self.batch_new_file):
+                        self.adjust_filename(batch_report_file, option)
+                    saved = True
+                    break
+                except PermissionError:
+                    msgbox = QtWidgets.QMessageBox()
+                    msgbox.setWindowTitle(f'SIREN - Save {self.file_labels[option]} file')
+                    msgbox.setIcon(QtWidgets.QMessageBox.Question)
+                    msgbox.setText(f"Permission error saving\n{batch_report_file}\nDo you want to specify a new location?")
+                    msgbox.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+                    reply = msgbox.exec_()
+                    if reply == QtWidgets.QMessageBox.No:
+                        break
+                    newfile = QtWidgets.QFileDialog.getSaveFileName(None, f'Save {self.file_labels[option]} file',
+                              batch_report_file, 'Excel Files (*.xlsx)')[0]
+                    if newfile == '':
+                        break
+                    batch_report_file = newfile
+                except Exception as err:
+                    self.setStatus(f'Error saving {self.file_labels[option]} file - {str(err)}')
+                    break
             tim = (time.time() - start_time)
             if tim < 60:
                 tim = '%.1f secs' % tim
             else:
                 hhmm = tim / 60.
                 tim = f'{int(hhmm)}:{int((hhmm-int(hhmm))*60.):0>2} mins'
-            self.setStatus(f'{self.sender().text()} completed ({len(self.batch_models)} sheets, {total_models:,} models; {tim}). You may need to open and save the workbook to reprocess it.')
+            if saved:
+                self.report_file = batch_report_file
+                self.setStatus(f'{self.sender().text()} completed ({len(self.batch_models)} sheets, {total_models:,} ' + \
+                               f'models; {tim}). You may need to open and save the workbook to reprocess it.')
+            else:
+                self.setStatus(f'{self.sender().text()} aborted ({tim}).')
             self.progressbar.setHidden(True)
             self.progressbar.setValue(0)
             return
@@ -6864,13 +7022,39 @@ class powerMatch(QtWidgets.QWidget):
                         pass
             cs.freeze_panes = 'B2'
             cs.activeCell = 'B2'
-        wb.save(rslts_file)
+        saved = False
+        while True:
+            try:
+                wb.save(rslts_file)
+                self.adjust_filename(rslts_file, R)
+                saved = True
+                break
+            except PermissionError:
+                msgbox = QtWidgets.QMessageBox()
+                msgbox.setWindowTitle(f'SIREN - Save {self.file_labels[option]} file')
+                msgbox.setIcon(QtWidgets.QMessageBox.Question)
+                msgbox.setText(f"Permission error saving\n{rslts_file}\nDo you want to specify a new location?")
+                msgbox.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+                reply = msgbox.exec_()
+                if reply == QtWidgets.QMessageBox.No:
+                    msg = 'Detail processing aborted.'
+                    break
+                newfile = QtWidgets.QFileDialog.getSaveFileName(None, f'Save {self.file_labels[option]} file',
+                          rslts_file, 'Excel Files (*.xlsx)')[0]
+                if newfile == '':
+                    break
+                rslts_file = newfile
+            except Exception as err:
+                msg = f'Error saving {self.file_labels[option]} file - {str(err)}'
+                break
         self.progressbar.setValue(20)
         QtWidgets.QApplication.processEvents()
-        j = rslts_file.rfind('/')
-        rslts_file = rslts_file[j + 1:]
-        msg = '%s created (%.2f seconds)' % (rslts_file, time.time() - start_time)
-        msg = '%s created.' % rslts_file
+        if saved:
+            self.report_file = rslts_file
+            j = rslts_file.rfind('/')
+            rslts_file = rslts_file[j + 1:]
+            msg = '%s created (%.2f seconds)' % (rslts_file, time.time() - start_time)
+            msg = '%s created.' % rslts_file
         self.setStatus(msg)
         self.progressbar.setHidden(True)
         self.progressbar.setValue(0)

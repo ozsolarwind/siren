@@ -2368,7 +2368,7 @@ Specifics on Hydroelectric power characteristics (experimental). Properties are:
 </tr>
 <tr class="none">
 <td class="none"><dfn>batch_3d_best</dfn></td>
-<td class="none">An optional property to specify (i) the font colour for the best cell(s) in 3D Summary tables, (ii) the border colour for best cells from the first summary table in subsequent tables, and (iii) to indicate if the highlighted cells within range will be the same as the first summary table. Default is <em>#FFC709,#06A9D6,True</em></td>
+<td class="none">An optional property to specify (i) the font colour for the best cell(s) in 3D Summary tables, (ii) the border colour for best cells from the first summary table in subsequent tables, (iii) to indicate if the highlighted cells within range will be the same as the first summary table, and (iv) to indicate that the best cells should have a border. The properties are separated by a comma and empty values can be included to choose the default. Default property is <em>#FFC709,#06A9D6,False,True</em></td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>carbon_price</dfn></td>
@@ -4113,7 +4113,7 @@ The order in which the dispatchable technologies will be processed by Powermatch
 </p><strong>Usage notes:</strong>
 <ul>
 <li>If you want to include a Total row in the outputs you need to have a Total row (as the last row) in the <em>Capacity (MW)</em> Report Group</li>
-<li><strong>Beware:</strong> If the batch input worksheet (capacity figures) contains formulae you need to be careful doing multiple batch executions. You may need to open the batch worksheet and save it before doing another batch execution.</li>
+<li><strong>Beware:</strong> If the batch input worksheet (capacity figures) contains formulae you need to be careful doing multiple batch executions. You may need to open the batch worksheet and save it before doing another batch execution. Powermatch uses a library, <a href="https://openpyxl.readthedocs.io/en/stable/">openpyxl</a>, to process XLSX spreadsheets. One of the observations is - &ldquo;If you need to access the calculated values of formulas, you typically need to open the workbook in an application like Excel, allow it to recalculate the formulas, and then save the workbook&rdquo;</li>
 <li>(in case you missed it). If you're modelling with zones both the input data file and the batch file must have input capacities by zone</li>
 <li>By default, the same Load data is used for all models in a Batch execution. If you add a <dfn>year</dfn> row immediately after the <dfn>Capacity (MW)</dfn> row, the load file can be changed to other years. The same Generators table is used for all models</li>
 <li>If the input model has capacity for facilities contributing to Underlying load (e.g. Rooftop PV) the batch report will contain underlying totals</li>
@@ -4124,7 +4124,7 @@ The order in which the dispatchable technologies will be processed by Powermatch
 </p>
 </li>
 <div class="experiment">
-<li><strong>Transition</strong>. This option can assist with modelling a transition from a &ldquo;current&rdquo; state to a future state with annual changes to technologies. The option uses a Batch file as input. For convenience there is an additional menu field for a Transition file, however, the file is idential to a Batch file. You create a model for each year with the planned additional capacities for that year. Powermatch will use the load profile for that year. To determine the capital cost for Generators it will calculate the average cost based upon the capacities for each year. To work corectly the models (may) need to be in ascending order by year. It relies on the load profile and Generators table names (sheet names) to include the year. The year can be passed either in the <dfn>Model Label</dfn> or an addiitonal <drn>year</dfn> row. When using this option the <em>remove_cost</em> cost option is ignored (set to False) to ensure capital costs are captured for a new technology even if it is not used. The report for each year is the cumulative cost up to that point and not the incremental cost
+<li><strong>Transition</strong>. This option can assist with modelling a transition from a &ldquo;current&rdquo; state to a future state with annual changes to technologies. The option uses a Batch file as input. For convenience there is an additional menu field for a Transition file, however, the file is idential to a Batch file. You create a model for each year with the planned additional capacities for that year. Powermatch will use the load profile for that year. To determine the capital cost for Generators it will calculate the average cost based upon the capacities for each year. To work correctly the models (may) need to be in ascending order by year. It relies on the load profile and Generators table names (sheet names) to include the year. The year can be passed either in the <dfn>Model Label</dfn> or an addiitonal <drn>year</dfn> row. When using this option the <em>remove_cost</em> cost option is ignored (set to False) to ensure capital costs are captured for a new technology even if it is not used. The report for each year is the cumulative cost up to that point and not the incremental cost
 </li>
 </div>
 </p>
@@ -4183,12 +4183,20 @@ Where:
 <div class="experiment">
 <em>3D Summary tables</em>
 <p>If the <em>batch_3d</em> property is set a &ldquo;three dimensional&rdquo; worksheet, <strong>3D Summary</strong>, will be created to provide a summary of results for a chosen variable/row using a coloured table highlighting the best results for the chosen variable/row. The table has a row for each output worksheet and a column for each second technology. Lower values will trend towards green and higher values towards red. Thus, for a variable where a lower value is better, e.g. LCOE, greener values are better, whereas for those where a higher value is better, e.g. RE %age, redder values are better. Just below the table is a hyperlink to the (first) best cell value. By default, the best cell within the table will be highlighted in yellow; values within the percentage range set by the 'Within range' value of the first will be bold. This table is derived from some clever Excel work from Len Bunn. <em>batch_3d</em>  can be set to a value between 1 and 8 to allow multiple summary tables to be produced.</p>
-<p>The <em>batch_3d_best</em> property enables some changes to be made to the highlighting in the tables. This property has three values separated by commas (default value is <em>#FFC709,#06A9D6,True</em>) that do the following:
+<p><strong>Notes:</strong><br />
+<ul>
+<li>If you have more than two ranges each cell is for the same combination of the first two ranges and all other combinations of the other ranges</li>
+<li>Due to some differences in how Excel and LibreOffice treat certain functions the formulae to determine the best cell hyperlinks may appear a little convoluted</li>
+<li>For readibility some rows in the 3D Summary table are hidden and some cell font colours are set to white</li>
+</ul>
+<p>The <em>batch_3d_best</em> property enables some changes to be made to the highlighting in the tables. This property has four values separated by commas (default value is <em>#FFC709,#06A9D6,False,True</em>) that do the following:
 <ol>
 <li>Sets the colour for the best cell value(s). It is a hex HTML color field (see <a href="https://htmlcolorcodes.com/">HTML Color Codes</a>). The default value is #FFC709 (<span style="color: #FFC709;">#FFC709</span><color>)</li>
 <li>Sets the border colour in subsequent tables for the best cell value(s) from the first table. It is a hex HTML color field. The default value is #06A9D6 (<span style="color: #06A9D6;">#06A9D6</span><color>)</li>
-<li>Indicates whether the highlight for 'Within Range' values are the same as the first table or for this (subsequent) table. The default value is True</li>
+<li>Indicates whether the highlight for 'Within Range' values are the same as the first table or for this (subsequent) table. The default value is False</li>
+<li>Indicates whether the best cells have a border. The default value is True</li>
 </ol>
+<p>The properties are separated by a comma and empty values can be included to choose the default. For example, <em>batch_3d_best=,,True</em> would indicate the highlight range for subsequent tables should be the same as the initial table with all other values being the default</p>
 </div>
 <p>The following example shows a batch input table (column) with three capacity ranges. Onshore Wind is the first technology and results in 7 worksheets of output, one for each technology step for Wind. Each worksheet contains 36 model outputs, for a total of 252 models. The worksheets have 6 Merged Groups, one for each step for Single Axis PV with each Merged Group having 6 values for Battery (4hr) and individual Model names are derived from Battery capacity. In a real-world example this approach has been used to create 26 sheets with a total of over 17,500 models in a single execution of Powermatch.</p>
 <table class="none">
@@ -5099,7 +5107,7 @@ Load data can also be downloaded for prior years to a filename defined by the <e
 <p><em>ERA5 hourly data on single levels from 1940 to present</em> provides data suitable to our needs.</p>
 <h4 id="era5">Obtaining ERA5 Data</h4>
 <p>ERA5 Data is publicly available and the following steps can be used to obtain the required data.</p>
-<p>To access ERA5 data you need to <a href="https://cds.climate.copernicus.eu/user/register" target="_blank">create a CDS account</a></p>
+<p>To access ERA5 data you need to <a href="https://cds.climate.copernicus.eu" target="_blank">create a CDS account</a>. This will need to create an API key</p>
 <p>Once set up you can either fill in the data request form or use <code>getera5</code> - see <a href="#getera5">Get ERA5 Files</a>.
 The data request form is at <a href="https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels?tab=form" target="_blank">ERA5 hourly data on single levels from 1940 to present</a>.
 To fill in the form you choose the following options:
