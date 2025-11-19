@@ -87,8 +87,8 @@ target_fmats = ['$%.2f', '%.1f%%', '%.1f%%', '%.1f%%', '$%.1fpwr_chr', '%.1fpwr_
 target_titles = ['LCOE ($)', 'Load met %', 'Surplus %', 'RE %', 'Total Cost ($)', 'tCO2e']
 headers = ['Facility', 'Capacity\n(Gen, MW;\nStor, MWh)', 'To meet\nLoad (MWh)',
            'Subtotal\n(MWh)', 'CF', 'Cost ($/yr)', 'LCOG\nCost\n($/MWh)', 'LCOE\nCost\n($/MWh)',
-           'Emissions\n(tCO2e)', 'Emissions\nCost', 'LCOE With\nCO2 Cost\n($/MWh)', 'Max.\nMWH',
-           'Max.\nBalance', 'Capital\nCost', 'Lifetime\nCost', 'Lifetime\nEmissions',
+           'Emissions\n(tCO2e)', 'Emissions\nIntensity', 'Emissions\nCost', 'LCOE With\nCO2 Cost\n($/MWh)',
+           'Max.\nMWH', 'Max.\nBalance', 'Capital\nCost', 'Lifetime\nCost', 'Lifetime\nEmissions',
            'Lifetime\nEmissions\nCost', 'Area (km^2)', 'Job\nYears', 'Reference\nLCOE', 'Reference\nCF']
 # set up columns for summary table. Hopefully to make it easier to add / alter columns
 st_fac = 0 # Facility
@@ -100,18 +100,19 @@ st_cst = 5 # Cost ($/yr)
 st_lcg = 6 # LCOG\nCost\n($/MWh)
 st_lco = 7 # LCOE\nCost\n($/MWh)
 st_emi = 8 # Emissions\n(tCO2e)
-st_emc = 9 # Emissions\nCost
-st_lcc = 10 # LCOE With\nCO2 Cost\n($/MWh)
-st_max = 11 # Max.\nMWH
-st_bal = 12 # Max.\nBalance'
-st_cac = 13 # Capital\nCost'
-st_lic = 14 # Lifetime\nCost'
-st_lie = 15 # Lifetime\nEmissions
-st_lec = 16 # Lifetime\nEmissions\nCost
-st_are = 17 # Areas (km^2)
-st_job = 18 # Job (years)
-st_rlc = 19 # Reference\nLCOE
-st_rcf = 20 # Reference\nCF
+st_ein = 9 # Emissions\nintensity
+st_emc = 10 # Emissions\nCost
+st_lcc = 11 # LCOE With\nCO2 Cost\n($/MWh)
+st_max = 12 # Max.\nMWH
+st_bal = 13 # Max.\nBalance'
+st_cac = 14 # Capital\nCost'
+st_lic = 15 # Lifetime\nCost'
+st_lie = 16 # Lifetime\nEmissions
+st_lec = 17 # Lifetime\nEmissions\nCost
+st_are = 18 # Areas (km^2)
+st_job = 19 # Job (years)
+st_rlc = 20 # Reference\nLCOE
+st_rcf = 21 # Reference\nCF
 
 # same order as self.file_labels
 C = 0 # Constraints - xls or xlsx
@@ -3555,6 +3556,7 @@ class powerMatch(QtWidgets.QWidget):
                              'LCOG ($/MWh)': [st_lcg, '#,##0.00'],
                              'LCOE ($/MWh)': [st_lco, '#,##0.00'],
                              'Emissions (tCO2e)': [st_emi, '#,##0'],
+                             'Emissions Intensity': [st_ein, '#,##0.000'],
                              'Emissions Cost': [st_emc, '#,##0'],
                              'LCOE With CO2 ($/MWh)': [st_lcc, '#,##0.00'],
                              'Max MWh': [st_max, '#,##0'],
@@ -4837,6 +4839,7 @@ class powerMatch(QtWidgets.QWidget):
             sp_d[st_lcg] = gs
             sp_d[st_lco] = gsw
             sp_d[st_emi] = co2_sum
+            sp_d[st_ein] = co2_sum / tml_sum
             sp_d[st_emc] = co2_cost_sum
             sp_d[st_lcc] = gswc
             sp_d[st_cac] = capex_sum
@@ -5161,6 +5164,8 @@ class powerMatch(QtWidgets.QWidget):
                 else:
                     ss.cell(row=ss_row, column=st_emi+1).value = '=Detail!' + ssCol(col) + str(emi_row)
                 ss.cell(row=ss_row, column=st_emi+1).number_format = '#,##0'
+                ss.cell(row=ss_row, column=st_ein+1).value = f'=IF({ssCol(st_tml+1)}{ss_row}>0,{ssCol(st_emi+1)}{ss_row}/{ssCol(st_tml+1)}{ss_row},"")'
+                ss.cell(row=ss_row, column=st_ein+1).number_format = '#,##0.000'
                 if self.carbon_price > 0:
                     ss.cell(row=ss_row, column=st_emc+1).value = '=IF(AND(' + ssCol(st_emi+1) + str(ss_row) + '<>"",' + \
                                                                  ssCol(st_emi+1) + str(ss_row) + '>0),' + \
@@ -5216,6 +5221,9 @@ class powerMatch(QtWidgets.QWidget):
             ss.cell(row=ss_row, column=st_lco+1).value = '=' + ssCol(st_cst+1) + str(ss_row) + \
                                                          '/' + ssCol(st_tml+1) + str(ss_row)
             ss.cell(row=ss_row, column=st_lco+1).number_format = '$#,##0.00'
+            ss.cell(row=ss_row, column=st_ein+1).value = f'=IF({ssCol(st_tml+1)}{ss_row}>0,{ssCol(st_emi+1)}{ss_row}/{ssCol(st_tml+1)}{ss_row},"")'
+            ss.cell(row=ss_row, column=st_ein+1).number_format = '#,##0.000'
+            ss.cell(row=ss_row, column=st_ein+1).font = bold
             if self.carbon_price > 0:
                 ss.cell(row=ss_row, column=st_lcc+1).value = '=(' + ssCol(st_cst+1) + str(ss_row) + \
                     '+' + ssCol(st_emc+1) + str(ss_row) + ')/' + ssCol(st_tml+1) + str(ss_row)
@@ -5573,6 +5581,7 @@ class powerMatch(QtWidgets.QWidget):
             emi_row = 8
             ns.cell(row=emi_row, column=2).value = headers[st_emi].replace('\n', ' ')
             ss.cell(row=3, column=st_emi+1).value = headers[st_emi] # emissions
+            ss.cell(row=3, column=st_ein+1).value = headers[st_ein] # emissions intensity
             ss.cell(row=3, column=st_emc+1).value = headers[st_emc] # emissions cost
             ss.cell(row=3, column=st_lcc+1).value = headers[st_lcc] # LCOE with CO2
             ss.cell(row=3, column=st_max+1).value = headers[st_max] # max. MWh
@@ -6237,6 +6246,7 @@ class powerMatch(QtWidgets.QWidget):
                 lifetime_sum += sp_data[sp][st_lic]
                 if self.generators[gen].emissions > 0 and sp_data[sp][st_tml] > 0:
                     sp_data[sp][st_emi] = sp_data[sp][ndx] * self.generators[gen].emissions
+                    sp_data[sp][st_ein] = sp_data[sp][st_emi] / sp_data[sp][st_tml]
                     co2_sum += sp_data[sp][st_emi]
                     sp_data[sp][st_emc] = sp_data[sp][st_emi] * self.carbon_price
                     if sp_data[sp][st_cst] == 0:
@@ -6354,6 +6364,7 @@ class powerMatch(QtWidgets.QWidget):
                     lifetime_sum += sp_d[st_lic]
                     if self.generators[gen].emissions > 0:
                         sp_d[st_emi] = sp_d[st_tml] * self.generators[gen].emissions
+                        sp_d[st_ein] = self.generators[gen].emissions
                         co2_sum += sp_d[st_emi]
                         sp_d[st_emc] = sp_d[st_emi] * self.carbon_price
                         if sp_d[st_cst] > 0:
@@ -6485,6 +6496,7 @@ class powerMatch(QtWidgets.QWidget):
             sp_pts = [0] * len(headers)
             for p in [st_cap, st_lcg, st_lco, st_lcc, st_max, st_bal, st_rlc - jm, st_are]:
                 sp_pts[p] = 2
+            sp_pts[st_ein] = 3
             if corr_data is not None:
                 sp_pts[st_cap] = 3 # compromise between capacity (2) and correlation (4)
             self.setStatus(self.sender().text() + ' completed')
@@ -6670,6 +6682,8 @@ class powerMatch(QtWidgets.QWidget):
                 else:
                     ss.cell(row=ss_row, column=st_emi+1).value = '=Detail!' + ssCol(col + nc) + str(emi_row)
                 ss.cell(row=ss_row, column=st_emi+1).number_format = '#,##0'
+                ss.cell(row=ss_row, column=st_ein+1).value = f'=IF({ssCol(st_tml+1)}{ss_row}>0,{ssCol(st_emi+1)}{ss_row}/{ssCol(st_tml+1)}{ss_row},"")'
+                ss.cell(row=ss_row, column=st_ein+1).number_format = '#,##0.000'
                 if self.carbon_price > 0:
                     ss.cell(row=ss_row, column=st_emc+1).value = '=IF(AND(' + ssCol(st_emi+1) + str(ss_row) + '<>"",' + \
                                                                  ssCol(st_emi+1) + str(ss_row) + '>0),' + \
@@ -8108,6 +8122,7 @@ class powerMatch(QtWidgets.QWidget):
         for p in [st_lcg, st_lco, st_lcc, st_max, st_bal, st_rlc - jm, st_are]:
             op_pts[p] = 2
         op_pts[st_cap] = 3
+        op_pts[st_ein] = 3
         if self.more_details:
             if do_lcoe:
                 list(map(list, list(zip(*op_data[0]))))
