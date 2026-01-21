@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 #
-#  Copyright (C) 2024-2025 Angus King
+#  Copyright (C) 2019-2026 Angus King
+#  Copyright (C) 2019-2025 Sustainable Energy Now Inc.
 #
 #  senplot3d.py - This file is possibly part of SIREN.
 #
@@ -103,7 +104,8 @@ class PowerPlot3D():
 
     def __init__(self, in_colours, in_cperiod, in_interval, in_order, in_period, in_rows,
                  in_seasons, the_days, in_title, in_toprow, ws, in_year, in_zone_row,
-                 months=3, html=None, background=False, contours=False, aspectmode='auto'):
+                 months=3, html=None, background=False, contours=False, aspectmode='auto',
+                 decpts=3):
         the_rows = [in_toprow[1] + 1]
         for m in range(len(the_days)):
             the_rows.append(the_rows[-1] + the_days[m] * in_interval)
@@ -212,7 +214,7 @@ class PowerPlot3D():
                 for j in range(len(z[i])):
                     for k in range(len(z[i][j])):
                         try:
-                            z[i][j][k] = z[i][j][k] / zc[i][j][k]
+                            z[i][j][k] = round(z[i][j][k] / zc[i][j][k], decpts)
                         except:
                             pass
         else:
@@ -230,14 +232,17 @@ class PowerPlot3D():
                             y_tickvals.append(len(z[0]))
                             y_ticktext.append(mth_labels[m])
                         except:
-                            if ws.cell_value(row + 1, 1)[11:13] == '00':
-                                try:
-                                    day = datetime.strptime(ws.cell_value(row + 1, 1)[:10], '%Y-%m-%d').weekday()
-                                    if day == 0:
-                                        y_tickvals.append(len(z[0]))
-                                        y_ticktext.append(ws.cell_value(row + 1, 1)[8:10].lstrip('0'))
-                                except:
-                                    pass
+                            try:
+                                if ws.cell_value(row + 1, 1)[11:13] == '00':
+                                    try:
+                                        day = datetime.strptime(ws.cell_value(row + 1, 1)[:10], '%Y-%m-%d').weekday()
+                                        if day == 0:
+                                            y_tickvals.append(len(z[0]))
+                                            y_ticktext.append(ws.cell_value(row + 1, 1)[8:10].lstrip('0'))
+                                    except:
+                                        pass
+                            except:
+                                pass
                         for key, values in variables.items():
                             try:
                                 z[values[1]][-1].append(ws.cell_value(row + 1, values[0]))
