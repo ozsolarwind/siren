@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2025 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2019-2026 Angus King
+#  Copyright (C) 2019-2025 Sustainable Energy Now Inc.
 #
 #  editini.py - This file is part of SIREN.
 #
@@ -26,7 +27,7 @@ import datetime
 import os
 import sys
 
-from displaytable import Table
+import displaytable
 from getmodels import getModelFile, commonprefix
 import inisyntax
 from senutils import ClickableQLabel, getParents, getUser, techClean
@@ -425,7 +426,7 @@ class EditSect():
         section_dict = {}
         for key, value in section_items:
             section_dict[key] = value
-        dialog = Table(section_dict, fields=['property', 'value'], title=self.section + ' Parameters',
+        dialog = displaytable.Table(section_dict, fields=['property', 'value'], title=self.section + ' Parameters',
                  save_folder=save_folder, edit=True, txt_ok=txt_ok)
         dialog.exec_()
         values = dialog.getValues()
@@ -492,7 +493,7 @@ class EditTech():
             except:
                 pass
             tech_dict[technology] = [area, capital_cost, o_m_cost]
-        dialog = Table(tech_dict, fields=['technology', 'area', 'capital_cost', 'o_m_cost'],
+        dialog = displaytable.Table(tech_dict, fields=['technology', 'area', 'capital_cost', 'o_m_cost'],
                  save_folder=save_folder, title='Technologies', edit=True)
         dialog.exec_()
         values = dialog.getValues()

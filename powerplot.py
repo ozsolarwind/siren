@@ -40,7 +40,6 @@ import displayobject
 import displaytable
 from colours import Colours, PlotPalette
 from credits import fileVersion
-from displaytable import Table
 from editini import EdtDialog, SaveIni
 from getmodels import getModelFile
 try:
@@ -462,6 +461,7 @@ class PowerPlot(QtWidgets.QWidget):
         self.leapyear = False
         iper = '<none>'
         imax = 0
+        self.allow_incomplete = False
         self.alpha = 0.25
         self.alpha_fill = 1.
         self.alpha_word = ['surplus', 'charge']
@@ -509,7 +509,10 @@ class PowerPlot(QtWidgets.QWidget):
         try:
             items = config.items('Powerplot')
             for key, value in items:
-                if key == 'alpha':
+                if key == 'allow_incomplete':
+                    if value.lower() in ['true', 'yes', 'on']:
+                        self.allow_incomplete = True
+                elif key == 'alpha':
                     try:
                         self.alpha = float(value)
                     except:
@@ -1425,7 +1428,7 @@ class PowerPlot(QtWidgets.QWidget):
                 i = combos[-1].findText(self.overlay_type[o], QtCore.Qt.MatchExactly)
                 combos[-1].setCurrentIndex(i)
                 extra_dict[self.overlay[o]] = combos[-1]
-        dialog = Table(extra_dict, fields=['Overlay', 'Extra'], title='Extra options', edit=True)
+        dialog = displaytable.Table(extra_dict, fields=['Overlay', 'Extra'], title='Extra options', edit=True)
         dialog.exec_()
         values = dialog.getValues()
         if values is None:
@@ -1912,6 +1915,7 @@ class PowerPlot(QtWidgets.QWidget):
         config = configparser.RawConfigParser()
         config.read(self.config_file)
         try:
+            self.allow_incomplete = False
             self.alpha = 0.25
             self.alpha_fill = 1.
             self.constrained_layout = False
@@ -1919,7 +1923,12 @@ class PowerPlot(QtWidgets.QWidget):
             self.y2_align = True
             items = config.items('Powerplot')
             for key, value in items:
-                if key == 'alpha':
+                if key == 'allow_incomplete':
+                    if value.lower() in ['true', 'yes', 'on']:
+                        self.allow_incomplete = True
+                    else:
+                        pass
+                elif key == 'alpha':
                     try:
                         self.alpha = float(value)
                     except:
@@ -2364,6 +2373,8 @@ class PowerPlot(QtWidgets.QWidget):
                                         miny = min(miny, data[-1][-1])
                                     except:
                                         self.log.setText(f'Data error with {column} ({ssCol(c2, base=0)}{row + 1}). Period may be incomplete (1)')
+                                        if self.allow_incomplete:
+                                            break
                                         return
                     for breakdown in breakdowns[1:]:
                         for c in range(self.order.count() -1, -1, -1):
@@ -2391,6 +2402,8 @@ class PowerPlot(QtWidgets.QWidget):
                                             miny = min(miny, data[-1][-1])
                                         except:
                                             self.log.setText(f'Data error with {column} ({ssCol(c2, base=0)}{row + 1}). Period may be incomplete (2)')
+                                            if self.allow_incomplete:
+                                                break
                                             return
                 else:
                     for c in range(self.order.count() -1, -1, -1):
@@ -2412,6 +2425,8 @@ class PowerPlot(QtWidgets.QWidget):
                                         miny = min(miny, data[-1][-1])
                                     except:
                                         self.log.setText(f'Data error with {column} ({ssCol(c2, base=0)}{row + 1}). Period may be incomplete (3)')
+                                        if self.allow_incomplete:
+                                            break
                                         return
                                 break
                 if tgt_col >= 0:
@@ -2469,6 +2484,8 @@ class PowerPlot(QtWidgets.QWidget):
                                             miny = min(miny, data[-1][-1])
                                         except:
                                             self.log.setText(f'Data error with {column} ({ssCol(c2, base=0)}{row + 1}). Period may be incomplete (4)')
+                                            if self.allow_incomplete:
+                                                break
                                             return
                     for breakdown in breakdowns[1:]:
                         for c in range(self.order.count() -1, -1, -1):
@@ -2498,6 +2515,8 @@ class PowerPlot(QtWidgets.QWidget):
                                                 miny = min(miny, data[-1][-1])
                                             except:
                                                 self.log.setText(f'Data error with {column} ({ssCol(c2, base=0)}{row + 1}). Period may be incomplete (5)')
+                                                if self.allow_incomplete:
+                                                    break
                                                 return
                 else:
                     for c in range(self.order.count() -1, -1, -1):
@@ -2521,6 +2540,8 @@ class PowerPlot(QtWidgets.QWidget):
                                             miny = min(miny, data[-1][-1])
                                         except:
                                             self.log.setText(f'Data error with {column} ({ssCol(c2, base=0)}{r2 + 1}). Period may be incomplete (6)')
+                                            if self.allow_incomplete:
+                                                break
                                             return
                                 break
                 if tgt_col >= 0:
@@ -2556,7 +2577,8 @@ class PowerPlot(QtWidgets.QWidget):
                                         overlay[o][-1] += ws.cell_value(r2, overlay_cols[o][-1])
                                     except:
                                         self.log.setText(f'Data error with {column} ({ssCol(c2, base=0)}{row + 1}). Period may be incomplete (7)')
-                                        break
+                                        if self.allow_incomplete:
+                                            break
                                         return
                                 if self.overlay_type[o] == 'Average':
                                     overlay[o][-1] = overlay[o][-1] / self.interval
@@ -3183,6 +3205,7 @@ class PowerPlot(QtWidgets.QWidget):
                                  m += 1
                              strt_row[-1] = strt_row[-1] + self.toprow[1]
                              todo_rows.append(the_days[s] * self.interval)
+            print('(3168)', todo_rows)
             load = []
             tgt_col = -1
             data = []
@@ -3629,7 +3652,7 @@ class PowerPlot(QtWidgets.QWidget):
                         try:
                             load[h] = load[h] + ws.cell_value(row, tgt_col)
                         except:
-                            pass
+                            print('(3614)', h, row, tgt_col, ws.cell_value(row, tgt_col), strt_row, todo_rows)
                         h += 1
                         if h >= self.interval:
                            h = 0
@@ -3653,6 +3676,8 @@ class PowerPlot(QtWidgets.QWidget):
                                     overlay[o][h] = overlay[o][h] + ws.cell_value(row, col)
                                 except:
                                     self.log.setText(f'Data error with {self.overlay[o]} ({ssCol(col, base=0)}{row + 1}). Period may be incomplete (8)')
+                                    if self.allow_incomplete:
+                                        break
                                     return
                             h += 1
                             if h >= self.interval:
@@ -4270,7 +4295,7 @@ class PowerPlot(QtWidgets.QWidget):
         title = '%s %s %s' % (corrtxt[1].title(), self.target, per1)
         if per2 != '' and per2 != '<none>':
             title += ' to ' + per2
-        dialog = Table(rows, fields=fields, title=title, decpts=decpts, sortby=sortby, reverse=True, save_folder=self.scenarios)
+        dialog = displaytable.Table(rows, fields=fields, title=title, decpts=decpts, sortby=sortby, reverse=True, save_folder=self.scenarios)
         dialog.exec()
         self.log.setText('Best %s: %s %.4f' % (corrtxt[1], best_fac, best_corr))
 
