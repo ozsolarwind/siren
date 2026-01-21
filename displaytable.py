@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2025 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2019-2026 Angus King
+#  Copyright (C) 2019-2025 Sustainable Energy Now Inc.
 #
 #  displaytable.py - This file is part of SIREN.
 #
@@ -343,6 +344,11 @@ class Table(QtWidgets.QDialog):
                 if fld[0] == '%':
                     self.labels[fld] = 'str'
                     self.lens[fld] = 0
+            if self.decpts is not None:
+                for i in range(len(self.fields)):
+                    if self.decpts[i] > 0:
+                        self.labels[self.fields[i]] = 'float'
+                        self.lens[self.fields[i]] = [0, self.decpts[i]]
         for thing in self.objects:
             for prop in dir(thing):
                 if prop[:2] != '__' and prop[-2:] != '__':
@@ -722,7 +728,7 @@ class Table(QtWidgets.QDialog):
                     if self.txt_ok is not None and self.table.item(row, 0).text() in self.txt_ok:
                         self.recur = False
                         return
-                    self.message.setText('Error with ' + self.fields[col].title() + ' field - ' + tst)
+                    self.message.setText('Error with ' + self.fields[col].title() + ' field - ' + tst + ' (1)')
                     self.recur = False
             else:
                 try:
@@ -738,7 +744,7 @@ class Table(QtWidgets.QDialog):
                     if self.txt_ok is not None and self.table.item(row, 0).text() in self.txt_ok:
                         self.recur = False
                         return
-                    self.message.setText('Error with ' + self.fields[col].title() + ' field - ' + tst)
+                    self.message.setText('Error with ' + self.fields[col].title() + ' field - ' + tst + ' (2)')
                     self.recur = False
         msg_font = self.message.font()
         msg_font.setBold(True)
@@ -1121,7 +1127,7 @@ class Table(QtWidgets.QDialog):
                                     if self.txt_ok is not None and self.table.item(rw, 0).text() in self.txt_ok:
                                         valu = self.table.item(rw, cl).text()
                                     else:
-                                        self.message.setText('Error with ' + self.fields[cl].title() + ' field - ' + tst)
+                                        self.message.setText('Error with ' + self.fields[cl].title() + ' field - ' + tst + ' (3)')
                                         self.replaced = None
                                         return
                             else:
@@ -1149,7 +1155,7 @@ class Table(QtWidgets.QDialog):
                                     if self.txt_ok is not None and self.table.item(rw, 0).text() in self.txt_ok:
                                         valu = self.table.item(rw, cl).text()
                                     else:
-                                        self.message.setText('Error with ' + self.fields[cl].title() + ' field - ' + tst)
+                                        self.message.setText('Error with ' + self.fields[cl].title() + ' field - ' + tst + ' (4)')
                                         self.replace = None
                                         return
                     else:
