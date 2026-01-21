@@ -62,7 +62,7 @@ class ZoomPanX():
         self.hide = False
         self.days = 3
 
-    def zoom_pan(self, ax, base_scale=2., annotate=False, dropone=False, flex_ticks=False, pick=True, mth_labels=None, days=3):
+    def zoom_pan(self, ax, base_scale=2., annotate=False, dropone=False, flex_ticks=False, intervals=None, pick=True, mth_labels=None, days=3):
         def set_flex():
             if self.flex_ticks:
                 cur_xlim = ax.get_xlim()
@@ -80,8 +80,8 @@ class ZoomPanX():
                         self.flex_on = False
 
         def zoom(event):
-            if event.inaxes != ax:
-                return
+          #  if event.inaxes != ax:
+           #     return
             if self.base_xlim is None:
                 self.base_xlim = ax.get_xlim()
                 self.base_ylim = ax.get_ylim()
@@ -537,9 +537,12 @@ class ZoomPanX():
                     set_flex()
                     ax.figure.canvas.draw()
                     return
-                ax.set_xlim([self.mth_xlim[self.month], self.mth_xlim[self.month + 1]])
-                set_flex()
-                ax.figure.canvas.draw()
+                try:
+                    ax.set_xlim([self.mth_xlim[self.month], self.mth_xlim[self.month + 1]])
+                    set_flex()
+                    ax.figure.canvas.draw()
+                except:
+                    pass
             elif event_key == 'x':
                 if self.d3:
                     if self.axis == 'x':
@@ -678,10 +681,15 @@ class ZoomPanX():
         self.xlabel = ax.get_xlabel()
         self.wtitle = ax.figure.canvas.manager.get_window_title()
         self.base_xlim = ax.get_xlim() # remember x base
-        if self.base_xlim[1] > 8784:
-            self.step = 168 * 2 # 48 * 7 half-hours per week
+        if intervals is None:
+            if self.base_xlim[1] > 17568:
+                self.step = 168 * 12 # 288 * 7 half-hours per week
+            elif self.base_xlim[1] > 8784:
+                self.step = 168 * 2 # 48 * 7 half-hours per week
+            else:
+                self.step = 168 # 24 * 7 hours per week
         else:
-            self.step = 168 # 24 * 7 hours per week
+            self.step = intervals * 7
         self.base_ylim = ax.get_ylim() # remember y base
         self.flex_ticks = flex_ticks
         self.days = days
@@ -711,14 +719,19 @@ class ZoomPanX():
             self.azim = ax.azim
         except:
             self.d3 = False
-        if self.base_xlim[1] == 8784 or self.base_xlim[1] == 8784 * 2: # leap year
+        if self.base_xlim[1] == 8784 or self.base_xlim[1] == 8784 * 2 or self.base_xlim[1] == 8784 * 12: # leap year
             the_days[1] = 29
         x = 0
         self.mth_xlim = [x]
-        if self.base_xlim[1] > 8784:
-            mult = 48
+        if intervals is None:
+            if self.base_xlim[1] > 17568:
+                mult = 288
+            elif self.base_xlim[1] > 8784:
+                mult = 48
+            else:
+                mult = 24
         else:
-            mult = 24
+            mult = int(self.step / 7)
         if dropone:
             no_of_days = 364
         else:

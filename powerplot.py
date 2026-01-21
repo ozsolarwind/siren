@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 #
-#  Copyright (C) 2019-2025 Sustainable Energy Now Inc., Angus King
-#
 #  Copyright (C) 2019-2026 Angus King
 #  Copyright (C) 2019-2025 Sustainable Energy Now Inc.
+#
+#  powerplot.py - This file is part of SIREN.
 #
 #  SIREN is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Affero General Public License as
@@ -21,6 +21,7 @@
 #
 
 import configparser  # decode .ini file
+from datetime import datetime
 import os
 import plotly.graph_objects as go
 import plotly
@@ -1477,6 +1478,14 @@ class PowerPlot(QtWidgets.QWidget):
                     return
                 if ws.cell_value(row, 0) in ['Interval', 'Trading Interval']:
                     self.interval = 48
+                    try:
+                        per1 = datetime.strptime(ws.cell_value(row + 1, 1), '%Y-%m-%d %H:%M:%S')
+                        per2 = datetime.strptime(ws.cell_value(row + 2, 1), '%Y-%m-%d %H:%M:%S')
+                        perdiff = per2 - per1
+                        if perdiff.total_seconds() == 300.0:
+                            self.interval = 288
+                    except:
+                        pass
                 else:
                     self.interval = 24
                 if tech_row >= 0:
@@ -2639,7 +2648,7 @@ class PowerPlot(QtWidgets.QWidget):
                 lc1.tick_params(colors=self.fontprops['Ticks']['color'], which='both')
                 lc1.set_ylabel('Power (MW/MWh)', fontdict=self.fontprops['Label']) # MWh?
                 zp = ZoomPanX()
-                f = zp.zoom_pan(lc1, base_scale=1.2, flex_ticks=flex_on, mth_labels=do_12_labels) # enable scrollable zoom
+                f = zp.zoom_pan(lc1, base_scale=1.2, flex_ticks=flex_on, intervals=self.interval, mth_labels=do_12_labels) # enable scrollable zoom
                 plt.show()
                 del zp
             elif self.plottype.currentText() in ['Cumulative', 'Step Chart']:
@@ -2814,7 +2823,7 @@ class PowerPlot(QtWidgets.QWidget):
                     cu1.set_xlabel('Period', fontdict=self.fontprops['Label'])
                 cu1.tick_params(colors=self.fontprops['Ticks']['color'], which='both')
                 zp = ZoomPanX()
-                f = zp.zoom_pan(cu1, base_scale=1.2, flex_ticks=flex_on, mth_labels=do_12_labels) # enable scrollable zoom
+                f = zp.zoom_pan(cu1, base_scale=1.2, flex_ticks=flex_on, intervals=self.interval, mth_labels=do_12_labels) # enable scrollable zoom
                 plt.show()
                 del zp
             elif self.plottype.currentText() == 'Bar Chart':
@@ -2911,11 +2920,11 @@ class PowerPlot(QtWidgets.QWidget):
                     bc1.set_xlabel('Period', fontdict=self.fontprops['Label'])
                 bc1.tick_params(colors=self.fontprops['Ticks']['color'], which='both')
                 zp = ZoomPanX()
-                f = zp.zoom_pan(bc1, base_scale=1.2, flex_ticks=flex_on, mth_labels=do_12_labels) # enable scrollable zoom
+                f = zp.zoom_pan(bc1, base_scale=1.2, flex_ticks=flex_on, intervals=self.interval, mth_labels=do_12_labels) # enable scrollable zoom
                 plt.show()
                 del zp
             elif self.plottype.currentText() == 'Heat Map':
-                fig = plt.figure(figname)
+                fig = plt.figure(figname, constrained_layout=self.constrained_layout)
                 if suptitle != '':
                     fig.suptitle(suptitle, fontproperties=self.fontprops['Header'])
                 if gridtype != '':
@@ -2956,7 +2965,6 @@ class PowerPlot(QtWidgets.QWidget):
                     #    hmdata[y][x] = round(hmdata[y][x], 3)
                         miny = min(miny, hmdata[y][x])
                         maxy = max(maxy, hmdata[y][x])
-                # print(hmdata)
                 if tgt_col >= 0:
                     fmt_str = '{:.3f}'
                     vmax = 1
@@ -2983,8 +2991,11 @@ class PowerPlot(QtWidgets.QWidget):
                 if self.interval == 24:
                     for y in range(0, 24, 4):
                         yticks.append(y + 2.5)
-                else:
+                elif self.interval == 48:
                     for y in range(0, 48, 8):
+                        yticks.append(y + 6.5)
+                elif self.interval == 288:
+                    for y in range(0, 288, 48):
                         yticks.append(y + 6.5)
                 hm1.invert_yaxis()
                 hm1.set_yticks(yticks)
@@ -3072,9 +3083,12 @@ class PowerPlot(QtWidgets.QWidget):
             if self.interval == 24:
                 ticks = list(range(0, 21, 4))
                 ticks.append(23)
-            else:
+            elif self.interval == 48:
                 ticks = list(range(0, 41, 8))
                 ticks.append(47)
+            elif self.interval == 288:
+                ticks = list(range(0, 241, 48))
+                ticks.append(287)
             titl = self.title.text()
             titl = self.replace_words('s', self.title.text(), isheet)
             if suptitle != '':
@@ -3323,7 +3337,7 @@ class PowerPlot(QtWidgets.QWidget):
                 plt.show()
                 return
             elif self.plottype.currentText() == 'Heat Map':
-                fig = plt.figure(figname)
+                fig = plt.figure(figname, constrained_layout=self.constrained_layout)
                 if suptitle != '':
                     fig.suptitle(suptitle, fontproperties=self.fontprops['Header'])
                 if gridtype != '':
@@ -3410,8 +3424,11 @@ class PowerPlot(QtWidgets.QWidget):
                 if self.interval == 24:
                     for y in range(0, 24, 4):
                         yticks.append(y + 2.5)
-                else:
+                elif self.interval == 48:
                     for y in range(0, 48, 8):
+                        yticks.append(y + 6.5)
+                elif self.interval == 288:
+                    for y in range(0, 288, 48):
                         yticks.append(y + 6.5)
                 hm2.invert_yaxis()
                 hm2.set_yticks(yticks)
@@ -3612,7 +3629,7 @@ class PowerPlot(QtWidgets.QWidget):
                         try:
                             load[h] = load[h] + ws.cell_value(row, tgt_col)
                         except:
-                            self.log.setText(f'Data error with {self.target} ({ssCol(tgt_col, base=0)}{row + 1}). Period may be incomplete (8)')
+                            pass
                         h += 1
                         if h >= self.interval:
                            h = 0
@@ -3635,7 +3652,7 @@ class PowerPlot(QtWidgets.QWidget):
                                 try:
                                     overlay[o][h] = overlay[o][h] + ws.cell_value(row, col)
                                 except:
-                                    self.log.setText(f'Data error with {self.overlay[o]} ({ssCol(col, base=0)}{row + 1}). Period may be incomplete (9)')
+                                    self.log.setText(f'Data error with {self.overlay[o]} ({ssCol(col, base=0)}{row + 1}). Period may be incomplete (8)')
                                     return
                             h += 1
                             if h >= self.interval:

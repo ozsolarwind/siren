@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2020-2025 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2019-2026 Angus King
+#  Copyright (C) 2019-2025 Sustainable Energy Now Inc.
 #
 #  flexiplot.py - This file is possibly part of SIREN.
 #
