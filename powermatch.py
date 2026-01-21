@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2018-2025 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2019-2026 Angus King
+#  Copyright (C) 2019-2025 Sustainable Energy Now Inc.
 #
 #  powermatch.py - This file is part of SIREN.
 #
@@ -475,6 +476,7 @@ class Constraint:
                     self.recharge_start = int(self.recharge_start)
                 else:
                     self.recharge_start = int((self.recharge_start + 1/3600) * 24)
+            print(self.recharge_start)
         except:
             self.recharge_start = 0
         try:
@@ -2196,9 +2198,10 @@ class powerMatch(QtWidgets.QWidget):
                 except:
                     return
             sp_pts = [2] * 15
-            sp_pts[4] = 3 # discharge loss
-            sp_pts[8] = 3 # parasitic loss
-            sp_pts[11] = 3 # recharge loss
+            for d in [4, 8, 11]: # discharge_loss, parasitic_loss, recharge_loss
+               sp_pts[d] = 3
+            for d in [0, 3, 6, 13]: # discharge_start, recharge_start
+               sp_pts[d] = 0
             dialog = displaytable.Table(self.constraints, title=self.sender().text(),
                  save_folder=self.scenarios, edit=True, decpts=sp_pts, abbr=False)
             dialog.exec_()
@@ -3491,33 +3494,53 @@ class powerMatch(QtWidgets.QWidget):
             j = rslts_file.rfind('/')
             if rslts_file[j + 1:j + 1 + len(self.results_prefix)] != self.results_prefix:
                 rslts_file = rslts_file[: j + 1] + self.results_prefix + '_' + rslts_file[j + 1:]
-        for itm in range(self.order.count()):
-            gen = self.order.item(itm).text()
-            try:
-                if self.generators[gen].capacity <= 0:
-                    continue
-            except KeyError as err:
-                self.setStatus('Key Error: No Generator entry for ' + str(err))
-                continue
-            except:
-                continue
-            if do_adjust:
+        if option not in [B, T]:
+            for itm in range(self.order.count()):
+                gen = self.order.item(itm).text()
                 try:
-                    if self.adjustto[gen] <= 0:
+                    if self.generators[gen].capacity <= 0:
                         continue
+                except KeyError as err:
+                    self.setStatus('Key Error: No Generator entry for ' + str(err))
+                    continue
                 except:
-                    pass
-            try:
-                if self.generators[gen].constraint in self.constraints and \
-                  self.constraints[self.generators[gen].constraint].category == 'Generator':
-                    typ = 'G'
-                else:
-                    typ = 'S'
-            except:
-                continue
-            dispatch_order.append(gen)
-            pmss_details[gen] = PM_Facility(gen, gen, self.generators[gen].capacity, typ, -1, 1)
-        if option == B or option == T:
+                    continue
+                if do_adjust:
+                    try:
+                        if self.adjustto[gen] <= 0:
+                            continue
+                    except:
+                        pass
+                try:
+                    if self.generators[gen].constraint in self.constraints and \
+                      self.constraints[self.generators[gen].constraint].category == 'Generator':
+                        typ = 'G'
+                    else:
+                        typ = 'S'
+                except:
+                    continue
+                dispatch_order.append(gen)
+                pmss_details[gen] = PM_Facility(gen, gen, self.generators[gen].capacity, typ, -1, 1)
+        else: #if option == B or option == T:
+            for gen in self.batch_tech:
+                if gen not in pmss_details.keys():
+                    try:
+                        if self.generators[gen].capacity <= 0:
+                            continue
+                    except KeyError as err:
+                        self.setStatus('Key Error: No Generator entry for ' + str(err))
+                        continue
+                    except:
+                        continue
+                    try:
+                        if self.generators[gen].constraint in self.constraints and \
+                          self.constraints[self.generators[gen].constraint].category == 'Generator':
+                            typ = 'G'
+                        else:
+                            typ = 'S'
+                    except:
+                        continue
+                    pmss_details[gen] = PM_Facility(gen, gen, self.generators[gen].capacity, typ, -1, 1)
             if option == T:
                 files = setTransition(self, self.file_labels[G], self.get_filename(self.files[G].text()), self.sheets[G].currentText(),
                                       self.loadCombo.currentText(), self.load_files)
@@ -5790,9 +5813,13 @@ class powerMatch(QtWidgets.QWidget):
                     ns.cell(row=cap_row, column=col + 2).value = capacity
                     ns.cell(row=cap_row, column=col + 2).number_format = '#,##0.00'
                 try:
-                    storage[1] = self.generators[gen].initial * pmss_details[gen].multiplier
+                    if self.generators[gen].initial < 1.:
+                        initial = capacity * self.generators[gen].initial
+                    else:
+                        initial = self.generators[gen].initial
+                    storage[1] = initial
                 except:
-                    storage[1] = self.generators[gen].initial
+                    pass
                 if self.constraints[self.generators[gen].constraint].capacity_min > 0:
                     storage[2] = capacity * self.constraints[self.generators[gen].constraint].capacity_min
                 if self.constraints[self.generators[gen].constraint].capacity_max > 0:
