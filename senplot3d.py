@@ -248,16 +248,16 @@ class PowerPlot3D():
         for i in range(in_interval):
             x.append(i)
         periods = []
-        for h in range(24):
+        for h in range(0, 24, 4):
             periods.append(f'{h:02}:00')
-            if in_interval == 48:
-                periods.append(f'{h:02}:30')
         x_tickvals = []
         x_ticktext = []
-        step = int(len(periods) / 6)
-        for t in range(step, len(periods), step):
+        step = int(in_interval / 6)
+        h = 0
+        for t in range(0, in_interval, step):
             x_tickvals.append(t)
-            x_ticktext.append(periods[t])
+            x_ticktext.append(periods[h])
+            h += 1
         y= []
         for i in range(len(z[0])):
             y.append(i + 1)
@@ -347,8 +347,10 @@ class PowerPlot3D():
 
 class TablePlot3D():
 
-    def __init__(self, colours, title, ws, x_offset, x_name, y_label, y_names, z_label, html=None,
+    def __init__(self, colours, title, ws, x_offset, x_name, x_label, y_label, y_names, z_label, html=None,
                  background=False, contours=False, aspectmode='auto'):
+        if x_label == '':
+            x_label = x_name
         x_tickvals = []
         x_ticktext = []
         y_rows = []
@@ -431,7 +433,7 @@ class TablePlot3D():
                             'yanchor': 'top'
                            },
                   'scene': {'xaxis': {'type': 'category',
-                                      'title': x_name,
+                                      'title': x_label,
                                       'tickmode': 'array',
                                       'tickvals': x_tickvals,
                                       'ticktext': x_ticktext,
@@ -441,8 +443,7 @@ class TablePlot3D():
                                       'title': y_label,
                                       'tickmode': 'array',
                                       'tickvals': y_tickvals,
-                                      'ticktext': y_ticktext,
-                                      'autorange': 'reversed'
+                                      'ticktext': y_ticktext
                                      },
                             'zaxis': {
                                       'title': z_label

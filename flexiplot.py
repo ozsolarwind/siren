@@ -1545,7 +1545,7 @@ class FlexiPlot(QtWidgets.QWidget):
             if x_name == '':
                 label, row, col = self.get_name_row_col(self.xseries.currentText())
                 x_name = row
-            TablePlot3D(colours, titl, ws, self.xoffset.currentText(), x_name, self.ylabel.text(), yseries, self.zlabel.text(),
+            TablePlot3D(colours, titl, ws, self.xoffset.currentText(), x_name, self.xlabel.text(), self.ylabel.text(), yseries, self.zlabel.text(),
                         html=saveit, background=background_3d, contours=contours_3d, aspectmode=aspectmode_3d)
             self.log.setText("3D Chart complete (You'll need to close the browser window yourself).")
             return
