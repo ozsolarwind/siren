@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2024 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2019-2026 Angus King
+#  Copyright (C) 2019-2025 Sustainable Energy Now Inc.
 #
 #  displayobject.py - This file is part of SIREN.
 #
@@ -234,11 +235,20 @@ class AnObject(QtWidgets.QDialog):
                         self.field_type.append('int')
                     elif isinstance(attr, float):
                         self.field_type.append('float')
+                    elif isinstance(attr, list):
+                        self.field_type.append('list')
+                    elif callable(attr):
+                        continue
                     else:
                         self.field_type.append('str')
                     label.append(QtWidgets.QLabel(prop.title() + ':'))
-                    if self.field_type[-1] != "str":
-                        self.edit.append(QtWidgets.QLineEdit(str(attr)))
+                    if self.field_type[-1] != 'str':
+                        if self.field_type[-1] == 'list':
+                            if len(attr) == 0:
+                                continue
+                            self.edit.append(QtWidgets.QLineEdit(','.join(attr)))
+                        else:
+                            self.edit.append(QtWidgets.QLineEdit(str(attr)))
                     else:
                         self.edit.append(QtWidgets.QLineEdit(attr))
                     if i < 0:
