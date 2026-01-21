@@ -2,7 +2,8 @@
 #
 #  Copyright (C) 2019-2025 Sustainable Energy Now Inc., Angus King
 #
-#  powerplot.py - This file is possibly part of SIREN.
+#  Copyright (C) 2019-2026 Angus King
+#  Copyright (C) 2019-2025 Sustainable Energy Now Inc.
 #
 #  SIREN is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Affero General Public License as
@@ -602,7 +603,7 @@ class PowerPlot(QtWidgets.QWidget):
                     if value.lower() in ['false', 'no', 'off']:
                         self.pie_group = None
                     elif value.lower() in ['true', 'yes', 'on']:
-                        self.pie_group = ['bess', 'biomass', 'pv', 'solar', 'wind']
+                        self.pie_group = ['bess', 'biomass', 'pumped_hydro', 'pv', 'solar', 'wind']
                     else:
                         if value.find(',') > -1:
                             self.pie_group = value.lower.split(',')
@@ -1768,7 +1769,7 @@ class PowerPlot(QtWidgets.QWidget):
                 if self.ovrSpin[o].value() != 1.5:
                     lines[-1] = lines[-1] + str(self.ovrSpin[o].value())
                 lines.append('overlay_2y' + ovr + choice + '=')
-                if self.overlay_y2[o].isChecked():
+                if self.overlay_y2[o].isChecked() and self.overlays[o].currentIndex() > 0:
                     lines[-1] = lines[-1] + 'True'
             lines.append('percentage' + choice + '=')
             if self.percentage.isChecked():
@@ -2220,6 +2221,9 @@ class PowerPlot(QtWidgets.QWidget):
             order = []
             for o in range(self.order.count()):
                 order.append(self.order.item(o).text())
+            for o in range(self.no_of_overlays):
+                if not self.overlay_y2[o].isChecked() and self.overlays[o].currentIndex() > 0:
+                    order.append(self.overlays[o].currentText())
             if d3_html:
                 saveit = self.file.text()[:self.file.text().rfind('.')] + '.html'
             else:
@@ -2257,7 +2261,7 @@ class PowerPlot(QtWidgets.QWidget):
         self.y2_label = ''
         do_y2 = False
         for o in range(self.no_of_overlays):
-            if self.overlay_y2[o].isChecked():
+            if self.overlay_y2[o].isChecked() and self.overlays[o].currentIndex() > 0:
                 do_y2 = True
                 self.y2_label += self.overlay[o] + ' '
             self.y2_label.strip()
@@ -2421,7 +2425,7 @@ class PowerPlot(QtWidgets.QWidget):
                             for row in range(self.toprow[1] + 1, self.rows + 1):
                                 overlay[o][row - self.toprow[1] - 1] = ws.cell_value(row, overlay_cols[o][-1])
                         for h in range(len(overlay[o])):
-                            if self.overlay_y2[o].isChecked():
+                            if self.overlay_y2[o].isChecked() and self.overlays[o].currentIndex() > 0:
                                 max2y = max(max2y, overlay[o][h])
                                 min2y = min(min2y, overlay[o][h])
                             else:
@@ -2552,7 +2556,7 @@ class PowerPlot(QtWidgets.QWidget):
                             for row in range(self.toprow[1] + 1, self.rows + 1, self.interval):
                                 overlay[o].append(ws.cell_value(row + h, overlay_cols[o][-1]))
                         for h in range(len(overlay[o])):
-                            if self.overlay_y2[o].isChecked():
+                            if self.overlay_y2[o].isChecked() and self.overlays[o].currentIndex() > 0:
                                 max2y = max(max2y, overlay[o][h])
                                 min2y = min(min2y, overlay[o][h])
                             else:
@@ -2570,7 +2574,7 @@ class PowerPlot(QtWidgets.QWidget):
                     plt.grid(axis=gridtype)
                 lc1 = plt.subplot(111)
                 for o in range(self.no_of_overlays):
-                    if self.overlay_y2[o].isChecked():
+                    if self.overlay_y2[o].isChecked() and self.overlays[o].currentIndex() > 0:
                         lcy1 = lc1.twinx()
                         lcy1.set_ylabel(self.y2_label)
                         break
@@ -2588,7 +2592,7 @@ class PowerPlot(QtWidgets.QWidget):
                                  color=self.set_colour(self.target), linestyle=self.tgtLine.currentText())
                     for o in range(self.no_of_overlays):
                         if len(overlay[o]) > 0:
-                            if self.overlay_y2[o].isChecked():
+                            if self.overlay_y2[o].isChecked() and self.overlays[o].currentIndex() > 0:
                                 lcy1.plot(x, overlay[o], linewidth=self.ovrSpin[o].value(), label=self.short_legend + self.overlay[o],
                                          color=self.overlay_colour[o], linestyle=self.ovrLine[o].currentText())
                             else:
@@ -2603,7 +2607,7 @@ class PowerPlot(QtWidgets.QWidget):
                                  color=self.set_colour(self.target), linestyle=self.tgtLine.currentText())
                     for o in range(self.no_of_overlays):
                         if len(overlay[o]) > 0:
-                            if self.overlay_y2[o].isChecked():
+                            if self.overlay_y2[o].isChecked() and self.overlays[o].currentIndex() > 0:
                                 lcy1.step(x, overlay[o], linewidth=self.ovrSpin[o].value(), label=self.short_legend + self.overlay[o],
                                         color=self.overlay_colour[o], linestyle=self.ovrLine[o].currentText())
                             else:
@@ -2652,7 +2656,7 @@ class PowerPlot(QtWidgets.QWidget):
                     plt.grid(axis=gridtype)
                 cu1 = plt.subplot(111)
                 for o in range(self.no_of_overlays):
-                    if self.overlay_y2[o].isChecked():
+                    if self.overlay_y2[o].isChecked() and self.overlays[o].currentIndex() > 0:
                         cuy1 = cu1.twinx()
                         cuy1.set_ylabel(self.y2_label)
                         break
@@ -2781,14 +2785,14 @@ class PowerPlot(QtWidgets.QWidget):
                     for o in range(self.no_of_overlays):
                         if len(overlay[o]) > 0:
                             if self.plottype.currentText() == 'Cumulative':
-                                if self.overlay_y2[o].isChecked():
+                                if self.overlay_y2[o].isChecked() and self.overlays[o].currentIndex() > 0:
                                     cuy1.plot(x, overlay[o], linewidth=self.ovrSpin[o].value(), label=self.short_legend + self.overlay[o],
                                              color=self.overlay_colour[o], linestyle=self.ovrLine[o].currentText())
                                 else:
                                     cu1.plot(x, overlay[o], linewidth=self.ovrSpin[o].value(), label=self.short_legend + self.overlay[o],
                                              color=self.overlay_colour[o], linestyle=self.ovrLine[o].currentText())
                             else:
-                                if self.overlay_y2[o].isChecked():
+                                if self.overlay_y2[o].isChecked() and self.overlays[o].currentIndex() > 0:
                                     cuy1.step(x, overlay[o], linewidth=self.ovrSpin[o].value(), label=self.short_legend + self.overlay[o],
                                              color=self.overlay_colour[o], linestyle=self.ovrLine[o].currentText())
                                 else:
@@ -2816,7 +2820,7 @@ class PowerPlot(QtWidgets.QWidget):
             elif self.plottype.currentText() == 'Bar Chart':
                 msgbox = QtWidgets.QMessageBox()
                 msgbox.setWindowTitle('powerplot - Bar Chart')
-                msgbox.setText("This could take a while to display. <b>Are you sure?</b><br />(You could try a Step Chart instead)")
+                msgbox.setText("This could take a while to display.<br />(You could try a Step Chart instead)<br /><b>Are you sure?</b>")
                 msgbox.setIcon(QtWidgets.QMessageBox.Question)
                 msgbox.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
                 reply = msgbox.exec_()
@@ -2829,7 +2833,7 @@ class PowerPlot(QtWidgets.QWidget):
                     plt.grid(axis=gridtype)
                 bc1 = plt.subplot(111)
                 for o in range(self.no_of_overlays):
-                    if self.overlay_y2[o].isChecked():
+                    if self.overlay_y2[o].isChecked() and self.overlays[o].currentIndex() > 0:
                         bcy1 = bc1.twinx()
                         bcy1.set_ylabel(self.y2_label)
                         break
@@ -2885,7 +2889,7 @@ class PowerPlot(QtWidgets.QWidget):
                                  linestyle=self.tgtLine.currentText())
                     for o in range(self.no_of_overlays):
                         if len(overlay[o]) > 0:
-                            if self.overlay_y2[o].isChecked():
+                            if self.overlay_y2[o].isChecked() and self.overlays[o].currentIndex() > 0:
                                 bcy1.plot(x, overlay[o], linewidth=self.ovrSpin[o].value(), label=self.short_legend + self.overlay[o],
                                           color=self.overlay_colour[o], linestyle=self.ovrLine[o].currentText())
                             else:
@@ -3642,7 +3646,7 @@ class PowerPlot(QtWidgets.QWidget):
                         # 'overlay_type'
                         if self.overlay_type[o] == 'Average':
                             overlay[o][h] = overlay[o][h] / self.interval
-                        if self.overlay_y2[o].isChecked():
+                        if self.overlay_y2[o].isChecked() and self.overlays[o].currentIndex() > 0:
                             max2y = max(max2y, overlay[o][h])
                             min2y = min(min2y, overlay[o][h])
                         else:
@@ -3658,7 +3662,7 @@ class PowerPlot(QtWidgets.QWidget):
                     plt.grid(axis=gridtype)
                 lc2 = plt.subplot(111)
                 for o in range(self.no_of_overlays):
-                    if self.overlay_y2[o].isChecked():
+                    if self.overlay_y2[o].isChecked() and self.overlays[o].currentIndex() > 0:
                         lcy2 = lc2.twinx()
                         lcy2.set_ylabel(self.y2_label)
                         break
@@ -3676,7 +3680,7 @@ class PowerPlot(QtWidgets.QWidget):
                                  color=self.set_colour(self.target), linestyle=self.tgtLine.currentText())
                     for o in range(self.no_of_overlays):
                         if len(overlay[o]) > 0:
-                            if self.overlay_y2[o].isChecked():
+                            if self.overlay_y2[o].isChecked() and self.overlays[o].currentIndex() > 0:
                                 lcy2.plot(x, overlay[o], linewidth=self.ovrSpin[o].value(), label=self.short_legend + self.overlay[o],
                                          color=self.overlay_colour[o], linestyle=self.ovrLine[o].currentText())
                             else:
@@ -3691,7 +3695,7 @@ class PowerPlot(QtWidgets.QWidget):
                                  color=self.set_colour(self.target), linestyle=self.tgtLine.currentText())
                     for o in range(self.no_of_overlays):
                         if len(overlay[o]) > 0:
-                            if self.overlay_y2[o].isChecked():
+                            if self.overlay_y2[o].isChecked() and self.overlays[o].currentIndex() > 0:
                                 lcy2.step(x, overlay[o], linewidth=self.ovrSpin[o].value(), label=self.short_legend + self.overlay[o],
                                          color=self.overlay_colour[o], linestyle=self.ovrLine[o].currentText())
                             else:
@@ -3729,7 +3733,7 @@ class PowerPlot(QtWidgets.QWidget):
                     plt.grid(axis=gridtype)
                 cu2 = plt.subplot(111)
                 for o in range(self.no_of_overlays):
-                    if self.overlay_y2[o].isChecked():
+                    if self.overlay_y2[o].isChecked() and self.overlays[o].currentIndex() > 0:
                         cuy2 = cu2.twinx()
                         cuy2.set_ylabel(self.y2_label)
                         break
@@ -3851,14 +3855,14 @@ class PowerPlot(QtWidgets.QWidget):
                     for o in range(self.no_of_overlays):
                         if len(overlay[o]) > 0:
                             if self.plottype.currentText() == 'Cumulative':
-                                if self.overlay_y2[o].isChecked():
+                                if self.overlay_y2[o].isChecked() and self.overlays[o].currentIndex() > 0:
                                     cuy2.plot(x, overlay[o], linewidth=self.ovrSpin[o].value(), label=self.short_legend + self.overlay[o],
                                               color=self.overlay_colour[o], linestyle=self.ovrLine[o].currentText())
                                 else:
                                     cu2.plot(x, overlay[o], linewidth=self.ovrSpin[o].value(), label=self.short_legend + self.overlay[o],
                                              color=self.overlay_colour[o], linestyle=self.ovrLine[o].currentText())
                             else:
-                                if self.overlay_y2[o].isChecked():
+                                if self.overlay_y2[o].isChecked() and self.overlays[o].currentIndex() > 0:
                                     cuy2.step(x, overlay[o], linewidth=self.ovrSpin[o].value(), label=self.short_legend + self.overlay[o],
                                              color=self.overlay_colour[o], linestyle=self.ovrLine[o].currentText())
                                 else:
@@ -3890,7 +3894,7 @@ class PowerPlot(QtWidgets.QWidget):
                     plt.grid(axis=gridtype)
                 bc2 = plt.subplot(111)
                 for o in range(self.no_of_overlays):
-                    if self.overlay_y2[o].isChecked():
+                    if self.overlay_y2[o].isChecked() and self.overlays[o].currentIndex() > 0:
                         bcy2 = bc2.twinx()
                         bcy2.set_ylabel(self.y2_label)
                         break
@@ -3945,7 +3949,7 @@ class PowerPlot(QtWidgets.QWidget):
                                  linestyle=self.tgtLine.currentText())
                     for o in range(self.no_of_overlays):
                         if len(overlay[o]) > 0:
-                            if self.overlay_y2[o].isChecked():
+                            if self.overlay_y2[o].isChecked() and self.overlays[o].currentIndex() > 0:
                                 bcy2.plot(x, overlay[o], linewidth=self.ovrSpin[o].value(), label=self.short_legend + self.overlay[o],
                                          color=self.overlay_colour[o], linestyle=self.ovrLine[o].currentText())
                             else:
