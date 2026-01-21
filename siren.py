@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2016-2025 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2019-2026 Angus King
+#  Copyright (C) 2019-2025 Sustainable Energy Now Inc.
 #
 #  siren.py - This file is part of SIREN.
 #
@@ -215,9 +216,9 @@ class TabDialog(QtWidgets.QDialog):
                 spawnitem[-1].triggered.connect(partial(self.spawn, spawns[i]))
                 spawnMenu.addAction(spawnitem[-1])
             layout.setMenuBar(menubar)
-        self.model_tool = ['flexiplot', 'getmap', 'indexweather', 'makegrid', 'powermap',
+        self.model_tool = ['colours', 'flexiplot', 'getmap', 'indexweather', 'makegrid', 'powermap',
                            'powermatch', 'powerplot', 'updateswis']
-        self.model_icon = ['line.png', 'map.png', 'list.png', 'grid.png', 'sen_icon32.png',
+        self.model_icon = ['rainbow-icon.png', 'line.png', 'map.png', 'list.png', 'grid.png', 'sen_icon32.png',
                            'power.png', 'line.png', 'list.png']
         help = QtWidgets.QAction(QtGui.QIcon('help.png'), 'Help', self)
         help.setShortcut('F1')
@@ -260,6 +261,13 @@ class TabDialog(QtWidgets.QDialog):
                 menu = QtWidgets.QMenu()
                 actions =  []
                 if ent in ['flexiplot.ini', 'powerplot.ini']:
+                    try:
+                        i = self.model_tool.index('colours')
+                        if i >= 0:
+                            actions.append(menu.addAction(QtGui.QIcon(self.model_icon[i]),
+                                                         'Edit ' + self.model_tool[i]))
+                    except:
+                        pass
                     tool = ent[:ent.find('.')]
                     try:
                         i = self.model_tool.index(tool)
@@ -298,8 +306,12 @@ class TabDialog(QtWidgets.QDialog):
                             mdl = self.table.item(self.table.currentRow(), 1).text()
                             if mdl.find('SWIS') < 0:
                                 continue
-                        actions.append(menu.addAction(QtGui.QIcon(self.model_icon[i]),
-                                                     'Execute ' + self.model_tool[i]))
+                        if self.model_tool[i] == 'colours':
+                            actions.append(menu.addAction(QtGui.QIcon(self.model_icon[i]),
+                                                         'Edit ' + self.model_tool[i]))
+                        else:
+                            actions.append(menu.addAction(QtGui.QIcon(self.model_icon[i]),
+                                                         'Execute ' + self.model_tool[i]))
                         actions[-1].setIconVisibleInMenu(True)
                     actions.append(menu.addAction(QtGui.QIcon('edit.png'), 'Edit Preferences'))
                     actions[-1].setIconVisibleInMenu(True)
@@ -315,7 +327,7 @@ class TabDialog(QtWidgets.QDialog):
                         ent_dir = self.table.item(self.table.currentRow(), 3).text()
                     else:
                         ent_dir = self.models_dirs[0]
-                    if action.text()[:8] == 'Execute ':
+                    if action.text()[:8] == 'Execute ' or action.text() == 'Edit colours':
                         if not self.entries[self.table.currentRow()][-3]:
                             ok, model_name, errors = self.check_file(ent_dir, ent)
                             if len(errors) > 0:
@@ -323,7 +335,7 @@ class TabDialog(QtWidgets.QDialog):
                                 title='SIREN (' + fileVersion() + ') - Preferences file errors')
                                 dialog.exec_()
                                 return QtCore.QObject.event(source, event)
-                        self.invoke(action.text()[8:], ent_dir + ent)
+                        self.invoke(action.text()[action.text().rfind(' ') + 1:], ent_dir + ent)
                     elif action.text()[:7] == 'Launch ':
                         who = action.text()[action.text().rfind('- ') + 2:]
                         self.invoke(who, '')

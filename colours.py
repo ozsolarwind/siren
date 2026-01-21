@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2025 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2019-2026 Angus King
+#  Copyright (C) 2019-2025 Sustainable Energy Now Inc.
 #
 #  colours.py - This file is part of SIREN.
 #
@@ -36,10 +37,13 @@ class Colours(QtWidgets.QDialog):
         config = configparser.RawConfigParser()
         if ini_file is not None:
             self.config_file = getModelFile(ini_file)
+            titl = self.config_file[-1]
         elif len(sys.argv) > 1:
             self.config_file = getModelFile(sys.argv[1])
+            titl = sys.argv[1]
         else:
             self.config_file = getModelFile('SIREN.ini')
+            titl = 'SIREN.ini'
         self.section = section
         self.underscore = underscore
         self.cancelled = False
@@ -91,6 +95,16 @@ class Colours(QtWidgets.QDialog):
                         self.colours[it] = [col, self.colours[it][1]]
                     else:
                         self.colours[it] = [col, '']
+            except:
+                pass
+        if len(self.colours) == 0 and self.section != 'Plot Colors':
+            self.section = 'Plot Colors'
+            try:
+                colours0 = config.items(self.section)
+                for it, col in colours0:
+                    if it == 'ruler':
+                        continue
+                    self.colours[it] = ['', col]
             except:
                 pass
         if palette is not None and len(palette) > 0: # set palette of colours
@@ -177,9 +191,13 @@ class Colours(QtWidgets.QDialog):
         self.btn = []
         self.grid = QtWidgets.QGridLayout()
         self.grid.addWidget(QtWidgets.QLabel('Item'), 0, 0)
+        if self.section[:5] != 'Color':
+            lab1 = f'{self.section}'
+        else:
+            lab1 = 'Default Colour'
         if self.map != '':
             self.grid.addWidget(QtWidgets.QLabel('Colour for ' + self.map), 0, 1)
-        self.grid.addWidget(QtWidgets.QLabel('Default Colour'), 0, self.default_col)
+        self.grid.addWidget(QtWidgets.QLabel(lab1), 0, self.default_col)
         i = 1
         if group_colours:
             bold = QtGui.QFont()
@@ -242,7 +260,7 @@ class Colours(QtWidgets.QDialog):
             self.width[1] = self.width[0] * 3 + 80
         self.resize(self.width[1], self.height[1])
      #   self.resize(640, 480)
-        self.setWindowTitle('SIREN - Color dialog')
+        self.setWindowTitle(f'SIREN - Color dialog - ({titl})')
         self.setWindowIcon(QtGui.QIcon('sen_icon32.ico'))
         QtWidgets.QShortcut(QtGui.QKeySequence('q'), self, self.quitClicked)
 
@@ -537,3 +555,32 @@ def PlotPalette(keys, palette=15, black=False, lower=True):
         else:
             colour_dict[key] = colr
     return colour_dict
+
+
+class ColourMenu(QtWidgets.QWidget):
+    def __init__(self, help='help.html'):
+        super(ColourMenu, self).__init__()
+        self.help = help
+        config = configparser.RawConfigParser()
+        if len(sys.argv) > 1:
+            self.config_file = getModelFile(sys.argv[1])
+            dialr = Colours(ini_file=self.config_file[-1])
+        else:
+            self.config_file = getModelFile('plot_colors.ini')
+            dialr = Colours(section='Plot Colors', ini_file=self.config_file)
+        if not dialr.cancelled:
+            dialr.exec_()
+        self.close()
+        sys.exit()
+
+
+if "__main__" == __name__:
+    app = QtWidgets.QApplication(sys.argv)
+    try:
+        QtGui.QGuiApplication.setDesktopFileName('siren')
+    except:
+        pass
+    ex = ColourMenu()
+    app.exec()
+    app.deleteLater()
+    sys.exit()
