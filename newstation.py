@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2025 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2019-2026 Angus King
+#  Copyright (C) 2019-2025 Sustainable Energy Now Inc.
 #
 #  newstation.py - This file is part of SIREN.
 #
@@ -26,14 +27,15 @@ import sys
 import configparser  # decode .ini file
 from PyQt5 import QtCore, QtGui, QtWidgets
 
+import displaytable
 from getmodels import getModelFile
 from senutils import ClickableQLabel, getParents, getUser, techClean
-from station import Station
+from station import Station, getStnArea
 from turbine import Turbine
 from math import floor
 
 
-class AnObject(QtWidgets.QDialog):
+class StnObject(QtWidgets.QDialog):
 
     def get_config(self):
         config = configparser.RawConfigParser()
@@ -133,10 +135,10 @@ class AnObject(QtWidgets.QDialog):
             pass
 
 
-    def __init__(self, dialog, anobject, scenarios=None):
-        super(AnObject, self).__init__()
+    def __init__(self, dialog, stnobject, scenarios=None):
+        super(StnObject, self).__init__()
         self.get_config()
-        self.anobject = anobject
+        self.stnobject = stnobject
         if scenarios is not None:
             self.scenarios = []
             for i in range(len(scenarios)):
@@ -148,8 +150,9 @@ class AnObject(QtWidgets.QDialog):
             self.scenarios = None
         dialog.setObjectName('Dialog')
         self.save = False
-        self.field = ['name', 'technology', 'lat', 'lon', 'capacity', 'turbine', 'rotor', 'hub_height',
-                      'no_turbines', 'area', 'scenario', 'power_file', 'grid_line', 'storage_hours',
+        self.field = ['name', 'technology', 'lat', 'lon', 'capacity', 'hybrid',
+                      'turbine', 'rotor', 'hub_height', 'no_turbines', 'area',
+                      'scenario', 'power_file', 'grid_line', 'storage_hours',
                       'direction', 'tilt', 'zone', 'storage_capacity']
         self.label = []
         self.edit = []
@@ -225,7 +228,7 @@ class AnObject(QtWidgets.QDialog):
             if self.turbines[i][0] == 'Vestas V90-2.0':
                 j = i
             turbcombo.addItem(self.turbines[i][0])
-            if self.turbines[i][0] == self.anobject.turbine:
+            if self.turbines[i][0] == self.stnobject.turbine:
                 turbcombo.setCurrentIndex(i)
                 if self.turbines[i][0] != '':
                     got_turbine = True
@@ -234,13 +237,13 @@ class AnObject(QtWidgets.QDialog):
         techcombo = QtWidgets.QComboBox(self)
         for i in range(len(self.technologies)):
             techcombo.addItem(self.technologies[i])
-            if self.technologies[i] == self.anobject.technology:
+            if self.technologies[i] == self.stnobject.technology:
                 techcombo.setCurrentIndex(i)
         if self.scenarios is not None:
             scencombo = QtWidgets.QComboBox(self)
             for i in range(len(self.scenarios)):
                 scencombo.addItem(self.scenarios[i])
-                if self.scenarios[i] == self.anobject.scenario:
+                if self.scenarios[i] == self.stnobject.scenario:
                     scencombo.setCurrentIndex(i)
         for i in range(len(self.field)):
             if self.field[i] == 'turbine':
@@ -258,18 +261,21 @@ class AnObject(QtWidgets.QDialog):
         self.no_turbines_was = 0
         self.turbine_was = ''
         self.turbine_classd = QtWidgets.QLabel('')
+        self.hybrid = []
         self.show_hide = {}
         units = {'area': 'sq. Km', 'capacity': 'MW', 'storage_capacity': 'MWh', 'storage_hours': 'hrs'}
         self.units = {}
         for i in range(len(self.field)):
             try:
-                attr = getattr(self.anobject, self.field[i])
+                attr = getattr(self.stnobject, self.field[i])
             except:
                 attr = ''
             if isinstance(attr, int):
                 self.field_type.append('int')
             elif isinstance(attr, float):
                 self.field_type.append('float')
+            elif isinstance(attr, list):
+                self.field_type.append('list')
             else:
                 self.field_type.append('str')
             if self.field[i] == 'name':
@@ -293,9 +299,16 @@ class AnObject(QtWidgets.QDialog):
                 self.edit[-1].setRange(0, 10000)
                 self.edit[-1].setValue(self.capacity)
                 self.edit[-1].setDecimals(3)
+            elif self.field[i] == 'hybrid':
+                self.hybrid = attr[:]
+                self.show_hide['hybrid'] = len(self.edit)
+                self.edit.append(QtWidgets.QPushButton('Hybrid Capacities', self))
+                self.edit[-1].clicked.connect(self.hybridClicked)
+                self.edit[-1].setEnabled(True)
             elif self.field[i] == 'turbine':
                 if self.techcomb.currentText().find('Wind') < 0 \
                   and self.techcomb.currentText().find('Offshore') < 0 \
+                  and self.techcomb.currentText().find('Hybrid') < 0 \
                   and self.techcomb.currentText() != '':
                     turbcombo.setCurrentIndex(0)
                 self.turbine = turbcombo
@@ -309,9 +322,9 @@ class AnObject(QtWidgets.QDialog):
                 self.rotor = attr
                 self.show_hide['rotor'] = len(self.edit)
                 wind_extra = ''
-                if self.anobject.technology == 'Wind':
+                if self.stnobject.technology == 'Wind':
                     wtyp = 0
-                elif self.anobject.technology == 'Offshore Wind':
+                elif self.stnobject.technology == 'Offshore Wind':
                     wtyp = 1
                 else:
                     wtyp = 0
@@ -340,7 +353,7 @@ class AnObject(QtWidgets.QDialog):
                 self.show_hide['no_turbines'] = len(self.edit)
                 self.edit.append(QtWidgets.QSpinBox())  # QtWidgets.QLineEdit(str(self.no_turbines)))
                 wtyp = 0
-                if self.anobject.technology == 'Offshore Wind':
+                if self.stnobject.technology == 'Offshore Wind':
                     wtyp = 1
                 self.edit[-1].setRange(0, self.wind_max_turbines[wtyp])
                 if self.no_turbines is None or self.no_turbines == '':
@@ -395,7 +408,7 @@ class AnObject(QtWidgets.QDialog):
             elif self.field[i] == 'tilt':
                 self.tilt = attr
                 self.show_hide['tilt'] = len(self.edit)
-                if attr is not None and self.anobject.technology == 'Fixed PV':
+                if attr is not None and self.stnobject.technology == 'Fixed PV':
                     self.edit.append(QtWidgets.QLineEdit(str(self.tilt)))
                 else:
                     self.edit.append(QtWidgets.QLineEdit(''))
@@ -445,7 +458,7 @@ class AnObject(QtWidgets.QDialog):
         save.clicked.connect(self.saveClicked)
         self.setLayout(grid)
         self.resize(widths[0] + widths[1] + 40, heights * i)
-        self.setWindowTitle('SIREN - Edit ' + getattr(self.anobject, '__module__'))
+        self.setWindowTitle('SIREN - Edit ' + getattr(self.stnobject, '__module__'))
         QtWidgets.QShortcut(QtGui.QKeySequence("q"), self, self.quitClicked)
        #  self.connect(self, SIGNAL('status_text'), self.setStatusText)
         # self.emit(SIGNAL('status_text'), 'Well Hello!')
@@ -455,10 +468,21 @@ class AnObject(QtWidgets.QDialog):
         cst_fields = ['storage_hours']
         pv_fields = ['direction', 'tilt']
         esr_fields = ['storage_capacity']
+        hybrid_fields = ['hybrid']
         show_fields = []
         hide_fields = []
-        if self.techcomb.currentText().find('Wind') >= 0 \
+        if self.techcomb.currentText() == 'Hybrid':
+            show_fields.append(hybrid_fields)
+            show_fields.append(cst_fields)
+            show_fields.append(pv_fields)
+            show_fields.append(esr_fields)
+            show_fields.append(wind_fields)
+            show_fields.append(hybrid_fields)
+            self.curve.show()
+            self.turbine_classd.show()
+        elif self.techcomb.currentText().find('Wind') >= 0 \
           or self.techcomb.currentText().find('Offshore') >= 0:
+            hide_fields.append(hybrid_fields)
             hide_fields.append(cst_fields)
             hide_fields.append(pv_fields)
             hide_fields.append(esr_fields)
@@ -468,6 +492,8 @@ class AnObject(QtWidgets.QDialog):
         else:
             self.curve.hide()
             self.turbine_classd.hide()
+       #     self.hybrid.hide()
+            hide_fields.append(hybrid_fields)
             if self.techcomb.currentText() in ['CST', 'Solar Thermal']:
                 show_fields.append(cst_fields)
                 hide_fields.append(pv_fields)
@@ -552,6 +578,40 @@ class AnObject(QtWidgets.QDialog):
         if self.turbine.currentText() != '':
             Turbine(self.turbine.currentText()).PowerCurve()
         return
+
+    def hybridClicked(self):
+        hybrids = []
+        for t in range(len(self.technologies) -1, 0, -1):
+            if self.technologies[t] not in ['Hybrid']:
+                for hyb in self.hybrid:
+                    if hyb[0] == self.technologies[t]:
+                        hybrids.append([self.technologies[t], hyb[1]])
+                        break
+                else:
+                    hybrids.append([self.technologies[t], 0])
+        fields = ['Technology', 'Capacity']
+        decpts = [0, 3]
+        dialog = displaytable.Table(hybrids, title='Hybrid Technologies', fields=fields, decpts=decpts,
+                                    sortby='Capacity', reverse=True, edit='edit')
+        dialog.exec_()
+        if dialog.getValues() is not None:
+            try:
+                techs = dialog.getValues()
+                hybrid = []
+                for tech, value in techs.items():
+                    cap = value[0].split('=')
+                    if len(cap) > 1 and cap[1] != '':
+                        if cap[1].strip()[-1] == 'K':
+                            cap = float(cap[1].strip()[:-1]) * pow(10, 3)
+                        elif cap[1].strip()[-1] == 'M':
+                            cap = float(cap[1].strip()[:-1]) * pow(10, 6)
+                        else:
+                            cap = float(cap[1].strip())
+                        hybrid.append([tech, cap])
+                self.hybrid = hybrid[:]
+            except:
+                pass
+        del dialog
 
     def quitClicked(self):
         self.close()
@@ -642,18 +702,19 @@ class AnObject(QtWidgets.QDialog):
                 setattr(self, self.field[i], self.edit[i].value())
             elif isinstance(self.edit[i], QtWidgets.QSpinBox):
                 setattr(self, self.field[i], self.edit[i].value())
-        if self.technology.find('Wind') < 0 and self.technology.find('Offshore') < 0:
+            elif isinstance(self.edit[i], QtWidgets.QPushButton):
+                if self.field[i] == 'hybrid':
+                    pass # I don't think I need to do anything here
+              #      self.stnobject.addHybrid(self.hybrid)
+        if self.technology.find('Wind') < 0 and self.technology.find('Offshore') < 0 \
+          and self.technology != 'Hybrid':
             self.rotor = 0.0
             self.turbine = ''
             self.hub_height = None
-        if self.technology == 'Biomass':
-            self.area = self.areas[self.technology] * float(self.capacity)
-        elif 'PV' in self.technology:
-            self.area = self.areas[self.technology] * float(self.capacity)
-        elif self.technology.find('Wind') >= 0 or self.technology.find('Offshore') >= 0:
+        if self.technology.find('Wind') >= 0 or self.technology.find('Offshore') >= 0:
             if self.turbine == '':
-                self.edit[5].setFocus()
-                self.message.setText('Error with ' + self.field[5].title() + '. Choose turbine')
+                self.edit[self.field.index('turbine')].setFocus()
+                self.message.setText('Error with ' + self.field[self.field.index('turbine')].title() + '. Choose turbine')
                 return
             turbine = Turbine(self.turbine)
             if self.capacity != self.capacity_was or \
@@ -661,23 +722,31 @@ class AnObject(QtWidgets.QDialog):
                 self.no_turbines = int(round((self.capacity * 1000.) / turbine.capacity))
             self.capacity = self.no_turbines * turbine.capacity / 1000.  # reduce from kW to MW
             self.rotor = turbine.rotor
-            self.area = self.areas[self.technology] * float(self.no_turbines) * pow((self.rotor * .001), 2)
-        elif self.technology  in ['CST', 'Solar Thermal']:
-            self.area = self.areas[self.technology] * float(self.capacity)  # temp calc. Should be 3.83 x collector area
-        elif self.technology == 'Geothermal':
-            self.area = self.areas[self.technology] * float(self.capacity)
-        elif self.technology == 'Wave':
-            self.area = self.areas[self.technology] * float(self.capacity)
-        elif self.technology in ['Hydro', 'Pumped Hydro']:
-            self.area = self.areas[self.technology] * float(self.capacity)
-        elif self.technology in ['BESS']:
-            self.area = self.areas[self.technology] * float(self.capacity)
-        elif self.technology[:5] == 'Other':
-            self.area = self.areas[self.technology] * float(self.capacity)
+        if self.technology != 'Hybrid':
+            if self.technology.find('Wind') >= 0 or self.technology.find('Offshore') >= 0:
+                self.area = getStnArea(self.technology, self.capacity, self.areas, no_turbines=self.no_turbines,
+                                    rotor=self.rotor)
+            else:
+                self.area = getStnArea(self.technology, self.capacity, self.areas)
+            if self.area is None:
+                self.message.setText(f'This technology ({self.technology}) not yet implemented. Choose another.')
+                self.edit[self.field.index('technology')].setFocus()
+                return
         else:
-            self.message.setText('This technology not yet implemented. Choose another.')
-            self.edit[1].setFocus()
-            return
+            self.area = 0
+            for tech in self.hybrid:
+                if tech[0].find('Wind') >= 0 or tech[0].find('Offshore') >= 0:
+                    if self.turbine == '':
+                        self.edit[self.field.index('turbine')].setFocus()
+                        self.message.setText('Error with ' + self.field[self.field.index('turbine')].title() + '. Choose turbine')
+                        return
+                    turbine = Turbine(self.turbine)
+                    self.no_turbines = int(round((tech[1] * 1000.) / turbine.capacity))
+                    self.rotor = turbine.rotor
+                    self.area += getStnArea(tech[0], tech[1], self.areas, no_turbines=self.no_turbines,
+                                            rotor=self.rotor)
+                else:
+                    self.area += getStnArea(tech[0], tech[1], self.areas)
         self.save = True
         self.close()
 
@@ -687,14 +756,16 @@ class AnObject(QtWidgets.QDialog):
                       self.no_turbines, self.area, self.scenario, power_file=self.power_file)
             if self.grid_line is not None:
                 station.grid_line = self.grid_line
-            if 'PV' in self.technology:
+            if 'PV' in self.technology or self.technology == 'Hybrid':
                 if self.direction is not None:
                     station.direction = self.direction
                 if self.tilt is not None:
                     station.tilt = self.tilt
-            if 'Wind' in self.technology:
-                if self.hub_height is not None and self.hub_height > 0:
+            if 'Wind' in self.technology or self.technology == 'Hybrid':
+                if self.hub_height is not None and self.hub_height != '' and self.hub_height > 0:
                     station.hub_height = self.hub_height
+            if self.technology == 'Hybrid' and len(self.hybrid) > 0:
+                station.hybrid = self.hybrid
             if self.storage_hours is not None:
                 if self.technology == 'CST':
                     try:

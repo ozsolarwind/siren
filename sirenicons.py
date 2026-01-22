@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2016-2025 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2019-2026 Angus King
+#  Copyright (C) 2019-2025 Sustainable Energy Now Inc.
 #
 #  sirenicons.py - This file is part of SIREN.
 #
@@ -34,7 +35,8 @@ class Icons:
             config_file = getModelFile('SIREN.ini')
         config.read(config_file)
         self.icons = {'BESS': 'bess_g.png', 'Biomass': 'biomass_g.png', 'CST': 'solar_g.png',
-                      'Fossil': 'fossil_g.png', 'Geothermal': 'hot_rocks_g.png', 'Hydro': 'hydro_g.png',
+                      'Fossil': 'fossil_g.png', 'Geothermal': 'hot_rocks_g.png',
+                      'Hybrid': 'hybrid_g.png', 'Hydro': 'hydro_g.png',
                       'Offshore Wind': 'offwind_g.png', 'Other': 'question.png',
                       'Pumped Hydro': 'phes_g.png', 'PV': 'solar_pv_g.png',
                       'Solar Thermal': 'solar_g.png', 'Wave': 'wave_g.png', 'Wind': 'wind_g.png'}

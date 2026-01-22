@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2025 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2019-2026 Angus King
+#  Copyright (C) 2019-2025 Sustainable Energy Now Inc.
 #
 #  wascene.py - This file is part of SIREN.
 #
@@ -33,7 +34,7 @@ from towns import Towns
 from getmodels import getModelFile
 from grid import Grid, Grid_Area, Grid_Boundary, Grid_Zones, Line
 from senutils import getParents, getUser, techClean, WorkBook
-from station import Station, Stations
+from station import Station, Stations, getStnArea
 from dijkstra_4 import Shortest
 
 
@@ -789,9 +790,7 @@ class WAScene(QtWidgets.QGraphicsScene):
             else:
                 curr_row = 0
 #           get column names
-            curr_col = -1
-            while curr_col < num_cols:
-                curr_col += 1
+            for curr_col in range(worksheet.ncols):
                 var[worksheet.cell_value(curr_row, curr_col)] = curr_col
             while curr_row < num_rows:
                 curr_row += 1
@@ -823,6 +822,20 @@ class WAScene(QtWidgets.QGraphicsScene):
                             name_ok = True
                     if new_name != new_st.name:
                         new_st.name = new_name
+                    tech = new_st.technology
+                    if new_st.technology == 'Hybrid':
+                        area = 0
+                        try:
+                            new_st.addHybrid(worksheet.cell_value(curr_row, var['Hybrid']))
+                            for tec in new_st.hybrid:
+                                if tec[0].find('Wind') >= 0 or tec[0].find('Offshore') >= 0:
+                                    area += getStnArea(tec[0], tec[1], self.areas, no_turbines=new_st.no_turbines,
+                                                       rotor=new_st.rotor)
+                                else:
+                                    area += getStnArea(tec[0], tec[1], self.areas)
+                            new_st.area = area
+                        except:
+                            pass
                     if new_st.area == 0 or new_st.area == '':
                         if new_st.technology == 'Wind':
                             new_st.area = self.areas[new_st.technology] * float(new_st.no_turbines) * \

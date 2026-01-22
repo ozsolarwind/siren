@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2025 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2019-2026 Angus King
+#  Copyright (C) 2019-2025 Sustainable Energy Now Inc.
 #
 #  powermodel.py - This file is part of SIREN.
 #
@@ -612,7 +613,7 @@ class PowerModel():
                     if value:
                         new_cell.value = copy(cell.value)
 
-            def stn_rows(ss):
+            def stn_cols(ss):
                 if not self.plots['save_zone']:
                     for col in range(1, ss.max_column + 1):
                         try:
@@ -623,69 +624,86 @@ class PowerModel():
                             pass
                 st_row = []
                 st_col = []
-                for i in range(len(type_tags)):
+                st_wdth = []
+                for i in range(len(stn_tags)):
                     st_row.append(0)
                     st_col.append(0)
+                    st_wdth.append(0)
                 for row in range(1, ss.max_row + 1):
                     for col in range(1, ss.max_column + 1):
                         try:
-                            if ss.cell(row=row, column=col).value[0] != '<':
-                                continue
-                            elif ss.cell(row=row, column=col).value[:5] == '<stn_':
+                            if ss.cell(row=row, column=col).value[:5] == '<stn_':
                                 bit = ss.cell(row=row, column=col).value[:-1].split('_')
-                                ty = type_tags.index(bit[-1])
+                                ty = stn_tags.index(bit[-1])
+                                st_wdth[ty] = max(ss.column_dimensions[ssCol(col)].width, 13)
                                 st_row[ty] = row
                                 st_col[ty] = col
                                 ss.cell(row=row, column=col).value = None
+                            else:
+                                continue
                         except:
                             pass
                 st = 0
                 for key, value in iter(sorted(stns.items())):
-                    try:
-                        ss.cell(row=st_row[type_tags.index('name')] + st, column=st_col[type_tags.index('name')]).value = self.power_summary[value].name
-                    except:
-                        pass
-                    if self.plots['save_zone']:
+                    for t in range(len(stn_tags)):
                         try:
-                            ss.cell(row=st_row[type_tags.index('zone')] + st, column=st_col[type_tags.index('zone')]).value = self.power_summary[value].zone
-                        except:
-                            pass
-                    try:
-                        ss.cell(row=st_row[type_tags.index('tech')] + st, column=st_col[type_tags.index('tech')]).value = self.power_summary[value].technology
-                    except:
-                        pass
-                    try:
-                        ss.cell(row=st_row[type_tags.index('cap')] + st, column=st_col[type_tags.index('cap')]).value = self.power_summary[value].capacity
-                        ss.cell(row=st_row[type_tags.index('cap')] + st, column=st_col[type_tags.index('cap')]).number_format = '#,##0.00'
-                    except:
-                        pass
-                    if self.power_summary[value].generation > 0:
-                        try:
-                            ss.cell(row=st_row[type_tags.index('cf')] + st, column=st_col[type_tags.index('cf')]).value = self.power_summary[value].generation / \
-                                 (self.power_summary[value].capacity * 8760)
-                            ss.cell(row=st_row[type_tags.index('cf')] + st, column=st_col[type_tags.index('cf')]).number_format = '#,##0.00'
-                        except:
-                            pass
-                    try:
-                        ss.cell(row=st_row[type_tags.index('gen')] + st, column=st_col[type_tags.index('gen')]).value = self.power_summary[value].generation
-                        ss.cell(row=st_row[type_tags.index('gen')] + st, column=st_col[type_tags.index('gen')]).number_format = '#,##0'
-                    except:
-                        pass
-                    if self.power_summary[value].transmitted is not None:
-                        try:
-                            ss.cell(row=st_row[type_tags.index('tmit')] + st, column=st_col[type_tags.index('tmit')]).value = self.power_summary[value].transmitted
-                            ss.cell(row=st_row[type_tags.index('tmit')] + st, column=st_col[type_tags.index('tmit')]).number_format = '#,##0'
+                            col = st_col[t]
+                            if col == 0:
+                                continue
+                            attr = getattr(self.power_summary[value], stn_attr[t])
+                            if attr is not None:
+                                st_wdth[t] = max(st_wdth[t], len(str(attr)))
+                                ss.cell(row=st_row[t] + st, column=col).value = attr
+                                if stn_fmat[t] != '':
+                                    ss.cell(row=st_row[t] + st, column=col).number_format = stn_fmat[t]
+                                else:
+                                    ss.cell(row=st_row[t] + st, column=col).alignment = oxl.styles.Alignment(horizontal='left')
+                                st_wdth[t] = max(st_wdth[t], len(str(attr)))
                         except:
                             pass
                     st += 1
+                for t in range(len(st_wdth)):
+                    ss.column_dimensions[ssCol(st_col[t])].width = st_wdth[t]
+
+            def tech_cols(ss):
+                return
+                if not self.plots['save_zone']:
+                    for col in range(1, ss.max_column + 1):
+                        try:
+                            if ss.cell(row=1, column=col).value.lower() == 'zone':
+                                ss.delete_cols(col)
+                                break
+                        except:
+                            pass
+                te_row = []
+                te_col = []
+                for i in range(len(type_tags)):
+                    te_row.append(0)
+                    te_col.append(0)
+                for row in range(1, ss.max_row + 1):
+                    for col in range(1, ss.max_column + 1):
+                        try:
+                            if ss.cell(row=row, column=col).value[:5] == '<stn_' \
+                              or ss.cell(row=row, column=col).value[0] != '<':
+                                continue
+                            bit = ss.cell(row=row, column=col).value[:-1].split('_')
+                            ty = tech_tags.index(bit[-1])
+                            te_row[ty] = row
+                            te_col[ty] = col
+                            ss.cell(row=row, column=col).value = None
+                        except:
+                            pass
 
             ts = oxl.load_workbook(self.pm_template)
             ws = ts.worksheets[0]
+            stn_tags = ['name', 'zone', 'tech',       'cap',      'cf',       'gen',        'tmit',        'hrly',     'turb']
+            stn_attr = ['name', 'zone', 'technology', 'capacity', 'cf',       'generation', 'transmitted', '',         'turbine']
+            stn_fmat = ['',     '',     '',           '#,##0.00', '#,##0.00', '#,##0',       '#,##0',      '#,##0.00', '']
             type_tags = ['name', 'zone', 'tech', 'cap', 'cf', 'gen', 'tmit', 'hrly']
-            tech_tags = ['load', 'wind', 'offw', 'roof', 'fixed', 'single', 'dual',
-                         'biomass', 'geotherm', 'other1', 'cst', 'hydro', 'phes']
+            tech_tags =  ['load', 'wind', 'offw',          'roof',       'fixed',    'single',         'dual',
+                          'biomass', 'geotherm',   'other1', 'cst', 'hydro', 'phes',         'hybrid']
             tech_names = ['Load', 'Wind', 'Offshore Wind', 'Rooftop PV', 'Fixed PV', 'Single Axis PV', 'Dual Axis PV',
-                          'Biomass', 'Geothermal', 'Other1', 'CST', 'Hydro', 'Pumped Hydro']
+                          'Biomass', 'Geothermal', 'Other1', 'CST', 'Hydro', 'Pumped Hydro', 'Hybrid']
             tech_names2 = [''] * len(tech_names)
             tech_names2[tech_names.index('Wind')] = 'Onshore Wind'
             tech_names2[tech_names.index('CST')] = 'Solar Thermal'
@@ -709,6 +727,10 @@ class PowerModel():
             else:
                 i = type_tags.index('zone')
                 del type_tags[i]
+                i = stn_tags.index('zone')
+                del stn_tags[i]
+                del stn_attr[i]
+                del stn_fmat[i]
                 heights = []
                 # some code to delete the zone row and reapply cell formats after the delete
                 del_zone = False
@@ -833,14 +855,16 @@ class PowerModel():
                 if os.path.exists(data_file + '~'):
                     os.remove(data_file + '~')
                 os.rename(data_file, data_file + '~')
+            # hourly data
+            tech_cols(ws)
             # stations summaries
             stns = {}
             for i in range(len(self.power_summary)):
                 stns[self.power_summary[i].name] = i
-            stn_rows(ws)
+            stn_cols(ws)
             try: # in case they have a separate station worksheet
                 ws2 = ts.worksheets[1]
-                stn_rows(ws2)
+                stn_cols(ws2)
             except:
                 pass
             datas = {}
@@ -898,6 +922,8 @@ class PowerModel():
                             ws.merge_cells(start_row=row, start_column=lst_col, end_row=row, end_column=col - 1)
                         lst_col = col
                         lst_zone = ws.cell(row=row, column=col).value
+                if lst_col < col:
+                    ws.merge_cells(start_row=row, start_column=lst_col, end_row=row, end_column=col)
             else:
                 for i in range(len(self.power_summary)):
                     key = self.power_summary[i].technology
@@ -935,30 +961,29 @@ class PowerModel():
                     ws.cell(row=per_row[1] + i, column=per_col[1]).value = shortstuff[i].period
                     cell_format(ws.cell(row=per_row[1], column=per_col[1]), ws.cell(row=per_row[1] + i, column=per_col[1]))
             # load
-            if type_row[-1] > 0:
+            if type_row[type_tags.index('hrly')] > 0:
                 for i in range(8760):
-                    ws.cell(row=type_row[-1] + i, column=tech_col[0]).value = shortstuff[i].load
-                    cell_format(ws.cell(row=type_row[-1], column=tech_col[0]), ws.cell(row=type_row[-1] + i,
-                                column=tech_col[0]))
+                    ws.cell(row=type_row[type_tags.index('hrly')] + i, column=tech_col[0]).value = shortstuff[i].load
+                    cell_format(ws.cell(row=type_row[type_tags.index('hrly')], column=tech_col[0]),
+                                ws.cell(row=type_row[type_tags.index('hrly')] + i, column=tech_col[0]))
             ly_keys = []
+            del_cols = []
             if self.plots['save_zone']:
                 ly_keys = []
                 for zt in zone_techs:
                     ly_keys.append([])
                 if self.plots['by_station']:
-                    k = 0
-                    for key in self.ly.keys():
+                    for i in range(len(self.power_summary)):
                         try:
-                            te = tech_names.index(self.stn_tech[k])
+                            te = tech_names.index(self.power_summary[i].technology)
                         except:
                             try:
-                                te = tech_names2.index(self.stn_tech[k])
+                                te = tech_names2.index(self.power_summary[i].technology)
                             except:
                                 continue
-                        zk = '%s.%02d' % (self.stn_zone[k], te)
+                        zk = f'{self.power_summary[i].zone}.{te:02}'
                         te = zone_techs.index(zk)
-                        ly_keys[te].append(key)
-                        k += 1
+                        ly_keys[te].append(f'{self.power_summary[i].zone}.{self.power_summary[i].name}')
                 else:
                     for key in self.ly.keys():
                         bits = key.split('.')
@@ -988,24 +1013,24 @@ class PowerModel():
                             pass
                     if doit: # or not doit:
                         for h in range(len(hrly)):
-                            ws.cell(row=type_row[-1] + h, column=tech_col[te]).value = hrly[h]
-                            cell_format(ws.cell(row=type_row[-1], column=tech_col[te]), \
-                                        ws.cell(row=type_row[-1] + h, column=tech_col[te]))
+                            ws.cell(row=type_row[type_tags.index('hrly')] + h, column=tech_col[te]).value = hrly[h]
+                            cell_format(ws.cell(row=type_row[type_tags.index('hrly')], column=tech_col[te]), \
+                                        ws.cell(row=type_row[type_tags.index('hrly')] + h, column=tech_col[te]))
+                    else:
+                        del_cols.append(tech_col[te])
             else:
                 for t in range(len(tech_names)):
                     ly_keys.append([])
                 if self.plots['by_station']:
-                    k = 0
-                    for key in self.ly.keys():
+                    for i in range(len(self.power_summary)):
                         try:
-                            te = tech_names.index(self.stn_tech[k])
+                            te = tech_names.index(self.power_summary[i].technology)
                         except:
                             try:
-                                te = tech_names2.index(self.stn_tech[k])
+                                te = tech_names2.index(self.power_summary[i].technology)
                             except:
                                 continue
-                        ly_keys[te].append(key)
-                        k += 1
+                        ly_keys[te].append(self.power_summary[i].name)
                 else:
                     for key in self.ly.keys():
                         try:
@@ -1016,7 +1041,6 @@ class PowerModel():
                             except:
                                 continue
                         ly_keys[te].append(key)
-                del_cols = []
                 for te in range(len(tech_col)):
                     if tech_col[te] == 0 or len(ly_keys[te]) == 0:
                         if tech_names[te] != 'Load':
@@ -1035,14 +1059,16 @@ class PowerModel():
                             pass
                     if doit: # or not doit:
                         for h in range(len(hrly)):
-                            ws.cell(row=type_row[-1] + h, column=tech_col[te]).value = hrly[h]
-                            cell_format(ws.cell(row=type_row[-1], column=tech_col[te]), \
-                                        ws.cell(row=type_row[-1] + h, column=tech_col[te]))
-                if self.pm_sparse and len(del_cols) > 0:
-                    del_cols.sort(reverse=True)
-                    for col in del_cols:
-                        if col > 0:
-                            ws.delete_cols(col)
+                            ws.cell(row=type_row[type_tags.index('hrly')] + h, column=tech_col[te]).value = hrly[h]
+                            cell_format(ws.cell(row=type_row[type_tags.index('hrly')], column=tech_col[te]), \
+                                        ws.cell(row=type_row[type_tags.index('hrly')] + h, column=tech_col[te]))
+                    else:
+                        del_cols.append(tech_col[te])
+            if self.pm_sparse and len(del_cols) > 0:
+                del_cols.sort(reverse=True)
+                for col in del_cols:
+                    if col > 0:
+                        ws.delete_cols(col)
             ts.save(data_file)
 
         config = configparser.RawConfigParser()

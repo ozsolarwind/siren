@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2025 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2019-2026 Angus King
+#  Copyright (C) 2019-2025 Sustainable Energy Now Inc.
 #
 #  superpower.py - This file is part of SIREN.
 #
@@ -124,13 +125,13 @@ class SuperPower():
             print(closest)
         return closest
 
-    def do_defaults(self, station):
-        if 'PV' in station.technology:
+    def do_defaults(self, station, technology):
+        if 'PV' in technology:
             technology = 'PV'
-        elif 'Wind' in station.technology:
+        elif 'Wind' in technology:
             technology = 'Wind'
         else:
-            technology = station.technology
+            technology = technology
         if self.default_files[technology] is None:
             dft_file = self.variable_files + '/' + self.defaults[technology]
             if os.path.exists(dft_file):
@@ -694,17 +695,22 @@ class SuperPower():
                     if self.plots['save_data'] or self.plots['financials'] or self.plots['save_detail'] \
                       or self.plots['visualise']:
                         self.stn_pows[-1].append(power[i] / 1000.)
-            if total_energy > 0:
-                pt = PowerSummary(stn.name, stn.technology, total_power, stn.capacity, total_energy)
+            for tec in ['Hybrid', 'Offshore', 'Wind']:
+                if tec in stn.technology:
+                    turbine = stn.turbine
+                    break
             else:
-                pt = PowerSummary(stn.name, stn.technology, total_power, stn.capacity)
+                turbine = None
+            if total_energy <= 0:
+                total_energy = None
+            pt = PowerSummary(stn.name, stn.technology, total_power, stn.capacity, transmitted=total_energy, turbine=turbine)
             if self.plots['save_zone']:
                 pt.zone = stn.zone
             self.power_summary.append(pt)
         if show_progress:
             self.progress.barProgress(-1)
 
-    def getStationPower(self, station):
+    def getStationPower(self, station, hybrid=None):
         def do_module(modname, station, field):
             if self.debug and self.status:
                 do_time = True
@@ -720,7 +726,7 @@ class SuperPower():
                     time3 = time.time() - clock_start - time2
                     self.status.log('Execute (%.6f seconds)' % (time3))
                 if self.debug:
-                    self.debug_sam(station.name, station.technology, module, self.data, self.status)
+                    self.debug_sam(station.name, stn_technology, module, self.data, self.status)
                 farmpwr = self.data.get_array(field.encode('utf-8'))
                 if do_time:
                     time4 = time.time() - clock_start - time2 - time3
@@ -777,17 +783,35 @@ class SuperPower():
                     for i in range(1, worksheet.nrows):
                         farmpwr.append(worksheet.cell_value(i, col) * 1000.)
                 return farmpwr
-        if station.capacity == 0:
+        if hybrid is None:
+            if len(station.hybrid) == 0:
+                stn_technology = station.technology
+                stn_capacity = station.capacity
+            else:
+                powr = []
+                for hyb in station.hybrid:
+                    powr.append(self.getStationPower(station, hyb))
+                farmpwr = []
+                for p in range(len(powr[0])):
+                    farmpwr.append(powr[0][p])
+                    for t in range(1, len(powr)):
+                        farmpwr[-1] += powr[t][p]
+                    farmpwr[-1] = min(station.capacity * 1000, farmpwr[-1])
+                return farmpwr
+        else:
+            stn_technology = hybrid[0]
+            stn_capacity = hybrid[1]
+        if stn_capacity == 0:
             return None
         if self.status:
-            self.status.log('Processing ' + station.name + ' (' + station.technology + ')')
+            self.status.log('Processing ' + station.name + ' (' + stn_technology + ')')
             QtWidgets.QApplication.processEvents()
         self.data = None
         self.data = ssc.Data()
         farmpwr = [] # just in case
-        if 'Wind' in station.technology:
+        if 'Wind' in stn_technology:
             temp_wind = None
-            if 'Off' in station.technology: # offshore?
+            if 'Off' in stn_technology: # offshore?
                 wtyp = 1
             else:
                 wtyp = 0
@@ -831,12 +855,12 @@ class SuperPower():
                     pass
             self.data.set_string(b'wind_resource_filename', wind_file.encode('utf-8'))
             no_turbines = int(station.no_turbines)
-            if station.scenario == 'Existing' and (no_turbines * turbine.capacity) != (station.capacity * 1000):
-                loss = round(1. - (station.capacity * 1000) / (no_turbines * turbine.capacity), 2)
+            if station.scenario == 'Existing' and (no_turbines * turbine.capacity) != (stn_capacity * 1000):
+                loss = round(1. - (stn_capacity * 1000) / (no_turbines * turbine.capacity), 2)
                 loss = loss * 100
                 if loss < self.wind_farm_losses_percent[wtyp]:
                     loss = self.wind_farm_losses_percent[wtyp]
-                self.data.set_number(b'system_capacity', station.capacity * 1000000)
+                self.data.set_number(b'system_capacity', stn_capacity * 1000000)
                 self.data.set_number(b'wind_farm_losses_percent', loss)
             else:
                 self.data.set_number(b'system_capacity', no_turbines * turbine.capacity * 1000)
@@ -869,7 +893,7 @@ class SuperPower():
             except:
                 if hub_hght > 0:
                     self.data.set_number(b'wind_turbine_hub_ht', hub_hght)
-            self.do_defaults(station)
+            self.do_defaults(station, stn_technology)
             farmpwr = do_module('windpower', station, 'gen')
             if temp_file is not None: # if a hub height is specified
                 try:
@@ -882,7 +906,7 @@ class SuperPower():
                 except:
                     pass
             return farmpwr
-        elif station.technology == 'CST':
+        elif stn_technology == 'CST':
             temp_solar = None
             closest = self.find_closest(station.lat, station.lon)
             if closest[-4:] == '.smz':
@@ -929,19 +953,19 @@ class SuperPower():
                     self.defaults['optical_table'].append(row)
                 del lines
             self.data.set_matrix(b'OpticalTable', self.defaults['optical_table'][:])
-            self.do_defaults(station)
+            self.do_defaults(station, stn_technology)
             farmpwr = do_module('tcsgeneric_solar', station, 'gen')
             if farmpwr is not None:
-                if station.capacity != base_capacity:
+                if stn_capacity != base_capacity:
                     for i in range(len(farmpwr)):
-                        farmpwr[i] = farmpwr[i] * station.capacity / float(base_capacity)
+                        farmpwr[i] = farmpwr[i] * stn_capacity / float(base_capacity)
             if temp_solar is not None: # from a zipped file
                 try:
                     os.remove(self.temp_dir + temp_solar)
                 except:
                     pass
             return farmpwr
-        elif station.technology == 'Solar Thermal':
+        elif stn_technology == 'Solar Thermal':
             temp_solar = None
             closest = self.find_closest(station.lat, station.lon)
             if closest[-4:] == '.smz':
@@ -998,19 +1022,19 @@ class SuperPower():
                 f_tc_cold = self.data.get_number(b'f_tc_cold')
                 V_tank_hot_ini = vol_tank * (1. - f_tc_cold)
                 self.data.set_number(b'V_tank_hot_ini', V_tank_hot_ini)
-            self.do_defaults(station)
+            self.do_defaults(station, stn_technology)
             farmpwr = do_module('tcsmolten_salt', station, 'gen')
             if farmpwr is not None:
-                if station.capacity != base_capacity:
+                if stn_capacity != base_capacity:
                     for i in range(len(farmpwr)):
-                        farmpwr[i] = farmpwr[i] * station.capacity / float(base_capacity)
+                        farmpwr[i] = farmpwr[i] * stn_capacity / float(base_capacity)
             if temp_solar is not None: # from a zipped file
                 try:
                     os.remove(self.temp_dir + temp_solar)
                 except:
                     pass
             return farmpwr
-        elif 'PV' in station.technology:
+        elif 'PV' in stn_technology:
             temp_solar = None
             closest = self.find_closest(station.lat, station.lon)
             if closest[-4:] == '.smz':
@@ -1026,24 +1050,24 @@ class SuperPower():
                 solar_file = self.solar_files + '/' + closest
             self.data.set_string(b'solar_resource_file', solar_file.encode('utf-8'))
             dc_ac_ratio = self.pv_dc_ac_ratio[0]
-            if station.technology[:5] == 'Fixed':
+            if stn_technology[:5] == 'Fixed':
                 dc_ac_ratio = self.pv_dc_ac_ratio[0]
                 self.data.set_number(b'array_type', 0)
-            elif station.technology[:7] == 'Rooftop':
+            elif stn_technology[:7] == 'Rooftop':
                 dc_ac_ratio = self.pv_dc_ac_ratio[1]
                 self.data.set_number(b'array_type', 1)
-            elif station.technology[:11] == 'Single Axis':
+            elif stn_technology[:11] == 'Single Axis':
                 dc_ac_ratio = self.pv_dc_ac_ratio[2]
                 self.data.set_number(b'array_type', 2)
-            elif station.technology[:9] == 'Backtrack':
+            elif stn_technology[:9] == 'Backtrack':
                 dc_ac_ratio = self.pv_dc_ac_ratio[3]
                 self.data.set_number(b'array_type', 3)
-            elif station.technology[:8] == 'Tracking' or station.technology[:9] == 'Dual Axis':
+            elif stn_technology[:8] == 'Tracking' or stn_technology[:9] == 'Dual Axis':
                 dc_ac_ratio = self.pv_dc_ac_ratio[4]
                 self.data.set_number(b'array_type', 4)
-            self.data.set_number(b'system_capacity', station.capacity * 1000 * dc_ac_ratio)
+            self.data.set_number(b'system_capacity', stn_capacity * 1000 * dc_ac_ratio)
             self.data.set_number(b'dc_ac_ratio', dc_ac_ratio)
-            if station.technology == 'Fixed PV':
+            if stn_technology == 'Fixed PV':
                 try:
                     self.data.set_number(b'tilt', fabs(station.tilt))
                 except:
@@ -1068,7 +1092,7 @@ class SuperPower():
                         pass
             self.data.set_number(b'azimuth', azi)
             self.data.set_number(b'losses', self.pv_losses)
-            self.do_defaults(station)
+            self.do_defaults(station, stn_technology)
             farmpwr = do_module('pvwattsv5', station, 'gen')
             if temp_solar is not None: # from a zipped file
                 try:
@@ -1076,7 +1100,7 @@ class SuperPower():
                 except:
                     pass
             return farmpwr
-        elif station.technology == 'Biomass':
+        elif stn_technology == 'Biomass':
             temp_solar = None
             closest = self.find_closest(station.lat, station.lon)
             if closest[-4:] == '.smz':
@@ -1091,14 +1115,14 @@ class SuperPower():
             else:
                 solar_file = self.solar_files + '/' + closest
             self.data.set_string(b'file_name', solar_file.encode('utf-8'))
-            self.data.set_number(b'system_capacity', station.capacity * 1000)
-            self.data.set_number(b'biopwr.plant.nameplate', station.capacity * 1000)
-            feedstock = station.capacity * 1000 * self.biomass_multiplier
+            self.data.set_number(b'system_capacity', stn_capacity * 1000)
+            self.data.set_number(b'biopwr.plant.nameplate', stn_capacity * 1000)
+            feedstock = stn_capacity * 1000 * self.biomass_multiplier
             self.data.set_number(b'biopwr.feedstock.total', feedstock)
             self.data.set_number(b'biopwr.feedstock.total_biomass', feedstock)
             carbon_pct = self.data.get_number(b'biopwr.feedstock.total_biomass_c')
             self.data.set_number(b'biopwr.feedstock.total_c', feedstock * carbon_pct / 100.)
-            self.do_defaults(station)
+            self.do_defaults(station, stn_technology)
             farmpwr = do_module('biomass', station, 'gen')
             if temp_solar is not None: # from a zipped file
                 try:
@@ -1106,7 +1130,7 @@ class SuperPower():
                 except:
                     pass
             return farmpwr
-        elif station.technology == 'Geothermal':
+        elif stn_technology == 'Geothermal':
             temp_solar = None
             closest = self.find_closest(station.lat, station.lon)
             if closest[-4:] == '.smz':
@@ -1121,11 +1145,11 @@ class SuperPower():
             else:
                 solar_file = self.solar_files + '/' + closest
             self.data.set_string(b'file_name', solar_file.encode('utf-8'))
-            self.data.set_number(b'nameplate', station.capacity * 1000)
-            self.data.set_number(b'resource_potential', station.capacity * 10.)
+            self.data.set_number(b'nameplate', stn_capacity * 1000)
+            self.data.set_number(b'resource_potential', stn_capacity * 10.)
             self.data.set_number(b'resource_type', self.geo_res)
             self.data.set_string(b'hybrid_dispatch_schedule', ('1' * 24 * 12).encode('utf-8'))
-            self.do_defaults(station)
+            self.do_defaults(station, stn_technology)
             pwr = do_module('geothermal', station, 'monthly_energy')
             if temp_solar is not None: # from a zipped file
                 try:
@@ -1140,14 +1164,14 @@ class SuperPower():
                 return farmpwr
             else:
                 return None
-        elif station.technology == 'Hydro':   # fudge Hydro purely by Capacity Factor
-            pwr = station.capacity * 1000 * self.hydro_cf
+        elif stn_technology == 'Hydro':   # fudge Hydro purely by Capacity Factor
+            pwr = stn_capacity * 1000 * self.hydro_cf
             for hr in range(8760):
                 farmpwr.append(pwr)
             return farmpwr
-        elif station.technology == 'Pumped Hydro':   # fudge Hydro purely by Capacity Factor
+        elif stn_technology == 'Pumped Hydro':   # fudge Hydro purely by Capacity Factor
             stg = station.storage_capacity * 1000
-            cap = station.capacity * 1000
+            cap = stn_capacity * 1000
             pwr = cap * self.ph_cf
             for dy in range(365):
                 d_stg = 0
@@ -1166,7 +1190,7 @@ class SuperPower():
                    else:
                        farmpwr.append(0)
             return farmpwr
-        elif station.technology == 'Wave':   # fudge Wave using 10m wind speed
+        elif stn_technology == 'Wave':   # fudge Wave using 10m wind speed
             closest = self.find_closest(station.lat, station.lon)
             tf = open(self.solar_files + '/' + closest, 'r')
             lines = tf.readlines()
@@ -1186,10 +1210,10 @@ class SuperPower():
                         wave_pwr = pow(wave_height, 2) * wave_period * self.wave_efficiency
                         if wave_pwr > 1.:
                             wave_pwr = 1.
-                        pwr = station.capacity * 1000 * wave_pwr
+                        pwr = stn_capacity * 1000 * wave_pwr
                         farmpwr.append(pwr)
             return farmpwr
-        elif station.technology[:5] == 'Other':
+        elif stn_technology[:5] == 'Other':
             config = configparser.RawConfigParser()
             if len(sys.argv) > 1:
                 config_file = getModelFile(sys.argv[1])
@@ -1200,7 +1224,7 @@ class SuperPower():
             propty = {}
             wnd50 = False
             try:
-                props = config.items(station.technology)
+                props = config.items(stn_technology)
                 for key, value in props:
                     propty[key] = value
                 closest = self.find_closest(station.lat, station.lon)
@@ -1310,7 +1334,7 @@ class SuperPower():
                             pwr = 1.
                     except:
                         pwr = 0.
-                    pwr = station.capacity * 1000 * pwr
+                    pwr = stn_capacity * 1000 * pwr
                     farmpwr.append(pwr)
             except:
                 pass

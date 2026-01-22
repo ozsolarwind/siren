@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2025 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2019-2026 Angus King
+#  Copyright (C) 2019-2025 Sustainable Energy Now Inc.
 #
 #  station.py - This file is part of SIREN.
 #
@@ -45,11 +46,38 @@ def within_map(y, x, poly):
         p1y, p1x = p2y, p2x
     return inside
 
+def getStnArea(tech, cap, areas, no_turbines=None, rotor=None):
+    area = None
+    if tech == 'Biomass':
+        area = areas[tech] * float(cap)
+    elif 'PV' in tech:
+        area = areas[tech] * float(cap)
+    elif tech.find('Wind') >= 0 or tech.find('Offshore') >= 0:
+        if no_turbines is not None and rotor is not None:
+            try:
+                area = areas[tech] * no_turbines * pow((rotor * .001), 2)
+            except:
+                area = areas[tech] * float(no_turbines) * pow((rotor * .001), 2)
+    elif tech  in ['CST', 'Solar Thermal']:
+        area = areas[tech] * float(cap)  # temp calc. Should be 3.83 x collector area
+    elif tech == 'Geothermal':
+        area = areas[tech] * float(cap)
+    elif tech == 'Wave':
+        area = areas[tech] * float(cap)
+    elif tech in ['Hydro', 'Pumped Hydro']:
+        area = areas[tech] * float(cap)
+    elif tech in ['BESS']:
+        area = areas[tech] * float(cap)
+    elif tech[:5] == 'Other':
+        area = areas[tech] * float(cap)
+    return area
+
 
 class Station:
     def __init__(self, name, technology, lat, lon, capacity, turbine, rotor, no_turbines, area, scenario,
                  direction=None, grid_line=None, hub_height=None, power_file=None, storage_hours=None, tilt=None, # extra file fields
-                 generation=None, grid_len=None, grid_path_len=None, zone=None, rating=None, storage_capacity=None):
+                 generation=None, grid_len=None, grid_path_len=None, zone=None, rating=None, storage_capacity=None,
+                 hybrid=None):
         self.name = name
         self.technology = technology
         self.lat = lat
@@ -76,6 +104,7 @@ class Station:
         self.direction = direction
         self.storage_hours = storage_hours
         self.storage_capacity = storage_capacity
+        self.hybrid = []
         if tilt is not None:
             try:
                 self.tilt = float(tilt)
@@ -92,6 +121,31 @@ class Station:
                 self.storage_capacity = float(storage_capacity)
             except:
                 pass
+        if hybrid is not None:
+            self.addHybrid(hybrid)
+        self.lat = lat
+        self.lon = lon
+        self.capacity = capacity
+
+    def addHybrid(self, hybrid):
+        if hybrid is not None:
+            if isinstance(hybrid, list):
+                self.hybrid = hybrid[:]
+            else:
+                if ',' in hybrid:
+                    hybrids = hybrid.split(',')
+                elif ';' in hybrid:
+                    hybrids = hybrid.split(',')
+                else:
+                    return
+                if len(hybrids) % 2 != 0:
+                    return
+                self.hybrid = []
+                for t in range(0, len(hybrids), 2):
+                    try:
+                        self.hybrid.append([hybrids[t], float(hybrids[t + 1])])
+                    except:
+                        self.hybrid.append([hybrids[t], 0])
 
 
 class Stations:
@@ -420,7 +474,21 @@ class Stations:
                                              turbs,
                                              float(facility['Area']),
                                              'Existing'))
-                                if 'Wind' in self.stations[-1].technology:
+                                tech = [self.stations[-1].technology]
+                                if self.stations[-1].technology == 'Hybrid':
+                                    area = 0
+                                    try:
+                                        self.stations[-1].addHybrid(worksheet.cell_value(curr_row, var['Hybrid']))
+                                        for tec in self.hybrid:
+                                            tech.append(tec[0])
+                                            if tec[0].find('Wind') >= 0 or tec[0].find('Offshore') >= 0:
+                                                area += getStnArea(tec[0], tec[1], self.areas, no_turbines=self.stations[-1].no_turbines,
+                                                                rotor=self.stations[-1].rotor)
+                                            else:
+                                                area += getStnArea(tec[0], tec[1], self.areas)
+                                    except:
+                                        pass
+                                if 'Wind' in self.stations[-1].technology or 'Wind' in tech:
                                     if self.stations[-1].rotor == 0 or self.stations[-1].rotor == '':
                                         rotor = 0
                                         if self.stations[-1].turbine[:7] == 'Enercon':
@@ -470,7 +538,7 @@ class Stations:
                                         self.stations[-1].grid_line = facility['Grid Line']
                                 except:
                                     pass
-                                if 'PV' in self.stations[-1].technology:
+                                if 'PV' in self.stations[-1].technology or 'PV' in tech:
                                     try:
                                         if facility['Direction'] != '':
                                             self.stations[-1].direction = facility['Direction']
@@ -527,7 +595,21 @@ class Stations:
                                              worksheet.cell_value(curr_row, var['No. turbines']),
                                              worksheet.cell_value(curr_row, var['Area']),
                                              'Existing'))
-                        if 'Wind' in self.stations[-1].technology:
+                        tech = [self.stations[-1].technology]
+                        if self.stations[-1].technology == 'Hybrid':
+                            area = 0
+                            try:
+                                self.stations[-1].addHybrid(worksheet.cell_value(curr_row, var['Hybrid']))
+                                for tec in self.hybrid:
+                                    tech.append(tec[0])
+                                    if tec[0].find('Wind') >= 0 or tec[0].find('Offshore') >= 0:
+                                        area += getStnArea(tec[0], tec[1], self.areas, no_turbines=self.stations[-1].no_turbines,
+                                                        rotor=self.stations[-1].rotor)
+                                    else:
+                                        area += getStnArea(tec[0], tec[1], self.areas)
+                            except:
+                                pass
+                        if 'Wind' in self.stations[-1].technology or 'Wind' in tech:
                             if self.stations[-1].rotor == 0 or self.stations[-1].rotor == '':
                                 rotor = 0
                                 if self.stations[-1].turbine[:7] == 'Enercon':
@@ -582,7 +664,7 @@ class Stations:
                                 self.stations[-1].grid_line = grid_line
                         except:
                             pass
-                        if 'PV' in self.stations[-1].technology:
+                        if 'PV' in self.stations[-1].technology or 'PV' in tech:
                             try:
                                 direction = worksheet.cell_value(curr_row, var['Direction'])
                                 if direction != '':

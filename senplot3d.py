@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 #
-#  Copyright (C) 2019-2026 Angus King
-#  Copyright (C) 2019-2025 Sustainable Energy Now Inc.
+#  Copyright (C) 2024-2026 Angus King
 #
 #  senplot3d.py - This file is possibly part of SIREN.
 #

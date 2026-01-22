@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2025 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2019-2026 Angus King
+#  Copyright (C) 2019-2025 Sustainable Energy Now Inc.
 #
 #  powermap.py - This file is part of SIREN
 #  (formerly named sirenm.py).
@@ -1345,15 +1346,29 @@ class MainWindow(QtWidgets.QMainWindow):
         variable_files = ''
         for section in check_sections:
             try:
+                if section == 'Files':
+                    scenarios = ''
+                    try:
+                        scenarios = config.get('Files', 'scenarios')
+                        if scenarios[-1] == '*':
+                            scenarios = scenarios[: scenarios.rfind('/')]
+                            for pkey, pvalue in parents:
+                                scenarios = scenarios.replace(pkey, pvalue)
+                    except:
+                        pass
                 sect_opts = config.items(section)
                 for key, value in sect_opts:
                     if section == 'Files':
                         if key == 'check':
                             continue
+                        elif key == 'scenario':
+                            i = value.rfind('/')
+                            if i < 0:
+                                value = scenarios + '/' + value
                         elif key == 'scenario_prefix':
                             continue
-                        elif key == 'scenarios' and value[-1] == '*':
-                            value = value[: value.rfind('/')]
+                        elif key == 'scenarios':
+                            value = scenarios
                     for pkey, pvalue in parents:
                         value = value.replace(pkey, pvalue)
                     value = value.replace('$USER$', getUser())
@@ -2226,7 +2241,7 @@ class MainWindow(QtWidgets.QMainWindow):
             except:
                 new_station = Station('Station ' + str(where.y()) + ' ' + str(where.x()), '', where.y(), where.x(),
                               0.0, '', 0.0, 0, 0.0, self.new_scenario)
-            dialog = newstation.AnObject(QtWidgets.QDialog(), new_station, scenarios=self.view.scene()._scenarios)
+            dialog = newstation.StnObject(QtWidgets.QDialog(), new_station, scenarios=self.view.scene()._scenarios)
             dialog.exec_()
             new_station = dialog.getValues()
             if new_station is not None:
@@ -2299,7 +2314,7 @@ class MainWindow(QtWidgets.QMainWindow):
         elif action == stnAction:
             if station.scenario != 'Existing':
                 s_was = station.scenario
-                dialog = newstation.AnObject(QtWidgets.QDialog(), station, scenarios=self.view.scene()._scenarios)
+                dialog = newstation.StnObject(QtWidgets.QDialog(), station, scenarios=self.view.scene()._scenarios)
                 dialog.exec_()
                 chg_station = dialog.getValues()
                 if chg_station is not None:
@@ -2369,7 +2384,7 @@ class MainWindow(QtWidgets.QMainWindow):
             new_station = Station(station.name + ' 2', station.technology, station.lat,
                           station.lon, station.capacity, station.turbine, station.rotor,
                           station.no_turbines, station.area, self.new_scenario)
-            if 'PV' in station.technology:
+            if 'PV' in station.technology or station.technology == 'Hybrid':
                 try:
                     new_station.direction = station.direction
                 except:
@@ -2378,14 +2393,16 @@ class MainWindow(QtWidgets.QMainWindow):
                     new_station.tilt = station.tilt
                 except:
                     pass
-            if 'Wind' in station.technology:
+            if 'Wind' in station.technology or station.technology == 'Hybrid':
                 try:
                     new_station.hub_height = station.hub_height
                 except:
                     pass
-            if station.technology in ['BESS', 'Hydro', 'Pumped Hydro']:
+            if station.technology in ['BESS', 'Hybrid', 'Hydro', 'Pumped Hydro']:
                 new_station.storage_capacity = station.storage_capacity
-            dialog = newstation.AnObject(QtWidgets.QDialog(), new_station, scenarios=self.view.scene()._scenarios)
+            if station.technology == 'Hybrid':
+                new_station.hybrid = station.hybrid[:]
+            dialog = newstation.StnObject(QtWidgets.QDialog(), new_station, scenarios=self.view.scene()._scenarios)
             dialog.exec_()
             new_station = dialog.getValues()
             if new_station is not None:
@@ -3271,14 +3288,14 @@ class MainWindow(QtWidgets.QMainWindow):
                   'area']
         field_empty = ['', '', 0, 0, 0, '', 0, 0, 0]
         extra_names = ['Direction', 'Grid Line', 'Hub Height', 'Power File', 'Storage Hours', 'Tilt',
-                       'Storage Capacity (MWh)']
+                       'Storage Capacity (MWh)', 'Hybrid']
         extra_fields = []
         for field in extra_names:
             i = field.find('(')
             if i > 0:
                  field = field[:i].strip()
             extra_fields.append(field.lower().replace(' ', '_'))
-        extra_empty = ['', '', 0, '', 0, 0, '']
+        extra_empty = ['', '', 0, '', 0, 0, '', '']
         to_add = [] # to add extra fields in a consistent order
         for stn in self.view.scene()._stations.stations:
             if stn.scenario != 'Existing' and stn.scenario == scenario:
@@ -3309,6 +3326,11 @@ class MainWindow(QtWidgets.QMainWindow):
                                 attr = getattr(stn, fields[f])
                                 if fields[f] == 'grid_line':
                                     new_line.append('"' + str(attr) + '"')
+                                elif fields[f] == 'hybrid':
+                                    fld = ''
+                                    for tech in attr:
+                                        fld += f'{tech[0]},{str(tech[1])},'
+                                    new_line.append('"' + fld[:-1] + '"')
                                 else:
                                     new_line.append(str(attr))
                             except:
@@ -3349,6 +3371,11 @@ class MainWindow(QtWidgets.QMainWindow):
                         for f in range(len(fields)):
                             try:
                                 attr = getattr(stn, fields[f])
+                                if fields[f] == 'hybrid':
+                                    fld = ''
+                                    for tech in attr:
+                                        fld += f'{tech[0]},{str(tech[1])},'
+                                    attr = fld[:-1]
                                 ws.write(ctr, f, attr)
                                 lens[f] = max(lens[f], len(str(attr)))
                             except:
@@ -3403,6 +3430,11 @@ class MainWindow(QtWidgets.QMainWindow):
                         for f in range(len(fields)):
                             try:
                                 attr = getattr(stn, fields[f])
+                                if fields[f] == 'hybrid':
+                                    fld = ''
+                                    for tech in attr:
+                                        fld += f'{tech[0]},{str(tech[1])},'
+                                    attr = fld[:-1]
                                 ws.cell(row=ctr + 1, column=f + 1).value = attr
                                 ws.cell(row=ctr + 1, column=f + 1).font = normal
                                 lens[f] = max(lens[f], len(str(attr)))

@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2025 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2019-2026 Angus King
+#  Copyright (C) 2019-2025 Sustainable Energy Now Inc.
 #
 #  powerclasses.py - This file is part of SIREN.
 #
@@ -103,9 +104,13 @@ def the_date(year, h):
 
 
 class PowerSummary:
-    def __init__(self, name, technology, generation, capacity, transmitted=None):
+    def __init__(self, name, technology, generation, capacity, transmitted=None, turbine=None):
         self.name = name
         self.technology = technology
+        try:
+            self.turbine = turbine
+        except:
+            self.turbine = ''
         try:
             self.generation = int(round(generation))
         except:
@@ -119,6 +124,10 @@ class PowerSummary:
             self.transmitted = int(round(transmitted))
         else:
             self.transmitted = None
+        if turbine is not None:
+            self.turbine = turbine
+        else:
+            self.turbine = None
         self.zone = None
 
 
