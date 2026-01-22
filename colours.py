@@ -555,32 +555,3 @@ def PlotPalette(keys, palette=15, black=False, lower=True):
         else:
             colour_dict[key] = colr
     return colour_dict
-
-
-class ColourMenu(QtWidgets.QWidget):
-    def __init__(self, help='help.html'):
-        super(ColourMenu, self).__init__()
-        self.help = help
-        config = configparser.RawConfigParser()
-        if len(sys.argv) > 1:
-            self.config_file = getModelFile(sys.argv[1])
-            dialr = Colours(ini_file=self.config_file[-1])
-        else:
-            self.config_file = getModelFile('plot_colors.ini')
-            dialr = Colours(section='Plot Colors', ini_file=self.config_file)
-        if not dialr.cancelled:
-            dialr.exec_()
-        self.close()
-        sys.exit()
-
-
-if "__main__" == __name__:
-    app = QtWidgets.QApplication(sys.argv)
-    try:
-        QtGui.QGuiApplication.setDesktopFileName('siren')
-    except:
-        pass
-    ex = ColourMenu()
-    app.exec()
-    app.deleteLater()
-    sys.exit()

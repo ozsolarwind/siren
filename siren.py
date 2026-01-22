@@ -31,6 +31,7 @@ import sys
 import time
 import webbrowser
 
+from colours import Colours
 import displayobject
 from credits import fileVersion
 from editini import EdtDialog, EditFileSections
@@ -335,7 +336,12 @@ class TabDialog(QtWidgets.QDialog):
                                 title='SIREN (' + fileVersion() + ') - Preferences file errors')
                                 dialog.exec_()
                                 return QtCore.QObject.event(source, event)
-                        self.invoke(action.text()[action.text().rfind(' ') + 1:], ent_dir + ent)
+                        if action.text() == 'Edit colours':
+                            dialr = Colours(ini_file=ent_dir + ent)
+                            if not dialr.cancelled:
+                                dialr.exec_()
+                        else:
+                            self.invoke(action.text()[action.text().rfind(' ') + 1:], ent_dir + ent)
                     elif action.text()[:7] == 'Launch ':
                         who = action.text()[action.text().rfind('- ') + 2:]
                         self.invoke(who, '')
