@@ -16,11 +16,11 @@ pre {
 </head>
 </body>
 <h2>Building SIREN from github and SourceForge</h2>
-<p>This is a brief set of clues on how to get SIREN working using the source from github and packages from SourceForge. More may be forthcoming. The SIREN help file (<a href="https://github.com/ozsolarwind/siren/blob/master/help.html" target="_blank">help.html</a>) is worth a read (You can also view the SIREN help file at <a href="https://rawgit.com/ozsolarwind/siren/master/help.html" target="_blank">https://rawgit.com/ozsolarwind/siren/master/help.html</a>). In terms of setup refer to :-
+<p>This is a brief set of clues on how to get SIREN working using the source from github and packages from SourceForge. More may be forthcoming. The SIREN help file (<a href="https://github.com/ozsolarwind/siren/blob/master/help.html" target="_blank">help.html</a>) is worth a read (You can also view the SIREN help file at <a href="https://rawcdn.githack.com/ozsolarwind/siren/master/help.html" target="_blank">https://rawcdn.githack.com/ozsolarwind/siren/master/help.html</a>). In terms of setup refer to :-
 <ul>
 <li>help.html.
 <a href="help.html#install" target="_blank">Installation</a>, <a href="help.html#setup" target="_blank">Setting Up</a>, <a href="help.html#prefs" target="_blank">Preferences</a>, and <a href="help.html#files" target="_blank">SIREN File Formats</a>. To use SIREN refer to <a href="help.html#usage" target="_blank">Using the Simulation</a>.</li>
-<li>rawgit. <a href="https://rawgit.com/ozsolarwind/siren/master/help.html#install" target="_blank">Installation</a>, <a href="https://rawgit.com/ozsolarwind/siren/master/help.html#setup" target="_blank">Setting Up</a>, <a href="https://rawgit.com/ozsolarwind/siren/master/help.html#prefs" target="_blank">Preferences</a>, and <a href="https://rawgit.com/ozsolarwind/siren/master/help.html.html#files" target="_blank">SIREN File Formats</a>. To use SIREN refer to <a href="https://rawgit.com/ozsolarwind/siren/master/help.html#usage" target="_blank">Using the Simulation</a>.</li>
+<li>rawgit. <a href="https://rawcdn.githack.com/ozsolarwind/siren/master/help.html#install" target="_blank">Installation</a>, <a href="https://rawcdn.githack.com/ozsolarwind/siren/master/help.html#setup" target="_blank">Setting Up</a>, <a href="https://rawcdn.githack.com/ozsolarwind/siren/master/help.html#prefs" target="_blank">Preferences</a>, and <a href="https://rawcdn.githack.com/ozsolarwind/siren/master/help.html#files" target="_blank">SIREN File Formats</a>. To use SIREN refer to <a href="https://rawcdn.githack.com/ozsolarwind/siren/master/help.html#usage" target="_blank">Using the Simulation</a>.</li>
 </ul>
 <h2 id="windows">Windows package</h2>
 <p>SIREN is packaged for Windows to enable that user base to install and use it with minimal technical knowledge. This version has been created with PyInstaller (see below). It has also been executed successfully on Mac using <code>WineBottler</code>. To run it in other environments, or to run your own Windows version you need:
@@ -28,8 +28,8 @@ pre {
 <li>Python 3.12 or later</li>
 <li>Some Python packages (see <a href="#libraries">Python Libraries</a>)</li>
 <li>The Python source programs for SIREN. These are available either from <a href="#github">github</a> or <a href="#forge">SourceForge</a>. Their purpose is briefly described in <a href="#source">SIREN Programs</a></li>
-<li>The SAM SDK. This is included in a number of the SourceForge files. It is also available from the SAM website - <a href="https://sam.nrel.gov/sdk" target="_blank">https://sam.nrel.gov/sdk</a>. SIREN currently uses <a href="https://github.com/NREL/ssc/releases/tag/2018.11.11.r2" target="_blank">Version 2019-02-09</a> (206). A useful version is <a href="https://github.com/NREL/ssc/releases/tag/2018.11.11.r4" target="_blank">SAM 2018.11.11 Revision 4 with ssc Revision 209</a> as this is the last version to come with prepackaged binaries (the zip file). You can also obtain more recent versions by downloading SAM itself and setting a link to the SAM folder in the <em>sam_sdk</em> property of the <code>[Files]</code> Section of the Preferences file. SIREN expects the SDK, <code>ssc.dll</code> to be in the <code>x64</code> (or <code>win64</code>) sub-folder<br />
-Other versions may be included with the Windows package and may be identified by a sub-folder name in the <code>siren</code> folder, e.g. <code>sam-sdk-2023-12-17</code></li>
+<li>The SAM SDK. This is included in a number of the SourceForge files. It is also available from the SAM website - <a href="https://sam.nrel.gov/sdk" target="_blank">https://sam.nrel.gov/sdk</a>. SIREN currently uses <a href="https://github.com/NatLabRockies/ssc/releases/tag/2025.4.16.r1.ssc.303" target="_blank">Version 2025-07-24</a> (303). A useful version is <a href="https://github.com/NatLabRockies/ssc/releases/tag/2018.11.11.r4" target="_blank">SAM 2018.11.11 Revision 4 with ssc Revision 209</a> as this is the last version to come with prepackaged binaries (the zip file). You can also obtain more recent versions by downloading SAM itself and setting a link to the SAM folder in the <em>sam_sdk</em> property of the <code>[Files]</code> Section of the Preferences file. SIREN expects the SDK, <code>ssc.dll</code> to be in the <code>x64</code> (or <code>win64</code>) sub-folder<br />
+Other versions may be included with the Windows package and may be identified by a sub-folder name in the <code>siren</code> folder, e.g. <code>sam-sdk-2025-04-16</code></li>
 <li>Other data files as indicated in <a href="help.html#setup" target="_blank">Setting Up</a>. These are found in some of the SIREN SourceForge downloads with a small number also available on github</li>
 <li>If required, the sample SIREN simulation of the SWIS - <em>siren_sample.exe</em>
 </ul>
@@ -51,7 +51,7 @@ Other versions may be included with the Windows package and may be identified by
 <li>Run the command <code>source bin/activate</code> to activate the virtual environment</code></li>
 </ul></li>
 <li>Run the command <code>pip install -r siren_requirements.txt</code> to install the packages used by SIREN that are not part of the standard installation</li>
-<li>Download the SAM SDK. A useful version is <a href="https://github.com/NREL/ssc/releases/tag/2018.11.11.r4" target="_blank">SAM 2018.11.11 Revision 4 with ssc Revision 209</a> as this is the last version to come with prepackaged binaries (the zip file) and unzip it to an appropriate location . You can also obtain more recent versions by downloading SAM itself and setting a link to the SAM folder in the <em>sam_sdk</em> property of the <code>[Files]</code> Section of the Preferences file. For Linux SIREN looks for <code>/linux64/ssc.so</code> and for macOX <code>/osx64/ssc.dylib</code></li>
+<li>Download the SAM SDK. A useful version is <a href="https://github.com/NatLabRockies/ssc/releases/tag/2018.11.11.r4" target="_blank">SAM 2018.11.11 Revision 4 with ssc Revision 209</a> as this is the last version to come with prepackaged binaries (the zip file) and unzip it to an appropriate location . You can also obtain more recent versions by downloading SAM itself and setting a link to the SAM folder in the <em>sam_sdk</em> property of the <code>[Files]</code> Section of the Preferences file. For Linux SIREN looks for <code>/linux64/ssc.so</code> and for macOX <code>/osx64/ssc.dylib</code></li>
 <li>Run the command <code>python3 siren.py</code> (or perhaps <code>python siren.py</code>) to invoke SIREN. The first time you run it will present a file menu to locate the models directory. This creates a file <code>siren_models_location.txt</code> with the location of the models folder</li>
 <li>If you've created a virtual environment for SIREN:
 <ul>
@@ -66,7 +66,7 @@ Other versions may be included with the Windows package and may be identified by
 <li>Spreadsheets with default parameters for the SAM models. The location for these is defined by the <em>variable_files</em> property of the <a href="help.html#p_files" target="_blank">[Files]</a> Section of the Preferences file and the files themselves are defined by the <a href="help.html#p_sam_modules"> [SAM Modules]</a> Section</li>
 <li>SAM wind turbine files - <em>Wind Turbines.csv</em> and <em>Wind Turbine Subset.csv</em>. The location for these is defined by the <em>sam_turbines</em> property of the <a href="help.html#p_files" target="_blank">[Files]</a> Section of the Preferences file</li>
 <li><em>siren_application.spec</em> is the specification file used to package the SIREN application using PyInstaller</li>
-<li>You can also view the SIREN help file at <a href="https://rawgit.com/ozsolarwind/siren/master/help.html" target="_blank">https://rawgit.com/ozsolarwind/siren/master/help.html</a>
+<li>You can also view the SIREN help file at <a href="https://rawcdn.githack.com/ozsolarwind/siren/master/help.html" target="_blank">https://rawcdn.githack.com/ozsolarwind/siren/master/help.html</a>
 </ul>
 <p>You should download all files (except the package and spec files) to your target &ldquo;home&rdquo; folder for SIREN.<p>
 <h2>SourceForge</h2>
@@ -81,30 +81,35 @@ Other versions may be included with the Windows package and may be identified by
 <table><tr><td><strong>Library</strong></td><td><strong>Standard library?</strong></td><td><strong>Notes</strong></td</tr>
 <tr><td>cdsapi</td><td style="text-align:center"></td><td>API to download ERA5 data</td></tr>
 <tr><td>configparser</td><td style="text-align:center">y</td></tr>
+<tr><td>copy</td><td style="text-align:center">y</td></tr>
 <tr><td>csv</td><td style="text-align:center">y</td></tr>
 <tr><td>ctypes</td><td style="text-align:center">y</td></tr>
 <tr><td>datetime</td><td style="text-align:center">y</td></tr>
 <tr><td>et_xmlfile</td><td>&nbsp;</td><td>Windows. Required by openpyxl?</td></tr>
 <tr><td>functools</td><td style="text-align:center">y</td></tr>
+<tr><td>glob</td><td style="text-align:center">y</td></tr>
 <tr><td>gzip</td><td style="text-align:center">y</td></tr>
 <tr><td>heapq</td><td style="text-align:center">y</td></tr>
 <tr><td>http.client</td><td style="text-align:center">y</td></tr>
+<tr><td>importlib.metadata</td><td>&nbsp;</td><td>Version check for cdsapi (ERA5 data)</td></tr>
 <tr><td>io</td><td style="text-align:center">y</td></tr>
 <tr><td>jdcal</td><td>&nbsp;</td><td>Windows. Required by openpyxl</td</tr>
 <tr><td>math</td><td style="text-align:center">y</td></tr>
-<tr><td>matplotlib</td><td>&nbsp;</td><td>Includes pylab</td</tr>
+<tr><td>matplotlib</td><td>&nbsp;</td><td>Includes mplot3d and pylab</td></tr>
+<tr><td>pyproj</td><td>&nbsp;</td></tr>
 <tr><td>python3-mpltoolkits.basemap</td><td>&nbsp;</td><td>Note: Must have <code>basemap/data/epsg</code> or <code>basemap_data/epsg</code> file (location may have changed with recent versions).</td></tr>
 <tr><td>netCDF4</td></tr>
 <tr><td>numpy</td></tr>
+<tr><td>openpyxl (python3-openpyxl)</td></tr>
 <tr><td>os</td><td style="text-align:center">y</td></tr>
 <tr><td>plotly</td></tr>
-<tr><td>python3-openpyxl</td></tr>
 <tr><td>pwd</td><td style="text-align:center">y</td><td>Linux ?</td></td></tr>
 <tr><td><s>pyexcel</s></td><td>&nbsp;</td><td><s>Support for spreadsheet. No longer used</s></td></td></tr>
 <tr><td><s>pyexcel-io</s></td><td>&nbsp;</td><td><s>CSV files</s></td></td></tr>
-<tr><td><s>pyexcel-ods</s></td><td>&nbsp;</td><td><s>ODS (LibreOffice) files</s></td></td></tr>
+<tr><td>pyexcel-odsr</td><td>&nbsp;</td><td>(Optionally) Read ODS (LibreOffice) files</td></tr>
 <tr><td><s>pyexcel-xls</s></td><td>&nbsp;</td><td><s>XLS (Excel) files</s></td></td></tr>
 <tr><td><s>pyexcel-xlsx</s></td><td>&nbsp;</td><td><s>XLSX (Excel) files</s></td></td></tr>
+<tr><td>PyQt5</td></tr>
 <tr><td>python3-distutils</td></tr>
 <tr><td>python3-matplotlib</td></tr>
 <tr><td>python3-pyproj</td><td>&nbsp;</td><td>Windows?</td></tr>
@@ -116,12 +121,15 @@ Other versions may be included with the Windows package and may be identified by
 <tr><td>scipy</td></tr>
 <tr><td>shutil</td><td style="text-align:center">y</td></tr>
 <tr><td>ssc</td><td>&nbsp;</td><td>SAM</td></tr>
+<tr><td>stat</td><td style="text-align:center">y</td><td>Used by sirensetup</td></tr>
 <tr><td>struct</td><td style="text-align:center">y</td></tr>
 <tr><td>subprocess</td><td style="text-align:center">y</td></tr>
 <tr><td>sys</td><td style="text-align:center">y</td></tr>
 <tr><td>tempfile</td><td style="text-align:center">y</td></tr>
 <tr><td>time</td></tr>
+<tr><td>tkinter</td><td style="text-align:center">y</td><td>(Used by compress_weatherfiles)</td></tr>
 <tr><td>urllib3</td></tr>
+<tr><td>warnings</td><td>&nbsp;</td><td>Used by zoompany to suppress some warningsws</td></tr>
 <tr><td>webbrowser</td><td style="text-align:center">y</td></tr>
 <tr><td>win32api</td><td>&nbsp;</td><td>Windows</td></tr>
 <tr><td>xlrd</td></tr>
@@ -154,7 +162,7 @@ Other versions may be included with the Windows package and may be identified by
 <tr><td><del>makerainfall2.py</del></td><td><del>Create rainfall files from MERRA-2 data</del></td></tr>
 <tr><td>makeweatherfiles.py (*)</td><td>Standalone program to create weather files from MERRA-2 data</td></tr>
 <tr><td>newstation.py</td><td>Create/edit a new power station</td></tr>
-<tr><td>plot3d.py</td><td>A prototype and incomplete program to produce 3D plots (charts) for Powermatch batch</td></tr>
+<tr><td><del>plot3d.py</del></td><td><del>A prototype and incomplete program to produce 3D plots (charts) for Powermatch batch</del></td></tr>
 <tr><td>plotweather.py (*)</td><td>Plot (chart) weather data</td></tr>
 <tr><td>pmtmldetail.py</td><td>Produce a more detailed Powermatch Detail worksheet which contains hourly details on how RE is used to meet load</td></tr>
 <tr><td>powerclasses.py</td><td>Classes used by PowerModel (powermodel.py)</td></tr>
@@ -162,7 +170,7 @@ Other versions may be included with the Windows package and may be identified by
 <tr><td>powermatch.py</td><td>Match generation to load. Produce costed scenarios</td></tr>
 <tr><td>powermodel.py (*)</td><td>Process SAM models for stations to produce spreadsheets and charts</td></tr>
 <tr><td>powerplot.py</td><td>A standalone program that will produce either hourly or diurnal charts from a spreadsheet that conforms to certain constraints</td></tr>
-<tr><td>sammodels.py</td><td>Routines for SAM/NREL models for DHI, DNI and Zenith angle</td></tr>
+<tr><td>sammodels.py</td><td>Routines for SAM/NRL (formerly NREL) models for DHI, DNI and Zenith angle</td></tr>
 <tr><td>samrun.py</td><td>Run a SAM model</td></tr>
 <tr><td>senplot3d.py</td><td>Support for 3D charts using plotly</td></tr>
 <tr><td>senutils.py (*)</td><td>Some common functions. Adjust file names from [Parents] properties in config (.ini) file; Obtain current userid details; &ldquo;Clean&rdquo; tech names; ClickableQLabel</td></tr>
@@ -182,6 +190,10 @@ Other versions may be included with the Windows package and may be identified by
 <tr><td>worldwindow.py</td><td>Display a world map for getmap and getmerra2</td></tr>
 <tr><td>zoompan.py</td><td>Implement a more dynamic zoom and pan for hourly charts</td></tr>
 </table>
+<p>
+<table>
+<tr><td>compress_weatherfiles.py</td><td>A small program, not officially part of SIREN, to compress SAM format weather files</td></tr>
+</table>
 <h2>Useful tools</h2>
 <h3>sam_models_list</h3>
 <p>The parameters and variables utilised by the SAM API often change between versions. <code>sam_models_list.py</code> can be run to list the SAM models and variables for different SAM versions. Usage:</p>
@@ -199,5 +211,5 @@ Other versions may be included with the Windows package and may be identified by
 </ul>
 <h3>opt_debug</h3>
 <p><code>opt_debug.py</code> can be used to debug the <code>powermatch</code> optimisation routine. It doesn't need to be packaged with SIREN.</p>
-<p>Angus King<br />May 2025</p>
+<p>Angus King<br />January 2026</p>
 </body>
