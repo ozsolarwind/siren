@@ -792,11 +792,18 @@ class SuperPower():
                 for hyb in station.hybrid:
                     powr.append(self.getStationPower(station, hyb))
                 farmpwr = []
-                for p in range(len(powr[0])):
-                    farmpwr.append(powr[0][p])
-                    for t in range(1, len(powr)):
-                        farmpwr[-1] += powr[t][p]
-                    farmpwr[-1] = min(station.capacity * 1000, farmpwr[-1])
+                for p in range(len(powr)):
+                    try:
+                        if len(farmpwr) == 0:
+                            for t in range(len(powr[p])):
+                                farmpwr.append(powr[p][t])
+                        else:
+                            for t in range(len(powr[p])):
+                                farmpwr[t] += powr[p][t]
+                    except:
+                        pass
+                for t in range(len(farmpwr)):
+                    farmpwr[t] = min(station.capacity * 1000, farmpwr[t])
                 return farmpwr
         else:
             stn_technology = hybrid[0]
@@ -888,8 +895,10 @@ class SuperPower():
             self.data.set_number(b'wind_turbine_rotor_diameter', turbine.rotor)
             self.data.set_number(b'wind_turbine_cutin', turbine.cutin)
             try:
-                if station.hub_height > 0:
+                if station.hub_height is not None and station.hub_height > 0:
                     self.data.set_number(b'wind_turbine_hub_ht', station.hub_height)
+                elif hub_hght > 0:
+                    self.data.set_number(b'wind_turbine_hub_ht', hub_hght)
             except:
                 if hub_hght > 0:
                     self.data.set_number(b'wind_turbine_hub_ht', hub_hght)
