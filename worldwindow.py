@@ -784,16 +784,16 @@ class WorldWindow(QtWidgets.QMainWindow):
         config = configparser.RawConfigParser()
         self.config.read(self.config_file)
         try:
-            map = self.config.get('Map', 'map_choice')
+            mapp = self.config.get('Map', 'map_choice')
         except:
-            map = ''
+            mapp = ''
         try:
             colours0 = self.config.items('Colors')
         except:
             pass
-        if map != '':
+        if mapp != '':
             try:
-                colours1 = self.config.items('Colors' + map)
+                colours1 = self.config.items('Colors' + mapp)
                 colours = []
                 for it, col in colours0:
                     for it1, col1 in colours1:
