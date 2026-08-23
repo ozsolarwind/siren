@@ -420,9 +420,12 @@ class FlexiPlot(QtWidgets.QWidget):
         self.title.textChanged.connect(self.somethingChanged)
         self.xlabel.textChanged.connect(self.somethingChanged)
         self.ylabel.textChanged.connect(self.somethingChanged)
-        self.overlay.currentIndexChanged.connect(self.overlayChanged)
-        self.ovrSpin.valueChanged.connect(self.ovrChanged)
-        self.ovrLine.currentIndexChanged.connect(self.ovrChanged)
+        try:
+            self.overlay.currentIndexChanged.connect(self.overlayChanged)
+            self.ovrSpin.valueChanged.connect(self.ovrChanged)
+            self.ovrLine.currentIndexChanged.connect(self.ovrChanged)
+        except:
+            pass
         self.zlabel.textChanged.connect(self.somethingChanged)
         self.maxSpin.valueChanged.connect(self.somethingChanged)
         self.plottype.currentIndexChanged.connect(self.plotChanged)

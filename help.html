@@ -4536,16 +4536,24 @@ By default the size of charts produced is determined by matplotlib, or by the <e
 <li>You can use the mouse scroll wheel to zoom in and out on the time (x) axis. The position of the mouse within the chart determines where the zoom will centre upon (that is, that point will remain fixed and the rest of the chart will move away from or towards that point)</li>
 <li>Moving the mouse while holding down the left button will allow you to pan across the chart</li>
 <li>Clicking the right mouse button or pressing the <em>r</em> key will reset the chart to the original state. This will allow you to zoom out to the original state and then zoom in to another period on the chart</li>
-<li>Pressing the <em>d</em> key will display a daily chart for a numbers of days. Each press will advance the chart by one day. By default the period is 3 days but you can change the number of days by pressing a number between 1 and 9 after the <em>d</em></li>
-<li>Pressing the <em>f</em> key will expand the chart window to fullscreen. Pressing it again will return it to the previous size</li>
-<li>Pressing the <em>h</em> key will hide the legend. Pressing it again will restore the legend to the top right</li>
-<li>Pressing the <em>l</em> key will allow you to move the legend, although the behaviour may be a little erratic. Initially, the legend will be moved to the top right of the window and be arranged as a vertical list. By clicking the left mouse button within the legend and dragging the mouse you can move it to a different location. In the process it may cause the chart to also move or cause some odd behaviour with it. In these cases pressing the <em>r</em> key will reset the chart leaving the legend in the new position</li>
-<li>Pressing the <em>m</em> key will display a monthly chart. Each press will show the next month. You can also navigate to a chosen month by pressing the number for the month after the <em>m</em>. For example, pressing <em>m10</em> will display October</li>
-<li>Pressing the <em>t</em> key will display a two weekly chart. Each press will step forward one week (that is, move forward one week and display two weeks). If the <em>m</em> key has been pressed the (two) weeks for that month will be displayed</li>
-<li>Pressing the <em>w</em> key will display a weekly chart. Each press will show the next week. If the <em>m</em> key has been pressed the weeks for that month will be displayed</li>
-<li>Pressing <em>PageUp</em> or <em>PageDown</em> will display the previous or next week or month</li>
-<li>Pressing the <em>left</em> or <em>right</em> arrow will scroll the display to the left or right</li>
-<li>Pressing the <em>up</em> or <em>down</em> arrow will scroll the display up or down</li>
+<li>You can interact with the figure using keyboard shortcuts. Those in bold are built-in matplotlib keys.
+<table class="none">
+<tr><td class="none"><em>a / A - </em></td><td class="none">Adjust the opacity of the legend background. <em>a</em> will progressively decrease opacity while <em>A</em> will progressively increase it</td></tr>
+<tr><td class="none"><em>d - </em></td><td class="none">Display a daily chart for a numbers of days. Each press will advance the chart by one day. By default the period is 3 days but you can change the number of days by pressing a number between 1 and 9 after the <em>d</em></td></tr>
+<tr><td><strong><em>f - </em></strong></td><td class="none">Expand the chart window to fullscreen. Pressing it again will return it to the previous size</td></tr>
+<tr><td class="none"><em>h - </em></td><td class="none">Hide the legend. Pressing it again will restore the legend to the top right</td></tr>
+<tr><td><strong><em>g / G - </em></strong></td><td class="none">Toggle major and minor grids</td></tr>
+<tr><td class="none"><em>l - </em></td><td class="none">Allow you to move the legend, although the behaviour may be a little erratic. <strong>Note:</strong> The <em>l</em> key also toggles the y-azis scale between linear and logarithmic so you may need to press it a second time to revert to a linear scale. Initially, the legend will be moved to the top right of the window and be arranged as a vertical list. By clicking the left mouse button within the legend and dragging the mouse you can move it to a different location. In the process it may cause the chart to also move or cause some odd behaviour with it. In these cases pressing the <em>r</em> key will reset the chart leaving the legend in the new position</td></tr>
+<tr><td class="none"><em>m - </em></td><td class="none">Display a monthly chart. Each press will show the next month. You can also navigate to a chosen month by pressing the number for the month after the <em>m</em>. For example, pressing <em>m10</em> will display October</td></tr>
+<tr><td><strong><em>o - </em></strong></td><td class="none">Enable / disable Pan/Zoom button</td></tr>
+<tr><td><strong><em>p - </em></strong></td><td class="none">Enable / disable Zoom to rectangle button</td></tr>
+<tr><td><strong><em>r / -<br />Home</strong></em></td><td class="none">Reset the plot view back to the original layout</td></tr>
+<tr><td class="none"><em>t - </em></td><td class="none">Display a two weekly chart. Each press will step forward one week (that is, move forward one week and display two weeks). If the <em>m</em> key has been pressed the (two) weeks for that month will be displayed</td></tr>
+<tr><td class="none"><em>w - </em></td><td class="none">Display a weekly chart. Each press will show the next week. If the <em>m</em> key has been pressed the weeks for that month will be displayed</td></tr>
+<tr><td class="none"><em>PageUp / - </em><br /><em>PageDown</em></td><td class="none">Display the previous or next week or month</td></tr>
+<tr><td class="none"><em>Left / - </em><br /><em>Right</em></td><td class="none">Scroll the display to the left or right</td></tr>
+<tr><td class="none"><em>Up / - </em><br /><em>Down</em></td><td class="none">Scroll the display up or down</td></tr>
+</table>
 </ul>
 <p>It is also possible to move the legend for Pie Charts produced with a legend.</p>
 <p><strong>Note:</strong> For cumulative (stacked) charts produced by Powerplot this feature may perform slowly so please be a little patient</p>
@@ -4623,18 +4631,18 @@ If it's not a diurnal chart (i.e. Period is <em>&lt;None&gt;</em>) any occurence
 <td class="none">You can specify a maximum value for the Power (y) axis. This allows you to produce a series of charts with the same scale (<em>maximum</em>)</td></tr>
 <tr><td class="lr"><dfn>Type of Plot</dfn></td>
 <td class="none">The type of chart to be produced. Options are <em>Bar Chart</em>, <em>Cumulative</em>, <em>Heat Map</em>, <em>Line Chart</em>, <em>Pie Chart</em>, <em>Step Day Chart</em>, <em>Step Line Chart</em> and <em>3D Surface Chart</em>.
-<sl>
+<ul>
 <li><em>Bar Chart</em>, <em>Cumulative</em> and <em>Step Chart</em> produce cumulative (stacked) charts and have filled areas by technology (or Columns) (<em>plot</em>).</li>
 <li>A Step Chart is similar to a Bar Chart but does not have spaces between the hourly bars; also it is a lot faster to display than a Bar Chart (a Bar Chart is not recommended for hourly charts).</li>
 <li>If a Target field (e.g. Load) is chosen the area above the Target value (i.e. excess generation) in the Cumulative and Step chart have a lightly shaded value (the degree of shading is chosen by the <em>alpha</em> property in the [Powerplot] Section of the Preferences file).</li>
 <li>A Heat Map visualises the total value of chosen columns to indicate the highest through lowest values of the range or, if a target column is chosen, an indication of how the total value meets the target value. Each &ldquo;square&rdquo; or &ldquo;cell&rdquo; of the map represents an hour; the vertical axis is hours in a day and the horizontal axis is days for the chosen period.</li>
 <li>For a pie chart you can use the <em>pie_group</em> property to indicate header columns that should be highlighted in a group. This can be used for example to indicate RE technology contribution</li>
-</sl>
+
 <div class="experiment">
-<sl>
+
 <li>A <em>Step Day Chart</em> presents a step chart with daily figures calculated by summing the 24 hours of each day</li>
 <li>A <em>3D Surface Chart</em> will present the data as a 3D Surface Chart. It will either produce daily charts or monthly charts for months greater than the <em>months_3d</em> property</li>
-</sl>
+</ul>
 </div>
 </td></tr>
 <tr><td class="lr"><dfn>Percentage</dfn></td>

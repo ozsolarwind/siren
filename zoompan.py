@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2019-2025 Angus King
+#  Copyright (C) 2019-2026 Angus King
 #
 #  zoompan.py - This file is used by SIREN.
 #
@@ -40,6 +40,7 @@ class ZoomPanX():
         self.base_ylim = None
         self.base_zlim = None
         self.xlabel = None
+        self.alpha = 0.8
         self.axis = 'x'
         self.angle = 0
         self.roll = 0
@@ -61,6 +62,7 @@ class ZoomPanX():
         self.pick = True
         self.hide = False
         self.days = 3
+        self.leginit = True
 
     def zoom_pan(self, ax, base_scale=2., annotate=False, dropone=False, flex_ticks=False, intervals=None, pick=True, mth_labels=None, days=3):
         def set_flex():
@@ -260,7 +262,10 @@ class ZoomPanX():
             if event.key is None:
                 return
             try:
-                event_key = event.key.lower()
+                if event.key in ['A', 'G', 'L']:
+                    event_key = event.key
+                else:
+                    event_key = event.key.lower()
             except:
                 event_key = event.key
             if event_key == 'r': # reset
@@ -335,6 +340,22 @@ class ZoomPanX():
                             self.month += 1
                     ax.set_xlim([self.mth_xlim[self.month], self.mth_xlim[self.month + 1]])
                 ax.figure.canvas.draw()
+            elif event_key == 'a':
+                self.alpha -= 0.1
+                if self.alpha < 0.0:
+                    self.alpha = 1.0
+                legend = self.fig_axes[-1].get_legend()
+                legend.get_frame().set_alpha(self.alpha)
+                self.keys = 'a'
+                ax.figure.canvas.draw()
+            elif event_key == 'A':
+                self.alpha += 0.1
+                if self.alpha > 1.0:
+                    self.alpha = 0.0
+                legend = self.fig_axes[-1].get_legend()
+                legend.get_frame().set_alpha(self.alpha)
+                self.keys = 'a'
+                ax.figure.canvas.draw()
             elif event_key == 'd':
                 if self.axis != 'x':
                     return
@@ -348,45 +369,31 @@ class ZoomPanX():
                 ax.set_xlim(xlim[0] + incr1, xlim[0] + incr2)
                 set_flex()
                 ax.figure.canvas.draw()
-            elif event_key == 'h': # hide legend
-                font = self.fig_axes[-1].get_legend().prop
-                handles = []
-                labels = []
-                for axs in self.fig_axes:
-                    handle, label = axs.get_legend_handles_labels()
-                    handles.extend(handle)
-                    labels.extend(label)
+            elif event_key == 'h':
+                legend = self.fig_axes[-1].get_legend()
                 if self.hide:
-                    us = ''
                     self.hide = False
+                    legend.set_visible(True)
                 else:
-                    us = '_'
                     self.hide = True
-                for l in range(len(labels)):
-                    labels[l] = us + labels[l]
-                # reverse the order
-                self.fig_axes[-1].legend(labels=labels)
-                # reverse the order
-                self.fig_axes[-1].legend(handles[::-1], labels[::-1], prop=font).set_draggable(True)
-                if self.yformat is not None:
-                    ax.yaxis.set_major_formatter(self.yformat)
+                    legend.set_visible(False)
                 ax.figure.canvas.draw()
             elif event_key == 'l':
                 self.keys = 'l'
-                font = self.fig_axes[-1].get_legend().prop
-                handles = []
-                labels = []
-                for axs in self.fig_axes:
-                    handle, label = axs.get_legend_handles_labels()
-                    handles.extend(handle)
-                    labels.extend(label)
-                # reverse the order
-                self.fig_axes[-1].legend(handles[::-1], labels[::-1], prop=font).set_draggable(True)
-                if self.yformat is not None:
-                    ax.yaxis.set_major_formatter(self.yformat)
-                ax.figure.canvas.draw()
-           #     if self.yformat is not None:
-             #       ax.yaxis.set_major_formatter(self.yformat)
+                if self.leginit:
+                    self.leginit = False
+                    font = self.fig_axes[-1].get_legend().prop
+                    handles = []
+                    labels = []
+                    for axs in self.fig_axes:
+                        handle, label = axs.get_legend_handles_labels()
+                        handles.extend(handle)
+                        labels.extend(label)
+                    # reverse the order
+                    self.fig_axes[-1].legend(handles[::-1], labels[::-1], prop=font).set_draggable(True)
+                    if self.yformat is not None:
+                        ax.yaxis.set_major_formatter(self.yformat)
+                    ax.figure.canvas.draw()
             elif event_key == 'm':
                 if self.axis != 'x':
                     return
