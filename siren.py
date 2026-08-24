@@ -36,7 +36,7 @@ import displayobject
 from credits import fileVersion
 from editini import EdtDialog, EditFileSections
 from getmodels import getModelFile, commonprefix
-from senutils import ClickableQLabel, getUser
+from senutils import ClickableQLabel, getParents, getUser
 
 
 class TabDialog(QtWidgets.QDialog):
@@ -430,6 +430,22 @@ class TabDialog(QtWidgets.QDialog):
             elif os.path.exists(program + '.py'):
                 pid = subprocess.Popen([program + '.py', ent], shell=True).pid
         else:
+            if program == 'powermap':
+                config = configparser.RawConfigParser()
+                config.read(ent)
+                try:
+                    sam_library = config.get('Files', 'sam_library')
+                    parents = []
+                    try:
+                        parents = getParents(config.items('Parents'))
+                    except:
+                        pass
+                    for pkey, pvalue in parents:
+                        sam_library = sam_library.replace(pkey, pvalue)
+                        sam_library = sam_library.replace('$USER$', getUser())
+                    os.environ['LD_LIBRARY_PATH'] = sam_library
+                except:
+                    pass
             pid = subprocess.Popen(['python3', program + '.py', ent]).pid # python3
         return
 

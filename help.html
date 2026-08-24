@@ -158,7 +158,7 @@ ul {
 <p><strong>All acronyms used in this help are defined in the list of <a href="#acronyms">acronyms</a></strong>
 <span id="iconcmt" style="font-size: 12px; display:inline"><br />(Click the small icon on the top right of the page to return to the top)</span>
 <h2>SIREN - SEN's Interactive Renewable Energy Network tool</h2>
-<p>The SEN SAM simulation, SIREN, is used to calculate energy generation for renewable energy power stations. The program uses the SAM SDK API for energy calculations. SAM is provided by the NRL (formerly NREL). This help briefly describes how to use the simulation.</p>
+<p>The SEN SAM simulation, SIREN, is used to calculate energy generation for renewable energy power stations. The program uses the SAM SDK API for energy calculations. SAM is provided by the NLR (formerly NREL). This help briefly describes how to use the simulation.</p>
 <h2>Contents</h2>
 <ul class="none">
 <li><a href="#licence">Licence</a></li>
@@ -238,7 +238,7 @@ You should have received a copy of the GNU Affero General Public License along w
 <p>Welcome to SEN's renewable energy conceptual simulation - SIREN.</p>
 <p>The worlds renewable energy resources could provide many times the amount of fossil-fuelled energy currently used. SEN's computer simulation models an electricity network and allows you to create, cost and evaluate scenarios for supplying electricity using a mixture of renewable energy sources.</p>
 <p>By placing virtual renewable energy plants around the area of interest, you will be able to determine the optimal locations to access renewable energy sources, minimise grid connection costs and meet the varying demand on the grid, while achieving the best in terms of efficiency, cost effectiveness and energy security.</p>
-<p>This version of the Simulation uses the SAM SDK API for energy calculations. SAM is provided by the NRL (formerly NRL).</p>
+<p>This version of the Simulation uses the SAM SDK API for energy calculations. SAM is provided by the NLR (formerly NREL).</p>
 <h3>Southern Western Australia (WA)</h3>
 <p>The default data provided with SIREN is for the SWIS in southern WA but the program(s) have been constructed to cover any geographic area with the appropriate input files. The techniques to create the required data files is documented in <a href="#notes">Supporting Notes</a>.</p>
 <h3>About SEN</h3>
@@ -1200,6 +1200,10 @@ as embedded solar - Rooftop PV - installed on the grid but not registered with A
 <tr class="none">
 <td class="none"><dfn>resource_grid</dfn></td>
 <td class="none">File to assist with showing the resource grid</td>
+</tr>
+<tr class="none">
+<td class="none"><dfn>sam_library</dfn></td>
+<td class="none">Location of shared libraries for Linux when using SAM versions from 308 (Jul 3 2026) onwards. This version of SAM adds new dependencies for OR-Tools (<a href="https://developers.google.com/optimization">https://developers.google.com/optimization</a>) that requires access to shared libraries provided with SAM. These libraries are likely to be located in the <code>linux_64</code> folder distributed with SAM (for example <code>$samsdk/linux_64</code>)</td>
 </tr>
 <tr class="none">
 <td class="none"><dfn>sam_sdk</dfn></td>
@@ -5779,8 +5783,8 @@ MERRA-2 Variables
 </table>
 <ul>
 <li>The wind direction and speed variables are both produced using the northward and eastward MERRA-2 Variables for each height</li>
-<li>DNI is computed using formulae derived from the NRL Centre for Renewable Energy Resources DISC DNI Model</li>
-<li>DHI is computed using formulae derived from the NRL DNI-GHI to DHI Calculator</li>
+<li>DNI is computed using formulae derived from the NLR Centre for Renewable Energy Resources DISC DNI Model</li>
+<li>DHI is computed using formulae derived from the NLR DNI-GHI to DHI Calculator</li>
 </ul>
 <h5>Compressed Weather Files</h5>
 <p>SIREN can use compressed versions of SAM weather files. If you aren't using SAM itself <code>compress_weatherfiles</code> is a small program that can compress the standard weather files to around one third of their normal size to save on space. The program is not officially part of SIREN but may be included with it. It can be invoked by right-clicking on the getfiles.ini Preferences file from the SIREN main menu (see [utilities] in <a href="#getfiles">getfiles Preferences</a>).
@@ -5797,7 +5801,7 @@ MERRA-2 Variables
 <li>I interpret each grid is centred on the latitude / longitude for that set of variables, that is, the value extends outwards in all directions from that point</li>
 </ul>
 <h3 id="index">Using other Weather Files</h3>
-<p>The use of ERA5 or MERRA-2 data for the weather files is not necessary but provides a way of obtaining (gridded) weather data for any geographic area. Any weather files suitable for SAM can be used by SIREN. <a href="https://sam.nrel.gov/weather" target="_blank">Weather Data</a> describes these file formats and <a href="https://sam.nrel.gov/content/weather-data-non-us-locations" target="_blank">Weather Data for non-U.S. Locations</a> gives some details on where non-U.S. weather data may be obtained.</p>
+<p>The use of ERA5 or MERRA-2 data for the weather files is not necessary but provides a way of obtaining (gridded) weather data for any geographic area. Any weather files suitable for SAM can be used by SIREN. <a href="https://sam.nlr.gov/weather" target="_blank">Weather Data</a> describes these file formats and gives some details on where non-U.S. weather data may be obtained.</p>
 <p>SIREN has two approaches for obtaining weather files:</p>
 <ol>
 <li>Having the geographic location of the file as part of the filename. This option uses filename formats of &lt;location_latitude_longitude_year&gt; and includes files created from MERRA-2 data by <code>makeweatherfiles</code>. The location for weather files for solar and wind are defined by the <em>solar_files</em> and <em>wind_files</em> properties in the <a href="#p_files">[Files]</a> Section of the Preferences file</li>
@@ -5885,7 +5889,7 @@ MERRA-2 Variables
 </ul>
 <p>If the source folder(s) contains other CSV files <code>makegrid</code> may fail. If this happens it is probably safer to copy the weather files to a separate folder.
 <h3 id="sam">SAM Models used by SIREN</h3>
-<p>SIREN uses the NRL SAM SDK API (or SSC) for energy calculations. The current SSC version is 206 (Feb 9 2019). This is a collection of tools developed by NRL for creating renewable energy system models. See <a href="https://sam.nrel.gov/sdk" target="_blank">SAM Simulation Core SDK</a> for details on the SDK. NREL also provide a user-friendly front end, <a href="https://sam.nrel.gov/" target="_blank">SAM</a>, to facilitate usage of the SAM models. The SAM front end will allow you to progress any modelling by SIREN to a greater level of detail.</p>
+<p>SIREN uses the NLR SAM SDK API (or SSC) for energy calculations. The current SSC version is 303 (Jul 24 2025). This is a collection of tools developed by NLR for creating renewable energy system models. See <a href="https://sam.nlr.gov/sdk" target="_blank">SAM Simulation Core SDK</a> for details on the SDK. NLR also provide a user-friendly front end, <a href="https://sam.nlr.gov/" target="_blank">SAM</a>, to facilitate usage of the SAM models. The SAM front end will allow you to progress any modelling by SIREN to a greater level of detail.</p>
 <p>The SAM models are very comprehensive and can be quite complex. For example, there are around 200 input variables possible for the Solar Thermal model SIREN uses. To simplify the interface to SAM, SIREN uses a variable file for each technology to store default values for most variables and only requires a minimal number of variables to be set by the user, such as Capacity. The models used by SIREN and their variable files are as follows:</p>
 <table class="none">
 <tr class="none">
@@ -6764,7 +6768,7 @@ MERRA-2 Variables
 <td class="none">US National Aeronautics and Space Administration</td></tr>
 <tr><td class="none"><dfn>NREL</dfn></td>
 <td class="none">US National Renewable Energy Laboratory</td></tr>
-<tr><td class="none"><dfn>NRL</dfn></td>
+<tr><td class="none"><dfn>NLR</dfn></td>
 <td class="none">US National Laboratory of the Rockies, formerly NREL. The US Department of Energy's primary national laboratory for energy systems</td></tr>
 <tr><td class="none"><dfn>PNG</dfn></td>
 <td class="none">Portable Network Graphics. A lossless compressed image file format</td></tr>
