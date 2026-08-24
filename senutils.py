@@ -206,8 +206,9 @@ class WorkBook(object):
             elif self._type == 'csv':
                 csv_file = open(filename, newline='')
                 things = csv.reader(csv_file)
-                self._sheet_names = ['n/a']
+                self._sheet_names = ['na']
                 self._worksheet = []
+                max_col = 0
                 for row in things:
                     self._worksheet.append([])
                     for cell in row:
@@ -230,11 +231,10 @@ class WorkBook(object):
                                  self._worksheet[-1].append(minus + cell)
                         else:
                              self._worksheet[-1].append('')
+                    max_col = max(max_col, len(self._worksheet[-1]))
                 csv_file.close()
                 self.nrows = len(self._worksheet)
-                self.ncols = 0
-                for r in range(self.nrows):
-                    self.ncols = max(self.ncols, len(self._worksheet[r]))
+                self.ncols = max_col
             elif self._type == 'ods' and odsr is not None:
                 self._book = odsr.get_data(filename)
                 self._sheet_names = list(self._book.keys())
@@ -308,9 +308,13 @@ class WorkBook(object):
                 self._sheet.name = 'n/a'
                 self._sheet._sheet = self._worksheet
                 self._sheet.nrows = len(self._sheet._sheet)
-                self._sheet.ncols = 0
-                for r in range(self._sheet.nrows):
-                    self._sheet.ncols = max(self._sheet.ncols, len(self._worksheet[r]))
+                max_col = 0
+                try:
+                    for row in range(self._sheet.nrows):
+                        max_col = max(max_col, len(self._worksheet[row]))
+                    self._sheet.ncols = max_col
+                except:
+                    self._sheet.ncols = max_col
         except:
             raise Exception('Error accessing sheet')
         return self._sheet
