@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 #
-#  Copyright (C) 2015-2025 Sustainable Energy Now Inc., Angus King
+#  Copyright (C) 2015-2026 Angus King
+#  Copyright (C) 2015-2025 Sustainable Energy Now Inc.
 #
 #  senutils.py - This file is part of SIREN.
 #
@@ -137,6 +138,8 @@ class ListWidget(QtWidgets.QListWidget):
                 action = 'Up'
             elif chr(event.key()) == 'D':
                 action = 'Down'
+            elif chr(event.key()) == 'C':
+                action = 'Clear'
             elif chr(event.key()) == '+' or chr(event.key()) == '=' or chr(event.key()) == 'I' or chr(event.key()) == 'L':
                 if self.objectName == 'Include':
                     return
@@ -168,6 +171,8 @@ class ListWidget(QtWidgets.QListWidget):
                 self.takeItem(self.currentRow())
                 self.setCurrentRow(row + 1)
                 self.currentItem().setBackground(background)
+        elif action == 'Clear':
+            self.clearSelection()
 
 
 # Class to support input file as .csv, .xls, or .xlsx
