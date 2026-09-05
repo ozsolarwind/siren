@@ -5600,15 +5600,124 @@ NASA MERRA-2 data allows weather files to be created on a grid of 0.625 degree o
 </ol></p></li></ol>
 </ul>
 <h4>SAM Weather Files</h4>
+<h5>Solar Files</h5>
+<p>SMW format solar files are one of the formats acceptable to SAM. This format has been chosen as it's easier to generate than other formats. MERRA-2 variables from both tavg1_2d_rad_Nx and tavg1_2d_slv_Nx data files are used to create the SMW variables.</p>
+<table border="1">
+<thead>
+<tr>
+<td colspan="4">SMW Variables</td>
+<td colspan="2">ERA5 Variables</td>
+<td colspan="2">MERRA-2 Variables</td>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Column</td>
+<td>Variable</td>
+<td>Units</td>
+<td>Description</td>
+<td>Name</td>
+<td>Units</td>
+<td>Name</td>
+<td>Units</td>
+</tr>
+<tr>
+<td>1</td>
+<td>Tdry</td>
+<td><sup>o</sup>C</td>
+<td>Temperature at 2 m or 10 m above the displacement height</td>
+<td>2m_temperature</td>
+<td><sup>o</sup>K</td>
+<td>t10m</td>
+<td><sup>o</sup>K</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Wspd</td>
+<td>m/s</td>
+<td>Eastward wind at 10 m above displacement height</td>
+<td>10m_u_component_of_wind</td>
+<td>m/s</td>
+<td>u10m</td>
+<td>m/s</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Wdir</td>
+<td>degrees</td>
+<td>Northward wind at 10 m above the displacement height</td>
+<td>10m_v_component_of_wind</td>
+<td>m/s</td>
+<td>v10m</td>
+<td>m/s</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Pres</td>
+<td>Pa</td>
+<td>Time averaged surface pressure</td>
+<td>surface_pressure</td>
+<td>Pa</td>
+<td>ps</td>
+<td>Pa</td>
+</tr>
+<tr>
+<td>8</td>
+<td>GHI</td>
+<td>W/m<sup>2</sup></td>
+<td>Surface incoming shortwave flux
+<br/>Surface net downward shortwave flux</td>
+<td>surface_solar_radiation_downwards /
+<br />surface_net_solar_radiation</td>
+<td>J/m<sup>2</sup></td>
+<td>swgdn /
+<br />swgnt
+<br/>(from tavg1_2d_rad_Nx data files)</td>
+<td>W/m<sup>2</sup></td>
+</tr>
+<tr>
+<td>9</td>
+<td>DNI</td>
+<td>W/m<sup>2</sup></td>
+<td>&nbsp;</td>
+<td>surface_solar_radiation_downwards /
+<br />surface_net_solar_radiation</td>
+<td>&nbsp;</td>
+<td>swgdn /
+<br />swgnt</td>
+<td>&nbsp;</td>
+</tr>
+<tr>
+<td>10</td>
+<td>DHI</td>
+<td>W/m<sup>2</sup></td>
+<td>&nbsp;</td>
+<td>surface_solar_radiation_downwards /
+<br />surface_net_solar_radiation</td>
+<td>&nbsp;</td>
+<td>swgdn /
+<br />swgnt</td>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>The wind direction and speed variables are both produced using the northward and eastward variables for each height</li>
+<li>DNI is computed using formulae derived from the NLR Centre for Renewable Energy Resources DISC DNI Model</li>
+<li>DHI is computed using formulae derived from the NLR DNI-GHI to DHI Calculator</li>
+</ul>
 <h5 id="merra6">Wind Files</h5>
 <p>SRW format wind files are one of the formats acceptable to SAM. This format has been chosen as it's easier to generate than other formats. MERRA-2 variables from tavg1_2d_slv_Nx data files are used to create the SRW variables.</p>
 <table border="1">
 <thead>
 <tr>
-<td colspan="3">
+<td colspan="4">
 SRW Variables
 </td>
-<td colspan="3">
+<td colspan="2">
+ERA5 Variables
+</td>
+<td colspan="2">
 MERRA-2 Variables
 </td>
 </tr>
@@ -5618,173 +5727,127 @@ MERRA-2 Variables
 <td>Column</td>
 <td>Variable</td>
 <td>Units</td>
-<td>&nbsp;</td>
 <td>Description</td>
+<td>Name</td>
+<td>Units</td>
+<td>Name</td>
 <td>Units</td>
 </tr>
 <tr>
 <td>1</td>
 <td>Temperature (at 2m)</td>
 <td><sup>o</sup>C</td>
-<td>t2m</td>
 <td>Temperature at 2 m above the displacement height</td>
+<td>2m_temperature</td>
+<td><sup>o</sup>K</td>
+<td>t2m</td>
 <td><sup>o</sup>K</td>
 </tr>
 <tr>
 <td>2</td>
 <td>Pressure (at 0m)</td>
 <td>atm</td>
-<td>ps</td>
 <td>Time averaged surface pressure</td>
+<td>surface_pressure</td>
+<td>Pa</td>
+<td>ps</td>
 <td>Pa</td>
 </tr>
 <tr>
 <td>3</td>
 <td>Direction (at 2m)</td>
 <td>degrees</td>
-<td>u2m</td>
 <td>Eastward wind at 2 m above displacement height</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>u2m</td>
 <td>m/s</td>
 </tr>
 <tr>
 <td>4</td>
 <td>Speed (at 2m)</td>
 <td>m/s</td>
-<td>v2m</td>
 <td>Northward wind at 2 m above the displacement height</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>v2m</td>
 <td>m/s</td>
 </tr>
 <tr>
 <td>5</td>
 <td>Temperature (at 10m)</td>
 <td><sup>o</sup>C</td>
-<td>t10m</td>
 <td>Temperature at 10 m above the displacement height</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>t10m</td>
 <td><sup>o</sup>K</td>
 </tr>
 <tr>
 <td>6</td>
 <td>Direction (at 10m)</td>
 <td>degrees</td>
-<td>u10m</td>
 <td>Eastward wind at 10 m above displacement height</td>
+<td>10m_u_component_of_wind</td>
+<td>m/s</td>
+<td>u10m</td>
 <td>m/s</td>
 </tr>
 <tr>
 <td>7</td>
 <td>Speed</td>
 <td>m/s</td>
-<td>v10m</td>
 <td>Northward wind at 10 m above the displacement height</td>
+<td>10m_v_component_of_wind</td>
+<td>m/s</td>
+<td>v10m</td>
 <td>m/s</td>
 </tr>
 <tr>
 <td>8</td>
 <td>Direction (at 50m)</td>
 <td>degrees</td>
-<td>u50m</td>
 <td>Eastward wind at 50 m above surface</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>u50m</td>
 <td>m/s</td>
 </tr>
 <tr>
 <td>9</td>
 <td>Speed (at 50m)</td>
 <td>m/s</td>
-<td>v50m</td>
 <td>Northward wind at 50 m above surface</td>
-<td>m/s</td>
-</tr>
-</tbody>
-</table>
-<ul>
-<li>The wind direction and speed variables are both produced using the northward and eastward MERRA-2 Variables for each height</li>
-<li>The 10m variables are only produced if they exist in the MERRA-2 data files</li>
-</ul>
-<h5>Solar Files</h5>
-<p>SMW format solar files are one of the formats acceptable to SAM. This format has been chosen as it's easier to generate than other formats. MERRA-2 variables from both tavg1_2d_rad_Nx and tavg1_2d_slv_Nx data files are used to create the SMW variables.</p>
-<table border="1">
-<thead>
-<tr>
-<td colspan="3">SMW Variables</td>
-<td colspan="3">MERRA-2 Variables</td>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Column</td>
-<td>Variable</td>
-<td>Units</td>
 <td>&nbsp;</td>
-<td>Description</td>
-<td>Units</td>
-</tr>
-<tr>
-<td>1</td>
-<td>Tdry</td>
-<td><sup>o</sup>C</td>
-<td>t10m</td>
-<td>Temperature at 10 m above the displacement height</td>
-<td><sup>o</sup>K</td>
-</tr>
-<tr>
-<td>5</td>
-<td>Wspd</td>
-<td>m/s</td>
-<td>u10m</td>
-<td>Eastward wind at 10 m above displacement height</td>
+<td>&nbsp;</td>
+<td>v50m</td>
 <td>m/s</td>
 </tr>
-<tr>
-<td>6</td>
-<td>Wdir</td>
-<td>degrees</td>
-<td>v10m</td>
-<td>Northward wind at 10 m above the displacement height</td>
-<td>m/s</td>
-</tr>
-<tr>
-<td>7</td>
-<td>Pres</td>
-<td>ps<td>
-<td>Time averaged surface pressure</td>
-<td>Pa</td>
-</tr>
-<tr>
 <tr>
 <td>8</td>
-<td>GHI</td>
-<td>W/m<sup>2</sup></td>
-<td>swgdn /
-<br />swgnt</td>
-<td>Surface incoming shortwave flux
-<br/>Surface net downward shortwave flux
-<br/>(from tavg1_2d_rad_Nx data files)</td>
-<td>W/m<sup>2</sup></td>
+<td>Direction (at 100m)</td>
+<td>degrees</td>
+<td>Eastward wind at 100 m above surface</td>
+<td>100m_u_component_of_wind</td>
+<td>m/s</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
 </tr>
 <tr>
 <td>9</td>
-<td>DNI</td>
-<td>W/m<sup>2</sup></td>
-<td>swgdn /
-<br />swgnt</td>
-<td>&nbsp;</td>
-<td>&nbsp;</td>
-</tr>
-<tr>
-<td>10</td>
-<td>DHI</td>
-<td>W/m<sup>2</sup></td>
-<td>swgdn /
-<br />swgnt</td>
+<td>Speed (at 100m)</td>
+<td>m/s</td>
+<td>Northward wind at 100 m above surface</td>
+<td>100m_v_component_of_wind</td>
+<td>m/s</td>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
 </tr>
 </tbody>
 </table>
 <ul>
-<li>The wind direction and speed variables are both produced using the northward and eastward MERRA-2 Variables for each height</li>
-<li>DNI is computed using formulae derived from the NLR Centre for Renewable Energy Resources DISC DNI Model</li>
-<li>DHI is computed using formulae derived from the NLR DNI-GHI to DHI Calculator</li>
+<li>The wind direction and speed variables are both produced using the northward and eastward variables for each height</li>
+<li>The 10m variables are only produced if they exist in the MERRA-2 data files</li>
 </ul>
 <h5>Compressed Weather Files</h5>
 <p>SIREN can use compressed versions of SAM weather files. If you aren't using SAM itself <code>compress_weatherfiles</code> is a small program that can compress the standard weather files to around one third of their normal size to save on space. The program is not officially part of SIREN but may be included with it. It can be invoked by right-clicking on the getfiles.ini Preferences file from the SIREN main menu (see [utilities] in <a href="#getfiles">getfiles Preferences</a>).
