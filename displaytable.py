@@ -765,13 +765,9 @@ class Table(QtWidgets.QDialog):
                     QtCore.QDateTime.toString(QtCore.QDateTime.currentDateTime(), 'yyyy-MM-dd_hhmm'))
         while True:
             data_file = QtWidgets.QFileDialog.getSaveFileName(None, 'Save ' + iam + ' Table',
-                        data_file, 'Excel Files (*.xls*);;CSV Files (*.csv)')[0]
+                        data_file, 'Excel Files (*.xlsx);;Excel Files (*.xls);;CSV Files (*.csv)', 'Excel Files (*.xlsx)')[0]
             if data_file == '':
                 return
-            if data_file[-4:] == '.csv' or data_file[-4:] == '.xls' or data_file[-5:] == '.xlsx':
-                pass
-            else:
-                data_file += '.xlsx'
             if not os.access(data_file[:data_file.rfind('/')], os.W_OK):
                 msgbox = QtWidgets.QMessageBox()
                 msgbox.setWindowTitle(f'SIREN - Save table')
